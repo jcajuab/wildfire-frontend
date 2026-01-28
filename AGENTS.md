@@ -15,7 +15,6 @@ Single source of truth for workflow, architecture, and coding practices.
 - Tailwind CSS v4: use Context7 (`mcp__context7__resolve-library-id`, `mcp__context7__query-docs`).
 - AI SDK v6 + AI Elements: always use Context7 (`mcp__context7__resolve-library-id`, `mcp__context7__query-docs`).
 - Redux Toolkit + RTK Query: always use Context7 (`mcp__context7__resolve-library-id`, `mcp__context7__query-docs`).
-- Ragie: always use web search with `https://docs.ragie.ai/reference` for anything Ragie-related.
 - shadcn: always use the shadcn MCP tools when adding or referencing shadcn components.
 
 ## Required skills
