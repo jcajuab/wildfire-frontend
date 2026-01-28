@@ -1,3 +1,5 @@
-export default function Page() {
-  return <p>Hello, World!</p>;
+import { redirect } from "next/navigation";
+
+export default function Page(): never {
+  redirect("/content");
 }
