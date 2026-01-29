@@ -229,13 +229,17 @@ export function CreatePlaylistDialog({
     }),
   );
 
-  const { setNodeRef: setPlaylistDroppableRef } = useDroppable({
+  const {
+    setNodeRef: setPlaylistDroppableRef,
+    isOver: isOverPlaylistContainer,
+  } = useDroppable({
     id: "playlist-container",
   });
 
-  const { setNodeRef: setLibraryDroppableRef } = useDroppable({
-    id: "library-container",
-  });
+  const { setNodeRef: setLibraryDroppableRef, isOver: isOverLibraryContainer } =
+    useDroppable({
+      id: "library-container",
+    });
 
   const handleAddContent = useCallback((content: Content) => {
     const newItem: DraftPlaylistItem = {
@@ -469,7 +473,11 @@ export function CreatePlaylistDialog({
                 {/* Items List */}
                 <div
                   ref={setPlaylistDroppableRef}
-                  className="flex flex-1 flex-col gap-2 overflow-y-auto rounded-md border-2 border-transparent transition-colors data-[over=true]:border-primary/20"
+                  className={`flex flex-1 flex-col gap-2 overflow-y-auto rounded-md border-2 transition-colors ${
+                    isOverPlaylistContainer
+                      ? "border-primary/50 bg-primary/5"
+                      : "border-transparent"
+                  }`}
                 >
                   <SortableContext
                     items={playlistItems}
@@ -497,7 +505,11 @@ export function CreatePlaylistDialog({
             {/* Right Column - Content Library */}
             <div
               ref={setLibraryDroppableRef}
-              className="flex w-80 flex-col gap-4 overflow-hidden rounded-lg border p-4"
+              className={`flex w-80 flex-col gap-4 overflow-hidden rounded-lg border p-4 transition-colors ${
+                isOverLibraryContainer
+                  ? "border-primary/50 bg-primary/5"
+                  : ""
+              }`}
             >
               <div className="flex items-center gap-2">
                 <IconPhoto className="size-4" />
