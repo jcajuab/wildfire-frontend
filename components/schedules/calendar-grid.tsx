@@ -260,15 +260,15 @@ function TimeGrid({
                 className="relative border-b"
                 style={{ height: HOUR_HEIGHT }}
               >
-                <span className="absolute -top-3 right-2 text-xs text-muted-foreground">
-                  {hour === 0
-                    ? "12 AM"
-                    : hour < 12
+                {hour !== 0 && (
+                  <span className="absolute right-2 top-0 -translate-y-1/2 text-xs text-muted-foreground">
+                    {hour < 12
                       ? `${hour} AM`
                       : hour === 12
                         ? "12 PM"
                         : `${hour - 12} PM`}
-                </span>
+                  </span>
+                )}
               </div>
             ))}
           </div>
