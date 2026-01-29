@@ -121,7 +121,7 @@ export function DisplayCard({
               <span className="sr-only">Actions</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="min-w-40">
             <DropdownMenuItem onClick={() => onViewDetails(display)}>
               <IconEye className="size-4" />
               View Details

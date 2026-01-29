@@ -67,7 +67,7 @@ export function PlaylistCard({
               <IconDotsVertical className="size-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="min-w-40">
             <DropdownMenuItem onClick={() => onEdit?.(playlist)}>
               <IconPencil className="size-4" />
               Edit Playlist

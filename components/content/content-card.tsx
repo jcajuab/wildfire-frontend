@@ -58,7 +58,7 @@ export function ContentCard({
               <span className="sr-only">Actions</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="min-w-40">
             <DropdownMenuItem onClick={() => onEdit(content)}>
               <IconPencil className="size-4" />
               Edit Content
