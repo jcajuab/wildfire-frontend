@@ -20,8 +20,8 @@ interface CalendarHeaderProps {
   readonly currentDate: Date;
   readonly view: CalendarView;
   readonly onViewChange: (view: CalendarView) => void;
-  readonly onPrevMonth: () => void;
-  readonly onNextMonth: () => void;
+  readonly onPrev: () => void;
+  readonly onNext: () => void;
   readonly onToday: () => void;
   readonly onMonthSelect: (month: number, year: number) => void;
 }
@@ -49,19 +49,59 @@ function generateYearOptions(currentYear: number): number[] {
   return years;
 }
 
+function formatDateRange(date: Date, view: CalendarView): string {
+  const currentMonth = MONTHS[date.getMonth()];
+  const currentYear = date.getFullYear();
+
+  if (view === "month") {
+    return `${currentMonth} ${currentYear}`;
+  }
+
+  if (view === "day") {
+    return date.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
+  if (view === "week") {
+    const start = new Date(date);
+    start.setDate(date.getDate() - date.getDay()); // Sunday
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6); // Saturday
+
+    const startStr = start.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    const endStr = end.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+
+    if (start.getFullYear() !== end.getFullYear()) {
+      return `${startStr}, ${start.getFullYear()} - ${endStr}, ${end.getFullYear()}`;
+    }
+    return `${startStr} - ${endStr}, ${currentYear}`;
+  }
+
+  return `${currentMonth} ${currentYear}`;
+}
+
 export function CalendarHeader({
   currentDate,
   view,
   onViewChange,
-  onPrevMonth,
-  onNextMonth,
+  onPrev,
+  onNext,
   onToday,
   onMonthSelect,
 }: CalendarHeaderProps): React.ReactElement {
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-  const monthName = MONTHS[currentMonth];
   const yearOptions = generateYearOptions(currentYear);
+  const label = formatDateRange(currentDate, view);
 
   return (
     <div className="flex items-center justify-between gap-4 pb-4">
@@ -70,10 +110,10 @@ export function CalendarHeader({
         <Button variant="outline" size="sm" onClick={onToday}>
           Today
         </Button>
-        <Button variant="outline" size="icon-sm" onClick={onPrevMonth}>
+        <Button variant="outline" size="icon-sm" onClick={onPrev}>
           <IconChevronLeft className="size-4" />
         </Button>
-        <Button variant="outline" size="icon-sm" onClick={onNextMonth}>
+        <Button variant="outline" size="icon-sm" onClick={onNext}>
           <IconChevronRight className="size-4" />
         </Button>
       </div>
@@ -82,7 +122,7 @@ export function CalendarHeader({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="gap-1 text-base font-medium">
-            {monthName} {currentYear}
+            {label}
             <IconChevronDown className="size-4" />
           </Button>
         </DropdownMenuTrigger>

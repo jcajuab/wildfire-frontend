@@ -65,21 +65,25 @@ export default function SchedulesPage(): React.ReactElement {
   );
 
   // Calendar navigation
-  const handlePrevMonth = useCallback(() => {
+  const handlePrev = useCallback(() => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
-      newDate.setMonth(newDate.getMonth() - 1);
+      if (view === "month") newDate.setMonth(newDate.getMonth() - 1);
+      else if (view === "week") newDate.setDate(newDate.getDate() - 7);
+      else if (view === "day") newDate.setDate(newDate.getDate() - 1);
       return newDate;
     });
-  }, []);
+  }, [view]);
 
-  const handleNextMonth = useCallback(() => {
+  const handleNext = useCallback(() => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
-      newDate.setMonth(newDate.getMonth() + 1);
+      if (view === "month") newDate.setMonth(newDate.getMonth() + 1);
+      else if (view === "week") newDate.setDate(newDate.getDate() + 7);
+      else if (view === "day") newDate.setDate(newDate.getDate() + 1);
       return newDate;
     });
-  }, []);
+  }, [view]);
 
   const handleToday = useCallback(() => {
     setCurrentDate(new Date());
@@ -172,14 +176,15 @@ export default function SchedulesPage(): React.ReactElement {
           currentDate={currentDate}
           view={view}
           onViewChange={setView}
-          onPrevMonth={handlePrevMonth}
-          onNextMonth={handleNextMonth}
+          onPrev={handlePrev}
+          onNext={handleNext}
           onToday={handleToday}
           onMonthSelect={handleMonthSelect}
         />
 
         <CalendarGrid
           currentDate={currentDate}
+          view={view}
           schedules={schedules}
           onScheduleClick={handleScheduleClick}
         />
