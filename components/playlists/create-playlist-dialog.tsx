@@ -15,6 +15,7 @@ import {
   DragOverlay,
   pointerWithin,
 } from "@dnd-kit/core";
+import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import {
   arrayMove,
   SortableContext,
@@ -534,9 +535,9 @@ export function CreatePlaylistDialog({
             </div>
           </div>
 
-          <DragOverlay>
+          <DragOverlay modifiers={[snapCenterToCursor]}>
             {activeContent ? (
-              <div className="w-80 opacity-90">
+              <div className="w-[19rem] opacity-90">
                 <LibraryItemCard
                   content={activeContent}
                   className="cursor-grabbing border-primary bg-background shadow-xl"
