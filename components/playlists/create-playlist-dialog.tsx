@@ -13,6 +13,7 @@ import {
   useDraggable,
   useDroppable,
   DragOverlay,
+  pointerWithin,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -89,7 +90,7 @@ function SortablePlaylistItem({
   onUpdateDuration,
 }: SortablePlaylistItemProps): React.ReactElement {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: item.id });
+    useSortable({ id: item.id, data: { content: item.content } });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -231,6 +232,10 @@ export function CreatePlaylistDialog({
     id: "playlist-container",
   });
 
+  const { setNodeRef: setLibraryDroppableRef } = useDroppable({
+    id: "library-container",
+  });
+
   const handleAddContent = useCallback((content: Content) => {
     const newItem: DraftPlaylistItem = {
       id: `draft-${Date.now()}-${content.id}`,
@@ -247,6 +252,10 @@ export function CreatePlaylistDialog({
     }
   }, []);
 
+  const handleRemoveItem = useCallback((itemId: string) => {
+    setPlaylistItems((prev) => prev.filter((item) => item.id !== itemId));
+  }, []);
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
@@ -254,23 +263,38 @@ export function CreatePlaylistDialog({
 
       if (!over) return;
 
-      // Handle Drop from Library
-      if (active.id.toString().startsWith("library-")) {
+      const activeId = active.id.toString();
+      const overId = over.id.toString();
+
+      // Handle Drop from Library -> Playlist
+      if (activeId.startsWith("library-")) {
         const content = active.data.current?.content as Content;
-        // If dropped over playlist container or any playlist item
-        if (
-          over.id === "playlist-container" ||
-          over.id.toString().startsWith("draft-")
-        ) {
-          if (content) {
-            handleAddContent(content);
-          }
+        const isOverPlaylist =
+          overId === "playlist-container" || overId.startsWith("draft-");
+
+        if (isOverPlaylist && content) {
+          handleAddContent(content);
         }
         return;
       }
 
+      // Handle Drop from Playlist -> Library (Remove)
+      if (activeId.startsWith("draft-")) {
+        const isOverLibrary =
+          overId === "library-container" || overId.startsWith("library-");
+
+        if (isOverLibrary) {
+          handleRemoveItem(activeId);
+          return;
+        }
+      }
+
       // Handle Reorder
-      if (active.id !== over.id) {
+      if (
+        active.id !== over.id &&
+        activeId.startsWith("draft-") &&
+        overId.startsWith("draft-")
+      ) {
         setPlaylistItems((items) => {
           const oldIndex = items.findIndex((item) => item.id === active.id);
           const newIndex = items.findIndex((item) => item.id === over.id);
@@ -279,7 +303,7 @@ export function CreatePlaylistDialog({
         });
       }
     },
-    [handleAddContent],
+    [handleAddContent, handleRemoveItem],
   );
 
   // Filter available content - exclude already added items
@@ -326,10 +350,6 @@ export function CreatePlaylistDialog({
     handleClose();
   }, [formData, playlistItems, totalDuration, onCreate, handleClose]);
 
-  const handleRemoveItem = useCallback((itemId: string) => {
-    setPlaylistItems((prev) => prev.filter((item) => item.id !== itemId));
-  }, []);
-
   const handleUpdateDuration = useCallback(
     (itemId: string, duration: number) => {
       setPlaylistItems((prev) =>
@@ -374,7 +394,7 @@ export function CreatePlaylistDialog({
         {/* Content */}
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCenter}
+          collisionDetection={pointerWithin}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
@@ -474,7 +494,10 @@ export function CreatePlaylistDialog({
             </div>
 
             {/* Right Column - Content Library */}
-            <div className="flex w-80 flex-col gap-4 overflow-hidden rounded-lg border p-4">
+            <div
+              ref={setLibraryDroppableRef}
+              className="flex w-80 flex-col gap-4 overflow-hidden rounded-lg border p-4"
+            >
               <div className="flex items-center gap-2">
                 <IconPhoto className="size-4" />
                 <span className="text-sm font-semibold">Content Library</span>
