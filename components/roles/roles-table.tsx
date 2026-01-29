@@ -1,0 +1,205 @@
+"use client";
+
+import {
+  IconDotsVertical,
+  IconEdit,
+  IconTrash,
+  IconArrowsSort,
+  IconSortAscending,
+  IconSortDescending,
+  IconUsers,
+} from "@tabler/icons-react";
+
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { Role, RoleSort, RoleSortField } from "@/types/role";
+
+interface RolesTableProps {
+  readonly roles: readonly Role[];
+  readonly sort: RoleSort;
+  readonly onSortChange: (sort: RoleSort) => void;
+  readonly onEdit: (role: Role) => void;
+  readonly onDelete: (role: Role) => void;
+}
+
+interface SortableHeaderProps {
+  readonly label: string;
+  readonly field: RoleSortField;
+  readonly currentSort: RoleSort;
+  readonly onSortChange: (sort: RoleSort) => void;
+}
+
+function SortableHeader({
+  label,
+  field,
+  currentSort,
+  onSortChange,
+}: SortableHeaderProps): React.ReactElement {
+  const isActive = currentSort.field === field;
+  const isAsc = currentSort.direction === "asc";
+
+  const handleClick = (): void => {
+    if (isActive) {
+      onSortChange({ field, direction: isAsc ? "desc" : "asc" });
+    } else {
+      onSortChange({ field, direction: "asc" });
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      className="flex items-center gap-1 hover:text-foreground"
+    >
+      {label}
+      {isActive ? (
+        isAsc ? (
+          <IconSortAscending className="size-4" />
+        ) : (
+          <IconSortDescending className="size-4" />
+        )
+      ) : (
+        <IconArrowsSort className="size-4 opacity-50" />
+      )}
+    </button>
+  );
+}
+
+interface RoleActionsMenuProps {
+  readonly role: Role;
+  readonly onEdit: (role: Role) => void;
+  readonly onDelete: (role: Role) => void;
+}
+
+function RoleActionsMenu({
+  role,
+  onEdit,
+  onDelete,
+}: RoleActionsMenuProps): React.ReactElement {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon-sm">
+          <IconDotsVertical className="size-4" />
+          <span className="sr-only">Actions</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onEdit(role)}>
+          <IconEdit className="size-4" />
+          Edit Role
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => onDelete(role)}
+          className="text-destructive focus:text-destructive"
+        >
+          <IconTrash className="size-4" />
+          Delete Role
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function formatDate(date: string): string {
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export function RolesTable({
+  roles,
+  sort,
+  onSortChange,
+  onEdit,
+  onDelete,
+}: RolesTableProps): React.ReactElement {
+  if (roles.length === 0) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-8">
+        <p className="text-muted-foreground">No roles found</p>
+      </div>
+    );
+  }
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-[200px]">
+            <SortableHeader
+              label="Name"
+              field="name"
+              currentSort={sort}
+              onSortChange={onSortChange}
+            />
+          </TableHead>
+          <TableHead className="w-[350px]">Description</TableHead>
+          <TableHead className="w-[120px]">
+            <SortableHeader
+              label="Users"
+              field="usersCount"
+              currentSort={sort}
+              onSortChange={onSortChange}
+            />
+          </TableHead>
+          <TableHead className="w-[150px]">
+            <SortableHeader
+              label="Created"
+              field="createdAt"
+              currentSort={sort}
+              onSortChange={onSortChange}
+            />
+          </TableHead>
+          <TableHead className="w-[50px]" />
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {roles.map((role) => (
+          <TableRow key={role.id}>
+            <TableCell>
+              <Badge variant="default" className="text-xs">
+                {role.name}
+              </Badge>
+            </TableCell>
+            <TableCell className="text-muted-foreground">
+              {role.description}
+            </TableCell>
+            <TableCell>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <IconUsers className="size-4" />
+                <span>{role.usersCount}</span>
+              </div>
+            </TableCell>
+            <TableCell className="text-muted-foreground">
+              {formatDate(role.createdAt)}
+            </TableCell>
+            <TableCell>
+              <RoleActionsMenu
+                role={role}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
