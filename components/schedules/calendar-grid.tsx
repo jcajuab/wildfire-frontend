@@ -220,59 +220,60 @@ function TimeGrid({
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden rounded-lg border">
-      {/* Header */}
-      <div className="flex border-b bg-muted/30 pr-4">
-        <div className="w-16 border-r bg-background" /> {/* Time Column */}
-        {days.map((day, i) => {
-          const isToday =
-            day.getDate() === new Date().getDate() &&
-            day.getMonth() === new Date().getMonth() &&
-            day.getFullYear() === new Date().getFullYear();
-          return (
-            <div
-              key={i}
-              className="flex-1 border-r px-2 py-2 text-center last:border-r-0"
-            >
+      <div ref={scrollRef} className="flex flex-1 flex-col overflow-y-auto">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-30 flex border-b bg-background shadow-sm">
+          <div className="w-16 flex-none border-r bg-background" />{" "}
+          {/* Time Column Header */}
+          {days.map((day, i) => {
+            const isToday =
+              day.getDate() === new Date().getDate() &&
+              day.getMonth() === new Date().getMonth() &&
+              day.getFullYear() === new Date().getFullYear();
+            return (
               <div
-                className={`text-xs font-medium ${isToday ? "text-primary" : "text-muted-foreground"}`}
+                key={i}
+                className="flex-1 border-r bg-background px-2 py-2 text-center last:border-r-0"
               >
-                {WEEKDAYS[day.getDay()]}
+                <div
+                  className={`text-xs font-medium ${isToday ? "text-primary" : "text-muted-foreground"}`}
+                >
+                  {WEEKDAYS[day.getDay()]}
+                </div>
+                <div
+                  className={`text-sm font-semibold ${isToday ? "text-primary" : ""}`}
+                >
+                  {day.getDate()}
+                </div>
               </div>
-              <div
-                className={`text-sm font-semibold ${isToday ? "text-primary" : ""}`}
-              >
-                {day.getDate()}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Body */}
-      <div ref={scrollRef} className="flex flex-1 overflow-y-auto">
-        {/* Time Labels */}
-        <div className="w-16 flex-none border-r bg-background">
-          {HOURS.map((hour) => (
-            <div
-              key={hour}
-              className="relative border-b text-right text-xs text-muted-foreground"
-              style={{ height: HOUR_HEIGHT }}
-            >
-              <span className="absolute -top-2 right-2 bg-background px-1">
-                {hour === 0
-                  ? "12 AM"
-                  : hour < 12
-                    ? `${hour} AM`
-                    : hour === 12
-                      ? "12 PM"
-                      : `${hour - 12} PM`}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* Grid */}
-        <div className="flex flex-1">
+        {/* Body */}
+        <div className="flex min-h-0 flex-1">
+          {/* Time Labels */}
+          <div className="w-16 flex-none border-r bg-background">
+            {HOURS.map((hour) => (
+              <div
+                key={hour}
+                className="relative border-b"
+                style={{ height: HOUR_HEIGHT }}
+              >
+                <span className="absolute -top-3 right-2 text-xs text-muted-foreground">
+                  {hour === 0
+                    ? "12 AM"
+                    : hour < 12
+                      ? `${hour} AM`
+                      : hour === 12
+                        ? "12 PM"
+                        : `${hour - 12} PM`}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Grid Columns */}
           {days.map((day, dayIndex) => {
             // Find overlapping schedules
             const daySchedules = schedules.filter((s) => {
@@ -282,7 +283,7 @@ function TimeGrid({
               end.setHours(0, 0, 0, 0);
               const current = new Date(day);
               current.setHours(0, 0, 0, 0);
-              
+
               // Only show if the schedule overlaps this day AND matches recurrence logic (simplified here)
               // For prototype, we show if within range
               return current >= start && current <= end;
@@ -308,7 +309,7 @@ function TimeGrid({
                     .split(":")
                     .map(Number);
                   const [endH, endM] = schedule.endTime.split(":").map(Number);
-                  
+
                   const startMinutes = startH * 60 + startM;
                   const endMinutes = endH * 60 + endM;
                   const durationMinutes = endMinutes - startMinutes;
