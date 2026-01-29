@@ -9,6 +9,7 @@ import {
   IconDeviceDesktop,
   IconPencil,
   IconX,
+  IconTrash,
 } from "@tabler/icons-react";
 
 import {
@@ -27,6 +28,7 @@ interface ViewScheduleDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onEdit: (schedule: Schedule) => void;
+  readonly onDelete: (schedule: Schedule) => void;
 }
 
 function formatDate(dateString: string): string {
@@ -63,6 +65,7 @@ export function ViewScheduleDialog({
   open,
   onOpenChange,
   onEdit,
+  onDelete,
 }: ViewScheduleDialogProps): React.ReactElement | null {
   if (!schedule) return null;
 
@@ -129,14 +132,26 @@ export function ViewScheduleDialog({
           </div>
         </div>
 
-        <DialogFooter className="border-t-2 border-dashed border-primary/30 pt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+        <DialogFooter className="flex items-center justify-between border-t-2 border-dashed border-primary/30 pt-4 sm:justify-between">
+          <Button
+            variant="destructive"
+            onClick={() => {
+              onDelete(schedule);
+              onOpenChange(false);
+            }}
+          >
+            <IconTrash className="size-4" />
+            Delete
           </Button>
-          <Button onClick={() => onEdit(schedule)}>
-            <IconPencil className="size-4" />
-            Edit
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+            <Button onClick={() => onEdit(schedule)}>
+              <IconPencil className="size-4" />
+              Edit
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

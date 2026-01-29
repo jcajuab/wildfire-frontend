@@ -125,6 +125,10 @@ export default function SchedulesPage(): React.ReactElement {
     setSchedules((prev) => [...prev, newSchedule]);
   }, []);
 
+  const handleDeleteSchedule = useCallback((schedule: Schedule) => {
+    setSchedules((prev) => prev.filter((s) => s.id !== schedule.id));
+  }, []);
+
   const handleSaveSchedule = useCallback(
     (scheduleId: string, data: ScheduleFormData) => {
       const playlist = mockPlaylists.find((p) => p.id === data.playlistId);
@@ -196,6 +200,7 @@ export default function SchedulesPage(): React.ReactElement {
         open={viewDialogOpen}
         onOpenChange={setViewDialogOpen}
         onEdit={handleEditFromView}
+        onDelete={handleDeleteSchedule}
       />
 
       {/* Edit Schedule Dialog */}
