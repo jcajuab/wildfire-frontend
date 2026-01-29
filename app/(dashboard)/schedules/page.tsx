@@ -35,22 +35,22 @@ const mockSchedules: Schedule[] = [
   {
     id: "schedule-1",
     name: "Demo Schedule",
-    startDate: "2025-01-05",
-    endDate: "2025-01-09",
+    startDate: "2026-01-05",
+    endDate: "2026-01-09",
     startTime: "08:00",
     endTime: "17:00",
     playlist: { id: "playlist-1", name: "Demo Playlist" },
     targetDisplays: [{ id: "display-1", name: "446" }],
     recurrence: "DAILY",
-    createdAt: "2025-01-01T10:00:00Z",
-    updatedAt: "2025-01-01T10:00:00Z",
+    createdAt: "2026-01-01T10:00:00Z",
+    updatedAt: "2026-01-01T10:00:00Z",
     createdBy: { id: "user-1", name: "Admin" },
   },
 ];
 
 export default function SchedulesPage(): React.ReactElement {
   // Calendar state
-  const [currentDate, setCurrentDate] = useState(() => new Date(2025, 0, 1)); // Jan 2025
+  const [currentDate, setCurrentDate] = useState(() => new Date(2026, 0, 1)); // Jan 2026
   const [view, setView] = useState<CalendarView>("month");
 
   // Schedules state
