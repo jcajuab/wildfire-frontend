@@ -8,182 +8,167 @@ import { PageHeader } from "@/components/layout";
 import {
   RolesTable,
   RoleSearchInput,
-  CreateRoleDialog,
-  EditRoleDialog,
+  RolesPagination,
+  RoleDialog,
 } from "@/components/roles";
 import type {
   Role,
   Permission,
+  RoleUser,
   RoleSort,
-  CreateRoleFormData,
-  EditRoleFormData,
+  RoleFormData,
 } from "@/types/role";
 
 // Mock permissions - will be replaced with API data
 const mockPermissions: Permission[] = [
   {
-    id: "content.view",
-    name: "View Content",
-    description: "Can view all content items",
-    category: "Content",
-  },
-  {
-    id: "content.create",
-    name: "Create Content",
-    description: "Can upload and create new content",
-    category: "Content",
-  },
-  {
-    id: "content.edit",
-    name: "Edit Content",
-    description: "Can edit existing content",
-    category: "Content",
-  },
-  {
-    id: "content.delete",
-    name: "Delete Content",
-    description: "Can delete content items",
-    category: "Content",
-  },
-  {
     id: "displays.view",
     name: "View Displays",
-    description: "Can view all displays",
-    category: "Displays",
+    description: "Can view all displays and their status",
   },
   {
     id: "displays.manage",
     name: "Manage Displays",
     description: "Can add, edit, and remove displays",
-    category: "Displays",
+  },
+  {
+    id: "displays.control",
+    name: "Control Displays",
+    description: "Can control display power and refresh",
+  },
+  {
+    id: "content.view",
+    name: "View Content",
+    description: "Can view all content items",
+  },
+  {
+    id: "content.manage",
+    name: "Manage Content",
+    description: "Can upload, edit, and delete content",
   },
   {
     id: "playlists.view",
     name: "View Playlists",
     description: "Can view all playlists",
-    category: "Playlists",
   },
   {
     id: "playlists.manage",
     name: "Manage Playlists",
     description: "Can create, edit, and delete playlists",
-    category: "Playlists",
   },
   {
     id: "schedules.view",
     name: "View Schedules",
     description: "Can view all schedules",
-    category: "Schedules",
   },
   {
     id: "schedules.manage",
     name: "Manage Schedules",
     description: "Can create, edit, and delete schedules",
-    category: "Schedules",
   },
   {
     id: "users.view",
     name: "View Users",
-    description: "Can view all users",
-    category: "Users",
+    description: "Can view all users in the organization",
   },
   {
     id: "users.manage",
     name: "Manage Users",
     description: "Can invite, edit, and remove users",
-    category: "Users",
+  },
+  {
+    id: "roles.view",
+    name: "View Roles",
+    description: "Can view all roles and permissions",
   },
   {
     id: "roles.manage",
     name: "Manage Roles",
     description: "Can create, edit, and delete roles",
-    category: "Users",
   },
 ];
 
+// Mock users - will be replaced with API data
+const mockUsers: RoleUser[] = [
+  { id: "1", name: "Admin", email: "john.doe@example.com" },
+  { id: "2", name: "Jane Smith", email: "jane.smith@example.com" },
+  { id: "3", name: "Bob Johnson", email: "bob.johnson@example.com" },
+];
+
 // Mock roles - will be replaced with API data
-const mockRoles: Role[] = [
+const initialRoles: Role[] = [
   {
     id: "1",
     name: "Admin",
-    description: "Full access to all features and settings",
     permissions: mockPermissions,
-    usersCount: 2,
-    createdAt: "2023-01-15T10:00:00Z",
-  },
-  {
-    id: "2",
-    name: "Editor",
-    description: "Can manage content, playlists, and schedules",
-    permissions: mockPermissions.filter((p) =>
-      ["content", "playlists", "schedules"].some((cat) => p.id.startsWith(cat)),
-    ),
-    usersCount: 5,
-    createdAt: "2023-02-20T14:30:00Z",
-  },
-  {
-    id: "3",
-    name: "Viewer",
-    description: "Read-only access to content and displays",
-    permissions: mockPermissions.filter((p) => p.id.endsWith(".view")),
-    usersCount: 12,
-    createdAt: "2023-03-10T09:15:00Z",
+    users: [mockUsers[0]],
+    usersCount: 1,
   },
 ];
 
 export default function RolesPage(): React.ReactElement {
   // State
-  const [roles, setRoles] = useState<Role[]>(mockRoles);
+  const [roles, setRoles] = useState<Role[]>(initialRoles);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<RoleSort>({
     field: "name",
     direction: "asc",
   });
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
 
+  // Pagination
+  const pageSize = 10;
+
   // Handlers
-  const handleCreate = useCallback((data: CreateRoleFormData) => {
-    const newRole: Role = {
-      id: crypto.randomUUID(),
-      name: data.name,
-      description: data.description,
-      permissions: mockPermissions.filter((p) =>
-        data.permissionIds.includes(p.id),
-      ),
-      usersCount: 0,
-      createdAt: new Date().toISOString(),
-    };
-    setRoles((prev) => [...prev, newRole]);
+  const handleCreate = useCallback(() => {
+    setDialogMode("create");
+    setSelectedRole(null);
+    setDialogOpen(true);
   }, []);
 
   const handleEdit = useCallback((role: Role) => {
+    setDialogMode("edit");
     setSelectedRole(role);
-    setIsEditDialogOpen(true);
+    setDialogOpen(true);
   }, []);
 
-  const handleSaveEdit = useCallback(
-    (roleId: string, data: EditRoleFormData) => {
-      setRoles((prev) =>
-        prev.map((role) => {
-          if (role.id !== roleId) return role;
-          return {
-            ...role,
-            name: data.name,
-            description: data.description,
-            permissions: mockPermissions.filter((p) =>
-              data.permissionIds.includes(p.id),
-            ),
-          };
-        }),
-      );
+  const handleSubmit = useCallback(
+    (data: RoleFormData) => {
+      if (dialogMode === "create") {
+        const newRole: Role = {
+          id: crypto.randomUUID(),
+          name: data.name,
+          permissions: mockPermissions.filter((p) =>
+            data.permissionIds.includes(p.id),
+          ),
+          users: mockUsers.filter((u) => data.userIds.includes(u.id)),
+          usersCount: data.userIds.length,
+        };
+        setRoles((prev) => [...prev, newRole]);
+      } else if (selectedRole) {
+        setRoles((prev) =>
+          prev.map((role) => {
+            if (role.id !== selectedRole.id) return role;
+            return {
+              ...role,
+              name: data.name,
+              permissions: mockPermissions.filter((p) =>
+                data.permissionIds.includes(p.id),
+              ),
+              users: mockUsers.filter((u) => data.userIds.includes(u.id)),
+              usersCount: data.userIds.length,
+            };
+          }),
+        );
+      }
     },
-    [],
+    [dialogMode, selectedRole],
   );
 
   const handleDelete = useCallback((role: Role) => {
-    // TODO: Add confirmation dialog
     setRoles((prev) => prev.filter((r) => r.id !== role.id));
   }, []);
 
@@ -191,10 +176,8 @@ export default function RolesPage(): React.ReactElement {
   const filteredRoles = useMemo(() => {
     if (!search) return roles;
     const searchLower = search.toLowerCase();
-    return roles.filter(
-      (role) =>
-        role.name.toLowerCase().includes(searchLower) ||
-        role.description.toLowerCase().includes(searchLower),
+    return roles.filter((role) =>
+      role.name.toLowerCase().includes(searchLower),
     );
   }, [roles, search]);
 
@@ -207,22 +190,22 @@ export default function RolesPage(): React.ReactElement {
           return a.name.localeCompare(b.name) * direction;
         case "usersCount":
           return (a.usersCount - b.usersCount) * direction;
-        case "createdAt":
-          return (
-            (new Date(a.createdAt).getTime() -
-              new Date(b.createdAt).getTime()) *
-            direction
-          );
         default:
           return 0;
       }
     });
   }, [filteredRoles, sort]);
 
+  // Paginate roles
+  const paginatedRoles = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return sortedRoles.slice(start, start + pageSize);
+  }, [sortedRoles, page]);
+
   return (
     <div className="flex h-full flex-col">
       <PageHeader title="Roles">
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
+        <Button onClick={handleCreate}>
           <IconPlus className="size-4" />
           Create Role
         </Button>
@@ -231,37 +214,39 @@ export default function RolesPage(): React.ReactElement {
       <div className="flex flex-1 flex-col">
         {/* Toolbar */}
         <div className="flex items-center justify-between border-b px-6 py-3">
-          <h2 className="text-lg font-semibold">All Roles</h2>
+          <h2 className="text-lg font-semibold">Search Results</h2>
           <RoleSearchInput value={search} onChange={setSearch} />
         </div>
 
         {/* Table */}
         <div className="flex-1 overflow-auto px-6">
           <RolesTable
-            roles={sortedRoles}
+            roles={paginatedRoles}
             sort={sort}
             onSortChange={setSort}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
         </div>
+
+        {/* Pagination */}
+        <RolesPagination
+          page={page}
+          pageSize={pageSize}
+          total={sortedRoles.length}
+          onPageChange={setPage}
+        />
       </div>
 
-      {/* Create Role Dialog */}
-      <CreateRoleDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        permissions={mockPermissions}
-        onCreate={handleCreate}
-      />
-
-      {/* Edit Role Dialog */}
-      <EditRoleDialog
+      {/* Create/Edit Role Dialog */}
+      <RoleDialog
+        mode={dialogMode}
         role={selectedRole}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
         permissions={mockPermissions}
-        onSave={handleSaveEdit}
+        availableUsers={mockUsers}
+        onSubmit={handleSubmit}
       />
     </div>
   );

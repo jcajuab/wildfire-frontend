@@ -1,4 +1,4 @@
 export { RolesTable } from "./roles-table";
 export { RoleSearchInput } from "./role-search-input";
-export { CreateRoleDialog } from "./create-role-dialog";
-export { EditRoleDialog } from "./edit-role-dialog";
+export { RolesPagination } from "./roles-pagination";
+export { RoleDialog } from "./role-dialog";

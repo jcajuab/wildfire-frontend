@@ -11,7 +11,6 @@ import {
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -115,14 +114,6 @@ function RoleActionsMenu({
   );
 }
 
-function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
 export function RolesTable({
   roles,
   sort,
@@ -142,27 +133,18 @@ export function RolesTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-[200px]">
+          <TableHead>
             <SortableHeader
-              label="Name"
+              label="Roles"
               field="name"
-              currentSort={sort}
-              onSortChange={onSortChange}
-            />
-          </TableHead>
-          <TableHead className="w-[350px]">Description</TableHead>
-          <TableHead className="w-[120px]">
-            <SortableHeader
-              label="Users"
-              field="usersCount"
               currentSort={sort}
               onSortChange={onSortChange}
             />
           </TableHead>
           <TableHead className="w-[150px]">
             <SortableHeader
-              label="Created"
-              field="createdAt"
+              label="Users"
+              field="usersCount"
               currentSort={sort}
               onSortChange={onSortChange}
             />
@@ -173,22 +155,12 @@ export function RolesTable({
       <TableBody>
         {roles.map((role) => (
           <TableRow key={role.id}>
-            <TableCell>
-              <Badge variant="default" className="text-xs">
-                {role.name}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-muted-foreground">
-              {role.description}
-            </TableCell>
+            <TableCell className="font-medium">{role.name}</TableCell>
             <TableCell>
               <div className="flex items-center gap-1 text-muted-foreground">
-                <IconUsers className="size-4" />
                 <span>{role.usersCount}</span>
+                <IconUsers className="size-4" />
               </div>
-            </TableCell>
-            <TableCell className="text-muted-foreground">
-              {formatDate(role.createdAt)}
             </TableCell>
             <TableCell>
               <RoleActionsMenu
