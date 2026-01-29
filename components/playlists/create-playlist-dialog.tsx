@@ -2,6 +2,23 @@
 
 import { useState, useCallback, useMemo } from "react";
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   IconInfoCircle,
   IconPhoto,
   IconPlaylist,
@@ -56,6 +73,77 @@ function formatDuration(seconds: number): string {
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")} sec`;
 }
 
+interface SortablePlaylistItemProps {
+  readonly item: DraftPlaylistItem;
+  readonly onRemove: (id: string) => void;
+  readonly onUpdateDuration: (id: string, duration: number) => void;
+}
+
+function SortablePlaylistItem({
+  item,
+  onRemove,
+  onUpdateDuration,
+}: SortablePlaylistItemProps): React.ReactElement {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : 0,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3"
+    >
+      {/* Thumbnail */}
+      <div className="flex size-12 items-center justify-center rounded bg-muted">
+        {/* Placeholder for thumbnail */}
+      </div>
+
+      {/* Info */}
+      <div className="flex flex-1 flex-col gap-0.5">
+        <span className="text-sm font-medium">{item.content.title}</span>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <IconClock className="size-3" />
+          <input
+            type="number"
+            min="1"
+            value={item.duration}
+            onChange={(e) =>
+              onUpdateDuration(item.id, parseInt(e.target.value, 10) || 1)
+            }
+            className="w-12 rounded border bg-transparent px-1 text-center"
+            onPointerDown={(e) => e.stopPropagation()} // Prevent drag when interacting with input
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+          <span>sec</span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => onRemove(item.id)}
+      >
+        <IconX className="size-4" />
+      </Button>
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab text-muted-foreground active:cursor-grabbing"
+      >
+        <IconGripVertical className="size-4" />
+      </div>
+    </div>
+  );
+}
+
 export function CreatePlaylistDialog({
   open,
   onOpenChange,
@@ -68,6 +156,26 @@ export function CreatePlaylistDialog({
   });
   const [playlistItems, setPlaylistItems] = useState<DraftPlaylistItem[]>([]);
   const [contentSearch, setContentSearch] = useState("");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setPlaylistItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }, []);
 
   // Filter available content - exclude already added items
   const filteredContent = useMemo(() => {
@@ -233,56 +341,31 @@ export function CreatePlaylistDialog({
 
               {/* Items List */}
               <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
-                {playlistItems.length === 0 ? (
-                  <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-                    Add content from the library to get started
-                  </div>
-                ) : (
-                  playlistItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3"
-                    >
-                      {/* Thumbnail */}
-                      <div className="flex size-12 items-center justify-center rounded bg-muted">
-                        {/* Placeholder for thumbnail */}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={playlistItems}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {playlistItems.length === 0 ? (
+                      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+                        Add content from the library to get started
                       </div>
-
-                      {/* Info */}
-                      <div className="flex flex-1 flex-col gap-0.5">
-                        <span className="text-sm font-medium">
-                          {item.content.title}
-                        </span>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <IconClock className="size-3" />
-                          <input
-                            type="number"
-                            min="1"
-                            value={item.duration}
-                            onChange={(e) =>
-                              handleUpdateDuration(
-                                item.id,
-                                parseInt(e.target.value, 10) || 1,
-                              )
-                            }
-                            className="w-12 rounded border bg-transparent px-1 text-center"
-                          />
-                          <span>sec</span>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => handleRemoveItem(item.id)}
-                      >
-                        <IconX className="size-4" />
-                      </Button>
-                      <IconGripVertical className="size-4 cursor-grab text-muted-foreground" />
-                    </div>
-                  ))
-                )}
+                    ) : (
+                      playlistItems.map((item) => (
+                        <SortablePlaylistItem
+                          key={item.id}
+                          item={item}
+                          onRemove={handleRemoveItem}
+                          onUpdateDuration={handleUpdateDuration}
+                        />
+                      ))
+                    )}
+                  </SortableContext>
+                </DndContext>
               </div>
             </div>
           </div>
