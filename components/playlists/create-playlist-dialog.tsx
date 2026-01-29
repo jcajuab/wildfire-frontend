@@ -273,12 +273,17 @@ export function CreatePlaylistDialog({
 
       // Handle Drop from Library -> Playlist
       if (activeId.startsWith("library-")) {
-        const content = active.data.current?.content as Content;
         const isOverPlaylist =
           overId === "playlist-container" || overId.startsWith("draft-");
 
-        if (isOverPlaylist && content) {
-          handleAddContent(content);
+        if (isOverPlaylist) {
+          const originalContentId = activeId.replace("library-", "");
+          const content = availableContent.find(
+            (c) => c.id === originalContentId,
+          );
+          if (content) {
+            handleAddContent(content);
+          }
         }
         return;
       }
@@ -308,7 +313,7 @@ export function CreatePlaylistDialog({
         });
       }
     },
-    [handleAddContent, handleRemoveItem],
+    [handleAddContent, handleRemoveItem, availableContent],
   );
 
   // Filter available content - exclude already added items
