@@ -213,20 +213,22 @@ export default function RolesPage(): React.ReactElement {
 
       <div className="flex flex-1 flex-col">
         {/* Toolbar */}
-        <div className="flex items-center justify-between border-b px-6 py-3">
+        <div className="flex items-center justify-between px-6 py-3">
           <h2 className="text-lg font-semibold">Search Results</h2>
           <RoleSearchInput value={search} onChange={setSearch} />
         </div>
 
         {/* Table */}
         <div className="flex-1 overflow-auto px-6">
-          <RolesTable
-            roles={paginatedRoles}
-            sort={sort}
-            onSortChange={setSort}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
+          <div className="overflow-hidden rounded-lg border">
+            <RolesTable
+              roles={paginatedRoles}
+              sort={sort}
+              onSortChange={setSort}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </div>
         </div>
 
         {/* Pagination */}

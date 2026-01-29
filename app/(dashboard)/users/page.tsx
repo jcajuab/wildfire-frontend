@@ -134,21 +134,23 @@ export default function UsersPage(): React.ReactElement {
 
       <div className="flex flex-1 flex-col">
         {/* Toolbar */}
-        <div className="flex items-center justify-between border-b px-6 py-3">
+        <div className="flex items-center justify-between px-6 py-3">
           <h2 className="text-lg font-semibold">Search Results</h2>
           <UserSearchInput value={search} onChange={setSearch} />
         </div>
 
         {/* Table */}
         <div className="flex-1 overflow-auto px-6">
-          <UsersTable
-            users={paginatedUsers}
-            availableRoles={mockRoles}
-            sort={sort}
-            onSortChange={setSort}
-            onRoleToggle={handleRoleToggle}
-            onRemoveUser={handleRemoveUser}
-          />
+          <div className="overflow-hidden rounded-lg border">
+            <UsersTable
+              users={paginatedUsers}
+              availableRoles={mockRoles}
+              sort={sort}
+              onSortChange={setSort}
+              onRoleToggle={handleRoleToggle}
+              onRemoveUser={handleRemoveUser}
+            />
+          </div>
         </div>
 
         {/* Pagination */}
