@@ -104,6 +104,20 @@ const initialRoles: Role[] = [
     users: [mockUsers[0]],
     usersCount: 1,
   },
+  {
+    id: "2",
+    name: "Editor",
+    permissions: mockPermissions.filter((p) => p.id.includes("manage")),
+    users: [mockUsers[1]],
+    usersCount: 1,
+  },
+  {
+    id: "3",
+    name: "Viewer",
+    permissions: mockPermissions.filter((p) => p.id.includes("view")),
+    users: [mockUsers[2]],
+    usersCount: 1,
+  },
 ];
 
 export default function RolesPage(): React.ReactElement {
