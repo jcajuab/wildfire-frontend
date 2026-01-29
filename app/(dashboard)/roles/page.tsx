@@ -11,118 +11,15 @@ import {
   RolesPagination,
   RoleDialog,
 } from "@/components/roles";
-import type {
-  Role,
-  Permission,
-  RoleUser,
-  RoleSort,
-  RoleFormData,
-} from "@/types/role";
-
-// Mock permissions - will be replaced with API data
-const mockPermissions: Permission[] = [
-  {
-    id: "displays.view",
-    name: "View Displays",
-    description: "Can view all displays and their status",
-  },
-  {
-    id: "displays.manage",
-    name: "Manage Displays",
-    description: "Can add, edit, and remove displays",
-  },
-  {
-    id: "displays.control",
-    name: "Control Displays",
-    description: "Can control display power and refresh",
-  },
-  {
-    id: "content.view",
-    name: "View Content",
-    description: "Can view all content items",
-  },
-  {
-    id: "content.manage",
-    name: "Manage Content",
-    description: "Can upload, edit, and delete content",
-  },
-  {
-    id: "playlists.view",
-    name: "View Playlists",
-    description: "Can view all playlists",
-  },
-  {
-    id: "playlists.manage",
-    name: "Manage Playlists",
-    description: "Can create, edit, and delete playlists",
-  },
-  {
-    id: "schedules.view",
-    name: "View Schedules",
-    description: "Can view all schedules",
-  },
-  {
-    id: "schedules.manage",
-    name: "Manage Schedules",
-    description: "Can create, edit, and delete schedules",
-  },
-  {
-    id: "users.view",
-    name: "View Users",
-    description: "Can view all users in the organization",
-  },
-  {
-    id: "users.manage",
-    name: "Manage Users",
-    description: "Can invite, edit, and remove users",
-  },
-  {
-    id: "roles.view",
-    name: "View Roles",
-    description: "Can view all roles and permissions",
-  },
-  {
-    id: "roles.manage",
-    name: "Manage Roles",
-    description: "Can create, edit, and delete roles",
-  },
-];
-
-// Mock users - will be replaced with API data
-const mockUsers: RoleUser[] = [
-  { id: "1", name: "Admin", email: "john.doe@example.com" },
-  { id: "2", name: "Jane Smith", email: "jane.smith@example.com" },
-  { id: "3", name: "Bob Johnson", email: "bob.johnson@example.com" },
-];
-
-// Mock roles - will be replaced with API data
-const initialRoles: Role[] = [
-  {
-    id: "1",
-    name: "Admin",
-    permissions: mockPermissions,
-    users: [mockUsers[0]],
-    usersCount: 1,
-  },
-  {
-    id: "2",
-    name: "Editor",
-    permissions: mockPermissions.filter((p) => p.id.includes("manage")),
-    users: [mockUsers[1]],
-    usersCount: 1,
-  },
-  {
-    id: "3",
-    name: "Viewer",
-    permissions: mockPermissions.filter((p) => p.id.includes("view")),
-    users: [mockUsers[2]],
-    usersCount: 1,
-  },
-];
+import { useApp } from "@/context/app-context";
+import type { Role, RoleSort, RoleFormData } from "@/types/role";
 
 export default function RolesPage(): React.ReactElement {
+  // Context
+  const { roles, users, permissions, addRole, updateRole, removeRole } =
+    useApp();
+
   // State
-  const [roles, setRoles] = useState<Role[]>(initialRoles);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<RoleSort>({
     field: "name",
@@ -151,40 +48,44 @@ export default function RolesPage(): React.ReactElement {
 
   const handleSubmit = useCallback(
     (data: RoleFormData) => {
+      // Map user IDs to RoleUser objects for the role
+      const selectedUsers = users
+        .filter((u) => data.userIds.includes(u.id))
+        .map((u) => ({ id: u.id, name: u.name, email: u.email }));
+
+      const selectedPermissions = permissions.filter((p) =>
+        data.permissionIds.includes(p.id),
+      );
+
       if (dialogMode === "create") {
         const newRole: Role = {
           id: crypto.randomUUID(),
           name: data.name,
-          permissions: mockPermissions.filter((p) =>
-            data.permissionIds.includes(p.id),
-          ),
-          users: mockUsers.filter((u) => data.userIds.includes(u.id)),
-          usersCount: data.userIds.length,
+          permissions: selectedPermissions,
+          users: selectedUsers,
+          usersCount: selectedUsers.length,
         };
-        setRoles((prev) => [...prev, newRole]);
+        addRole(newRole);
       } else if (selectedRole) {
-        setRoles((prev) =>
-          prev.map((role) => {
-            if (role.id !== selectedRole.id) return role;
-            return {
-              ...role,
-              name: data.name,
-              permissions: mockPermissions.filter((p) =>
-                data.permissionIds.includes(p.id),
-              ),
-              users: mockUsers.filter((u) => data.userIds.includes(u.id)),
-              usersCount: data.userIds.length,
-            };
-          }),
-        );
+        const updatedRole: Role = {
+          ...selectedRole,
+          name: data.name,
+          permissions: selectedPermissions,
+          users: selectedUsers,
+          usersCount: selectedUsers.length,
+        };
+        updateRole(updatedRole);
       }
     },
-    [dialogMode, selectedRole],
+    [dialogMode, selectedRole, users, permissions, addRole, updateRole],
   );
 
-  const handleDelete = useCallback((role: Role) => {
-    setRoles((prev) => prev.filter((r) => r.id !== role.id));
-  }, []);
+  const handleDelete = useCallback(
+    (role: Role) => {
+      removeRole(role.id);
+    },
+    [removeRole],
+  );
 
   // Filter roles based on search
   const filteredRoles = useMemo(() => {
@@ -260,8 +161,8 @@ export default function RolesPage(): React.ReactElement {
         role={selectedRole}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        permissions={mockPermissions}
-        availableUsers={mockUsers}
+        permissions={permissions}
+        availableUsers={users}
         onSubmit={handleSubmit}
       />
     </div>

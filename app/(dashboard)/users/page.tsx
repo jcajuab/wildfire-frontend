@@ -11,29 +11,14 @@ import {
   UsersPagination,
   InviteUsersDialog,
 } from "@/components/users";
+import { useApp } from "@/context/app-context";
 import type { User, UserRole, UserSort } from "@/types/user";
 
-// Mock roles - will be replaced with API data
-const mockRoles: UserRole[] = [
-  { id: "1", name: "Admin" },
-  { id: "2", name: "Editor" },
-  { id: "3", name: "Viewer" },
-];
-
-// Mock users - will be replaced with API data
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "Admin",
-    email: "john.doe@example.com",
-    roles: [{ id: "1", name: "Admin" }],
-    lastSeenAt: "2023-04-15T08:43:31Z",
-  },
-];
-
 export default function UsersPage(): React.ReactElement {
+  // Context
+  const { users, roles, addUser, updateUser, removeUser } = useApp();
+
   // State
-  const [users, setUsers] = useState<User[]>(mockUsers);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<UserSort>({
     field: "name",
@@ -46,48 +31,52 @@ export default function UsersPage(): React.ReactElement {
   const pageSize = 10;
 
   // Handlers
-  const handleInvite = useCallback((emails: readonly string[]) => {
-    // Create pending users from emails
-    const newUsers: User[] = emails.map((email) => ({
-      id: crypto.randomUUID(),
-      name: email.split("@")[0] ?? "User",
-      email,
-      roles: [],
-      lastSeenAt: null,
-    }));
-    setUsers((prev) => [...newUsers, ...prev]);
-  }, []);
+  const handleInvite = useCallback(
+    (emails: readonly string[]) => {
+      // Create pending users from emails
+      emails.forEach((email) => {
+        const newUser: User = {
+          id: crypto.randomUUID(),
+          name: email.split("@")[0] ?? "User",
+          email,
+          roles: [],
+          lastSeenAt: null,
+        };
+        addUser(newUser);
+      });
+    },
+    [addUser],
+  );
 
   const handleRoleToggle = useCallback(
     (userId: string, roleId: string, checked: boolean) => {
-      setUsers((prev) =>
-        prev.map((user) => {
-          if (user.id !== userId) return user;
-          const role = mockRoles.find((r) => r.id === roleId);
-          if (!role) return user;
+      const user = users.find((u) => u.id === userId);
+      if (!user) return;
 
-          if (checked) {
-            // Add role
-            return {
-              ...user,
-              roles: [...user.roles, role],
-            };
-          } else {
-            // Remove role
-            return {
-              ...user,
-              roles: user.roles.filter((r) => r.id !== roleId),
-            };
-          }
-        }),
-      );
+      const role = roles.find((r) => r.id === roleId);
+      if (!role) return;
+
+      let newRoles = user.roles;
+      if (checked) {
+        // Check if already has role
+        if (!newRoles.some((r) => r.id === roleId)) {
+          newRoles = [...newRoles, { id: role.id, name: role.name }];
+        }
+      } else {
+        newRoles = newRoles.filter((r) => r.id !== roleId);
+      }
+
+      updateUser({ ...user, roles: newRoles });
     },
-    [],
+    [users, roles, updateUser],
   );
 
-  const handleRemoveUser = useCallback((user: User) => {
-    setUsers((prev) => prev.filter((u) => u.id !== user.id));
-  }, []);
+  const handleRemoveUser = useCallback(
+    (user: User) => {
+      removeUser(user.id);
+    },
+    [removeUser],
+  );
 
   // Filter users based on search
   const filteredUsers = useMemo(() => {
@@ -144,7 +133,7 @@ export default function UsersPage(): React.ReactElement {
           <div className="overflow-hidden rounded-lg border">
             <UsersTable
               users={paginatedUsers}
-              availableRoles={mockRoles}
+              availableRoles={roles}
               sort={sort}
               onSortChange={setSort}
               onRoleToggle={handleRoleToggle}

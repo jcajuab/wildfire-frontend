@@ -1,4 +1,5 @@
 import { AppLayout } from "@/components/layout";
+import { AppProvider } from "@/context/app-context";
 
 interface DashboardLayoutProps {
   readonly children: React.ReactNode;
@@ -7,5 +8,9 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({
   children,
 }: DashboardLayoutProps): React.ReactElement {
-  return <AppLayout>{children}</AppLayout>;
+  return (
+    <AppProvider>
+      <AppLayout>{children}</AppLayout>
+    </AppProvider>
+  );
 }
