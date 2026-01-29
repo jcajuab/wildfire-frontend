@@ -11,6 +11,9 @@ import {
   IconShield,
   IconDotsVertical,
   IconUser,
+  IconUserCircle,
+  IconList,
+  IconLogout,
 } from "@tabler/icons-react";
 
 import {
@@ -139,9 +142,22 @@ export function AppSidebar(): React.ReactElement {
                 align="start"
                 className="w-[--radix-dropdown-menu-trigger-width]"
               >
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem>Sign out</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/account">
+                    <IconUserCircle className="size-4" />
+                    Account
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/logs">
+                    <IconList className="size-4" />
+                    Logs
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive focus:text-destructive">
+                  <IconLogout className="size-4" />
+                  Log Out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
