@@ -9,13 +9,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-  type DragStartEvent,
-  useDraggable,
-  useDroppable,
-  DragOverlay,
-  pointerWithin,
 } from "@dnd-kit/core";
-import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import {
   arrayMove,
   SortableContext,
@@ -33,6 +27,7 @@ import {
   IconClock,
   IconEye,
   IconX,
+  IconPlus,
 } from "@tabler/icons-react";
 
 import {
@@ -91,7 +86,7 @@ function SortablePlaylistItem({
   onUpdateDuration,
 }: SortablePlaylistItemProps): React.ReactElement {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: item.id, data: { content: item.content } });
+    useSortable({ id: item.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -150,60 +145,6 @@ function SortablePlaylistItem({
   );
 }
 
-interface LibraryItemCardProps {
-  readonly content: Content;
-  readonly onClick?: () => void;
-  readonly className?: string;
-}
-
-function LibraryItemCard({
-  content,
-  onClick,
-  className,
-}: LibraryItemCardProps): React.ReactElement {
-  return (
-    <div
-      className={`flex w-full items-center gap-3 rounded-lg border bg-background p-3 text-left transition-colors hover:bg-muted/50 ${className}`}
-    >
-      <div className="flex size-10 items-center justify-center rounded bg-muted">
-        {/* Placeholder for thumbnail */}
-      </div>
-      <span className="flex-1 truncate text-sm">{content.title}</span>
-      <button
-        type="button"
-        onClick={onClick}
-        className="flex size-6 items-center justify-center rounded hover:bg-muted"
-      >
-        <IconPlus className="size-4 text-muted-foreground" />
-      </button>
-      <IconGripVertical className="size-4 cursor-grab text-muted-foreground" />
-    </div>
-  );
-}
-
-function DraggableLibraryItem({
-  content,
-  onClick,
-}: LibraryItemCardProps): React.ReactElement {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `library-${content.id}`,
-    data: { content },
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      className={isDragging ? "opacity-50" : ""}
-    >
-      <LibraryItemCard content={content} onClick={onClick} />
-    </div>
-  );
-}
-
-import { IconPlus } from "@tabler/icons-react";
-
 export function CreatePlaylistDialog({
   open,
   onOpenChange,
@@ -216,7 +157,6 @@ export function CreatePlaylistDialog({
   });
   const [playlistItems, setPlaylistItems] = useState<DraftPlaylistItem[]>([]);
   const [contentSearch, setContentSearch] = useState("");
-  const [activeContent, setActiveContent] = useState<Content | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -229,18 +169,6 @@ export function CreatePlaylistDialog({
     }),
   );
 
-  const {
-    setNodeRef: setPlaylistDroppableRef,
-    isOver: isOverPlaylistContainer,
-  } = useDroppable({
-    id: "playlist-container",
-  });
-
-  const { setNodeRef: setLibraryDroppableRef, isOver: isOverLibraryContainer } =
-    useDroppable({
-      id: "library-container",
-    });
-
   const handleAddContent = useCallback((content: Content) => {
     const newItem: DraftPlaylistItem = {
       id: `draft-${Date.now()}-${content.id}`,
@@ -251,70 +179,35 @@ export function CreatePlaylistDialog({
     setPlaylistItems((prev) => [...prev, newItem]);
   }, []);
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    if (event.active.data.current?.content) {
-      setActiveContent(event.active.data.current.content as Content);
-    }
-  }, []);
-
   const handleRemoveItem = useCallback((itemId: string) => {
     setPlaylistItems((prev) => prev.filter((item) => item.id !== itemId));
   }, []);
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      setActiveContent(null);
-
-      if (!over) return;
-
-      const activeId = active.id.toString();
-      const overId = over.id.toString();
-
-      // Handle Drop from Library -> Playlist
-      if (activeId.startsWith("library-")) {
-        const isOverPlaylist =
-          overId === "playlist-container" || overId.startsWith("draft-");
-
-        if (isOverPlaylist) {
-          const originalContentId = activeId.replace("library-", "");
-          const content = availableContent.find(
-            (c) => c.id === originalContentId,
-          );
-          if (content) {
-            handleAddContent(content);
-          }
-        }
-        return;
-      }
-
-      // Handle Drop from Playlist -> Library (Remove)
-      if (activeId.startsWith("draft-")) {
-        const isOverLibrary =
-          overId === "library-container" || overId.startsWith("library-");
-
-        if (isOverLibrary) {
-          handleRemoveItem(activeId);
-          return;
-        }
-      }
-
-      // Handle Reorder
-      if (
-        active.id !== over.id &&
-        activeId.startsWith("draft-") &&
-        overId.startsWith("draft-")
-      ) {
-        setPlaylistItems((items) => {
-          const oldIndex = items.findIndex((item) => item.id === active.id);
-          const newIndex = items.findIndex((item) => item.id === over.id);
-
-          return arrayMove(items, oldIndex, newIndex);
-        });
-      }
+  const handleUpdateDuration = useCallback(
+    (itemId: string, duration: number) => {
+      setPlaylistItems((prev) =>
+        prev.map((item) =>
+          item.id === itemId
+            ? { ...item, duration: Math.max(1, duration) }
+            : item,
+        ),
+      );
     },
-    [handleAddContent, handleRemoveItem, availableContent],
+    [],
   );
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setPlaylistItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }, []);
 
   // Filter available content - exclude already added items
   const filteredContent = useMemo(() => {
@@ -360,19 +253,6 @@ export function CreatePlaylistDialog({
     handleClose();
   }, [formData, playlistItems, totalDuration, onCreate, handleClose]);
 
-  const handleUpdateDuration = useCallback(
-    (itemId: string, duration: number) => {
-      setPlaylistItems((prev) =>
-        prev.map((item) =>
-          item.id === itemId
-            ? { ...item, duration: Math.max(1, duration) }
-            : item,
-        ),
-      );
-    },
-    [],
-  );
-
   const canCreate = formData.name.trim().length > 0;
 
   return (
@@ -402,87 +282,77 @@ export function CreatePlaylistDialog({
         </DialogHeader>
 
         {/* Content */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={pointerWithin}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="flex flex-1 gap-6 overflow-hidden p-6">
-            {/* Left Column - Playlist Info & Items */}
-            <div className="flex flex-1 flex-col gap-4 overflow-hidden">
-              {/* Playlist Information Card */}
-              <div className="flex flex-col gap-4 rounded-lg border p-4">
-                <div className="flex items-center gap-2">
-                  <IconInfoCircle className="size-4" />
-                  <span className="text-sm font-semibold">
-                    Playlist Information
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="playlist-name">Name</Label>
-                    <Input
-                      id="playlist-name"
-                      placeholder="Demo Playlist"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="playlist-description">
-                      Description (Optional)
-                    </Label>
-                    <Textarea
-                      id="playlist-description"
-                      placeholder="Enter playlist description"
-                      rows={3}
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          description: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <p className="text-sm text-muted-foreground">
-                    Total Duration: {formatDuration(totalDuration)}
-                  </p>
-                </div>
+        <div className="flex flex-1 gap-6 overflow-hidden p-6">
+          {/* Left Column - Playlist Info & Items */}
+          <div className="flex flex-1 flex-col gap-4 overflow-hidden">
+            {/* Playlist Information Card */}
+            <div className="flex flex-col gap-4 rounded-lg border p-4">
+              <div className="flex items-center gap-2">
+                <IconInfoCircle className="size-4" />
+                <span className="text-sm font-semibold">
+                  Playlist Information
+                </span>
               </div>
 
-              {/* Playlist Items Card */}
-              <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg border p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <IconPlaylist className="size-4" />
-                    <span className="text-sm font-semibold">
-                      Playlist Items
-                    </span>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <IconEye className="size-4" />
-                    Preview
-                  </Button>
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="playlist-name">Name</Label>
+                  <Input
+                    id="playlist-name"
+                    placeholder="Demo Playlist"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                  />
                 </div>
 
-                {/* Items List */}
-                <div
-                  ref={setPlaylistDroppableRef}
-                  className={`flex flex-1 flex-col gap-2 overflow-y-auto rounded-md border-2 transition-colors ${
-                    isOverPlaylistContainer
-                      ? "border-primary/50 bg-primary/5"
-                      : "border-transparent"
-                  }`}
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="playlist-description">
+                    Description (Optional)
+                  </Label>
+                  <Textarea
+                    id="playlist-description"
+                    placeholder="Enter playlist description"
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  Total Duration: {formatDuration(totalDuration)}
+                </p>
+              </div>
+            </div>
+
+            {/* Playlist Items Card */}
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <IconPlaylist className="size-4" />
+                  <span className="text-sm font-semibold">Playlist Items</span>
+                </div>
+                <Button variant="outline" size="sm">
+                  <IconEye className="size-4" />
+                  Preview
+                </Button>
+              </div>
+
+              {/* Items List */}
+              <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
                 >
                   <SortableContext
                     items={playlistItems}
@@ -503,66 +373,57 @@ export function CreatePlaylistDialog({
                       ))
                     )}
                   </SortableContext>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column - Content Library */}
-            <div
-              ref={setLibraryDroppableRef}
-              className={`flex w-80 flex-col gap-4 overflow-hidden rounded-lg border p-4 transition-colors ${
-                isOverLibraryContainer
-                  ? "border-primary/50 bg-primary/5"
-                  : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <IconPhoto className="size-4" />
-                <span className="text-sm font-semibold">Content Library</span>
-              </div>
-
-              {/* Search */}
-              <div className="relative">
-                <IconSearch className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search contents..."
-                  value={contentSearch}
-                  onChange={(e) => setContentSearch(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-
-              {/* Content List */}
-              <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
-                {filteredContent.length === 0 ? (
-                  <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-                    No content available
-                  </div>
-                ) : (
-                  filteredContent.map((content) => (
-                    <DraggableLibraryItem
-                      key={content.id}
-                      content={content}
-                      onClick={() => handleAddContent(content)}
-                    />
-                  ))
-                )}
+                </DndContext>
               </div>
             </div>
           </div>
 
-          <DragOverlay modifiers={[snapCenterToCursor]}>
-            {activeContent ? (
-              <div className="w-[19rem] opacity-90">
-                <LibraryItemCard
-                  content={activeContent}
-                  className="cursor-grabbing border-primary bg-background shadow-xl"
-                />
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+          {/* Right Column - Content Library */}
+          <div className="flex w-80 flex-col gap-4 overflow-hidden rounded-lg border p-4">
+            <div className="flex items-center gap-2">
+              <IconPhoto className="size-4" />
+              <span className="text-sm font-semibold">Content Library</span>
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+              <IconSearch className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search contents..."
+                value={contentSearch}
+                onChange={(e) => setContentSearch(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+
+            {/* Content List */}
+            <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
+              {filteredContent.length === 0 ? (
+                <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+                  No content available
+                </div>
+              ) : (
+                filteredContent.map((content) => (
+                  <button
+                    key={content.id}
+                    type="button"
+                    onClick={() => handleAddContent(content)}
+                    className="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted/50"
+                  >
+                    <div className="flex size-10 items-center justify-center rounded bg-muted">
+                      {/* Placeholder for thumbnail */}
+                    </div>
+                    <span className="flex-1 truncate text-sm">
+                      {content.title}
+                    </span>
+                    <IconPlus className="size-4 text-muted-foreground" />
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
