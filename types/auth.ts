@@ -1,0 +1,28 @@
+/** Login request body (POST /auth/login). */
+export interface LoginCredentials {
+  readonly email: string;
+  readonly password: string;
+}
+
+/** User shape returned by auth endpoints. */
+export interface AuthUser {
+  readonly id: string;
+  readonly email: string;
+  readonly name: string;
+}
+
+/** Success response from POST /auth/login and GET /auth/me. */
+export interface AuthResponse {
+  readonly type: "bearer";
+  readonly token: string;
+  readonly expiresAt: string;
+  readonly user: AuthUser;
+}
+
+/** Backend error response shape. */
+export interface ApiErrorResponse {
+  readonly error: {
+    readonly code: string;
+    readonly message: string;
+  };
+}

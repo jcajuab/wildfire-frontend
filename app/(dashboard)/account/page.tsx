@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/layout";
+import { useAuth } from "@/context/auth-context";
 
 // Common timezones
 const timezones = [
@@ -31,19 +32,17 @@ const timezones = [
   "Pacific - Auckland",
 ] as const;
 
-// Mock user data - will be replaced with actual auth context
-const mockUser = {
-  firstName: "Admin",
-  lastName: "",
-  email: "john.doe@example.com",
-  timezone: "Asia - Taipei",
-  avatar: null as string | null,
-};
+const defaultTimezone = "Asia - Taipei";
 
 export default function AccountPage(): React.ReactElement {
-  const [firstName, setFirstName] = useState(mockUser.firstName);
-  const [lastName, setLastName] = useState(mockUser.lastName);
-  const [timezone, setTimezone] = useState(mockUser.timezone);
+  const { user, logout } = useAuth();
+  const [firstName, setFirstName] = useState(
+    user?.name?.split(/\s+/)[0] ?? "Admin",
+  );
+  const [lastName, setLastName] = useState(
+    user?.name?.split(/\s+/).slice(1).join(" ") ?? "",
+  );
+  const [timezone, setTimezone] = useState(defaultTimezone);
 
   const handleChangeProfilePicture = (): void => {
     // TODO: Implement file upload
@@ -55,9 +54,8 @@ export default function AccountPage(): React.ReactElement {
     console.log("Change password");
   };
 
-  const handleLogOut = (): void => {
-    // TODO: Implement logout
-    console.log("Log out");
+  const handleLogOut = async (): Promise<void> => {
+    await logout();
   };
 
   const handleDeleteAccount = (): void => {
@@ -141,7 +139,7 @@ export default function AccountPage(): React.ReactElement {
             <Label className="text-right text-sm font-medium text-muted-foreground">
               Email
             </Label>
-            <p className="text-sm">{mockUser.email}</p>
+            <p className="text-sm">{user?.email ?? "—"}</p>
           </div>
 
           {/* Password */}

@@ -1,19 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { IconFlame } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/auth-context";
+import { AuthApiError } from "@/lib/api-client";
 
-export default function LoginPage() {
+export default function LoginPage(): React.ReactElement {
+  const router = useRouter();
+  const { login, isAuthenticated, isInitialized, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>): void {
+  useEffect(() => {
+    if (isInitialized && isAuthenticated) {
+      router.replace("/");
+    }
+  }, [isInitialized, isAuthenticated, router]);
+
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>,
+  ): Promise<void> {
     e.preventDefault();
-    // TODO: Implement login logic
-    console.log("Login attempt:", { email, password });
+    setErrorMessage(null);
+    const credentials = { email, password };
+    try {
+      await login(credentials);
+      router.replace("/");
+    } catch (err) {
+      const message =
+        err instanceof AuthApiError ? err.message : "Something went wrong.";
+      setErrorMessage(message);
+    }
+  }
+
+  if (!isInitialized) {
+    return (
+      <div className="w-full max-w-sm px-4">
+        <div className="flex items-center justify-center py-12">
+          <span className="text-sm text-muted-foreground">Loading…</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return (
+      <div className="w-full max-w-sm px-4">
+        <div className="flex items-center justify-center py-12">
+          <span className="text-sm text-muted-foreground">Redirecting…</span>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -29,6 +71,15 @@ export default function LoginPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+        {errorMessage !== null && (
+          <p
+            className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            role="alert"
+          >
+            {errorMessage}
+          </p>
+        )}
+
         <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -38,6 +89,8 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="!h-10 !rounded-lg !bg-white !text-sm"
+            autoComplete="email"
+            required
           />
         </div>
 
@@ -50,11 +103,17 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="!h-10 !rounded-lg !bg-white !text-sm"
+            autoComplete="current-password"
+            required
           />
         </div>
 
-        <Button type="submit" className="!h-10 w-full !rounded-lg !text-sm">
-          Login
+        <Button
+          type="submit"
+          className="!h-10 w-full !rounded-lg !text-sm"
+          disabled={isLoading}
+        >
+          {isLoading ? "Logging in…" : "Login"}
         </Button>
       </form>
     </div>

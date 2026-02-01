@@ -41,3 +41,9 @@ Single source of truth for workflow, architecture, and coding practices.
 
 - Run `pnpm run lint`, `pnpm run format`, and `pnpm run build` before finalizing changes.
 - build = blocker; lint = medium; format = low.
+
+## Auth (login integration)
+
+- Login is integrated with the backend via `POST /auth/login`; JWT and user are stored in **sessionStorage** (key `wildfire_session`).
+- Set `NEXT_PUBLIC_API_URL` (e.g. `http://localhost:3001`, no trailing slash) in `.env.local`; see `.env.example`. Restart the dev server after changing env.
+- For local login the backend at `localhost:3001` must allow the frontend origin (e.g. `http://localhost:3000`) in CORS so the browser allows the `POST /auth/login` request.
