@@ -16,8 +16,15 @@ import type { Role, RoleSort, RoleFormData } from "@/types/role";
 
 export default function RolesPage(): React.ReactElement {
   // Context
-  const { roles, users, permissions, addRole, updateRole, removeRole } =
-    useApp();
+  const {
+    roles,
+    users,
+    permissions,
+    getRoleDetails,
+    addRole,
+    updateRole,
+    removeRole,
+  } = useApp();
 
   // State
   const [search, setSearch] = useState("");
@@ -48,36 +55,30 @@ export default function RolesPage(): React.ReactElement {
 
   const handleSubmit = useCallback(
     (data: RoleFormData) => {
-      // Map user IDs to RoleUser objects for the role
-      const selectedUsers = users
-        .filter((u) => data.userIds.includes(u.id))
-        .map((u) => ({ id: u.id, name: u.name, email: u.email }));
-
-      const selectedPermissions = permissions.filter((p) =>
-        data.permissionIds.includes(p.id),
-      );
+      const detail = {
+        permissionIds: [...data.permissionIds],
+        userIds: [...data.userIds],
+      };
 
       if (dialogMode === "create") {
         const newRole: Role = {
           id: crypto.randomUUID(),
           name: data.name,
-          permissions: selectedPermissions,
-          users: selectedUsers,
-          usersCount: selectedUsers.length,
+          description: null,
+          isSystem: false,
+          usersCount: data.userIds.length,
         };
-        addRole(newRole);
+        addRole(newRole, detail);
       } else if (selectedRole) {
         const updatedRole: Role = {
           ...selectedRole,
           name: data.name,
-          permissions: selectedPermissions,
-          users: selectedUsers,
-          usersCount: selectedUsers.length,
+          usersCount: data.userIds.length,
         };
-        updateRole(updatedRole);
+        updateRole(updatedRole, detail);
       }
     },
-    [dialogMode, selectedRole, users, permissions, addRole, updateRole],
+    [dialogMode, selectedRole, addRole, updateRole],
   );
 
   const handleDelete = useCallback(
@@ -104,7 +105,9 @@ export default function RolesPage(): React.ReactElement {
         case "name":
           return a.name.localeCompare(b.name) * direction;
         case "usersCount":
-          return (a.usersCount - b.usersCount) * direction;
+          return (
+            ((a.usersCount ?? 0) - (b.usersCount ?? 0)) * direction
+          );
         default:
           return 0;
       }
@@ -162,7 +165,17 @@ export default function RolesPage(): React.ReactElement {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         permissions={permissions}
-        availableUsers={users}
+        availableUsers={users.map((u) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+        }))}
+        initialPermissionIds={
+          selectedRole ? getRoleDetails(selectedRole.id)?.permissionIds : undefined
+        }
+        initialUserIds={
+          selectedRole ? getRoleDetails(selectedRole.id)?.userIds : undefined
+        }
         onSubmit={handleSubmit}
       />
     </div>

@@ -158,7 +158,7 @@ export function RolesTable({
             <TableCell className="font-medium">{role.name}</TableCell>
             <TableCell>
               <div className="flex items-center gap-1 text-muted-foreground">
-                <span>{role.usersCount}</span>
+                <span>{role.usersCount ?? "—"}</span>
                 <IconUsers className="size-4" />
               </div>
             </TableCell>

@@ -12,7 +12,7 @@ import {
   InviteUsersDialog,
 } from "@/components/users";
 import { useApp } from "@/context/app-context";
-import type { User, UserRole, UserSort } from "@/types/user";
+import type { User, UserSort } from "@/types/user";
 
 export default function UsersPage(): React.ReactElement {
   // Context
@@ -33,14 +33,13 @@ export default function UsersPage(): React.ReactElement {
   // Handlers
   const handleInvite = useCallback(
     (emails: readonly string[]) => {
-      // Create pending users from emails
       emails.forEach((email) => {
         const newUser: User = {
           id: crypto.randomUUID(),
-          name: email.split("@")[0] ?? "User",
           email,
+          name: email.split("@")[0] ?? "User",
+          isActive: true,
           roles: [],
-          lastSeenAt: null,
         };
         addUser(newUser);
       });
@@ -56,9 +55,8 @@ export default function UsersPage(): React.ReactElement {
       const role = roles.find((r) => r.id === roleId);
       if (!role) return;
 
-      let newRoles = user.roles;
+      let newRoles = user.roles ?? [];
       if (checked) {
-        // Check if already has role
         if (!newRoles.some((r) => r.id === roleId)) {
           newRoles = [...newRoles, { id: role.id, name: role.name }];
         }

@@ -1,21 +1,25 @@
+/** Permission shape aligned with backend (resource:action). */
 export interface Permission {
   readonly id: string;
-  readonly name: string;
-  readonly description: string;
+  readonly resource: string;
+  readonly action: string;
 }
 
+/** User assigned to a role (for dialog display). */
 export interface RoleUser {
   readonly id: string;
   readonly name: string;
   readonly email: string;
 }
 
+/** Role list/detail shape aligned with backend. */
 export interface Role {
   readonly id: string;
   readonly name: string;
-  readonly permissions: readonly Permission[];
-  readonly users: readonly RoleUser[];
-  readonly usersCount: number;
+  readonly description: string | null;
+  readonly isSystem: boolean;
+  /** Present when list includes user count (e.g. from API or derived). */
+  readonly usersCount?: number;
 }
 
 export type RoleSortField = "name" | "usersCount";

@@ -1,14 +1,19 @@
+/** Role reference for display (e.g. on user row). */
 export interface UserRole {
   readonly id: string;
   readonly name: string;
 }
 
+/** User shape aligned with backend. */
 export interface User {
   readonly id: string;
-  readonly name: string;
   readonly email: string;
-  readonly roles: readonly UserRole[];
-  readonly lastSeenAt: string | null;
+  readonly name: string;
+  readonly isActive: boolean;
+  /** Assigned roles (for display when loaded). */
+  readonly roles?: readonly UserRole[];
+  /** Last seen timestamp (optional; backend may not provide). */
+  readonly lastSeenAt?: string | null;
 }
 
 export type UserSortField = "name" | "lastSeen";

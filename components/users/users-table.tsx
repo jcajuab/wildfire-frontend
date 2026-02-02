@@ -121,7 +121,7 @@ function UserActionsMenu({
   onRoleToggle,
   onRemoveUser,
 }: UserActionsMenuProps): React.ReactElement {
-  const userRoleIds = user.roles.map((r) => r.id);
+  const userRoleIds = (user.roles ?? []).map((r) => r.id);
 
   return (
     <DropdownMenu>
@@ -241,7 +241,7 @@ export function UsersTable({
             </TableCell>
             <TableCell>
               <div className="flex flex-wrap gap-1">
-                {user.roles.map((role) => (
+                {(user.roles ?? []).map((role) => (
                   <Badge key={role.id} variant="default" className="text-xs">
                     {role.name}
                   </Badge>
@@ -249,7 +249,7 @@ export function UsersTable({
               </div>
             </TableCell>
             <TableCell className="text-muted-foreground">
-              {formatLastSeen(user.lastSeenAt)}
+              {formatLastSeen(user.lastSeenAt ?? null)}
             </TableCell>
             <TableCell>
               <UserActionsMenu

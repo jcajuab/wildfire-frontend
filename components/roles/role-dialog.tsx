@@ -29,6 +29,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  formatPermissionId,
+  formatPermissionReadableLabel,
+} from "@/lib/format-permission";
 import type { Role, Permission, RoleUser, RoleFormData } from "@/types/role";
 
 interface RoleDialogProps {
@@ -38,6 +42,10 @@ interface RoleDialogProps {
   readonly onOpenChange: (open: boolean) => void;
   readonly permissions: readonly Permission[];
   readonly availableUsers: readonly RoleUser[];
+  /** Initial permission IDs when editing (from API or context). */
+  readonly initialPermissionIds?: readonly string[];
+  /** Initial user IDs assigned to role when editing (from API or context). */
+  readonly initialUserIds?: readonly string[];
   readonly onSubmit: (data: RoleFormData) => void;
 }
 
@@ -46,6 +54,8 @@ interface RoleFormProps {
   readonly initialRole?: Role | null;
   readonly permissions: readonly Permission[];
   readonly availableUsers: readonly RoleUser[];
+  readonly initialPermissionIds: readonly string[];
+  readonly initialUserIds: readonly string[];
   readonly onSubmit: (data: RoleFormData) => void;
   readonly onOpenChange: (open: boolean) => void;
 }
@@ -55,15 +65,19 @@ function RoleForm({
   initialRole,
   permissions,
   availableUsers,
+  initialPermissionIds,
+  initialUserIds,
   onSubmit,
   onOpenChange,
 }: RoleFormProps): React.ReactElement {
   const [name, setName] = useState(initialRole?.name ?? "");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(
-    initialRole?.permissions.map((p) => p.id) ?? [],
+    mode === "edit" ? [...initialPermissionIds] : [],
   );
-  const [assignedUsers, setAssignedUsers] = useState<RoleUser[]>(
-    initialRole?.users ? [...initialRole.users] : [],
+  const [assignedUsers, setAssignedUsers] = useState<RoleUser[]>(() =>
+    mode === "edit"
+      ? availableUsers.filter((u) => initialUserIds.includes(u.id))
+      : [],
   );
   const [selectedUserId, setSelectedUserId] = useState<string>("");
 
@@ -156,14 +170,14 @@ function RoleForm({
                   <div className="flex items-center justify-between py-3">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">
-                        {permission.name}
+                        {formatPermissionReadableLabel(permission)}
                       </span>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <IconInfoCircle className="size-4 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{permission.description}</p>
+                          <p>{formatPermissionId(permission)}</p>
                         </TooltipContent>
                       </Tooltip>
                     </div>
@@ -262,6 +276,8 @@ export function RoleDialog({
   onOpenChange,
   permissions,
   availableUsers,
+  initialPermissionIds = [],
+  initialUserIds = [],
   onSubmit,
 }: RoleDialogProps): React.ReactElement {
   return (
@@ -274,6 +290,8 @@ export function RoleDialog({
             initialRole={role}
             permissions={permissions}
             availableUsers={availableUsers}
+            initialPermissionIds={initialPermissionIds}
+            initialUserIds={initialUserIds}
             onSubmit={onSubmit}
             onOpenChange={onOpenChange}
           />
