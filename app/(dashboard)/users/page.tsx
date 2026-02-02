@@ -6,15 +6,18 @@ import { IconPlus } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout";
 import {
+  EditUserDialog,
   UsersTable,
   UserSearchInput,
   UsersPagination,
   InviteUsersDialog,
 } from "@/components/users";
+import type { EditUserFormData } from "@/components/users";
 import {
   useGetUsersQuery,
   useGetRolesQuery,
   useCreateUserMutation,
+  useUpdateUserMutation,
   useDeleteUserMutation,
 } from "@/lib/api/rbac-api";
 import type { User, UserSort } from "@/types/user";
@@ -23,6 +26,7 @@ export default function UsersPage(): React.ReactElement {
   const { data: usersData, isLoading: usersLoading, isError: usersError } = useGetUsersQuery();
   const { data: rolesData } = useGetRolesQuery();
   const [createUser] = useCreateUserMutation();
+  const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
 
   const [search, setSearch] = useState("");
@@ -32,6 +36,8 @@ export default function UsersPage(): React.ReactElement {
   });
   const [page, setPage] = useState(1);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const pageSize = 10;
@@ -68,6 +74,31 @@ export default function UsersPage(): React.ReactElement {
       }
     },
     [createUser],
+  );
+
+  const handleEdit = useCallback((user: User) => {
+    setSelectedUser(user);
+    setSubmitError(null);
+    setIsEditDialogOpen(true);
+  }, []);
+
+  const handleEditSubmit = useCallback(
+    async (data: EditUserFormData) => {
+      setSubmitError(null);
+      try {
+        await updateUser({
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          isActive: data.isActive,
+        }).unwrap();
+        setIsEditDialogOpen(false);
+        setSelectedUser(null);
+      } catch (err) {
+        setSubmitError(err instanceof Error ? err.message : "Failed to update user");
+      }
+    },
+    [updateUser],
   );
 
   const handleRemoveUser = useCallback(
@@ -158,6 +189,7 @@ export default function UsersPage(): React.ReactElement {
               availableRoles={availableRoles}
               sort={sort}
               onSortChange={setSort}
+              onEdit={handleEdit}
               onRemoveUser={handleRemoveUser}
             />
           </div>
@@ -175,6 +207,13 @@ export default function UsersPage(): React.ReactElement {
         open={isInviteDialogOpen}
         onOpenChange={setIsInviteDialogOpen}
         onInvite={handleInvite}
+      />
+
+      <EditUserDialog
+        user={selectedUser}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSubmit={handleEditSubmit}
       />
     </div>
   );

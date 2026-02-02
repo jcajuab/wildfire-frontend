@@ -3,6 +3,7 @@
 import {
   IconDotsVertical,
   IconCircle,
+  IconEdit,
   IconTrash,
   IconArrowsSort,
   IconSortAscending,
@@ -39,6 +40,7 @@ interface UsersTableProps {
   readonly availableRoles: readonly UserRole[];
   readonly sort: UserSort;
   readonly onSortChange: (sort: UserSort) => void;
+  readonly onEdit: (user: User) => void;
   readonly onRemoveUser: (user: User) => void;
 }
 
@@ -104,6 +106,7 @@ interface UserActionsMenuProps {
   readonly user: User;
   readonly userRoleIds: string[];
   readonly availableRoles: readonly UserRole[];
+  readonly onEdit: (user: User) => void;
   readonly onRoleToggle: (userId: string, roleIds: string[]) => void;
   readonly onRemoveUser: (user: User) => void;
 }
@@ -112,6 +115,7 @@ function UserActionsMenu({
   user,
   userRoleIds,
   availableRoles,
+  onEdit,
   onRoleToggle,
   onRemoveUser,
 }: UserActionsMenuProps): React.ReactElement {
@@ -124,6 +128,10 @@ function UserActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onEdit(user)}>
+          <IconEdit className="size-4" />
+          Edit User
+        </DropdownMenuItem>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <IconCircle className="size-4" />
@@ -180,12 +188,14 @@ function formatLastSeen(date: string | null): string {
 interface UserRowProps {
   readonly user: User;
   readonly availableRoles: readonly UserRole[];
+  readonly onEdit: (user: User) => void;
   readonly onRemoveUser: (user: User) => void;
 }
 
 function UserRow({
   user,
   availableRoles,
+  onEdit,
   onRemoveUser,
 }: UserRowProps): React.ReactElement {
   const { data: userRoles = [] } = useGetUserRolesQuery(user.id);
@@ -222,6 +232,7 @@ function UserRow({
           user={user}
           userRoleIds={userRoleIds}
           availableRoles={availableRoles}
+          onEdit={onEdit}
           onRoleToggle={handleRoleToggle}
           onRemoveUser={onRemoveUser}
         />
@@ -235,6 +246,7 @@ export function UsersTable({
   availableRoles,
   sort,
   onSortChange,
+  onEdit,
   onRemoveUser,
 }: UsersTableProps): React.ReactElement {
   if (users.length === 0) {
@@ -280,6 +292,7 @@ export function UsersTable({
             key={user.id}
             user={user}
             availableRoles={availableRoles}
+            onEdit={onEdit}
             onRemoveUser={onRemoveUser}
           />
         ))}
