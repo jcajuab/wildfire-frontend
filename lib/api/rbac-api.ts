@@ -220,5 +220,6 @@ export const {
   useUpdateUserMutation,
   useDeleteUserMutation,
   useGetUserRolesQuery,
+  useLazyGetUserRolesQuery,
   useSetUserRolesMutation,
 } = rbacApi;

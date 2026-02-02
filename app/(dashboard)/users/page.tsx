@@ -11,14 +11,20 @@ import {
   UsersPagination,
   InviteUsersDialog,
 } from "@/components/users";
-import { useApp } from "@/context/app-context";
+import {
+  useGetUsersQuery,
+  useGetRolesQuery,
+  useCreateUserMutation,
+  useDeleteUserMutation,
+} from "@/lib/api/rbac-api";
 import type { User, UserSort } from "@/types/user";
 
 export default function UsersPage(): React.ReactElement {
-  // Context
-  const { users, roles, addUser, updateUser, removeUser } = useApp();
+  const { data: usersData, isLoading: usersLoading, isError: usersError } = useGetUsersQuery();
+  const { data: rolesData } = useGetRolesQuery();
+  const [createUser] = useCreateUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
 
-  // State
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<UserSort>({
     field: "name",
@@ -26,57 +32,57 @@ export default function UsersPage(): React.ReactElement {
   });
   const [page, setPage] = useState(1);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Pagination
   const pageSize = 10;
 
-  // Handlers
-  const handleInvite = useCallback(
-    (emails: readonly string[]) => {
-      emails.forEach((email) => {
-        const newUser: User = {
-          id: crypto.randomUUID(),
-          email,
-          name: email.split("@")[0] ?? "User",
-          isActive: true,
-          roles: [],
-        };
-        addUser(newUser);
-      });
-    },
-    [addUser],
+  const users: User[] = useMemo(
+    () =>
+      (usersData ?? []).map((u) => ({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        isActive: u.isActive,
+      })),
+    [usersData],
+  );
+  const availableRoles = useMemo(
+    () => (rolesData ?? []).map((r) => ({ id: r.id, name: r.name })),
+    [rolesData],
   );
 
-  const handleRoleToggle = useCallback(
-    (userId: string, roleId: string, checked: boolean) => {
-      const user = users.find((u) => u.id === userId);
-      if (!user) return;
-
-      const role = roles.find((r) => r.id === roleId);
-      if (!role) return;
-
-      let newRoles = user.roles ?? [];
-      if (checked) {
-        if (!newRoles.some((r) => r.id === roleId)) {
-          newRoles = [...newRoles, { id: role.id, name: role.name }];
+  const handleInvite = useCallback(
+    async (emails: readonly string[]) => {
+      setSubmitError(null);
+      try {
+        for (const email of emails) {
+          await createUser({
+            email,
+            name: email.split("@")[0] ?? "User",
+            isActive: true,
+          }).unwrap();
         }
-      } else {
-        newRoles = newRoles.filter((r) => r.id !== roleId);
+        setIsInviteDialogOpen(false);
+      } catch (err) {
+        setSubmitError(err instanceof Error ? err.message : "Failed to invite user(s)");
       }
-
-      updateUser({ ...user, roles: newRoles });
     },
-    [users, roles, updateUser],
+    [createUser],
   );
 
   const handleRemoveUser = useCallback(
-    (user: User) => {
-      removeUser(user.id);
+    async (user: User) => {
+      if (!confirm(`Remove user "${user.name}"?`)) return;
+      setSubmitError(null);
+      try {
+        await deleteUser(user.id).unwrap();
+      } catch (err) {
+        setSubmitError(err instanceof Error ? err.message : "Failed to remove user");
+      }
     },
-    [removeUser],
+    [deleteUser],
   );
 
-  // Filter users based on search
   const filteredUsers = useMemo(() => {
     if (!search) return users;
     const searchLower = search.toLowerCase();
@@ -87,7 +93,6 @@ export default function UsersPage(): React.ReactElement {
     );
   }, [users, search]);
 
-  // Sort users
   const sortedUsers = useMemo(() => {
     return [...filteredUsers].sort((a, b) => {
       const direction = sort.direction === "asc" ? 1 : -1;
@@ -104,11 +109,26 @@ export default function UsersPage(): React.ReactElement {
     });
   }, [filteredUsers, sort]);
 
-  // Paginate users
   const paginatedUsers = useMemo(() => {
     const start = (page - 1) * pageSize;
     return sortedUsers.slice(start, start + pageSize);
   }, [sortedUsers, page]);
+
+  if (usersLoading) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8">
+        <p className="text-muted-foreground">Loading users…</p>
+      </div>
+    );
+  }
+
+  if (usersError) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8">
+        <p className="text-destructive">Failed to load users. Check the API and try again.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -119,28 +139,30 @@ export default function UsersPage(): React.ReactElement {
         </Button>
       </PageHeader>
 
+      {submitError && (
+        <div className="mx-6 mt-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {submitError}
+        </div>
+      )}
+
       <div className="flex flex-1 flex-col">
-        {/* Toolbar */}
         <div className="flex items-center justify-between px-6 py-3">
           <h2 className="text-lg font-semibold">Search Results</h2>
           <UserSearchInput value={search} onChange={setSearch} />
         </div>
 
-        {/* Table */}
         <div className="flex-1 overflow-auto px-6">
           <div className="overflow-hidden rounded-lg border">
             <UsersTable
               users={paginatedUsers}
-              availableRoles={roles}
+              availableRoles={availableRoles}
               sort={sort}
               onSortChange={setSort}
-              onRoleToggle={handleRoleToggle}
               onRemoveUser={handleRemoveUser}
             />
           </div>
         </div>
 
-        {/* Pagination */}
         <UsersPagination
           page={page}
           pageSize={pageSize}
@@ -149,7 +171,6 @@ export default function UsersPage(): React.ReactElement {
         />
       </div>
 
-      {/* Invite Users Dialog */}
       <InviteUsersDialog
         open={isInviteDialogOpen}
         onOpenChange={setIsInviteDialogOpen}

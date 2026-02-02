@@ -31,6 +31,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useGetUserRolesQuery, useSetUserRolesMutation } from "@/lib/api/rbac-api";
 import type { User, UserRole, UserSort, UserSortField } from "@/types/user";
 
 interface UsersTableProps {
@@ -38,11 +39,6 @@ interface UsersTableProps {
   readonly availableRoles: readonly UserRole[];
   readonly sort: UserSort;
   readonly onSortChange: (sort: UserSort) => void;
-  readonly onRoleToggle: (
-    userId: string,
-    roleId: string,
-    checked: boolean,
-  ) => void;
   readonly onRemoveUser: (user: User) => void;
 }
 
@@ -106,23 +102,19 @@ function FilterableHeader({
 
 interface UserActionsMenuProps {
   readonly user: User;
+  readonly userRoleIds: string[];
   readonly availableRoles: readonly UserRole[];
-  readonly onRoleToggle: (
-    userId: string,
-    roleId: string,
-    checked: boolean,
-  ) => void;
+  readonly onRoleToggle: (userId: string, roleIds: string[]) => void;
   readonly onRemoveUser: (user: User) => void;
 }
 
 function UserActionsMenu({
   user,
+  userRoleIds,
   availableRoles,
   onRoleToggle,
   onRemoveUser,
 }: UserActionsMenuProps): React.ReactElement {
-  const userRoleIds = (user.roles ?? []).map((r) => r.id);
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -145,7 +137,10 @@ function UserActionsMenu({
                   key={role.id}
                   onClick={(e) => {
                     e.preventDefault();
-                    onRoleToggle(user.id, role.id, !isChecked);
+                    const newRoleIds = isChecked
+                      ? userRoleIds.filter((id) => id !== role.id)
+                      : [...userRoleIds, role.id];
+                    onRoleToggle(user.id, newRoleIds);
                   }}
                   className="flex items-center justify-between gap-2"
                 >
@@ -182,12 +177,64 @@ function formatLastSeen(date: string | null): string {
   return `${year}-${month}-${day}, ${String(hour12).padStart(2, "0")}:${minutes}:${seconds} ${ampm}`;
 }
 
+interface UserRowProps {
+  readonly user: User;
+  readonly availableRoles: readonly UserRole[];
+  readonly onRemoveUser: (user: User) => void;
+}
+
+function UserRow({
+  user,
+  availableRoles,
+  onRemoveUser,
+}: UserRowProps): React.ReactElement {
+  const { data: userRoles = [] } = useGetUserRolesQuery(user.id);
+  const [setUserRoles] = useSetUserRolesMutation();
+  const userRoleIds = userRoles.map((r) => r.id);
+
+  const handleRoleToggle = (userId: string, roleIds: string[]): void => {
+    setUserRoles({ userId, roleIds });
+  };
+
+  return (
+    <TableRow>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <IconUser className="size-4 text-muted-foreground" />
+          <span className="font-medium">{user.name}</span>
+        </div>
+      </TableCell>
+      <TableCell className="text-muted-foreground">{user.email}</TableCell>
+      <TableCell>
+        <div className="flex flex-wrap gap-1">
+          {userRoles.map((role) => (
+            <Badge key={role.id} variant="default" className="text-xs">
+              {role.name}
+            </Badge>
+          ))}
+        </div>
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {formatLastSeen(user.lastSeenAt ?? null)}
+      </TableCell>
+      <TableCell>
+        <UserActionsMenu
+          user={user}
+          userRoleIds={userRoleIds}
+          availableRoles={availableRoles}
+          onRoleToggle={handleRoleToggle}
+          onRemoveUser={onRemoveUser}
+        />
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export function UsersTable({
   users,
   availableRoles,
   sort,
   onSortChange,
-  onRoleToggle,
   onRemoveUser,
 }: UsersTableProps): React.ReactElement {
   if (users.length === 0) {
@@ -229,37 +276,12 @@ export function UsersTable({
       </TableHeader>
       <TableBody>
         {users.map((user) => (
-          <TableRow key={user.id}>
-            <TableCell>
-              <div className="flex items-center gap-2">
-                <IconUser className="size-4 text-muted-foreground" />
-                <span className="font-medium">{user.name}</span>
-              </div>
-            </TableCell>
-            <TableCell className="text-muted-foreground">
-              {user.email}
-            </TableCell>
-            <TableCell>
-              <div className="flex flex-wrap gap-1">
-                {(user.roles ?? []).map((role) => (
-                  <Badge key={role.id} variant="default" className="text-xs">
-                    {role.name}
-                  </Badge>
-                ))}
-              </div>
-            </TableCell>
-            <TableCell className="text-muted-foreground">
-              {formatLastSeen(user.lastSeenAt ?? null)}
-            </TableCell>
-            <TableCell>
-              <UserActionsMenu
-                user={user}
-                availableRoles={availableRoles}
-                onRoleToggle={onRoleToggle}
-                onRemoveUser={onRemoveUser}
-              />
-            </TableCell>
-          </TableRow>
+          <UserRow
+            key={user.id}
+            user={user}
+            availableRoles={availableRoles}
+            onRemoveUser={onRemoveUser}
+          />
         ))}
       </TableBody>
     </Table>
