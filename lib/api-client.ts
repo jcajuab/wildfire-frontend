@@ -35,6 +35,26 @@ export async function login(
   return data as AuthResponse;
 }
 
+/** GET /auth/me. Refreshes JWT (sliding session). Returns auth payload or throws with backend error body. */
+export async function refreshToken(token: string): Promise<AuthResponse> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/me`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const data = (await response.json()) as AuthResponse | ApiErrorResponse;
+
+  if (!response.ok) {
+    const error = data as ApiErrorResponse;
+    const message =
+      error?.error?.message ?? `Request failed with status ${response.status}`;
+    throw new AuthApiError(message, response.status, error);
+  }
+
+  return data as AuthResponse;
+}
+
 /** POST /auth/logout. No-op on backend; call for consistency. Does not throw. */
 export async function logoutApi(token: string): Promise<void> {
   const baseUrl = getBaseUrl();

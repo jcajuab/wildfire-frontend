@@ -85,8 +85,14 @@ function SortablePlaylistItem({
   onRemove,
   onUpdateDuration,
 }: SortablePlaylistItemProps): React.ReactElement {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: item.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -127,11 +133,7 @@ function SortablePlaylistItem({
       </div>
 
       {/* Actions */}
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={() => onRemove(item.id)}
-      >
+      <Button variant="ghost" size="icon-sm" onClick={() => onRemove(item.id)}>
         <IconX className="size-4" />
       </Button>
       <div

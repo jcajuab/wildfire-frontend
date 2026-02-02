@@ -108,27 +108,21 @@ const initialRoles: Role[] = [
     id: "1",
     name: "Admin",
     permissions: mockPermissions,
-    users: [
-      { id: "1", name: "Admin", email: "john.doe@example.com" },
-    ],
+    users: [{ id: "1", name: "Admin", email: "john.doe@example.com" }],
     usersCount: 1,
   },
   {
     id: "2",
     name: "Editor",
     permissions: mockPermissions.filter((p) => p.id.includes("manage")),
-    users: [
-      { id: "2", name: "Jane Smith", email: "jane.smith@example.com" },
-    ],
+    users: [{ id: "2", name: "Jane Smith", email: "jane.smith@example.com" }],
     usersCount: 1,
   },
   {
     id: "3",
     name: "Viewer",
     permissions: mockPermissions.filter((p) => p.id.includes("view")),
-    users: [
-      { id: "3", name: "Bob Johnson", email: "bob.johnson@example.com" },
-    ],
+    users: [{ id: "3", name: "Bob Johnson", email: "bob.johnson@example.com" }],
     usersCount: 1,
   },
 ];
@@ -262,7 +256,10 @@ export function AppProvider({
 
         if (isAssigned && !hasRole) {
           // Add role
-          newRoles = [...newRoles, { id: updatedRole.id, name: updatedRole.name }];
+          newRoles = [
+            ...newRoles,
+            { id: updatedRole.id, name: updatedRole.name },
+          ];
         } else if (!isAssigned && hasRole) {
           // Remove role
           newRoles = newRoles.filter((r) => r.id !== updatedRole.id);

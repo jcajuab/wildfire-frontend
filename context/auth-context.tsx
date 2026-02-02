@@ -8,14 +8,41 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { login as loginApi, logoutApi } from "@/lib/api-client";
+import {
+  AuthApiError,
+  login as loginApi,
+  logoutApi,
+  refreshToken,
+} from "@/lib/api-client";
 import type { AuthUser } from "@/types/auth";
 
 const SESSION_KEY = "wildfire_session";
+const REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes before expiry
+const REFRESH_CHECK_INTERVAL_MS = 60_000; // check every 60 seconds
 
 interface SessionData {
   readonly token: string;
   readonly user: AuthUser;
+  readonly expiresAt: string;
+}
+
+function isValidSessionData(data: unknown): data is SessionData {
+  if (data == null || typeof data !== "object") return false;
+  const d = data as Record<string, unknown>;
+  if (
+    typeof d.token !== "string" ||
+    typeof d.expiresAt !== "string" ||
+    d.expiresAt === ""
+  )
+    return false;
+  const user = d.user;
+  if (user == null || typeof user !== "object") return false;
+  const u = user as Record<string, unknown>;
+  return (
+    typeof u.id === "string" &&
+    typeof u.email === "string" &&
+    typeof u.name === "string"
+  );
 }
 
 function readSession(): SessionData | null {
@@ -23,17 +50,11 @@ function readSession(): SessionData | null {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    const data = JSON.parse(raw) as SessionData;
-    if (
-      typeof data?.token !== "string" ||
-      !data?.user ||
-      typeof data.user.id !== "string" ||
-      typeof data.user.email !== "string" ||
-      typeof data.user.name !== "string"
-    ) {
-      return null;
-    }
-    return { token: data.token, user: data.user };
+
+    const data = JSON.parse(raw) as unknown;
+    if (!isValidSessionData(data)) return null;
+
+    return { token: data.token, user: data.user, expiresAt: data.expiresAt };
   } catch {
     return null;
   }
@@ -78,6 +99,39 @@ export function AuthProvider({
     setIsInitialized(true);
   }, []);
 
+  useEffect(() => {
+    if (!token) return;
+
+    const refreshTokenCheckIntervalId = setInterval(async () => {
+      const session = readSession();
+      if (!session?.expiresAt) return;
+
+      const expiresAtMs = new Date(session.expiresAt).getTime();
+      const nowMs = Date.now();
+      if (expiresAtMs - nowMs > REFRESH_THRESHOLD_MS) return;
+
+      try {
+        const response = await refreshToken(session.token);
+        const newSession: SessionData = {
+          token: response.token,
+          user: response.user,
+          expiresAt: response.expiresAt,
+        };
+        writeSession(newSession);
+        setToken(newSession.token);
+        setUser(newSession.user);
+      } catch (err) {
+        if (err instanceof AuthApiError && err.status === 401) {
+          setToken(null);
+          setUser(null);
+          clearSession();
+        }
+      }
+    }, REFRESH_CHECK_INTERVAL_MS);
+
+    return () => clearInterval(refreshTokenCheckIntervalId);
+  }, [token]);
+
   const login = useCallback(
     async (credentials: { email: string; password: string }) => {
       setIsLoading(true);
@@ -86,6 +140,7 @@ export function AuthProvider({
         const session: SessionData = {
           token: result.token,
           user: result.user,
+          expiresAt: result.expiresAt,
         };
         writeSession(session);
         setToken(session.token);
@@ -94,7 +149,7 @@ export function AuthProvider({
         setIsLoading(false);
       }
     },
-    [],
+    []
   );
 
   const logout = useCallback(async () => {
@@ -124,7 +179,7 @@ export function AuthProvider({
       login,
       logout,
     }),
-    [user, token, isLoading, isInitialized, login, logout],
+    [user, token, isLoading, isInitialized, login, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

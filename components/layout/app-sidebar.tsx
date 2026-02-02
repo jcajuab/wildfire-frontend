@@ -65,20 +65,20 @@ export function AppSidebar(): React.ReactElement {
   const mounted = useMounted();
 
   return (
-    <Sidebar collapsible='icon'>
-      <SidebarHeader className='flex flex-row items-center justify-between'>
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="flex flex-row items-center justify-between">
         {state === "expanded" ? (
           <>
             <Link
-              href='/'
-              className='flex items-center gap-2 px-2 font-semibold text-primary'
+              href="/"
+              className="flex items-center gap-2 px-2 font-semibold text-primary"
             >
-              <span className='text-lg tracking-tight'>WILDFIRE</span>
+              <span className="text-lg tracking-tight">WILDFIRE</span>
             </Link>
             <SidebarTrigger />
           </>
         ) : (
-          <SidebarTrigger className='mx-auto' />
+          <SidebarTrigger className="mx-auto" />
         )}
       </SidebarHeader>
 
@@ -96,7 +96,7 @@ export function AppSidebar(): React.ReactElement {
                       tooltip={mounted ? item.title : undefined}
                     >
                       <Link href={item.href}>
-                        <item.icon className='size-4' />
+                        <item.icon className="size-4" />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -113,46 +113,46 @@ export function AppSidebar(): React.ReactElement {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className='w-full justify-between'>
-                  <div className='flex items-center gap-2'>
-                    <div className='flex size-6 items-center justify-center rounded-full bg-muted'>
-                      <IconUser className='size-4' />
+                <SidebarMenuButton className="w-full justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex size-6 items-center justify-center rounded-full bg-muted">
+                      <IconUser className="size-4" />
                     </div>
-                    <div className='flex flex-col items-start group-data-[collapsible=icon]:hidden'>
-                      <span className='text-xs font-medium'>{displayName}</span>
-                      <span className='text-[10px] text-muted-foreground'>
+                    <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">
+                      <span className="text-xs font-medium">{displayName}</span>
+                      <span className="text-[10px] text-muted-foreground">
                         {displayEmail}
                       </span>
                     </div>
                   </div>
-                  <IconDotsVertical className='size-4 group-data-[collapsible=icon]:hidden' />
+                  <IconDotsVertical className="size-4 group-data-[collapsible=icon]:hidden" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                side='top'
-                align='start'
-                className='w-[--radix-dropdown-menu-trigger-width]'
+                side="top"
+                align="start"
+                className="w-[--radix-dropdown-menu-trigger-width]"
               >
                 <DropdownMenuItem asChild>
-                  <Link href='/account'>
-                    <IconUserCircle className='size-4' />
+                  <Link href="/account">
+                    <IconUserCircle className="size-4" />
                     Account
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href='/logs'>
-                    <IconList className='size-4' />
+                  <Link href="/logs">
+                    <IconList className="size-4" />
                     Logs
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className='text-destructive focus:text-destructive'
+                  className="text-destructive focus:text-destructive"
                   onSelect={(e) => {
                     e.preventDefault();
                     void logout();
                   }}
                 >
-                  <IconLogout className='size-4' />
+                  <IconLogout className="size-4" />
                   Log Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
