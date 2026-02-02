@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
@@ -77,6 +78,9 @@ function RoleForm({
   onOpenChange,
 }: RoleFormProps): React.ReactElement {
   const [name, setName] = useState(initialRole?.name ?? "");
+  const [description, setDescription] = useState(
+    initialRole?.description ?? "",
+  );
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(
     mode === "edit" && Array.isArray(initialPermissionIds)
       ? [...initialPermissionIds]
@@ -95,6 +99,7 @@ function RoleForm({
 
     onSubmit({
       name: name.trim(),
+      description: description.trim() || null,
       permissionIds: selectedPermissions,
       userIds: assignedUsers.map((u) => u.id),
     });
@@ -170,6 +175,17 @@ function RoleForm({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter role name"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="roleDescription">Description</Label>
+              <Textarea
+                id="roleDescription"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Optional description"
+                rows={3}
+                className="resize-none"
               />
             </div>
           </div>

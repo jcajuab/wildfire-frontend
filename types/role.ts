@@ -32,6 +32,7 @@ export interface RoleSort {
 
 export interface RoleFormData {
   readonly name: string;
+  readonly description?: string | null;
   readonly permissionIds: readonly string[];
   readonly userIds: readonly string[];
 }

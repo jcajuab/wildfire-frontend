@@ -134,7 +134,7 @@ export default function RolesPage(): React.ReactElement {
         if (dialogMode === "create") {
           const role = await createRole({
             name: data.name,
-            description: null,
+            description: data.description ?? null,
           }).unwrap();
           await setRolePermissions({
             roleId: role.id,
@@ -152,6 +152,7 @@ export default function RolesPage(): React.ReactElement {
           await updateRole({
             id: selectedRole.id,
             name: data.name,
+            description: data.description ?? null,
           }).unwrap();
           await setRolePermissions({
             roleId: selectedRole.id,

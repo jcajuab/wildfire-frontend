@@ -62,17 +62,17 @@ function SortableHeader({
   return (
     <button
       onClick={handleClick}
-      className='flex items-center gap-1 hover:text-foreground'
+      className="flex items-center gap-1 hover:text-foreground"
     >
       {label}
       {isActive ? (
         isAsc ? (
-          <IconSortAscending className='size-4' />
+          <IconSortAscending className="size-4" />
         ) : (
-          <IconSortDescending className='size-4' />
+          <IconSortDescending className="size-4" />
         )
       ) : (
-        <IconArrowsSort className='size-4 opacity-50' />
+        <IconArrowsSort className="size-4 opacity-50" />
       )}
     </button>
   );
@@ -92,21 +92,21 @@ function RoleActionsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant='ghost' size='icon-sm'>
-          <IconDotsVertical className='size-4' />
-          <span className='sr-only'>Actions</span>
+        <Button variant="ghost" size="icon-sm">
+          <IconDotsVertical className="size-4" />
+          <span className="sr-only">Actions</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align='end'>
+      <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => onEdit(role)}>
-          <IconEdit className='size-4' />
+          <IconEdit className="size-4" />
           Edit Role
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => onDelete(role)}
-          className='text-destructive focus:text-destructive'
+          className="text-destructive focus:text-destructive"
         >
-          <IconTrash className='size-4' />
+          <IconTrash className="size-4" />
           Delete Role
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -123,8 +123,8 @@ export function RolesTable({
 }: RolesTableProps): React.ReactElement {
   if (roles.length === 0) {
     return (
-      <div className='flex flex-1 items-center justify-center p-8'>
-        <p className='text-muted-foreground'>No roles found</p>
+      <div className="flex flex-1 items-center justify-center p-8">
+        <p className="text-muted-foreground">No roles found</p>
       </div>
     );
   }
@@ -135,35 +135,35 @@ export function RolesTable({
         <TableRow>
           <TableHead>
             <SortableHeader
-              label='Roles'
-              field='name'
+              label="Roles"
+              field="name"
               currentSort={sort}
               onSortChange={onSortChange}
             />
           </TableHead>
           <TableHead>Description</TableHead>
-          <TableHead className='w-[150px]'>
+          <TableHead className="w-[150px]">
             <SortableHeader
-              label='Users'
-              field='usersCount'
+              label="Users"
+              field="usersCount"
               currentSort={sort}
               onSortChange={onSortChange}
             />
           </TableHead>
-          <TableHead className='w-[50px]' />
+          <TableHead className="w-[50px]" />
         </TableRow>
       </TableHeader>
       <TableBody>
         {roles.map((role) => (
           <TableRow key={role.id}>
-            <TableCell className='font-medium'>{role.name}</TableCell>
-            <TableCell className='text-muted-foreground'>
+            <TableCell className="font-medium">{role.name}</TableCell>
+            <TableCell className="text-muted-foreground">
               {role.description ?? "No description set for this role"}
             </TableCell>
             <TableCell>
-              <div className='flex items-center gap-1 text-muted-foreground'>
+              <div className="flex items-center gap-1 text-muted-foreground">
                 <span>{role.usersCount ?? "—"}</span>
-                <IconUsers className='size-4' />
+                <IconUsers className="size-4" />
               </div>
             </TableCell>
             <TableCell>
