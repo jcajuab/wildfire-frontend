@@ -32,7 +32,10 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useGetUserRolesQuery, useSetUserRolesMutation } from "@/lib/api/rbac-api";
+import {
+  useGetUserRolesQuery,
+  useSetUserRolesMutation,
+} from "@/lib/api/rbac-api";
 import type { User, UserRole, UserSort, UserSortField } from "@/types/user";
 
 interface UsersTableProps {

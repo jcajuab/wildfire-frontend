@@ -149,7 +149,7 @@ export function AuthProvider({
         setIsLoading(false);
       }
     },
-    []
+    [],
   );
 
   const logout = useCallback(async () => {
@@ -179,7 +179,7 @@ export function AuthProvider({
       login,
       logout,
     }),
-    [user, token, isLoading, isInitialized, login, logout]
+    [user, token, isLoading, isInitialized, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

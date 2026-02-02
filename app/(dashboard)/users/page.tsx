@@ -23,7 +23,11 @@ import {
 import type { User, UserSort } from "@/types/user";
 
 export default function UsersPage(): React.ReactElement {
-  const { data: usersData, isLoading: usersLoading, isError: usersError } = useGetUsersQuery();
+  const {
+    data: usersData,
+    isLoading: usersLoading,
+    isError: usersError,
+  } = useGetUsersQuery();
   const { data: rolesData } = useGetRolesQuery();
   const [createUser] = useCreateUserMutation();
   const [updateUser] = useUpdateUserMutation();
@@ -70,7 +74,9 @@ export default function UsersPage(): React.ReactElement {
         }
         setIsInviteDialogOpen(false);
       } catch (err) {
-        setSubmitError(err instanceof Error ? err.message : "Failed to invite user(s)");
+        setSubmitError(
+          err instanceof Error ? err.message : "Failed to invite user(s)",
+        );
       }
     },
     [createUser],
@@ -95,7 +101,9 @@ export default function UsersPage(): React.ReactElement {
         setIsEditDialogOpen(false);
         setSelectedUser(null);
       } catch (err) {
-        setSubmitError(err instanceof Error ? err.message : "Failed to update user");
+        setSubmitError(
+          err instanceof Error ? err.message : "Failed to update user",
+        );
       }
     },
     [updateUser],
@@ -108,7 +116,9 @@ export default function UsersPage(): React.ReactElement {
       try {
         await deleteUser(user.id).unwrap();
       } catch (err) {
-        setSubmitError(err instanceof Error ? err.message : "Failed to remove user");
+        setSubmitError(
+          err instanceof Error ? err.message : "Failed to remove user",
+        );
       }
     },
     [deleteUser],
@@ -156,7 +166,9 @@ export default function UsersPage(): React.ReactElement {
   if (usersError) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8">
-        <p className="text-destructive">Failed to load users. Check the API and try again.</p>
+        <p className="text-destructive">
+          Failed to load users. Check the API and try again.
+        </p>
       </div>
     );
   }

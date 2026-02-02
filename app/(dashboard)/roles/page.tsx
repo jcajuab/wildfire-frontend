@@ -27,9 +27,12 @@ import {
 import type { Role, RoleSort, RoleFormData } from "@/types/role";
 
 export default function RolesPage(): React.ReactElement {
-
   // API
-  const { data: rolesData, isLoading: rolesLoading, isError: rolesError } = useGetRolesQuery();
+  const {
+    data: rolesData,
+    isLoading: rolesLoading,
+    isError: rolesError,
+  } = useGetRolesQuery();
   const { data: permissionsData } = useGetPermissionsQuery();
   const { data: usersData } = useGetUsersQuery();
 
@@ -53,16 +56,19 @@ export default function RolesPage(): React.ReactElement {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // When editing, fetch role permissions and users for dialog
-  const { data: rolePermissionsData } = useGetRolePermissionsQuery(selectedRole?.id ?? "", {
-    skip: !dialogOpen || !selectedRole,
-  });
+  const { data: rolePermissionsData } = useGetRolePermissionsQuery(
+    selectedRole?.id ?? "",
+    {
+      skip: !dialogOpen || !selectedRole,
+    }
+  );
   const { data: roleUsersData } = useGetRoleUsersQuery(selectedRole?.id ?? "", {
     skip: !dialogOpen || !selectedRole,
   });
 
   const pageSize = 10;
 
-  // Map API data to UI types
+  // Map API data to UI types (usersCount from backend GET /roles)
   const roles: Role[] = useMemo(
     () =>
       (rolesData ?? []).map((r) => ({
@@ -70,14 +76,19 @@ export default function RolesPage(): React.ReactElement {
         name: r.name,
         description: r.description,
         isSystem: r.isSystem,
+        usersCount: r.usersCount,
       })),
-    [rolesData],
+    [rolesData]
   );
   const permissions = useMemo(() => permissionsData ?? [], [permissionsData]);
   const availableUsers = useMemo(
     () =>
-      (usersData ?? []).map((u) => ({ id: u.id, name: u.name, email: u.email })),
-    [usersData],
+      (usersData ?? []).map((u) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+      })),
+    [usersData]
   );
 
   const handleCreate = useCallback(() => {
@@ -126,8 +137,12 @@ export default function RolesPage(): React.ReactElement {
           }).unwrap();
           const currentUserIds = (roleUsersData ?? []).map((u) => u.id);
           const desiredUserIds = [...data.userIds];
-          const toAdd = desiredUserIds.filter((id) => !currentUserIds.includes(id));
-          const toRemove = currentUserIds.filter((id) => !desiredUserIds.includes(id));
+          const toAdd = desiredUserIds.filter(
+            (id) => !currentUserIds.includes(id)
+          );
+          const toRemove = currentUserIds.filter(
+            (id) => !desiredUserIds.includes(id)
+          );
           for (const userId of toAdd) {
             const currentRoles = await getUserRolesTrigger(userId).unwrap();
             await setUserRoles({
@@ -139,13 +154,17 @@ export default function RolesPage(): React.ReactElement {
             const currentRoles = await getUserRolesTrigger(userId).unwrap();
             await setUserRoles({
               userId,
-              roleIds: currentRoles.map((r) => r.id).filter((id) => id !== selectedRole.id),
+              roleIds: currentRoles
+                .map((r) => r.id)
+                .filter((id) => id !== selectedRole.id),
             }).unwrap();
           }
           setDialogOpen(false);
         }
       } catch (err) {
-        setSubmitError(err instanceof Error ? err.message : "Something went wrong");
+        setSubmitError(
+          err instanceof Error ? err.message : "Something went wrong"
+        );
       }
     },
     [
@@ -157,7 +176,7 @@ export default function RolesPage(): React.ReactElement {
       setRolePermissions,
       setUserRoles,
       getUserRolesTrigger,
-    ],
+    ]
   );
 
   const handleDelete = useCallback(
@@ -167,16 +186,20 @@ export default function RolesPage(): React.ReactElement {
       try {
         await deleteRole(role.id).unwrap();
       } catch (err) {
-        setSubmitError(err instanceof Error ? err.message : "Failed to delete role");
+        setSubmitError(
+          err instanceof Error ? err.message : "Failed to delete role"
+        );
       }
     },
-    [deleteRole],
+    [deleteRole]
   );
 
   const filteredRoles = useMemo(() => {
     if (!search) return roles;
     const searchLower = search.toLowerCase();
-    return roles.filter((role) => role.name.toLowerCase().includes(searchLower));
+    return roles.filter((role) =>
+      role.name.toLowerCase().includes(searchLower)
+    );
   }, [roles, search]);
 
   const sortedRoles = useMemo(() => {
@@ -200,43 +223,45 @@ export default function RolesPage(): React.ReactElement {
 
   if (rolesLoading) {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-8">
-        <p className="text-muted-foreground">Loading roles…</p>
+      <div className='flex h-full flex-col items-center justify-center p-8'>
+        <p className='text-muted-foreground'>Loading roles…</p>
       </div>
     );
   }
 
   if (rolesError) {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-8">
-        <p className="text-destructive">Failed to load roles. Check the API and try again.</p>
+      <div className='flex h-full flex-col items-center justify-center p-8'>
+        <p className='text-destructive'>
+          Failed to load roles. Check the API and try again.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <PageHeader title="Roles">
+    <div className='flex h-full flex-col'>
+      <PageHeader title='Roles'>
         <Button onClick={handleCreate}>
-          <IconPlus className="size-4" />
+          <IconPlus className='size-4' />
           Create Role
         </Button>
       </PageHeader>
 
       {submitError && (
-        <div className="mx-6 mt-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div className='mx-6 mt-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive'>
           {submitError}
         </div>
       )}
 
-      <div className="flex flex-1 flex-col">
-        <div className="flex items-center justify-between px-6 py-3">
-          <h2 className="text-lg font-semibold">Search Results</h2>
+      <div className='flex flex-1 flex-col'>
+        <div className='flex items-center justify-between px-6 py-3'>
+          <h2 className='text-lg font-semibold'>Search Results</h2>
           <RoleSearchInput value={search} onChange={setSearch} />
         </div>
 
-        <div className="flex-1 overflow-auto px-6">
-          <div className="overflow-hidden rounded-lg border">
+        <div className='flex-1 overflow-auto px-6'>
+          <div className='overflow-hidden rounded-lg border'>
             <RolesTable
               roles={paginatedRoles}
               sort={sort}

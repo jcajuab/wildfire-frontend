@@ -1,7 +1,4 @@
-import {
-  createApi,
-  fetchBaseQuery,
-} from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 /** Backend RBAC response shapes (match overview). */
 export interface RbacRole {
@@ -9,6 +6,8 @@ export interface RbacRole {
   readonly name: string;
   readonly description: string | null;
   readonly isSystem: boolean;
+  /** Number of users assigned to this role (from GET /roles). */
+  readonly usersCount?: number;
 }
 
 export interface RbacPermission {
@@ -191,7 +190,10 @@ export const rbacApi = createApi({
         { type: "Role", id: "LIST" },
       ],
     }),
-    setUserRoles: build.mutation<RbacRole[], { userId: string; roleIds: string[] }>({
+    setUserRoles: build.mutation<
+      RbacRole[],
+      { userId: string; roleIds: string[] }
+    >({
       query: ({ userId, roleIds }) => ({
         url: `users/${userId}/roles`,
         method: "PUT",
@@ -199,6 +201,7 @@ export const rbacApi = createApi({
       }),
       invalidatesTags: (_result, _error, { userId }) => [
         { type: "User", id: userId },
+        { type: "Role", id: "LIST" },
       ],
     }),
   }),
