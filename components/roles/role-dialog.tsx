@@ -44,6 +44,8 @@ interface RoleDialogProps {
   readonly role?: Role | null;
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
+  /** When true (or create mode), form is shown; when false in edit mode, loading state is shown. */
+  readonly editDataReady?: boolean;
   readonly permissions: readonly Permission[];
   readonly availableUsers: readonly RoleUser[];
   /** Initial permission IDs when editing (from API or context). */
@@ -76,12 +78,14 @@ function RoleForm({
 }: RoleFormProps): React.ReactElement {
   const [name, setName] = useState(initialRole?.name ?? "");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(
-    mode === "edit" ? [...initialPermissionIds] : []
+    mode === "edit" && Array.isArray(initialPermissionIds)
+      ? [...initialPermissionIds]
+      : [],
   );
   const [assignedUsers, setAssignedUsers] = useState<RoleUser[]>(() =>
-    mode === "edit"
+    mode === "edit" && Array.isArray(initialUserIds)
       ? availableUsers.filter((u) => initialUserIds.includes(u.id))
-      : []
+      : [],
   );
   const [selectedUserId, setSelectedUserId] = useState<string>("");
 
@@ -99,21 +103,21 @@ function RoleForm({
 
   const handlePermissionToggle = (
     permissionId: string | null,
-    checked: boolean
+    checked: boolean,
   ): void => {
     if (permissionId == null) return;
     if (checked) {
       setSelectedPermissions((prev) => [...prev, permissionId]);
     } else {
       setSelectedPermissions((prev) =>
-        prev.filter((id) => id !== permissionId)
+        prev.filter((id) => id !== permissionId),
       );
     }
   };
 
   const displayPermissions: DesignPermissionWithId[] = useMemo(
     () => mergeDesignPermissionsWithApi(permissions),
-    [permissions]
+    [permissions],
   );
 
   const handleAddUser = (): void => {
@@ -131,7 +135,7 @@ function RoleForm({
 
   // Filter out already assigned users from available users
   const unassignedUsers = availableUsers.filter(
-    (u) => !assignedUsers.some((au) => au.id === u.id)
+    (u) => !assignedUsers.some((au) => au.id === u.id),
   );
 
   const isValid = name.trim().length > 0;
@@ -143,48 +147,48 @@ function RoleForm({
         <DialogTitle>{isCreate ? "Create New Role" : "Edit Role"}</DialogTitle>
       </DialogHeader>
 
-      <Tabs defaultValue='display' className='mt-4'>
-        <TabsList className='w-full'>
-          <TabsTrigger value='display' className='flex-1'>
+      <Tabs defaultValue="display" className="mt-4">
+        <TabsList className="w-full">
+          <TabsTrigger value="display" className="flex-1">
             Display
           </TabsTrigger>
-          <TabsTrigger value='permissions' className='flex-1'>
+          <TabsTrigger value="permissions" className="flex-1">
             Permissions
           </TabsTrigger>
-          <TabsTrigger value='users' className='flex-1'>
+          <TabsTrigger value="users" className="flex-1">
             Manage Users ({assignedUsers.length})
           </TabsTrigger>
         </TabsList>
 
         {/* Display Tab */}
-        <TabsContent value='display' className='mt-4'>
-          <div className='flex flex-col gap-4'>
-            <div className='flex flex-col gap-2'>
-              <Label htmlFor='roleName'>Role Name</Label>
+        <TabsContent value="display" className="mt-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="roleName">Role Name</Label>
               <Input
-                id='roleName'
+                id="roleName"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder='Enter role name'
+                placeholder="Enter role name"
               />
             </div>
           </div>
         </TabsContent>
 
         {/* Permissions Tab */}
-        <TabsContent value='permissions' className='mt-4'>
-          <div className='flex max-h-[400px] flex-col gap-0 overflow-y-auto'>
+        <TabsContent value="permissions" className="mt-4">
+          <div className="flex max-h-[400px] flex-col gap-0 overflow-y-auto">
             <TooltipProvider>
               {displayPermissions.map((perm, index) => (
                 <div key={`${perm.resource}:${perm.action}`}>
-                  <div className='flex items-center justify-between py-3'>
-                    <div className='flex items-center gap-2'>
-                      <span className='text-sm font-medium'>
+                  <div className="flex items-center justify-between py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
                         {formatPermissionReadableLabel(perm)}
                       </span>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <IconInfoCircle className='size-4 text-muted-foreground cursor-help' />
+                          <IconInfoCircle className="size-4 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>{formatPermissionId(perm)}</p>
@@ -210,13 +214,13 @@ function RoleForm({
         </TabsContent>
 
         {/* Manage Users Tab */}
-        <TabsContent value='users' className='mt-4'>
-          <div className='flex flex-col gap-4'>
+        <TabsContent value="users" className="mt-4">
+          <div className="flex flex-col gap-4">
             {/* Add user row */}
-            <div className='flex items-center gap-2'>
+            <div className="flex items-center gap-2">
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                <SelectTrigger className='flex-1'>
-                  <SelectValue placeholder='Select user' />
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Select user" />
                 </SelectTrigger>
                 <SelectContent>
                   {unassignedUsers.map((user) => (
@@ -227,37 +231,37 @@ function RoleForm({
                 </SelectContent>
               </Select>
               <Button
-                type='button'
-                variant='outline'
+                type="button"
+                variant="outline"
                 onClick={handleAddUser}
                 disabled={!selectedUserId}
               >
-                <IconUserPlus className='size-4' />
+                <IconUserPlus className="size-4" />
                 Add User
               </Button>
             </div>
 
             {/* Assigned users list */}
             {assignedUsers.length > 0 && (
-              <div className='flex flex-col gap-2'>
+              <div className="flex flex-col gap-2">
                 {assignedUsers.map((user) => (
                   <div
                     key={user.id}
-                    className='flex items-center justify-between rounded-md border px-3 py-2'
+                    className="flex items-center justify-between rounded-md border px-3 py-2"
                   >
-                    <div className='flex flex-col'>
-                      <span className='text-sm font-medium'>{user.name}</span>
-                      <span className='text-xs text-muted-foreground'>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{user.name}</span>
+                      <span className="text-xs text-muted-foreground">
                         {user.email}
                       </span>
                     </div>
                     <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon-sm'
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => handleRemoveUser(user.id)}
                     >
-                      <IconX className='size-4' />
+                      <IconX className="size-4" />
                     </Button>
                   </div>
                 ))}
@@ -267,15 +271,15 @@ function RoleForm({
         </TabsContent>
       </Tabs>
 
-      <DialogFooter className='mt-6'>
+      <DialogFooter className="mt-6">
         <Button
-          type='button'
-          variant='outline'
+          type="button"
+          variant="outline"
           onClick={() => onOpenChange(false)}
         >
           Cancel
         </Button>
-        <Button type='submit' disabled={!isValid}>
+        <Button type="submit" disabled={!isValid}>
           {isCreate ? "Create" : "Save"}
         </Button>
       </DialogFooter>
@@ -288,28 +292,39 @@ export function RoleDialog({
   role,
   open,
   onOpenChange,
+  editDataReady = true,
   permissions,
   availableUsers,
   initialPermissionIds = [],
   initialUserIds = [],
   onSubmit,
 }: RoleDialogProps): React.ReactElement {
+  const showForm = mode === "create" || editDataReady;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-md'>
-        {open && (
-          <RoleForm
-            key={mode === "edit" && role ? role.id : "create"}
-            mode={mode}
-            initialRole={role}
-            permissions={permissions}
-            availableUsers={availableUsers}
-            initialPermissionIds={initialPermissionIds}
-            initialUserIds={initialUserIds}
-            onSubmit={onSubmit}
-            onOpenChange={onOpenChange}
-          />
-        )}
+      <DialogContent className="sm:max-w-md">
+        {open &&
+          (showForm ? (
+            <RoleForm
+              key={mode === "edit" && role ? role.id : "create"}
+              mode={mode}
+              initialRole={role}
+              permissions={permissions}
+              availableUsers={availableUsers}
+              initialPermissionIds={initialPermissionIds}
+              initialUserIds={initialUserIds}
+              onSubmit={onSubmit}
+              onOpenChange={onOpenChange}
+            />
+          ) : (
+            <>
+              <DialogTitle className="sr-only">Edit role</DialogTitle>
+              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                <p className="text-sm">Loading permissions…</p>
+              </div>
+            </>
+          ))}
       </DialogContent>
     </Dialog>
   );

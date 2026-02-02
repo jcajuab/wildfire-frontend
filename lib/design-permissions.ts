@@ -49,7 +49,7 @@ export function mergeDesignPermissionsWithApi(
     id: string;
     resource: string;
     action: string;
-  }>
+  }>,
 ): DesignPermissionWithId[] {
   const byKey = new Map<string, string>();
   for (const p of apiPermissions) {
