@@ -1,341 +1,269 @@
 "use client";
 
-import { useMemo, useRef, useEffect } from "react";
-import type {
-  Schedule,
-  CalendarWeek,
-  CalendarDay,
-  CalendarView,
-} from "@/types/schedule";
+import { useMemo } from "react";
+import type { CalendarView, Schedule, ScheduleDisplay } from "@/types/schedule";
+import {
+  MINUTES_PER_DAY,
+  assignEventLanes,
+  createResourceDateKey,
+  formatMinutesAsTime,
+  getDayDates,
+  getWeekDates,
+  groupEventsByResourceDate,
+  projectResourceEvents,
+  type ResourceCalendarLaneEvent,
+} from "@/lib/schedules/resource-calendar";
 
 interface CalendarGridProps {
   readonly currentDate: Date;
   readonly view: CalendarView;
   readonly schedules: readonly Schedule[];
+  readonly resources: readonly ScheduleDisplay[];
   readonly onScheduleClick: (schedule: Schedule) => void;
 }
 
-const WEEKDAYS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-] as const;
-
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const HOUR_HEIGHT = 60; // px per hour
-
-function getCalendarWeeks(year: number, month: number): CalendarWeek[] {
-  const weeks: CalendarWeek[] = [];
-  const firstDayOfMonth = new Date(year, month, 1);
-  const lastDayOfMonth = new Date(year, month + 1, 0);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const startDate = new Date(firstDayOfMonth);
-  startDate.setDate(startDate.getDate() - startDate.getDay());
-
-  const endDate = new Date(lastDayOfMonth);
-  endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
-
-  const totalDays =
-    Math.round(
-      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-    ) + 1;
-  const totalWeeks = Math.ceil(totalDays / 7);
-
-  for (let weekIndex = 0; weekIndex < totalWeeks; weekIndex++) {
-    const days: CalendarDay[] = [];
-    for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-      const dayOffset = weekIndex * 7 + dayIndex;
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + dayOffset);
-      days.push({
-        date,
-        isCurrentMonth: date.getMonth() === month,
-        isToday: date.getTime() === today.getTime(),
-        isFriday: date.getDay() === 5,
-        dayOfMonth: date.getDate(),
-      });
-    }
-    weeks.push({ days });
-  }
-
-  return weeks;
+interface ResourceGridSharedProps {
+  readonly days: readonly Date[];
+  readonly resources: readonly ScheduleDisplay[];
+  readonly eventsByResourceDate: ReadonlyMap<
+    string,
+    readonly ResourceCalendarLaneEvent[]
+  >;
+  readonly schedulesById: ReadonlyMap<string, Schedule>;
+  readonly onScheduleClick: (schedule: Schedule) => void;
 }
 
-function formatTime(time: string): string {
-  const [hours, minutes] = time.split(":").map(Number);
-  const period = hours >= 12 ? "PM" : "AM";
-  const displayHours = hours % 12 || 12;
-  return `${displayHours}:${minutes.toString().padStart(2, "0")} ${period}`;
-}
+const WEEK_GRID_TEMPLATE = "14rem repeat(7, minmax(0, 1fr))";
+const DAY_GRID_TEMPLATE = "16rem minmax(0, 1fr)";
+const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 
-interface ScheduleBarInfo {
-  schedule: Schedule;
-  startCol: number;
-  endCol: number;
-  label: string;
-}
-
-function getScheduleBarsForWeek(
-  week: CalendarWeek,
-  schedules: readonly Schedule[],
-): ScheduleBarInfo[] {
-  const bars: ScheduleBarInfo[] = [];
-
-  for (const schedule of schedules) {
-    const scheduleStart = new Date(schedule.startDate);
-    const scheduleEnd = new Date(schedule.endDate);
-    scheduleStart.setHours(0, 0, 0, 0);
-    scheduleEnd.setHours(0, 0, 0, 0);
-
-    const weekStart = week.days[0].date;
-    const weekEnd = week.days[6].date;
-
-    if (scheduleEnd >= weekStart && scheduleStart <= weekEnd) {
-      const startCol = Math.max(
-        0,
-        Math.floor(
-          (scheduleStart.getTime() - weekStart.getTime()) /
-            (1000 * 60 * 60 * 24),
-        ),
-      );
-      const endCol = Math.min(
-        6,
-        Math.floor(
-          (scheduleEnd.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24),
-        ),
-      );
-
-      bars.push({
-        schedule,
-        startCol,
-        endCol,
-        label: `${schedule.name} (${formatTime(schedule.startTime)} - ${formatTime(schedule.endTime)})`,
-      });
-    }
-  }
-
-  return bars;
-}
-
-function MonthView({
-  currentDate,
-  schedules,
-  onScheduleClick,
-}: CalendarGridProps): React.ReactElement {
-  const weeks = useMemo(() => {
-    return getCalendarWeeks(currentDate.getFullYear(), currentDate.getMonth());
-  }, [currentDate]);
-
-  return (
-    <div className="flex flex-1 flex-col overflow-hidden rounded-lg border">
-      <div className="grid grid-cols-7 border-b bg-muted/30">
-        {WEEKDAYS.map((day) => (
-          <div
-            key={day}
-            className="border-r px-2 py-2 text-center text-xs font-medium text-muted-foreground last:border-r-0"
-          >
-            {day}
-          </div>
-        ))}
-      </div>
-
-      <div className="flex flex-1 flex-col overflow-y-auto">
-        {weeks.map((week, weekIndex) => {
-          const scheduleBars = getScheduleBarsForWeek(week, schedules);
-
-          return (
-            <div
-              key={weekIndex}
-              className="relative grid min-h-32 flex-1 grid-cols-7 border-b last:border-b-0"
-            >
-              {week.days.map((day, dayIndex) => (
-                <div
-                  key={dayIndex}
-                  className={`relative border-r p-1 last:border-r-0 ${
-                    day.isFriday ? "bg-primary/5" : ""
-                  } ${!day.isCurrentMonth ? "bg-muted/20" : ""}`}
-                >
-                  <span
-                    className={`text-sm ${
-                      day.isToday
-                        ? "font-semibold text-primary"
-                        : day.isCurrentMonth
-                          ? "text-foreground"
-                          : "text-muted-foreground"
-                    }`}
-                  >
-                    {day.dayOfMonth}
-                  </span>
-                </div>
-              ))}
-
-              {scheduleBars.map((bar, barIndex) => (
-                <button
-                  key={bar.schedule.id}
-                  type="button"
-                  onClick={() => onScheduleClick(bar.schedule)}
-                  className="absolute left-0 z-10 mx-1 cursor-pointer truncate rounded border-l-4 border-primary bg-primary/10 px-2 py-0.5 text-left text-xs text-primary transition-colors hover:bg-primary/20"
-                  style={{
-                    top: `${28 + barIndex * 24}px`,
-                    left: `calc(${(bar.startCol / 7) * 100}% + 4px)`,
-                    width: `calc(${((bar.endCol - bar.startCol + 1) / 7) * 100}% - 8px)`,
-                  }}
-                >
-                  {bar.label}
-                </button>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+function getLaneHeight(events: readonly ResourceCalendarLaneEvent[]): number {
+  const laneCount = events.reduce(
+    (maxLaneCount, event) => Math.max(maxLaneCount, event.laneCount),
+    1,
   );
+  return Math.max(72, 14 + laneCount * 24);
 }
 
-function TimeGrid({
+function formatDayHeader(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+  });
+}
+
+function formatDaySubheader(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatHourLabel(hour: number): string {
+  if (hour === 0) return "12 AM";
+  if (hour < 12) return `${hour} AM`;
+  if (hour === 12) return "12 PM";
+  return `${hour - 12} PM`;
+}
+
+function ResourceWeekView({
   days,
-  schedules,
+  resources,
+  eventsByResourceDate,
+  schedulesById,
   onScheduleClick,
-}: {
-  days: Date[];
-  schedules: readonly Schedule[];
-  onScheduleClick: (schedule: Schedule) => void;
-}): React.ReactElement {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  // Scroll to 8 AM on mount
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = 8 * HOUR_HEIGHT;
-    }
-  }, []);
-
+}: ResourceGridSharedProps): React.ReactElement {
   return (
-    <div className="flex flex-1 flex-col overflow-hidden rounded-lg border">
-      <div ref={scrollRef} className="flex flex-1 flex-col overflow-y-auto">
-        {/* Sticky Header */}
-        <div className="sticky top-0 z-30 flex border-b bg-background shadow-sm">
-          <div className="w-16 flex-none border-r bg-background" />{" "}
-          {/* Time Column Header */}
-          {days.map((day, i) => {
-            const isToday =
-              day.getDate() === new Date().getDate() &&
-              day.getMonth() === new Date().getMonth() &&
-              day.getFullYear() === new Date().getFullYear();
-            return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
+      <div className="overflow-auto">
+        <div className="w-full min-w-0">
+          <div
+            className="sticky top-0 z-30 grid border-b bg-muted/30 backdrop-blur-sm"
+            style={{ gridTemplateColumns: WEEK_GRID_TEMPLATE }}
+          >
+            <div className="sticky left-0 z-40 border-r bg-muted/30 px-4 py-2 text-sm font-semibold">
+              Display
+            </div>
+            {days.map((day) => (
               <div
-                key={i}
-                className="flex-1 border-r bg-background px-2 py-2 text-center last:border-r-0"
+                key={day.toISOString()}
+                className="border-r px-2 py-2 last:border-r-0"
               >
-                <div
-                  className={`text-xs font-medium ${isToday ? "text-primary" : "text-muted-foreground"}`}
-                >
-                  {WEEKDAYS[day.getDay()]}
+                <div className="text-xs font-medium text-muted-foreground">
+                  {formatDayHeader(day)}
                 </div>
-                <div
-                  className={`text-sm font-semibold ${isToday ? "text-primary" : ""}`}
-                >
-                  {day.getDate()}
+                <div className="text-sm font-semibold">
+                  {formatDaySubheader(day)}
                 </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Body */}
-        <div className="flex min-h-0 flex-1">
-          {/* Time Labels */}
-          <div className="w-16 flex-none border-r bg-background">
-            {HOURS.map((hour) => (
-              <div
-                key={hour}
-                className="relative border-b"
-                style={{ height: HOUR_HEIGHT }}
-              >
-                <span className="absolute right-2 top-1 text-xs text-muted-foreground">
-                  {hour === 0
-                    ? "12 AM"
-                    : hour < 12
-                      ? `${hour} AM`
-                      : hour === 12
-                        ? "12 PM"
-                        : `${hour - 12} PM`}
-                </span>
               </div>
             ))}
           </div>
 
-          {/* Grid Columns */}
-          {days.map((day, dayIndex) => {
-            // Find overlapping schedules
-            const daySchedules = schedules.filter((s) => {
-              const start = new Date(s.startDate);
-              const end = new Date(s.endDate);
-              start.setHours(0, 0, 0, 0);
-              end.setHours(0, 0, 0, 0);
-              const current = new Date(day);
-              current.setHours(0, 0, 0, 0);
+          {resources.map((resource) => (
+            <div
+              key={resource.id}
+              className="grid border-b"
+              style={{ gridTemplateColumns: WEEK_GRID_TEMPLATE }}
+            >
+              <div className="sticky left-0 z-20 flex items-center border-r bg-background px-4 py-3">
+                <p className="truncate text-sm font-medium">{resource.name}</p>
+              </div>
 
-              // Only show if the schedule overlaps this day AND matches recurrence logic (simplified here)
-              // For prototype, we show if within range
-              return current >= start && current <= end;
-            });
+              {days.map((day) => {
+                const resourceDateKey = createResourceDateKey(resource.id, day);
+                const dayEvents =
+                  eventsByResourceDate.get(resourceDateKey) ?? [];
+                const laneHeight = getLaneHeight(dayEvents);
+
+                return (
+                  <div
+                    key={resourceDateKey}
+                    className="relative border-r bg-background/60 p-1.5 last:border-r-0"
+                    style={{ minHeight: laneHeight }}
+                  >
+                    {dayEvents.map((event) => {
+                      const schedule = schedulesById.get(event.scheduleId);
+                      if (!schedule) {
+                        return null;
+                      }
+
+                      return (
+                        <button
+                          key={event.id}
+                          type="button"
+                          onClick={() => onScheduleClick(schedule)}
+                          className="absolute inset-x-1 z-10 overflow-hidden rounded border-l-4 border-primary bg-primary/12 px-1.5 py-1 text-left transition-colors hover:bg-primary/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                          style={{ top: `${6 + event.lane * 22}px` }}
+                          aria-label={`View schedule ${schedule.name} on ${resource.name}, ${event.timeLabel}`}
+                        >
+                          <span className="block truncate text-xs font-medium text-primary">
+                            {schedule.name}
+                          </span>
+                          <span className="block truncate text-[11px] text-primary/80">
+                            {event.timeLabel}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResourceDayView({
+  days,
+  resources,
+  eventsByResourceDate,
+  schedulesById,
+  onScheduleClick,
+}: ResourceGridSharedProps): React.ReactElement {
+  const day = days[0];
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
+      <div className="border-b px-4 py-2 text-sm font-medium">
+        {day.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })}
+      </div>
+
+      <div className="overflow-auto">
+        <div className="min-w-[1100px]">
+          <div
+            className="sticky top-0 z-30 grid border-b bg-muted/30 backdrop-blur-sm"
+            style={{ gridTemplateColumns: DAY_GRID_TEMPLATE }}
+          >
+            <div className="sticky left-0 z-40 border-r bg-muted/30 px-4 py-2 text-sm font-semibold">
+              Display
+            </div>
+            <div className="grid grid-cols-24">
+              {HOURS.map((hour) => (
+                <div
+                  key={hour}
+                  className="border-r px-1 py-2 text-center text-[11px] text-muted-foreground last:border-r-0"
+                >
+                  {hour % 2 === 0 ? formatHourLabel(hour) : ""}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {resources.map((resource) => {
+            const resourceDateKey = createResourceDateKey(resource.id, day);
+            const dayEvents = eventsByResourceDate.get(resourceDateKey) ?? [];
+            const laneHeight = getLaneHeight(dayEvents);
 
             return (
               <div
-                key={dayIndex}
-                className="relative flex-1 border-r last:border-r-0"
+                key={resource.id}
+                className="grid border-b"
+                style={{ gridTemplateColumns: DAY_GRID_TEMPLATE }}
               >
-                {/* Horizontal Lines */}
-                {HOURS.map((hour) => (
-                  <div
-                    key={hour}
-                    className="border-b"
-                    style={{ height: HOUR_HEIGHT }}
-                  />
-                ))}
+                <div className="sticky left-0 z-20 flex items-center border-r bg-background px-4 py-3">
+                  <p className="truncate text-sm font-medium">
+                    {resource.name}
+                  </p>
+                </div>
 
-                {/* Events */}
-                {daySchedules.map((schedule) => {
-                  const [startH, startM] = schedule.startTime
-                    .split(":")
-                    .map(Number);
-                  const [endH, endM] = schedule.endTime.split(":").map(Number);
+                <div
+                  className="relative bg-background/60"
+                  style={{ minHeight: laneHeight }}
+                >
+                  <div className="pointer-events-none absolute inset-0 grid grid-cols-24">
+                    {HOURS.map((hour) => (
+                      <div
+                        key={hour}
+                        className="border-r border-border/60 last:border-r-0"
+                      />
+                    ))}
+                  </div>
 
-                  const startMinutes = startH * 60 + startM;
-                  const endMinutes = endH * 60 + endM;
-                  const durationMinutes = endMinutes - startMinutes;
+                  {dayEvents.map((event) => {
+                    const schedule = schedulesById.get(event.scheduleId);
+                    if (!schedule) {
+                      return null;
+                    }
 
-                  const top = (startMinutes / 60) * HOUR_HEIGHT;
-                  const height = (durationMinutes / 60) * HOUR_HEIGHT;
+                    const startPercent =
+                      (event.startMinutes / MINUTES_PER_DAY) * 100;
+                    const widthPercent = Math.max(
+                      ((event.endMinutes - event.startMinutes) /
+                        MINUTES_PER_DAY) *
+                        100,
+                      1.2,
+                    );
 
-                  return (
-                    <button
-                      key={schedule.id}
-                      type="button"
-                      onClick={() => onScheduleClick(schedule)}
-                      className="absolute inset-x-1 z-10 overflow-hidden rounded border-l-4 border-primary bg-primary/10 p-1 text-left text-xs transition-colors hover:bg-primary/20"
-                      style={{
-                        top,
-                        height: Math.max(height, 20), // Minimum height
-                      }}
-                    >
-                      <div className="font-medium text-primary">
-                        {schedule.name}
-                      </div>
-                      <div className="text-primary/80">
-                        {formatTime(schedule.startTime)} -{" "}
-                        {formatTime(schedule.endTime)}
-                      </div>
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={event.id}
+                        type="button"
+                        onClick={() => onScheduleClick(schedule)}
+                        className="absolute z-10 overflow-hidden rounded border-l-4 border-primary bg-primary/12 px-1.5 py-1 text-left transition-colors hover:bg-primary/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                        style={{
+                          left: `${startPercent}%`,
+                          width: `${widthPercent}%`,
+                          top: `${6 + event.lane * 22}px`,
+                        }}
+                        aria-label={`View schedule ${schedule.name} on ${resource.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`}
+                      >
+                        <span className="block truncate text-xs font-medium text-primary">
+                          {schedule.name}
+                        </span>
+                        <span className="block truncate text-[11px] text-primary/80">
+                          {event.timeLabel}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
@@ -345,46 +273,79 @@ function TimeGrid({
   );
 }
 
-function WeekView({
+function EmptyResourcesState(): React.ReactElement {
+  return (
+    <div className="flex min-h-[24rem] items-center justify-center rounded-lg border bg-muted/10 px-4 text-center">
+      <div>
+        <p className="text-sm font-medium">
+          No displays available for scheduling.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Add displays first, then assign schedules to resources.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export function CalendarGrid({
   currentDate,
+  view,
   schedules,
+  resources,
   onScheduleClick,
 }: CalendarGridProps): React.ReactElement {
   const days = useMemo(() => {
-    const start = new Date(currentDate);
-    start.setDate(currentDate.getDate() - currentDate.getDay()); // Sunday
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      return d;
+    if (view === "resource-day") {
+      return getDayDates(currentDate);
+    }
+
+    return getWeekDates(currentDate);
+  }, [currentDate, view]);
+
+  const schedulesById = useMemo(() => {
+    return new Map(schedules.map((schedule) => [schedule.id, schedule]));
+  }, [schedules]);
+
+  const projectedEvents = useMemo(() => {
+    return projectResourceEvents({
+      schedules,
+      resources,
+      dates: days,
     });
-  }, [currentDate]);
+  }, [schedules, resources, days]);
+
+  const laidOutEvents = useMemo(() => {
+    return assignEventLanes(projectedEvents);
+  }, [projectedEvents]);
+
+  const eventsByResourceDate = useMemo(() => {
+    return groupEventsByResourceDate(laidOutEvents);
+  }, [laidOutEvents]);
+
+  if (resources.length === 0) {
+    return <EmptyResourcesState />;
+  }
+
+  if (view === "resource-day") {
+    return (
+      <ResourceDayView
+        days={days}
+        resources={resources}
+        eventsByResourceDate={eventsByResourceDate}
+        schedulesById={schedulesById}
+        onScheduleClick={onScheduleClick}
+      />
+    );
+  }
 
   return (
-    <TimeGrid
+    <ResourceWeekView
       days={days}
-      schedules={schedules}
+      resources={resources}
+      eventsByResourceDate={eventsByResourceDate}
+      schedulesById={schedulesById}
       onScheduleClick={onScheduleClick}
     />
   );
-}
-
-function DayView({
-  currentDate,
-  schedules,
-  onScheduleClick,
-}: CalendarGridProps): React.ReactElement {
-  return (
-    <TimeGrid
-      days={[currentDate]}
-      schedules={schedules}
-      onScheduleClick={onScheduleClick}
-    />
-  );
-}
-
-export function CalendarGrid(props: CalendarGridProps): React.ReactElement {
-  if (props.view === "week") return <WeekView {...props} />;
-  if (props.view === "day") return <DayView {...props} />;
-  return <MonthView {...props} />;
 }

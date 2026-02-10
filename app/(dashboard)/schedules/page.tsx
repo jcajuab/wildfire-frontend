@@ -49,7 +49,7 @@ const mockSchedules: Schedule[] = [
 export default function SchedulesPage(): React.ReactElement {
   // Calendar state
   const [currentDate, setCurrentDate] = useState(() => new Date(2026, 0, 1)); // Jan 2026
-  const [view, setView] = useState<CalendarView>("month");
+  const [view, setView] = useState<CalendarView>("resource-week");
 
   // Schedules state
   const [schedules, setSchedules] = useState<Schedule[]>(mockSchedules);
@@ -66,9 +66,8 @@ export default function SchedulesPage(): React.ReactElement {
   const handlePrev = useCallback(() => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
-      if (view === "month") newDate.setMonth(newDate.getMonth() - 1);
-      else if (view === "week") newDate.setDate(newDate.getDate() - 7);
-      else if (view === "day") newDate.setDate(newDate.getDate() - 1);
+      if (view === "resource-week") newDate.setDate(newDate.getDate() - 7);
+      if (view === "resource-day") newDate.setDate(newDate.getDate() - 1);
       return newDate;
     });
   }, [view]);
@@ -76,19 +75,14 @@ export default function SchedulesPage(): React.ReactElement {
   const handleNext = useCallback(() => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
-      if (view === "month") newDate.setMonth(newDate.getMonth() + 1);
-      else if (view === "week") newDate.setDate(newDate.getDate() + 7);
-      else if (view === "day") newDate.setDate(newDate.getDate() + 1);
+      if (view === "resource-week") newDate.setDate(newDate.getDate() + 7);
+      if (view === "resource-day") newDate.setDate(newDate.getDate() + 1);
       return newDate;
     });
   }, [view]);
 
   const handleToday = useCallback(() => {
     setCurrentDate(new Date());
-  }, []);
-
-  const handleMonthSelect = useCallback((month: number, year: number) => {
-    setCurrentDate(new Date(year, month, 1));
   }, []);
 
   // Schedule actions
@@ -181,13 +175,14 @@ export default function SchedulesPage(): React.ReactElement {
             onPrev={handlePrev}
             onNext={handleNext}
             onToday={handleToday}
-            onMonthSelect={handleMonthSelect}
+            resourcesCount={mockDisplays.length}
           />
 
           <CalendarGrid
             currentDate={currentDate}
             view={view}
             schedules={schedules}
+            resources={mockDisplays}
             onScheduleClick={handleScheduleClick}
           />
         </DashboardPage.Content>

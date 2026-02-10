@@ -1,19 +1,9 @@
 "use client";
 
-import {
-  IconChevronLeft,
-  IconChevronRight,
-  IconChevronDown,
-} from "@tabler/icons-react";
+import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { CalendarView } from "@/types/schedule";
 
 interface CalendarHeaderProps {
@@ -23,41 +13,17 @@ interface CalendarHeaderProps {
   readonly onPrev: () => void;
   readonly onNext: () => void;
   readonly onToday: () => void;
-  readonly onMonthSelect: (month: number, year: number) => void;
+  readonly resourcesCount: number;
 }
 
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-] as const;
-
-function generateYearOptions(currentYear: number): number[] {
-  const years: number[] = [];
-  for (let i = currentYear - 5; i <= currentYear + 5; i++) {
-    years.push(i);
-  }
-  return years;
+function getStartOfWeek(date: Date): Date {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  start.setDate(start.getDate() - start.getDay());
+  return start;
 }
 
 function formatDateRange(date: Date, view: CalendarView): string {
-  const currentMonth = MONTHS[date.getMonth()];
-  const currentYear = date.getFullYear();
-
-  if (view === "month") {
-    return `${currentMonth} ${currentYear}`;
-  }
-
-  if (view === "day") {
+  if (view === "resource-day") {
     return date.toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
@@ -65,11 +31,10 @@ function formatDateRange(date: Date, view: CalendarView): string {
     });
   }
 
-  if (view === "week") {
-    const start = new Date(date);
-    start.setDate(date.getDate() - date.getDay()); // Sunday
+  if (view === "resource-week") {
+    const start = getStartOfWeek(date);
     const end = new Date(start);
-    end.setDate(start.getDate() + 6); // Saturday
+    end.setDate(start.getDate() + 6);
 
     const startStr = start.toLocaleDateString("en-US", {
       month: "short",
@@ -83,10 +48,10 @@ function formatDateRange(date: Date, view: CalendarView): string {
     if (start.getFullYear() !== end.getFullYear()) {
       return `${startStr}, ${start.getFullYear()} - ${endStr}, ${end.getFullYear()}`;
     }
-    return `${startStr} - ${endStr}, ${currentYear}`;
+    return `${startStr} - ${endStr}, ${start.getFullYear()}`;
   }
 
-  return `${currentMonth} ${currentYear}`;
+  return "";
 }
 
 export function CalendarHeader({
@@ -96,15 +61,15 @@ export function CalendarHeader({
   onPrev,
   onNext,
   onToday,
-  onMonthSelect,
+  resourcesCount,
 }: CalendarHeaderProps): React.ReactElement {
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
-  const yearOptions = generateYearOptions(currentYear);
   const label = formatDateRange(currentDate, view);
+  const resourcesLabel = `${resourcesCount} ${
+    resourcesCount === 1 ? "display" : "displays"
+  }`;
 
   return (
-    <div className="flex items-center justify-between gap-4 pb-4">
+    <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
       {/* Left: Today + Navigation */}
       <div className="flex items-center gap-1">
         <Button variant="outline" size="sm" onClick={onToday}>
@@ -128,35 +93,13 @@ export function CalendarHeader({
         </Button>
       </div>
 
-      {/* Center: Month/Year Selector */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="gap-1 text-base font-medium">
-            {label}
-            <IconChevronDown className="size-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="center"
-          className="max-h-64 overflow-y-auto"
-        >
-          {yearOptions.map((year) =>
-            MONTHS.map((month, monthIndex) => (
-              <DropdownMenuItem
-                key={`${year}-${monthIndex}`}
-                onClick={() => onMonthSelect(monthIndex, year)}
-                className={
-                  monthIndex === currentMonth && year === currentYear
-                    ? "bg-primary/10"
-                    : ""
-                }
-              >
-                {month} {year}
-              </DropdownMenuItem>
-            )),
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* Center: Date Range + Resource Count */}
+      <div className="flex min-w-0 flex-1 items-center justify-center gap-2 px-2">
+        <h2 className="truncate text-base font-semibold">{label}</h2>
+        <span className="rounded-md border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+          {resourcesLabel}
+        </span>
+      </div>
 
       {/* Right: View Toggle */}
       <ToggleGroup
@@ -170,9 +113,8 @@ export function CalendarHeader({
         variant="outline"
         size="sm"
       >
-        <ToggleGroupItem value="month">Month</ToggleGroupItem>
-        <ToggleGroupItem value="week">Week</ToggleGroupItem>
-        <ToggleGroupItem value="day">Day</ToggleGroupItem>
+        <ToggleGroupItem value="resource-week">Resource Week</ToggleGroupItem>
+        <ToggleGroupItem value="resource-day">Resource Day</ToggleGroupItem>
       </ToggleGroup>
     </div>
   );

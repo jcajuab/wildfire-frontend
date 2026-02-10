@@ -1,6 +1,6 @@
 export type RecurrenceType = "DAILY" | "WEEKLY" | "MONTHLY" | "NONE";
 
-export type CalendarView = "month" | "week" | "day";
+export type CalendarView = "resource-week" | "resource-day";
 
 export interface ScheduleCreator {
   readonly id: string;
