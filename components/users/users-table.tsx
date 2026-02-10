@@ -13,6 +13,7 @@ import {
   IconCheck,
 } from "@tabler/icons-react";
 
+import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,6 +33,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatDateTime } from "@/lib/formatters";
 import type { User, UserRole, UserSort, UserSortField } from "@/types/user";
 
 interface UsersTableProps {
@@ -172,20 +174,6 @@ function UserActionsMenu({
   );
 }
 
-function formatLastSeen(date: string | null): string {
-  if (!date) return "Never";
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const hours = d.getHours();
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-  const seconds = String(d.getSeconds()).padStart(2, "0");
-  const ampm = hours >= 12 ? "PM" : "AM";
-  const hour12 = hours % 12 || 12;
-  return `${year}-${month}-${day}, ${String(hour12).padStart(2, "0")}:${minutes}:${seconds} ${ampm}`;
-}
-
 interface UserRowProps {
   readonly user: User;
   readonly userRoles: readonly UserRole[];
@@ -224,7 +212,7 @@ function UserRow({
         </div>
       </TableCell>
       <TableCell className="text-muted-foreground">
-        {formatLastSeen(user.lastSeenAt ?? null)}
+        {user.lastSeenAt ? formatDateTime(user.lastSeenAt) : "Never"}
       </TableCell>
       <TableCell>
         <UserActionsMenu
@@ -252,8 +240,12 @@ export function UsersTable({
 }: UsersTableProps): React.ReactElement {
   if (users.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center p-8">
-        <p className="text-muted-foreground">No users found</p>
+      <div className="py-8">
+        <EmptyState
+          title="No users found"
+          description="Invite teammates to collaborate on content, playlists, and display operations."
+          icon={<IconUser className="size-7" aria-hidden="true" />}
+        />
       </div>
     );
   }

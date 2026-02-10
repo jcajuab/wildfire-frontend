@@ -63,7 +63,11 @@ export function PlaylistCard({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Actions for ${playlist.name}`}
+            >
               <IconDotsVertical className="size-4" />
             </Button>
           </DropdownMenuTrigger>

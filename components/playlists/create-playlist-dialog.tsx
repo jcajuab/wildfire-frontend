@@ -23,13 +23,13 @@ import {
   IconPhoto,
   IconPlaylist,
   IconGripVertical,
-  IconSearch,
   IconClock,
   IconEye,
   IconX,
   IconPlus,
 } from "@tabler/icons-react";
 
+import { SearchControl } from "@/components/common/search-control";
 import {
   Dialog,
   DialogContent,
@@ -133,16 +133,23 @@ function SortablePlaylistItem({
       </div>
 
       {/* Actions */}
-      <Button variant="ghost" size="icon-sm" onClick={() => onRemove(item.id)}>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => onRemove(item.id)}
+        aria-label={`Remove ${item.content.title} from playlist`}
+      >
         <IconX className="size-4" />
       </Button>
-      <div
+      <button
+        type="button"
         {...attributes}
         {...listeners}
+        aria-label={`Drag to reorder ${item.content.title}`}
         className="cursor-grab text-muted-foreground active:cursor-grabbing"
       >
         <IconGripVertical className="size-4" />
-      </div>
+      </button>
     </div>
   );
 }
@@ -388,16 +395,13 @@ export function CreatePlaylistDialog({
             </div>
 
             {/* Search */}
-            <div className="relative">
-              <IconSearch className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search contents..."
-                value={contentSearch}
-                onChange={(e) => setContentSearch(e.target.value)}
-                className="pl-8"
-              />
-            </div>
+            <SearchControl
+              value={contentSearch}
+              onChange={setContentSearch}
+              placeholder="Search contents…"
+              ariaLabel="Search content library"
+              className="max-w-none"
+            />
 
             {/* Content List */}
             <div className="flex flex-1 flex-col gap-2 overflow-y-auto">

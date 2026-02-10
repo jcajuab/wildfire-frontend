@@ -8,7 +8,7 @@ import { CalendarHeader } from "@/components/schedules/calendar-header";
 import { CreateScheduleDialog } from "@/components/schedules/create-schedule-dialog";
 import { EditScheduleDialog } from "@/components/schedules/edit-schedule-dialog";
 import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog";
-import { PageHeader } from "@/components/layout/page-header";
+import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import type {
   Schedule,
@@ -161,32 +161,37 @@ export default function SchedulesPage(): React.ReactElement {
   );
 
   return (
-    <>
-      <PageHeader title="Schedules">
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <IconPlus className="size-4" />
-          Create Schedule
-        </Button>
-      </PageHeader>
+    <DashboardPage.Root>
+      <DashboardPage.Header
+        title="Schedules"
+        actions={
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <IconPlus className="size-4" />
+            Create Schedule
+          </Button>
+        }
+      />
 
-      <div className="flex flex-1 flex-col overflow-hidden px-6 pb-6">
-        <CalendarHeader
-          currentDate={currentDate}
-          view={view}
-          onViewChange={setView}
-          onPrev={handlePrev}
-          onNext={handleNext}
-          onToday={handleToday}
-          onMonthSelect={handleMonthSelect}
-        />
+      <DashboardPage.Body>
+        <DashboardPage.Content className="flex min-h-0 flex-1 flex-col gap-4 pt-6">
+          <CalendarHeader
+            currentDate={currentDate}
+            view={view}
+            onViewChange={setView}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            onToday={handleToday}
+            onMonthSelect={handleMonthSelect}
+          />
 
-        <CalendarGrid
-          currentDate={currentDate}
-          view={view}
-          schedules={schedules}
-          onScheduleClick={handleScheduleClick}
-        />
-      </div>
+          <CalendarGrid
+            currentDate={currentDate}
+            view={view}
+            schedules={schedules}
+            onScheduleClick={handleScheduleClick}
+          />
+        </DashboardPage.Content>
+      </DashboardPage.Body>
 
       {/* Create Schedule Dialog */}
       <CreateScheduleDialog
@@ -215,6 +220,6 @@ export default function SchedulesPage(): React.ReactElement {
         availablePlaylists={mockPlaylists}
         availableDisplays={mockDisplays}
       />
-    </>
+    </DashboardPage.Root>
   );
 }

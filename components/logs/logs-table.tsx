@@ -1,7 +1,12 @@
 "use client";
 
-import { IconAdjustmentsHorizontal, IconUser } from "@tabler/icons-react";
+import {
+  IconAdjustmentsHorizontal,
+  IconHistory,
+  IconUser,
+} from "@tabler/icons-react";
 
+import { EmptyState } from "@/components/common/empty-state";
 import {
   Table,
   TableBody,
@@ -10,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDateTime } from "@/lib/formatters";
 import type { LogEntry } from "@/types/log";
 
 interface LogsTableProps {
@@ -31,23 +37,10 @@ function FilterableHeader({
   );
 }
 
-function formatTimestamp(timestamp: string): string {
-  const d = new Date(timestamp);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const hours = d.getHours();
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-  const seconds = String(d.getSeconds()).padStart(2, "0");
-  const ampm = hours >= 12 ? "PM" : "AM";
-  const hour12 = hours % 12 || 12;
-  return `${year}-${month}-${day}, ${String(hour12).padStart(2, "0")}:${minutes}:${seconds} ${ampm}`;
-}
-
 function formatMetadata(metadata: Record<string, unknown>): string {
   const str = JSON.stringify(metadata);
   if (str.length > 30) {
-    return str.substring(0, 27) + "...";
+    return `${str.substring(0, 27)}…`;
   }
   return str;
 }
@@ -55,8 +48,12 @@ function formatMetadata(metadata: Record<string, unknown>): string {
 export function LogsTable({ logs }: LogsTableProps): React.ReactElement {
   if (logs.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center p-8">
-        <p className="text-muted-foreground">No logs found</p>
+      <div className="py-8">
+        <EmptyState
+          title="No logs found"
+          description="Logs will appear here as users authenticate and perform actions."
+          icon={<IconHistory className="size-7" aria-hidden="true" />}
+        />
       </div>
     );
   }
@@ -79,7 +76,7 @@ export function LogsTable({ logs }: LogsTableProps): React.ReactElement {
         {logs.map((log) => (
           <TableRow key={log.id}>
             <TableCell className="text-muted-foreground">
-              {formatTimestamp(log.timestamp)}
+              {formatDateTime(log.timestamp)}
             </TableCell>
             <TableCell>
               <div className="flex items-center gap-2">

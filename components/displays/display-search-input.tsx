@@ -1,29 +1,25 @@
 "use client";
 
-import { IconSearch } from "@tabler/icons-react";
-
-import { Input } from "@/components/ui/input";
+import { SearchControl } from "@/components/common/search-control";
 
 interface DisplaySearchInputProps {
   readonly value: string;
   readonly onChange: (value: string) => void;
+  readonly className?: string;
 }
 
 export function DisplaySearchInput({
   value,
   onChange,
+  className,
 }: DisplaySearchInputProps): React.ReactElement {
   return (
-    <div className="relative">
-      <IconSearch className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        type="search"
-        placeholder="Search displays..."
-        aria-label="Search displays"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-48 pl-8"
-      />
-    </div>
+    <SearchControl
+      value={value}
+      onChange={onChange}
+      placeholder="Search displays…"
+      ariaLabel="Search displays"
+      className={className}
+    />
   );
 }

@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback } from "react";
 import { IconFileExport } from "@tabler/icons-react";
 
-import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/layout/page-header";
+import { DashboardPage } from "@/components/layout";
 import { LogSearchInput } from "@/components/logs/log-search-input";
 import { LogsPagination } from "@/components/logs/logs-pagination";
 import { LogsTable } from "@/components/logs/logs-table";
+import { Button } from "@/components/ui/button";
+import {
+  useQueryNumberState,
+  useQueryStringState,
+} from "@/hooks/use-query-state";
 import type { LogEntry } from "@/types/log";
 
 const mockLogs: LogEntry[] = [
@@ -22,8 +26,8 @@ const mockLogs: LogEntry[] = [
 ];
 
 export default function LogsPage(): React.ReactElement {
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const [search, setSearch] = useQueryStringState("q", "");
+  const [page, setPage] = useQueryNumberState("page", 1);
 
   const pageSize = 10;
   const searchLower = search.toLowerCase();
@@ -37,7 +41,15 @@ export default function LogsPage(): React.ReactElement {
   const start = (page - 1) * pageSize;
   const paginatedLogs = filteredLogs.slice(start, start + pageSize);
 
-  const handleExport = (): void => {
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearch(value);
+      setPage(1);
+    },
+    [setSearch, setPage],
+  );
+
+  const handleExport = useCallback((): void => {
     const rows = filteredLogs.map((log) => [
       log.timestamp,
       log.authorName,
@@ -58,34 +70,43 @@ export default function LogsPage(): React.ReactElement {
     link.download = "wildfire-logs.csv";
     link.click();
     URL.revokeObjectURL(url);
-  };
+  }, [filteredLogs]);
 
   return (
-    <div className="flex h-full flex-col">
-      <PageHeader title="Logs">
-        <Button onClick={handleExport}>
-          <IconFileExport className="size-4" />
-          Export Logs
-        </Button>
-      </PageHeader>
+    <DashboardPage.Root>
+      <DashboardPage.Header
+        title="Logs"
+        actions={
+          <Button onClick={handleExport}>
+            <IconFileExport className="size-4" />
+            Export Logs
+          </Button>
+        }
+      />
 
-      <div className="flex flex-1 flex-col">
-        <div className="flex items-center justify-between border-b px-6 py-3">
-          <h2 className="text-lg font-semibold">Search Results</h2>
-          <LogSearchInput value={search} onChange={setSearch} />
-        </div>
+      <DashboardPage.Body>
+        <DashboardPage.Toolbar>
+          <h2 className="text-base font-semibold">Search Results</h2>
+          <LogSearchInput
+            value={search}
+            onChange={handleSearchChange}
+            className="w-full max-w-none md:w-72"
+          />
+        </DashboardPage.Toolbar>
 
-        <div className="flex-1 overflow-auto px-6">
+        <DashboardPage.Content className="pt-6">
           <LogsTable logs={paginatedLogs} />
-        </div>
+        </DashboardPage.Content>
 
-        <LogsPagination
-          page={page}
-          pageSize={pageSize}
-          total={filteredLogs.length}
-          onPageChange={setPage}
-        />
-      </div>
-    </div>
+        <DashboardPage.Footer>
+          <LogsPagination
+            page={page}
+            pageSize={pageSize}
+            total={filteredLogs.length}
+            onPageChange={setPage}
+          />
+        </DashboardPage.Footer>
+      </DashboardPage.Body>
+    </DashboardPage.Root>
   );
 }

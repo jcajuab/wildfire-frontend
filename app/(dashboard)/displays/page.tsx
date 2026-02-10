@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { Pagination } from "@/components/content/pagination";
 import { AddDisplayDialog } from "@/components/displays/add-display-dialog";
 import { DisplayFilterPopover } from "@/components/displays/display-filter-popover";
 import { DisplayGrid } from "@/components/displays/display-grid";
@@ -12,19 +13,35 @@ import { DisplaySortSelect } from "@/components/displays/display-sort-select";
 import { DisplayStatusTabs } from "@/components/displays/display-status-tabs";
 import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
 import { ViewDisplayDialog } from "@/components/displays/view-display-dialog";
-import { PageHeader } from "@/components/layout/page-header";
-import { Pagination } from "@/components/content/pagination";
+import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import type { Display, DisplaySortField } from "@/types/display";
+import {
+  useQueryEnumState,
+  useQueryNumberState,
+  useQueryStringState,
+} from "@/hooks/use-query-state";
 import type { DisplayStatusFilter } from "@/components/displays/display-status-tabs";
+import type { Display, DisplaySortField } from "@/types/display";
+
+const DISPLAY_STATUS_VALUES = ["all", "READY", "LIVE", "DOWN"] as const;
+const DISPLAY_SORT_VALUES = ["alphabetical", "status", "location"] as const;
 
 const mockDisplays: Display[] = [];
 
 export default function DisplaysPage(): React.ReactElement {
-  const [statusFilter, setStatusFilter] = useState<DisplayStatusFilter>("all");
-  const [sortBy, setSortBy] = useState<DisplaySortField>("alphabetical");
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] =
+    useQueryEnumState<DisplayStatusFilter>(
+      "status",
+      "all",
+      DISPLAY_STATUS_VALUES,
+    );
+  const [sortBy, setSortBy] = useQueryEnumState<DisplaySortField>(
+    "sort",
+    "alphabetical",
+    DISPLAY_SORT_VALUES,
+  );
+  const [search, setSearch] = useQueryStringState("q", "");
+  const [page, setPage] = useQueryNumberState("page", 1);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -37,6 +54,30 @@ export default function DisplaysPage(): React.ReactElement {
 
   const [displays, setDisplays] = useState<Display[]>(mockDisplays);
   const pageSize = 20;
+
+  const handleStatusFilterChange = useCallback(
+    (value: DisplayStatusFilter) => {
+      setStatusFilter(value);
+      setPage(1);
+    },
+    [setStatusFilter, setPage],
+  );
+
+  const handleSortChange = useCallback(
+    (value: DisplaySortField) => {
+      setSortBy(value);
+      setPage(1);
+    },
+    [setSortBy, setPage],
+  );
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearch(value);
+      setPage(1);
+    },
+    [setSearch, setPage],
+  );
 
   const handleRegister = useCallback(
     (displayData: Omit<Display, "id" | "createdAt">) => {
@@ -98,80 +139,95 @@ export default function DisplaysPage(): React.ReactElement {
 
   const handleSaveEdit = useCallback((updatedDisplay: Display) => {
     setDisplays((prev) =>
-      prev.map((d) => (d.id === updatedDisplay.id ? updatedDisplay : d)),
+      prev.map((display) =>
+        display.id === updatedDisplay.id ? updatedDisplay : display,
+      ),
     );
   }, []);
 
-  // Filter displays based on current filters
-  const filteredDisplays = displays.filter((display) => {
-    if (statusFilter !== "all" && display.status !== statusFilter) {
-      return false;
-    }
+  const filteredDisplays = useMemo(
+    () =>
+      displays.filter((display) => {
+        if (statusFilter !== "all" && display.status !== statusFilter) {
+          return false;
+        }
 
-    if (search) {
-      const searchLower = search.toLowerCase();
-      const matchesName = display.name.toLowerCase().includes(searchLower);
-      const matchesLocation = display.location
-        .toLowerCase()
-        .includes(searchLower);
-      if (!matchesName && !matchesLocation) {
-        return false;
-      }
-    }
+        if (search.length > 0) {
+          const searchLower = search.toLowerCase();
+          const matchesName = display.name.toLowerCase().includes(searchLower);
+          const matchesLocation = display.location
+            .toLowerCase()
+            .includes(searchLower);
+          if (!matchesName && !matchesLocation) {
+            return false;
+          }
+        }
 
-    return true;
-  });
+        return true;
+      }),
+    [displays, statusFilter, search],
+  );
 
-  // Sort displays
-  const sortedDisplays = [...filteredDisplays].sort((a, b) => {
-    switch (sortBy) {
-      case "alphabetical":
-        return a.name.localeCompare(b.name);
-      case "status":
-        return a.status.localeCompare(b.status);
-      case "location":
-        return a.location.localeCompare(b.location);
-      default:
-        return 0;
-    }
-  });
+  const sortedDisplays = useMemo(
+    () =>
+      [...filteredDisplays].sort((a, b) => {
+        switch (sortBy) {
+          case "alphabetical":
+            return a.name.localeCompare(b.name);
+          case "status":
+            return a.status.localeCompare(b.status);
+          case "location":
+            return a.location.localeCompare(b.location);
+          default:
+            return 0;
+        }
+      }),
+    [filteredDisplays, sortBy],
+  );
 
-  // Paginate displays
-  const paginatedDisplays = sortedDisplays.slice(
-    (page - 1) * pageSize,
-    page * pageSize,
+  const paginatedDisplays = useMemo(
+    () => sortedDisplays.slice((page - 1) * pageSize, page * pageSize),
+    [sortedDisplays, page],
   );
 
   return (
-    <div className="flex h-full flex-col">
-      <PageHeader title="Displays">
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <IconPlus className="size-4" />
-          Add Display
-        </Button>
-      </PageHeader>
+    <DashboardPage.Root>
+      <DashboardPage.Header
+        title="Displays"
+        actions={
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <IconPlus className="size-4" />
+            Add Display
+          </Button>
+        }
+      />
 
       {infoMessage ? (
-        <div className="mx-6 mb-2 rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-sm text-primary">
-          {infoMessage}
-        </div>
+        <DashboardPage.Banner>{infoMessage}</DashboardPage.Banner>
       ) : null}
 
-      <div className="flex flex-1 flex-col">
-        <div className="flex items-center justify-between px-6 py-3">
+      <DashboardPage.Body>
+        <DashboardPage.Toolbar>
           <DisplayStatusTabs
             value={statusFilter}
-            onValueChange={setStatusFilter}
+            onValueChange={handleStatusFilterChange}
           />
 
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto">
             <DisplayFilterPopover />
-            <DisplaySortSelect value={sortBy} onValueChange={setSortBy} />
-            <DisplaySearchInput value={search} onChange={setSearch} />
+            <DisplaySortSelect
+              value={sortBy}
+              onValueChange={handleSortChange}
+            />
+            <DisplaySearchInput
+              value={search}
+              onChange={handleSearchChange}
+              className="w-full max-w-none md:w-72"
+            />
           </div>
-        </div>
+        </DashboardPage.Toolbar>
 
-        <div className="flex-1 overflow-auto">
+        <DashboardPage.Content className="pt-6">
           <DisplayGrid
             items={paginatedDisplays}
             onViewDetails={handleViewDetails}
@@ -180,15 +236,17 @@ export default function DisplaysPage(): React.ReactElement {
             onToggleDisplay={handleToggleDisplay}
             onRemoveDisplay={handleRemoveDisplay}
           />
-        </div>
+        </DashboardPage.Content>
 
-        <Pagination
-          page={page}
-          pageSize={pageSize}
-          total={sortedDisplays.length}
-          onPageChange={setPage}
-        />
-      </div>
+        <DashboardPage.Footer>
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            total={sortedDisplays.length}
+            onPageChange={setPage}
+          />
+        </DashboardPage.Footer>
+      </DashboardPage.Body>
 
       <AddDisplayDialog
         open={isAddDialogOpen}
@@ -237,6 +295,6 @@ export default function DisplaysPage(): React.ReactElement {
           setDisplayToRemove(null);
         }}
       />
-    </div>
+    </DashboardPage.Root>
   );
 }

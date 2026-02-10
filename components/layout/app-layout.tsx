@@ -11,7 +11,9 @@ export function AppLayout({ children }: AppLayoutProps): React.ReactElement {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="flex flex-col">{children}</SidebarInset>
+      <SidebarInset id="main-content" className="flex flex-col">
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   );
 }

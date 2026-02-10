@@ -110,10 +110,20 @@ export function CalendarHeader({
         <Button variant="outline" size="sm" onClick={onToday}>
           Today
         </Button>
-        <Button variant="outline" size="icon-sm" onClick={onPrev}>
+        <Button
+          variant="outline"
+          size="icon-sm"
+          onClick={onPrev}
+          aria-label="Previous period"
+        >
           <IconChevronLeft className="size-4" />
         </Button>
-        <Button variant="outline" size="icon-sm" onClick={onNext}>
+        <Button
+          variant="outline"
+          size="icon-sm"
+          onClick={onNext}
+          aria-label="Next period"
+        >
           <IconChevronRight className="size-4" />
         </Button>
       </div>

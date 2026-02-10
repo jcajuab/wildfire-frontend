@@ -8,8 +8,10 @@ export function PageHeader({
   children,
 }: PageHeaderProps): React.ReactElement {
   return (
-    <header className="flex items-center justify-between px-6 py-4">
-      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+    <header className="flex items-center justify-between border-b border-border/70 px-8 py-4">
+      <h1 className="text-3xl font-semibold leading-tight tracking-tight">
+        {title}
+      </h1>
       {children && <div className="flex items-center gap-2">{children}</div>}
     </header>
   );

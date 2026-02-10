@@ -209,7 +209,13 @@ function RoleForm({
                       </span>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <IconInfoCircle className="size-4 text-muted-foreground cursor-help" />
+                          <button
+                            type="button"
+                            aria-label={`Permission id for ${formatPermissionReadableLabel(perm)}`}
+                            className="inline-flex cursor-help text-muted-foreground"
+                          >
+                            <IconInfoCircle className="size-4" />
+                          </button>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>{formatPermissionId(perm)}</p>
@@ -281,6 +287,7 @@ function RoleForm({
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => handleRemoveUser(user.id)}
+                      aria-label={`Remove ${user.name} from role`}
                     >
                       <IconX className="size-4" />
                     </Button>

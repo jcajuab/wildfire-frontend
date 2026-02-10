@@ -73,7 +73,7 @@ export function AppSidebar(): React.ReactElement {
               href="/"
               className="flex items-center gap-2 px-2 font-semibold text-primary"
             >
-              <span className="text-lg tracking-tight">WILDFIRE</span>
+              <span className="text-xl tracking-tight">WILDFIRE</span>
             </Link>
             <SidebarTrigger />
           </>
@@ -113,14 +113,16 @@ export function AppSidebar(): React.ReactElement {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="w-full justify-between">
+                <SidebarMenuButton size="lg" className="w-full justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="flex size-6 items-center justify-center rounded-full bg-muted">
+                    <div className="flex size-7 items-center justify-center rounded-full bg-muted">
                       <IconUser className="size-4" />
                     </div>
-                    <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">
-                      <span className="text-xs font-medium">{displayName}</span>
-                      <span className="text-[10px] text-muted-foreground">
+                    <div className="flex min-w-0 flex-col items-start group-data-[collapsible=icon]:hidden">
+                      <span className="truncate text-sm font-medium leading-5">
+                        {displayName}
+                      </span>
+                      <span className="truncate text-xs leading-4 text-muted-foreground">
                         {displayEmail}
                       </span>
                     </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { IconEye, IconPlus } from "@tabler/icons-react";
+
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { ContentFilterPopover } from "@/components/content/content-filter-popover";
 import { ContentGrid } from "@/components/content/content-grid";
@@ -10,7 +11,7 @@ import { Pagination } from "@/components/content/pagination";
 import { ContentSearchInput } from "@/components/content/content-search-input";
 import { ContentSortSelect } from "@/components/content/content-sort-select";
 import { ContentStatusTabs } from "@/components/content/content-status-tabs";
-import { PageHeader } from "@/components/layout/page-header";
+import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,9 +22,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { Content, ContentSortField } from "@/types/content";
-import type { StatusFilter } from "@/components/content/content-status-tabs";
+import {
+  useQueryEnumState,
+  useQueryNumberState,
+  useQueryStringState,
+} from "@/hooks/use-query-state";
 import type { TypeFilter } from "@/components/content/content-filter-popover";
+import type { StatusFilter } from "@/components/content/content-status-tabs";
+import type { Content, ContentSortField } from "@/types/content";
+
+const CONTENT_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
+const CONTENT_TYPE_VALUES = ["all", "IMAGE", "VIDEO", "PDF"] as const;
+const CONTENT_SORT_VALUES = ["recent", "title", "size", "type"] as const;
 
 const mockContents: Content[] = [];
 
@@ -154,11 +164,24 @@ function PreviewContentDialog({
 }
 
 export default function ContentPage(): React.ReactElement {
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
-  const [sortBy, setSortBy] = useState<ContentSortField>("recent");
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(
+    "status",
+    "all",
+    CONTENT_STATUS_VALUES,
+  );
+  const [typeFilter, setTypeFilter] = useQueryEnumState<TypeFilter>(
+    "type",
+    "all",
+    CONTENT_TYPE_VALUES,
+  );
+  const [sortBy, setSortBy] = useQueryEnumState<ContentSortField>(
+    "sort",
+    "recent",
+    CONTENT_SORT_VALUES,
+  );
+  const [search, setSearch] = useQueryStringState("q", "");
+  const [page, setPage] = useQueryNumberState("page", 1);
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [contents, setContents] = useState<Content[]>(mockContents);
   const [contentToPreview, setContentToPreview] = useState<Content | null>(
@@ -169,6 +192,38 @@ export default function ContentPage(): React.ReactElement {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const pageSize = 20;
+
+  const handleStatusFilterChange = useCallback(
+    (value: StatusFilter) => {
+      setStatusFilter(value);
+      setPage(1);
+    },
+    [setStatusFilter, setPage],
+  );
+
+  const handleTypeFilterChange = useCallback(
+    (value: TypeFilter) => {
+      setTypeFilter(value);
+      setPage(1);
+    },
+    [setTypeFilter, setPage],
+  );
+
+  const handleSortChange = useCallback(
+    (value: ContentSortField) => {
+      setSortBy(value);
+      setPage(1);
+    },
+    [setSortBy, setPage],
+  );
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearch(value);
+      setPage(1);
+    },
+    [setSearch, setPage],
+  );
 
   const handleCreateFromScratch = useCallback((name: string) => {
     const newContent: Content = {
@@ -225,85 +280,108 @@ export default function ContentPage(): React.ReactElement {
     setIsDeleteDialogOpen(true);
   }, []);
 
-  const filteredContents = contents.filter((content) => {
-    if (statusFilter !== "all" && content.status !== statusFilter) {
-      return false;
-    }
+  const filteredContents = useMemo(
+    () =>
+      contents.filter((content) => {
+        if (statusFilter !== "all" && content.status !== statusFilter) {
+          return false;
+        }
 
-    if (typeFilter !== "all" && content.type !== typeFilter) {
-      return false;
-    }
+        if (typeFilter !== "all" && content.type !== typeFilter) {
+          return false;
+        }
 
-    if (search && !content.title.toLowerCase().includes(search.toLowerCase())) {
-      return false;
-    }
+        if (
+          search.length > 0 &&
+          !content.title.toLowerCase().includes(search.toLowerCase())
+        ) {
+          return false;
+        }
 
-    return true;
-  });
+        return true;
+      }),
+    [contents, statusFilter, typeFilter, search],
+  );
 
-  const sortedContents = [...filteredContents].sort((a, b) => {
-    switch (sortBy) {
-      case "title":
-        return a.title.localeCompare(b.title);
-      case "size":
-        return b.fileSize - a.fileSize;
-      case "type":
-        return a.type.localeCompare(b.type);
-      case "recent":
-      default:
-        return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-    }
-  });
+  const sortedContents = useMemo(
+    () =>
+      [...filteredContents].sort((a, b) => {
+        switch (sortBy) {
+          case "title":
+            return a.title.localeCompare(b.title);
+          case "size":
+            return b.fileSize - a.fileSize;
+          case "type":
+            return a.type.localeCompare(b.type);
+          case "recent":
+          default:
+            return (
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+        }
+      }),
+    [filteredContents, sortBy],
+  );
 
-  const paginatedContents = sortedContents.slice(
-    (page - 1) * pageSize,
-    page * pageSize,
+  const paginatedContents = useMemo(
+    () => sortedContents.slice((page - 1) * pageSize, page * pageSize),
+    [sortedContents, page],
   );
 
   return (
-    <div className="flex h-full flex-col">
-      <PageHeader title="Content">
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <IconPlus className="size-4" />
-          Create Content
-        </Button>
-      </PageHeader>
+    <DashboardPage.Root>
+      <DashboardPage.Header
+        title="Content"
+        actions={
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <IconPlus className="size-4" />
+            Create Content
+          </Button>
+        }
+      />
 
-      <div className="flex flex-1 flex-col">
-        <div className="flex items-center justify-between px-6 py-3">
+      <DashboardPage.Body>
+        <DashboardPage.Toolbar>
           <ContentStatusTabs
             value={statusFilter}
-            onValueChange={setStatusFilter}
+            onValueChange={handleStatusFilterChange}
           />
 
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto">
             <ContentFilterPopover
               typeFilter={typeFilter}
-              onTypeFilterChange={setTypeFilter}
+              onTypeFilterChange={handleTypeFilterChange}
             />
-            <ContentSortSelect value={sortBy} onValueChange={setSortBy} />
-            <ContentSearchInput value={search} onChange={setSearch} />
+            <ContentSortSelect
+              value={sortBy}
+              onValueChange={handleSortChange}
+            />
+            <ContentSearchInput
+              value={search}
+              onChange={handleSearchChange}
+              className="w-full max-w-none md:w-72"
+            />
           </div>
-        </div>
+        </DashboardPage.Toolbar>
 
-        <div className="flex-1 overflow-auto">
+        <DashboardPage.Content className="pt-6">
           <ContentGrid
             items={paginatedContents}
             onEdit={handleEdit}
             onPreview={handlePreview}
             onDelete={handleDelete}
           />
-        </div>
+        </DashboardPage.Content>
 
-        <Pagination
-          page={page}
-          pageSize={pageSize}
-          total={sortedContents.length}
-          onPageChange={setPage}
-        />
-      </div>
+        <DashboardPage.Footer>
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            total={sortedContents.length}
+            onPageChange={setPage}
+          />
+        </DashboardPage.Footer>
+      </DashboardPage.Body>
 
       <CreateContentDialog
         open={isCreateDialogOpen}
@@ -353,6 +431,6 @@ export default function ContentPage(): React.ReactElement {
           setContentToDelete(null);
         }}
       />
-    </div>
+    </DashboardPage.Root>
   );
 }

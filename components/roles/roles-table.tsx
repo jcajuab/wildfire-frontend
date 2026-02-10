@@ -10,6 +10,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 
+import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -123,8 +124,12 @@ export function RolesTable({
 }: RolesTableProps): React.ReactElement {
   if (roles.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center p-8">
-        <p className="text-muted-foreground">No roles found</p>
+      <div className="py-8">
+        <EmptyState
+          title="No roles found"
+          description="Create role templates to standardize access control across your team."
+          icon={<IconUsers className="size-7" aria-hidden="true" />}
+        />
       </div>
     );
   }

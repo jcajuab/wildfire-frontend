@@ -3,15 +3,19 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
-import { Button } from "@/components/ui/button";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
-import { PageHeader } from "@/components/layout/page-header";
+import { DashboardPage } from "@/components/layout";
+import { Button } from "@/components/ui/button";
 import { EditUserDialog } from "@/components/users/edit-user-dialog";
 import { InviteUsersDialog } from "@/components/users/invite-users-dialog";
 import { UserSearchInput } from "@/components/users/user-search-input";
 import { UsersPagination } from "@/components/users/users-pagination";
 import { UsersTable } from "@/components/users/users-table";
-import type { EditUserFormData } from "@/components/users/edit-user-dialog";
+import {
+  useQueryEnumState,
+  useQueryNumberState,
+  useQueryStringState,
+} from "@/hooks/use-query-state";
 import {
   useLazyGetUserRolesQuery,
   useGetUsersQuery,
@@ -21,7 +25,17 @@ import {
   useDeleteUserMutation,
   useSetUserRolesMutation,
 } from "@/lib/api/rbac-api";
-import type { User, UserRole, UserSort } from "@/types/user";
+import type { EditUserFormData } from "@/components/users/edit-user-dialog";
+import type {
+  User,
+  UserRole,
+  UserSort,
+  UserSortDirection,
+  UserSortField,
+} from "@/types/user";
+
+const USER_SORT_FIELDS = ["name", "lastSeen"] as const;
+const USER_SORT_DIRECTIONS = ["asc", "desc"] as const;
 
 export default function UsersPage(): React.ReactElement {
   const {
@@ -36,12 +50,20 @@ export default function UsersPage(): React.ReactElement {
   const [setUserRoles] = useSetUserRolesMutation();
   const [getUserRolesTrigger] = useLazyGetUserRolesQuery();
 
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<UserSort>({
-    field: "name",
-    direction: "asc",
-  });
-  const [page, setPage] = useState(1);
+  const [search, setSearch] = useQueryStringState("q", "");
+  const [sortField, setSortField] = useQueryEnumState<UserSortField>(
+    "sortField",
+    "name",
+    USER_SORT_FIELDS,
+  );
+  const [sortDirection, setSortDirection] =
+    useQueryEnumState<UserSortDirection>(
+      "sortDir",
+      "asc",
+      USER_SORT_DIRECTIONS,
+    );
+  const [page, setPage] = useQueryNumberState("page", 1);
+
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -54,19 +76,44 @@ export default function UsersPage(): React.ReactElement {
 
   const pageSize = 10;
 
+  const sort = useMemo<UserSort>(
+    () => ({
+      field: sortField,
+      direction: sortDirection,
+    }),
+    [sortField, sortDirection],
+  );
+
   const users: User[] = useMemo(
     () =>
-      (usersData ?? []).map((u) => ({
-        id: u.id,
-        email: u.email,
-        name: u.name,
-        isActive: u.isActive,
+      (usersData ?? []).map((user) => ({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        isActive: user.isActive,
       })),
     [usersData],
   );
   const availableRoles = useMemo(
-    () => (rolesData ?? []).map((r) => ({ id: r.id, name: r.name })),
+    () => (rolesData ?? []).map((role) => ({ id: role.id, name: role.name })),
     [rolesData],
+  );
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearch(value);
+      setPage(1);
+    },
+    [setSearch, setPage],
+  );
+
+  const handleSortChange = useCallback(
+    (nextSort: UserSort) => {
+      setSortField(nextSort.field);
+      setSortDirection(nextSort.direction);
+      setPage(1);
+    },
+    [setSortField, setSortDirection, setPage],
   );
 
   const handleInvite = useCallback(
@@ -223,65 +270,82 @@ export default function UsersPage(): React.ReactElement {
 
   if (usersLoading) {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-8">
-        <p className="text-muted-foreground">Loading users…</p>
-      </div>
+      <DashboardPage.Root>
+        <DashboardPage.Header title="Users" />
+        <DashboardPage.Body>
+          <DashboardPage.Content className="flex items-center justify-center">
+            <p className="text-muted-foreground">Loading users…</p>
+          </DashboardPage.Content>
+        </DashboardPage.Body>
+      </DashboardPage.Root>
     );
   }
 
   if (usersError) {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-8">
-        <p className="text-destructive">
-          Failed to load users. Check the API and try again.
-        </p>
-      </div>
+      <DashboardPage.Root>
+        <DashboardPage.Header title="Users" />
+        <DashboardPage.Body>
+          <DashboardPage.Content className="flex items-center justify-center">
+            <p className="text-destructive">
+              Failed to load users. Check the API and try again.
+            </p>
+          </DashboardPage.Content>
+        </DashboardPage.Body>
+      </DashboardPage.Root>
     );
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <PageHeader title="Users">
-        <Button onClick={() => setIsInviteDialogOpen(true)}>
-          <IconPlus className="size-4" />
-          Invite User
-        </Button>
-      </PageHeader>
+    <DashboardPage.Root>
+      <DashboardPage.Header
+        title="Users"
+        actions={
+          <Button onClick={() => setIsInviteDialogOpen(true)}>
+            <IconPlus className="size-4" />
+            Invite User
+          </Button>
+        }
+      />
 
-      {submitError && (
-        <div className="mx-6 mt-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {submitError}
-        </div>
-      )}
+      {submitError ? (
+        <DashboardPage.Banner tone="danger">{submitError}</DashboardPage.Banner>
+      ) : null}
 
-      <div className="flex flex-1 flex-col">
-        <div className="flex items-center justify-between px-6 py-3">
-          <h2 className="text-lg font-semibold">Search Results</h2>
-          <UserSearchInput value={search} onChange={setSearch} />
-        </div>
+      <DashboardPage.Body>
+        <DashboardPage.Toolbar>
+          <h2 className="text-base font-semibold">Search Results</h2>
+          <UserSearchInput
+            value={search}
+            onChange={handleSearchChange}
+            className="w-full max-w-none md:w-72"
+          />
+        </DashboardPage.Toolbar>
 
-        <div className="flex-1 overflow-auto px-6">
+        <DashboardPage.Content className="pt-6">
           <div className="overflow-hidden rounded-lg border">
             <UsersTable
               users={paginatedUsers}
               availableRoles={availableRoles}
               userRolesByUserId={userRolesByUserId}
               sort={sort}
-              onSortChange={setSort}
+              onSortChange={handleSortChange}
               onEdit={handleEdit}
               onRoleToggle={handleRoleToggle}
               onRemoveUser={handleRequestRemoveUser}
             />
           </div>
-        </div>
+        </DashboardPage.Content>
 
-        <UsersPagination
-          page={page}
-          pageSize={pageSize}
-          total={sortedUsers.length}
-          onPageChange={setPage}
-        />
-      </div>
+        <DashboardPage.Footer>
+          <UsersPagination
+            page={page}
+            pageSize={pageSize}
+            total={sortedUsers.length}
+            onPageChange={setPage}
+          />
+        </DashboardPage.Footer>
+      </DashboardPage.Body>
 
       <InviteUsersDialog
         open={isInviteDialogOpen}
@@ -320,6 +384,6 @@ export default function UsersPage(): React.ReactElement {
           }
         }}
       />
-    </div>
+    </DashboardPage.Root>
   );
 }

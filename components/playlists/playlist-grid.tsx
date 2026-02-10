@@ -1,5 +1,8 @@
 "use client";
 
+import { IconPlaylist } from "@tabler/icons-react";
+
+import { EmptyState } from "@/components/common/empty-state";
 import { PlaylistCard } from "./playlist-card";
 import type { Playlist } from "@/types/playlist";
 
@@ -17,7 +20,13 @@ export function PlaylistGrid({
   onDelete,
 }: PlaylistGridProps): React.ReactElement {
   if (playlists.length === 0) {
-    return <div className="flex-1" />;
+    return (
+      <EmptyState
+        title="No playlists yet"
+        description="Create your first playlist to combine content and publish it to displays."
+        icon={<IconPlaylist className="size-7" aria-hidden="true" />}
+      />
+    );
   }
 
   return (

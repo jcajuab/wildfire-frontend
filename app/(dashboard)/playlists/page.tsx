@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { IconPlus, IconPresentation } from "@tabler/icons-react";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { DashboardPage } from "@/components/layout";
 import { CreatePlaylistDialog } from "@/components/playlists/create-playlist-dialog";
 import { Pagination } from "@/components/playlists/pagination";
 import { PlaylistFilterPopover } from "@/components/playlists/playlist-filter-popover";
@@ -11,9 +12,6 @@ import { PlaylistGrid } from "@/components/playlists/playlist-grid";
 import { PlaylistSearchInput } from "@/components/playlists/playlist-search-input";
 import { PlaylistSortSelect } from "@/components/playlists/playlist-sort-select";
 import { PlaylistStatusTabs } from "@/components/playlists/playlist-status-tabs";
-import type { DurationFilter } from "@/components/playlists/playlist-filter-popover";
-import type { StatusFilter } from "@/components/playlists/playlist-status-tabs";
-import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,10 +23,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { Playlist, PlaylistSortField } from "@/types/playlist";
+import {
+  useQueryEnumState,
+  useQueryNumberState,
+  useQueryStringState,
+} from "@/hooks/use-query-state";
+import type { DurationFilter } from "@/components/playlists/playlist-filter-popover";
+import type { StatusFilter } from "@/components/playlists/playlist-status-tabs";
 import type { Content } from "@/types/content";
+import type { Playlist, PlaylistSortField } from "@/types/playlist";
 
-// Mock playlists for demonstration
+const PLAYLIST_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
+const PLAYLIST_DURATION_VALUES = ["all", "short", "medium", "long"] as const;
+const PLAYLIST_SORT_VALUES = ["recent", "name", "duration", "items"] as const;
+
 const mockPlaylists: Playlist[] = [
   {
     id: "1",
@@ -82,7 +90,6 @@ const mockPlaylists: Playlist[] = [
   },
 ];
 
-// Mock available content for the create dialog
 const mockAvailableContent: Content[] = [
   {
     id: "content-1",
@@ -115,12 +122,24 @@ const mockAvailableContent: Content[] = [
 ];
 
 export default function PlaylistsPage(): React.ReactElement {
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [durationFilter, setDurationFilter] = useState<DurationFilter>("all");
-  const [sortBy, setSortBy] = useState<PlaylistSortField>("recent");
-  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(
+    "status",
+    "all",
+    PLAYLIST_STATUS_VALUES,
+  );
+  const [durationFilter, setDurationFilter] = useQueryEnumState<DurationFilter>(
+    "duration",
+    "all",
+    PLAYLIST_DURATION_VALUES,
+  );
+  const [sortBy, setSortBy] = useQueryEnumState<PlaylistSortField>(
+    "sort",
+    "recent",
+    PLAYLIST_SORT_VALUES,
+  );
+  const [search, setSearch] = useQueryStringState("q", "");
+  const [page, setPage] = useQueryNumberState("page", 1);
 
-  const [page, setPage] = useState(1);
   const pageSize = 12;
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -133,16 +152,48 @@ export default function PlaylistsPage(): React.ReactElement {
 
   const [playlists, setPlaylists] = useState<Playlist[]>(mockPlaylists);
 
+  const handleStatusFilterChange = useCallback(
+    (value: StatusFilter) => {
+      setStatusFilter(value);
+      setPage(1);
+    },
+    [setStatusFilter, setPage],
+  );
+
+  const handleDurationFilterChange = useCallback(
+    (value: DurationFilter) => {
+      setDurationFilter(value);
+      setPage(1);
+    },
+    [setDurationFilter, setPage],
+  );
+
+  const handleSortChange = useCallback(
+    (value: PlaylistSortField) => {
+      setSortBy(value);
+      setPage(1);
+    },
+    [setSortBy, setPage],
+  );
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearch(value);
+      setPage(1);
+    },
+    [setSearch, setPage],
+  );
+
   const filteredPlaylists = useMemo(() => {
     let result = [...playlists];
 
     if (statusFilter !== "all") {
-      result = result.filter((p) => p.status === statusFilter);
+      result = result.filter((playlist) => playlist.status === statusFilter);
     }
 
     if (durationFilter !== "all") {
-      result = result.filter((p) => {
-        const duration = p.totalDuration;
+      result = result.filter((playlist) => {
+        const duration = playlist.totalDuration;
         switch (durationFilter) {
           case "short":
             return duration < 60;
@@ -156,12 +207,12 @@ export default function PlaylistsPage(): React.ReactElement {
       });
     }
 
-    if (search) {
+    if (search.length > 0) {
       const searchLower = search.toLowerCase();
       result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchLower) ||
-          p.description?.toLowerCase().includes(searchLower),
+        (playlist) =>
+          playlist.name.toLowerCase().includes(searchLower) ||
+          playlist.description?.toLowerCase().includes(searchLower),
       );
     }
 
@@ -187,7 +238,7 @@ export default function PlaylistsPage(): React.ReactElement {
   const paginatedPlaylists = useMemo(() => {
     const start = (page - 1) * pageSize;
     return filteredPlaylists.slice(start, start + pageSize);
-  }, [filteredPlaylists, page, pageSize]);
+  }, [filteredPlaylists, page]);
 
   const handleCreatePlaylist = useCallback(
     (
@@ -225,46 +276,59 @@ export default function PlaylistsPage(): React.ReactElement {
   }, []);
 
   return (
-    <>
-      <PageHeader title="Playlists">
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <IconPlus className="size-4" />
-          Create Playlist
-        </Button>
-      </PageHeader>
+    <DashboardPage.Root>
+      <DashboardPage.Header
+        title="Playlists"
+        actions={
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <IconPlus className="size-4" />
+            Create Playlist
+          </Button>
+        }
+      />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="flex items-center justify-between gap-4 px-6 pb-4">
+      <DashboardPage.Body>
+        <DashboardPage.Toolbar>
           <PlaylistStatusTabs
             value={statusFilter}
-            onValueChange={setStatusFilter}
+            onValueChange={handleStatusFilterChange}
           />
-          <div className="flex items-center gap-2">
+
+          <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto">
             <PlaylistFilterPopover
               durationFilter={durationFilter}
-              onDurationFilterChange={setDurationFilter}
+              onDurationFilterChange={handleDurationFilterChange}
             />
-            <PlaylistSortSelect value={sortBy} onValueChange={setSortBy} />
-            <PlaylistSearchInput value={search} onChange={setSearch} />
+            <PlaylistSortSelect
+              value={sortBy}
+              onValueChange={handleSortChange}
+            />
+            <PlaylistSearchInput
+              value={search}
+              onChange={handleSearchChange}
+              className="w-full max-w-none md:w-72"
+            />
           </div>
-        </div>
+        </DashboardPage.Toolbar>
 
-        <div className="flex-1 overflow-y-auto px-6">
+        <DashboardPage.Content className="pt-6">
           <PlaylistGrid
             playlists={paginatedPlaylists}
             onEdit={handleEditPlaylist}
             onPreview={handlePreviewPlaylist}
             onDelete={handleDeletePlaylist}
           />
-        </div>
+        </DashboardPage.Content>
 
-        <Pagination
-          page={page}
-          pageSize={pageSize}
-          total={filteredPlaylists.length}
-          onPageChange={setPage}
-        />
-      </div>
+        <DashboardPage.Footer>
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            total={filteredPlaylists.length}
+            onPageChange={setPage}
+          />
+        </DashboardPage.Footer>
+      </DashboardPage.Body>
 
       <CreatePlaylistDialog
         open={createDialogOpen}
@@ -393,6 +457,6 @@ export default function PlaylistsPage(): React.ReactElement {
           setDeletePlaylist(null);
         }}
       />
-    </>
+    </DashboardPage.Root>
   );
 }

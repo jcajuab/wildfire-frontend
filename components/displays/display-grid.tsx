@@ -1,5 +1,8 @@
 "use client";
 
+import { IconDeviceTv } from "@tabler/icons-react";
+
+import { EmptyState } from "@/components/common/empty-state";
 import { DisplayCard } from "./display-card";
 import type { Display } from "@/types/display";
 
@@ -22,14 +25,16 @@ export function DisplayGrid({
 }: DisplayGridProps): React.ReactElement {
   if (items.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted-foreground">No displays found</p>
-      </div>
+      <EmptyState
+        title="No displays found"
+        description="Register a screen to monitor health, playback, and remote actions in one place."
+        icon={<IconDeviceTv className="size-7" aria-hidden="true" />}
+      />
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 p-6 lg:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
       {items.map((display) => (
         <DisplayCard
           key={display.id}

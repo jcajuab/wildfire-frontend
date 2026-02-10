@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { IconUserSquareRounded, IconUser } from "@tabler/icons-react";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
-import { PageHeader } from "@/components/layout/page-header";
+import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -139,152 +139,152 @@ export default function AccountPage(): React.ReactElement {
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <PageHeader title="Account" />
+    <DashboardPage.Root>
+      <DashboardPage.Header title="Account" />
 
       {infoMessage ? (
-        <div className="mx-6 mt-2 rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-sm text-primary">
-          {infoMessage}
-        </div>
+        <DashboardPage.Banner>{infoMessage}</DashboardPage.Banner>
       ) : null}
 
-      <div className="flex flex-1 flex-col overflow-auto">
-        {/* Account Information Section */}
-        <div className="border-b px-6 py-4">
-          <div className="flex items-center gap-2">
-            <IconUserSquareRounded className="size-5" />
-            <h2 className="text-base font-semibold">Account Information</h2>
-          </div>
-        </div>
-
-        {/* Form */}
-        <div className="flex flex-col gap-6 px-6 py-6">
-          {/* Profile Picture */}
-          <div className="grid grid-cols-[180px_1fr] items-start gap-4">
-            <Label className="pt-2 text-right text-sm font-medium text-muted-foreground">
-              Profile Picture
-            </Label>
-            <div className="flex items-center gap-4">
-              <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                <IconUser className="size-6 text-muted-foreground" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleChangeProfilePicture}
-                >
-                  Change Profile Picture
-                </Button>
-                <input
-                  ref={profilePictureInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProfilePictureSelected}
-                  className="hidden"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Recommended size: 320 × 320 pixels
-                </p>
-              </div>
+      <DashboardPage.Body>
+        <DashboardPage.Content className="overflow-auto px-0 pb-0">
+          {/* Account Information Section */}
+          <div className="border-b px-8 py-4">
+            <div className="flex items-center gap-2">
+              <IconUserSquareRounded className="size-5" />
+              <h2 className="text-base font-semibold">Account Information</h2>
             </div>
           </div>
 
-          {/* First Name */}
-          <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-            <Label
-              htmlFor="firstName"
-              className="text-right text-sm font-medium text-muted-foreground"
-            >
-              First Name
-            </Label>
-            <Input
-              id="firstName"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              className="max-w-lg"
-            />
+          {/* Form */}
+          <div className="flex flex-col gap-6 px-8 py-6">
+            {/* Profile Picture */}
+            <div className="grid grid-cols-[180px_1fr] items-start gap-4">
+              <Label className="pt-2 text-right text-sm font-medium text-muted-foreground">
+                Profile Picture
+              </Label>
+              <div className="flex items-center gap-4">
+                <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                  <IconUser className="size-6 text-muted-foreground" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleChangeProfilePicture}
+                  >
+                    Change Profile Picture
+                  </Button>
+                  <input
+                    ref={profilePictureInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePictureSelected}
+                    className="hidden"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Recommended size: 320 × 320 pixels
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* First Name */}
+            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
+              <Label
+                htmlFor="firstName"
+                className="text-right text-sm font-medium text-muted-foreground"
+              >
+                First Name
+              </Label>
+              <Input
+                id="firstName"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="max-w-lg"
+              />
+            </div>
+
+            {/* Last Name */}
+            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
+              <Label
+                htmlFor="lastName"
+                className="text-right text-sm font-medium text-muted-foreground"
+              >
+                Last Name
+              </Label>
+              <Input
+                id="lastName"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="max-w-lg"
+              />
+            </div>
+
+            {/* Email (read-only) */}
+            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
+              <Label className="text-right text-sm font-medium text-muted-foreground">
+                Email
+              </Label>
+              <p className="text-sm">{user?.email ?? "—"}</p>
+            </div>
+
+            {/* Password */}
+            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
+              <Label className="text-right text-sm font-medium text-muted-foreground">
+                Password
+              </Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleChangePassword}
+                className="w-fit"
+              >
+                Change Password
+              </Button>
+            </div>
+
+            {/* Time Zone */}
+            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
+              <Label className="text-right text-sm font-medium text-muted-foreground">
+                Time Zone
+              </Label>
+              <Select value={timezone} onValueChange={setTimezone}>
+                <SelectTrigger className="max-w-lg">
+                  <SelectValue placeholder="Select timezone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timezones.map((tz) => (
+                    <SelectItem key={tz} value={tz}>
+                      {tz}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {/* Last Name */}
-          <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-            <Label
-              htmlFor="lastName"
-              className="text-right text-sm font-medium text-muted-foreground"
-            >
-              Last Name
-            </Label>
-            <Input
-              id="lastName"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              className="max-w-lg"
-            />
+          {/* Action Buttons */}
+          <div className="grid grid-cols-[180px_1fr] items-center gap-4 px-8 pb-6">
+            <div />
+            <div className="max-w-lg flex justify-end gap-2">
+              <Button variant="default" onClick={handleSaveChanges}>
+                Save Changes
+              </Button>
+              <Button
+                variant="outline"
+                className="border-destructive text-destructive hover:bg-destructive/10"
+                onClick={handleLogOut}
+              >
+                Log Out
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteAccount}>
+                Delete Account
+              </Button>
+            </div>
           </div>
-
-          {/* Email (read-only) */}
-          <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-            <Label className="text-right text-sm font-medium text-muted-foreground">
-              Email
-            </Label>
-            <p className="text-sm">{user?.email ?? "—"}</p>
-          </div>
-
-          {/* Password */}
-          <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-            <Label className="text-right text-sm font-medium text-muted-foreground">
-              Password
-            </Label>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleChangePassword}
-              className="w-fit"
-            >
-              Change Password
-            </Button>
-          </div>
-
-          {/* Time Zone */}
-          <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-            <Label className="text-right text-sm font-medium text-muted-foreground">
-              Time Zone
-            </Label>
-            <Select value={timezone} onValueChange={setTimezone}>
-              <SelectTrigger className="max-w-lg">
-                <SelectValue placeholder="Select timezone" />
-              </SelectTrigger>
-              <SelectContent>
-                {timezones.map((tz) => (
-                  <SelectItem key={tz} value={tz}>
-                    {tz}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-[180px_1fr] items-center gap-4 px-6 pb-6">
-          <div />
-          <div className="flex justify-end gap-2 max-w-lg">
-            <Button variant="default" onClick={handleSaveChanges}>
-              Save Changes
-            </Button>
-            <Button
-              variant="outline"
-              className="border-destructive text-destructive hover:bg-destructive/10"
-              onClick={handleLogOut}
-            >
-              Log Out
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteAccount}>
-              Delete Account
-            </Button>
-          </div>
-        </div>
-      </div>
+        </DashboardPage.Content>
+      </DashboardPage.Body>
 
       <Dialog
         open={isPasswordDialogOpen}
@@ -357,6 +357,6 @@ export default function AccountPage(): React.ReactElement {
         confirmLabel="Delete account"
         onConfirm={handleDeleteAccountConfirm}
       />
-    </div>
+    </DashboardPage.Root>
   );
 }

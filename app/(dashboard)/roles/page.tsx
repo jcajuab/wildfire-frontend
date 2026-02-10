@@ -3,13 +3,18 @@
 import { useState, useCallback, useMemo } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
-import { Button } from "@/components/ui/button";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
-import { PageHeader } from "@/components/layout/page-header";
+import { DashboardPage } from "@/components/layout";
 import { RoleDialog } from "@/components/roles/role-dialog";
 import { RoleSearchInput } from "@/components/roles/role-search-input";
 import { RolesPagination } from "@/components/roles/roles-pagination";
 import { RolesTable } from "@/components/roles/roles-table";
+import { Button } from "@/components/ui/button";
+import {
+  useQueryEnumState,
+  useQueryNumberState,
+  useQueryStringState,
+} from "@/hooks/use-query-state";
 import {
   useGetRolesQuery,
   useGetPermissionsQuery,
@@ -23,10 +28,18 @@ import {
   useSetUserRolesMutation,
   useLazyGetUserRolesQuery,
 } from "@/lib/api/rbac-api";
-import type { Role, RoleSort, RoleFormData } from "@/types/role";
+import type {
+  Role,
+  RoleFormData,
+  RoleSort,
+  RoleSortDirection,
+  RoleSortField,
+} from "@/types/role";
+
+const ROLE_SORT_FIELDS = ["name", "usersCount"] as const;
+const ROLE_SORT_DIRECTIONS = ["asc", "desc"] as const;
 
 export default function RolesPage(): React.ReactElement {
-  // API
   const {
     data: rolesData,
     isLoading: rolesLoading,
@@ -42,13 +55,19 @@ export default function RolesPage(): React.ReactElement {
   const [setUserRoles] = useSetUserRolesMutation();
   const [getUserRolesTrigger] = useLazyGetUserRolesQuery();
 
-  // State
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<RoleSort>({
-    field: "name",
-    direction: "asc",
-  });
-  const [page, setPage] = useState(1);
+  const [search, setSearch] = useQueryStringState("q", "");
+  const [sortField, setSortField] = useQueryEnumState<RoleSortField>(
+    "sortField",
+    "name",
+    ROLE_SORT_FIELDS,
+  );
+  const [sortDirection, setSortDirection] =
+    useQueryEnumState<RoleSortDirection>(
+      "sortDir",
+      "asc",
+      ROLE_SORT_DIRECTIONS,
+    );
+  const [page, setPage] = useQueryNumberState("page", 1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
@@ -56,7 +75,6 @@ export default function RolesPage(): React.ReactElement {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // When editing, fetch role permissions and users for dialog
   const {
     data: rolePermissionsData,
     isLoading: rolePermissionsLoading,
@@ -76,7 +94,6 @@ export default function RolesPage(): React.ReactElement {
     refetchOnMountOrArgChange: true,
   });
 
-  // Only render the form when edit data is ready (create mode, or both queries succeeded and no fetch in flight in edit mode)
   const editDataReady =
     dialogMode === "create" ||
     (dialogMode === "edit" &&
@@ -91,27 +108,51 @@ export default function RolesPage(): React.ReactElement {
 
   const pageSize = 10;
 
-  // Map API data to UI types (usersCount from backend GET /roles)
+  const sort = useMemo<RoleSort>(
+    () => ({
+      field: sortField,
+      direction: sortDirection,
+    }),
+    [sortField, sortDirection],
+  );
+
   const roles: Role[] = useMemo(
     () =>
-      (rolesData ?? []).map((r) => ({
-        id: r.id,
-        name: r.name,
-        description: r.description,
-        isSystem: r.isSystem,
-        usersCount: r.usersCount,
+      (rolesData ?? []).map((role) => ({
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        isSystem: role.isSystem,
+        usersCount: role.usersCount,
       })),
     [rolesData],
   );
   const permissions = useMemo(() => permissionsData ?? [], [permissionsData]);
   const availableUsers = useMemo(
     () =>
-      (usersData ?? []).map((u) => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
+      (usersData ?? []).map((user) => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
       })),
     [usersData],
+  );
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearch(value);
+      setPage(1);
+    },
+    [setSearch, setPage],
+  );
+
+  const handleSortChange = useCallback(
+    (nextSort: RoleSort) => {
+      setSortField(nextSort.field);
+      setSortDirection(nextSort.direction);
+      setPage(1);
+    },
+    [setSortField, setSortDirection, setPage],
   );
 
   const handleCreate = useCallback(() => {
@@ -149,7 +190,10 @@ export default function RolesPage(): React.ReactElement {
               ).unwrap();
               await setUserRoles({
                 userId,
-                roleIds: [...currentRoles.map((r) => r.id), role.id],
+                roleIds: [
+                  ...currentRoles.map((roleItem) => roleItem.id),
+                  role.id,
+                ],
               }).unwrap();
             }),
           );
@@ -164,7 +208,7 @@ export default function RolesPage(): React.ReactElement {
             roleId: selectedRole.id,
             permissionIds: [...data.permissionIds],
           }).unwrap();
-          const currentUserIds = (roleUsersData ?? []).map((u) => u.id);
+          const currentUserIds = (roleUsersData ?? []).map((user) => user.id);
           const desiredUserIds = [...data.userIds];
           const toAdd = desiredUserIds.filter(
             (id) => !currentUserIds.includes(id),
@@ -180,7 +224,10 @@ export default function RolesPage(): React.ReactElement {
               ).unwrap();
               await setUserRoles({
                 userId,
-                roleIds: [...currentRoles.map((r) => r.id), selectedRole.id],
+                roleIds: [
+                  ...currentRoles.map((roleItem) => roleItem.id),
+                  selectedRole.id,
+                ],
               }).unwrap();
             }),
           );
@@ -193,7 +240,7 @@ export default function RolesPage(): React.ReactElement {
               await setUserRoles({
                 userId,
                 roleIds: currentRoles
-                  .map((r) => r.id)
+                  .map((roleItem) => roleItem.id)
                   .filter((id) => id !== selectedRole.id),
               }).unwrap();
             }),
@@ -252,62 +299,79 @@ export default function RolesPage(): React.ReactElement {
 
   if (rolesLoading) {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-8">
-        <p className="text-muted-foreground">Loading roles…</p>
-      </div>
+      <DashboardPage.Root>
+        <DashboardPage.Header title="Roles" />
+        <DashboardPage.Body>
+          <DashboardPage.Content className="flex items-center justify-center">
+            <p className="text-muted-foreground">Loading roles…</p>
+          </DashboardPage.Content>
+        </DashboardPage.Body>
+      </DashboardPage.Root>
     );
   }
 
   if (rolesError) {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-8">
-        <p className="text-destructive">
-          Failed to load roles. Check the API and try again.
-        </p>
-      </div>
+      <DashboardPage.Root>
+        <DashboardPage.Header title="Roles" />
+        <DashboardPage.Body>
+          <DashboardPage.Content className="flex items-center justify-center">
+            <p className="text-destructive">
+              Failed to load roles. Check the API and try again.
+            </p>
+          </DashboardPage.Content>
+        </DashboardPage.Body>
+      </DashboardPage.Root>
     );
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <PageHeader title="Roles">
-        <Button onClick={handleCreate}>
-          <IconPlus className="size-4" />
-          Create Role
-        </Button>
-      </PageHeader>
+    <DashboardPage.Root>
+      <DashboardPage.Header
+        title="Roles"
+        actions={
+          <Button onClick={handleCreate}>
+            <IconPlus className="size-4" />
+            Create Role
+          </Button>
+        }
+      />
 
-      {submitError && (
-        <div className="mx-6 mt-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {submitError}
-        </div>
-      )}
+      {submitError ? (
+        <DashboardPage.Banner tone="danger">{submitError}</DashboardPage.Banner>
+      ) : null}
 
-      <div className="flex flex-1 flex-col">
-        <div className="flex items-center justify-between px-6 py-3">
-          <h2 className="text-lg font-semibold">Search Results</h2>
-          <RoleSearchInput value={search} onChange={setSearch} />
-        </div>
+      <DashboardPage.Body>
+        <DashboardPage.Toolbar>
+          <h2 className="text-base font-semibold">Search Results</h2>
+          <RoleSearchInput
+            value={search}
+            onChange={handleSearchChange}
+            className="w-full max-w-none md:w-72"
+          />
+        </DashboardPage.Toolbar>
 
-        <div className="flex-1 overflow-auto px-6">
+        <DashboardPage.Content className="pt-6">
           <div className="overflow-hidden rounded-lg border">
             <RolesTable
               roles={paginatedRoles}
               sort={sort}
-              onSortChange={setSort}
+              onSortChange={handleSortChange}
               onEdit={handleEdit}
               onDelete={handleDeleteRequest}
             />
           </div>
-        </div>
+        </DashboardPage.Content>
 
-        <RolesPagination
-          page={page}
-          pageSize={pageSize}
-          total={sortedRoles.length}
-          onPageChange={setPage}
-        />
-      </div>
+        <DashboardPage.Footer>
+          <RolesPagination
+            page={page}
+            pageSize={pageSize}
+            total={sortedRoles.length}
+            onPageChange={setPage}
+          />
+        </DashboardPage.Footer>
+      </DashboardPage.Body>
 
       <RoleDialog
         mode={dialogMode}
@@ -320,8 +384,10 @@ export default function RolesPage(): React.ReactElement {
         editDataReady={editDataReady}
         permissions={permissions}
         availableUsers={availableUsers}
-        initialPermissionIds={rolePermissionsData?.map((p) => p.id)}
-        initialUserIds={roleUsersData?.map((u) => u.id)}
+        initialPermissionIds={rolePermissionsData?.map(
+          (permission) => permission.id,
+        )}
+        initialUserIds={roleUsersData?.map((user) => user.id)}
         onSubmit={handleSubmit}
       />
 
@@ -349,6 +415,6 @@ export default function RolesPage(): React.ReactElement {
           }
         }}
       />
-    </div>
+    </DashboardPage.Root>
   );
 }

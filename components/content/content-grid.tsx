@@ -1,5 +1,8 @@
 "use client";
 
+import { IconWorld } from "@tabler/icons-react";
+
+import { EmptyState } from "@/components/common/empty-state";
 import { ContentCard } from "./content-card";
 import type { Content } from "@/types/content";
 
@@ -18,14 +21,16 @@ export function ContentGrid({
 }: ContentGridProps): React.ReactElement {
   if (items.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted-foreground">No content found</p>
-      </div>
+      <EmptyState
+        title="No content yet"
+        description="Upload a file or create content from scratch to start building playlists."
+        icon={<IconWorld className="size-7" aria-hidden="true" />}
+      />
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {items.map((content) => (
         <ContentCard
           key={content.id}

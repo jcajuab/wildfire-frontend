@@ -1,32 +1,25 @@
 "use client";
 
-import { IconSearch } from "@tabler/icons-react";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { SearchControl } from "@/components/common/search-control";
 
 interface UserSearchInputProps {
   readonly value: string;
   readonly onChange: (value: string) => void;
+  readonly className?: string;
 }
 
 export function UserSearchInput({
   value,
   onChange,
+  className,
 }: UserSearchInputProps): React.ReactElement {
   return (
-    <InputGroup className="w-[250px]">
-      <InputGroupAddon align="inline-start">
-        <IconSearch className="size-4" />
-      </InputGroupAddon>
-      <InputGroupInput
-        placeholder="Search users..."
-        aria-label="Search users"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </InputGroup>
+    <SearchControl
+      value={value}
+      onChange={onChange}
+      placeholder="Search users…"
+      ariaLabel="Search users"
+      className={className}
+    />
   );
 }

@@ -124,6 +124,7 @@ function InviteUsersDialogContent({
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => handleRemoveEmail(index)}
+                  aria-label={`Remove email field ${index + 1}`}
                 >
                   <IconX className="size-4" />
                 </Button>
