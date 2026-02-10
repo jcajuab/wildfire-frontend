@@ -23,6 +23,7 @@ export function UserSearchInput({
       </InputGroupAddon>
       <InputGroupInput
         placeholder="Search users..."
+        aria-label="Search users"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

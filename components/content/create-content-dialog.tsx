@@ -43,21 +43,18 @@ export function CreateContentDialog({
 
   const handleCreateFromScratch = useCallback(() => {
     if (name.trim()) {
-      onCreateFromScratch(name.trim());
+      if (selectedFile) {
+        onUploadFile(name.trim(), selectedFile);
+      } else {
+        onCreateFromScratch(name.trim());
+      }
       handleClose();
     }
-  }, [name, onCreateFromScratch, handleClose]);
+  }, [name, selectedFile, onCreateFromScratch, onUploadFile, handleClose]);
 
-  const handleFileSelect = useCallback(
-    (file: File) => {
-      setSelectedFile(file);
-      if (name.trim()) {
-        onUploadFile(name.trim(), file);
-        handleClose();
-      }
-    },
-    [name, onUploadFile, handleClose],
-  );
+  const handleFileSelect = useCallback((file: File) => {
+    setSelectedFile(file);
+  }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -181,7 +178,7 @@ export function CreateContentDialog({
             className="flex-1"
           >
             <IconSparkles className="size-4" />
-            Start from scratch
+            {selectedFile ? "Upload file" : "Start from scratch"}
           </Button>
         </DialogFooter>
       </DialogContent>

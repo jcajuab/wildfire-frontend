@@ -21,6 +21,7 @@ export function ContentSearchInput({
       <Input
         type="search"
         placeholder={placeholder}
+        aria-label="Search content"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-48 pl-8"

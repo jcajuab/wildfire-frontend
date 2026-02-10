@@ -3,15 +3,13 @@
 import { useState, useCallback } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
-import { PageHeader } from "@/components/layout";
+import { CalendarGrid } from "@/components/schedules/calendar-grid";
+import { CalendarHeader } from "@/components/schedules/calendar-header";
+import { CreateScheduleDialog } from "@/components/schedules/create-schedule-dialog";
+import { EditScheduleDialog } from "@/components/schedules/edit-schedule-dialog";
+import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import {
-  CalendarHeader,
-  CalendarGrid,
-  CreateScheduleDialog,
-  ViewScheduleDialog,
-  EditScheduleDialog,
-} from "@/components/schedules";
 import type {
   Schedule,
   CalendarView,

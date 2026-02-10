@@ -1,21 +1,30 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { IconPlus } from "@tabler/icons-react";
+import { IconPlus, IconPresentation } from "@tabler/icons-react";
 
-import { PageHeader } from "@/components/layout";
+import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { CreatePlaylistDialog } from "@/components/playlists/create-playlist-dialog";
+import { Pagination } from "@/components/playlists/pagination";
+import { PlaylistFilterPopover } from "@/components/playlists/playlist-filter-popover";
+import { PlaylistGrid } from "@/components/playlists/playlist-grid";
+import { PlaylistSearchInput } from "@/components/playlists/playlist-search-input";
+import { PlaylistSortSelect } from "@/components/playlists/playlist-sort-select";
+import { PlaylistStatusTabs } from "@/components/playlists/playlist-status-tabs";
+import type { DurationFilter } from "@/components/playlists/playlist-filter-popover";
+import type { StatusFilter } from "@/components/playlists/playlist-status-tabs";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
-  PlaylistStatusTabs,
-  PlaylistFilterPopover,
-  PlaylistSortSelect,
-  PlaylistSearchInput,
-  PlaylistGrid,
-  Pagination,
-  CreatePlaylistDialog,
-  type StatusFilter,
-  type DurationFilter,
-} from "@/components/playlists";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import type { Playlist, PlaylistSortField } from "@/types/playlist";
 import type { Content } from "@/types/content";
 
@@ -106,32 +115,31 @@ const mockAvailableContent: Content[] = [
 ];
 
 export default function PlaylistsPage(): React.ReactElement {
-  // Filter state
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [durationFilter, setDurationFilter] = useState<DurationFilter>("all");
   const [sortBy, setSortBy] = useState<PlaylistSortField>("recent");
   const [search, setSearch] = useState("");
 
-  // Pagination state
   const [page, setPage] = useState(1);
   const pageSize = 12;
 
-  // Dialog state
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [previewPlaylist, setPreviewPlaylist] = useState<Playlist | null>(null);
+  const [editPlaylist, setEditPlaylist] = useState<Playlist | null>(null);
+  const [deletePlaylist, setDeletePlaylist] = useState<Playlist | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
-  // Playlists state (would come from API in real app)
   const [playlists, setPlaylists] = useState<Playlist[]>(mockPlaylists);
 
-  // Filter and sort playlists
   const filteredPlaylists = useMemo(() => {
     let result = [...playlists];
 
-    // Status filter
     if (statusFilter !== "all") {
       result = result.filter((p) => p.status === statusFilter);
     }
 
-    // Duration filter
     if (durationFilter !== "all") {
       result = result.filter((p) => {
         const duration = p.totalDuration;
@@ -148,7 +156,6 @@ export default function PlaylistsPage(): React.ReactElement {
       });
     }
 
-    // Search
     if (search) {
       const searchLower = search.toLowerCase();
       result = result.filter(
@@ -158,7 +165,6 @@ export default function PlaylistsPage(): React.ReactElement {
       );
     }
 
-    // Sort
     result.sort((a, b) => {
       switch (sortBy) {
         case "name":
@@ -178,7 +184,6 @@ export default function PlaylistsPage(): React.ReactElement {
     return result;
   }, [playlists, statusFilter, durationFilter, search, sortBy]);
 
-  // Paginate
   const paginatedPlaylists = useMemo(() => {
     const start = (page - 1) * pageSize;
     return filteredPlaylists.slice(start, start + pageSize);
@@ -205,17 +210,18 @@ export default function PlaylistsPage(): React.ReactElement {
   );
 
   const handleEditPlaylist = useCallback((playlist: Playlist) => {
-    // TODO: Open edit dialog
-    console.log("Edit playlist:", playlist);
+    setEditPlaylist(playlist);
+    setEditName(playlist.name);
+    setEditDescription(playlist.description ?? "");
   }, []);
 
   const handlePreviewPlaylist = useCallback((playlist: Playlist) => {
-    // TODO: Open preview
-    console.log("Preview playlist:", playlist);
+    setPreviewPlaylist(playlist);
   }, []);
 
   const handleDeletePlaylist = useCallback((playlist: Playlist) => {
-    setPlaylists((prev) => prev.filter((p) => p.id !== playlist.id));
+    setDeletePlaylist(playlist);
+    setDeleteDialogOpen(true);
   }, []);
 
   return (
@@ -228,7 +234,6 @@ export default function PlaylistsPage(): React.ReactElement {
       </PageHeader>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Toolbar */}
         <div className="flex items-center justify-between gap-4 px-6 pb-4">
           <PlaylistStatusTabs
             value={statusFilter}
@@ -244,7 +249,6 @@ export default function PlaylistsPage(): React.ReactElement {
           </div>
         </div>
 
-        {/* Grid */}
         <div className="flex-1 overflow-y-auto px-6">
           <PlaylistGrid
             playlists={paginatedPlaylists}
@@ -254,7 +258,6 @@ export default function PlaylistsPage(): React.ReactElement {
           />
         </div>
 
-        {/* Pagination */}
         <Pagination
           page={page}
           pageSize={pageSize}
@@ -263,12 +266,132 @@ export default function PlaylistsPage(): React.ReactElement {
         />
       </div>
 
-      {/* Create Playlist Dialog */}
       <CreatePlaylistDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onCreate={handleCreatePlaylist}
         availableContent={mockAvailableContent}
+      />
+
+      <Dialog
+        open={editPlaylist !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditPlaylist(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Playlist</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-playlist-name">Name</Label>
+              <Input
+                id="edit-playlist-name"
+                value={editName}
+                onChange={(event) => setEditName(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-playlist-description">Description</Label>
+              <Textarea
+                id="edit-playlist-description"
+                rows={3}
+                value={editDescription}
+                onChange={(event) => setEditDescription(event.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditPlaylist(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!editPlaylist || editName.trim().length === 0) return;
+                setPlaylists((prev) =>
+                  prev.map((playlist) =>
+                    playlist.id === editPlaylist.id
+                      ? {
+                          ...playlist,
+                          name: editName.trim(),
+                          description: editDescription.trim() || null,
+                          updatedAt: new Date().toISOString(),
+                        }
+                      : playlist,
+                  ),
+                );
+                setEditPlaylist(null);
+              }}
+              disabled={editName.trim().length === 0}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={previewPlaylist !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreviewPlaylist(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <IconPresentation className="size-4" />
+              Playlist Preview
+            </DialogTitle>
+          </DialogHeader>
+          {previewPlaylist ? (
+            <div className="space-y-2 text-sm">
+              <p>
+                <span className="text-muted-foreground">Name:</span>{" "}
+                {previewPlaylist.name}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Items:</span>{" "}
+                {previewPlaylist.items.length}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Duration:</span>{" "}
+                {previewPlaylist.totalDuration} sec
+              </p>
+              <div className="rounded-md border p-3">
+                {previewPlaylist.items.map((item) => (
+                  <p key={item.id} className="text-xs text-muted-foreground">
+                    • {item.content.title} ({item.duration}s)
+                  </p>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewPlaylist(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmActionDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete playlist?"
+        description={
+          deletePlaylist
+            ? `This will permanently delete "${deletePlaylist.name}".`
+            : undefined
+        }
+        confirmLabel="Delete playlist"
+        onConfirm={() => {
+          if (!deletePlaylist) return;
+          setPlaylists((prev) =>
+            prev.filter((playlist) => playlist.id !== deletePlaylist.id),
+          );
+          setDeletePlaylist(null);
+        }}
       />
     </>
   );

@@ -1,26 +1,27 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/layout";
+import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { PageHeader } from "@/components/layout/page-header";
+import { EditUserDialog } from "@/components/users/edit-user-dialog";
+import { InviteUsersDialog } from "@/components/users/invite-users-dialog";
+import { UserSearchInput } from "@/components/users/user-search-input";
+import { UsersPagination } from "@/components/users/users-pagination";
+import { UsersTable } from "@/components/users/users-table";
+import type { EditUserFormData } from "@/components/users/edit-user-dialog";
 import {
-  EditUserDialog,
-  UsersTable,
-  UserSearchInput,
-  UsersPagination,
-  InviteUsersDialog,
-} from "@/components/users";
-import type { EditUserFormData } from "@/components/users";
-import {
+  useLazyGetUserRolesQuery,
   useGetUsersQuery,
   useGetRolesQuery,
   useCreateUserMutation,
   useUpdateUserMutation,
   useDeleteUserMutation,
+  useSetUserRolesMutation,
 } from "@/lib/api/rbac-api";
-import type { User, UserSort } from "@/types/user";
+import type { User, UserRole, UserSort } from "@/types/user";
 
 export default function UsersPage(): React.ReactElement {
   const {
@@ -32,6 +33,8 @@ export default function UsersPage(): React.ReactElement {
   const [createUser] = useCreateUserMutation();
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
+  const [setUserRoles] = useSetUserRolesMutation();
+  const [getUserRolesTrigger] = useLazyGetUserRolesQuery();
 
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<UserSort>({
@@ -42,6 +45,11 @@ export default function UsersPage(): React.ReactElement {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userToRemove, setUserToRemove] = useState<User | null>(null);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+  const [userRolesByUserId, setUserRolesByUserId] = useState<
+    Readonly<Record<string, readonly UserRole[]>>
+  >({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const pageSize = 10;
@@ -65,13 +73,30 @@ export default function UsersPage(): React.ReactElement {
     async (emails: readonly string[]) => {
       setSubmitError(null);
       try {
-        for (const email of emails) {
-          await createUser({
-            email,
-            name: email.split("@")[0] ?? "User",
-            isActive: true,
-          }).unwrap();
+        const results = await Promise.allSettled(
+          emails.map((email) =>
+            createUser({
+              email,
+              name: email.split("@")[0] ?? "User",
+              isActive: true,
+            }).unwrap(),
+          ),
+        );
+
+        const failedInvites = results.filter(
+          (result): result is PromiseRejectedResult =>
+            result.status === "rejected",
+        );
+
+        if (failedInvites.length > 0) {
+          const firstError = failedInvites[0]?.reason;
+          const details =
+            firstError instanceof Error ? `: ${firstError.message}` : "";
+          throw new Error(
+            `${failedInvites.length} of ${emails.length} invites failed${details}`,
+          );
         }
+
         setIsInviteDialogOpen(false);
       } catch (err) {
         setSubmitError(
@@ -80,6 +105,24 @@ export default function UsersPage(): React.ReactElement {
       }
     },
     [createUser],
+  );
+
+  const handleRoleToggle = useCallback(
+    async (userId: string, roleIds: string[]) => {
+      setSubmitError(null);
+      try {
+        await setUserRoles({ userId, roleIds }).unwrap();
+        setUserRolesByUserId((prev) => ({
+          ...prev,
+          [userId]: availableRoles.filter((role) => roleIds.includes(role.id)),
+        }));
+      } catch (err) {
+        setSubmitError(
+          err instanceof Error ? err.message : "Failed to update user roles",
+        );
+      }
+    },
+    [setUserRoles, availableRoles],
   );
 
   const handleEdit = useCallback((user: User) => {
@@ -109,20 +152,10 @@ export default function UsersPage(): React.ReactElement {
     [updateUser],
   );
 
-  const handleRemoveUser = useCallback(
-    async (user: User) => {
-      if (!confirm(`Remove user "${user.name}"?`)) return;
-      setSubmitError(null);
-      try {
-        await deleteUser(user.id).unwrap();
-      } catch (err) {
-        setSubmitError(
-          err instanceof Error ? err.message : "Failed to remove user",
-        );
-      }
-    },
-    [deleteUser],
-  );
+  const handleRequestRemoveUser = useCallback((user: User) => {
+    setUserToRemove(user);
+    setIsRemoveDialogOpen(true);
+  }, []);
 
   const filteredUsers = useMemo(() => {
     if (!search) return users;
@@ -154,6 +187,39 @@ export default function UsersPage(): React.ReactElement {
     const start = (page - 1) * pageSize;
     return sortedUsers.slice(start, start + pageSize);
   }, [sortedUsers, page]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (paginatedUsers.length === 0) return () => undefined;
+
+    async function loadVisibleUserRoles(): Promise<void> {
+      const entries = await Promise.all(
+        paginatedUsers.map(async (user) => {
+          try {
+            const roles = await getUserRolesTrigger(user.id, true).unwrap();
+            return [
+              user.id,
+              roles.map((role) => ({ id: role.id, name: role.name })),
+            ] as const;
+          } catch {
+            return [user.id, []] as const;
+          }
+        }),
+      );
+
+      if (cancelled) return;
+      setUserRolesByUserId((prev) => ({
+        ...prev,
+        ...Object.fromEntries(entries),
+      }));
+    }
+
+    void loadVisibleUserRoles();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getUserRolesTrigger, paginatedUsers]);
 
   if (usersLoading) {
     return (
@@ -199,10 +265,12 @@ export default function UsersPage(): React.ReactElement {
             <UsersTable
               users={paginatedUsers}
               availableRoles={availableRoles}
+              userRolesByUserId={userRolesByUserId}
               sort={sort}
               onSortChange={setSort}
               onEdit={handleEdit}
-              onRemoveUser={handleRemoveUser}
+              onRoleToggle={handleRoleToggle}
+              onRemoveUser={handleRequestRemoveUser}
             />
           </div>
         </div>
@@ -226,6 +294,31 @@ export default function UsersPage(): React.ReactElement {
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSubmit={handleEditSubmit}
+      />
+
+      <ConfirmActionDialog
+        open={isRemoveDialogOpen}
+        onOpenChange={setIsRemoveDialogOpen}
+        title="Remove user?"
+        description={
+          userToRemove
+            ? `This will permanently remove "${userToRemove.name}".`
+            : undefined
+        }
+        confirmLabel="Remove user"
+        onConfirm={async () => {
+          if (!userToRemove) return;
+          setSubmitError(null);
+          try {
+            await deleteUser(userToRemove.id).unwrap();
+            setUserToRemove(null);
+          } catch (err) {
+            setSubmitError(
+              err instanceof Error ? err.message : "Failed to remove user",
+            );
+            throw err;
+          }
+        }}
       />
     </div>
   );

@@ -19,6 +19,7 @@ export function DisplaySearchInput({
       <Input
         type="search"
         placeholder="Search displays..."
+        aria-label="Search displays"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-48 pl-8"

@@ -32,18 +32,16 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  useGetUserRolesQuery,
-  useSetUserRolesMutation,
-} from "@/lib/api/rbac-api";
 import type { User, UserRole, UserSort, UserSortField } from "@/types/user";
 
 interface UsersTableProps {
   readonly users: readonly User[];
   readonly availableRoles: readonly UserRole[];
+  readonly userRolesByUserId: Readonly<Record<string, readonly UserRole[]>>;
   readonly sort: UserSort;
   readonly onSortChange: (sort: UserSort) => void;
   readonly onEdit: (user: User) => void;
+  readonly onRoleToggle: (userId: string, roleIds: string[]) => void;
   readonly onRemoveUser: (user: User) => void;
 }
 
@@ -190,24 +188,22 @@ function formatLastSeen(date: string | null): string {
 
 interface UserRowProps {
   readonly user: User;
+  readonly userRoles: readonly UserRole[];
   readonly availableRoles: readonly UserRole[];
   readonly onEdit: (user: User) => void;
+  readonly onRoleToggle: (userId: string, roleIds: string[]) => void;
   readonly onRemoveUser: (user: User) => void;
 }
 
 function UserRow({
   user,
+  userRoles,
   availableRoles,
   onEdit,
+  onRoleToggle,
   onRemoveUser,
 }: UserRowProps): React.ReactElement {
-  const { data: userRoles = [] } = useGetUserRolesQuery(user.id);
-  const [setUserRoles] = useSetUserRolesMutation();
   const userRoleIds = userRoles.map((r) => r.id);
-
-  const handleRoleToggle = (userId: string, roleIds: string[]): void => {
-    setUserRoles({ userId, roleIds });
-  };
 
   return (
     <TableRow>
@@ -236,7 +232,7 @@ function UserRow({
           userRoleIds={userRoleIds}
           availableRoles={availableRoles}
           onEdit={onEdit}
-          onRoleToggle={handleRoleToggle}
+          onRoleToggle={onRoleToggle}
           onRemoveUser={onRemoveUser}
         />
       </TableCell>
@@ -247,9 +243,11 @@ function UserRow({
 export function UsersTable({
   users,
   availableRoles,
+  userRolesByUserId,
   sort,
   onSortChange,
   onEdit,
+  onRoleToggle,
   onRemoveUser,
 }: UsersTableProps): React.ReactElement {
   if (users.length === 0) {
@@ -294,8 +292,10 @@ export function UsersTable({
           <UserRow
             key={user.id}
             user={user}
+            userRoles={userRolesByUserId[user.id] ?? []}
             availableRoles={availableRoles}
             onEdit={onEdit}
+            onRoleToggle={onRoleToggle}
             onRemoveUser={onRemoveUser}
           />
         ))}

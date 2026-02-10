@@ -4,13 +4,12 @@ import { useState, useCallback, useMemo } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/layout";
-import {
-  RolesTable,
-  RoleSearchInput,
-  RolesPagination,
-  RoleDialog,
-} from "@/components/roles";
+import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { PageHeader } from "@/components/layout/page-header";
+import { RoleDialog } from "@/components/roles/role-dialog";
+import { RoleSearchInput } from "@/components/roles/role-search-input";
+import { RolesPagination } from "@/components/roles/roles-pagination";
+import { RolesTable } from "@/components/roles/roles-table";
 import {
   useGetRolesQuery,
   useGetPermissionsQuery,
@@ -53,6 +52,8 @@ export default function RolesPage(): React.ReactElement {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // When editing, fetch role permissions and users for dialog
@@ -140,13 +141,18 @@ export default function RolesPage(): React.ReactElement {
             roleId: role.id,
             permissionIds: [...data.permissionIds],
           }).unwrap();
-          for (const userId of data.userIds) {
-            const currentRoles = await getUserRolesTrigger(userId).unwrap();
-            await setUserRoles({
-              userId,
-              roleIds: [...currentRoles.map((r) => r.id), role.id],
-            }).unwrap();
-          }
+          await Promise.all(
+            data.userIds.map(async (userId) => {
+              const currentRoles = await getUserRolesTrigger(
+                userId,
+                true,
+              ).unwrap();
+              await setUserRoles({
+                userId,
+                roleIds: [...currentRoles.map((r) => r.id), role.id],
+              }).unwrap();
+            }),
+          );
           setDialogOpen(false);
         } else if (selectedRole) {
           await updateRole({
@@ -166,22 +172,32 @@ export default function RolesPage(): React.ReactElement {
           const toRemove = currentUserIds.filter(
             (id) => !desiredUserIds.includes(id),
           );
-          for (const userId of toAdd) {
-            const currentRoles = await getUserRolesTrigger(userId).unwrap();
-            await setUserRoles({
-              userId,
-              roleIds: [...currentRoles.map((r) => r.id), selectedRole.id],
-            }).unwrap();
-          }
-          for (const userId of toRemove) {
-            const currentRoles = await getUserRolesTrigger(userId).unwrap();
-            await setUserRoles({
-              userId,
-              roleIds: currentRoles
-                .map((r) => r.id)
-                .filter((id) => id !== selectedRole.id),
-            }).unwrap();
-          }
+          await Promise.all(
+            toAdd.map(async (userId) => {
+              const currentRoles = await getUserRolesTrigger(
+                userId,
+                true,
+              ).unwrap();
+              await setUserRoles({
+                userId,
+                roleIds: [...currentRoles.map((r) => r.id), selectedRole.id],
+              }).unwrap();
+            }),
+          );
+          await Promise.all(
+            toRemove.map(async (userId) => {
+              const currentRoles = await getUserRolesTrigger(
+                userId,
+                true,
+              ).unwrap();
+              await setUserRoles({
+                userId,
+                roleIds: currentRoles
+                  .map((r) => r.id)
+                  .filter((id) => id !== selectedRole.id),
+              }).unwrap();
+            }),
+          );
           setDialogOpen(false);
         }
       } catch (err) {
@@ -202,20 +218,10 @@ export default function RolesPage(): React.ReactElement {
     ],
   );
 
-  const handleDelete = useCallback(
-    async (role: Role) => {
-      if (!confirm(`Delete role "${role.name}"?`)) return;
-      setSubmitError(null);
-      try {
-        await deleteRole(role.id).unwrap();
-      } catch (err) {
-        setSubmitError(
-          err instanceof Error ? err.message : "Failed to delete role",
-        );
-      }
-    },
-    [deleteRole],
-  );
+  const handleDeleteRequest = useCallback((role: Role) => {
+    setRoleToDelete(role);
+    setIsDeleteDialogOpen(true);
+  }, []);
 
   const filteredRoles = useMemo(() => {
     if (!search) return roles;
@@ -290,7 +296,7 @@ export default function RolesPage(): React.ReactElement {
               sort={sort}
               onSortChange={setSort}
               onEdit={handleEdit}
-              onDelete={handleDelete}
+              onDelete={handleDeleteRequest}
             />
           </div>
         </div>
@@ -317,6 +323,31 @@ export default function RolesPage(): React.ReactElement {
         initialPermissionIds={rolePermissionsData?.map((p) => p.id)}
         initialUserIds={roleUsersData?.map((u) => u.id)}
         onSubmit={handleSubmit}
+      />
+
+      <ConfirmActionDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Delete role?"
+        description={
+          roleToDelete
+            ? `This will permanently delete "${roleToDelete.name}".`
+            : undefined
+        }
+        confirmLabel="Delete role"
+        onConfirm={async () => {
+          if (!roleToDelete) return;
+          setSubmitError(null);
+          try {
+            await deleteRole(roleToDelete.id).unwrap();
+            setRoleToDelete(null);
+          } catch (err) {
+            setSubmitError(
+              err instanceof Error ? err.message : "Failed to delete role",
+            );
+            throw err;
+          }
+        }}
       />
     </div>
   );

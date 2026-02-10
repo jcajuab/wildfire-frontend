@@ -199,12 +199,10 @@ function MonthView({
 }
 
 function TimeGrid({
-  currentDate,
   days,
   schedules,
   onScheduleClick,
 }: {
-  currentDate: Date;
   days: Date[];
   schedules: readonly Schedule[];
   onScheduleClick: (schedule: Schedule) => void;
@@ -364,7 +362,6 @@ function WeekView({
 
   return (
     <TimeGrid
-      currentDate={currentDate}
       days={days}
       schedules={schedules}
       onScheduleClick={onScheduleClick}
@@ -379,7 +376,6 @@ function DayView({
 }: CalendarGridProps): React.ReactElement {
   return (
     <TimeGrid
-      currentDate={currentDate}
       days={[currentDate]}
       schedules={schedules}
       onScheduleClick={onScheduleClick}

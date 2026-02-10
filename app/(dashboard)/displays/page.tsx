@@ -3,45 +3,41 @@
 import { useState, useCallback } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
+import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { AddDisplayDialog } from "@/components/displays/add-display-dialog";
+import { DisplayFilterPopover } from "@/components/displays/display-filter-popover";
+import { DisplayGrid } from "@/components/displays/display-grid";
+import { DisplaySearchInput } from "@/components/displays/display-search-input";
+import { DisplaySortSelect } from "@/components/displays/display-sort-select";
+import { DisplayStatusTabs } from "@/components/displays/display-status-tabs";
+import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
+import { ViewDisplayDialog } from "@/components/displays/view-display-dialog";
+import { PageHeader } from "@/components/layout/page-header";
+import { Pagination } from "@/components/content/pagination";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/layout";
-import { Pagination } from "@/components/content";
-import {
-  DisplayStatusTabs,
-  DisplaySortSelect,
-  DisplaySearchInput,
-  DisplayFilterPopover,
-  DisplayGrid,
-  AddDisplayDialog,
-  ViewDisplayDialog,
-  EditDisplayDialog,
-} from "@/components/displays";
-import type { DisplayStatusFilter } from "@/components/displays";
 import type { Display, DisplaySortField } from "@/types/display";
+import type { DisplayStatusFilter } from "@/components/displays/display-status-tabs";
 
-// Mock data for demonstration - will be replaced with API data
 const mockDisplays: Display[] = [];
 
 export default function DisplaysPage(): React.ReactElement {
-  // Filter state
   const [statusFilter, setStatusFilter] = useState<DisplayStatusFilter>("all");
   const [sortBy, setSortBy] = useState<DisplaySortField>("alphabetical");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  // Dialog state
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+  const [displayToRemove, setDisplayToRemove] = useState<Display | null>(null);
   const [selectedDisplay, setSelectedDisplay] = useState<Display | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
-  // Display state (mock)
   const [displays, setDisplays] = useState<Display[]>(mockDisplays);
-
-  // Pagination
   const pageSize = 20;
 
-  // Handlers
   const handleRegister = useCallback(
     (displayData: Omit<Display, "id" | "createdAt">) => {
       const newDisplay: Display = {
@@ -60,23 +56,32 @@ export default function DisplaysPage(): React.ReactElement {
   }, []);
 
   const handlePreviewPage = useCallback((display: Display) => {
-    // TODO: Open preview in new tab
-    console.log("Preview page:", display.id);
+    setSelectedDisplay(display);
+    setIsPreviewDialogOpen(true);
   }, []);
 
   const handleRefreshPage = useCallback((display: Display) => {
-    // TODO: Send refresh command to display
-    console.log("Refresh page:", display.id);
+    const refreshedAt = new Date().toLocaleTimeString();
+    setInfoMessage(`Refreshed "${display.name}" at ${refreshedAt}.`);
   }, []);
 
   const handleToggleDisplay = useCallback((display: Display) => {
-    // TODO: Toggle display on/off
-    console.log("Toggle display:", display.id);
+    setDisplays((prev) =>
+      prev.map((currentDisplay) =>
+        currentDisplay.id === display.id
+          ? {
+              ...currentDisplay,
+              status: currentDisplay.status === "DOWN" ? "READY" : "DOWN",
+            }
+          : currentDisplay,
+      ),
+    );
+    setInfoMessage(`Updated power state for "${display.name}".`);
   }, []);
 
   const handleRemoveDisplay = useCallback((display: Display) => {
-    // TODO: Show confirmation dialog
-    setDisplays((prev) => prev.filter((d) => d.id !== display.id));
+    setDisplayToRemove(display);
+    setIsRemoveDialogOpen(true);
   }, []);
 
   const handleEditFromView = useCallback((display: Display) => {
@@ -86,8 +91,9 @@ export default function DisplaysPage(): React.ReactElement {
   }, []);
 
   const handleEditPlaylist = useCallback((display: Display) => {
-    // TODO: Navigate to playlist editor
-    console.log("Edit playlist for:", display.id);
+    setInfoMessage(
+      `Playlist editing for "${display.name}" is unavailable in mock mode.`,
+    );
   }, []);
 
   const handleSaveEdit = useCallback((updatedDisplay: Display) => {
@@ -98,12 +104,10 @@ export default function DisplaysPage(): React.ReactElement {
 
   // Filter displays based on current filters
   const filteredDisplays = displays.filter((display) => {
-    // Status filter
     if (statusFilter !== "all" && display.status !== statusFilter) {
       return false;
     }
 
-    // Search filter
     if (search) {
       const searchLower = search.toLowerCase();
       const matchesName = display.name.toLowerCase().includes(searchLower);
@@ -147,8 +151,13 @@ export default function DisplaysPage(): React.ReactElement {
         </Button>
       </PageHeader>
 
+      {infoMessage ? (
+        <div className="mx-6 mb-2 rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-sm text-primary">
+          {infoMessage}
+        </div>
+      ) : null}
+
       <div className="flex flex-1 flex-col">
-        {/* Toolbar */}
         <div className="flex items-center justify-between px-6 py-3">
           <DisplayStatusTabs
             value={statusFilter}
@@ -162,7 +171,6 @@ export default function DisplaysPage(): React.ReactElement {
           </div>
         </div>
 
-        {/* Display grid */}
         <div className="flex-1 overflow-auto">
           <DisplayGrid
             items={paginatedDisplays}
@@ -174,7 +182,6 @@ export default function DisplaysPage(): React.ReactElement {
           />
         </div>
 
-        {/* Pagination */}
         <Pagination
           page={page}
           pageSize={pageSize}
@@ -183,14 +190,12 @@ export default function DisplaysPage(): React.ReactElement {
         />
       </div>
 
-      {/* Add Display Dialog */}
       <AddDisplayDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         onRegister={handleRegister}
       />
 
-      {/* View Display Dialog */}
       <ViewDisplayDialog
         display={selectedDisplay}
         open={isViewDialogOpen}
@@ -199,12 +204,38 @@ export default function DisplaysPage(): React.ReactElement {
         onEditPlaylist={handleEditPlaylist}
       />
 
-      {/* Edit Display Dialog */}
       <EditDisplayDialog
         display={selectedDisplay}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSave={handleSaveEdit}
+      />
+
+      <ViewDisplayDialog
+        display={selectedDisplay}
+        open={isPreviewDialogOpen}
+        onOpenChange={setIsPreviewDialogOpen}
+        onEdit={handleEditFromView}
+        onEditPlaylist={handleEditPlaylist}
+      />
+
+      <ConfirmActionDialog
+        open={isRemoveDialogOpen}
+        onOpenChange={setIsRemoveDialogOpen}
+        title="Remove display?"
+        description={
+          displayToRemove
+            ? `This will permanently remove "${displayToRemove.name}".`
+            : undefined
+        }
+        confirmLabel="Remove display"
+        onConfirm={() => {
+          if (!displayToRemove) return;
+          setDisplays((prev) =>
+            prev.filter((display) => display.id !== displayToRemove.id),
+          );
+          setDisplayToRemove(null);
+        }}
       />
     </div>
   );

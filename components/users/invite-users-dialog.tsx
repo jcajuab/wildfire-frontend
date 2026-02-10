@@ -18,7 +18,7 @@ import { Separator } from "@/components/ui/separator";
 interface InviteUsersDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onInvite: (emails: readonly string[]) => void;
+  readonly onInvite: (emails: readonly string[]) => Promise<void> | void;
 }
 
 function InviteUsersDialogContent({
@@ -26,6 +26,7 @@ function InviteUsersDialogContent({
   onOpenChange,
 }: Omit<InviteUsersDialogProps, "open">): React.ReactElement {
   const [emails, setEmails] = useState<string[]>([""]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleEmailChange = (index: number, value: string): void => {
@@ -80,14 +81,19 @@ function InviteUsersDialogContent({
     e.target.value = "";
   };
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+    if (isSubmitting) return;
     const validEmails = emails.filter(
       (email) => email.trim() && email.includes("@"),
     );
     if (validEmails.length === 0) return;
-    onInvite(validEmails);
-    onOpenChange(false);
+    setIsSubmitting(true);
+    try {
+      await onInvite(validEmails);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const hasValidEmail = emails.some(
@@ -178,11 +184,12 @@ function InviteUsersDialogContent({
           type="button"
           variant="outline"
           onClick={() => onOpenChange(false)}
+          disabled={isSubmitting}
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={!hasValidEmail}>
-          Invite
+        <Button type="submit" disabled={!hasValidEmail || isSubmitting}>
+          {isSubmitting ? "Inviting…" : "Invite"}
         </Button>
       </DialogFooter>
     </form>

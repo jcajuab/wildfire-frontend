@@ -22,7 +22,8 @@ export function LogSearchInput({
         <IconSearch className="size-4" />
       </InputGroupAddon>
       <InputGroupInput
-        placeholder="Search users..."
+        placeholder="Search logs..."
+        aria-label="Search logs"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

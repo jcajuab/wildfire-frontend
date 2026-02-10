@@ -1,9 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { IconUserSquareRounded, IconUser } from "@tabler/icons-react";
 
+import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageHeader } from "@/components/layout";
 import { useAuth } from "@/context/auth-context";
 
 // Common timezones
@@ -36,6 +45,7 @@ const defaultTimezone = "Asia - Taipei";
 
 export default function AccountPage(): React.ReactElement {
   const { user, logout } = useAuth();
+  const profilePictureInputRef = useRef<HTMLInputElement>(null);
   const [firstName, setFirstName] = useState(
     user?.name?.split(/\s+/)[0] ?? "Admin",
   );
@@ -43,15 +53,33 @@ export default function AccountPage(): React.ReactElement {
     user?.name?.split(/\s+/).slice(1).join(" ") ?? "",
   );
   const [timezone, setTimezone] = useState(defaultTimezone);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   const handleChangeProfilePicture = (): void => {
-    // TODO: Implement file upload
-    console.log("Change profile picture");
+    profilePictureInputRef.current?.click();
+  };
+
+  const handleProfilePictureSelected = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ): void => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setInfoMessage(`Selected "${file.name}" as profile picture (mock mode).`);
+    event.target.value = "";
   };
 
   const handleChangePassword = (): void => {
-    // TODO: Implement password change dialog
-    console.log("Change password");
+    setPasswordError(null);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setIsPasswordDialogOpen(true);
   };
 
   const handleLogOut = async (): Promise<void> => {
@@ -59,13 +87,66 @@ export default function AccountPage(): React.ReactElement {
   };
 
   const handleDeleteAccount = (): void => {
-    // TODO: Implement account deletion with confirmation
-    console.log("Delete account");
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleSaveChanges = (): void => {
+    setInfoMessage("Saved account settings in mock mode.");
+  };
+
+  const handlePasswordSubmit = (
+    event: React.FormEvent<HTMLFormElement>,
+  ): void => {
+    event.preventDefault();
+    setPasswordError(null);
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError("Please fill in all password fields.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New password and confirmation do not match.");
+      return;
+    }
+
+    setInfoMessage("Password updated in mock mode.");
+    setIsPasswordDialogOpen(false);
+  };
+
+  const canSubmitPassword =
+    currentPassword.length > 0 &&
+    newPassword.length > 0 &&
+    confirmPassword.length > 0;
+
+  const accountDisplayName = [firstName.trim(), lastName.trim()]
+    .filter((part) => part.length > 0)
+    .join(" ");
+
+  const accountNameForDialog =
+    accountDisplayName.length > 0
+      ? accountDisplayName
+      : (user?.name ?? "this account");
+
+  const handleDeleteAccountConfirm = async (): Promise<void> => {
+    setInfoMessage("Account deletion confirmed in mock mode. Signing out.");
+    await logout();
   };
 
   return (
     <div className="flex h-full flex-col">
       <PageHeader title="Account" />
+
+      {infoMessage ? (
+        <div className="mx-6 mt-2 rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-sm text-primary">
+          {infoMessage}
+        </div>
+      ) : null}
 
       <div className="flex flex-1 flex-col overflow-auto">
         {/* Account Information Section */}
@@ -95,6 +176,13 @@ export default function AccountPage(): React.ReactElement {
                 >
                   Change Profile Picture
                 </Button>
+                <input
+                  ref={profilePictureInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePictureSelected}
+                  className="hidden"
+                />
                 <p className="text-xs text-muted-foreground">
                   Recommended size: 320 × 320 pixels
                 </p>
@@ -181,6 +269,9 @@ export default function AccountPage(): React.ReactElement {
         <div className="grid grid-cols-[180px_1fr] items-center gap-4 px-6 pb-6">
           <div />
           <div className="flex justify-end gap-2 max-w-lg">
+            <Button variant="default" onClick={handleSaveChanges}>
+              Save Changes
+            </Button>
             <Button
               variant="outline"
               className="border-destructive text-destructive hover:bg-destructive/10"
@@ -194,6 +285,78 @@ export default function AccountPage(): React.ReactElement {
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={isPasswordDialogOpen}
+        onOpenChange={(open) => {
+          setIsPasswordDialogOpen(open);
+          if (!open) setPasswordError(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <form onSubmit={handlePasswordSubmit}>
+            <DialogHeader>
+              <DialogTitle>Change Password</DialogTitle>
+              <DialogDescription>
+                This action is simulated in mock mode.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="current-password">Current password</Label>
+                <Input
+                  id="current-password"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="new-password">New password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="confirm-password">Confirm new password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                />
+              </div>
+              {passwordError ? (
+                <p className="text-sm text-destructive">{passwordError}</p>
+              ) : null}
+            </div>
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsPasswordDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!canSubmitPassword}>
+                Update Password
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmActionDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Delete account?"
+        description={`This will permanently remove ${accountNameForDialog}. In mock mode this signs you out.`}
+        confirmLabel="Delete account"
+        onConfirm={handleDeleteAccountConfirm}
+      />
     </div>
   );
 }

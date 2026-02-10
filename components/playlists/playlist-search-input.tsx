@@ -21,6 +21,7 @@ export function PlaylistSearchInput({
       <Input
         type="search"
         placeholder={placeholder}
+        aria-label="Search playlists"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-48 pl-8"

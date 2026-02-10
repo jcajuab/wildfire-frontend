@@ -23,6 +23,7 @@ export function RoleSearchInput({
       </InputGroupAddon>
       <InputGroupInput
         placeholder="Search roles..."
+        aria-label="Search roles"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

@@ -1,11 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import {
   IconCalendarEvent,
   IconCalendar,
   IconClock,
   IconRepeat,
-  IconExternalLink,
   IconDeviceDesktop,
   IconPencil,
   IconX,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import type { Schedule } from "@/types/schedule";
 
 interface ViewScheduleDialogProps {
@@ -67,6 +68,7 @@ export function ViewScheduleDialog({
   onEdit,
   onDelete,
 }: ViewScheduleDialogProps): React.ReactElement | null {
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   if (!schedule) return null;
 
   return (
@@ -108,13 +110,9 @@ export function ViewScheduleDialog({
           {/* Playlist */}
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Playlist:</span>
-            <a
-              href="#"
-              className="flex items-center gap-1 text-foreground hover:text-primary"
-            >
+            <span className="flex items-center gap-1 text-foreground">
               {schedule.playlist.name}
-              <IconExternalLink className="size-3.5" />
-            </a>
+            </span>
           </div>
 
           {/* Target Displays */}
@@ -135,10 +133,7 @@ export function ViewScheduleDialog({
         <DialogFooter className="flex items-center justify-between border-t-2 border-dashed border-primary/30 pt-4 sm:justify-between">
           <Button
             variant="destructive"
-            onClick={() => {
-              onDelete(schedule);
-              onOpenChange(false);
-            }}
+            onClick={() => setConfirmDeleteOpen(true)}
           >
             <IconTrash className="size-4" />
             Delete
@@ -154,6 +149,17 @@ export function ViewScheduleDialog({
           </div>
         </DialogFooter>
       </DialogContent>
+      <ConfirmActionDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        title="Delete schedule?"
+        description={`This will permanently delete "${schedule.name}".`}
+        confirmLabel="Delete schedule"
+        onConfirm={() => {
+          onDelete(schedule);
+          onOpenChange(false);
+        }}
+      />
     </Dialog>
   );
 }

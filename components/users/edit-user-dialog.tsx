@@ -26,7 +26,7 @@ interface EditUserDialogProps {
   readonly user: User | null;
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onSubmit: (data: EditUserFormData) => void;
+  readonly onSubmit: (data: EditUserFormData) => Promise<void> | void;
 }
 
 /** Form body keyed by user.id so state resets when editing a different user. */
@@ -37,22 +37,27 @@ function EditUserForm({
 }: {
   user: User;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: EditUserFormData) => void;
+  onSubmit: (data: EditUserFormData) => Promise<void> | void;
 }): React.ReactElement {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [isActive, setIsActive] = useState(user.isActive);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    if (!name.trim() || !email.trim()) return;
-    onSubmit({
-      id: user.id,
-      name: name.trim(),
-      email: email.trim(),
-      isActive,
-    });
-    onOpenChange(false);
+    if (!name.trim() || !email.trim() || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await onSubmit({
+        id: user.id,
+        name: name.trim(),
+        email: email.trim(),
+        isActive,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isValid = name.trim().length > 0 && email.trim().length > 0;
@@ -101,11 +106,12 @@ function EditUserForm({
           type="button"
           variant="outline"
           onClick={() => onOpenChange(false)}
+          disabled={isSubmitting}
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={!isValid}>
-          Save
+        <Button type="submit" disabled={!isValid || isSubmitting}>
+          {isSubmitting ? "Saving…" : "Save"}
         </Button>
       </DialogFooter>
     </form>

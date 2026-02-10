@@ -53,7 +53,7 @@ interface RoleDialogProps {
   readonly initialPermissionIds?: readonly string[];
   /** Initial user IDs assigned to role when editing (from API or context). */
   readonly initialUserIds?: readonly string[];
-  readonly onSubmit: (data: RoleFormData) => void;
+  readonly onSubmit: (data: RoleFormData) => Promise<void> | void;
 }
 
 interface RoleFormProps {
@@ -63,7 +63,7 @@ interface RoleFormProps {
   readonly availableUsers: readonly RoleUser[];
   readonly initialPermissionIds: readonly string[];
   readonly initialUserIds: readonly string[];
-  readonly onSubmit: (data: RoleFormData) => void;
+  readonly onSubmit: (data: RoleFormData) => Promise<void> | void;
   readonly onOpenChange: (open: boolean) => void;
 }
 
@@ -92,18 +92,23 @@ function RoleForm({
       : [],
   );
   const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || isSubmitting) return;
 
-    onSubmit({
-      name: name.trim(),
-      description: description.trim() || null,
-      permissionIds: selectedPermissions,
-      userIds: assignedUsers.map((u) => u.id),
-    });
-    onOpenChange(false);
+    setIsSubmitting(true);
+    try {
+      await onSubmit({
+        name: name.trim(),
+        description: description.trim() || null,
+        permissionIds: selectedPermissions,
+        userIds: assignedUsers.map((u) => u.id),
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handlePermissionToggle = (
@@ -292,11 +297,12 @@ function RoleForm({
           type="button"
           variant="outline"
           onClick={() => onOpenChange(false)}
+          disabled={isSubmitting}
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={!isValid}>
-          {isCreate ? "Create" : "Save"}
+        <Button type="submit" disabled={!isValid || isSubmitting}>
+          {isSubmitting ? "Saving…" : isCreate ? "Create" : "Save"}
         </Button>
       </DialogFooter>
     </form>
