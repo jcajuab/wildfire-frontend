@@ -25,6 +25,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/context/auth-context";
+import { deleteCurrentUser } from "@/lib/api-client";
+import { toast } from "sonner";
 
 // Common timezones
 const timezones = [
@@ -45,7 +47,7 @@ const timezones = [
 const defaultTimezone = "Asia - Taipei";
 
 export default function AccountPage(): ReactElement {
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
   const profilePictureInputRef = useRef<HTMLInputElement>(null);
   const [firstName, setFirstName] = useState(
     user?.name?.split(/\s+/)[0] ?? "Admin",
@@ -133,8 +135,18 @@ export default function AccountPage(): ReactElement {
       : (user?.name ?? "this account");
 
   const handleDeleteAccountConfirm = async (): Promise<void> => {
-    setInfoMessage("Account deletion confirmed in mock mode. Signing out.");
-    await logout();
+    if (!token) {
+      toast.error("You are not signed in.");
+      return;
+    }
+    try {
+      await deleteCurrentUser(token);
+      await logout();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to delete account.";
+      toast.error(message);
+    }
   };
 
   return (
@@ -352,7 +364,7 @@ export default function AccountPage(): ReactElement {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         title="Delete account?"
-        description={`This will permanently remove ${accountNameForDialog}. In mock mode this signs you out.`}
+        description={`This will permanently remove ${accountNameForDialog}. You can log out instead if you only want to end this session.`}
         confirmLabel="Delete account"
         onConfirm={handleDeleteAccountConfirm}
       />

@@ -71,6 +71,22 @@ export async function logoutApi(token: string): Promise<void> {
   }
 }
 
+/** DELETE /auth/me. Deletes the current user (self-deletion). Returns on 204; throws AuthApiError on error. */
+export async function deleteCurrentUser(token: string): Promise<void> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/me`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (response.status === 204) return;
+
+  const data = (await response.json()) as ApiErrorResponse;
+  const message =
+    data?.error?.message ?? `Request failed with status ${response.status}`;
+  throw new AuthApiError(message, response.status, data);
+}
+
 /** Error thrown by auth API with status and optional backend body. */
 export class AuthApiError extends Error {
   constructor(

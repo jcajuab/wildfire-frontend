@@ -14,6 +14,7 @@ import { InviteUsersDialog } from "@/components/users/invite-users-dialog";
 import { UserSearchInput } from "@/components/users/user-search-input";
 import { UsersPagination } from "@/components/users/users-pagination";
 import { UsersTable } from "@/components/users/users-table";
+import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
@@ -42,6 +43,7 @@ const USER_SORT_FIELDS = ["name", "lastSeen"] as const;
 const USER_SORT_DIRECTIONS = ["asc", "desc"] as const;
 
 export default function UsersPage(): ReactElement {
+  const { user: currentUser } = useAuth();
   const canUpdateUser = useCan("users:update");
   const canDeleteUser = useCan("users:delete");
   const isSuperAdmin = useCan("*:manage");
@@ -367,6 +369,7 @@ export default function UsersPage(): ReactElement {
               canDelete={canDeleteUser}
               isSuperAdmin={isSuperAdmin}
               systemRoleIds={systemRoleIds}
+              currentUserId={currentUser?.id}
             />
           </div>
         </DashboardPage.Content>
