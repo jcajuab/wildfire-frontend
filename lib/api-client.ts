@@ -123,7 +123,7 @@ export async function changePassword(
 
 const AVATAR_UPLOAD_TIMEOUT_MS = 30_000;
 
-/** POST /auth/me/avatar. Upload or replace current user avatar. Returns full auth payload; use updateSession to refresh. */
+/** PUT /auth/me/avatar. Upload or replace current user avatar. Returns full auth payload; use updateSession to refresh. */
 export async function uploadAvatar(
   token: string,
   file: File,
@@ -133,11 +133,14 @@ export async function uploadAvatar(
   formData.append("file", file);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), AVATAR_UPLOAD_TIMEOUT_MS);
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    AVATAR_UPLOAD_TIMEOUT_MS,
+  );
 
   try {
     const response = await fetch(`${baseUrl}/auth/me/avatar`, {
-      method: "POST",
+      method: "PUT",
       headers: { Authorization: `Bearer ${token}` },
       body: formData,
       signal: controller.signal,
@@ -148,7 +151,8 @@ export async function uploadAvatar(
     if (!response.ok) {
       const error = data as ApiErrorResponse;
       const message =
-        error?.error?.message ?? `Request failed with status ${response.status}`;
+        error?.error?.message ??
+        `Request failed with status ${response.status}`;
       throw new AuthApiError(message, response.status, error);
     }
 

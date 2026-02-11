@@ -21,6 +21,8 @@ export interface RbacUser {
   readonly email: string;
   readonly name: string;
   readonly isActive: boolean;
+  /** Presigned avatar URL when user has profile picture in MinIO. */
+  readonly avatarUrl?: string | null;
 }
 
 const SESSION_KEY = "wildfire_session";

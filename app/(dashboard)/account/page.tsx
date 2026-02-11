@@ -231,47 +231,47 @@ export default function AccountPage(): ReactElement {
 
   return (
     <DashboardPage.Root>
-      <DashboardPage.Header title='Account' />
+      <DashboardPage.Header title="Account" />
 
       <DashboardPage.Body>
         <DashboardPage.Content
           key={user?.id ?? "anonymous"}
-          className='overflow-auto px-0 pb-0'
+          className="overflow-auto px-0 pb-0"
         >
           {/* Account Information Section */}
-          <div className='border-b px-8 py-4'>
-            <div className='flex items-center gap-2'>
-              <IconUserSquareRounded className='size-5' />
-              <h2 className='text-base font-semibold'>Account Information</h2>
+          <div className="border-b px-8 py-4">
+            <div className="flex items-center gap-2">
+              <IconUserSquareRounded className="size-5" />
+              <h2 className="text-base font-semibold">Account Information</h2>
             </div>
           </div>
 
           {/* Form */}
-          <div className='flex flex-col gap-6 px-8 py-6'>
+          <div className="flex flex-col gap-6 px-8 py-6">
             {/* Profile Picture */}
-            <div className='grid grid-cols-[180px_1fr] items-start gap-4'>
-              <Label className='pt-2 text-right text-sm font-medium text-muted-foreground'>
+            <div className="grid grid-cols-[180px_1fr] items-start gap-4">
+              <Label className="pt-2 text-right text-sm font-medium text-muted-foreground">
                 Profile Picture
               </Label>
-              <div className='flex items-center gap-4'>
-                <div className='flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted'>
+              <div className="flex items-center gap-4">
+                <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
                   {user?.avatarUrl ? (
                     <Image
                       src={user.avatarUrl}
-                      alt='Profile'
+                      alt="Profile"
                       width={48}
                       height={48}
-                      className='size-12 object-cover'
+                      className="size-12 object-cover"
                       unoptimized
                     />
                   ) : (
-                    <IconUser className='size-6 text-muted-foreground' />
+                    <IconUser className="size-6 text-muted-foreground" />
                   )}
                 </div>
-                <div className='flex flex-col gap-1'>
+                <div className="flex flex-col gap-1">
                   <Button
-                    variant='outline'
-                    size='sm'
+                    variant="outline"
+                    size="sm"
                     onClick={handleChangeProfilePicture}
                     disabled={isAvatarUploading}
                   >
@@ -281,12 +281,12 @@ export default function AccountPage(): ReactElement {
                   </Button>
                   <input
                     ref={profilePictureInputRef}
-                    type='file'
-                    accept='image/jpeg,image/png,image/webp,image/gif'
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
                     onChange={handleProfilePictureSelected}
-                    className='hidden'
+                    className="hidden"
                   />
-                  <p className='text-xs text-muted-foreground'>
+                  <p className="text-xs text-muted-foreground">
                     JPEG, PNG, WebP or GIF. Max 2 MB. Recommended: 320 × 320 px.
                   </p>
                 </div>
@@ -294,68 +294,68 @@ export default function AccountPage(): ReactElement {
             </div>
 
             {/* First Name */}
-            <div className='grid grid-cols-[180px_1fr] items-center gap-4'>
+            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
               <Label
-                htmlFor='firstName'
-                className='text-right text-sm font-medium text-muted-foreground'
+                htmlFor="firstName"
+                className="text-right text-sm font-medium text-muted-foreground"
               >
                 First Name
               </Label>
               <Input
-                id='firstName'
+                id="firstName"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className='max-w-lg'
+                className="max-w-lg"
               />
             </div>
 
             {/* Last Name */}
-            <div className='grid grid-cols-[180px_1fr] items-center gap-4'>
+            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
               <Label
-                htmlFor='lastName'
-                className='text-right text-sm font-medium text-muted-foreground'
+                htmlFor="lastName"
+                className="text-right text-sm font-medium text-muted-foreground"
               >
                 Last Name
               </Label>
               <Input
-                id='lastName'
+                id="lastName"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className='max-w-lg'
+                className="max-w-lg"
               />
             </div>
 
             {/* Email (read-only) */}
-            <div className='grid grid-cols-[180px_1fr] items-center gap-4'>
-              <Label className='text-right text-sm font-medium text-muted-foreground'>
+            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
+              <Label className="text-right text-sm font-medium text-muted-foreground">
                 Email
               </Label>
-              <p className='text-sm'>{user?.email ?? "—"}</p>
+              <p className="text-sm">{user?.email ?? "—"}</p>
             </div>
 
             {/* Password */}
-            <div className='grid grid-cols-[180px_1fr] items-center gap-4'>
-              <Label className='text-right text-sm font-medium text-muted-foreground'>
+            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
+              <Label className="text-right text-sm font-medium text-muted-foreground">
                 Password
               </Label>
               <Button
-                variant='outline'
-                size='sm'
+                variant="outline"
+                size="sm"
                 onClick={handleChangePassword}
-                className='w-fit'
+                className="w-fit"
               >
                 Change Password
               </Button>
             </div>
 
             {/* Time Zone */}
-            <div className='grid grid-cols-[180px_1fr] items-center gap-4'>
-              <Label className='text-right text-sm font-medium text-muted-foreground'>
+            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
+              <Label className="text-right text-sm font-medium text-muted-foreground">
                 Time Zone
               </Label>
               <Select value={timezone} onValueChange={setTimezone}>
-                <SelectTrigger className='max-w-lg'>
-                  <SelectValue placeholder='Select timezone' />
+                <SelectTrigger className="max-w-lg">
+                  <SelectValue placeholder="Select timezone" />
                 </SelectTrigger>
                 <SelectContent>
                   {timezones.map((tz) => (
@@ -369,20 +369,20 @@ export default function AccountPage(): ReactElement {
           </div>
 
           {/* Action Buttons */}
-          <div className='grid grid-cols-[180px_1fr] items-center gap-4 px-8 pb-6'>
+          <div className="grid grid-cols-[180px_1fr] items-center gap-4 px-8 pb-6">
             <div />
-            <div className='max-w-lg flex justify-end gap-2'>
-              <Button variant='default' onClick={handleSaveChanges}>
+            <div className="max-w-lg flex justify-end gap-2">
+              <Button variant="default" onClick={handleSaveChanges}>
                 Save Changes
               </Button>
               <Button
-                variant='outline'
-                className='border-destructive text-destructive hover:bg-destructive/10'
+                variant="outline"
+                className="border-destructive text-destructive hover:bg-destructive/10"
                 onClick={handleLogOut}
               >
                 Log Out
               </Button>
-              <Button variant='destructive' onClick={handleDeleteAccount}>
+              <Button variant="destructive" onClick={handleDeleteAccount}>
                 Delete Account
               </Button>
             </div>
@@ -397,7 +397,7 @@ export default function AccountPage(): ReactElement {
           if (!open) setPasswordError(null);
         }}
       >
-        <DialogContent className='sm:max-w-md'>
+        <DialogContent className="sm:max-w-md">
           <form onSubmit={handlePasswordSubmit}>
             <DialogHeader>
               <DialogTitle>Change Password</DialogTitle>
@@ -406,47 +406,47 @@ export default function AccountPage(): ReactElement {
                 characters).
               </DialogDescription>
             </DialogHeader>
-            <div className='mt-4 flex flex-col gap-3'>
-              <div className='flex flex-col gap-1.5'>
-                <Label htmlFor='current-password'>Current password</Label>
+            <div className="mt-4 flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="current-password">Current password</Label>
                 <Input
-                  id='current-password'
-                  type='password'
+                  id="current-password"
+                  type="password"
                   value={currentPassword}
                   onChange={(event) => setCurrentPassword(event.target.value)}
                 />
               </div>
-              <div className='flex flex-col gap-1.5'>
-                <Label htmlFor='new-password'>New password</Label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="new-password">New password</Label>
                 <Input
-                  id='new-password'
-                  type='password'
+                  id="new-password"
+                  type="password"
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
                 />
               </div>
-              <div className='flex flex-col gap-1.5'>
-                <Label htmlFor='confirm-password'>Confirm new password</Label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="confirm-password">Confirm new password</Label>
                 <Input
-                  id='confirm-password'
-                  type='password'
+                  id="confirm-password"
+                  type="password"
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
                 />
               </div>
               {passwordError ? (
-                <p className='text-sm text-destructive'>{passwordError}</p>
+                <p className="text-sm text-destructive">{passwordError}</p>
               ) : null}
             </div>
-            <DialogFooter className='mt-6'>
+            <DialogFooter className="mt-6">
               <Button
-                type='button'
-                variant='outline'
+                type="button"
+                variant="outline"
                 onClick={() => setIsPasswordDialogOpen(false)}
               >
                 Cancel
               </Button>
-              <Button type='submit' disabled={!canSubmitPassword}>
+              <Button type="submit" disabled={!canSubmitPassword}>
                 Update Password
               </Button>
             </DialogFooter>
@@ -457,9 +457,9 @@ export default function AccountPage(): ReactElement {
       <ConfirmActionDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        title='Delete account?'
+        title="Delete account?"
         description={`This will permanently remove ${accountNameForDialog}. You can log out instead if you only want to end this session.`}
-        confirmLabel='Delete account'
+        confirmLabel="Delete account"
         onConfirm={handleDeleteAccountConfirm}
       />
     </DashboardPage.Root>

@@ -10,6 +10,8 @@ export interface User {
   readonly email: string;
   readonly name: string;
   readonly isActive: boolean;
+  /** Presigned avatar URL (when user has profile picture in MinIO). */
+  readonly avatarUrl?: string | null;
   /** Assigned roles (for display when loaded). */
   readonly roles?: readonly UserRole[];
   /** Last seen timestamp (optional; backend may not provide). */

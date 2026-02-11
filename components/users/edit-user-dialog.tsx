@@ -70,51 +70,51 @@ function EditUserForm({
       <DialogHeader>
         <DialogTitle>Edit User</DialogTitle>
       </DialogHeader>
-      <div className='mt-4 flex flex-col gap-4'>
-        <div className='flex flex-col gap-2'>
-          <Label htmlFor='edit-user-name'>Name</Label>
+      <div className="mt-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="edit-user-name">Name</Label>
           <Input
-            id='edit-user-name'
+            id="edit-user-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder='Full name'
+            placeholder="Full name"
           />
         </div>
-        <div className='flex flex-col gap-2'>
-          <Label htmlFor='edit-user-email'>Email</Label>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="edit-user-email">Email</Label>
           <Input
-            id='edit-user-email'
-            type='email'
+            id="edit-user-email"
+            type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder='user@example.com'
+            placeholder="user@example.com"
           />
         </div>
-        <div className='flex items-center justify-between rounded-lg border p-4'>
-          <div className='space-y-0.5'>
-            <Label htmlFor='edit-user-active'>Active</Label>
-            <p className='text-sm text-muted-foreground'>
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <Label htmlFor="edit-user-active">Active</Label>
+            <p className="text-sm text-muted-foreground">
               Inactive users cannot sign in.
             </p>
           </div>
           <Switch
-            id='edit-user-active'
+            id="edit-user-active"
             checked={isActive}
             onCheckedChange={setIsActive}
             disabled={!isSuperAdmin}
           />
         </div>
       </div>
-      <DialogFooter className='mt-6'>
+      <DialogFooter className="mt-6">
         <Button
-          type='button'
-          variant='outline'
+          type="button"
+          variant="outline"
           onClick={() => onOpenChange(false)}
           disabled={isSubmitting}
         >
           Cancel
         </Button>
-        <Button type='submit' disabled={!isValid || isSubmitting}>
+        <Button type="submit" disabled={!isValid || isSubmitting}>
           {isSubmitting ? "Saving…" : "Save"}
         </Button>
       </DialogFooter>
@@ -130,7 +130,7 @@ export function EditUserDialog({
 }: EditUserDialogProps): ReactElement {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-md'>
+      <DialogContent className="sm:max-w-md">
         {open && user ? (
           <EditUserForm
             key={user.id}

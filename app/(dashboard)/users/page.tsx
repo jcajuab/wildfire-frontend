@@ -99,6 +99,7 @@ export default function UsersPage(): ReactElement {
         email: user.email,
         name: user.name,
         isActive: user.isActive,
+        avatarUrl: user.avatarUrl ?? null,
       })),
     [usersData],
   );
@@ -165,27 +166,23 @@ export default function UsersPage(): ReactElement {
   );
 
   const systemRoleIds = useMemo(
-    () =>
-      (rolesData ?? [])
-        .filter((r) => r.isSystem)
-        .map((r) => r.id),
+    () => (rolesData ?? []).filter((r) => r.isSystem).map((r) => r.id),
     [rolesData],
   );
 
   const handleRoleToggle = useCallback(
     async (userId: string, newRoleIds: string[]) => {
       try {
-        const roleIdsToSend =
-          isSuperAdmin
-            ? newRoleIds
-            : (() => {
-                const currentIds =
-                  userRolesByUserId[userId]?.map((r) => r.id) ?? [];
-                const preservedSystem = currentIds.filter((id) =>
-                  systemRoleIds.includes(id),
-                );
-                return [...new Set([...newRoleIds, ...preservedSystem])];
-              })();
+        const roleIdsToSend = isSuperAdmin
+          ? newRoleIds
+          : (() => {
+              const currentIds =
+                userRolesByUserId[userId]?.map((r) => r.id) ?? [];
+              const preservedSystem = currentIds.filter((id) =>
+                systemRoleIds.includes(id),
+              );
+              return [...new Set([...newRoleIds, ...preservedSystem])];
+            })();
         const roles = await setUserRoles({
           userId,
           roleIds: roleIdsToSend,
@@ -200,12 +197,7 @@ export default function UsersPage(): ReactElement {
         );
       }
     },
-    [
-      setUserRoles,
-      isSuperAdmin,
-      userRolesByUserId,
-      systemRoleIds,
-    ],
+    [setUserRoles, isSuperAdmin, userRolesByUserId, systemRoleIds],
   );
 
   const handleEdit = useCallback((user: User) => {

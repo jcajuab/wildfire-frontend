@@ -40,6 +40,7 @@ import { useMounted } from "@/hooks/use-mounted";
 import { useAuth } from "@/context/auth-context";
 import { DASHBOARD_ROUTE_READ_ENTRIES } from "@/lib/route-permissions";
 import type { ComponentType, ReactElement } from "react";
+import Image from "next/image";
 
 interface NavItem {
   readonly title: string;
@@ -134,7 +135,18 @@ export function AppSidebar(): ReactElement {
                 <SidebarMenuButton size="lg" className="w-full justify-between">
                   <div className="flex items-center gap-2">
                     <div className="flex size-7 items-center justify-center rounded-full bg-muted">
-                      <IconUser className="size-4" />
+                      {user?.avatarUrl ? (
+                        <Image
+                          src={user.avatarUrl}
+                          alt="User Avatar"
+                          width={48}
+                          height={48}
+                          className="size-7 rounded-full object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <IconUser className="size-6 text-muted-foreground" />
+                      )}
                     </div>
                     <div className="flex min-w-0 flex-col items-start group-data-[collapsible=icon]:hidden">
                       <span className="truncate text-sm font-medium leading-5">
