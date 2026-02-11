@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
+import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { Pagination } from "@/components/content/pagination";
 import { AddDisplayDialog } from "@/components/displays/add-display-dialog";
@@ -15,6 +16,7 @@ import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
 import { ViewDisplayDialog } from "@/components/displays/view-display-dialog";
 import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
   useQueryNumberState,
@@ -29,6 +31,8 @@ const DISPLAY_SORT_VALUES = ["alphabetical", "status", "location"] as const;
 const mockDisplays: Display[] = [];
 
 export default function DisplaysPage(): React.ReactElement {
+  const canUpdateDisplay = useCan("devices:update");
+  const canDeleteDisplay = useCan("devices:delete");
   const [statusFilter, setStatusFilter] =
     useQueryEnumState<DisplayStatusFilter>(
       "status",
@@ -195,10 +199,12 @@ export default function DisplaysPage(): React.ReactElement {
       <DashboardPage.Header
         title="Displays"
         actions={
-          <Button onClick={() => setIsAddDialogOpen(true)}>
-            <IconPlus className="size-4" />
-            Add Display
-          </Button>
+          <Can permission="devices:create">
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <IconPlus className="size-4" />
+              Add Display
+            </Button>
+          </Can>
         }
       />
 
@@ -235,6 +241,8 @@ export default function DisplaysPage(): React.ReactElement {
             onRefreshPage={handleRefreshPage}
             onToggleDisplay={handleToggleDisplay}
             onRemoveDisplay={handleRemoveDisplay}
+            canUpdate={canUpdateDisplay}
+            canDelete={canDeleteDisplay}
           />
         </DashboardPage.Content>
 
@@ -260,6 +268,7 @@ export default function DisplaysPage(): React.ReactElement {
         onOpenChange={setIsViewDialogOpen}
         onEdit={handleEditFromView}
         onEditPlaylist={handleEditPlaylist}
+        canEdit={canUpdateDisplay}
       />
 
       <EditDisplayDialog
@@ -275,6 +284,7 @@ export default function DisplaysPage(): React.ReactElement {
         onOpenChange={setIsPreviewDialogOpen}
         onEdit={handleEditFromView}
         onEditPlaylist={handleEditPlaylist}
+        canEdit={canUpdateDisplay}
       />
 
       <ConfirmActionDialog

@@ -29,6 +29,8 @@ interface DisplayCardProps {
   readonly onRefreshPage: (display: Display) => void;
   readonly onToggleDisplay: (display: Display) => void;
   readonly onRemoveDisplay: (display: Display) => void;
+  readonly canUpdate?: boolean;
+  readonly canDelete?: boolean;
 }
 
 function getStatusColor(status: DisplayStatus): string {
@@ -83,6 +85,8 @@ export function DisplayCard({
   onRefreshPage,
   onToggleDisplay,
   onRemoveDisplay,
+  canUpdate = true,
+  canDelete = true,
 }: DisplayCardProps): React.ReactElement {
   const nowPlaying = display.nowPlaying;
   const progress = nowPlaying
@@ -134,17 +138,21 @@ export function DisplayCard({
               <IconRefresh className="size-4" />
               Refresh Page
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onToggleDisplay(display)}>
-              <IconToggleLeft className="size-4" />
-              Toggle Display
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onRemoveDisplay(display)}
-              className="text-destructive focus:text-destructive"
-            >
-              <IconTrash className="size-4" />
-              Remove Display
-            </DropdownMenuItem>
+            {canUpdate && (
+              <DropdownMenuItem onClick={() => onToggleDisplay(display)}>
+                <IconToggleLeft className="size-4" />
+                Toggle Display
+              </DropdownMenuItem>
+            )}
+            {canDelete && (
+              <DropdownMenuItem
+                onClick={() => onRemoveDisplay(display)}
+                className="text-destructive focus:text-destructive"
+              >
+                <IconTrash className="size-4" />
+                Remove Display
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

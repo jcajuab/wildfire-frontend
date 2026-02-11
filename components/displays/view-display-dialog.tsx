@@ -25,6 +25,7 @@ interface ViewDisplayDialogProps {
   readonly onOpenChange: (open: boolean) => void;
   readonly onEdit: (display: Display) => void;
   readonly onEditPlaylist: (display: Display) => void;
+  readonly canEdit?: boolean;
 }
 
 function formatDuration(seconds: number): string {
@@ -39,6 +40,7 @@ export function ViewDisplayDialog({
   onOpenChange,
   onEdit,
   onEditPlaylist,
+  canEdit = true,
 }: ViewDisplayDialogProps): React.ReactElement | null {
   if (!display) return null;
 
@@ -106,10 +108,12 @@ export function ViewDisplayDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Close
               </Button>
-              <Button onClick={() => onEdit(display)}>
-                <IconPencil className="size-4" />
-                Edit
-              </Button>
+              {canEdit && (
+                <Button onClick={() => onEdit(display)}>
+                  <IconPencil className="size-4" />
+                  Edit
+                </Button>
+              )}
             </DialogFooter>
           </TabsContent>
 
@@ -157,10 +161,12 @@ export function ViewDisplayDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Close
               </Button>
-              <Button onClick={() => onEditPlaylist(display)}>
-                <IconPencil className="size-4" />
-                Edit Playlist
-              </Button>
+              {canEdit && (
+                <Button onClick={() => onEditPlaylist(display)}>
+                  <IconPencil className="size-4" />
+                  Edit Playlist
+                </Button>
+              )}
             </DialogFooter>
           </TabsContent>
         </Tabs>

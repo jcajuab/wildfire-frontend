@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
+import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { DashboardPage } from "@/components/layout";
 import { RoleDialog } from "@/components/roles/role-dialog";
@@ -10,6 +11,7 @@ import { RoleSearchInput } from "@/components/roles/role-search-input";
 import { RolesPagination } from "@/components/roles/roles-pagination";
 import { RolesTable } from "@/components/roles/roles-table";
 import { Button } from "@/components/ui/button";
+import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
   useQueryNumberState,
@@ -40,6 +42,8 @@ const ROLE_SORT_FIELDS = ["name", "usersCount"] as const;
 const ROLE_SORT_DIRECTIONS = ["asc", "desc"] as const;
 
 export default function RolesPage(): React.ReactElement {
+  const canUpdateRole = useCan("roles:update");
+  const canDeleteRole = useCan("roles:delete");
   const {
     data: rolesData,
     isLoading: rolesLoading,
@@ -330,10 +334,12 @@ export default function RolesPage(): React.ReactElement {
       <DashboardPage.Header
         title="Roles"
         actions={
-          <Button onClick={handleCreate}>
-            <IconPlus className="size-4" />
-            Create Role
-          </Button>
+          <Can permission="roles:create">
+            <Button onClick={handleCreate}>
+              <IconPlus className="size-4" />
+              Create Role
+            </Button>
+          </Can>
         }
       />
 
@@ -359,6 +365,8 @@ export default function RolesPage(): React.ReactElement {
               onSortChange={handleSortChange}
               onEdit={handleEdit}
               onDelete={handleDeleteRequest}
+              canEdit={canUpdateRole}
+              canDelete={canDeleteRole}
             />
           </div>
         </DashboardPage.Content>

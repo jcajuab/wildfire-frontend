@@ -22,6 +22,8 @@ interface ContentCardProps {
   readonly onEdit: (content: Content) => void;
   readonly onPreview: (content: Content) => void;
   readonly onDelete: (content: Content) => void;
+  readonly canUpdate?: boolean;
+  readonly canDelete?: boolean;
 }
 
 export function ContentCard({
@@ -29,6 +31,8 @@ export function ContentCard({
   onEdit,
   onPreview,
   onDelete,
+  canUpdate = true,
+  canDelete = true,
 }: ContentCardProps): React.ReactElement {
   return (
     <div className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-md">
@@ -59,21 +63,25 @@ export function ContentCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
-            <DropdownMenuItem onClick={() => onEdit(content)}>
-              <IconPencil className="size-4" />
-              Edit Content
-            </DropdownMenuItem>
+            {canUpdate && (
+              <DropdownMenuItem onClick={() => onEdit(content)}>
+                <IconPencil className="size-4" />
+                Edit Content
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => onPreview(content)}>
               <IconEye className="size-4" />
               Preview Content
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDelete(content)}
-              className="text-destructive focus:text-destructive"
-            >
-              <IconTrash className="size-4" />
-              Delete Content
-            </DropdownMenuItem>
+            {canDelete && (
+              <DropdownMenuItem
+                onClick={() => onDelete(content)}
+                className="text-destructive focus:text-destructive"
+              >
+                <IconTrash className="size-4" />
+                Delete Content
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

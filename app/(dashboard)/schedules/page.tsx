@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
+import { Can } from "@/components/common/can";
 import { CalendarGrid } from "@/components/schedules/calendar-grid";
 import { CalendarHeader } from "@/components/schedules/calendar-header";
 import { CreateScheduleDialog } from "@/components/schedules/create-schedule-dialog";
@@ -10,6 +11,7 @@ import { EditScheduleDialog } from "@/components/schedules/edit-schedule-dialog"
 import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog";
 import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { useCan } from "@/hooks/use-can";
 import type {
   Schedule,
   CalendarView,
@@ -47,6 +49,8 @@ const mockSchedules: Schedule[] = [
 ];
 
 export default function SchedulesPage(): React.ReactElement {
+  const canEditSchedule = useCan("schedules:update");
+  const canDeleteSchedule = useCan("schedules:delete");
   // Calendar state
   const [currentDate, setCurrentDate] = useState(() => new Date(2026, 0, 1)); // Jan 2026
   const [view, setView] = useState<CalendarView>("resource-week");
@@ -159,10 +163,12 @@ export default function SchedulesPage(): React.ReactElement {
       <DashboardPage.Header
         title="Schedules"
         actions={
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <IconPlus className="size-4" />
-            Create Schedule
-          </Button>
+          <Can permission="schedules:create">
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <IconPlus className="size-4" />
+              Create Schedule
+            </Button>
+          </Can>
         }
       />
 
@@ -204,6 +210,8 @@ export default function SchedulesPage(): React.ReactElement {
         onOpenChange={setViewDialogOpen}
         onEdit={handleEditFromView}
         onDelete={handleDeleteSchedule}
+        canEdit={canEditSchedule}
+        canDelete={canDeleteSchedule}
       />
 
       {/* Edit Schedule Dialog */}

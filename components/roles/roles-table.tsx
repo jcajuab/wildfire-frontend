@@ -34,6 +34,8 @@ interface RolesTableProps {
   readonly onSortChange: (sort: RoleSort) => void;
   readonly onEdit: (role: Role) => void;
   readonly onDelete: (role: Role) => void;
+  readonly canEdit?: boolean;
+  readonly canDelete?: boolean;
 }
 
 interface SortableHeaderProps {
@@ -83,13 +85,18 @@ interface RoleActionsMenuProps {
   readonly role: Role;
   readonly onEdit: (role: Role) => void;
   readonly onDelete: (role: Role) => void;
+  readonly canEdit: boolean;
+  readonly canDelete: boolean;
 }
 
 function RoleActionsMenu({
   role,
   onEdit,
   onDelete,
-}: RoleActionsMenuProps): React.ReactElement {
+  canEdit,
+  canDelete,
+}: RoleActionsMenuProps): React.ReactElement | null {
+  if (!canEdit && !canDelete) return null;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -99,17 +106,21 @@ function RoleActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onEdit(role)}>
-          <IconEdit className="size-4" />
-          Edit Role
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => onDelete(role)}
-          className="text-destructive focus:text-destructive"
-        >
-          <IconTrash className="size-4" />
-          Delete Role
-        </DropdownMenuItem>
+        {canEdit && (
+          <DropdownMenuItem onClick={() => onEdit(role)}>
+            <IconEdit className="size-4" />
+            Edit Role
+          </DropdownMenuItem>
+        )}
+        {canDelete && (
+          <DropdownMenuItem
+            onClick={() => onDelete(role)}
+            className="text-destructive focus:text-destructive"
+          >
+            <IconTrash className="size-4" />
+            Delete Role
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -121,6 +132,8 @@ export function RolesTable({
   onSortChange,
   onEdit,
   onDelete,
+  canEdit = true,
+  canDelete = true,
 }: RolesTableProps): React.ReactElement {
   if (roles.length === 0) {
     return (
@@ -176,6 +189,8 @@ export function RolesTable({
                 role={role}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                canEdit={canEdit}
+                canDelete={canDelete}
               />
             </TableCell>
           </TableRow>

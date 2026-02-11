@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
+import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { InviteUsersDialog } from "@/components/users/invite-users-dialog";
 import { UserSearchInput } from "@/components/users/user-search-input";
 import { UsersPagination } from "@/components/users/users-pagination";
 import { UsersTable } from "@/components/users/users-table";
+import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
   useQueryNumberState,
@@ -38,6 +40,8 @@ const USER_SORT_FIELDS = ["name", "lastSeen"] as const;
 const USER_SORT_DIRECTIONS = ["asc", "desc"] as const;
 
 export default function UsersPage(): React.ReactElement {
+  const canUpdateUser = useCan("users:update");
+  const canDeleteUser = useCan("users:delete");
   const {
     data: usersData,
     isLoading: usersLoading,
@@ -301,10 +305,12 @@ export default function UsersPage(): React.ReactElement {
       <DashboardPage.Header
         title="Users"
         actions={
-          <Button onClick={() => setIsInviteDialogOpen(true)}>
-            <IconPlus className="size-4" />
-            Invite User
-          </Button>
+          <Can permission="users:create">
+            <Button onClick={() => setIsInviteDialogOpen(true)}>
+              <IconPlus className="size-4" />
+              Invite User
+            </Button>
+          </Can>
         }
       />
 
@@ -333,6 +339,8 @@ export default function UsersPage(): React.ReactElement {
               onEdit={handleEdit}
               onRoleToggle={handleRoleToggle}
               onRemoveUser={handleRequestRemoveUser}
+              canUpdate={canUpdateUser}
+              canDelete={canDeleteUser}
             />
           </div>
         </DashboardPage.Content>

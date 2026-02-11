@@ -11,6 +11,8 @@ interface ContentGridProps {
   readonly onEdit: (content: Content) => void;
   readonly onPreview: (content: Content) => void;
   readonly onDelete: (content: Content) => void;
+  readonly canUpdate?: boolean;
+  readonly canDelete?: boolean;
 }
 
 export function ContentGrid({
@@ -18,6 +20,8 @@ export function ContentGrid({
   onEdit,
   onPreview,
   onDelete,
+  canUpdate = true,
+  canDelete = true,
 }: ContentGridProps): React.ReactElement {
   if (items.length === 0) {
     return (
@@ -38,6 +42,8 @@ export function ContentGrid({
           onEdit={onEdit}
           onPreview={onPreview}
           onDelete={onDelete}
+          canUpdate={canUpdate}
+          canDelete={canDelete}
         />
       ))}
     </div>

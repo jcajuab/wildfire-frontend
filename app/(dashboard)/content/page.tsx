@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { IconEye, IconPlus } from "@tabler/icons-react";
 
+import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { ContentFilterPopover } from "@/components/content/content-filter-popover";
 import { ContentGrid } from "@/components/content/content-grid";
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
   useQueryNumberState,
@@ -164,6 +166,8 @@ function PreviewContentDialog({
 }
 
 export default function ContentPage(): React.ReactElement {
+  const canUpdateContent = useCan("content:update");
+  const canDeleteContent = useCan("content:delete");
   const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(
     "status",
     "all",
@@ -333,10 +337,12 @@ export default function ContentPage(): React.ReactElement {
       <DashboardPage.Header
         title="Content"
         actions={
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <IconPlus className="size-4" />
-            Create Content
-          </Button>
+          <Can permission="content:create">
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <IconPlus className="size-4" />
+              Create Content
+            </Button>
+          </Can>
         }
       />
 
@@ -370,6 +376,8 @@ export default function ContentPage(): React.ReactElement {
             onEdit={handleEdit}
             onPreview={handlePreview}
             onDelete={handleDelete}
+            canUpdate={canUpdateContent}
+            canDelete={canDeleteContent}
           />
         </DashboardPage.Content>
 

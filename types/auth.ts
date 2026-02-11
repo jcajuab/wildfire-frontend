@@ -17,6 +17,8 @@ export interface AuthResponse {
   readonly token: string;
   readonly expiresAt: string;
   readonly user: AuthUser;
+  /** Current user's permissions (resource:action). Empty if no roles. */
+  readonly permissions: string[];
 }
 
 /** Backend error response shape. */

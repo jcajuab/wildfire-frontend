@@ -13,6 +13,8 @@ interface DisplayGridProps {
   readonly onRefreshPage: (display: Display) => void;
   readonly onToggleDisplay: (display: Display) => void;
   readonly onRemoveDisplay: (display: Display) => void;
+  readonly canUpdate?: boolean;
+  readonly canDelete?: boolean;
 }
 
 export function DisplayGrid({
@@ -22,6 +24,8 @@ export function DisplayGrid({
   onRefreshPage,
   onToggleDisplay,
   onRemoveDisplay,
+  canUpdate = true,
+  canDelete = true,
 }: DisplayGridProps): React.ReactElement {
   if (items.length === 0) {
     return (
@@ -44,6 +48,8 @@ export function DisplayGrid({
           onRefreshPage={onRefreshPage}
           onToggleDisplay={onToggleDisplay}
           onRemoveDisplay={onRemoveDisplay}
+          canUpdate={canUpdate}
+          canDelete={canDelete}
         />
       ))}
     </div>

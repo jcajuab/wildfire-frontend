@@ -23,6 +23,8 @@ interface PlaylistCardProps {
   readonly onEdit?: (playlist: Playlist) => void;
   readonly onPreview?: (playlist: Playlist) => void;
   readonly onDelete?: (playlist: Playlist) => void;
+  readonly canUpdate?: boolean;
+  readonly canDelete?: boolean;
 }
 
 function formatDuration(seconds: number): string {
@@ -45,6 +47,8 @@ export function PlaylistCard({
   onEdit,
   onPreview,
   onDelete,
+  canUpdate = true,
+  canDelete = true,
 }: PlaylistCardProps): React.ReactElement {
   // Show first 4 items as thumbnails
   const visibleItems = playlist.items.slice(0, 4);
@@ -72,21 +76,25 @@ export function PlaylistCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
-            <DropdownMenuItem onClick={() => onEdit?.(playlist)}>
-              <IconPencil className="size-4" />
-              Edit Playlist
-            </DropdownMenuItem>
+            {canUpdate && (
+              <DropdownMenuItem onClick={() => onEdit?.(playlist)}>
+                <IconPencil className="size-4" />
+                Edit Playlist
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => onPreview?.(playlist)}>
               <IconEye className="size-4" />
               Preview Playlist
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDelete?.(playlist)}
-              className="text-destructive focus:text-destructive"
-            >
-              <IconTrash className="size-4" />
-              Delete Playlist
-            </DropdownMenuItem>
+            {canDelete && (
+              <DropdownMenuItem
+                onClick={() => onDelete?.(playlist)}
+                className="text-destructive focus:text-destructive"
+              >
+                <IconTrash className="size-4" />
+                Delete Playlist
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

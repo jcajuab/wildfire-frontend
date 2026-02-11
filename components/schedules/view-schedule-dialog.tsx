@@ -30,6 +30,8 @@ interface ViewScheduleDialogProps {
   readonly onOpenChange: (open: boolean) => void;
   readonly onEdit: (schedule: Schedule) => void;
   readonly onDelete: (schedule: Schedule) => void;
+  readonly canEdit?: boolean;
+  readonly canDelete?: boolean;
 }
 
 function formatDate(dateString: string): string {
@@ -67,6 +69,8 @@ export function ViewScheduleDialog({
   onOpenChange,
   onEdit,
   onDelete,
+  canEdit = true,
+  canDelete = true,
 }: ViewScheduleDialogProps): React.ReactElement | null {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   if (!schedule) return null;
@@ -131,21 +135,25 @@ export function ViewScheduleDialog({
         </div>
 
         <DialogFooter className="flex items-center justify-between border-t-2 border-dashed border-primary/30 pt-4 sm:justify-between">
-          <Button
-            variant="destructive"
-            onClick={() => setConfirmDeleteOpen(true)}
-          >
-            <IconTrash className="size-4" />
-            Delete
-          </Button>
+          {canDelete && (
+            <Button
+              variant="destructive"
+              onClick={() => setConfirmDeleteOpen(true)}
+            >
+              <IconTrash className="size-4" />
+              Delete
+            </Button>
+          )}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Close
             </Button>
-            <Button onClick={() => onEdit(schedule)}>
-              <IconPencil className="size-4" />
-              Edit
-            </Button>
+            {canEdit && (
+              <Button onClick={() => onEdit(schedule)}>
+                <IconPencil className="size-4" />
+                Edit
+              </Button>
+            )}
           </div>
         </DialogFooter>
       </DialogContent>

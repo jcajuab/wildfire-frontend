@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { IconPlus, IconPresentation } from "@tabler/icons-react";
 
+import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { DashboardPage } from "@/components/layout";
 import { CreatePlaylistDialog } from "@/components/playlists/create-playlist-dialog";
@@ -23,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
   useQueryNumberState,
@@ -122,6 +124,8 @@ const mockAvailableContent: Content[] = [
 ];
 
 export default function PlaylistsPage(): React.ReactElement {
+  const canUpdatePlaylist = useCan("playlists:update");
+  const canDeletePlaylist = useCan("playlists:delete");
   const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(
     "status",
     "all",
@@ -280,10 +284,12 @@ export default function PlaylistsPage(): React.ReactElement {
       <DashboardPage.Header
         title="Playlists"
         actions={
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <IconPlus className="size-4" />
-            Create Playlist
-          </Button>
+          <Can permission="playlists:create">
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <IconPlus className="size-4" />
+              Create Playlist
+            </Button>
+          </Can>
         }
       />
 
@@ -317,6 +323,8 @@ export default function PlaylistsPage(): React.ReactElement {
             onEdit={handleEditPlaylist}
             onPreview={handlePreviewPlaylist}
             onDelete={handleDeletePlaylist}
+            canUpdate={canUpdatePlaylist}
+            canDelete={canDeletePlaylist}
           />
         </DashboardPage.Content>
 

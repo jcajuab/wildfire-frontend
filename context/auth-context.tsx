@@ -14,6 +14,7 @@ import {
   logoutApi,
   refreshToken,
 } from "@/lib/api-client";
+import { can as canPermission } from "@/lib/permissions";
 import type { AuthUser } from "@/types/auth";
 
 const SESSION_KEY = "wildfire_session";
@@ -24,25 +25,13 @@ interface SessionData {
   readonly token: string;
   readonly user: AuthUser;
   readonly expiresAt: string;
+  readonly permissions: string[];
 }
 
-function isValidSessionData(data: unknown): data is SessionData {
-  if (data == null || typeof data !== "object") return false;
-  const d = data as Record<string, unknown>;
-  if (
-    typeof d.token !== "string" ||
-    typeof d.expiresAt !== "string" ||
-    d.expiresAt === ""
-  )
-    return false;
-  const user = d.user;
-  if (user == null || typeof user !== "object") return false;
-  const u = user as Record<string, unknown>;
-  return (
-    typeof u.id === "string" &&
-    typeof u.email === "string" &&
-    typeof u.name === "string"
-  );
+/** Old sessions without permissions get []. */
+function getPermissionsFromSession(data: Record<string, unknown>): string[] {
+  if (!Array.isArray(data.permissions)) return [];
+  return data.permissions.filter((p): p is string => typeof p === "string");
 }
 
 function readSession(): SessionData | null {
@@ -52,9 +41,32 @@ function readSession(): SessionData | null {
     if (!raw) return null;
 
     const data = JSON.parse(raw) as unknown;
-    if (!isValidSessionData(data)) return null;
-
-    return { token: data.token, user: data.user, expiresAt: data.expiresAt };
+    if (data == null || typeof data !== "object") return null;
+    const d = data as Record<string, unknown>;
+    if (
+      typeof d.token !== "string" ||
+      typeof d.expiresAt !== "string" ||
+      d.expiresAt === ""
+    )
+      return null;
+    const user = d.user;
+    if (user == null || typeof user !== "object") return null;
+    const u = user as Record<string, unknown>;
+    if (
+      !(
+        typeof u.id === "string" &&
+        typeof u.email === "string" &&
+        typeof u.name === "string"
+      )
+    )
+      return null;
+    const permissions = getPermissionsFromSession(d);
+    return {
+      token: d.token as string,
+      user: user as AuthUser,
+      expiresAt: d.expiresAt as string,
+      permissions,
+    };
   } catch {
     return null;
   }
@@ -71,9 +83,11 @@ function clearSession(): void {
 interface AuthContextValue {
   readonly user: AuthUser | null;
   readonly token: string | null;
+  readonly permissions: string[];
   readonly isAuthenticated: boolean;
   readonly isLoading: boolean;
   readonly isInitialized: boolean;
+  can: (permission: string) => boolean;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -87,6 +101,7 @@ export function AuthProvider({
 }): React.ReactElement {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [permissions, setPermissions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -95,6 +110,7 @@ export function AuthProvider({
     if (session) {
       setToken(session.token);
       setUser(session.user);
+      setPermissions(session.permissions);
     }
     setIsInitialized(true);
   }, []);
@@ -116,14 +132,17 @@ export function AuthProvider({
           token: response.token,
           user: response.user,
           expiresAt: response.expiresAt,
+          permissions: response.permissions,
         };
         writeSession(newSession);
         setToken(newSession.token);
         setUser(newSession.user);
+        setPermissions(newSession.permissions);
       } catch (err) {
         if (err instanceof AuthApiError && err.status === 401) {
           setToken(null);
           setUser(null);
+          setPermissions([]);
           clearSession();
         }
       }
@@ -141,10 +160,12 @@ export function AuthProvider({
           token: result.token,
           user: result.user,
           expiresAt: result.expiresAt,
+          permissions: result.permissions,
         };
         writeSession(session);
         setToken(session.token);
         setUser(session.user);
+        setPermissions(session.permissions);
       } finally {
         setIsLoading(false);
       }
@@ -156,6 +177,7 @@ export function AuthProvider({
     const currentToken = token;
     setToken(null);
     setUser(null);
+    setPermissions([]);
     clearSession();
     if (typeof window !== "undefined") {
       console.info("[auth] logout");
@@ -169,17 +191,24 @@ export function AuthProvider({
     }
   }, [token]);
 
+  const can = useCallback(
+    (permission: string) => canPermission(permission, permissions),
+    [permissions],
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       token,
+      permissions,
       isAuthenticated: token !== null && user !== null,
       isLoading,
       isInitialized,
+      can,
       login,
       logout,
     }),
-    [user, token, isLoading, isInitialized, login, logout],
+    [user, token, permissions, isLoading, isInitialized, can, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
