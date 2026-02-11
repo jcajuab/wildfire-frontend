@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconWorld } from "@tabler/icons-react";
+import { IconFileUpload } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { ContentCard } from "./content-card";
@@ -29,7 +29,7 @@ export function ContentGrid({
       <EmptyState
         title="No content yet"
         description="Upload a file or create content from scratch to start building playlists."
-        icon={<IconWorld className="size-7" aria-hidden="true" />}
+        icon={<IconFileUpload className="size-7" aria-hidden="true" />}
       />
     );
   }
