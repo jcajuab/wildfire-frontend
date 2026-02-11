@@ -16,7 +16,7 @@ import {
   refreshToken,
 } from "@/lib/api-client";
 import { can as canPermission } from "@/lib/permissions";
-import type { AuthUser } from "@/types/auth";
+import type { AuthResponse, AuthUser } from "@/types/auth";
 
 const SESSION_KEY = "wildfire_session";
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes before expiry
@@ -91,6 +91,8 @@ interface AuthContextValue {
   can: (permission: string) => boolean;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
+  /** Replace session with auth payload (e.g. after PATCH /auth/me). */
+  updateSession: (response: AuthResponse) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -192,6 +194,19 @@ export function AuthProvider({
     }
   }, [token]);
 
+  const updateSession = useCallback((response: AuthResponse) => {
+    const session: SessionData = {
+      token: response.token,
+      user: response.user,
+      expiresAt: response.expiresAt,
+      permissions: response.permissions,
+    };
+    writeSession(session);
+    setToken(session.token);
+    setUser(session.user);
+    setPermissions(session.permissions);
+  }, []);
+
   const can = useCallback(
     (permission: string) => canPermission(permission, permissions),
     [permissions],
@@ -208,8 +223,19 @@ export function AuthProvider({
       can,
       login,
       logout,
+      updateSession,
     }),
-    [user, token, permissions, isLoading, isInitialized, can, login, logout],
+    [
+      user,
+      token,
+      permissions,
+      isLoading,
+      isInitialized,
+      can,
+      login,
+      logout,
+      updateSession,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

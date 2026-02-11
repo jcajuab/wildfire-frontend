@@ -9,6 +9,8 @@ export interface AuthUser {
   readonly id: string;
   readonly email: string;
   readonly name: string;
+  readonly timezone?: string | null;
+  readonly avatarUrl?: string | null;
 }
 
 /** Success response from POST /auth/login and GET /auth/me. */
