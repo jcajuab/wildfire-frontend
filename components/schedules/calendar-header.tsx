@@ -70,53 +70,57 @@ export function CalendarHeader({
   }`;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
+    <div className='grid w-full grid-cols-3 items-center gap-3'>
       {/* Left: Today + Navigation */}
-      <div className="flex items-center gap-1">
-        <Button variant="outline" size="sm" onClick={onToday}>
-          Today
-        </Button>
-        <Button
-          variant="outline"
-          size="icon-sm"
-          onClick={onPrev}
-          aria-label="Previous period"
-        >
-          <IconChevronLeft className="size-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon-sm"
-          onClick={onNext}
-          aria-label="Next period"
-        >
-          <IconChevronRight className="size-4" />
-        </Button>
+      <div className='flex justify-start'>
+        <div className='flex items-center gap-1'>
+          <Button variant='outline' size='default' onClick={onToday}>
+            Today
+          </Button>
+          <Button
+            variant='outline'
+            size='icon'
+            onClick={onPrev}
+            aria-label='Previous period'
+          >
+            <IconChevronLeft className='size-4' />
+          </Button>
+          <Button
+            variant='outline'
+            size='icon'
+            onClick={onNext}
+            aria-label='Next period'
+          >
+            <IconChevronRight className='size-4' />
+          </Button>
+        </div>
       </div>
 
       {/* Center: Date Range + Resource Count */}
-      <div className="flex min-w-0 flex-1 items-center justify-center gap-2 px-2">
-        <h2 className="truncate text-base font-semibold">{label}</h2>
-        <span className="rounded-md border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+      <div className='flex justify-center gap-2'>
+        <h2 className='truncate text-base font-semibold'>{label}</h2>
+        <span className='shrink-0 rounded-md border bg-muted/40 px-2 py-1 text-xs text-muted-foreground'>
           {resourcesLabel}
         </span>
       </div>
 
       {/* Right: View Toggle */}
-      <ToggleGroup
-        type="single"
-        value={view}
-        onValueChange={(value) => {
-          if (value) {
-            onViewChange(value as CalendarView);
-          }
-        }}
-        variant="outline"
-        size="sm"
-      >
-        <ToggleGroupItem value="resource-week">Resource Week</ToggleGroupItem>
-        <ToggleGroupItem value="resource-day">Resource Day</ToggleGroupItem>
-      </ToggleGroup>
+      <div className='flex justify-end'>
+        <ToggleGroup
+          type='single'
+          value={view}
+          onValueChange={(value) => {
+            if (value) {
+              onViewChange(value as CalendarView);
+            }
+          }}
+          variant='outline'
+          size='default'
+        >
+          <ToggleGroupItem value='resource-week'>Resource Week</ToggleGroupItem>
+          <ToggleGroupItem value='resource-day'>Resource Day</ToggleGroupItem>
+        </ToggleGroup>
+      </div>
     </div>
   );
 }

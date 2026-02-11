@@ -162,11 +162,11 @@ export default function SchedulesPage(): ReactElement {
   return (
     <DashboardPage.Root>
       <DashboardPage.Header
-        title="Schedules"
+        title='Schedules'
         actions={
-          <Can permission="schedules:create">
+          <Can permission='schedules:create'>
             <Button onClick={() => setCreateDialogOpen(true)}>
-              <IconPlus className="size-4" />
+              <IconPlus className='size-4' />
               Create Schedule
             </Button>
           </Can>
@@ -174,7 +174,7 @@ export default function SchedulesPage(): ReactElement {
       />
 
       <DashboardPage.Body>
-        <DashboardPage.Content className="flex min-h-0 flex-1 flex-col gap-4 pt-6">
+        <DashboardPage.Toolbar className='px-8 py-3'>
           <CalendarHeader
             currentDate={currentDate}
             view={view}
@@ -184,7 +184,9 @@ export default function SchedulesPage(): ReactElement {
             onToday={handleToday}
             resourcesCount={mockDisplays.length}
           />
+        </DashboardPage.Toolbar>
 
+        <DashboardPage.Content className='flex min-h-0 flex-1 flex-col pt-6'>
           <CalendarGrid
             currentDate={currentDate}
             view={view}
@@ -193,6 +195,8 @@ export default function SchedulesPage(): ReactElement {
             onScheduleClick={handleScheduleClick}
           />
         </DashboardPage.Content>
+
+        <DashboardPage.Footer />
       </DashboardPage.Body>
 
       {/* Create Schedule Dialog */}
