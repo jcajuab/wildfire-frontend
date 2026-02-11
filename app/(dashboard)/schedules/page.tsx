@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
@@ -12,6 +12,7 @@ import { EditScheduleDialog } from "@/components/schedules/edit-schedule-dialog"
 import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog";
 import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { useGetDevicesQuery } from "@/lib/api/devices-api";
 import { useCan } from "@/hooks/use-can";
 import type {
   Schedule,
@@ -19,17 +20,11 @@ import type {
   ScheduleFormData,
 } from "@/types/schedule";
 
-// Mock data
+// Mock data (playlists and schedules – schedule API not wired yet)
 const mockPlaylists = [
   { id: "playlist-1", name: "Demo Playlist" },
   { id: "playlist-2", name: "Marketing Content" },
   { id: "playlist-3", name: "Welcome Messages" },
-] as const;
-
-const mockDisplays = [
-  { id: "display-1", name: "446" },
-  { id: "display-2", name: "Lobby Display" },
-  { id: "display-3", name: "Conference Room A" },
 ] as const;
 
 const mockSchedules: Schedule[] = [
@@ -52,6 +47,12 @@ const mockSchedules: Schedule[] = [
 export default function SchedulesPage(): ReactElement {
   const canEditSchedule = useCan("schedules:update");
   const canDeleteSchedule = useCan("schedules:delete");
+  const { data: devicesData } = useGetDevicesQuery();
+  const availableDisplays: readonly { id: string; name: string }[] = useMemo(
+    () => devicesData?.items?.map((d) => ({ id: d.id, name: d.name })) ?? [],
+    [devicesData?.items],
+  );
+
   // Calendar state
   const [currentDate, setCurrentDate] = useState(() => new Date(2026, 0, 1)); // Jan 2026
   const [view, setView] = useState<CalendarView>("resource-week");
@@ -102,29 +103,32 @@ export default function SchedulesPage(): ReactElement {
     setEditDialogOpen(true);
   }, []);
 
-  const handleCreateSchedule = useCallback((data: ScheduleFormData) => {
-    const playlist = mockPlaylists.find((p) => p.id === data.playlistId);
-    const displays = data.targetDisplayIds
-      .map((id) => mockDisplays.find((d) => d.id === id))
-      .filter(Boolean) as { id: string; name: string }[];
+  const handleCreateSchedule = useCallback(
+    (data: ScheduleFormData) => {
+      const playlist = mockPlaylists.find((p) => p.id === data.playlistId);
+      const displays = data.targetDisplayIds
+        .map((id) => availableDisplays.find((d) => d.id === id))
+        .filter(Boolean) as { id: string; name: string }[];
 
-    const newSchedule: Schedule = {
-      id: `schedule-${Date.now()}`,
-      name: data.name,
-      startDate: data.startDate.toISOString().split("T")[0],
-      endDate: data.endDate.toISOString().split("T")[0],
-      startTime: data.startTime,
-      endTime: data.endTime,
-      playlist: playlist ?? { id: "", name: "" },
-      targetDisplays: displays,
-      recurrence: data.recurrenceEnabled ? data.recurrence : "NONE",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      createdBy: { id: "user-1", name: "Admin" },
-    };
+      const newSchedule: Schedule = {
+        id: `schedule-${Date.now()}`,
+        name: data.name,
+        startDate: data.startDate.toISOString().split("T")[0],
+        endDate: data.endDate.toISOString().split("T")[0],
+        startTime: data.startTime,
+        endTime: data.endTime,
+        playlist: playlist ?? { id: "", name: "" },
+        targetDisplays: displays,
+        recurrence: data.recurrenceEnabled ? data.recurrence : "NONE",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        createdBy: { id: "user-1", name: "Admin" },
+      };
 
-    setSchedules((prev) => [...prev, newSchedule]);
-  }, []);
+      setSchedules((prev) => [...prev, newSchedule]);
+    },
+    [availableDisplays],
+  );
 
   const handleDeleteSchedule = useCallback((schedule: Schedule) => {
     setSchedules((prev) => prev.filter((s) => s.id !== schedule.id));
@@ -134,7 +138,7 @@ export default function SchedulesPage(): ReactElement {
     (scheduleId: string, data: ScheduleFormData) => {
       const playlist = mockPlaylists.find((p) => p.id === data.playlistId);
       const displays = data.targetDisplayIds
-        .map((id) => mockDisplays.find((d) => d.id === id))
+        .map((id) => availableDisplays.find((d) => d.id === id))
         .filter(Boolean) as { id: string; name: string }[];
 
       setSchedules((prev) =>
@@ -156,17 +160,17 @@ export default function SchedulesPage(): ReactElement {
         ),
       );
     },
-    [],
+    [availableDisplays],
   );
 
   return (
     <DashboardPage.Root>
       <DashboardPage.Header
-        title='Schedules'
+        title="Schedules"
         actions={
-          <Can permission='schedules:create'>
+          <Can permission="schedules:create">
             <Button onClick={() => setCreateDialogOpen(true)}>
-              <IconPlus className='size-4' />
+              <IconPlus className="size-4" />
               Create Schedule
             </Button>
           </Can>
@@ -174,7 +178,7 @@ export default function SchedulesPage(): ReactElement {
       />
 
       <DashboardPage.Body>
-        <DashboardPage.Toolbar className='px-8 py-3'>
+        <DashboardPage.Toolbar className="px-8 py-3">
           <CalendarHeader
             currentDate={currentDate}
             view={view}
@@ -182,21 +186,21 @@ export default function SchedulesPage(): ReactElement {
             onPrev={handlePrev}
             onNext={handleNext}
             onToday={handleToday}
-            resourcesCount={mockDisplays.length}
+            resourcesCount={availableDisplays.length}
           />
         </DashboardPage.Toolbar>
 
-        <DashboardPage.Content className='flex min-h-0 flex-1 flex-col pt-6'>
+        <DashboardPage.Content className="flex min-h-0 flex-1 flex-col pt-6">
           <CalendarGrid
             currentDate={currentDate}
             view={view}
             schedules={schedules}
-            resources={mockDisplays}
+            resources={availableDisplays}
             onScheduleClick={handleScheduleClick}
           />
         </DashboardPage.Content>
 
-        <DashboardPage.Footer />
+        <DashboardPage.Footer>{null}</DashboardPage.Footer>
       </DashboardPage.Body>
 
       {/* Create Schedule Dialog */}
@@ -205,7 +209,7 @@ export default function SchedulesPage(): ReactElement {
         onOpenChange={setCreateDialogOpen}
         onCreate={handleCreateSchedule}
         availablePlaylists={mockPlaylists}
-        availableDisplays={mockDisplays}
+        availableDisplays={availableDisplays}
       />
 
       {/* View Schedule Dialog */}
@@ -226,7 +230,7 @@ export default function SchedulesPage(): ReactElement {
         onOpenChange={setEditDialogOpen}
         onSave={handleSaveSchedule}
         availablePlaylists={mockPlaylists}
-        availableDisplays={mockDisplays}
+        availableDisplays={availableDisplays}
       />
     </DashboardPage.Root>
   );

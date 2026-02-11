@@ -70,55 +70,55 @@ export function CalendarHeader({
   }`;
 
   return (
-    <div className='grid w-full grid-cols-3 items-center gap-3'>
+    <div className="grid w-full grid-cols-3 items-center gap-3">
       {/* Left: Today + Navigation */}
-      <div className='flex justify-start'>
-        <div className='flex items-center gap-1'>
-          <Button variant='outline' size='default' onClick={onToday}>
+      <div className="flex justify-start">
+        <div className="flex items-center gap-1">
+          <Button variant="outline" size="default" onClick={onToday}>
             Today
           </Button>
           <Button
-            variant='outline'
-            size='icon'
+            variant="outline"
+            size="icon"
             onClick={onPrev}
-            aria-label='Previous period'
+            aria-label="Previous period"
           >
-            <IconChevronLeft className='size-4' />
+            <IconChevronLeft className="size-4" />
           </Button>
           <Button
-            variant='outline'
-            size='icon'
+            variant="outline"
+            size="icon"
             onClick={onNext}
-            aria-label='Next period'
+            aria-label="Next period"
           >
-            <IconChevronRight className='size-4' />
+            <IconChevronRight className="size-4" />
           </Button>
         </div>
       </div>
 
       {/* Center: Date Range + Resource Count */}
-      <div className='flex justify-center gap-2'>
-        <h2 className='truncate text-base font-semibold'>{label}</h2>
-        <span className='shrink-0 rounded-md border bg-muted/40 px-2 py-1 text-xs text-muted-foreground'>
+      <div className="flex justify-center gap-2">
+        <h2 className="truncate text-base font-semibold">{label}</h2>
+        <span className="shrink-0 rounded-md border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
           {resourcesLabel}
         </span>
       </div>
 
       {/* Right: View Toggle */}
-      <div className='flex justify-end'>
+      <div className="flex justify-end">
         <ToggleGroup
-          type='single'
+          type="single"
           value={view}
           onValueChange={(value) => {
             if (value) {
               onViewChange(value as CalendarView);
             }
           }}
-          variant='outline'
-          size='default'
+          variant="outline"
+          size="default"
         >
-          <ToggleGroupItem value='resource-week'>Resource Week</ToggleGroupItem>
-          <ToggleGroupItem value='resource-day'>Resource Day</ToggleGroupItem>
+          <ToggleGroupItem value="resource-week">Resource Week</ToggleGroupItem>
+          <ToggleGroupItem value="resource-day">Resource Day</ToggleGroupItem>
         </ToggleGroup>
       </div>
     </div>

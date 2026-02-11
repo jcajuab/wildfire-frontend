@@ -14,6 +14,8 @@ export interface NowPlaying {
 
 export interface Display {
   readonly id: string;
+  /** Backend device identifier (for registration/debugging). */
+  readonly identifier?: string;
   readonly name: string;
   readonly status: DisplayStatus;
   readonly location: string;

@@ -1,22 +1,24 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { IconPlus } from "@tabler/icons-react";
+import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
-import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { Pagination } from "@/components/content/pagination";
-import { AddDisplayDialog } from "@/components/displays/add-display-dialog";
+import { DeviceRegistrationInfoDialog } from "@/components/displays/device-registration-info-dialog";
 import { DisplayFilterPopover } from "@/components/displays/display-filter-popover";
 import { DisplayGrid } from "@/components/displays/display-grid";
 import { DisplaySearchInput } from "@/components/displays/display-search-input";
 import { DisplaySortSelect } from "@/components/displays/display-sort-select";
 import { DisplayStatusTabs } from "@/components/displays/display-status-tabs";
-import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
 import { ViewDisplayDialog } from "@/components/displays/view-display-dialog";
 import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useGetDevicesQuery } from "@/lib/api/devices-api";
+import { mapDeviceToDisplay } from "@/lib/map-device-to-display";
 import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
@@ -29,11 +31,14 @@ import type { Display, DisplaySortField } from "@/types/display";
 const DISPLAY_STATUS_VALUES = ["all", "READY", "LIVE", "DOWN"] as const;
 const DISPLAY_SORT_VALUES = ["alphabetical", "status", "location"] as const;
 
-const mockDisplays: Display[] = [];
+const DEVICE_SELF_REGISTRATION_MESSAGE =
+  "Devices are managed via self-registration. Use the device API key to register or update displays.";
 
 export default function DisplaysPage(): ReactElement {
   const canUpdateDisplay = useCan("devices:update");
   const canDeleteDisplay = useCan("devices:delete");
+  const { data: devicesData, isLoading, isError, error } = useGetDevicesQuery();
+
   const [statusFilter, setStatusFilter] =
     useQueryEnumState<DisplayStatusFilter>(
       "status",
@@ -48,16 +53,15 @@ export default function DisplaysPage(): ReactElement {
   const [search, setSearch] = useQueryStringState("q", "");
   const [page, setPage] = useQueryNumberState("page", 1);
 
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAddInfoDialogOpen, setIsAddInfoDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
-  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
-  const [displayToRemove, setDisplayToRemove] = useState<Display | null>(null);
   const [selectedDisplay, setSelectedDisplay] = useState<Display | null>(null);
-  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
-  const [displays, setDisplays] = useState<Display[]>(mockDisplays);
+  const displays: Display[] = useMemo(
+    () => (devicesData?.items ?? []).map(mapDeviceToDisplay),
+    [devicesData?.items],
+  );
   const pageSize = 20;
 
   const handleStatusFilterChange = useCallback(
@@ -84,18 +88,6 @@ export default function DisplaysPage(): ReactElement {
     [setSearch, setPage],
   );
 
-  const handleRegister = useCallback(
-    (displayData: Omit<Display, "id" | "createdAt">) => {
-      const newDisplay: Display = {
-        ...displayData,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-      };
-      setDisplays((prev) => [newDisplay, ...prev]);
-    },
-    [],
-  );
-
   const handleViewDetails = useCallback((display: Display) => {
     setSelectedDisplay(display);
     setIsViewDialogOpen(true);
@@ -107,46 +99,36 @@ export default function DisplaysPage(): ReactElement {
   }, []);
 
   const handleRefreshPage = useCallback((display: Display) => {
-    const refreshedAt = new Date().toLocaleTimeString();
-    setInfoMessage(`Refreshed "${display.name}" at ${refreshedAt}.`);
+    toast.info(
+      `Refreshed "${display.name}". Reload the page to see latest data.`,
+    );
   }, []);
 
-  const handleToggleDisplay = useCallback((display: Display) => {
-    setDisplays((prev) =>
-      prev.map((currentDisplay) =>
-        currentDisplay.id === display.id
-          ? {
-              ...currentDisplay,
-              status: currentDisplay.status === "DOWN" ? "READY" : "DOWN",
-            }
-          : currentDisplay,
-      ),
-    );
-    setInfoMessage(`Updated power state for "${display.name}".`);
-  }, []);
+  // Signature required by DisplayCard; we only show a toast (no toggle from dashboard).
+  const handleToggleDisplay = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- required by card callback signature
+    (_display: Display) => {
+      toast.info(
+        "Power state is not managed from the dashboard. Devices report their own status.",
+      );
+    },
+    [],
+  );
 
   const handleRemoveDisplay = useCallback((display: Display) => {
-    setDisplayToRemove(display);
-    setIsRemoveDialogOpen(true);
+    void display;
+    toast.info(DEVICE_SELF_REGISTRATION_MESSAGE);
   }, []);
 
   const handleEditFromView = useCallback((display: Display) => {
+    void display;
     setIsViewDialogOpen(false);
-    setSelectedDisplay(display);
-    setIsEditDialogOpen(true);
+    toast.info(DEVICE_SELF_REGISTRATION_MESSAGE);
   }, []);
 
   const handleEditPlaylist = useCallback((display: Display) => {
-    setInfoMessage(
-      `Playlist editing for "${display.name}" is unavailable in mock mode.`,
-    );
-  }, []);
-
-  const handleSaveEdit = useCallback((updatedDisplay: Display) => {
-    setDisplays((prev) =>
-      prev.map((display) =>
-        display.id === updatedDisplay.id ? updatedDisplay : display,
-      ),
+    toast.info(
+      `Schedule assignment for "${display.name}" is done via the Schedules page.`,
     );
   }, []);
 
@@ -163,7 +145,10 @@ export default function DisplaysPage(): ReactElement {
           const matchesLocation = display.location
             .toLowerCase()
             .includes(searchLower);
-          if (!matchesName && !matchesLocation) {
+          const matchesIdentifier = display.identifier
+            ?.toLowerCase()
+            .includes(searchLower);
+          if (!matchesName && !matchesLocation && !matchesIdentifier) {
             return false;
           }
         }
@@ -195,13 +180,22 @@ export default function DisplaysPage(): ReactElement {
     [sortedDisplays, page],
   );
 
+  useEffect(() => {
+    if (!isError) return;
+    toast.error(
+      error && "status" in error && error.status === 403
+        ? "You don’t have permission to view displays."
+        : "Failed to load displays.",
+    );
+  }, [isError, error]);
+
   return (
     <DashboardPage.Root>
       <DashboardPage.Header
         title="Displays"
         actions={
           <Can permission="devices:create">
-            <Button onClick={() => setIsAddDialogOpen(true)}>
+            <Button onClick={() => setIsAddInfoDialogOpen(true)}>
               <IconPlus className="size-4" />
               Add Display
             </Button>
@@ -209,8 +203,10 @@ export default function DisplaysPage(): ReactElement {
         }
       />
 
-      {infoMessage ? (
-        <DashboardPage.Banner>{infoMessage}</DashboardPage.Banner>
+      {isError ? (
+        <DashboardPage.Banner tone="danger">
+          Failed to load displays. Check your connection and permissions.
+        </DashboardPage.Banner>
       ) : null}
 
       <DashboardPage.Body>
@@ -235,16 +231,24 @@ export default function DisplaysPage(): ReactElement {
         </DashboardPage.Toolbar>
 
         <DashboardPage.Content className="pt-6">
-          <DisplayGrid
-            items={paginatedDisplays}
-            onViewDetails={handleViewDetails}
-            onPreviewPage={handlePreviewPage}
-            onRefreshPage={handleRefreshPage}
-            onToggleDisplay={handleToggleDisplay}
-            onRemoveDisplay={handleRemoveDisplay}
-            canUpdate={canUpdateDisplay}
-            canDelete={canDeleteDisplay}
-          />
+          {isLoading ? (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-[200px] rounded-lg" />
+              ))}
+            </div>
+          ) : (
+            <DisplayGrid
+              items={paginatedDisplays}
+              onViewDetails={handleViewDetails}
+              onPreviewPage={handlePreviewPage}
+              onRefreshPage={handleRefreshPage}
+              onToggleDisplay={handleToggleDisplay}
+              onRemoveDisplay={handleRemoveDisplay}
+              canUpdate={canUpdateDisplay}
+              canDelete={canDeleteDisplay}
+            />
+          )}
         </DashboardPage.Content>
 
         <DashboardPage.Footer>
@@ -257,10 +261,9 @@ export default function DisplaysPage(): ReactElement {
         </DashboardPage.Footer>
       </DashboardPage.Body>
 
-      <AddDisplayDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onRegister={handleRegister}
+      <DeviceRegistrationInfoDialog
+        open={isAddInfoDialogOpen}
+        onOpenChange={setIsAddInfoDialogOpen}
       />
 
       <ViewDisplayDialog
@@ -272,13 +275,6 @@ export default function DisplaysPage(): ReactElement {
         canEdit={canUpdateDisplay}
       />
 
-      <EditDisplayDialog
-        display={selectedDisplay}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        onSave={handleSaveEdit}
-      />
-
       <ViewDisplayDialog
         display={selectedDisplay}
         open={isPreviewDialogOpen}
@@ -286,25 +282,6 @@ export default function DisplaysPage(): ReactElement {
         onEdit={handleEditFromView}
         onEditPlaylist={handleEditPlaylist}
         canEdit={canUpdateDisplay}
-      />
-
-      <ConfirmActionDialog
-        open={isRemoveDialogOpen}
-        onOpenChange={setIsRemoveDialogOpen}
-        title="Remove display?"
-        description={
-          displayToRemove
-            ? `This will permanently remove "${displayToRemove.name}".`
-            : undefined
-        }
-        confirmLabel="Remove display"
-        onConfirm={() => {
-          if (!displayToRemove) return;
-          setDisplays((prev) =>
-            prev.filter((display) => display.id !== displayToRemove.id),
-          );
-          setDisplayToRemove(null);
-        }}
       />
     </DashboardPage.Root>
   );

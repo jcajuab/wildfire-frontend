@@ -297,10 +297,10 @@ export default function UsersPage(): ReactElement {
   if (usersLoading) {
     return (
       <DashboardPage.Root>
-        <DashboardPage.Header title='Users' />
+        <DashboardPage.Header title="Users" />
         <DashboardPage.Body>
-          <DashboardPage.Content className='flex items-center justify-center'>
-            <p className='text-muted-foreground'>Loading users…</p>
+          <DashboardPage.Content className="flex items-center justify-center">
+            <p className="text-muted-foreground">Loading users…</p>
           </DashboardPage.Content>
         </DashboardPage.Body>
       </DashboardPage.Root>
@@ -310,10 +310,10 @@ export default function UsersPage(): ReactElement {
   if (usersError) {
     return (
       <DashboardPage.Root>
-        <DashboardPage.Header title='Users' />
+        <DashboardPage.Header title="Users" />
         <DashboardPage.Body>
-          <DashboardPage.Content className='flex items-center justify-center'>
-            <p className='text-destructive'>
+          <DashboardPage.Content className="flex items-center justify-center">
+            <p className="text-destructive">
               Failed to load users. Check the API and try again.
             </p>
           </DashboardPage.Content>
@@ -325,11 +325,11 @@ export default function UsersPage(): ReactElement {
   return (
     <DashboardPage.Root>
       <DashboardPage.Header
-        title='Users'
+        title="Users"
         actions={
-          <Can permission='users:create'>
+          <Can permission="users:create">
             <Button onClick={() => setIsInviteDialogOpen(true)}>
-              <IconPlus className='size-4' />
+              <IconPlus className="size-4" />
               Invite User
             </Button>
           </Can>
@@ -338,16 +338,16 @@ export default function UsersPage(): ReactElement {
 
       <DashboardPage.Body>
         <DashboardPage.Toolbar>
-          <h2 className='text-base font-semibold'>Search Results</h2>
+          <h2 className="text-base font-semibold">Search Results</h2>
           <UserSearchInput
             value={search}
             onChange={handleSearchChange}
-            className='w-full max-w-none md:w-72'
+            className="w-full max-w-none md:w-72"
           />
         </DashboardPage.Toolbar>
 
-        <DashboardPage.Content className='pt-6'>
-          <div className='overflow-hidden rounded-lg border'>
+        <DashboardPage.Content className="pt-6">
+          <div className="overflow-hidden rounded-lg border">
             <UsersTable
               users={paginatedUsers}
               availableRoles={availableRoles}
@@ -392,13 +392,13 @@ export default function UsersPage(): ReactElement {
       <ConfirmActionDialog
         open={isRemoveDialogOpen}
         onOpenChange={setIsRemoveDialogOpen}
-        title='Remove user?'
+        title="Remove user?"
         description={
           userToRemove
             ? `This will permanently remove "${userToRemove.name}".`
             : undefined
         }
-        confirmLabel='Remove user'
+        confirmLabel="Remove user"
         onConfirm={async () => {
           if (!userToRemove) return;
           try {

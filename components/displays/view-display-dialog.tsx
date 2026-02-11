@@ -77,11 +77,19 @@ export function ViewDisplayDialog({
 
               {/* Details grid */}
               <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                {display.identifier != null && display.identifier !== "" ? (
+                  <>
+                    <span className="text-muted-foreground">Identifier:</span>
+                    <span className="font-mono text-xs">
+                      {display.identifier}
+                    </span>
+                  </>
+                ) : null}
                 <span className="text-muted-foreground">IP Address:</span>
-                <span>{display.ipAddress}</span>
+                <span>{display.ipAddress || "—"}</span>
 
                 <span className="text-muted-foreground">MAC Address:</span>
-                <span>{display.macAddress}</span>
+                <span>{display.macAddress || "—"}</span>
 
                 <span className="text-muted-foreground">Display Output:</span>
                 <span>{display.displayOutput}</span>
