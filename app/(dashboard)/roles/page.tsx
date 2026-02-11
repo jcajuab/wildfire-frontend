@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { IconPlus } from "@tabler/icons-react";
+import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
@@ -77,7 +78,6 @@ export default function RolesPage(): React.ReactElement {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     data: rolePermissionsData,
@@ -162,20 +162,17 @@ export default function RolesPage(): React.ReactElement {
   const handleCreate = useCallback(() => {
     setDialogMode("create");
     setSelectedRole(null);
-    setSubmitError(null);
     setDialogOpen(true);
   }, []);
 
   const handleEdit = useCallback((role: Role) => {
     setDialogMode("edit");
     setSelectedRole(role);
-    setSubmitError(null);
     setDialogOpen(true);
   }, []);
 
   const handleSubmit = useCallback(
     async (data: RoleFormData) => {
-      setSubmitError(null);
       try {
         if (dialogMode === "create") {
           const role = await createRole({
@@ -252,7 +249,7 @@ export default function RolesPage(): React.ReactElement {
           setDialogOpen(false);
         }
       } catch (err) {
-        setSubmitError(
+        toast.error(
           err instanceof Error ? err.message : "Something went wrong",
         );
       }
@@ -343,10 +340,6 @@ export default function RolesPage(): React.ReactElement {
         }
       />
 
-      {submitError ? (
-        <DashboardPage.Banner tone="danger">{submitError}</DashboardPage.Banner>
-      ) : null}
-
       <DashboardPage.Body>
         <DashboardPage.Toolbar>
           <h2 className="text-base font-semibold">Search Results</h2>
@@ -411,12 +404,11 @@ export default function RolesPage(): React.ReactElement {
         confirmLabel="Delete role"
         onConfirm={async () => {
           if (!roleToDelete) return;
-          setSubmitError(null);
           try {
             await deleteRole(roleToDelete.id).unwrap();
             setRoleToDelete(null);
           } catch (err) {
-            setSubmitError(
+            toast.error(
               err instanceof Error ? err.message : "Failed to delete role",
             );
             throw err;

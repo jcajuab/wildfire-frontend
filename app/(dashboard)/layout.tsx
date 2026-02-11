@@ -1,4 +1,4 @@
-import { AppLayout, AuthGuard } from "@/components/layout";
+import { AppLayout, AuthGuard, PageReadGuard } from "@/components/layout";
 
 interface DashboardLayoutProps {
   readonly children: React.ReactNode;
@@ -9,7 +9,9 @@ export default function DashboardLayout({
 }: DashboardLayoutProps): React.ReactElement {
   return (
     <AuthGuard>
-      <AppLayout>{children}</AppLayout>
+      <AppLayout>
+        <PageReadGuard>{children}</PageReadGuard>
+      </AppLayout>
     </AuthGuard>
   );
 }

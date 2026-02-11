@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { IconPlus } from "@tabler/icons-react";
+import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
@@ -76,7 +77,6 @@ export default function UsersPage(): React.ReactElement {
   const [userRolesByUserId, setUserRolesByUserId] = useState<
     Readonly<Record<string, readonly UserRole[]>>
   >({});
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const pageSize = 10;
 
@@ -122,7 +122,6 @@ export default function UsersPage(): React.ReactElement {
 
   const handleInvite = useCallback(
     async (emails: readonly string[]) => {
-      setSubmitError(null);
       try {
         const results = await Promise.allSettled(
           emails.map((email) =>
@@ -150,7 +149,7 @@ export default function UsersPage(): React.ReactElement {
 
         setIsInviteDialogOpen(false);
       } catch (err) {
-        setSubmitError(
+        toast.error(
           err instanceof Error ? err.message : "Failed to invite user(s)",
         );
       }
@@ -160,7 +159,6 @@ export default function UsersPage(): React.ReactElement {
 
   const handleRoleToggle = useCallback(
     async (userId: string, roleIds: string[]) => {
-      setSubmitError(null);
       try {
         await setUserRoles({ userId, roleIds }).unwrap();
         setUserRolesByUserId((prev) => ({
@@ -168,7 +166,7 @@ export default function UsersPage(): React.ReactElement {
           [userId]: availableRoles.filter((role) => roleIds.includes(role.id)),
         }));
       } catch (err) {
-        setSubmitError(
+        toast.error(
           err instanceof Error ? err.message : "Failed to update user roles",
         );
       }
@@ -178,13 +176,11 @@ export default function UsersPage(): React.ReactElement {
 
   const handleEdit = useCallback((user: User) => {
     setSelectedUser(user);
-    setSubmitError(null);
     setIsEditDialogOpen(true);
   }, []);
 
   const handleEditSubmit = useCallback(
     async (data: EditUserFormData) => {
-      setSubmitError(null);
       try {
         await updateUser({
           id: data.id,
@@ -195,7 +191,7 @@ export default function UsersPage(): React.ReactElement {
         setIsEditDialogOpen(false);
         setSelectedUser(null);
       } catch (err) {
-        setSubmitError(
+        toast.error(
           err instanceof Error ? err.message : "Failed to update user",
         );
       }
@@ -314,10 +310,6 @@ export default function UsersPage(): React.ReactElement {
         }
       />
 
-      {submitError ? (
-        <DashboardPage.Banner tone="danger">{submitError}</DashboardPage.Banner>
-      ) : null}
-
       <DashboardPage.Body>
         <DashboardPage.Toolbar>
           <h2 className="text-base font-semibold">Search Results</h2>
@@ -380,12 +372,11 @@ export default function UsersPage(): React.ReactElement {
         confirmLabel="Remove user"
         onConfirm={async () => {
           if (!userToRemove) return;
-          setSubmitError(null);
           try {
             await deleteUser(userToRemove.id).unwrap();
             setUserToRemove(null);
           } catch (err) {
-            setSubmitError(
+            toast.error(
               err instanceof Error ? err.message : "Failed to remove user",
             );
             throw err;
