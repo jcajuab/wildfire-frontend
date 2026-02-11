@@ -1,5 +1,6 @@
 "use client";
 
+import type { ChangeEvent, ReactElement } from "react";
 import { useState, useCallback } from "react";
 import { IconUpload, IconSparkles } from "@tabler/icons-react";
 
@@ -29,7 +30,7 @@ export function CreateContentDialog({
   onOpenChange,
   onCreateFromScratch,
   onUploadFile,
-}: CreateContentDialogProps): React.ReactElement {
+}: CreateContentDialogProps): ReactElement {
   const [name, setName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -83,7 +84,7 @@ export function CreateContentDialog({
   );
 
   const handleFileInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
       if (files && files.length > 0) {
         handleFileSelect(files[0]);

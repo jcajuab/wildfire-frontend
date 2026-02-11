@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useState, useCallback } from "react";
 import {
   IconCheck,
@@ -72,7 +73,7 @@ function StepIndicator({
   currentStep,
 }: {
   readonly currentStep: WizardStep;
-}): React.ReactElement {
+}): ReactElement {
   return (
     <div className="flex items-center justify-center gap-0">
       {stepLabels.map((label, index) => {
@@ -122,7 +123,7 @@ export function AddDisplayDialog({
   open,
   onOpenChange,
   onRegister,
-}: AddDisplayDialogProps): React.ReactElement {
+}: AddDisplayDialogProps): ReactElement {
   const [step, setStep] = useState<WizardStep>(1);
   const [data, setData] = useState<WizardData>(initialWizardData);
   const [groupInput, setGroupInput] = useState("");

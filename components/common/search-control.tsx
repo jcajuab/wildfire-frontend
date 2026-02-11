@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { IconSearch } from "@tabler/icons-react";
 
 import {
@@ -23,7 +24,7 @@ export function SearchControl({
   ariaLabel,
   placeholder = "Search…",
   className,
-}: SearchControlProps): React.ReactElement {
+}: SearchControlProps): ReactElement {
   return (
     <InputGroup className={cn("w-full min-w-52 max-w-80", className)}>
       <InputGroupAddon align="inline-start">

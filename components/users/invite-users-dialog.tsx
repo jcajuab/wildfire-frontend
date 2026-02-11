@@ -1,5 +1,6 @@
 "use client";
 
+import type { ChangeEvent, FormEvent, ReactElement } from "react";
 import { useState, useRef } from "react";
 import { IconPlus, IconDownload, IconUpload, IconX } from "@tabler/icons-react";
 
@@ -24,7 +25,7 @@ interface InviteUsersDialogProps {
 function InviteUsersDialogContent({
   onInvite,
   onOpenChange,
-}: Omit<InviteUsersDialogProps, "open">): React.ReactElement {
+}: Omit<InviteUsersDialogProps, "open">): ReactElement {
   const [emails, setEmails] = useState<string[]>([""]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,7 +62,7 @@ function InviteUsersDialogContent({
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -81,7 +82,7 @@ function InviteUsersDialogContent({
     e.target.value = "";
   };
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     if (isSubmitting) return;
     const validEmails = emails.filter(
@@ -201,7 +202,7 @@ export function InviteUsersDialog({
   open,
   onOpenChange,
   onInvite,
-}: InviteUsersDialogProps): React.ReactElement {
+}: InviteUsersDialogProps): ReactElement {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">

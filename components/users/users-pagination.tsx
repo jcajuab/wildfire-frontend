@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 
 interface UsersPaginationProps {
@@ -14,7 +15,7 @@ export function UsersPagination({
   pageSize,
   total,
   onPageChange,
-}: UsersPaginationProps): React.ReactElement {
+}: UsersPaginationProps): ReactElement {
   return (
     <PaginationFooter
       page={page}

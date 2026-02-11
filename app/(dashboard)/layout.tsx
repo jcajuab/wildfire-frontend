@@ -1,12 +1,13 @@
+import type { ReactElement, ReactNode } from "react";
 import { AppLayout, AuthGuard, PageReadGuard } from "@/components/layout";
 
 interface DashboardLayoutProps {
-  readonly children: React.ReactNode;
+  readonly children: ReactNode;
 }
 
 export default function DashboardLayout({
   children,
-}: DashboardLayoutProps): React.ReactElement {
+}: DashboardLayoutProps): ReactElement {
   return (
     <AuthGuard>
       <AppLayout>

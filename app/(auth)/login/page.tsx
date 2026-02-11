@@ -1,5 +1,6 @@
 "use client";
 
+import type { FormEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconFlame } from "@tabler/icons-react";
@@ -9,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { AuthApiError } from "@/lib/api-client";
 
-export default function LoginPage(): React.ReactElement {
+export default function LoginPage(): ReactElement {
   const router = useRouter();
   const { login, isAuthenticated, isInitialized, isLoading } = useAuth();
   const [email, setEmail] = useState("");
@@ -22,9 +23,7 @@ export default function LoginPage(): React.ReactElement {
     }
   }, [isInitialized, isAuthenticated, router]);
 
-  async function handleSubmit(
-    e: React.FormEvent<HTMLFormElement>,
-  ): Promise<void> {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     setErrorMessage(null);
     const credentials = { email, password };

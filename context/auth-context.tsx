@@ -1,6 +1,7 @@
 "use client";
 
-import React, {
+import type { ReactElement, ReactNode } from "react";
+import {
   createContext,
   useCallback,
   useContext,
@@ -97,8 +98,8 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({
   children,
 }: {
-  children: React.ReactNode;
-}): React.ReactElement {
+  children: ReactNode;
+}): ReactElement {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<string[]>([]);

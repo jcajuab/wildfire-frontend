@@ -1,10 +1,11 @@
+import type { ReactElement, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface EmptyStateProps {
   readonly title: string;
   readonly description?: string;
-  readonly icon?: React.ReactNode;
-  readonly action?: React.ReactNode;
+  readonly icon?: ReactNode;
+  readonly action?: ReactNode;
   readonly className?: string;
 }
 
@@ -14,7 +15,7 @@ export function EmptyState({
   icon,
   action,
   className,
-}: EmptyStateProps): React.ReactElement {
+}: EmptyStateProps): ReactElement {
   return (
     <div
       className={cn(

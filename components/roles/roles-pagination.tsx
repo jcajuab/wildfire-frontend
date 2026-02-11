@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 
 interface RolesPaginationProps {
@@ -14,7 +15,7 @@ export function RolesPagination({
   pageSize,
   total,
   onPageChange,
-}: RolesPaginationProps): React.ReactElement {
+}: RolesPaginationProps): ReactElement {
   return (
     <PaginationFooter
       page={page}

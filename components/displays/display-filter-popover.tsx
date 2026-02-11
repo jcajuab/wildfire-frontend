@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { IconFilter } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-export function DisplayFilterPopover(): React.ReactElement {
+export function DisplayFilterPopover(): ReactElement {
   return (
     <Popover>
       <PopoverTrigger asChild>

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { IconShieldLock } from "@tabler/icons-react";
@@ -7,31 +8,22 @@ import { IconShieldLock } from "@tabler/icons-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
-
-const ROUTE_PERMISSION_MAP: Readonly<Record<string, string>> = {
-  "/roles": "roles:read",
-  "/users": "users:read",
-  "/content": "content:read",
-  "/playlists": "playlists:read",
-  "/schedules": "schedules:read",
-  "/displays": "devices:read",
-} as const;
+import { ROUTE_READ_PERMISSION_MAP } from "@/lib/route-permissions";
 
 interface PageReadGuardProps {
-  readonly children: React.ReactNode;
+  readonly children: ReactNode;
 }
 
 /**
  * Wraps dashboard content and shows an access-denied view when the user
  * navigates to a resource route without the required read permission.
  */
-export function PageReadGuard({ children }: PageReadGuardProps): React.ReactElement {
+export function PageReadGuard({ children }: PageReadGuardProps): ReactElement {
   const pathname = usePathname();
   const { can } = useAuth();
 
-  const requiredPermission = ROUTE_PERMISSION_MAP[pathname ?? ""];
-  const hasAccess =
-    requiredPermission === undefined || can(requiredPermission);
+  const requiredPermission = ROUTE_READ_PERMISSION_MAP[pathname ?? ""];
+  const hasAccess = requiredPermission === undefined || can(requiredPermission);
 
   if (!hasAccess && requiredPermission !== undefined) {
     return (

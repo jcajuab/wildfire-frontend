@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import {
   IconDotsVertical,
   IconPlaylist,
@@ -49,7 +50,7 @@ export function PlaylistCard({
   onDelete,
   canUpdate = true,
   canDelete = true,
-}: PlaylistCardProps): React.ReactElement {
+}: PlaylistCardProps): ReactElement {
   // Show first 4 items as thumbnails
   const visibleItems = playlist.items.slice(0, 4);
 

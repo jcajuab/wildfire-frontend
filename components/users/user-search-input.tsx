@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { SearchControl } from "@/components/common/search-control";
 
 interface UserSearchInputProps {
@@ -12,7 +13,7 @@ export function UserSearchInput({
   value,
   onChange,
   className,
-}: UserSearchInputProps): React.ReactElement {
+}: UserSearchInputProps): ReactElement {
   return (
     <SearchControl
       value={value}

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
@@ -40,7 +41,7 @@ import type {
 const USER_SORT_FIELDS = ["name", "lastSeen"] as const;
 const USER_SORT_DIRECTIONS = ["asc", "desc"] as const;
 
-export default function UsersPage(): React.ReactElement {
+export default function UsersPage(): ReactElement {
   const canUpdateUser = useCan("users:update");
   const canDeleteUser = useCan("users:delete");
   const {

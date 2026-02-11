@@ -38,58 +38,44 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useMounted } from "@/hooks/use-mounted";
 import { useAuth } from "@/context/auth-context";
+import { DASHBOARD_ROUTE_READ_ENTRIES } from "@/lib/route-permissions";
+import type { ComponentType, ReactElement } from "react";
 
 interface NavItem {
   readonly title: string;
   readonly href: string;
-  readonly icon: React.ComponentType<{ className?: string }>;
+  readonly icon: ComponentType<{ className?: string }>;
   readonly permission: string;
 }
 
-const navItems: readonly NavItem[] = [
-  {
-    title: "Displays",
-    href: "/displays",
-    icon: IconDeviceDesktop,
-    permission: "devices:read",
-  },
-  {
-    title: "Content",
-    href: "/content",
-    icon: IconPhoto,
-    permission: "content:read",
-  },
-  {
-    title: "Playlists",
-    href: "/playlists",
-    icon: IconPlaylist,
-    permission: "playlists:read",
-  },
-  {
-    title: "Schedules",
-    href: "/schedules",
-    icon: IconCalendarEvent,
-    permission: "schedules:read",
-  },
-  {
-    title: "Users",
-    href: "/users",
-    icon: IconUsers,
-    permission: "users:read",
-  },
-  {
-    title: "Roles",
-    href: "/roles",
-    icon: IconShield,
-    permission: "roles:read",
-  },
-] as const;
+const ICON_BY_PATH: Record<
+  (typeof DASHBOARD_ROUTE_READ_ENTRIES)[number]["path"],
+  ComponentType<{ className?: string }>
+> = {
+  "/displays": IconDeviceDesktop,
+  "/content": IconPhoto,
+  "/playlists": IconPlaylist,
+  "/schedules": IconCalendarEvent,
+  "/users": IconUsers,
+  "/roles": IconShield,
+};
 
-export function AppSidebar(): React.ReactElement {
+const navItems: readonly NavItem[] = DASHBOARD_ROUTE_READ_ENTRIES.map(
+  (entry) => ({
+    title: entry.title,
+    href: entry.path,
+    permission: entry.permission,
+    icon: ICON_BY_PATH[entry.path],
+  }),
+);
+
+export function AppSidebar(): ReactElement {
   const pathname = usePathname();
   const { state } = useSidebar();
-  const { user, logout, can } = useAuth();
-  const visibleNavItems = navItems.filter((item) => can(item.permission));
+  const { user, logout, can, isInitialized } = useAuth();
+  const visibleNavItems = isInitialized
+    ? navItems.filter((item) => can(item.permission))
+    : [];
   const displayName = user?.name ?? "User";
   const displayEmail = user?.email ?? "";
   // Only render tooltips after client mount to avoid hydration mismatch

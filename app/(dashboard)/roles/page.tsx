@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useState, useCallback, useMemo } from "react";
 import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
@@ -42,7 +43,7 @@ import type {
 const ROLE_SORT_FIELDS = ["name", "usersCount"] as const;
 const ROLE_SORT_DIRECTIONS = ["asc", "desc"] as const;
 
-export default function RolesPage(): React.ReactElement {
+export default function RolesPage(): ReactElement {
   const canUpdateRole = useCan("roles:update");
   const canDeleteRole = useCan("roles:delete");
   const {

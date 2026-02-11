@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { SearchControl } from "@/components/common/search-control";
 
 interface DisplaySearchInputProps {
@@ -12,7 +13,7 @@ export function DisplaySearchInput({
   value,
   onChange,
   className,
-}: DisplaySearchInputProps): React.ReactElement {
+}: DisplaySearchInputProps): ReactElement {
   return (
     <SearchControl
       value={value}

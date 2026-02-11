@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 
@@ -19,7 +20,7 @@ export function PaginationFooter({
   total,
   onPageChange,
   variant = "compact",
-}: PaginationFooterProps): React.ReactElement {
+}: PaginationFooterProps): ReactElement {
   const totalPages = Math.ceil(total / pageSize);
   const startItem = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const endItem = Math.min(page * pageSize, total);

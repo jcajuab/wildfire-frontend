@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import {
   IconDotsVertical,
   IconCircle,
@@ -61,7 +62,7 @@ function SortableHeader({
   field,
   currentSort,
   onSortChange,
-}: SortableHeaderProps): React.ReactElement {
+}: SortableHeaderProps): ReactElement {
   const isActive = currentSort.field === field;
   const isAsc = currentSort.direction === "asc";
 
@@ -96,9 +97,7 @@ interface FilterableHeaderProps {
   readonly label: string;
 }
 
-function FilterableHeader({
-  label,
-}: FilterableHeaderProps): React.ReactElement {
+function FilterableHeader({ label }: FilterableHeaderProps): ReactElement {
   return (
     <div className="flex items-center gap-1">
       {label}
@@ -127,7 +126,7 @@ function UserActionsMenu({
   onRemoveUser,
   canUpdate,
   canDelete,
-}: UserActionsMenuProps): React.ReactElement | null {
+}: UserActionsMenuProps): ReactElement | null {
   if (!canUpdate && !canDelete) return null;
   return (
     <DropdownMenu>
@@ -207,7 +206,7 @@ function UserRow({
   onRemoveUser,
   canUpdate,
   canDelete,
-}: UserRowProps): React.ReactElement {
+}: UserRowProps): ReactElement {
   const userRoleIds = userRoles.map((r) => r.id);
 
   return (
@@ -258,7 +257,7 @@ export function UsersTable({
   onRemoveUser,
   canUpdate = true,
   canDelete = true,
-}: UsersTableProps): React.ReactElement {
+}: UsersTableProps): ReactElement {
   if (users.length === 0) {
     return (
       <div className="py-8">

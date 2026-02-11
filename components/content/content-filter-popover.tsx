@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { IconFilter } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ const typeOptions: readonly {
 export function ContentFilterPopover({
   typeFilter,
   onTypeFilterChange,
-}: ContentFilterPopoverProps): React.ReactElement {
+}: ContentFilterPopoverProps): ReactElement {
   return (
     <Popover>
       <PopoverTrigger asChild>

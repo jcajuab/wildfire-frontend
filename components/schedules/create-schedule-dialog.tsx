@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,7 @@ export function CreateScheduleDialog({
   onCreate,
   availablePlaylists,
   availableDisplays,
-}: CreateScheduleDialogProps): React.ReactElement {
+}: CreateScheduleDialogProps): ReactElement {
   async function handleCreate(data: ScheduleFormData): Promise<void> {
     await onCreate(data);
     onOpenChange(false);

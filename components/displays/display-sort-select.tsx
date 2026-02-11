@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { IconSortAscendingLetters } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ const sortOptions: readonly {
 export function DisplaySortSelect({
   value,
   onValueChange,
-}: DisplaySortSelectProps): React.ReactElement {
+}: DisplaySortSelectProps): ReactElement {
   const currentLabel =
     sortOptions.find((option) => option.value === value)?.label ??
     "Alphabetical";

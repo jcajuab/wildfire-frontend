@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useState, useCallback, useMemo } from "react";
 import {
   DndContext,
@@ -84,7 +85,7 @@ function SortablePlaylistItem({
   item,
   onRemove,
   onUpdateDuration,
-}: SortablePlaylistItemProps): React.ReactElement {
+}: SortablePlaylistItemProps): ReactElement {
   const {
     attributes,
     listeners,
@@ -159,7 +160,7 @@ export function CreatePlaylistDialog({
   onOpenChange,
   onCreate,
   availableContent,
-}: CreatePlaylistDialogProps): React.ReactElement {
+}: CreatePlaylistDialogProps): ReactElement {
   const [formData, setFormData] = useState<PlaylistFormData>({
     name: "",
     description: "",

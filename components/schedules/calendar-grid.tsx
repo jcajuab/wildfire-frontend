@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useMemo } from "react";
 import type { CalendarView, Schedule, ScheduleDisplay } from "@/types/schedule";
 import {
@@ -71,7 +72,7 @@ function ResourceWeekView({
   eventsByResourceDate,
   schedulesById,
   onScheduleClick,
-}: ResourceGridSharedProps): React.ReactElement {
+}: ResourceGridSharedProps): ReactElement {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
       <div className="overflow-auto">
@@ -161,7 +162,7 @@ function ResourceDayView({
   eventsByResourceDate,
   schedulesById,
   onScheduleClick,
-}: ResourceGridSharedProps): React.ReactElement {
+}: ResourceGridSharedProps): ReactElement {
   const day = days[0];
 
   return (
@@ -273,7 +274,7 @@ function ResourceDayView({
   );
 }
 
-function EmptyResourcesState(): React.ReactElement {
+function EmptyResourcesState(): ReactElement {
   return (
     <div className="flex min-h-[24rem] items-center justify-center rounded-lg border bg-muted/10 px-4 text-center">
       <div>
@@ -294,7 +295,7 @@ export function CalendarGrid({
   schedules,
   resources,
   onScheduleClick,
-}: CalendarGridProps): React.ReactElement {
+}: CalendarGridProps): ReactElement {
   const days = useMemo(() => {
     if (view === "resource-day") {
       return getDayDates(currentDate);

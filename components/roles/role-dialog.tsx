@@ -1,5 +1,6 @@
 "use client";
 
+import type { FormEvent, ReactElement } from "react";
 import { useMemo, useState } from "react";
 import { IconUserPlus, IconInfoCircle, IconX } from "@tabler/icons-react";
 
@@ -76,7 +77,7 @@ function RoleForm({
   initialUserIds,
   onSubmit,
   onOpenChange,
-}: RoleFormProps): React.ReactElement {
+}: RoleFormProps): ReactElement {
   const [name, setName] = useState(initialRole?.name ?? "");
   const [description, setDescription] = useState(
     initialRole?.description ?? "",
@@ -94,7 +95,7 @@ function RoleForm({
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     if (!name.trim() || isSubmitting) return;
 
@@ -327,7 +328,7 @@ export function RoleDialog({
   initialPermissionIds = [],
   initialUserIds = [],
   onSubmit,
-}: RoleDialogProps): React.ReactElement {
+}: RoleDialogProps): ReactElement {
   const showForm = mode === "create" || editDataReady;
 
   return (

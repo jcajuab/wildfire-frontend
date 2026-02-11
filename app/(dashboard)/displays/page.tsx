@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
@@ -30,7 +31,7 @@ const DISPLAY_SORT_VALUES = ["alphabetical", "status", "location"] as const;
 
 const mockDisplays: Display[] = [];
 
-export default function DisplaysPage(): React.ReactElement {
+export default function DisplaysPage(): ReactElement {
   const canUpdateDisplay = useCan("devices:update");
   const canDeleteDisplay = useCan("devices:delete");
   const [statusFilter, setStatusFilter] =

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { ContentStatus } from "@/types/content";
 
@@ -22,7 +23,7 @@ const statusOptions: readonly {
 export function ContentStatusTabs({
   value,
   onValueChange,
-}: ContentStatusTabsProps): React.ReactElement {
+}: ContentStatusTabsProps): ReactElement {
   return (
     <ToggleGroup
       type="single"

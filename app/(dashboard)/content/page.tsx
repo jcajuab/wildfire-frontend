@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { IconEye, IconPlus } from "@tabler/icons-react";
 
@@ -51,7 +52,7 @@ function EditContentDialog({
   open,
   onOpenChange,
   onSave,
-}: EditContentDialogProps): React.ReactElement | null {
+}: EditContentDialogProps): ReactElement | null {
   if (!content) return null;
 
   return (
@@ -78,7 +79,7 @@ function EditContentDialogForm({
   content,
   onOpenChange,
   onSave,
-}: EditContentDialogFormProps): React.ReactElement {
+}: EditContentDialogFormProps): ReactElement {
   const [title, setTitle] = useState(content.title);
 
   return (
@@ -122,7 +123,7 @@ function PreviewContentDialog({
   content,
   open,
   onOpenChange,
-}: PreviewContentDialogProps): React.ReactElement | null {
+}: PreviewContentDialogProps): ReactElement | null {
   if (!content) return null;
 
   return (
@@ -165,7 +166,7 @@ function PreviewContentDialog({
   );
 }
 
-export default function ContentPage(): React.ReactElement {
+export default function ContentPage(): ReactElement {
   const canUpdateContent = useCan("content:update");
   const canDeleteContent = useCan("content:delete");
   const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(

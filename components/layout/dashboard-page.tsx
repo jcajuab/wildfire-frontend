@@ -1,15 +1,16 @@
+import type { ReactElement, ReactNode } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { cn } from "@/lib/utils";
 
 interface DashboardPageRootProps {
-  readonly children: React.ReactNode;
+  readonly children: ReactNode;
   readonly className?: string;
 }
 
 function DashboardPageRoot({
   children,
   className,
-}: DashboardPageRootProps): React.ReactElement {
+}: DashboardPageRootProps): ReactElement {
   return (
     <div className={cn("flex h-full min-w-0 flex-col", className)}>
       {children}
@@ -19,18 +20,18 @@ function DashboardPageRoot({
 
 interface DashboardPageHeaderProps {
   readonly title: string;
-  readonly actions?: React.ReactNode;
+  readonly actions?: ReactNode;
 }
 
 function DashboardPageHeader({
   title,
   actions,
-}: DashboardPageHeaderProps): React.ReactElement {
+}: DashboardPageHeaderProps): ReactElement {
   return <PageHeader title={title}>{actions}</PageHeader>;
 }
 
 interface DashboardPageBannerProps {
-  readonly children: React.ReactNode;
+  readonly children: ReactNode;
   readonly tone?: "info" | "danger";
   readonly className?: string;
 }
@@ -39,7 +40,7 @@ function DashboardPageBanner({
   children,
   tone = "info",
   className,
-}: DashboardPageBannerProps): React.ReactElement {
+}: DashboardPageBannerProps): ReactElement {
   return (
     <div
       className={cn(
@@ -56,14 +57,14 @@ function DashboardPageBanner({
 }
 
 interface DashboardPageToolbarProps {
-  readonly children: React.ReactNode;
+  readonly children: ReactNode;
   readonly className?: string;
 }
 
 function DashboardPageToolbar({
   children,
   className,
-}: DashboardPageToolbarProps): React.ReactElement {
+}: DashboardPageToolbarProps): ReactElement {
   return (
     <section
       className={cn(
@@ -77,14 +78,14 @@ function DashboardPageToolbar({
 }
 
 interface DashboardPageBodyProps {
-  readonly children: React.ReactNode;
+  readonly children: ReactNode;
   readonly className?: string;
 }
 
 function DashboardPageBody({
   children,
   className,
-}: DashboardPageBodyProps): React.ReactElement {
+}: DashboardPageBodyProps): ReactElement {
   return (
     <section className={cn("flex min-h-0 flex-1 flex-col", className)}>
       {children}
@@ -93,14 +94,14 @@ function DashboardPageBody({
 }
 
 interface DashboardPageContentProps {
-  readonly children: React.ReactNode;
+  readonly children: ReactNode;
   readonly className?: string;
 }
 
 function DashboardPageContent({
   children,
   className,
-}: DashboardPageContentProps): React.ReactElement {
+}: DashboardPageContentProps): ReactElement {
   return (
     <div className={cn("flex-1 overflow-auto px-8 pb-8", className)}>
       {children}
@@ -109,14 +110,14 @@ function DashboardPageContent({
 }
 
 interface DashboardPageFooterProps {
-  readonly children: React.ReactNode;
+  readonly children: ReactNode;
   readonly className?: string;
 }
 
 function DashboardPageFooter({
   children,
   className,
-}: DashboardPageFooterProps): React.ReactElement {
+}: DashboardPageFooterProps): ReactElement {
   return (
     <footer className={cn("border-t border-border/70", className)}>
       {children}

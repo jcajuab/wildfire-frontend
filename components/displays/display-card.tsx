@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import {
   IconDotsVertical,
   IconMapPin,
@@ -87,7 +88,7 @@ export function DisplayCard({
   onRemoveDisplay,
   canUpdate = true,
   canDelete = true,
-}: DisplayCardProps): React.ReactElement {
+}: DisplayCardProps): ReactElement {
   const nowPlaying = display.nowPlaying;
   const progress = nowPlaying
     ? (nowPlaying.progress / nowPlaying.duration) * 100

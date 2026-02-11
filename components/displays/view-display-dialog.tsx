@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import {
   IconDeviceDesktop,
   IconMapPin,
@@ -41,7 +42,7 @@ export function ViewDisplayDialog({
   onEdit,
   onEditPlaylist,
   canEdit = true,
-}: ViewDisplayDialogProps): React.ReactElement | null {
+}: ViewDisplayDialogProps): ReactElement | null {
   if (!display) return null;
 
   const nowPlaying = display.nowPlaying;

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useState, useCallback } from "react";
 import { IconDeviceFloppy, IconX } from "@tabler/icons-react";
 
@@ -64,7 +65,7 @@ function EditDisplayForm({
   display,
   onClose,
   onSave,
-}: EditDisplayFormProps): React.ReactElement {
+}: EditDisplayFormProps): ReactElement {
   const [formData, setFormData] = useState<EditFormData>(() =>
     createInitialFormData(display),
   );
@@ -249,7 +250,7 @@ export function EditDisplayDialog({
   open,
   onOpenChange,
   onSave,
-}: EditDisplayDialogProps): React.ReactElement | null {
+}: EditDisplayDialogProps): ReactElement | null {
   const handleClose = useCallback(() => {
     onOpenChange(false);
   }, [onOpenChange]);

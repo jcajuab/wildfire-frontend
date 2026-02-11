@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { IconWorld } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
@@ -22,7 +23,7 @@ export function ContentGrid({
   onDelete,
   canUpdate = true,
   canDelete = true,
-}: ContentGridProps): React.ReactElement {
+}: ContentGridProps): ReactElement {
   if (items.length === 0) {
     return (
       <EmptyState

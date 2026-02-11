@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { IconFilter } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,7 @@ const durationOptions: readonly {
 export function PlaylistFilterPopover({
   durationFilter,
   onDurationFilterChange,
-}: PlaylistFilterPopoverProps): React.ReactElement {
+}: PlaylistFilterPopoverProps): ReactElement {
   return (
     <Popover>
       <PopoverTrigger asChild>

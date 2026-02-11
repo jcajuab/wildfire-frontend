@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { PlaylistStatus } from "@/types/playlist";
 
@@ -22,7 +23,7 @@ const statusOptions: readonly {
 export function PlaylistStatusTabs({
   value,
   onValueChange,
-}: PlaylistStatusTabsProps): React.ReactElement {
+}: PlaylistStatusTabsProps): ReactElement {
   return (
     <ToggleGroup
       type="single"

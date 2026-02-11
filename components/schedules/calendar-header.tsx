@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,7 @@ export function CalendarHeader({
   onNext,
   onToday,
   resourcesCount,
-}: CalendarHeaderProps): React.ReactElement {
+}: CalendarHeaderProps): ReactElement {
   const label = formatDateRange(currentDate, view);
   const resourcesLabel = `${resourcesCount} ${
     resourcesCount === 1 ? "display" : "displays"

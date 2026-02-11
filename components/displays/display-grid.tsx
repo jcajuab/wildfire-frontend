@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { IconDeviceTv } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
@@ -26,7 +27,7 @@ export function DisplayGrid({
   onRemoveDisplay,
   canUpdate = true,
   canDelete = true,
-}: DisplayGridProps): React.ReactElement {
+}: DisplayGridProps): ReactElement {
   if (items.length === 0) {
     return (
       <EmptyState

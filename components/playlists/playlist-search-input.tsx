@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { SearchControl } from "@/components/common/search-control";
 
 interface PlaylistSearchInputProps {
@@ -14,7 +15,7 @@ export function PlaylistSearchInput({
   onChange,
   placeholder = "Search playlists…",
   className,
-}: PlaylistSearchInputProps): React.ReactElement {
+}: PlaylistSearchInputProps): ReactElement {
   return (
     <SearchControl
       value={value}

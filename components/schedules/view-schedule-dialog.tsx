@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useState } from "react";
 import {
   IconCalendarEvent,
@@ -71,7 +72,7 @@ export function ViewScheduleDialog({
   onDelete,
   canEdit = true,
   canDelete = true,
-}: ViewScheduleDialogProps): React.ReactElement | null {
+}: ViewScheduleDialogProps): ReactElement | null {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   if (!schedule) return null;
 

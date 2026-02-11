@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +43,7 @@ export function EditScheduleDialog({
   onSave,
   availablePlaylists,
   availableDisplays,
-}: EditScheduleDialogProps): React.ReactElement | null {
+}: EditScheduleDialogProps): ReactElement | null {
   if (!schedule) return null;
   const scheduleId = schedule.id;
 

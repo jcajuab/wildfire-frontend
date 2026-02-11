@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { SearchControl } from "@/components/common/search-control";
 
 interface RoleSearchInputProps {
@@ -12,7 +13,7 @@ export function RoleSearchInput({
   value,
   onChange,
   className,
-}: RoleSearchInputProps): React.ReactElement {
+}: RoleSearchInputProps): ReactElement {
   return (
     <SearchControl
       value={value}

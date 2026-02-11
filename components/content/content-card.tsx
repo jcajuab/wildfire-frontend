@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import {
   IconDotsVertical,
   IconPencil,
@@ -33,7 +34,7 @@ export function ContentCard({
   onDelete,
   canUpdate = true,
   canDelete = true,
-}: ContentCardProps): React.ReactElement {
+}: ContentCardProps): ReactElement {
   return (
     <div className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-md">
       {/* Thumbnail area */}

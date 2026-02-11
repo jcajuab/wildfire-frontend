@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { IconPlaylist } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
@@ -22,7 +23,7 @@ export function PlaylistGrid({
   onDelete,
   canUpdate = true,
   canDelete = true,
-}: PlaylistGridProps): React.ReactElement {
+}: PlaylistGridProps): ReactElement {
   if (playlists.length === 0) {
     return (
       <EmptyState

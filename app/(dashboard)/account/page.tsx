@@ -1,5 +1,6 @@
 "use client";
 
+import type { ChangeEvent, FormEvent, ReactElement } from "react";
 import { useState, useRef } from "react";
 import { IconUserSquareRounded, IconUser } from "@tabler/icons-react";
 
@@ -43,7 +44,7 @@ const timezones = [
 
 const defaultTimezone = "Asia - Taipei";
 
-export default function AccountPage(): React.ReactElement {
+export default function AccountPage(): ReactElement {
   const { user, logout } = useAuth();
   const profilePictureInputRef = useRef<HTMLInputElement>(null);
   const [firstName, setFirstName] = useState(
@@ -66,7 +67,7 @@ export default function AccountPage(): React.ReactElement {
   };
 
   const handleProfilePictureSelected = (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: ChangeEvent<HTMLInputElement>,
   ): void => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -94,9 +95,7 @@ export default function AccountPage(): React.ReactElement {
     setInfoMessage("Saved account settings in mock mode.");
   };
 
-  const handlePasswordSubmit = (
-    event: React.FormEvent<HTMLFormElement>,
-  ): void => {
+  const handlePasswordSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
     setPasswordError(null);
 

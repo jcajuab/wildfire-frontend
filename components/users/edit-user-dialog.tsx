@@ -1,5 +1,6 @@
 "use client";
 
+import type { FormEvent, ReactElement } from "react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -38,13 +39,13 @@ function EditUserForm({
   user: User;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: EditUserFormData) => Promise<void> | void;
-}): React.ReactElement {
+}): ReactElement {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [isActive, setIsActive] = useState(user.isActive);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || isSubmitting) return;
     setIsSubmitting(true);
@@ -123,7 +124,7 @@ export function EditUserDialog({
   open,
   onOpenChange,
   onSubmit,
-}: EditUserDialogProps): React.ReactElement {
+}: EditUserDialogProps): ReactElement {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { IconPlus, IconPresentation } from "@tabler/icons-react";
 
@@ -123,7 +124,7 @@ const mockAvailableContent: Content[] = [
   },
 ];
 
-export default function PlaylistsPage(): React.ReactElement {
+export default function PlaylistsPage(): ReactElement {
   const canUpdatePlaylist = useCan("playlists:update");
   const canDeletePlaylist = useCan("playlists:delete");
   const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(

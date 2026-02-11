@@ -1,18 +1,19 @@
 "use client";
 
+import type { ReactElement, ReactNode } from "react";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 
 interface AuthGuardProps {
-  readonly children: React.ReactNode;
+  readonly children: ReactNode;
 }
 
 /**
  * Client guard: redirects to /login when not authenticated.
  * Shows loading until auth state is initialized to avoid flash of dashboard.
  */
-export function AuthGuard({ children }: AuthGuardProps): React.ReactElement {
+export function AuthGuard({ children }: AuthGuardProps): ReactElement {
   const router = useRouter();
   const { isAuthenticated, isInitialized } = useAuth();
 

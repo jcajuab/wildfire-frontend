@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import {
   IconDotsVertical,
   IconEdit,
@@ -50,7 +51,7 @@ function SortableHeader({
   field,
   currentSort,
   onSortChange,
-}: SortableHeaderProps): React.ReactElement {
+}: SortableHeaderProps): ReactElement {
   const isActive = currentSort.field === field;
   const isAsc = currentSort.direction === "asc";
 
@@ -95,7 +96,7 @@ function RoleActionsMenu({
   onDelete,
   canEdit,
   canDelete,
-}: RoleActionsMenuProps): React.ReactElement | null {
+}: RoleActionsMenuProps): ReactElement | null {
   if (!canEdit && !canDelete) return null;
   return (
     <DropdownMenu>
@@ -134,7 +135,7 @@ export function RolesTable({
   onDelete,
   canEdit = true,
   canDelete = true,
-}: RolesTableProps): React.ReactElement {
+}: RolesTableProps): ReactElement {
   if (roles.length === 0) {
     return (
       <div className="py-8">

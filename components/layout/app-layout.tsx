@@ -1,13 +1,14 @@
 "use client";
 
+import type { ReactElement, ReactNode } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 
 interface AppLayoutProps {
-  readonly children: React.ReactNode;
+  readonly children: ReactNode;
 }
 
-export function AppLayout({ children }: AppLayoutProps): React.ReactElement {
+export function AppLayout({ children }: AppLayoutProps): ReactElement {
   return (
     <SidebarProvider>
       <AppSidebar />

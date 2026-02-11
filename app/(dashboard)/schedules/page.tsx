@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useState, useCallback } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
@@ -48,7 +49,7 @@ const mockSchedules: Schedule[] = [
   },
 ];
 
-export default function SchedulesPage(): React.ReactElement {
+export default function SchedulesPage(): ReactElement {
   const canEditSchedule = useCan("schedules:update");
   const canDeleteSchedule = useCan("schedules:delete");
   // Calendar state

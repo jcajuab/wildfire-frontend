@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import {
   IconAdjustmentsHorizontal,
   IconHistory,
@@ -26,9 +27,7 @@ interface FilterableHeaderProps {
   readonly label: string;
 }
 
-function FilterableHeader({
-  label,
-}: FilterableHeaderProps): React.ReactElement {
+function FilterableHeader({ label }: FilterableHeaderProps): ReactElement {
   return (
     <div className="flex items-center gap-1">
       {label}
@@ -45,7 +44,7 @@ function formatMetadata(metadata: Record<string, unknown>): string {
   return str;
 }
 
-export function LogsTable({ logs }: LogsTableProps): React.ReactElement {
+export function LogsTable({ logs }: LogsTableProps): ReactElement {
   if (logs.length === 0) {
     return (
       <div className="py-8">

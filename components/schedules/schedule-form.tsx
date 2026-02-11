@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useCallback, useState } from "react";
 import {
   IconCalendar,
@@ -37,7 +38,7 @@ function ScheduleFormFrame({
   onSubmit,
   onCancel,
   submitLabel,
-}: ScheduleFormProps): React.ReactElement {
+}: ScheduleFormProps): ReactElement {
   const [formData, setFormData] = useState<ScheduleFormData>(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -311,7 +312,7 @@ export function CreateScheduleForm({
   availableDisplays,
   onSubmit,
   onCancel,
-}: CreateScheduleFormProps): React.ReactElement {
+}: CreateScheduleFormProps): ReactElement {
   return (
     <ScheduleFormFrame
       initialData={{
@@ -340,7 +341,7 @@ export function EditScheduleForm({
   availableDisplays,
   onSubmit,
   onCancel,
-}: EditScheduleFormProps): React.ReactElement {
+}: EditScheduleFormProps): ReactElement {
   return (
     <ScheduleFormFrame
       initialData={initialData}

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { IconSortDescending } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ const sortOptions: readonly {
 export function ContentSortSelect({
   value,
   onValueChange,
-}: ContentSortSelectProps): React.ReactElement {
+}: ContentSortSelectProps): ReactElement {
   const currentLabel =
     sortOptions.find((option) => option.value === value)?.label ?? "Recent";
 

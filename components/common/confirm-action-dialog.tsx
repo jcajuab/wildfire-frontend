@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useState } from "react";
 import {
   AlertDialog,
@@ -32,7 +33,7 @@ export function ConfirmActionDialog({
   cancelLabel = "Cancel",
   onConfirm,
   destructive = true,
-}: ConfirmActionDialogProps): React.ReactElement {
+}: ConfirmActionDialogProps): ReactElement {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleConfirm(): Promise<void> {

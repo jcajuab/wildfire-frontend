@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useCallback } from "react";
 import { IconFileExport } from "@tabler/icons-react";
 
@@ -25,7 +26,7 @@ const mockLogs: LogEntry[] = [
   },
 ];
 
-export default function LogsPage(): React.ReactElement {
+export default function LogsPage(): ReactElement {
   const [search, setSearch] = useQueryStringState("q", "");
   const [page, setPage] = useQueryNumberState("page", 1);
 
