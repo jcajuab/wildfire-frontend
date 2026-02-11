@@ -48,6 +48,10 @@ interface UsersTableProps {
   readonly onRemoveUser: (user: User) => void;
   readonly canUpdate?: boolean;
   readonly canDelete?: boolean;
+  /** When true, allow update/delete for Super Admin users. When false, hide actions for users who have a system role. */
+  readonly isSuperAdmin?: boolean;
+  /** Role ids that are system roles (e.g. Super Admin). Used with isSuperAdmin to hide actions per row. */
+  readonly systemRoleIds?: readonly string[];
 }
 
 interface SortableHeaderProps {
@@ -220,6 +224,7 @@ function UserRow({
       <TableCell className="text-muted-foreground">{user.email}</TableCell>
       <TableCell>
         <div className="flex flex-wrap gap-1">
+          {userRoles.length === 0 && <span className="text-muted-foreground">No roles assigned yet</span>}
           {userRoles.map((role) => (
             <Badge key={role.id} variant="default" className="text-xs">
               {role.name}
@@ -257,6 +262,8 @@ export function UsersTable({
   onRemoveUser,
   canUpdate = true,
   canDelete = true,
+  isSuperAdmin = false,
+  systemRoleIds = [],
 }: UsersTableProps): ReactElement {
   if (users.length === 0) {
     return (
@@ -300,19 +307,31 @@ export function UsersTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {users.map((user) => (
-          <UserRow
-            key={user.id}
-            user={user}
-            userRoles={userRolesByUserId[user.id] ?? []}
-            availableRoles={availableRoles}
-            onEdit={onEdit}
-            onRoleToggle={onRoleToggle}
-            onRemoveUser={onRemoveUser}
-            canUpdate={canUpdate}
-            canDelete={canDelete}
-          />
-        ))}
+        {users.map((user) => {
+          const userRoleIds = (userRolesByUserId[user.id] ?? []).map(
+            (r) => r.id,
+          );
+          const isTargetSuperAdmin =
+            systemRoleIds.length > 0 &&
+            userRoleIds.some((id) => systemRoleIds.includes(id));
+          const canUpdateRow =
+            canUpdate && (isSuperAdmin || !isTargetSuperAdmin);
+          const canDeleteRow =
+            canDelete && (isSuperAdmin || !isTargetSuperAdmin);
+          return (
+            <UserRow
+              key={user.id}
+              user={user}
+              userRoles={userRolesByUserId[user.id] ?? []}
+              availableRoles={availableRoles}
+              onEdit={onEdit}
+              onRoleToggle={onRoleToggle}
+              onRemoveUser={onRemoveUser}
+              canUpdate={canUpdateRow}
+              canDelete={canDeleteRow}
+            />
+          );
+        })}
       </TableBody>
     </Table>
   );

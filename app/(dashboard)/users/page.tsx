@@ -44,6 +44,7 @@ const USER_SORT_DIRECTIONS = ["asc", "desc"] as const;
 export default function UsersPage(): ReactElement {
   const canUpdateUser = useCan("users:update");
   const canDeleteUser = useCan("users:delete");
+  const isSuperAdmin = useCan("*:manage");
   const {
     data: usersData,
     isLoading: usersLoading,
@@ -99,10 +100,13 @@ export default function UsersPage(): ReactElement {
       })),
     [usersData],
   );
-  const availableRoles = useMemo(
-    () => (rolesData ?? []).map((role) => ({ id: role.id, name: role.name })),
-    [rolesData],
-  );
+  const availableRoles = useMemo(() => {
+    const roles = rolesData ?? [];
+    const filtered = isSuperAdmin
+      ? roles
+      : roles.filter((role) => !role.isSystem);
+    return filtered.map((role) => ({ id: role.id, name: role.name }));
+  }, [rolesData, isSuperAdmin]);
 
   const handleSearchChange = useCallback(
     (value: string) => {
@@ -158,13 +162,35 @@ export default function UsersPage(): ReactElement {
     [createUser],
   );
 
+  const systemRoleIds = useMemo(
+    () =>
+      (rolesData ?? [])
+        .filter((r) => r.isSystem)
+        .map((r) => r.id),
+    [rolesData],
+  );
+
   const handleRoleToggle = useCallback(
-    async (userId: string, roleIds: string[]) => {
+    async (userId: string, newRoleIds: string[]) => {
       try {
-        await setUserRoles({ userId, roleIds }).unwrap();
+        const roleIdsToSend =
+          isSuperAdmin
+            ? newRoleIds
+            : (() => {
+                const currentIds =
+                  userRolesByUserId[userId]?.map((r) => r.id) ?? [];
+                const preservedSystem = currentIds.filter((id) =>
+                  systemRoleIds.includes(id),
+                );
+                return [...new Set([...newRoleIds, ...preservedSystem])];
+              })();
+        const roles = await setUserRoles({
+          userId,
+          roleIds: roleIdsToSend,
+        }).unwrap();
         setUserRolesByUserId((prev) => ({
           ...prev,
-          [userId]: availableRoles.filter((role) => roleIds.includes(role.id)),
+          [userId]: roles.map((r) => ({ id: r.id, name: r.name })),
         }));
       } catch (err) {
         toast.error(
@@ -172,7 +198,12 @@ export default function UsersPage(): ReactElement {
         );
       }
     },
-    [setUserRoles, availableRoles],
+    [
+      setUserRoles,
+      isSuperAdmin,
+      userRolesByUserId,
+      systemRoleIds,
+    ],
   );
 
   const handleEdit = useCallback((user: User) => {
@@ -334,6 +365,8 @@ export default function UsersPage(): ReactElement {
               onRemoveUser={handleRequestRemoveUser}
               canUpdate={canUpdateUser}
               canDelete={canDeleteUser}
+              isSuperAdmin={isSuperAdmin}
+              systemRoleIds={systemRoleIds}
             />
           </div>
         </DashboardPage.Content>

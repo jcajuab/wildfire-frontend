@@ -46,6 +46,7 @@ const ROLE_SORT_DIRECTIONS = ["asc", "desc"] as const;
 export default function RolesPage(): ReactElement {
   const canUpdateRole = useCan("roles:update");
   const canDeleteRole = useCan("roles:delete");
+  const isSuperAdmin = useCan("*:manage");
   const {
     data: rolesData,
     isLoading: rolesLoading,
@@ -361,6 +362,7 @@ export default function RolesPage(): ReactElement {
               onDelete={handleDeleteRequest}
               canEdit={canUpdateRole}
               canDelete={canDeleteRole}
+              isSuperAdmin={isSuperAdmin}
             />
           </div>
         </DashboardPage.Content>
