@@ -3,6 +3,7 @@
 import type { ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { IconEye, IconPlus } from "@tabler/icons-react";
+import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
@@ -30,6 +31,12 @@ import {
   useQueryNumberState,
   useQueryStringState,
 } from "@/hooks/use-query-state";
+import {
+  useDeleteContentMutation,
+  useListContentQuery,
+  useUploadContentMutation,
+} from "@/lib/api/content-api";
+import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import type { TypeFilter } from "@/components/content/content-filter-popover";
 import type { StatusFilter } from "@/components/content/content-status-tabs";
 import type { Content, ContentSortField } from "@/types/content";
@@ -37,8 +44,6 @@ import type { Content, ContentSortField } from "@/types/content";
 const CONTENT_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
 const CONTENT_TYPE_VALUES = ["all", "IMAGE", "VIDEO", "PDF"] as const;
 const CONTENT_SORT_VALUES = ["recent", "title", "size", "type"] as const;
-
-const mockContents: Content[] = [];
 
 interface EditContentDialogProps {
   readonly content: Content | null;
@@ -188,15 +193,21 @@ export default function ContentPage(): ReactElement {
   const [page, setPage] = useQueryNumberState("page", 1);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [contents, setContents] = useState<Content[]>(mockContents);
   const [contentToPreview, setContentToPreview] = useState<Content | null>(
     null,
   );
   const [contentToEdit, setContentToEdit] = useState<Content | null>(null);
   const [contentToDelete, setContentToDelete] = useState<Content | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { data } = useListContentQuery({ page: 1, pageSize: 100 });
+  const [uploadContent] = useUploadContentMutation();
+  const [deleteContent] = useDeleteContentMutation();
 
   const pageSize = 20;
+  const contents = useMemo(
+    () => (data?.items ?? []).map(mapBackendContentToContent),
+    [data?.items],
+  );
 
   const handleStatusFilterChange = useCallback(
     (value: StatusFilter) => {
@@ -231,46 +242,23 @@ export default function ContentPage(): ReactElement {
   );
 
   const handleCreateFromScratch = useCallback((name: string) => {
-    const newContent: Content = {
-      id: crypto.randomUUID(),
-      title: name,
-      type: "PDF",
-      mimeType: "application/pdf",
-      fileSize: 0,
-      checksum: "",
-      width: null,
-      height: null,
-      duration: null,
-      status: "DRAFT",
-      createdAt: new Date().toISOString(),
-      createdBy: {
-        id: "1",
-        name: "Admin",
-      },
-    };
-    setContents((prev) => [newContent, ...prev]);
+    void name;
+    toast.info("Creating blank content is not supported by the backend.");
   }, []);
 
-  const handleUploadFile = useCallback((name: string, file: File) => {
-    const newContent: Content = {
-      id: crypto.randomUUID(),
-      title: name,
-      type: "PDF",
-      mimeType: file.type,
-      fileSize: file.size,
-      checksum: "",
-      width: null,
-      height: null,
-      duration: null,
-      status: "DRAFT",
-      createdAt: new Date().toISOString(),
-      createdBy: {
-        id: "1",
-        name: "Admin",
-      },
-    };
-    setContents((prev) => [newContent, ...prev]);
-  }, []);
+  const handleUploadFile = useCallback(
+    async (name: string, file: File) => {
+      try {
+        await uploadContent({ title: name, file }).unwrap();
+        toast.success("Content uploaded.");
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to upload content.",
+        );
+      }
+    },
+    [uploadContent],
+  );
 
   const handleEdit = useCallback((content: Content) => {
     setContentToEdit(content);
@@ -406,11 +394,9 @@ export default function ContentPage(): ReactElement {
           if (!open) setContentToEdit(null);
         }}
         onSave={(contentId, title) => {
-          setContents((prev) =>
-            prev.map((content) =>
-              content.id === contentId ? { ...content, title } : content,
-            ),
-          );
+          void contentId;
+          void title;
+          toast.info("Renaming content is not yet supported by the backend.");
         }}
       />
 
@@ -432,12 +418,17 @@ export default function ContentPage(): ReactElement {
             : undefined
         }
         confirmLabel="Delete content"
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!contentToDelete) return;
-          setContents((prev) =>
-            prev.filter((content) => content.id !== contentToDelete.id),
-          );
-          setContentToDelete(null);
+          try {
+            await deleteContent(contentToDelete.id).unwrap();
+            setContentToDelete(null);
+          } catch (err) {
+            toast.error(
+              err instanceof Error ? err.message : "Failed to delete content.",
+            );
+            throw err;
+          }
         }}
       />
     </DashboardPage.Root>

@@ -13,7 +13,9 @@ export const DASHBOARD_ROUTE_READ_ENTRIES = [
 ] as const;
 
 /** Map path -> required read permission for PageReadGuard. */
-export const ROUTE_READ_PERMISSION_MAP: Readonly<Record<string, string>> =
-  Object.fromEntries(
+export const ROUTE_READ_PERMISSION_MAP: Readonly<Record<string, string>> = {
+  ...(Object.fromEntries(
     DASHBOARD_ROUTE_READ_ENTRIES.map((e) => [e.path, e.permission]),
-  ) as Record<string, string>;
+  ) as Record<string, string>),
+  "/logs": "audit:read",
+};

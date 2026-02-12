@@ -1,8 +1,9 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { IconFileExport } from "@tabler/icons-react";
+import { toast } from "sonner";
 
 import { DashboardPage } from "@/components/layout";
 import { LogSearchInput } from "@/components/logs/log-search-input";
@@ -13,32 +14,33 @@ import {
   useQueryNumberState,
   useQueryStringState,
 } from "@/hooks/use-query-state";
+import { useCan } from "@/hooks/use-can";
+import {
+  exportAuditEventsCsv,
+  useListAuditEventsQuery,
+} from "@/lib/api/audit-api";
+import { mapAuditEventToLogEntry } from "@/lib/mappers/audit-log-mapper";
 import type { LogEntry } from "@/types/log";
 
-const mockLogs: LogEntry[] = [
-  {
-    id: "1",
-    timestamp: "2023-04-15T08:43:31Z",
-    authorId: "1",
-    authorName: "Admin",
-    description: 'User "Admin" logged in',
-    metadata: { id: "1", name: "Admin" },
-  },
-];
-
 export default function LogsPage(): ReactElement {
+  const canExport = useCan("audit:export");
   const [search, setSearch] = useQueryStringState("q", "");
   const [page, setPage] = useQueryNumberState("page", 1);
+  const { data } = useListAuditEventsQuery({ page: 1, pageSize: 200 });
+  const allLogs = useMemo<LogEntry[]>(
+    () => (data?.items ?? []).map(mapAuditEventToLogEntry),
+    [data?.items],
+  );
 
   const pageSize = 10;
   const searchLower = search.toLowerCase();
   const filteredLogs = search
-    ? mockLogs.filter(
+    ? allLogs.filter(
         (log) =>
           log.authorName.toLowerCase().includes(searchLower) ||
           log.description.toLowerCase().includes(searchLower),
       )
-    : mockLogs;
+    : allLogs;
   const start = (page - 1) * pageSize;
   const paginatedLogs = filteredLogs.slice(start, start + pageSize);
 
@@ -51,34 +53,29 @@ export default function LogsPage(): ReactElement {
   );
 
   const handleExport = useCallback((): void => {
-    const rows = filteredLogs.map((log) => [
-      log.timestamp,
-      log.authorName,
-      log.description,
-      JSON.stringify(log.metadata),
-    ]);
-    const csv = [["timestamp", "author", "description", "metadata"], ...rows]
-      .map((row) =>
-        row
-          .map((value) => `"${String(value).replaceAll('"', '""')}"`)
-          .join(","),
-      )
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "wildfire-logs.csv";
-    link.click();
-    URL.revokeObjectURL(url);
-  }, [filteredLogs]);
+    void (async () => {
+      try {
+        const blob = await exportAuditEventsCsv();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "wildfire-audit-events.csv";
+        link.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to export audit logs.",
+        );
+      }
+    })();
+  }, []);
 
   return (
     <DashboardPage.Root>
       <DashboardPage.Header
         title="Logs"
         actions={
-          <Button onClick={handleExport}>
+          <Button onClick={handleExport} disabled={!canExport}>
             <IconFileExport className="size-4" />
             Export Logs
           </Button>

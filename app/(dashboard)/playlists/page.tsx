@@ -3,6 +3,7 @@
 import type { ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { IconPlus, IconPresentation } from "@tabler/icons-react";
+import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
@@ -31,6 +32,20 @@ import {
   useQueryNumberState,
   useQueryStringState,
 } from "@/hooks/use-query-state";
+import { useListContentQuery } from "@/lib/api/content-api";
+import {
+  useAddPlaylistItemMutation,
+  useCreatePlaylistMutation,
+  useDeletePlaylistMutation,
+  useLazyGetPlaylistQuery,
+  useListPlaylistsQuery,
+  useUpdatePlaylistMutation,
+} from "@/lib/api/playlists-api";
+import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
+import {
+  mapBackendPlaylistBase,
+  mapBackendPlaylistWithItems,
+} from "@/lib/mappers/playlist-mapper";
 import type { DurationFilter } from "@/components/playlists/playlist-filter-popover";
 import type { StatusFilter } from "@/components/playlists/playlist-status-tabs";
 import type { Content } from "@/types/content";
@@ -39,90 +54,6 @@ import type { Playlist, PlaylistSortField } from "@/types/playlist";
 const PLAYLIST_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
 const PLAYLIST_DURATION_VALUES = ["all", "short", "medium", "long"] as const;
 const PLAYLIST_SORT_VALUES = ["recent", "name", "duration", "items"] as const;
-
-const mockPlaylists: Playlist[] = [
-  {
-    id: "1",
-    name: "Demo Playlist",
-    description: null,
-    status: "DRAFT",
-    items: [
-      {
-        id: "item-1",
-        content: {
-          id: "content-1",
-          title: "Hello",
-          type: "IMAGE",
-          mimeType: "image/png",
-          fileSize: 1024,
-          checksum: "abc123",
-          width: 1920,
-          height: 1080,
-          duration: null,
-          status: "IN_USE",
-          createdAt: "2024-01-15T10:00:00Z",
-          createdBy: { id: "user-1", name: "Admin" },
-        },
-        duration: 5,
-        order: 0,
-      },
-      {
-        id: "item-2",
-        content: {
-          id: "content-2",
-          title: "World",
-          type: "IMAGE",
-          mimeType: "image/png",
-          fileSize: 2048,
-          checksum: "def456",
-          width: 1920,
-          height: 1080,
-          duration: null,
-          status: "IN_USE",
-          createdAt: "2024-01-15T10:00:00Z",
-          createdBy: { id: "user-1", name: "Admin" },
-        },
-        duration: 5,
-        order: 1,
-      },
-    ],
-    totalDuration: 10,
-    createdAt: "2024-01-15T10:00:00Z",
-    updatedAt: "2024-01-15T10:00:00Z",
-    createdBy: { id: "user-1", name: "Admin" },
-  },
-];
-
-const mockAvailableContent: Content[] = [
-  {
-    id: "content-1",
-    title: "Hello",
-    type: "IMAGE",
-    mimeType: "image/png",
-    fileSize: 1024,
-    checksum: "abc123",
-    width: 1920,
-    height: 1080,
-    duration: null,
-    status: "IN_USE",
-    createdAt: "2024-01-15T10:00:00Z",
-    createdBy: { id: "user-1", name: "Admin" },
-  },
-  {
-    id: "content-2",
-    title: "World",
-    type: "IMAGE",
-    mimeType: "image/png",
-    fileSize: 2048,
-    checksum: "def456",
-    width: 1920,
-    height: 1080,
-    duration: null,
-    status: "IN_USE",
-    createdAt: "2024-01-15T10:00:00Z",
-    createdBy: { id: "user-1", name: "Admin" },
-  },
-];
 
 export default function PlaylistsPage(): ReactElement {
   const canUpdatePlaylist = useCan("playlists:update");
@@ -150,12 +81,27 @@ export default function PlaylistsPage(): ReactElement {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [previewPlaylist, setPreviewPlaylist] = useState<Playlist | null>(null);
   const [editPlaylist, setEditPlaylist] = useState<Playlist | null>(null);
-  const [deletePlaylist, setDeletePlaylist] = useState<Playlist | null>(null);
+  const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | null>(
+    null,
+  );
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
-
-  const [playlists, setPlaylists] = useState<Playlist[]>(mockPlaylists);
+  const { data: playlistsData } = useListPlaylistsQuery();
+  const { data: contentData } = useListContentQuery({ page: 1, pageSize: 100 });
+  const [loadPlaylist] = useLazyGetPlaylistQuery();
+  const [createPlaylist] = useCreatePlaylistMutation();
+  const [addPlaylistItem] = useAddPlaylistItemMutation();
+  const [updatePlaylist] = useUpdatePlaylistMutation();
+  const [deletePlaylistMutation] = useDeletePlaylistMutation();
+  const playlists = useMemo(
+    () => (playlistsData?.items ?? []).map(mapBackendPlaylistBase),
+    [playlistsData?.items],
+  );
+  const availableContent = useMemo<Content[]>(
+    () => (contentData?.items ?? []).map(mapBackendContentToContent),
+    [contentData?.items],
+  );
 
   const handleStatusFilterChange = useCallback(
     (value: StatusFilter) => {
@@ -252,17 +198,31 @@ export default function PlaylistsPage(): ReactElement {
         "id" | "createdAt" | "updatedAt" | "createdBy" | "status"
       >,
     ) => {
-      const newPlaylist: Playlist = {
-        ...data,
-        id: `playlist-${Date.now()}`,
-        status: "DRAFT",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        createdBy: { id: "user-1", name: "Admin" },
-      };
-      setPlaylists((prev) => [newPlaylist, ...prev]);
+      void (async () => {
+        try {
+          const created = await createPlaylist({
+            name: data.name,
+            description: data.description,
+          }).unwrap();
+          await Promise.all(
+            data.items.map((item, index) =>
+              addPlaylistItem({
+                playlistId: created.id,
+                contentId: item.content.id,
+                sequence: index + 1,
+                duration: item.duration,
+              }).unwrap(),
+            ),
+          );
+          toast.success("Playlist created.");
+        } catch (err) {
+          toast.error(
+            err instanceof Error ? err.message : "Failed to create playlist.",
+          );
+        }
+      })();
     },
-    [],
+    [addPlaylistItem, createPlaylist],
   );
 
   const handleEditPlaylist = useCallback((playlist: Playlist) => {
@@ -271,12 +231,20 @@ export default function PlaylistsPage(): ReactElement {
     setEditDescription(playlist.description ?? "");
   }, []);
 
-  const handlePreviewPlaylist = useCallback((playlist: Playlist) => {
-    setPreviewPlaylist(playlist);
-  }, []);
+  const handlePreviewPlaylist = useCallback(
+    async (playlist: Playlist) => {
+      try {
+        const detailed = await loadPlaylist(playlist.id, true).unwrap();
+        setPreviewPlaylist(mapBackendPlaylistWithItems(detailed));
+      } catch {
+        setPreviewPlaylist(playlist);
+      }
+    },
+    [loadPlaylist],
+  );
 
   const handleDeletePlaylist = useCallback((playlist: Playlist) => {
-    setDeletePlaylist(playlist);
+    setPlaylistToDelete(playlist);
     setDeleteDialogOpen(true);
   }, []);
 
@@ -343,7 +311,7 @@ export default function PlaylistsPage(): ReactElement {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onCreate={handleCreatePlaylist}
-        availableContent={mockAvailableContent}
+        availableContent={availableContent}
       />
 
       <Dialog
@@ -382,19 +350,23 @@ export default function PlaylistsPage(): ReactElement {
             <Button
               onClick={() => {
                 if (!editPlaylist || editName.trim().length === 0) return;
-                setPlaylists((prev) =>
-                  prev.map((playlist) =>
-                    playlist.id === editPlaylist.id
-                      ? {
-                          ...playlist,
-                          name: editName.trim(),
-                          description: editDescription.trim() || null,
-                          updatedAt: new Date().toISOString(),
-                        }
-                      : playlist,
-                  ),
-                );
-                setEditPlaylist(null);
+                void (async () => {
+                  try {
+                    await updatePlaylist({
+                      id: editPlaylist.id,
+                      name: editName.trim(),
+                      description: editDescription.trim() || null,
+                    }).unwrap();
+                    setEditPlaylist(null);
+                    toast.success("Playlist updated.");
+                  } catch (err) {
+                    toast.error(
+                      err instanceof Error
+                        ? err.message
+                        : "Failed to update playlist.",
+                    );
+                  }
+                })();
               }}
               disabled={editName.trim().length === 0}
             >
@@ -453,17 +425,23 @@ export default function PlaylistsPage(): ReactElement {
         onOpenChange={setDeleteDialogOpen}
         title="Delete playlist?"
         description={
-          deletePlaylist
-            ? `This will permanently delete "${deletePlaylist.name}".`
+          playlistToDelete
+            ? `This will permanently delete "${playlistToDelete.name}".`
             : undefined
         }
         confirmLabel="Delete playlist"
-        onConfirm={() => {
-          if (!deletePlaylist) return;
-          setPlaylists((prev) =>
-            prev.filter((playlist) => playlist.id !== deletePlaylist.id),
-          );
-          setDeletePlaylist(null);
+        onConfirm={async () => {
+          if (!playlistToDelete) return;
+          try {
+            await deletePlaylistMutation(playlistToDelete.id).unwrap();
+            setPlaylistToDelete(null);
+            toast.success("Playlist deleted.");
+          } catch (err) {
+            toast.error(
+              err instanceof Error ? err.message : "Failed to delete playlist.",
+            );
+            throw err;
+          }
         }}
       />
     </DashboardPage.Root>

@@ -77,25 +77,25 @@ function ResourceWeekView({
   onScheduleClick,
 }: ResourceGridSharedProps): ReactElement {
   return (
-    <div className='flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border'>
-      <div className='overflow-auto'>
-        <div className='w-full min-w-0'>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
+      <div className="overflow-auto">
+        <div className="w-full min-w-0">
           <div
-            className='sticky top-0 z-30 grid border-b bg-muted/30 backdrop-blur-sm'
+            className="sticky top-0 z-30 grid border-b bg-muted/30 backdrop-blur-sm"
             style={{ gridTemplateColumns: WEEK_GRID_TEMPLATE }}
           >
-            <div className='sticky left-0 z-40 border-r bg-muted/30 px-4 py-2 text-sm font-semibold'>
+            <div className="sticky left-0 z-40 border-r bg-muted/30 px-4 py-2 text-sm font-semibold">
               Display
             </div>
             {days.map((day) => (
               <div
                 key={day.toISOString()}
-                className='border-r px-2 py-2 last:border-r-0'
+                className="border-r px-2 py-2 last:border-r-0"
               >
-                <div className='text-xs font-medium text-muted-foreground'>
+                <div className="text-xs font-medium text-muted-foreground">
                   {formatDayHeader(day)}
                 </div>
-                <div className='text-sm font-semibold'>
+                <div className="text-sm font-semibold">
                   {formatDaySubheader(day)}
                 </div>
               </div>
@@ -105,11 +105,11 @@ function ResourceWeekView({
           {resources.map((resource) => (
             <div
               key={resource.id}
-              className='grid border-b'
+              className="grid border-b"
               style={{ gridTemplateColumns: WEEK_GRID_TEMPLATE }}
             >
-              <div className='sticky left-0 z-20 flex items-center border-r bg-background px-4 py-3'>
-                <p className='truncate text-sm font-medium'>{resource.name}</p>
+              <div className="sticky left-0 z-20 flex items-center border-r bg-background px-4 py-3">
+                <p className="truncate text-sm font-medium">{resource.name}</p>
               </div>
 
               {days.map((day) => {
@@ -121,7 +121,7 @@ function ResourceWeekView({
                 return (
                   <div
                     key={resourceDateKey}
-                    className='relative border-r bg-background/60 p-1.5 last:border-r-0'
+                    className="relative border-r bg-background/60 p-1.5 last:border-r-0"
                     style={{ minHeight: laneHeight }}
                   >
                     {dayEvents.map((event) => {
@@ -133,16 +133,16 @@ function ResourceWeekView({
                       return (
                         <button
                           key={event.id}
-                          type='button'
+                          type="button"
                           onClick={() => onScheduleClick(schedule)}
-                          className='absolute inset-x-1 z-10 overflow-hidden rounded border-l-4 border-primary bg-primary/12 px-1.5 py-1 text-left transition-colors hover:bg-primary/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring'
+                          className="absolute inset-x-1 z-10 overflow-hidden rounded border-l-4 border-primary bg-primary/12 px-1.5 py-1 text-left transition-colors hover:bg-primary/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                           style={{ top: `${6 + event.lane * 22}px` }}
                           aria-label={`View schedule ${schedule.name} on ${resource.name}, ${event.timeLabel}`}
                         >
-                          <span className='block truncate text-xs font-medium text-primary'>
+                          <span className="block truncate text-xs font-medium text-primary">
                             {schedule.name}
                           </span>
-                          <span className='block truncate text-[11px] text-primary/80'>
+                          <span className="block truncate text-[11px] text-primary/80">
                             {event.timeLabel}
                           </span>
                         </button>
@@ -169,8 +169,8 @@ function ResourceDayView({
   const day = days[0];
 
   return (
-    <div className='flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border'>
-      <div className='border-b px-4 py-2 text-sm font-medium'>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
+      <div className="border-b px-4 py-2 text-sm font-medium">
         {day.toLocaleDateString("en-US", {
           weekday: "long",
           month: "long",
@@ -179,20 +179,20 @@ function ResourceDayView({
         })}
       </div>
 
-      <div className='overflow-auto'>
-        <div className='min-w-[1100px]'>
+      <div className="overflow-auto">
+        <div className="min-w-[1100px]">
           <div
-            className='sticky top-0 z-30 grid border-b bg-muted/30 backdrop-blur-sm'
+            className="sticky top-0 z-30 grid border-b bg-muted/30 backdrop-blur-sm"
             style={{ gridTemplateColumns: DAY_GRID_TEMPLATE }}
           >
-            <div className='sticky left-0 z-40 border-r bg-muted/30 px-4 py-2 text-sm font-semibold'>
+            <div className="sticky left-0 z-40 border-r bg-muted/30 px-4 py-2 text-sm font-semibold">
               Display
             </div>
-            <div className='grid grid-cols-24'>
+            <div className="grid grid-cols-24">
               {HOURS.map((hour) => (
                 <div
                   key={hour}
-                  className='border-r px-1 py-2 text-center text-[11px] text-muted-foreground last:border-r-0'
+                  className="border-r px-1 py-2 text-center text-[11px] text-muted-foreground last:border-r-0"
                 >
                   {hour % 2 === 0 ? formatHourLabel(hour) : ""}
                 </div>
@@ -208,24 +208,24 @@ function ResourceDayView({
             return (
               <div
                 key={resource.id}
-                className='grid border-b'
+                className="grid border-b"
                 style={{ gridTemplateColumns: DAY_GRID_TEMPLATE }}
               >
-                <div className='sticky left-0 z-20 flex items-center border-r bg-background px-4 py-3'>
-                  <p className='truncate text-sm font-medium'>
+                <div className="sticky left-0 z-20 flex items-center border-r bg-background px-4 py-3">
+                  <p className="truncate text-sm font-medium">
                     {resource.name}
                   </p>
                 </div>
 
                 <div
-                  className='relative bg-background/60'
+                  className="relative bg-background/60"
                   style={{ minHeight: laneHeight }}
                 >
-                  <div className='pointer-events-none absolute inset-0 grid grid-cols-24'>
+                  <div className="pointer-events-none absolute inset-0 grid grid-cols-24">
                     {HOURS.map((hour) => (
                       <div
                         key={hour}
-                        className='border-r border-border/60 last:border-r-0'
+                        className="border-r border-border/60 last:border-r-0"
                       />
                     ))}
                   </div>
@@ -248,9 +248,9 @@ function ResourceDayView({
                     return (
                       <button
                         key={event.id}
-                        type='button'
+                        type="button"
                         onClick={() => onScheduleClick(schedule)}
-                        className='absolute z-10 overflow-hidden rounded border-l-4 border-primary bg-primary/12 px-1.5 py-1 text-left transition-colors hover:bg-primary/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring'
+                        className="absolute z-10 overflow-hidden rounded border-l-4 border-primary bg-primary/12 px-1.5 py-1 text-left transition-colors hover:bg-primary/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                         style={{
                           left: `${startPercent}%`,
                           width: `${widthPercent}%`,
@@ -258,10 +258,10 @@ function ResourceDayView({
                         }}
                         aria-label={`View schedule ${schedule.name} on ${resource.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`}
                       >
-                        <span className='block truncate text-xs font-medium text-primary'>
+                        <span className="block truncate text-xs font-medium text-primary">
                           {schedule.name}
                         </span>
-                        <span className='block truncate text-[11px] text-primary/80'>
+                        <span className="block truncate text-[11px] text-primary/80">
                           {event.timeLabel}
                         </span>
                       </button>
@@ -280,9 +280,9 @@ function ResourceDayView({
 function EmptyResourcesState(): ReactElement {
   return (
     <EmptyState
-      title='No displays available for scheduling'
-      description='Add displays first, then assign schedules to resources.'
-      icon={<IconDeviceTv className='size-7' aria-hidden='true' />}
+      title="No displays available for scheduling"
+      description="Add displays first, then assign schedules to resources."
+      icon={<IconDeviceTv className="size-7" aria-hidden="true" />}
     />
   );
 }

@@ -3,6 +3,7 @@
 import type { ReactElement } from "react";
 import { useState, useCallback, useMemo } from "react";
 import { IconPlus } from "@tabler/icons-react";
+import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { CalendarGrid } from "@/components/schedules/calendar-grid";
@@ -13,41 +14,43 @@ import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog"
 import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useGetDevicesQuery } from "@/lib/api/devices-api";
+import {
+  useCreateScheduleMutation,
+  useDeleteScheduleMutation,
+  useListSchedulesQuery,
+  useUpdateScheduleMutation,
+} from "@/lib/api/schedules-api";
+import { useListPlaylistsQuery } from "@/lib/api/playlists-api";
 import { useCan } from "@/hooks/use-can";
+import {
+  mapBackendScheduleToSchedule,
+  mapCreateFormToScheduleRequest,
+  mapUpdateFormToScheduleRequest,
+} from "@/lib/mappers/schedule-mapper";
 import type {
   Schedule,
   CalendarView,
   ScheduleFormData,
 } from "@/types/schedule";
 
-// Mock data (playlists and schedules – schedule API not wired yet)
-const mockPlaylists = [
-  { id: "playlist-1", name: "Demo Playlist" },
-  { id: "playlist-2", name: "Marketing Content" },
-  { id: "playlist-3", name: "Welcome Messages" },
-] as const;
-
-const mockSchedules: Schedule[] = [
-  {
-    id: "schedule-1",
-    name: "Demo Schedule",
-    startDate: "2026-01-05",
-    endDate: "2026-01-09",
-    startTime: "08:00",
-    endTime: "17:00",
-    playlist: { id: "playlist-1", name: "Demo Playlist" },
-    targetDisplays: [{ id: "display-1", name: "446" }],
-    recurrence: "DAILY",
-    createdAt: "2026-01-01T10:00:00Z",
-    updatedAt: "2026-01-01T10:00:00Z",
-    createdBy: { id: "user-1", name: "Admin" },
-  },
-];
-
 export default function SchedulesPage(): ReactElement {
   const canEditSchedule = useCan("schedules:update");
   const canDeleteSchedule = useCan("schedules:delete");
   const { data: devicesData } = useGetDevicesQuery();
+  const { data: schedulesData } = useListSchedulesQuery();
+  const { data: playlistsData } = useListPlaylistsQuery();
+  const [createSchedule] = useCreateScheduleMutation();
+  const [updateSchedule] = useUpdateScheduleMutation();
+  const [deleteSchedule] = useDeleteScheduleMutation();
+
+  const availablePlaylists: readonly { id: string; name: string }[] = useMemo(
+    () =>
+      (playlistsData?.items ?? []).map((playlist) => ({
+        id: playlist.id,
+        name: playlist.name,
+      })),
+    [playlistsData?.items],
+  );
   const availableDisplays: readonly { id: string; name: string }[] = useMemo(
     () => devicesData?.items?.map((d) => ({ id: d.id, name: d.name })) ?? [],
     [devicesData?.items],
@@ -57,8 +60,10 @@ export default function SchedulesPage(): ReactElement {
   const [currentDate, setCurrentDate] = useState(() => new Date(2026, 0, 1)); // Jan 2026
   const [view, setView] = useState<CalendarView>("resource-week");
 
-  // Schedules state
-  const [schedules, setSchedules] = useState<Schedule[]>(mockSchedules);
+  const schedules: Schedule[] = useMemo(
+    () => (schedulesData?.items ?? []).map(mapBackendScheduleToSchedule),
+    [schedulesData?.items],
+  );
 
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -104,63 +109,47 @@ export default function SchedulesPage(): ReactElement {
   }, []);
 
   const handleCreateSchedule = useCallback(
-    (data: ScheduleFormData) => {
-      const playlist = mockPlaylists.find((p) => p.id === data.playlistId);
-      const displays = data.targetDisplayIds
-        .map((id) => availableDisplays.find((d) => d.id === id))
-        .filter(Boolean) as { id: string; name: string }[];
-
-      const newSchedule: Schedule = {
-        id: `schedule-${Date.now()}`,
-        name: data.name,
-        startDate: data.startDate.toISOString().split("T")[0],
-        endDate: data.endDate.toISOString().split("T")[0],
-        startTime: data.startTime,
-        endTime: data.endTime,
-        playlist: playlist ?? { id: "", name: "" },
-        targetDisplays: displays,
-        recurrence: data.recurrenceEnabled ? data.recurrence : "NONE",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        createdBy: { id: "user-1", name: "Admin" },
-      };
-
-      setSchedules((prev) => [...prev, newSchedule]);
+    async (data: ScheduleFormData) => {
+      try {
+        await createSchedule(mapCreateFormToScheduleRequest(data)).unwrap();
+        toast.success("Schedule created.");
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to create schedule.",
+        );
+      }
     },
-    [availableDisplays],
+    [createSchedule],
   );
 
-  const handleDeleteSchedule = useCallback((schedule: Schedule) => {
-    setSchedules((prev) => prev.filter((s) => s.id !== schedule.id));
-  }, []);
+  const handleDeleteSchedule = useCallback(
+    async (schedule: Schedule) => {
+      try {
+        await deleteSchedule(schedule.id).unwrap();
+        toast.success("Schedule deleted.");
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to delete schedule.",
+        );
+      }
+    },
+    [deleteSchedule],
+  );
 
   const handleSaveSchedule = useCallback(
-    (scheduleId: string, data: ScheduleFormData) => {
-      const playlist = mockPlaylists.find((p) => p.id === data.playlistId);
-      const displays = data.targetDisplayIds
-        .map((id) => availableDisplays.find((d) => d.id === id))
-        .filter(Boolean) as { id: string; name: string }[];
-
-      setSchedules((prev) =>
-        prev.map((schedule) =>
-          schedule.id === scheduleId
-            ? {
-                ...schedule,
-                name: data.name,
-                startDate: data.startDate.toISOString().split("T")[0],
-                endDate: data.endDate.toISOString().split("T")[0],
-                startTime: data.startTime,
-                endTime: data.endTime,
-                playlist: playlist ?? schedule.playlist,
-                targetDisplays: displays,
-                recurrence: data.recurrenceEnabled ? data.recurrence : "NONE",
-                updatedAt: new Date().toISOString(),
-              }
-            : schedule,
-        ),
-      );
+    async (scheduleId: string, data: ScheduleFormData) => {
+      try {
+        await updateSchedule(
+          mapUpdateFormToScheduleRequest(scheduleId, data),
+        ).unwrap();
+        toast.success("Schedule updated.");
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to update schedule.",
+        );
+      }
     },
-    [availableDisplays],
+    [updateSchedule],
   );
 
   return (
@@ -208,7 +197,7 @@ export default function SchedulesPage(): ReactElement {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onCreate={handleCreateSchedule}
-        availablePlaylists={mockPlaylists}
+        availablePlaylists={availablePlaylists}
         availableDisplays={availableDisplays}
       />
 
@@ -229,7 +218,7 @@ export default function SchedulesPage(): ReactElement {
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         onSave={handleSaveSchedule}
-        availablePlaylists={mockPlaylists}
+        availablePlaylists={availablePlaylists}
         availableDisplays={availableDisplays}
       />
     </DashboardPage.Root>

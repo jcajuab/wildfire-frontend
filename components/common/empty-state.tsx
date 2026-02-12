@@ -23,14 +23,14 @@ export function EmptyState({
         className,
       )}
     >
-      {icon ? <div className='text-muted-foreground'>{icon}</div> : null}
-      <h3 className='text-xl font-semibold text-balance'>{title}</h3>
+      {icon ? <div className="text-muted-foreground">{icon}</div> : null}
+      <h3 className="text-xl font-semibold text-balance">{title}</h3>
       {description ? (
-        <p className='max-w-md text-sm leading-relaxed text-muted-foreground text-pretty'>
+        <p className="max-w-md text-sm leading-relaxed text-muted-foreground text-pretty">
           {description}
         </p>
       ) : null}
-      {action ? <div className='pt-1'>{action}</div> : null}
+      {action ? <div className="pt-1">{action}</div> : null}
     </div>
   );
 }
