@@ -17,14 +17,24 @@ function safeParseMetadata(
   }
 }
 
-export function mapAuditEventToLogEntry(event: BackendAuditEvent): LogEntry {
+export interface MapAuditEventOptions {
+  getActorName?: (actorId: string, actorType: string | null) => string;
+}
+
+export function mapAuditEventToLogEntry(
+  event: BackendAuditEvent,
+  options?: MapAuditEventOptions,
+): LogEntry {
   const actorId = event.actorId ?? "unknown";
   const actorType = event.actorType ?? "unknown";
+  const authorName =
+    options?.getActorName?.(actorId, event.actorType) ??
+    (actorType === "user" ? actorId : actorType);
   return {
     id: event.id,
     timestamp: event.occurredAt,
     authorId: actorId,
-    authorName: actorType === "user" ? actorId : actorType,
+    authorName,
     description: `${event.action} (${event.method} ${event.route ?? event.path})`,
     metadata: safeParseMetadata(event.metadataJson, {
       requestId: event.requestId,
