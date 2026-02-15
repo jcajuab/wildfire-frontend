@@ -78,17 +78,17 @@ export default function LogsPage(): ReactElement {
   return (
     <DashboardPage.Root>
       <DashboardPage.Header
-        title='Logs'
+        title="Logs"
         actions={
           <Button onClick={handleExport} disabled={!canExport}>
-            <IconFileExport className='size-4' />
+            <IconFileExport className="size-4" />
             Export Logs
           </Button>
         }
       />
 
       <DashboardPage.Body>
-        <DashboardPage.Content className='pt-6'>
+        <DashboardPage.Content className="pt-6">
           <LogsTable logs={logs} />
         </DashboardPage.Content>
 

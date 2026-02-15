@@ -2,7 +2,11 @@
 
 import type { ReactElement } from "react";
 import { Fragment } from "react";
-import { IconFileText, IconHistory, IconListDetails } from "@tabler/icons-react";
+import {
+  IconFileText,
+  IconHistory,
+  IconListDetails,
+} from "@tabler/icons-react";
 
 import {
   Dialog,

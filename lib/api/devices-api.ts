@@ -69,8 +69,73 @@ export const devicesApi = createApi({
       query: (id) => `devices/${id}`,
       providesTags: (_result, _error, id) => [{ type: "Device", id }],
     }),
+    registerDevice: build.mutation<
+      Device,
+      {
+        identifier: string;
+        name: string;
+        location?: string | null;
+        apiKey: string;
+      }
+    >({
+      queryFn: async (arg) => {
+        const baseUrl = getBaseUrl();
+        if (!baseUrl) {
+          return {
+            error: {
+              status: 0,
+              data: "API URL not configured (NEXT_PUBLIC_API_URL).",
+            },
+          };
+        }
+        const body: { identifier: string; name: string; location?: string } = {
+          identifier: arg.identifier,
+          name: arg.name,
+        };
+        if (arg.location != null && arg.location !== "") {
+          body.location = arg.location;
+        }
+        const response = await fetch(`${baseUrl}/devices`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": arg.apiKey,
+          },
+          body: JSON.stringify(body),
+        });
+        const raw = await response.text();
+        let data: unknown;
+        try {
+          data = raw ? JSON.parse(raw) : undefined;
+        } catch {
+          data = undefined;
+        }
+        if (response.ok) {
+          return { data: data as Device };
+        }
+        const message =
+          typeof data === "object" &&
+          data !== null &&
+          "error" in data &&
+          typeof (data as { error?: { message?: unknown } }).error?.message ===
+            "string"
+            ? (data as { error: { message: string } }).error.message
+            : "Failed to register display.";
+        return {
+          error: {
+            status: response.status,
+            data: message as unknown,
+          },
+        };
+      },
+      invalidatesTags: [{ type: "Device", id: "LIST" }],
+    }),
   }),
 });
 
-export const { useGetDevicesQuery, useGetDeviceQuery, useLazyGetDeviceQuery } =
-  devicesApi;
+export const {
+  useGetDevicesQuery,
+  useGetDeviceQuery,
+  useLazyGetDeviceQuery,
+  useRegisterDeviceMutation,
+} = devicesApi;

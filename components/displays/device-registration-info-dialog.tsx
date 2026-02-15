@@ -2,110 +2,177 @@
 
 import type { ReactElement } from "react";
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useRegisterDeviceMutation } from "@/lib/api/devices-api";
 
 interface DeviceRegistrationInfoDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
 }
 
-const CURL_EXAMPLE = `curl -X POST YOUR_BACKEND_URL/devices \\
-  -H "Content-Type: application/json" \\
-  -H "x-api-key: YOUR_DEVICE_API_KEY" \\
-  -d '{"identifier":"display-01","name":"Lobby Screen","location":"Hall"}'`;
+function getRegisterErrorMessage(err: unknown): string {
+  if (err && typeof err === "object" && "data" in err) {
+    const data = (err as { data: unknown }).data;
+    if (typeof data === "string") return data;
+  }
+  if (err instanceof Error) return err.message;
+  return "Failed to register display.";
+}
 
 export function DeviceRegistrationInfoDialog({
   open,
   onOpenChange,
 }: DeviceRegistrationInfoDialogProps): ReactElement {
-  const [copied, setCopied] = useState(false);
+  const [identifier, setIdentifier] = useState("");
+  const [name, setName] = useState("");
+  const [location, setLocation] = useState("");
+  const [apiKey, setApiKey] = useState("");
 
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(CURL_EXAMPLE);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
+  const [registerDevice, { isLoading: isSubmitting }] =
+    useRegisterDeviceMutation();
+
+  const resetForm = useCallback(() => {
+    setIdentifier("");
+    setName("");
+    setLocation("");
+    setApiKey("");
   }, []);
 
+  const handleOpenChange = useCallback(
+    (next: boolean) => {
+      if (!next) resetForm();
+      onOpenChange(next);
+    },
+    [onOpenChange, resetForm],
+  );
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const trimmedIdentifier = identifier.trim();
+      const trimmedName = name.trim();
+      const trimmedLocation = location.trim();
+      const trimmedApiKey = apiKey.trim();
+
+      if (!trimmedIdentifier || !trimmedName || !trimmedApiKey) {
+        toast.error("Identifier, name, and device API key are required.");
+        return;
+      }
+
+      try {
+        await registerDevice({
+          identifier: trimmedIdentifier,
+          name: trimmedName,
+          location: trimmedLocation || undefined,
+          apiKey: trimmedApiKey,
+        }).unwrap();
+        toast.success("Display registered.");
+        handleOpenChange(false);
+        resetForm();
+      } catch (err) {
+        const message = getRegisterErrorMessage(err);
+        if (typeof console !== "undefined" && console.error) {
+          console.error("[devices.register] Registration failed", {
+            message,
+            identifier: trimmedIdentifier,
+          });
+        }
+        toast.error(message);
+      }
+    },
+    [
+      identifier,
+      name,
+      location,
+      apiKey,
+      registerDevice,
+      handleOpenChange,
+      resetForm,
+    ],
+  );
+
+  const canSubmit =
+    identifier.trim().length > 0 &&
+    name.trim().length > 0 &&
+    apiKey.trim().length > 0 &&
+    !isSubmitting;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-[calc(100%-2rem)] sm:max-w-lg max-h-[90dvh] overflow-y-auto'>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Register your display</DialogTitle>
-          <DialogDescription className='wrap-break-word'>
-            Displays are registered by the device itself. Use the API from your
-            Raspberry Pi or display client to register.
+          <DialogDescription className="wrap-break-word">
+            Register a display by providing its details and the device API key
+            (from backend .env DEVICE_API_KEY).
           </DialogDescription>
         </DialogHeader>
-        <div className='space-y-3 text-sm min-w-0'>
-          <p className='font-medium'>Request</p>
-          <ul className='list-inside list-disc space-y-1.5 text-muted-foreground wrap-break-word'>
-            <li>
-              <strong>Endpoint:</strong>{" "}
-              <code className='rounded bg-muted px-1 break-all'>
-                POST /devices
-              </code>
-            </li>
-            <li>
-              <strong>Header:</strong>{" "}
-              <code className='rounded bg-muted px-1 break-all'>
-                x-api-key: &lt;DEVICE_API_KEY&gt;
-              </code>
-            </li>
-            <li>
-              <strong>Body (JSON):</strong>{" "}
-              <code className='rounded bg-muted px-1 break-all'>
-                {`{ "identifier": "...", "name": "...", "location": "..." }`}
-              </code>{" "}
-              — <code className='rounded bg-muted px-1'>location</code> is
-              optional.
-            </li>
-          </ul>
-          <p className='font-medium'>Example (copy and replace placeholders)</p>
-          <div className='flex flex-col gap-2 sm:relative min-w-0'>
-            <pre className='min-w-0 overflow-x-auto rounded-md border bg-muted p-3 text-xs sm:pr-20'>
-              <code>{CURL_EXAMPLE}</code>
-            </pre>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              className='w-full sm:absolute sm:right-2 sm:top-2 sm:w-auto shrink-0'
-              onClick={handleCopy}
-            >
-              {copied ? "Copied!" : "Copy"}
-            </Button>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="register-identifier">Identifier</Label>
+            <Input
+              id="register-identifier"
+              placeholder="display-01"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              autoComplete="off"
+              disabled={isSubmitting}
+            />
           </div>
-          <p className='text-muted-foreground wrap-break-word'>
-            Replace{" "}
-            <code className='rounded bg-muted px-1 break-all'>
-              YOUR_BACKEND_URL
-            </code>{" "}
-            with your API base (e.g.{" "}
-            <code className='rounded bg-muted px-1 break-all'>
-              http://localhost:8000
-            </code>{" "}
-            or your machine’s LAN IP for phone testing), and{" "}
-            <code className='rounded bg-muted px-1 break-all'>
-              YOUR_DEVICE_API_KEY
-            </code>{" "}
-            with the value from the backend{" "}
-            <code className='rounded bg-muted px-1 break-all'>.env</code>. Once
-            registered, the display will appear in this list. Updates (name,
-            location) are also done by the device with the same endpoint.
-          </p>
-        </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="register-name">Name</Label>
+            <Input
+              id="register-name"
+              placeholder="Lobby Screen"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="off"
+              disabled={isSubmitting}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="register-location">
+              Location <span className="text-muted-foreground">(optional)</span>
+            </Label>
+            <Input
+              id="register-location"
+              placeholder="Hall"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              autoComplete="off"
+              disabled={isSubmitting}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="register-api-key">Device API key</Label>
+            <Input
+              id="register-api-key"
+              type="password"
+              placeholder="Value from backend .env DEVICE_API_KEY"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              autoComplete="off"
+              disabled={isSubmitting}
+            />
+          </div>
+          <DialogFooter className="sm:justify-end">
+            <Button type="submit" disabled={!canSubmit}>
+              {isSubmitting ? "Registering…" : "Register"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
