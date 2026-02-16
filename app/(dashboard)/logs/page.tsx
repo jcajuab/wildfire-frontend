@@ -37,6 +37,17 @@ function formatActorDisplay(
   };
 }
 
+function getActorAvatarUrl(
+  avatarUrlByUserId: Map<string, string | null>,
+): (actorId: string, actorType: string | null) => string | null {
+  return (actorId: string, actorType: string | null) => {
+    if (actorType === "user") {
+      return avatarUrlByUserId.get(actorId) ?? null;
+    }
+    return null;
+  };
+}
+
 export default function LogsPage(): ReactElement {
   const canExport = useCan("audit:export");
   const [page, setPage] = useQueryNumberState("page", 1);
@@ -46,12 +57,19 @@ export default function LogsPage(): ReactElement {
 
   const logs = useMemo<LogEntry[]>(() => {
     const userMap = new Map(users.map((u) => [u.id, u.name]));
+    const avatarUrlByUserId = new Map(
+      users.map((u) => [u.id, u.avatarUrl ?? null]),
+    );
     const deviceMap = new Map(
       (devicesData?.items ?? []).map((d) => [d.id, d.name || d.identifier]),
     );
     const getActorName = formatActorDisplay(userMap, deviceMap);
+    const getActorAvatarUrlFn = getActorAvatarUrl(avatarUrlByUserId);
     return (data?.items ?? []).map((event) =>
-      mapAuditEventToLogEntry(event, { getActorName }),
+      mapAuditEventToLogEntry(event, {
+        getActorName,
+        getActorAvatarUrl: getActorAvatarUrlFn,
+      }),
     );
   }, [data?.items, users, devicesData?.items]);
 

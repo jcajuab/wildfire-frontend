@@ -2,6 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useState, useCallback } from "react";
+import Image from "next/image";
 import {
   IconAdjustmentsHorizontal,
   IconHistory,
@@ -31,9 +32,9 @@ interface FilterableHeaderProps {
 
 function FilterableHeader({ label }: FilterableHeaderProps): ReactElement {
   return (
-    <div className="flex items-center gap-1">
+    <div className='flex items-center gap-1'>
       {label}
-      <IconAdjustmentsHorizontal className="size-4 opacity-50" />
+      <IconAdjustmentsHorizontal className='size-4 opacity-50' />
     </div>
   );
 }
@@ -59,11 +60,11 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
 
   if (logs.length === 0) {
     return (
-      <div className="py-8">
+      <div className='py-8'>
         <EmptyState
-          title="No logs found"
-          description="Logs will appear here as users authenticate and perform actions."
-          icon={<IconHistory className="size-7" aria-hidden="true" />}
+          title='No logs found'
+          description='Logs will appear here as users authenticate and perform actions.'
+          icon={<IconHistory className='size-7' aria-hidden='true' />}
         />
       </div>
     );
@@ -74,34 +75,45 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[220px]">
-              <FilterableHeader label="Timestamp" />
+            <TableHead className='w-[220px]'>
+              <FilterableHeader label='Timestamp' />
             </TableHead>
-            <TableHead className="w-[180px]">
-              <FilterableHeader label="Author" />
+            <TableHead className='w-[180px]'>
+              <FilterableHeader label='Author' />
             </TableHead>
-            <TableHead className="w-[280px]">Description</TableHead>
+            <TableHead className='w-[280px]'>Description</TableHead>
             <TableHead>Metadata</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {logs.map((log) => (
             <TableRow key={log.id}>
-              <TableCell className="text-muted-foreground">
+              <TableCell className='text-muted-foreground'>
                 {formatDateTime(log.timestamp)}
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-2">
-                  <IconUser className="size-4 text-muted-foreground" />
+                <div className='flex items-center gap-2'>
+                  {log.authorAvatarUrl ? (
+                    <Image
+                      src={log.authorAvatarUrl}
+                      alt='Author'
+                      width={28}
+                      height={28}
+                      className='size-7 rounded-full object-cover'
+                      unoptimized
+                    />
+                  ) : (
+                    <IconUser className='size-4 text-muted-foreground' />
+                  )}
                   <span>{log.authorName}</span>
                 </div>
               </TableCell>
               <TableCell>{log.description}</TableCell>
-              <TableCell className="text-muted-foreground font-mono text-xs">
+              <TableCell className='text-muted-foreground font-mono text-xs'>
                 <button
-                  type="button"
+                  type='button'
                   onClick={() => handleMetadataClick(log)}
-                  className="w-full text-left cursor-pointer hover:underline focus:outline-none focus:underline rounded px-1 -mx-1"
+                  className='w-full text-left cursor-pointer hover:underline focus:outline-none focus:underline rounded px-1 -mx-1'
                 >
                   {formatMetadata(log.metadata)}
                 </button>

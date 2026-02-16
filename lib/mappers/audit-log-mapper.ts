@@ -19,6 +19,10 @@ function safeParseMetadata(
 
 export interface MapAuditEventOptions {
   getActorName?: (actorId: string, actorType: string | null) => string;
+  getActorAvatarUrl?: (
+    actorId: string,
+    actorType: string | null,
+  ) => string | null;
 }
 
 export function mapAuditEventToLogEntry(
@@ -35,6 +39,8 @@ export function mapAuditEventToLogEntry(
     timestamp: event.occurredAt,
     authorId: actorId,
     authorName,
+    authorAvatarUrl:
+      options?.getActorAvatarUrl?.(actorId, event.actorType) ?? null,
     description: `${event.action} (${event.method} ${event.route ?? event.path})`,
     metadata: safeParseMetadata(event.metadataJson, {
       requestId: event.requestId,
