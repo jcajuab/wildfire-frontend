@@ -24,6 +24,20 @@ export function formatDateTime(value: string | Date): string {
   }).format(date);
 }
 
+/**
+ * Converts a YYYY-MM-DD date string to ISO 8601 start-of-day UTC.
+ */
+export function dateToISOStart(date: string): string {
+  return `${date}T00:00:00.000Z`;
+}
+
+/**
+ * Converts a YYYY-MM-DD date string to ISO 8601 end-of-day UTC.
+ */
+export function dateToISOEnd(date: string): string {
+  return `${date}T23:59:59.999Z`;
+}
+
 export function formatClockTime(time: string): string {
   const [hoursRaw, minutesRaw] = time.split(":");
   const hours = Number(hoursRaw);

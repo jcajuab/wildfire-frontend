@@ -34,6 +34,8 @@ export interface BackendAuditListResponse {
 export interface AuditListQuery {
   readonly page?: number;
   readonly pageSize?: number;
+  readonly from?: string;
+  readonly to?: string;
   readonly action?: string;
   readonly actorId?: string;
   readonly actorType?: string;
@@ -44,6 +46,8 @@ export interface AuditListQuery {
 }
 
 export interface AuditExportQuery {
+  readonly from?: string;
+  readonly to?: string;
   readonly action?: string;
   readonly actorId?: string;
   readonly actorType?: string;
@@ -105,6 +109,8 @@ export const auditApi = createApi({
         params: {
           page: query?.page ?? 1,
           pageSize: query?.pageSize ?? 20,
+          from: query?.from,
+          to: query?.to,
           action: query?.action,
           actorId: query?.actorId,
           actorType: query?.actorType,
