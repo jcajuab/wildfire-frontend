@@ -171,7 +171,7 @@ export function AppSidebar(): ReactElement {
                     Account
                   </Link>
                 </DropdownMenuItem>
-                {can("*:manage") && (
+                {can("audit:read") && (
                   <DropdownMenuItem asChild>
                     <Link href="/logs">
                       <IconList className="size-4" />
