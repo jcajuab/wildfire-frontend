@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQuery } from "@/lib/api/base-query";
 
 /** Backend RBAC response shapes (match overview). */
 export interface RbacRole {
@@ -24,39 +25,6 @@ export interface RbacUser {
   /** Presigned avatar URL when user has profile picture in MinIO. */
   readonly avatarUrl?: string | null;
 }
-
-const SESSION_KEY = "wildfire_session";
-
-function getBaseUrl(): string {
-  const url = process.env.NEXT_PUBLIC_API_URL;
-  if (typeof url !== "string" || url === "") {
-    return "";
-  }
-  return url.replace(/\/$/, "");
-}
-
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw) as { token?: string };
-    return typeof data.token === "string" ? data.token : null;
-  } catch {
-    return null;
-  }
-}
-
-const baseQuery = fetchBaseQuery({
-  baseUrl: getBaseUrl(),
-  prepareHeaders(headers) {
-    const token = getToken();
-    if (token) {
-      headers.set("authorization", `Bearer ${token}`);
-    }
-    return headers;
-  },
-});
 
 export const rbacApi = createApi({
   reducerPath: "rbacApi",

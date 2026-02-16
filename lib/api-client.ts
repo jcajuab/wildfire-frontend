@@ -1,16 +1,18 @@
+import {
+  getBaseUrl as getApiBaseUrl,
+  getDevOnlyRequestHeaders,
+} from "@/lib/api/base-query";
 import type {
   ApiErrorResponse,
   AuthResponse,
   LoginCredentials,
 } from "@/types/auth";
 
-const getBaseUrl = (): string => {
-  const url = process.env.NEXT_PUBLIC_API_URL;
-  if (typeof url !== "string" || url === "") {
-    throw new Error("NEXT_PUBLIC_API_URL is not set");
-  }
-  return url.replace(/\/$/, "");
-};
+function getBaseUrl(): string {
+  const url = getApiBaseUrl();
+  if (!url) throw new Error("NEXT_PUBLIC_API_URL is not set");
+  return url;
+}
 
 /** POST /auth/login. Returns auth payload or throws with backend error body. */
 export async function login(
@@ -19,7 +21,10 @@ export async function login(
   const baseUrl = getBaseUrl();
   const response = await fetch(`${baseUrl}/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...getDevOnlyRequestHeaders(),
+    },
     body: JSON.stringify(credentials),
   });
 
@@ -40,7 +45,10 @@ export async function refreshToken(token: string): Promise<AuthResponse> {
   const baseUrl = getBaseUrl();
   const response = await fetch(`${baseUrl}/auth/me`, {
     method: "GET",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...getDevOnlyRequestHeaders(),
+    },
   });
 
   const data = (await response.json()) as AuthResponse | ApiErrorResponse;
@@ -60,7 +68,10 @@ export async function logoutApi(token: string): Promise<void> {
   const baseUrl = getBaseUrl();
   const response = await fetch(`${baseUrl}/auth/logout`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...getDevOnlyRequestHeaders(),
+    },
   });
   if (!response.ok) {
     // Log for observability; do not throw so UX is not blocked
@@ -82,6 +93,7 @@ export async function updateCurrentUserProfile(
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      ...getDevOnlyRequestHeaders(),
     },
     body: JSON.stringify(payload),
   });
@@ -109,6 +121,7 @@ export async function changePassword(
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      ...getDevOnlyRequestHeaders(),
     },
     body: JSON.stringify(payload),
   });
@@ -141,7 +154,10 @@ export async function uploadAvatar(
   try {
     const response = await fetch(`${baseUrl}/auth/me/avatar`, {
       method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...getDevOnlyRequestHeaders(),
+      },
       body: formData,
       signal: controller.signal,
     });
@@ -172,7 +188,10 @@ export async function deleteCurrentUser(token: string): Promise<void> {
   const baseUrl = getBaseUrl();
   const response = await fetch(`${baseUrl}/auth/me`, {
     method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...getDevOnlyRequestHeaders(),
+    },
   });
 
   if (response.status === 204) return;
