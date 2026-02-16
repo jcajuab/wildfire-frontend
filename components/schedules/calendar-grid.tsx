@@ -77,7 +77,7 @@ function ResourceWeekView({
   onScheduleClick,
 }: ResourceGridSharedProps): ReactElement {
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
+    <div className="flex flex-col overflow-hidden rounded-lg border max-h-[calc(100vh-14rem)]">
       <div className="overflow-auto">
         <div className="w-full min-w-0">
           <div
@@ -169,7 +169,7 @@ function ResourceDayView({
   const day = days[0];
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
+    <div className="flex flex-col overflow-hidden rounded-lg border max-h-[calc(100vh-14rem)]">
       <div className="border-b px-4 py-2 text-sm font-medium">
         {day.toLocaleDateString("en-US", {
           weekday: "long",
