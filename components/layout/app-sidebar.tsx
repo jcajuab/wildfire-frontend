@@ -171,12 +171,14 @@ export function AppSidebar(): ReactElement {
                     Account
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/logs">
-                    <IconList className="size-4" />
-                    Logs
-                  </Link>
-                </DropdownMenuItem>
+                {can("*:manage") && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/logs">
+                      <IconList className="size-4" />
+                      Logs
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
                   onSelect={(e) => {
