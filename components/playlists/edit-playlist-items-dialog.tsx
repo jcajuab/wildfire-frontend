@@ -328,8 +328,7 @@ export function EditPlaylistItemsDialog({
                   <span className="text-sm font-semibold">Playlist Items</span>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {drafts.length} items &middot;{" "}
-                  {formatDuration(totalDuration)}
+                  {drafts.length} items &middot; {formatDuration(totalDuration)}
                 </span>
               </div>
 

@@ -1,5 +1,9 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { baseQuery, getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/base-query";
+import {
+  baseQuery,
+  getBaseUrl,
+  getDevOnlyRequestHeaders,
+} from "@/lib/api/base-query";
 
 /** Backend device shape (matches GET /devices and GET /devices/:id). */
 export interface Device {

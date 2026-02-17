@@ -35,6 +35,7 @@ import {
   useDeleteContentMutation,
   useListContentQuery,
   useUploadContentMutation,
+  useUpdateContentMutation,
   useLazyGetContentFileUrlQuery,
 } from "@/lib/api/content-api";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
@@ -203,6 +204,7 @@ export default function ContentPage(): ReactElement {
   const { data } = useListContentQuery({ page: 1, pageSize: 100 });
   const [uploadContent] = useUploadContentMutation();
   const [deleteContent] = useDeleteContentMutation();
+  const [updateContent] = useUpdateContentMutation();
   const [getContentFileUrl] = useLazyGetContentFileUrlQuery();
 
   const pageSize = 20;
@@ -408,10 +410,13 @@ export default function ContentPage(): ReactElement {
         onOpenChange={(open) => {
           if (!open) setContentToEdit(null);
         }}
-        onSave={(contentId, title) => {
-          void contentId;
-          void title;
-          toast.info("Renaming content is not yet supported by the backend.");
+        onSave={async (contentId, title) => {
+          try {
+            await updateContent({ id: contentId, title }).unwrap();
+            toast.success("Content updated.");
+          } catch {
+            toast.error("Failed to update content.");
+          }
         }}
       />
 

@@ -89,6 +89,20 @@ export const contentApi = createApi({
         { type: "Content", id },
       ],
     }),
+    updateContent: build.mutation<
+      BackendContent,
+      { readonly id: string; readonly title: string }
+    >({
+      query: ({ id, title }) => ({
+        url: `content/${id}`,
+        method: "PATCH",
+        body: { title },
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Content", id: "LIST" },
+        { type: "Content", id },
+      ],
+    }),
     getContentFileUrl: build.query<{ downloadUrl: string }, string>({
       query: (id) => `content/${id}/file`,
     }),
@@ -100,5 +114,6 @@ export const {
   useGetContentQuery,
   useUploadContentMutation,
   useDeleteContentMutation,
+  useUpdateContentMutation,
   useLazyGetContentFileUrlQuery,
 } = contentApi;

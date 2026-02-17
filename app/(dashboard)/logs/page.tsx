@@ -131,7 +131,7 @@ export default function LogsPage(): ReactElement {
   return (
     <DashboardPage.Root>
       <DashboardPage.Header
-        title='Logs'
+        title="Logs"
         actions={
           canExport ? (
             <Popover
@@ -140,41 +140,41 @@ export default function LogsPage(): ReactElement {
             >
               <PopoverTrigger asChild>
                 <Button>
-                  <IconFileExport className='size-4' />
+                  <IconFileExport className="size-4" />
                   Export Logs
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className='w-80' align='end'>
-                <div className='flex flex-col gap-4'>
-                  <div className='flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3'>
-                    <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
-                      <Label htmlFor='export-from'>From</Label>
+              <PopoverContent className="w-80" align="end">
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
+                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                      <Label htmlFor="export-from">From</Label>
                       <Input
-                        id='export-from'
-                        type='date'
+                        id="export-from"
+                        type="date"
                         value={exportFrom}
                         onChange={(e) => setExportFrom(e.target.value)}
                       />
                     </div>
-                    <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
-                      <Label htmlFor='export-to'>To</Label>
+                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                      <Label htmlFor="export-to">To</Label>
                       <Input
-                        id='export-to'
-                        type='date'
+                        id="export-to"
+                        type="date"
                         value={exportTo}
                         onChange={(e) => setExportTo(e.target.value)}
                       />
                     </div>
                   </div>
                   {!isRangeValid && exportFrom !== "" && exportTo !== "" && (
-                    <p className='text-destructive text-xs'>
+                    <p className="text-destructive text-xs">
                       From date must be before or equal to To date.
                     </p>
                   )}
                   <Button
                     onClick={handleExportSubmit}
                     disabled={!canDownload}
-                    className='w-full'
+                    className="w-full"
                   >
                     Download CSV
                   </Button>
@@ -186,8 +186,8 @@ export default function LogsPage(): ReactElement {
       />
 
       <DashboardPage.Body>
-        <DashboardPage.Content className='pt-6'>
-          <div className='overflow-hidden rounded-lg border'>
+        <DashboardPage.Content className="pt-6">
+          <div className="overflow-hidden rounded-lg border">
             <LogsTable logs={logs} />
           </div>
         </DashboardPage.Content>

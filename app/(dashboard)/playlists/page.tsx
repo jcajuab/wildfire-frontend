@@ -87,9 +87,8 @@ export default function PlaylistsPage(): ReactElement {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [previewPlaylist, setPreviewPlaylist] = useState<Playlist | null>(null);
   const [editPlaylist, setEditPlaylist] = useState<Playlist | null>(null);
-  const [manageItemsPlaylist, setManageItemsPlaylist] = useState<Playlist | null>(
-    null,
-  );
+  const [manageItemsPlaylist, setManageItemsPlaylist] =
+    useState<Playlist | null>(null);
   const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | null>(
     null,
   );
