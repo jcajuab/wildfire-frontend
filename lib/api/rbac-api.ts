@@ -34,6 +34,7 @@ export const rbacApi = createApi({
     // Roles
     getRoles: build.query<RbacRole[], void>({
       query: () => "roles",
+      transformResponse: (response: { items: RbacRole[] }) => response.items,
       providesTags: (result) =>
         result
           ? [
@@ -110,6 +111,8 @@ export const rbacApi = createApi({
     // Permissions
     getPermissions: build.query<RbacPermission[], void>({
       query: () => "permissions",
+      transformResponse: (response: { items: RbacPermission[] }) =>
+        response.items,
       providesTags: (result) =>
         result
           ? [
@@ -122,6 +125,7 @@ export const rbacApi = createApi({
     // Users
     getUsers: build.query<RbacUser[], void>({
       query: () => "users",
+      transformResponse: (response: { items: RbacUser[] }) => response.items,
       providesTags: (result) =>
         result
           ? [

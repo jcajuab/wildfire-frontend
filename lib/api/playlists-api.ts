@@ -31,6 +31,9 @@ export interface BackendPlaylistWithItems extends BackendPlaylist {
 
 export interface BackendPlaylistListResponse {
   readonly items: readonly BackendPlaylist[];
+  readonly total: number;
+  readonly page: number;
+  readonly pageSize: number;
 }
 
 export interface CreatePlaylistRequest {

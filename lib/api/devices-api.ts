@@ -17,6 +17,9 @@ export interface Device {
 
 export interface DevicesListResponse {
   readonly items: readonly Device[];
+  readonly total: number;
+  readonly page: number;
+  readonly pageSize: number;
 }
 
 export const devicesApi = createApi({

@@ -25,6 +25,9 @@ export interface BackendSchedule {
 
 export interface BackendScheduleListResponse {
   readonly items: readonly BackendSchedule[];
+  readonly total: number;
+  readonly page: number;
+  readonly pageSize: number;
 }
 
 export interface CreateScheduleRequest {
