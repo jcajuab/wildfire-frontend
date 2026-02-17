@@ -33,6 +33,7 @@ function toFormData(schedule: Schedule): ScheduleFormData {
     targetDisplayIds: schedule.targetDisplays.map((display) => display.id),
     recurrenceEnabled: schedule.recurrence !== "NONE",
     recurrence: schedule.recurrence === "NONE" ? "DAILY" : schedule.recurrence,
+    priority: schedule.priority,
   };
 }
 

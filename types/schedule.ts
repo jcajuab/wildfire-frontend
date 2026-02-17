@@ -27,6 +27,7 @@ export interface Schedule {
   readonly playlist: SchedulePlaylist;
   readonly targetDisplays: readonly ScheduleDisplay[];
   readonly recurrence: RecurrenceType;
+  readonly priority: number;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly createdBy: ScheduleCreator;
@@ -42,6 +43,7 @@ export interface ScheduleFormData {
   targetDisplayIds: string[];
   recurrenceEnabled: boolean;
   recurrence: RecurrenceType;
+  priority: number;
 }
 
 export interface CalendarDay {

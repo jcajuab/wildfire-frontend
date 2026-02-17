@@ -11,6 +11,7 @@ import {
   IconPencil,
   IconX,
   IconTrash,
+  IconFlag,
 } from "@tabler/icons-react";
 
 import {
@@ -110,6 +111,12 @@ export function ViewScheduleDialog({
           <div className="flex items-center gap-2 text-sm">
             <IconRepeat className="size-4" />
             <span>{formatRecurrence(schedule.recurrence)}</span>
+          </div>
+
+          {/* Priority */}
+          <div className="flex items-center gap-2 text-sm">
+            <IconFlag className="size-4" />
+            <span>Priority: {schedule.priority}</span>
           </div>
 
           {/* Playlist */}

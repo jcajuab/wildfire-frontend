@@ -52,6 +52,7 @@ export function mapBackendScheduleToSchedule(item: BackendSchedule): Schedule {
       },
     ],
     recurrence: recurrenceFromDays(item.daysOfWeek),
+    priority: item.priority,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
     createdBy: {
@@ -71,7 +72,7 @@ export function mapCreateFormToScheduleRequest(
     startTime: data.startTime,
     endTime: data.endTime,
     daysOfWeek: daysFromForm(data),
-    priority: 1,
+    priority: data.priority,
     isActive: true,
   };
 }
@@ -88,7 +89,7 @@ export function mapUpdateFormToScheduleRequest(
     startTime: data.startTime,
     endTime: data.endTime,
     daysOfWeek: daysFromForm(data),
-    priority: 1,
+    priority: data.priority,
     isActive: true,
   };
 }

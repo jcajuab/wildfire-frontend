@@ -79,16 +79,37 @@ function ScheduleFormFrame({
   return (
     <>
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="schedule-name">Schedule Name</Label>
-          <Input
-            id="schedule-name"
-            placeholder="Demo Schedule"
-            value={formData.name}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, name: e.target.value }))
-            }
-          />
+        <div className="grid grid-cols-[1fr_120px] gap-3">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="schedule-name">Name</Label>
+            <Input
+              id="schedule-name"
+              placeholder="Demo Schedule"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, name: e.target.value }))
+              }
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="schedule-priority">Priority</Label>
+            <Input
+              id="schedule-priority"
+              type="number"
+              min={1}
+              max={100}
+              value={formData.priority}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  priority: Math.max(
+                    1,
+                    Math.min(100, Number.parseInt(e.target.value) || 1),
+                  ),
+                }))
+              }
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -325,6 +346,7 @@ export function CreateScheduleForm({
         targetDisplayIds: [],
         recurrenceEnabled: false,
         recurrence: "DAILY",
+        priority: 1,
       }}
       availablePlaylists={availablePlaylists}
       availableDisplays={availableDisplays}
