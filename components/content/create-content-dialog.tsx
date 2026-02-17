@@ -2,7 +2,7 @@
 
 import type { ChangeEvent, ReactElement } from "react";
 import { useState, useCallback } from "react";
-import { IconUpload, IconSparkles } from "@tabler/icons-react";
+import { IconUpload } from "@tabler/icons-react";
 
 import {
   Dialog,
@@ -19,16 +19,16 @@ import { Label } from "@/components/ui/label";
 interface CreateContentDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onCreateFromScratch: (name: string) => void;
   readonly onUploadFile: (name: string, file: File) => void;
 }
 
-const SUPPORTED_FILE_TYPES = ".docx, .odt, .odp, .ods, .pdf, .txt";
+const SUPPORTED_FILE_MIME_TYPES =
+  "image/jpeg,image/png,image/webp,image/gif,video/mp4,application/pdf";
+const SUPPORTED_FILE_LABELS = "JPG, PNG, WEBP, GIF, MP4, PDF";
 
 export function CreateContentDialog({
   open,
   onOpenChange,
-  onCreateFromScratch,
   onUploadFile,
 }: CreateContentDialogProps): ReactElement {
   const [name, setName] = useState("");
@@ -42,16 +42,11 @@ export function CreateContentDialog({
     onOpenChange(false);
   }, [onOpenChange]);
 
-  const handleCreateFromScratch = useCallback(() => {
-    if (name.trim()) {
-      if (selectedFile) {
-        onUploadFile(name.trim(), selectedFile);
-      } else {
-        onCreateFromScratch(name.trim());
-      }
-      handleClose();
-    }
-  }, [name, selectedFile, onCreateFromScratch, onUploadFile, handleClose]);
+  const handleUpload = useCallback(() => {
+    if (!name.trim() || !selectedFile) return;
+    onUploadFile(name.trim(), selectedFile);
+    handleClose();
+  }, [name, selectedFile, onUploadFile, handleClose]);
 
   const handleFileSelect = useCallback((file: File) => {
     setSelectedFile(file);
@@ -99,8 +94,7 @@ export function CreateContentDialog({
         <DialogHeader>
           <DialogTitle className="text-lg">Create New Content</DialogTitle>
           <DialogDescription>
-            Upload a document to parse and style it in the editor, or start
-            fresh with a blank canvas
+            Upload a supported media file to add it to the content library.
           </DialogDescription>
         </DialogHeader>
 
@@ -144,14 +138,14 @@ export function CreateContentDialog({
                 id="file-upload"
                 type="file"
                 className="sr-only"
-                accept={SUPPORTED_FILE_TYPES}
+                accept={SUPPORTED_FILE_MIME_TYPES}
                 onChange={handleFileInputChange}
               />
               <p className="text-xs text-muted-foreground">
                 Supported files types:
               </p>
               <p className="text-xs text-muted-foreground">
-                {SUPPORTED_FILE_TYPES}
+                {SUPPORTED_FILE_LABELS}
               </p>
             </div>
             {selectedFile && (
@@ -160,13 +154,6 @@ export function CreateContentDialog({
               </p>
             )}
           </div>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">Or</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
         </div>
 
         <DialogFooter className="sm:justify-between">
@@ -174,12 +161,12 @@ export function CreateContentDialog({
             Cancel
           </Button>
           <Button
-            onClick={handleCreateFromScratch}
-            disabled={!name.trim()}
+            onClick={handleUpload}
+            disabled={!name.trim() || selectedFile === null}
             className="flex-1"
           >
-            <IconSparkles className="size-4" />
-            {selectedFile ? "Upload file" : "Start from scratch"}
+            <IconUpload className="size-4" />
+            Upload file
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -5,6 +5,7 @@ export interface BackendContent {
   readonly id: string;
   readonly title: string;
   readonly type: "IMAGE" | "VIDEO" | "PDF";
+  readonly status: "DRAFT" | "IN_USE";
   readonly mimeType: string;
   readonly fileSize: number;
   readonly checksum: string;
@@ -28,6 +29,11 @@ export interface BackendContentListResponse {
 export interface ContentListQuery {
   readonly page?: number;
   readonly pageSize?: number;
+  readonly status?: "DRAFT" | "IN_USE";
+  readonly type?: "IMAGE" | "VIDEO" | "PDF";
+  readonly search?: string;
+  readonly sortBy?: "createdAt" | "title" | "fileSize" | "type";
+  readonly sortDirection?: "asc" | "desc";
 }
 
 export interface UploadContentRequest {
@@ -48,7 +54,12 @@ export const contentApi = createApi({
         url: "content",
         params: {
           page: query?.page ?? 1,
-          pageSize: query?.pageSize ?? 100,
+          pageSize: query?.pageSize ?? 20,
+          status: query?.status,
+          type: query?.type,
+          search: query?.search,
+          sortBy: query?.sortBy ?? "createdAt",
+          sortDirection: query?.sortDirection ?? "desc",
         },
       }),
       providesTags: (result) =>

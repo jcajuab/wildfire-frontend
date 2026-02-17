@@ -45,7 +45,7 @@ import type { Content, ContentSortField } from "@/types/content";
 
 const CONTENT_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
 const CONTENT_TYPE_VALUES = ["all", "IMAGE", "VIDEO", "PDF"] as const;
-const CONTENT_SORT_VALUES = ["recent", "title", "size", "type"] as const;
+const CONTENT_SORT_VALUES = ["createdAt", "title", "fileSize", "type"] as const;
 
 interface EditContentDialogProps {
   readonly content: Content | null;
@@ -139,7 +139,7 @@ function PreviewContentDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <IconEye className="size-4" />
-            Content Preview
+            Content Details
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-2 text-sm">
@@ -188,7 +188,7 @@ export default function ContentPage(): ReactElement {
   );
   const [sortBy, setSortBy] = useQueryEnumState<ContentSortField>(
     "sort",
-    "recent",
+    "createdAt",
     CONTENT_SORT_VALUES,
   );
   const [search, setSearch] = useQueryStringState("q", "");
@@ -201,14 +201,22 @@ export default function ContentPage(): ReactElement {
   const [contentToEdit, setContentToEdit] = useState<Content | null>(null);
   const [contentToDelete, setContentToDelete] = useState<Content | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { data } = useListContentQuery({ page: 1, pageSize: 100 });
+  const pageSize = 20;
+  const { data, isLoading, isError } = useListContentQuery({
+    page,
+    pageSize,
+    status: statusFilter === "all" ? undefined : statusFilter,
+    type: typeFilter === "all" ? undefined : typeFilter,
+    search: search.trim().length > 0 ? search : undefined,
+    sortBy,
+    sortDirection: "desc",
+  });
   const [uploadContent] = useUploadContentMutation();
   const [deleteContent] = useDeleteContentMutation();
   const [updateContent] = useUpdateContentMutation();
   const [getContentFileUrl] = useLazyGetContentFileUrlQuery();
 
-  const pageSize = 20;
-  const contents = useMemo(
+  const visibleContents = useMemo(
     () => (data?.items ?? []).map(mapBackendContentToContent),
     [data?.items],
   );
@@ -244,11 +252,6 @@ export default function ContentPage(): ReactElement {
     },
     [setSearch, setPage],
   );
-
-  const handleCreateFromScratch = useCallback((name: string) => {
-    void name;
-    toast.info("Creating blank content is not supported by the backend.");
-  }, []);
 
   const handleUploadFile = useCallback(
     async (name: string, file: File) => {
@@ -289,53 +292,33 @@ export default function ContentPage(): ReactElement {
     [getContentFileUrl],
   );
 
-  const filteredContents = useMemo(
-    () =>
-      contents.filter((content) => {
-        if (statusFilter !== "all" && content.status !== statusFilter) {
-          return false;
-        }
+  if (isLoading) {
+    return (
+      <DashboardPage.Root>
+        <DashboardPage.Header title="Content" />
+        <DashboardPage.Body>
+          <DashboardPage.Content className="flex items-center justify-center">
+            <p className="text-muted-foreground">Loading content...</p>
+          </DashboardPage.Content>
+        </DashboardPage.Body>
+      </DashboardPage.Root>
+    );
+  }
 
-        if (typeFilter !== "all" && content.type !== typeFilter) {
-          return false;
-        }
-
-        if (
-          search.length > 0 &&
-          !content.title.toLowerCase().includes(search.toLowerCase())
-        ) {
-          return false;
-        }
-
-        return true;
-      }),
-    [contents, statusFilter, typeFilter, search],
-  );
-
-  const sortedContents = useMemo(
-    () =>
-      [...filteredContents].sort((a, b) => {
-        switch (sortBy) {
-          case "title":
-            return a.title.localeCompare(b.title);
-          case "size":
-            return b.fileSize - a.fileSize;
-          case "type":
-            return a.type.localeCompare(b.type);
-          case "recent":
-          default:
-            return (
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            );
-        }
-      }),
-    [filteredContents, sortBy],
-  );
-
-  const paginatedContents = useMemo(
-    () => sortedContents.slice((page - 1) * pageSize, page * pageSize),
-    [sortedContents, page],
-  );
+  if (isError) {
+    return (
+      <DashboardPage.Root>
+        <DashboardPage.Header title="Content" />
+        <DashboardPage.Body>
+          <DashboardPage.Content className="flex items-center justify-center">
+            <p className="text-destructive">
+              Failed to load content. Check the API and try again.
+            </p>
+          </DashboardPage.Content>
+        </DashboardPage.Body>
+      </DashboardPage.Root>
+    );
+  }
 
   return (
     <DashboardPage.Root>
@@ -377,7 +360,7 @@ export default function ContentPage(): ReactElement {
 
         <DashboardPage.Content className="pt-6">
           <ContentGrid
-            items={paginatedContents}
+            items={visibleContents}
             onEdit={handleEdit}
             onPreview={handlePreview}
             onDelete={handleDelete}
@@ -391,7 +374,7 @@ export default function ContentPage(): ReactElement {
           <Pagination
             page={page}
             pageSize={pageSize}
-            total={sortedContents.length}
+            total={data?.total ?? 0}
             onPageChange={setPage}
           />
         </DashboardPage.Footer>
@@ -400,7 +383,6 @@ export default function ContentPage(): ReactElement {
       <CreateContentDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
-        onCreateFromScratch={handleCreateFromScratch}
         onUploadFile={handleUploadFile}
       />
 
@@ -442,11 +424,18 @@ export default function ContentPage(): ReactElement {
           if (!contentToDelete) return;
           try {
             await deleteContent(contentToDelete.id).unwrap();
+            toast.success("Content deleted.");
             setContentToDelete(null);
           } catch (err) {
-            toast.error(
-              err instanceof Error ? err.message : "Failed to delete content.",
-            );
+            const message =
+              err instanceof Error ? err.message : "Failed to delete content.";
+            if (message.toLowerCase().includes("used by")) {
+              toast.error(
+                "Content is still referenced in playlists. Remove those references first.",
+              );
+            } else {
+              toast.error(message);
+            }
             throw err;
           }
         }}

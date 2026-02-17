@@ -41,7 +41,7 @@ export function ContentCard({
   return (
     <div className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-md">
       {/* Thumbnail area */}
-      <div className="flex aspect-[4/3] items-center justify-center bg-muted/50">
+      <div className="flex aspect-4/3 items-center justify-center bg-muted/50">
         <IconWorld className="size-12 text-muted-foreground/50" />
       </div>
 
@@ -75,7 +75,7 @@ export function ContentCard({
             )}
             <DropdownMenuItem onClick={() => onPreview(content)}>
               <IconEye className="size-4" />
-              Preview Content
+              View Details
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onDownload(content)}>
               <IconDownload className="size-4" />

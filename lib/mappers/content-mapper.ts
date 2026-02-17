@@ -12,8 +12,7 @@ export function mapBackendContentToContent(item: BackendContent): Content {
     width: item.width,
     height: item.height,
     duration: item.duration,
-    // Backend does not expose status yet; keep deterministic UI behavior.
-    status: "DRAFT",
+    status: item.status,
     createdAt: item.createdAt,
     createdBy: {
       id: item.createdBy.id,

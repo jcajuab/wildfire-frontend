@@ -29,7 +29,7 @@ export interface ContentListResponse {
   readonly total: number;
 }
 
-export type ContentSortField = "recent" | "title" | "size" | "type";
+export type ContentSortField = "createdAt" | "title" | "fileSize" | "type";
 export type SortDirection = "asc" | "desc";
 
 export interface ContentFilter {

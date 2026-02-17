@@ -21,9 +21,9 @@ const sortOptions: readonly {
   readonly value: ContentSortField;
   readonly label: string;
 }[] = [
-  { value: "recent", label: "Recent" },
+  { value: "createdAt", label: "Recent" },
   { value: "title", label: "Title" },
-  { value: "size", label: "Size" },
+  { value: "fileSize", label: "Size" },
   { value: "type", label: "Type" },
 ] as const;
 

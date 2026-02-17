@@ -44,7 +44,7 @@ const USER_SORT_DIRECTIONS = ["asc", "desc"] as const;
 const HIGH_RISK_TARGET_THRESHOLD = 20;
 
 export default function UsersPage(): ReactElement {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, refreshSession } = useAuth();
   const canUpdateUser = useCan("users:update");
   const canDeleteUser = useCan("users:delete");
   const isSuperAdmin = useCan("*:manage");
@@ -216,6 +216,9 @@ export default function UsersPage(): ReactElement {
           roleIds: roleIdsToSend,
           policyVersion,
         }).unwrap();
+        if (currentUser?.id === userId) {
+          await refreshSession();
+        }
         setUserRolesByUserId((prev) => ({
           ...prev,
           [userId]: roles.map((r) => ({ id: r.id, name: r.name })),
@@ -226,7 +229,14 @@ export default function UsersPage(): ReactElement {
         );
       }
     },
-    [setUserRoles, isSuperAdmin, userRolesByUserId, systemRoleIds],
+    [
+      setUserRoles,
+      isSuperAdmin,
+      userRolesByUserId,
+      systemRoleIds,
+      currentUser?.id,
+      refreshSession,
+    ],
   );
 
   const handleEdit = useCallback((user: User) => {

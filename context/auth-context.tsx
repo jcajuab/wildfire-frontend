@@ -84,6 +84,8 @@ interface AuthContextValue {
   can: (permission: string) => boolean;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
+  /** Forces a backend-auth refresh to avoid stale permission UX after RBAC writes. */
+  refreshSession: () => Promise<void>;
   /** Replace session with auth payload (e.g. after PATCH /auth/me). */
   updateSession: (response: AuthResponse) => void;
 }
@@ -176,6 +178,30 @@ export function AuthProvider({
     }
   }, []);
 
+  const refreshSession = useCallback(async () => {
+    try {
+      const response = await refreshToken();
+      const session: SessionData = {
+        user: response.user,
+        expiresAt: response.expiresAt,
+        permissions: response.permissions,
+      };
+      writeSession(session);
+      setUser(session.user);
+      setPermissions(session.permissions);
+    } catch (err) {
+      if (
+        err instanceof AuthApiError &&
+        (err.status === 401 || err.status === 403)
+      ) {
+        setUser(null);
+        setPermissions([]);
+        clearSession();
+      }
+      throw err;
+    }
+  }, []);
+
   const updateSession = useCallback((response: AuthResponse) => {
     const session: SessionData = {
       user: response.user,
@@ -203,6 +229,7 @@ export function AuthProvider({
       can,
       login,
       logout,
+      refreshSession,
       updateSession,
     }),
     [
@@ -213,6 +240,7 @@ export function AuthProvider({
       can,
       login,
       logout,
+      refreshSession,
       updateSession,
     ],
   );
