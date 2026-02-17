@@ -89,6 +89,9 @@ export const contentApi = createApi({
         { type: "Content", id },
       ],
     }),
+    getContentFileUrl: build.query<{ downloadUrl: string }, string>({
+      query: (id) => `content/${id}/file`,
+    }),
   }),
 });
 
@@ -97,4 +100,5 @@ export const {
   useGetContentQuery,
   useUploadContentMutation,
   useDeleteContentMutation,
+  useLazyGetContentFileUrlQuery,
 } = contentApi;

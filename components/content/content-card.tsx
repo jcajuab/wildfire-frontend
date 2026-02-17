@@ -3,6 +3,7 @@
 import type { ReactElement } from "react";
 import {
   IconDotsVertical,
+  IconDownload,
   IconPencil,
   IconEye,
   IconTrash,
@@ -23,6 +24,7 @@ interface ContentCardProps {
   readonly onEdit: (content: Content) => void;
   readonly onPreview: (content: Content) => void;
   readonly onDelete: (content: Content) => void;
+  readonly onDownload: (content: Content) => void;
   readonly canUpdate?: boolean;
   readonly canDelete?: boolean;
 }
@@ -32,6 +34,7 @@ export function ContentCard({
   onEdit,
   onPreview,
   onDelete,
+  onDownload,
   canUpdate = true,
   canDelete = true,
 }: ContentCardProps): ReactElement {
@@ -73,6 +76,10 @@ export function ContentCard({
             <DropdownMenuItem onClick={() => onPreview(content)}>
               <IconEye className="size-4" />
               Preview Content
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDownload(content)}>
+              <IconDownload className="size-4" />
+              Download File
             </DropdownMenuItem>
             {canDelete && (
               <DropdownMenuItem

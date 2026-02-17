@@ -35,6 +35,7 @@ import {
   useDeleteContentMutation,
   useListContentQuery,
   useUploadContentMutation,
+  useLazyGetContentFileUrlQuery,
 } from "@/lib/api/content-api";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import type { TypeFilter } from "@/components/content/content-filter-popover";
@@ -202,6 +203,7 @@ export default function ContentPage(): ReactElement {
   const { data } = useListContentQuery({ page: 1, pageSize: 100 });
   const [uploadContent] = useUploadContentMutation();
   const [deleteContent] = useDeleteContentMutation();
+  const [getContentFileUrl] = useLazyGetContentFileUrlQuery();
 
   const pageSize = 20;
   const contents = useMemo(
@@ -272,6 +274,18 @@ export default function ContentPage(): ReactElement {
     setContentToDelete(content);
     setIsDeleteDialogOpen(true);
   }, []);
+
+  const handleDownload = useCallback(
+    async (content: Content) => {
+      try {
+        const { downloadUrl } = await getContentFileUrl(content.id).unwrap();
+        window.open(downloadUrl, "_blank", "noopener,noreferrer");
+      } catch {
+        toast.error("Failed to get download URL.");
+      }
+    },
+    [getContentFileUrl],
+  );
 
   const filteredContents = useMemo(
     () =>
@@ -365,6 +379,7 @@ export default function ContentPage(): ReactElement {
             onEdit={handleEdit}
             onPreview={handlePreview}
             onDelete={handleDelete}
+            onDownload={handleDownload}
             canUpdate={canUpdateContent}
             canDelete={canDeleteContent}
           />
