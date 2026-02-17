@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import type { RecurrenceType, ScheduleFormData } from "@/types/schedule";
 
 interface ScheduleFormProps {
@@ -79,6 +80,17 @@ function ScheduleFormFrame({
   return (
     <>
       <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <Switch
+            id="schedule-active"
+            checked={formData.isActive}
+            onCheckedChange={(checked) =>
+              setFormData((prev) => ({ ...prev, isActive: checked }))
+            }
+          />
+          <Label htmlFor="schedule-active">Active</Label>
+        </div>
+
         <div className="grid grid-cols-[1fr_120px] gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="schedule-name">Name</Label>
@@ -347,6 +359,7 @@ export function CreateScheduleForm({
         recurrenceEnabled: false,
         recurrence: "DAILY",
         priority: 1,
+        isActive: true,
       }}
       availablePlaylists={availablePlaylists}
       availableDisplays={availableDisplays}

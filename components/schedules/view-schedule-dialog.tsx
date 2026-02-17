@@ -86,9 +86,14 @@ export function ViewScheduleDialog({
 
         <div className="flex flex-col gap-4 rounded-lg border-2 border-dashed border-primary/30 p-4">
           {/* Schedule Name */}
-          <div className="flex items-center gap-2">
-            <IconCalendarEvent className="size-4" />
-            <span className="font-semibold">{schedule.name}</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <IconCalendarEvent className="size-4" />
+              <span className="font-semibold">{schedule.name}</span>
+            </div>
+            <Badge variant={schedule.isActive ? "default" : "secondary"}>
+              {schedule.isActive ? "Active" : "Inactive"}
+            </Badge>
           </div>
 
           {/* Date Range */}

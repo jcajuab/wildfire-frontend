@@ -34,6 +34,7 @@ function toFormData(schedule: Schedule): ScheduleFormData {
     recurrenceEnabled: schedule.recurrence !== "NONE",
     recurrence: schedule.recurrence === "NONE" ? "DAILY" : schedule.recurrence,
     priority: schedule.priority,
+    isActive: schedule.isActive,
   };
 }
 
