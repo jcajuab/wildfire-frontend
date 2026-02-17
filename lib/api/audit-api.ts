@@ -22,6 +22,8 @@ export interface BackendAuditEvent {
   readonly ipAddress: string | null;
   readonly userAgent: string | null;
   readonly metadataJson: string | null;
+  readonly actorName?: string | null;
+  readonly actorEmail?: string | null;
 }
 
 export interface BackendAuditListResponse {
@@ -89,7 +91,22 @@ export async function exportAuditEventsCsv(
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `Export failed with status ${response.status}`);
+    let message: string | undefined;
+    try {
+      const parsed = JSON.parse(text) as {
+        error?: {
+          message?: unknown;
+        };
+      };
+      if (typeof parsed?.error?.message === "string") {
+        message = parsed.error.message;
+      }
+    } catch {
+      message = undefined;
+    }
+    throw new Error(
+      (message ?? text) || `Export failed with status ${response.status}`,
+    );
   }
 
   return await response.blob();

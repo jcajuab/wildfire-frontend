@@ -16,9 +16,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useQueryNumberState } from "@/hooks/use-query-state";
+import {
+  useQueryEnumState,
+  useQueryNumberState,
+  useQueryStringState,
+} from "@/hooks/use-query-state";
 import { useCan } from "@/hooks/use-can";
 import {
+  type AuditExportQuery,
+  type AuditListQuery,
   exportAuditEventsCsv,
   useListAuditEventsQuery,
 } from "@/lib/api/audit-api";
@@ -26,19 +32,18 @@ import { useGetDevicesQuery } from "@/lib/api/devices-api";
 import { useGetUsersQuery } from "@/lib/api/rbac-api";
 import { dateToISOEnd, dateToISOStart } from "@/lib/formatters";
 import { mapAuditEventToLogEntry } from "@/lib/mappers/audit-log-mapper";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { LogEntry } from "@/types/log";
 
 const PAGE_SIZE = 20;
-
-function toYYYYMMDD(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-function getDefaultExportRange(): { from: string; to: string } {
-  const now = new Date();
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  return { from: toYYYYMMDD(thirtyDaysAgo), to: toYYYYMMDD(now) };
-}
+const ACTOR_TYPE_FILTERS = ["all", "user", "device"] as const;
+type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
 
 function formatActorDisplay(
   userMap: Map<string, string>,
@@ -69,12 +74,47 @@ function getActorAvatarUrl(
 export default function LogsPage(): ReactElement {
   const canExport = useCan("audit:export");
   const [page, setPage] = useQueryNumberState("page", 1);
-  const defaultRange = useMemo(() => getDefaultExportRange(), []);
-  const [exportFrom, setExportFrom] = useState<string>(defaultRange.from);
-  const [exportTo, setExportTo] = useState<string>(defaultRange.to);
+  const [from, setFrom] = useQueryStringState("from", "");
+  const [to, setTo] = useQueryStringState("to", "");
+  const [action, setAction] = useQueryStringState("action", "");
+  const [requestId, setRequestId] = useQueryStringState("requestId", "");
+  const [resourceType, setResourceType] = useQueryStringState(
+    "resourceType",
+    "",
+  );
+  const [statusRaw, setStatusRaw] = useQueryStringState("status", "");
+  const [actorType, setActorType] = useQueryEnumState<ActorTypeFilter>(
+    "actorType",
+    "all",
+    ACTOR_TYPE_FILTERS,
+  );
   const [exportPopoverOpen, setExportPopoverOpen] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
 
-  const { data } = useListAuditEventsQuery({ page, pageSize: PAGE_SIZE });
+  const parsedStatus = useMemo<number | undefined>(() => {
+    const parsed = Number.parseInt(statusRaw, 10);
+    if (!Number.isFinite(parsed) || parsed < 100 || parsed > 599) {
+      return undefined;
+    }
+    return parsed;
+  }, [statusRaw]);
+
+  const listQuery = useMemo<AuditListQuery>(
+    () => ({
+      page,
+      pageSize: PAGE_SIZE,
+      from: from ? dateToISOStart(from) : undefined,
+      to: to ? dateToISOEnd(to) : undefined,
+      action: action || undefined,
+      actorType: actorType === "all" ? undefined : actorType,
+      resourceType: resourceType || undefined,
+      status: parsedStatus,
+      requestId: requestId || undefined,
+    }),
+    [action, actorType, from, page, parsedStatus, requestId, resourceType, to],
+  );
+
+  const { data } = useListAuditEventsQuery(listQuery);
   const { data: users = [] } = useGetUsersQuery();
   const { data: devicesData } = useGetDevicesQuery();
 
@@ -98,18 +138,83 @@ export default function LogsPage(): ReactElement {
 
   const total = data?.total ?? 0;
 
-  const isRangeValid =
-    exportFrom.trim() !== "" &&
-    exportTo.trim() !== "" &&
-    exportFrom <= exportTo;
+  const isRangeValid = from.trim() !== "" && to.trim() !== "" && from <= to;
   const canDownload = isRangeValid;
+
+  const resetToFirstPage = useCallback((): void => {
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [page, setPage]);
+
+  const handleFromChange = useCallback(
+    (nextValue: string): void => {
+      setFrom(nextValue);
+      resetToFirstPage();
+    },
+    [resetToFirstPage, setFrom],
+  );
+
+  const handleToChange = useCallback(
+    (nextValue: string): void => {
+      setTo(nextValue);
+      resetToFirstPage();
+    },
+    [resetToFirstPage, setTo],
+  );
+
+  const handleActionChange = useCallback(
+    (nextValue: string): void => {
+      setAction(nextValue);
+      resetToFirstPage();
+    },
+    [resetToFirstPage, setAction],
+  );
+
+  const handleActorTypeChange = useCallback(
+    (nextValue: ActorTypeFilter): void => {
+      setActorType(nextValue);
+      resetToFirstPage();
+    },
+    [resetToFirstPage, setActorType],
+  );
+
+  const handleResourceTypeChange = useCallback(
+    (nextValue: string): void => {
+      setResourceType(nextValue);
+      resetToFirstPage();
+    },
+    [resetToFirstPage, setResourceType],
+  );
+
+  const handleStatusChange = useCallback(
+    (nextValue: string): void => {
+      setStatusRaw(nextValue);
+      resetToFirstPage();
+    },
+    [resetToFirstPage, setStatusRaw],
+  );
+
+  const handleRequestIdChange = useCallback(
+    (nextValue: string): void => {
+      setRequestId(nextValue);
+      resetToFirstPage();
+    },
+    [resetToFirstPage, setRequestId],
+  );
 
   const handleExportSubmit = useCallback((): void => {
     void (async () => {
+      setIsExporting(true);
       try {
-        const query = {
-          from: dateToISOStart(exportFrom),
-          to: dateToISOEnd(exportTo),
+        const query: AuditExportQuery = {
+          from: dateToISOStart(from),
+          to: dateToISOEnd(to),
+          action: action || undefined,
+          actorType: actorType === "all" ? undefined : actorType,
+          resourceType: resourceType || undefined,
+          status: parsedStatus,
+          requestId: requestId || undefined,
         };
         const blob = await exportAuditEventsCsv(query);
         const url = URL.createObjectURL(blob);
@@ -121,12 +226,40 @@ export default function LogsPage(): ReactElement {
         setExportPopoverOpen(false);
         toast.success("Logs exported.");
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to export audit logs.",
-        );
+        const message =
+          err instanceof Error ? err.message : "Failed to export audit logs.";
+        if (message.includes("Export limit exceeded")) {
+          toast.error(
+            "Export is too large for one file. Narrow your filters or date range.",
+          );
+        } else {
+          toast.error(message);
+        }
+      } finally {
+        setIsExporting(false);
       }
     })();
-  }, [exportFrom, exportTo]);
+  }, [action, actorType, from, parsedStatus, requestId, resourceType, to]);
+
+  const handleResetFilters = useCallback((): void => {
+    setFrom("");
+    setTo("");
+    setAction("");
+    setActorType("all");
+    setResourceType("");
+    setStatusRaw("");
+    setRequestId("");
+    setPage(1);
+  }, [
+    setAction,
+    setActorType,
+    setFrom,
+    setPage,
+    setRequestId,
+    setResourceType,
+    setStatusRaw,
+    setTo,
+  ]);
 
   return (
     <DashboardPage.Root>
@@ -152,8 +285,8 @@ export default function LogsPage(): ReactElement {
                       <Input
                         id="export-from"
                         type="date"
-                        value={exportFrom}
-                        onChange={(e) => setExportFrom(e.target.value)}
+                        value={from}
+                        onChange={(e) => handleFromChange(e.target.value)}
                       />
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -161,22 +294,30 @@ export default function LogsPage(): ReactElement {
                       <Input
                         id="export-to"
                         type="date"
-                        value={exportTo}
-                        onChange={(e) => setExportTo(e.target.value)}
+                        value={to}
+                        onChange={(e) => handleToChange(e.target.value)}
                       />
                     </div>
                   </div>
-                  {!isRangeValid && exportFrom !== "" && exportTo !== "" && (
+                  <p className="text-xs text-muted-foreground">
+                    Export applies your active table filters.
+                  </p>
+                  {total > 100000 && (
+                    <p className="text-xs text-muted-foreground">
+                      Current result set may exceed backend export limits.
+                    </p>
+                  )}
+                  {!isRangeValid && from !== "" && to !== "" && (
                     <p className="text-destructive text-xs">
                       From date must be before or equal to To date.
                     </p>
                   )}
                   <Button
                     onClick={handleExportSubmit}
-                    disabled={!canDownload}
+                    disabled={!canDownload || isExporting}
                     className="w-full"
                   >
-                    Download CSV
+                    {isExporting ? "Exporting..." : "Download CSV"}
                   </Button>
                 </div>
               </PopoverContent>
@@ -186,6 +327,97 @@ export default function LogsPage(): ReactElement {
       />
 
       <DashboardPage.Body>
+        <DashboardPage.Content className="border-b pb-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="logs-filter-from">From</Label>
+              <Input
+                id="logs-filter-from"
+                type="date"
+                value={from}
+                onChange={(e) => handleFromChange(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="logs-filter-to">To</Label>
+              <Input
+                id="logs-filter-to"
+                type="date"
+                value={to}
+                onChange={(e) => handleToChange(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="logs-filter-action">Action</Label>
+              <Input
+                id="logs-filter-action"
+                value={action}
+                onChange={(e) => handleActionChange(e.target.value)}
+                placeholder="e.g. rbac.user.update"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="logs-filter-request-id">Request ID</Label>
+              <Input
+                id="logs-filter-request-id"
+                value={requestId}
+                onChange={(e) => handleRequestIdChange(e.target.value)}
+                placeholder="req-..."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Actor Type</Label>
+              <Select
+                value={actorType}
+                onValueChange={(value) => {
+                  if (ACTOR_TYPE_FILTERS.includes(value as ActorTypeFilter)) {
+                    handleActorTypeChange(value as ActorTypeFilter);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full justify-between">
+                  <SelectValue placeholder="All actor types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="device">Device</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="logs-filter-resource-type">Resource Type</Label>
+              <Input
+                id="logs-filter-resource-type"
+                value={resourceType}
+                onChange={(e) => handleResourceTypeChange(e.target.value)}
+                placeholder="e.g. user, content, schedule"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="logs-filter-status">Status</Label>
+              <Input
+                id="logs-filter-status"
+                type="number"
+                min={100}
+                max={599}
+                value={statusRaw}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                placeholder="e.g. 403"
+              />
+            </div>
+            <div className="flex items-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleResetFilters}
+              >
+                Reset Filters
+              </Button>
+            </div>
+          </div>
+        </DashboardPage.Content>
         <DashboardPage.Content className="pt-6">
           <div className="overflow-hidden rounded-lg border">
             <LogsTable logs={logs} />

@@ -3,11 +3,7 @@
 import type { ReactElement } from "react";
 import { useState, useCallback } from "react";
 import Image from "next/image";
-import {
-  IconAdjustmentsHorizontal,
-  IconHistory,
-  IconUser,
-} from "@tabler/icons-react";
+import { IconHistory, IconUser } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import {
@@ -24,19 +20,6 @@ import { LogMetadataDialog } from "@/components/logs/log-metadata-dialog";
 
 interface LogsTableProps {
   readonly logs: readonly LogEntry[];
-}
-
-interface FilterableHeaderProps {
-  readonly label: string;
-}
-
-function FilterableHeader({ label }: FilterableHeaderProps): ReactElement {
-  return (
-    <div className="flex items-center gap-1">
-      {label}
-      <IconAdjustmentsHorizontal className="size-4 opacity-50" />
-    </div>
-  );
 }
 
 function formatMetadata(metadata: Record<string, unknown>): string {
@@ -75,12 +58,8 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[220px]">
-              <FilterableHeader label="Timestamp" />
-            </TableHead>
-            <TableHead className="w-[180px]">
-              <FilterableHeader label="Author" />
-            </TableHead>
+            <TableHead className="w-[220px]">Timestamp</TableHead>
+            <TableHead className="w-[180px]">Author</TableHead>
             <TableHead className="w-[280px]">Description</TableHead>
             <TableHead>Metadata</TableHead>
           </TableRow>
@@ -108,7 +87,14 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
                   <span>{log.authorName}</span>
                 </div>
               </TableCell>
-              <TableCell>{log.description}</TableCell>
+              <TableCell>
+                <div className="space-y-0.5">
+                  <p>{log.description}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {log.technicalDescription}
+                  </p>
+                </div>
+              </TableCell>
               <TableCell className="text-muted-foreground font-mono text-xs">
                 <button
                   type="button"

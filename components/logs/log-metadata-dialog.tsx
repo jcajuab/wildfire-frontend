@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import {
   IconFileText,
   IconHistory,
@@ -43,17 +43,24 @@ export function LogMetadataDialog({
   onOpenChange,
   log,
 }: LogMetadataDialogProps): ReactElement | null {
+  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
   const handleClose = (): void => onOpenChange(false);
+  const handleDialogOpenChange = (nextOpen: boolean): void => {
+    if (!nextOpen) {
+      setShowAdvanced(false);
+    }
+    onOpenChange(nextOpen);
+  };
 
   if (!log) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-lg">Request metadata</DialogTitle>
           <DialogDescription>
-            Full request and context for this log entry.
+            Incident details for this audit record.
           </DialogDescription>
         </DialogHeader>
 
@@ -73,12 +80,15 @@ export function LogMetadataDialog({
                 <span className="text-xs text-muted-foreground wrap-break-word">
                   {log.description}
                 </span>
+                <span className="text-xs text-muted-foreground wrap-break-word">
+                  {log.technicalDescription}
+                </span>
               </div>
             </div>
 
             <div className="flex items-center gap-2 text-sm font-medium pt-1">
               <IconListDetails className="size-4" />
-              Request metadata
+              Summary details
             </div>
 
             <div className="grid grid-cols-2 gap-y-2 text-sm">
@@ -91,6 +101,34 @@ export function LogMetadataDialog({
                 </Fragment>
               ))}
             </div>
+            <div className="pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-auto px-0 text-xs"
+                onClick={() => setShowAdvanced((prev) => !prev)}
+              >
+                {showAdvanced ? "Hide advanced fields" : "Show advanced fields"}
+              </Button>
+            </div>
+            {showAdvanced && (
+              <>
+                <div className="flex items-center gap-2 text-sm font-medium pt-1">
+                  <IconListDetails className="size-4" />
+                  Technical fields
+                </div>
+                <div className="grid grid-cols-2 gap-y-2 text-sm">
+                  {Object.entries(log.rawMetadata).map(([key, value]) => (
+                    <Fragment key={`raw-${key}`}>
+                      <span className="text-muted-foreground">{key}:</span>
+                      <span className="font-mono text-xs break-all">
+                        {formatMetadataValue(value)}
+                      </span>
+                    </Fragment>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
