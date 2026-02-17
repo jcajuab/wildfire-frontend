@@ -9,8 +9,6 @@ import type {
   ScheduleFormData,
 } from "@/types/schedule";
 
-const DEFAULT_RANGE_START = "2026-01-01";
-const DEFAULT_RANGE_END = "2026-12-31";
 const DAILY_DAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 function recurrenceFromDays(days: readonly number[]): RecurrenceType {
@@ -27,18 +25,35 @@ function daysFromForm(data: ScheduleFormData): number[] {
   if (data.recurrence === "DAILY") {
     return [...DAILY_DAYS];
   }
+  if (data.recurrence === "WEEKLY") {
+    // Use selected days from form; fall back to start date's day
+    if (data.selectedDays && data.selectedDays.length > 0) {
+      return [...data.selectedDays];
+    }
+    return [data.startDate.getDay()];
+  }
   if (data.recurrence === "MONTHLY") {
     return [data.startDate.getDay()];
   }
   return [data.startDate.getDay()];
 }
 
+function deriveScheduleDateRange(): { startDate: string; endDate: string } {
+  const now = new Date();
+  const year = now.getFullYear();
+  return {
+    startDate: `${year}-01-01`,
+    endDate: `${year}-12-31`,
+  };
+}
+
 export function mapBackendScheduleToSchedule(item: BackendSchedule): Schedule {
+  const { startDate, endDate } = deriveScheduleDateRange();
   return {
     id: item.id,
     name: item.name,
-    startDate: DEFAULT_RANGE_START,
-    endDate: DEFAULT_RANGE_END,
+    startDate,
+    endDate,
     startTime: item.startTime,
     endTime: item.endTime,
     playlist: {
@@ -58,7 +73,7 @@ export function mapBackendScheduleToSchedule(item: BackendSchedule): Schedule {
     updatedAt: item.updatedAt,
     createdBy: {
       id: "",
-      name: "System",
+      name: "Unknown",
     },
   };
 }

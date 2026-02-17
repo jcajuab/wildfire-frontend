@@ -11,15 +11,15 @@ function mapBackendPlaylistItemToContent(item: BackendPlaylistItem): Content {
     id: item.content.id,
     title: item.content.title,
     type: item.content.type,
-    mimeType: item.content.type === "PDF" ? "application/pdf" : "image/*",
+    mimeType: "",
     fileSize: 0,
     checksum: item.content.checksum,
     width: null,
     height: null,
     duration: null,
-    status: "DRAFT",
+    status: "IN_USE",
     createdAt: "",
-    createdBy: { id: "", name: "Unknown" },
+    createdBy: { id: "", name: "" },
   };
 }
 
@@ -39,7 +39,7 @@ export function mapBackendPlaylistBase(item: BackendPlaylist): Playlist {
     id: item.id,
     name: item.name,
     description: item.description,
-    status: "DRAFT",
+    status: "DRAFT", // Backend doesn't expose playlist status yet
     items: [],
     totalDuration: 0,
     createdAt: item.createdAt,

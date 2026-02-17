@@ -3,8 +3,8 @@ import type { Display } from "@/types/display";
 
 /**
  * Maps a backend Device to the frontend Display type.
- * Backend only has id, identifier, name, location, createdAt, updatedAt;
- * missing fields are set to placeholders.
+ * Only maps fields the backend actually provides.
+ * Fields not available from the backend are set to explicit "Not available" placeholders.
  */
 export function mapDeviceToDisplay(device: Device): Display {
   return {
@@ -14,10 +14,10 @@ export function mapDeviceToDisplay(device: Device): Display {
     location: device.location ?? "",
     createdAt: device.createdAt,
     status: "READY",
-    ipAddress: "",
-    macAddress: "",
-    displayOutput: "—",
-    resolution: "—",
+    ipAddress: "Not available",
+    macAddress: "Not available",
+    displayOutput: "Not available",
+    resolution: "Not available",
     groups: [],
     nowPlaying: null,
   };

@@ -1,4 +1,7 @@
+import type { SortDirection } from "@/types/common";
 import type { Content } from "./content";
+
+export type { SortDirection };
 
 export type PlaylistStatus = "DRAFT" | "IN_USE";
 
@@ -34,7 +37,6 @@ export interface PlaylistListResponse {
 }
 
 export type PlaylistSortField = "recent" | "name" | "duration" | "items";
-export type SortDirection = "asc" | "desc";
 
 export interface PlaylistFilter {
   readonly status?: PlaylistStatus;

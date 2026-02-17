@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { type ReactElement, memo } from "react";
 import {
   IconDotsVertical,
   IconMapPin,
@@ -37,13 +37,13 @@ interface DisplayCardProps {
 function getStatusColor(status: DisplayStatus): string {
   switch (status) {
     case "READY":
-      return "bg-green-500";
+      return "bg-emerald-500";
     case "LIVE":
-      return "bg-blue-500";
+      return "bg-primary";
     case "DOWN":
-      return "bg-red-500";
+      return "bg-destructive";
     default:
-      return "bg-gray-500";
+      return "bg-muted-foreground";
   }
 }
 
@@ -63,13 +63,13 @@ function getStatusLabel(status: DisplayStatus): string {
 function getStatusTextColor(status: DisplayStatus): string {
   switch (status) {
     case "READY":
-      return "text-green-600";
+      return "text-emerald-600 dark:text-emerald-400";
     case "LIVE":
-      return "text-blue-600";
+      return "text-primary";
     case "DOWN":
-      return "text-red-600";
+      return "text-destructive";
     default:
-      return "text-gray-600";
+      return "text-muted-foreground";
   }
 }
 
@@ -79,7 +79,7 @@ function formatDuration(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-export function DisplayCard({
+export const DisplayCard = memo(function DisplayCard({
   display,
   onViewDetails,
   onPreviewPage,
@@ -103,6 +103,7 @@ export function DisplayCard({
             <h3 className="text-base font-semibold">{display.name}</h3>
             <div className="flex items-center gap-1.5">
               <span
+                aria-hidden="true"
                 className={`size-2 rounded-full ${getStatusColor(display.status)}`}
               />
               <span
@@ -121,9 +122,12 @@ export function DisplayCard({
         {/* Actions menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Actions for ${display.name}`}
+            >
               <IconDotsVertical className="size-4" />
-              <span className="sr-only">Actions</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
@@ -223,4 +227,4 @@ export function DisplayCard({
       </div>
     </div>
   );
-}
+});

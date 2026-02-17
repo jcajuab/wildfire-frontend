@@ -44,6 +44,7 @@ export interface ScheduleFormData {
   targetDisplayIds: string[];
   recurrenceEnabled: boolean;
   recurrence: RecurrenceType;
+  selectedDays?: number[];
   priority: number;
   isActive: boolean;
 }

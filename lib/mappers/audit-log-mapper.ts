@@ -120,8 +120,6 @@ function humanizeAuditAction(event: BackendAuditEvent): string {
   return `Performed ${event.action}`;
 }
 
-const unknownAuditActions = new Set<string>();
-
 export function mapAuditEventToLogEntry(
   event: BackendAuditEvent,
   options?: MapAuditEventOptions,
@@ -172,15 +170,6 @@ export function mapAuditEventToLogEntry(
   if (targetCount) {
     metadata["targets changed"] = targetCount;
   }
-  if (
-    !ACTION_LABELS[event.action] &&
-    typeof window !== "undefined" &&
-    !unknownAuditActions.has(event.action)
-  ) {
-    unknownAuditActions.add(event.action);
-    console.warn("[audit] unmapped action label", { action: event.action });
-  }
-
   return {
     id: event.id,
     timestamp: event.occurredAt,

@@ -96,7 +96,7 @@ export default function PlaylistsPage(): ReactElement {
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const { data: playlistsData } = useListPlaylistsQuery();
-  const { data: contentData } = useListContentQuery({ page: 1, pageSize: 100 });
+  const { data: contentData } = useListContentQuery({ page: 1, pageSize: 200 });
   const [loadPlaylist] = useLazyGetPlaylistQuery();
   const [createPlaylist] = useCreatePlaylistMutation();
   const [addPlaylistItem] = useAddPlaylistItemMutation();
@@ -202,35 +202,33 @@ export default function PlaylistsPage(): ReactElement {
   }, [filteredPlaylists, page]);
 
   const handleCreatePlaylist = useCallback(
-    (
+    async (
       data: Omit<
         Playlist,
         "id" | "createdAt" | "updatedAt" | "createdBy" | "status"
       >,
     ) => {
-      void (async () => {
-        try {
-          const created = await createPlaylist({
-            name: data.name,
-            description: data.description,
-          }).unwrap();
-          await Promise.all(
-            data.items.map((item, index) =>
-              addPlaylistItem({
-                playlistId: created.id,
-                contentId: item.content.id,
-                sequence: index + 1,
-                duration: item.duration,
-              }).unwrap(),
-            ),
-          );
-          toast.success("Playlist created.");
-        } catch (err) {
-          toast.error(
-            err instanceof Error ? err.message : "Failed to create playlist.",
-          );
-        }
-      })();
+      try {
+        const created = await createPlaylist({
+          name: data.name,
+          description: data.description,
+        }).unwrap();
+        await Promise.all(
+          data.items.map((item, index) =>
+            addPlaylistItem({
+              playlistId: created.id,
+              contentId: item.content.id,
+              sequence: index + 1,
+              duration: item.duration,
+            }).unwrap(),
+          ),
+        );
+        toast.success("Playlist created.");
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to create playlist.",
+        );
+      }
     },
     [addPlaylistItem, createPlaylist],
   );
@@ -390,9 +388,7 @@ export default function PlaylistsPage(): ReactElement {
           }}
           playlist={manageItemsPlaylist}
           availableContent={availableContent}
-          onSave={(playlistId, diff) => {
-            void handleSaveItems(playlistId, diff);
-          }}
+          onSave={handleSaveItems}
         />
       )}
 
@@ -430,25 +426,23 @@ export default function PlaylistsPage(): ReactElement {
               Cancel
             </Button>
             <Button
-              onClick={() => {
+              onClick={async () => {
                 if (!editPlaylist || editName.trim().length === 0) return;
-                void (async () => {
-                  try {
-                    await updatePlaylist({
-                      id: editPlaylist.id,
-                      name: editName.trim(),
-                      description: editDescription.trim() || null,
-                    }).unwrap();
-                    setEditPlaylist(null);
-                    toast.success("Playlist updated.");
-                  } catch (err) {
-                    toast.error(
-                      err instanceof Error
-                        ? err.message
-                        : "Failed to update playlist.",
-                    );
-                  }
-                })();
+                try {
+                  await updatePlaylist({
+                    id: editPlaylist.id,
+                    name: editName.trim(),
+                    description: editDescription.trim() || null,
+                  }).unwrap();
+                  setEditPlaylist(null);
+                  toast.success("Playlist updated.");
+                } catch (err) {
+                  toast.error(
+                    err instanceof Error
+                      ? err.message
+                      : "Failed to update playlist.",
+                  );
+                }
               }}
               disabled={editName.trim().length === 0}
             >

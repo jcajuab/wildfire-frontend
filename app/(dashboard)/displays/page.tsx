@@ -268,17 +268,11 @@ export default function DisplaysPage(): ReactElement {
 
       <ViewDisplayDialog
         display={selectedDisplay}
-        open={isViewDialogOpen}
-        onOpenChange={setIsViewDialogOpen}
-        onEdit={handleEditFromView}
-        onEditPlaylist={handleEditPlaylist}
-        canEdit={canUpdateDisplay}
-      />
-
-      <ViewDisplayDialog
-        display={selectedDisplay}
-        open={isPreviewDialogOpen}
-        onOpenChange={setIsPreviewDialogOpen}
+        open={isViewDialogOpen || isPreviewDialogOpen}
+        onOpenChange={(open) => {
+          setIsViewDialogOpen(open);
+          setIsPreviewDialogOpen(open);
+        }}
         onEdit={handleEditFromView}
         onEditPlaylist={handleEditPlaylist}
         canEdit={canUpdateDisplay}

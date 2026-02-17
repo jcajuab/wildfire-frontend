@@ -1,3 +1,7 @@
+import type { SortDirection } from "@/types/common";
+
+export type { SortDirection };
+
 export type ContentType = "IMAGE" | "VIDEO" | "PDF";
 
 export type ContentStatus = "DRAFT" | "IN_USE";
@@ -30,7 +34,6 @@ export interface ContentListResponse {
 }
 
 export type ContentSortField = "createdAt" | "title" | "fileSize" | "type";
-export type SortDirection = "asc" | "desc";
 
 export interface ContentFilter {
   readonly status?: ContentStatus;

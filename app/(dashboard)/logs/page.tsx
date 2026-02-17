@@ -203,42 +203,40 @@ export default function LogsPage(): ReactElement {
     [resetToFirstPage, setRequestId],
   );
 
-  const handleExportSubmit = useCallback((): void => {
-    void (async () => {
-      setIsExporting(true);
-      try {
-        const query: AuditExportQuery = {
-          from: dateToISOStart(from),
-          to: dateToISOEnd(to),
-          action: action || undefined,
-          actorType: actorType === "all" ? undefined : actorType,
-          resourceType: resourceType || undefined,
-          status: parsedStatus,
-          requestId: requestId || undefined,
-        };
-        const blob = await exportAuditEventsCsv(query);
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "wildfire-audit-events.csv";
-        link.click();
-        URL.revokeObjectURL(url);
-        setExportPopoverOpen(false);
-        toast.success("Logs exported.");
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to export audit logs.";
-        if (message.includes("Export limit exceeded")) {
-          toast.error(
-            "Export is too large for one file. Narrow your filters or date range.",
-          );
-        } else {
-          toast.error(message);
-        }
-      } finally {
-        setIsExporting(false);
+  const handleExportSubmit = useCallback(async (): Promise<void> => {
+    setIsExporting(true);
+    try {
+      const query: AuditExportQuery = {
+        from: dateToISOStart(from),
+        to: dateToISOEnd(to),
+        action: action || undefined,
+        actorType: actorType === "all" ? undefined : actorType,
+        resourceType: resourceType || undefined,
+        status: parsedStatus,
+        requestId: requestId || undefined,
+      };
+      const blob = await exportAuditEventsCsv(query);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "wildfire-audit-events.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+      setExportPopoverOpen(false);
+      toast.success("Logs exported.");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to export audit logs.";
+      if (message.includes("Export limit exceeded")) {
+        toast.error(
+          "Export is too large for one file. Narrow your filters or date range.",
+        );
+      } else {
+        toast.error(message);
       }
-    })();
+    } finally {
+      setIsExporting(false);
+    }
   }, [action, actorType, from, parsedStatus, requestId, resourceType, to]);
 
   const handleResetFilters = useCallback((): void => {

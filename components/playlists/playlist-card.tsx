@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { type ReactElement, memo } from "react";
 import {
   IconDotsVertical,
   IconPlaylist,
@@ -45,7 +45,7 @@ function formatItemDuration(seconds: number): string {
   return `0:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
-export function PlaylistCard({
+export const PlaylistCard = memo(function PlaylistCard({
   playlist,
   onEdit,
   onManageItems,
@@ -152,4 +152,4 @@ export function PlaylistCard({
       )}
     </div>
   );
-}
+});

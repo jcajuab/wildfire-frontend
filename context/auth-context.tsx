@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -111,10 +112,19 @@ export function AuthProvider({
     setIsInitialized(true);
   }, []);
 
+  const isRefreshingRef = useRef(false);
+  const userRef = useRef(user);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
 
     const refreshTokenCheckIntervalId = setInterval(async () => {
+      if (isRefreshingRef.current) return;
+      if (!userRef.current) return;
+
       const session = readSession();
       if (!session?.expiresAt) return;
 
@@ -122,6 +132,7 @@ export function AuthProvider({
       const nowMs = Date.now();
       if (expiresAtMs - nowMs > REFRESH_THRESHOLD_MS) return;
 
+      isRefreshingRef.current = true;
       try {
         const response = await refreshToken();
         const newSession: SessionData = {
@@ -138,6 +149,8 @@ export function AuthProvider({
           setPermissions([]);
           clearSession();
         }
+      } finally {
+        isRefreshingRef.current = false;
       }
     }, REFRESH_CHECK_INTERVAL_MS);
 
@@ -168,9 +181,6 @@ export function AuthProvider({
     setUser(null);
     setPermissions([]);
     clearSession();
-    if (typeof window !== "undefined") {
-      console.info("[auth] logout");
-    }
     try {
       await logoutApi();
     } catch {

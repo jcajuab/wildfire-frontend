@@ -66,11 +66,17 @@ export const rbacApi = createApi({
         method: "PATCH",
         body,
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: "Role", id }],
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Role", id },
+        { type: "Role", id: "LIST" },
+      ],
     }),
     deleteRole: build.mutation<void, string>({
       query: (id) => ({ url: `roles/${id}`, method: "DELETE" }),
-      invalidatesTags: (_result, _error, id) => [{ type: "Role", id }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: "Role", id },
+        { type: "Role", id: "LIST" },
+      ],
     }),
     getRolePermissions: build.query<RbacPermission[], string>({
       query: (roleId) => `roles/${roleId}/permissions`,
@@ -90,6 +96,7 @@ export const rbacApi = createApi({
       }),
       invalidatesTags: (_result, _error, { roleId }) => [
         { type: "Role", id: roleId },
+        { type: "Permission", id: "LIST" },
       ],
     }),
     getRoleUsers: build.query<RbacUser[], string>({
@@ -147,11 +154,17 @@ export const rbacApi = createApi({
         method: "PATCH",
         body,
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: "User", id }],
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "User", id },
+        { type: "User", id: "LIST" },
+      ],
     }),
     deleteUser: build.mutation<void, string>({
       query: (id) => ({ url: `users/${id}`, method: "DELETE" }),
-      invalidatesTags: (_result, _error, id) => [{ type: "User", id }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: "User", id },
+        { type: "User", id: "LIST" },
+      ],
     }),
     getUserRoles: build.query<RbacRole[], string>({
       query: (userId) => `users/${userId}/roles`,

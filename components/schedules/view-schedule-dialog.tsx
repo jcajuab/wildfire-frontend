@@ -9,7 +9,6 @@ import {
   IconRepeat,
   IconDeviceDesktop,
   IconPencil,
-  IconX,
   IconTrash,
   IconFlag,
 } from "@tabler/icons-react";
@@ -140,7 +139,6 @@ export function ViewScheduleDialog({
                 <Badge key={display.id} variant="outline" className="gap-1">
                   <IconDeviceDesktop className="size-3" />
                   {display.name}
-                  <IconX className="size-3" />
                 </Badge>
               ))}
             </div>

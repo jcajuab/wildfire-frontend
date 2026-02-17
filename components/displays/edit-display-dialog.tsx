@@ -33,10 +33,9 @@ interface EditFormData {
   groups: readonly string[];
 }
 
-// Mock display outputs for demonstration
-const mockDisplayOutputs: readonly DisplayOutput[] = [
-  { name: "HDMI-0", resolution: "1366x768" },
-  { name: "HDMI-1", resolution: "1366x768" },
+const availableDisplayOutputs: readonly DisplayOutput[] = [
+  { name: "HDMI-0", resolution: "Auto-detect" },
+  { name: "HDMI-1", resolution: "Auto-detect" },
 ];
 
 function createInitialFormData(display: Display): EditFormData {
@@ -159,7 +158,7 @@ function EditDisplayForm({
         <div className="flex flex-col gap-1.5">
           <Label>Display Output</Label>
           <div className="flex flex-col gap-2">
-            {mockDisplayOutputs.map((output) => (
+            {availableDisplayOutputs.map((output) => (
               <button
                 key={output.name}
                 type="button"
@@ -221,6 +220,7 @@ function EditDisplayForm({
                   <button
                     type="button"
                     onClick={() => handleRemoveGroup(group)}
+                    aria-label={`Remove ${group}`}
                     className="ml-1 rounded-full p-0.5 hover:bg-muted"
                   >
                     <IconX className="size-3" />

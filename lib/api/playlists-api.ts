@@ -139,6 +139,7 @@ export const playlistsApi = createApi({
       }),
       invalidatesTags: (_result, _error, { playlistId }) => [
         { type: "Playlist", id: playlistId },
+        { type: "Playlist", id: "LIST" },
       ],
     }),
     deletePlaylistItem: build.mutation<void, DeletePlaylistItemRequest>({

@@ -32,7 +32,7 @@ export function DisplayGrid({
     return (
       <EmptyState
         title="No displays found"
-        description="Displays register themselves via the API. Use Add Display to see registration instructions, or ensure your devices have called POST /devices with the device API key."
+        description="Displays register themselves automatically. Use Add Display to see registration instructions for your Raspberry Pi devices."
         icon={<IconDeviceTv className="size-7" aria-hidden="true" />}
       />
     );

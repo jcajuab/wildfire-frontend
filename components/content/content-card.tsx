@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { type ReactElement, memo } from "react";
 import {
   IconDotsVertical,
   IconDownload,
@@ -29,7 +29,7 @@ interface ContentCardProps {
   readonly canDelete?: boolean;
 }
 
-export function ContentCard({
+export const ContentCard = memo(function ContentCard({
   content,
   onEdit,
   onPreview,
@@ -60,10 +60,10 @@ export function ContentCard({
             <Button
               variant="ghost"
               size="icon-sm"
+              aria-label={`Actions for ${content.title}`}
               className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
             >
               <IconDotsVertical className="size-4" />
-              <span className="sr-only">Actions</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
@@ -95,4 +95,4 @@ export function ContentCard({
       </div>
     </div>
   );
-}
+});

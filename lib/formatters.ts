@@ -43,7 +43,14 @@ export function formatClockTime(time: string): string {
   const hours = Number(hoursRaw);
   const minutes = Number(minutesRaw);
 
-  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
+  if (
+    !Number.isFinite(hours) ||
+    !Number.isFinite(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
     return time;
   }
 

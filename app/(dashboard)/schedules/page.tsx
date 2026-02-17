@@ -57,7 +57,7 @@ export default function SchedulesPage(): ReactElement {
   );
 
   // Calendar state
-  const [currentDate, setCurrentDate] = useState(() => new Date(2026, 0, 1)); // Jan 2026
+  const [currentDate, setCurrentDate] = useState(() => new Date());
   const [view, setView] = useState<CalendarView>("resource-week");
 
   const schedules: Schedule[] = useMemo(

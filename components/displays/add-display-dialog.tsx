@@ -61,10 +61,10 @@ const initialWizardData: WizardData = {
   macAddress: "",
 };
 
-// Mock display outputs for demonstration
-const mockDisplayOutputs: DisplayOutput[] = [
-  { name: "HDMI-0", resolution: "1366x768" },
-  { name: "HDMI-1", resolution: "1366x768" },
+// Display outputs will be populated from device detection when available
+const availableDisplayOutputs: DisplayOutput[] = [
+  { name: "HDMI-0", resolution: "Auto-detect" },
+  { name: "HDMI-1", resolution: "Auto-detect" },
 ];
 
 const stepLabels = ["Connect", "Select", "Configure", "Review"] as const;
@@ -142,7 +142,6 @@ export function AddDisplayDialog({
         setData((prev) => ({
           ...prev,
           isNewDevice: true,
-          macAddress: "3E:4B:7A:C1:8F:22",
         }));
       }
       setStep((prev) => (prev + 1) as WizardStep);
@@ -294,11 +293,17 @@ export function AddDisplayDialog({
                 Select Display Output
               </div>
 
-              <div className="flex flex-col gap-2">
-                {mockDisplayOutputs.map((output) => (
+              <div
+                className="flex flex-col gap-2"
+                role="radiogroup"
+                aria-label="Display output"
+              >
+                {availableDisplayOutputs.map((output) => (
                   <button
                     key={output.name}
                     type="button"
+                    role="radio"
+                    aria-checked={data.selectedOutput === output.name}
                     onClick={() =>
                       setData((prev) => ({
                         ...prev,
@@ -319,6 +324,7 @@ export function AddDisplayDialog({
                       </span>
                     </div>
                     <div
+                      aria-hidden="true"
                       className={`flex size-5 items-center justify-center rounded-full border-2 ${
                         data.selectedOutput === output.name
                           ? "border-primary bg-primary"
@@ -398,6 +404,7 @@ export function AddDisplayDialog({
                         <button
                           type="button"
                           onClick={() => handleRemoveGroup(group)}
+                          aria-label={`Remove ${group}`}
                           className="ml-1 rounded-full p-0.5 hover:bg-muted"
                         >
                           <IconX className="size-3" />
