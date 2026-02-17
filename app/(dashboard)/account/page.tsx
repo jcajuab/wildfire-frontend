@@ -53,7 +53,7 @@ const timezones = [
 const defaultTimezone = "Asia - Taipei";
 
 export default function AccountPage(): ReactElement {
-  const { user, logout, token, updateSession } = useAuth();
+  const { user, logout, updateSession } = useAuth();
   const profilePictureInputRef = useRef<HTMLInputElement>(null);
   const [firstName, setFirstName] = useState(
     user?.name?.split(/\s+/)[0] ?? "Admin",
@@ -79,7 +79,7 @@ export default function AccountPage(): ReactElement {
   ): Promise<void> => {
     const file = event.target.files?.[0];
     event.target.value = "";
-    if (!file || !token) return;
+    if (!file) return;
 
     const allowedTypes = [
       "image/jpeg",
@@ -101,7 +101,7 @@ export default function AccountPage(): ReactElement {
 
     setIsAvatarUploading(true);
     try {
-      const response = await uploadAvatar(token, file);
+      const response = await uploadAvatar(undefined, file);
       updateSession(response);
       toast.success("Profile picture updated.");
     } catch (err) {
@@ -132,15 +132,11 @@ export default function AccountPage(): ReactElement {
   };
 
   const handleSaveChanges = async (): Promise<void> => {
-    if (!token) {
-      toast.error("You are not signed in.");
-      return;
-    }
     const name = [firstName.trim(), lastName.trim()]
       .filter((part) => part.length > 0)
       .join(" ");
     try {
-      const response = await updateCurrentUserProfile(token, {
+      const response = await updateCurrentUserProfile(undefined, {
         name,
         timezone: timezone || null,
       });
@@ -174,13 +170,8 @@ export default function AccountPage(): ReactElement {
       return;
     }
 
-    if (!token) {
-      setPasswordError("You are not signed in.");
-      return;
-    }
-
     try {
-      await changePassword(token, {
+      await changePassword(undefined, {
         currentPassword,
         newPassword,
       });
@@ -215,12 +206,8 @@ export default function AccountPage(): ReactElement {
       : (user?.name ?? "this account");
 
   const handleDeleteAccountConfirm = async (): Promise<void> => {
-    if (!token) {
-      toast.error("You are not signed in.");
-      return;
-    }
     try {
-      await deleteCurrentUser(token);
+      await deleteCurrentUser();
       await logout();
     } catch (err) {
       const message =

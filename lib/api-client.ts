@@ -21,6 +21,7 @@ export async function login(
   const baseUrl = getBaseUrl();
   const response = await fetch(`${baseUrl}/auth/login`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...getDevOnlyRequestHeaders(),
@@ -41,14 +42,20 @@ export async function login(
 }
 
 /** GET /auth/me. Refreshes JWT (sliding session). Returns auth payload or throws with backend error body. */
-export async function refreshToken(token: string): Promise<AuthResponse> {
+export async function refreshToken(
+  token?: string | null,
+): Promise<AuthResponse> {
   const baseUrl = getBaseUrl();
+  const headers: Record<string, string> = {
+    ...getDevOnlyRequestHeaders(),
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await fetch(`${baseUrl}/auth/me`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...getDevOnlyRequestHeaders(),
-    },
+    credentials: "include",
+    headers,
   });
 
   const data = (await response.json()) as AuthResponse | ApiErrorResponse;
@@ -64,14 +71,18 @@ export async function refreshToken(token: string): Promise<AuthResponse> {
 }
 
 /** POST /auth/logout. No-op on backend; call for consistency. Does not throw. */
-export async function logoutApi(token: string): Promise<void> {
+export async function logoutApi(token?: string | null): Promise<void> {
   const baseUrl = getBaseUrl();
+  const headers: Record<string, string> = {
+    ...getDevOnlyRequestHeaders(),
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await fetch(`${baseUrl}/auth/logout`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...getDevOnlyRequestHeaders(),
-    },
+    credentials: "include",
+    headers,
   });
   if (!response.ok) {
     // Log for observability; do not throw so UX is not blocked
@@ -84,17 +95,21 @@ export async function logoutApi(token: string): Promise<void> {
 
 /** PATCH /auth/me. Update current user profile (e.g. name, timezone). Returns full auth payload; use it to refresh session. */
 export async function updateCurrentUserProfile(
-  token: string,
+  token: string | null | undefined,
   payload: { name?: string; timezone?: string | null },
 ): Promise<AuthResponse> {
   const baseUrl = getBaseUrl();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...getDevOnlyRequestHeaders(),
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await fetch(`${baseUrl}/auth/me`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...getDevOnlyRequestHeaders(),
-    },
+    credentials: "include",
+    headers,
     body: JSON.stringify(payload),
   });
 
@@ -112,17 +127,21 @@ export async function updateCurrentUserProfile(
 
 /** POST /auth/me/password. Change current user password. Returns 204 on success; 401 if current password wrong. */
 export async function changePassword(
-  token: string,
+  token: string | null | undefined,
   payload: { currentPassword: string; newPassword: string },
 ): Promise<void> {
   const baseUrl = getBaseUrl();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...getDevOnlyRequestHeaders(),
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await fetch(`${baseUrl}/auth/me/password`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...getDevOnlyRequestHeaders(),
-    },
+    credentials: "include",
+    headers,
     body: JSON.stringify(payload),
   });
 
@@ -138,7 +157,7 @@ const AVATAR_UPLOAD_TIMEOUT_MS = 30_000;
 
 /** PUT /auth/me/avatar. Upload or replace current user avatar. Returns full auth payload; use updateSession to refresh. */
 export async function uploadAvatar(
-  token: string,
+  token: string | null | undefined,
   file: File,
 ): Promise<AuthResponse> {
   const baseUrl = getBaseUrl();
@@ -152,12 +171,16 @@ export async function uploadAvatar(
   );
 
   try {
+    const headers: Record<string, string> = {
+      ...getDevOnlyRequestHeaders(),
+    };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
     const response = await fetch(`${baseUrl}/auth/me/avatar`, {
       method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        ...getDevOnlyRequestHeaders(),
-      },
+      credentials: "include",
+      headers,
       body: formData,
       signal: controller.signal,
     });
@@ -184,14 +207,18 @@ export async function uploadAvatar(
 }
 
 /** DELETE /auth/me. Deletes the current user (self-deletion). Returns on 204; throws AuthApiError on error. */
-export async function deleteCurrentUser(token: string): Promise<void> {
+export async function deleteCurrentUser(token?: string | null): Promise<void> {
   const baseUrl = getBaseUrl();
+  const headers: Record<string, string> = {
+    ...getDevOnlyRequestHeaders(),
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await fetch(`${baseUrl}/auth/me`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...getDevOnlyRequestHeaders(),
-    },
+    credentials: "include",
+    headers,
   });
 
   if (response.status === 204) return;

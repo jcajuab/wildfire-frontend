@@ -300,6 +300,18 @@ function RoleForm({
         </TabsContent>
       </Tabs>
 
+      <div className="mt-4 rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+        This change will assign{" "}
+        <span className="font-medium text-foreground">
+          {selectedPermissions.length}
+        </span>{" "}
+        permissions and{" "}
+        <span className="font-medium text-foreground">
+          {assignedUsers.length}
+        </span>{" "}
+        users to this role.
+      </div>
+
       <DialogFooter className="mt-6">
         <Button
           type="button"

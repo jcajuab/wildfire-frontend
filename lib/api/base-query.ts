@@ -1,7 +1,5 @@
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const SESSION_KEY = "wildfire_session";
-
 /**
  * Backend API base URL (no trailing slash). Empty string if not set.
  */
@@ -11,21 +9,6 @@ export function getBaseUrl(): string {
     return "";
   }
   return url.replace(/\/$/, "");
-}
-
-/**
- * JWT from session storage. Used for authenticated API requests.
- */
-export function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw) as { token?: string };
-    return typeof data.token === "string" ? data.token : null;
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -50,14 +33,11 @@ export function getDevOnlyRequestHeaders(): Record<string, string> {
  */
 export const baseQuery = fetchBaseQuery({
   baseUrl: getBaseUrl(),
+  credentials: "include",
   prepareHeaders(headers) {
     Object.entries(getDevOnlyRequestHeaders()).forEach(([key, value]) => {
       headers.set(key, value);
     });
-    const token = getToken();
-    if (token) {
-      headers.set("authorization", `Bearer ${token}`);
-    }
     return headers;
   },
 });

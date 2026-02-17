@@ -3,7 +3,6 @@ import {
   baseQuery,
   getBaseUrl,
   getDevOnlyRequestHeaders,
-  getToken,
 } from "@/lib/api/base-query";
 
 export interface BackendAuditEvent {
@@ -64,10 +63,6 @@ export async function exportAuditEventsCsv(
   query: AuditExportQuery = {},
 ): Promise<Blob> {
   const baseUrl = getBaseUrl();
-  const token = getToken();
-  if (!token) {
-    throw new Error("You are not authenticated.");
-  }
 
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
@@ -83,8 +78,8 @@ export async function exportAuditEventsCsv(
 
   const response = await fetch(url, {
     method: "GET",
+    credentials: "include",
     headers: {
-      Authorization: `Bearer ${token}`,
       ...getDevOnlyRequestHeaders(),
     },
   });

@@ -23,7 +23,6 @@ const REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes before expiry
 const REFRESH_CHECK_INTERVAL_MS = 60_000; // check every 60 seconds
 
 interface SessionData {
-  readonly token: string;
   readonly user: AuthUser;
   readonly expiresAt: string;
   readonly permissions: string[];
@@ -44,12 +43,7 @@ function readSession(): SessionData | null {
     const data = JSON.parse(raw) as unknown;
     if (data == null || typeof data !== "object") return null;
     const d = data as Record<string, unknown>;
-    if (
-      typeof d.token !== "string" ||
-      typeof d.expiresAt !== "string" ||
-      d.expiresAt === ""
-    )
-      return null;
+    if (typeof d.expiresAt !== "string" || d.expiresAt === "") return null;
     const user = d.user;
     if (user == null || typeof user !== "object") return null;
     const u = user as Record<string, unknown>;
@@ -63,7 +57,6 @@ function readSession(): SessionData | null {
       return null;
     const permissions = getPermissionsFromSession(d);
     return {
-      token: d.token as string,
       user: user as AuthUser,
       expiresAt: d.expiresAt as string,
       permissions,
@@ -103,7 +96,6 @@ export function AuthProvider({
   children: ReactNode;
 }): ReactElement {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -111,7 +103,6 @@ export function AuthProvider({
   useEffect(() => {
     const session = readSession();
     if (session) {
-      setToken(session.token);
       setUser(session.user);
       setPermissions(session.permissions);
     }
@@ -119,7 +110,7 @@ export function AuthProvider({
   }, []);
 
   useEffect(() => {
-    if (!token) return;
+    if (!user) return;
 
     const refreshTokenCheckIntervalId = setInterval(async () => {
       const session = readSession();
@@ -130,20 +121,17 @@ export function AuthProvider({
       if (expiresAtMs - nowMs > REFRESH_THRESHOLD_MS) return;
 
       try {
-        const response = await refreshToken(session.token);
+        const response = await refreshToken();
         const newSession: SessionData = {
-          token: response.token,
           user: response.user,
           expiresAt: response.expiresAt,
           permissions: response.permissions,
         };
         writeSession(newSession);
-        setToken(newSession.token);
         setUser(newSession.user);
         setPermissions(newSession.permissions);
       } catch (err) {
         if (err instanceof AuthApiError && err.status === 401) {
-          setToken(null);
           setUser(null);
           setPermissions([]);
           clearSession();
@@ -152,7 +140,7 @@ export function AuthProvider({
     }, REFRESH_CHECK_INTERVAL_MS);
 
     return () => clearInterval(refreshTokenCheckIntervalId);
-  }, [token]);
+  }, [user]);
 
   const login = useCallback(
     async (credentials: { email: string; password: string }) => {
@@ -160,13 +148,11 @@ export function AuthProvider({
       try {
         const result = await loginApi(credentials);
         const session: SessionData = {
-          token: result.token,
           user: result.user,
           expiresAt: result.expiresAt,
           permissions: result.permissions,
         };
         writeSession(session);
-        setToken(session.token);
         setUser(session.user);
         setPermissions(session.permissions);
       } finally {
@@ -177,32 +163,26 @@ export function AuthProvider({
   );
 
   const logout = useCallback(async () => {
-    const currentToken = token;
-    setToken(null);
     setUser(null);
     setPermissions([]);
     clearSession();
     if (typeof window !== "undefined") {
       console.info("[auth] logout");
     }
-    if (currentToken) {
-      try {
-        await logoutApi(currentToken);
-      } catch {
-        // Backend no-op; ignore network errors
-      }
+    try {
+      await logoutApi();
+    } catch {
+      // Backend no-op; ignore network errors
     }
-  }, [token]);
+  }, []);
 
   const updateSession = useCallback((response: AuthResponse) => {
     const session: SessionData = {
-      token: response.token,
       user: response.user,
       expiresAt: response.expiresAt,
       permissions: response.permissions,
     };
     writeSession(session);
-    setToken(session.token);
     setUser(session.user);
     setPermissions(session.permissions);
   }, []);
@@ -215,9 +195,9 @@ export function AuthProvider({
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
-      token,
+      token: null,
       permissions,
-      isAuthenticated: token !== null && user !== null,
+      isAuthenticated: user !== null,
       isLoading,
       isInitialized,
       can,
@@ -227,7 +207,6 @@ export function AuthProvider({
     }),
     [
       user,
-      token,
       permissions,
       isLoading,
       isInitialized,

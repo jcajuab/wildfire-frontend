@@ -44,6 +44,8 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
   "auth.session.refresh": "Refreshed session",
   "auth.profile.update": "Updated profile",
   "auth.password.update": "Changed password",
+  "auth.password.reset.request": "Requested password reset",
+  "auth.password.reset.complete": "Completed password reset",
   "auth.avatar.update": "Updated profile picture",
   "auth.account.delete": "Deleted account",
   "content.content.create": "Uploaded content",
@@ -118,6 +120,8 @@ function humanizeAuditAction(event: BackendAuditEvent): string {
   return `Performed ${event.action}`;
 }
 
+const unknownAuditActions = new Set<string>();
+
 export function mapAuditEventToLogEntry(
   event: BackendAuditEvent,
   options?: MapAuditEventOptions,
@@ -152,6 +156,28 @@ export function mapAuditEventToLogEntry(
     "request id": event.requestId ?? "—",
     channel: event.actorType ?? "unknown",
   };
+  const policyVersion =
+    typeof rawMetadata.rbacPolicyVersion === "string"
+      ? rawMetadata.rbacPolicyVersion
+      : null;
+  const targetCount =
+    typeof rawMetadata.rbacTargetCount === "string"
+      ? rawMetadata.rbacTargetCount
+      : null;
+  if (policyVersion) {
+    metadata["policy version"] = policyVersion;
+  }
+  if (targetCount) {
+    metadata["targets changed"] = targetCount;
+  }
+  if (
+    !ACTION_LABELS[event.action] &&
+    typeof window !== "undefined" &&
+    !unknownAuditActions.has(event.action)
+  ) {
+    unknownAuditActions.add(event.action);
+    console.warn("[audit] unmapped action label", { action: event.action });
+  }
 
   return {
     id: event.id,
