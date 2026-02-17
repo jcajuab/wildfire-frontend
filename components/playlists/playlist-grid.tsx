@@ -10,6 +10,7 @@ import type { Playlist } from "@/types/playlist";
 interface PlaylistGridProps {
   readonly playlists: readonly Playlist[];
   readonly onEdit?: (playlist: Playlist) => void;
+  readonly onManageItems?: (playlist: Playlist) => void;
   readonly onPreview?: (playlist: Playlist) => void;
   readonly onDelete?: (playlist: Playlist) => void;
   readonly canUpdate?: boolean;
@@ -19,6 +20,7 @@ interface PlaylistGridProps {
 export function PlaylistGrid({
   playlists,
   onEdit,
+  onManageItems,
   onPreview,
   onDelete,
   canUpdate = true,
@@ -41,6 +43,7 @@ export function PlaylistGrid({
           key={playlist.id}
           playlist={playlist}
           onEdit={onEdit}
+          onManageItems={onManageItems}
           onPreview={onPreview}
           onDelete={onDelete}
           canUpdate={canUpdate}

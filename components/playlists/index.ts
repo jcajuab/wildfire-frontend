@@ -15,3 +15,5 @@ export { PlaylistGrid } from "./playlist-grid";
 export { Pagination } from "./pagination";
 
 export { CreatePlaylistDialog } from "./create-playlist-dialog";
+export { EditPlaylistItemsDialog } from "./edit-playlist-items-dialog";
+

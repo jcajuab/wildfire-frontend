@@ -9,6 +9,10 @@ import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { DashboardPage } from "@/components/layout";
 import { CreatePlaylistDialog } from "@/components/playlists/create-playlist-dialog";
+import {
+  EditPlaylistItemsDialog,
+  type PlaylistItemsDiff,
+} from "@/components/playlists/edit-playlist-items-dialog";
 import { Pagination } from "@/components/playlists/pagination";
 import { PlaylistFilterPopover } from "@/components/playlists/playlist-filter-popover";
 import { PlaylistGrid } from "@/components/playlists/playlist-grid";
@@ -40,6 +44,8 @@ import {
   useLazyGetPlaylistQuery,
   useListPlaylistsQuery,
   useUpdatePlaylistMutation,
+  useUpdatePlaylistItemMutation,
+  useDeletePlaylistItemMutation,
 } from "@/lib/api/playlists-api";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import {
@@ -81,6 +87,9 @@ export default function PlaylistsPage(): ReactElement {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [previewPlaylist, setPreviewPlaylist] = useState<Playlist | null>(null);
   const [editPlaylist, setEditPlaylist] = useState<Playlist | null>(null);
+  const [manageItemsPlaylist, setManageItemsPlaylist] = useState<Playlist | null>(
+    null,
+  );
   const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | null>(
     null,
   );
@@ -94,6 +103,8 @@ export default function PlaylistsPage(): ReactElement {
   const [addPlaylistItem] = useAddPlaylistItemMutation();
   const [updatePlaylist] = useUpdatePlaylistMutation();
   const [deletePlaylistMutation] = useDeletePlaylistMutation();
+  const [updatePlaylistItem] = useUpdatePlaylistItemMutation();
+  const [deletePlaylistItem] = useDeletePlaylistItemMutation();
   const playlists = useMemo(
     () => (playlistsData?.items ?? []).map(mapBackendPlaylistBase),
     [playlistsData?.items],
@@ -231,6 +242,63 @@ export default function PlaylistsPage(): ReactElement {
     setEditDescription(playlist.description ?? "");
   }, []);
 
+  const handleManageItems = useCallback(
+    async (playlist: Playlist) => {
+      try {
+        const detailed = await loadPlaylist(playlist.id, true).unwrap();
+        setManageItemsPlaylist(mapBackendPlaylistWithItems(detailed));
+      } catch {
+        toast.error("Failed to load playlist items.");
+      }
+    },
+    [loadPlaylist],
+  );
+
+  const handleSaveItems = useCallback(
+    async (playlistId: string, diff: PlaylistItemsDiff) => {
+      try {
+        const promises: Promise<unknown>[] = [];
+
+        diff.deleted.forEach((itemId) => {
+          promises.push(deletePlaylistItem({ playlistId, itemId }).unwrap());
+        });
+
+        diff.updated.forEach((item) => {
+          promises.push(
+            updatePlaylistItem({
+              playlistId,
+              itemId: item.itemId,
+              sequence: item.sequence,
+              duration: item.duration,
+            }).unwrap(),
+          );
+        });
+
+        diff.added.forEach((item) => {
+          promises.push(
+            addPlaylistItem({
+              playlistId,
+              contentId: item.contentId,
+              sequence: item.sequence,
+              duration: item.duration,
+            }).unwrap(),
+          );
+        });
+
+        await Promise.all(promises);
+        toast.success("Playlist items updated.");
+        setManageItemsPlaylist(null);
+      } catch (err) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Failed to update playlist items.",
+        );
+      }
+    },
+    [addPlaylistItem, deletePlaylistItem, updatePlaylistItem],
+  );
+
   const handlePreviewPlaylist = useCallback(
     async (playlist: Playlist) => {
       try {
@@ -290,6 +358,7 @@ export default function PlaylistsPage(): ReactElement {
           <PlaylistGrid
             playlists={paginatedPlaylists}
             onEdit={handleEditPlaylist}
+            onManageItems={handleManageItems}
             onPreview={handlePreviewPlaylist}
             onDelete={handleDeletePlaylist}
             canUpdate={canUpdatePlaylist}
@@ -313,6 +382,20 @@ export default function PlaylistsPage(): ReactElement {
         onCreate={handleCreatePlaylist}
         availableContent={availableContent}
       />
+
+      {manageItemsPlaylist && (
+        <EditPlaylistItemsDialog
+          open={manageItemsPlaylist !== null}
+          onOpenChange={(open) => {
+            if (!open) setManageItemsPlaylist(null);
+          }}
+          playlist={manageItemsPlaylist}
+          availableContent={availableContent}
+          onSave={(playlistId, diff) => {
+            void handleSaveItems(playlistId, diff);
+          }}
+        />
+      )}
 
       <Dialog
         open={editPlaylist !== null}

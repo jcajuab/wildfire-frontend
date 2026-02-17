@@ -8,6 +8,7 @@ import {
   IconPencil,
   IconEye,
   IconTrash,
+  IconListDetails,
 } from "@tabler/icons-react";
 
 import {
@@ -22,6 +23,7 @@ import type { Playlist } from "@/types/playlist";
 interface PlaylistCardProps {
   readonly playlist: Playlist;
   readonly onEdit?: (playlist: Playlist) => void;
+  readonly onManageItems?: (playlist: Playlist) => void;
   readonly onPreview?: (playlist: Playlist) => void;
   readonly onDelete?: (playlist: Playlist) => void;
   readonly canUpdate?: boolean;
@@ -46,6 +48,7 @@ function formatItemDuration(seconds: number): string {
 export function PlaylistCard({
   playlist,
   onEdit,
+  onManageItems,
   onPreview,
   onDelete,
   canUpdate = true,
@@ -78,10 +81,16 @@ export function PlaylistCard({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
             {canUpdate && (
-              <DropdownMenuItem onClick={() => onEdit?.(playlist)}>
-                <IconPencil className="size-4" />
-                Edit Playlist
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuItem onClick={() => onEdit?.(playlist)}>
+                  <IconPencil className="size-4" />
+                  Edit Playlist Info
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onManageItems?.(playlist)}>
+                  <IconListDetails className="size-4" />
+                  Manage Items
+                </DropdownMenuItem>
+              </>
             )}
             <DropdownMenuItem onClick={() => onPreview?.(playlist)}>
               <IconEye className="size-4" />
