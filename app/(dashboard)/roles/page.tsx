@@ -42,6 +42,7 @@ import type {
 
 const ROLE_SORT_FIELDS = ["name", "usersCount"] as const;
 const ROLE_SORT_DIRECTIONS = ["asc", "desc"] as const;
+const HIGH_RISK_TARGET_THRESHOLD = 20;
 
 export default function RolesPage(): ReactElement {
   const canUpdateRole = useCan("roles:update");
@@ -176,6 +177,14 @@ export default function RolesPage(): ReactElement {
   const handleSubmit = useCallback(
     async (data: RoleFormData) => {
       try {
+        const isHighRiskOperation =
+          data.permissionIds.length > HIGH_RISK_TARGET_THRESHOLD ||
+          data.userIds.length > HIGH_RISK_TARGET_THRESHOLD;
+        if (isHighRiskOperation && data.highRiskConfirmed !== true) {
+          throw new Error("High-impact changes must be explicitly confirmed.");
+        }
+        const policyVersion = data.policyVersion;
+
         if (dialogMode === "create") {
           const role = await createRole({
             name: data.name,
@@ -184,6 +193,7 @@ export default function RolesPage(): ReactElement {
           await setRolePermissions({
             roleId: role.id,
             permissionIds: [...data.permissionIds],
+            policyVersion,
           }).unwrap();
           await Promise.all(
             data.userIds.map(async (userId) => {
@@ -197,6 +207,7 @@ export default function RolesPage(): ReactElement {
                   ...currentRoles.map((roleItem) => roleItem.id),
                   role.id,
                 ],
+                policyVersion,
               }).unwrap();
             }),
           );
@@ -210,6 +221,7 @@ export default function RolesPage(): ReactElement {
           await setRolePermissions({
             roleId: selectedRole.id,
             permissionIds: [...data.permissionIds],
+            policyVersion,
           }).unwrap();
           const currentUserIds = (roleUsersData ?? []).map((user) => user.id);
           const desiredUserIds = [...data.userIds];
@@ -231,6 +243,7 @@ export default function RolesPage(): ReactElement {
                   ...currentRoles.map((roleItem) => roleItem.id),
                   selectedRole.id,
                 ],
+                policyVersion,
               }).unwrap();
             }),
           );
@@ -245,6 +258,7 @@ export default function RolesPage(): ReactElement {
                 roleIds: currentRoles
                   .map((roleItem) => roleItem.id)
                   .filter((id) => id !== selectedRole.id),
+                policyVersion,
               }).unwrap();
             }),
           );

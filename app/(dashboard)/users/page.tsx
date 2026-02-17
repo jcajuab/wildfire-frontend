@@ -41,6 +41,7 @@ import type {
 
 const USER_SORT_FIELDS = ["name", "lastSeen"] as const;
 const USER_SORT_DIRECTIONS = ["asc", "desc"] as const;
+const HIGH_RISK_TARGET_THRESHOLD = 20;
 
 export default function UsersPage(): ReactElement {
   const { user: currentUser } = useAuth();
@@ -183,9 +184,37 @@ export default function UsersPage(): ReactElement {
               );
               return [...new Set([...newRoleIds, ...preservedSystem])];
             })();
+        let policyVersion: number | undefined;
+        if (roleIdsToSend.length > HIGH_RISK_TARGET_THRESHOLD) {
+          const confirmed = window.confirm(
+            "This updates a high number of roles. Continue with a governed bulk change?",
+          );
+          if (!confirmed) {
+            return;
+          }
+          const policyVersionInput = window.prompt(
+            "Enter policy version for this high-impact role update:",
+          );
+          if (!policyVersionInput) {
+            toast.error(
+              "Policy version is required for high-impact role updates.",
+            );
+            return;
+          }
+          const parsedPolicyVersion = Number.parseInt(policyVersionInput, 10);
+          if (
+            !Number.isInteger(parsedPolicyVersion) ||
+            parsedPolicyVersion < 1
+          ) {
+            toast.error("Policy version must be a positive whole number.");
+            return;
+          }
+          policyVersion = parsedPolicyVersion;
+        }
         const roles = await setUserRoles({
           userId,
           roleIds: roleIdsToSend,
+          policyVersion,
         }).unwrap();
         setUserRolesByUserId((prev) => ({
           ...prev,

@@ -81,12 +81,12 @@ export const rbacApi = createApi({
     }),
     setRolePermissions: build.mutation<
       RbacPermission[],
-      { roleId: string; permissionIds: string[] }
+      { roleId: string; permissionIds: string[]; policyVersion?: number }
     >({
-      query: ({ roleId, permissionIds }) => ({
+      query: ({ roleId, permissionIds, policyVersion }) => ({
         url: `roles/${roleId}/permissions`,
         method: "PUT",
-        body: { permissionIds },
+        body: { permissionIds, policyVersion },
       }),
       invalidatesTags: (_result, _error, { roleId }) => [
         { type: "Role", id: roleId },
@@ -162,12 +162,12 @@ export const rbacApi = createApi({
     }),
     setUserRoles: build.mutation<
       RbacRole[],
-      { userId: string; roleIds: string[] }
+      { userId: string; roleIds: string[]; policyVersion?: number }
     >({
-      query: ({ userId, roleIds }) => ({
+      query: ({ userId, roleIds, policyVersion }) => ({
         url: `users/${userId}/roles`,
         method: "PUT",
-        body: { roleIds },
+        body: { roleIds, policyVersion },
       }),
       invalidatesTags: (_result, _error, { userId }) => [
         { type: "User", id: userId },

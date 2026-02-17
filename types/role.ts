@@ -35,4 +35,6 @@ export interface RoleFormData {
   readonly description?: string | null;
   readonly permissionIds: readonly string[];
   readonly userIds: readonly string[];
+  readonly policyVersion?: number;
+  readonly highRiskConfirmed?: boolean;
 }

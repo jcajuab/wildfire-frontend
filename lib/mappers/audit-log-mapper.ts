@@ -157,12 +157,14 @@ export function mapAuditEventToLogEntry(
     channel: event.actorType ?? "unknown",
   };
   const policyVersion =
-    typeof rawMetadata.rbacPolicyVersion === "string"
-      ? rawMetadata.rbacPolicyVersion
+    typeof rawMetadata.rbacPolicyVersion === "string" ||
+    typeof rawMetadata.rbacPolicyVersion === "number"
+      ? String(rawMetadata.rbacPolicyVersion)
       : null;
   const targetCount =
-    typeof rawMetadata.rbacTargetCount === "string"
-      ? rawMetadata.rbacTargetCount
+    typeof rawMetadata.rbacTargetCount === "string" ||
+    typeof rawMetadata.rbacTargetCount === "number"
+      ? String(rawMetadata.rbacTargetCount)
       : null;
   if (policyVersion) {
     metadata["policy version"] = policyVersion;

@@ -229,6 +229,51 @@ export async function deleteCurrentUser(token?: string | null): Promise<void> {
   throw new AuthApiError(message, response.status, data);
 }
 
+/** POST /auth/forgot-password. Always returns 204 when accepted. */
+export async function forgotPassword(email: string): Promise<void> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/forgot-password`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...getDevOnlyRequestHeaders(),
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  if (response.status === 204) return;
+
+  const data = (await response.json()) as ApiErrorResponse;
+  const message =
+    data?.error?.message ?? `Request failed with status ${response.status}`;
+  throw new AuthApiError(message, response.status, data);
+}
+
+/** POST /auth/reset-password. Returns 204 on success. */
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+): Promise<void> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/reset-password`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...getDevOnlyRequestHeaders(),
+    },
+    body: JSON.stringify({ token, newPassword }),
+  });
+
+  if (response.status === 204) return;
+
+  const data = (await response.json()) as ApiErrorResponse;
+  const message =
+    data?.error?.message ?? `Request failed with status ${response.status}`;
+  throw new AuthApiError(message, response.status, data);
+}
+
 /** Error thrown by auth API with status and optional backend body. */
 export class AuthApiError extends Error {
   constructor(

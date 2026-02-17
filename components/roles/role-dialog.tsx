@@ -41,6 +41,8 @@ import {
 } from "@/lib/format-permission";
 import type { Role, Permission, RoleUser, RoleFormData } from "@/types/role";
 
+const HIGH_RISK_TARGET_THRESHOLD = 20;
+
 interface RoleDialogProps {
   readonly mode: "create" | "edit";
   readonly role?: Role | null;
@@ -94,10 +96,36 @@ function RoleForm({
   );
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [policyVersionText, setPolicyVersionText] = useState<string>("");
+  const [highRiskConfirmed, setHighRiskConfirmed] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     if (!name.trim() || isSubmitting) return;
+    setFormError(null);
+
+    const isHighRiskOperation =
+      selectedPermissions.length > HIGH_RISK_TARGET_THRESHOLD ||
+      assignedUsers.length > HIGH_RISK_TARGET_THRESHOLD;
+    const parsedPolicyVersion = Number.parseInt(policyVersionText.trim(), 10);
+    const policyVersion =
+      Number.isInteger(parsedPolicyVersion) && parsedPolicyVersion > 0
+        ? parsedPolicyVersion
+        : undefined;
+
+    if (isHighRiskOperation) {
+      if (policyVersion === undefined) {
+        setFormError(
+          `Policy version is required when changing more than ${HIGH_RISK_TARGET_THRESHOLD} targets.`,
+        );
+        return;
+      }
+      if (!highRiskConfirmed) {
+        setFormError("Please confirm this high-impact governance change.");
+        return;
+      }
+    }
 
     setIsSubmitting(true);
     try {
@@ -106,6 +134,8 @@ function RoleForm({
         description: description.trim() || null,
         permissionIds: selectedPermissions,
         userIds: assignedUsers.map((u) => u.id),
+        policyVersion,
+        highRiskConfirmed,
       });
     } finally {
       setIsSubmitting(false);
@@ -151,6 +181,9 @@ function RoleForm({
 
   const isValid = name.trim().length > 0;
   const isCreate = mode === "create";
+  const isHighRiskOperation =
+    selectedPermissions.length > HIGH_RISK_TARGET_THRESHOLD ||
+    assignedUsers.length > HIGH_RISK_TARGET_THRESHOLD;
 
   return (
     <form onSubmit={handleSubmit}>
@@ -311,6 +344,42 @@ function RoleForm({
         </span>{" "}
         users to this role.
       </div>
+
+      {isHighRiskOperation ? (
+        <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3">
+          <p className="text-xs text-amber-900">
+            High-impact change detected. Enter policy version and confirm before
+            saving.
+          </p>
+          <div className="mt-3 flex flex-col gap-2">
+            <Label htmlFor="policyVersion">Policy version</Label>
+            <Input
+              id="policyVersion"
+              type="number"
+              min={1}
+              step={1}
+              value={policyVersionText}
+              onChange={(e) => setPolicyVersionText(e.target.value)}
+              placeholder="e.g. 12"
+            />
+          </div>
+          <div className="mt-3 flex items-center justify-between rounded-md border bg-white px-3 py-2">
+            <p className="text-xs text-muted-foreground">
+              I confirm this governance update is reviewed and approved.
+            </p>
+            <Switch
+              checked={highRiskConfirmed}
+              onCheckedChange={setHighRiskConfirmed}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {formError ? (
+        <p className="mt-3 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {formError}
+        </p>
+      ) : null}
 
       <DialogFooter className="mt-6">
         <Button

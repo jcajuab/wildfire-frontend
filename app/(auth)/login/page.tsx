@@ -2,6 +2,7 @@
 
 import type { FormEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IconFlame } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -31,8 +32,15 @@ export default function LoginPage(): ReactElement {
       await login(credentials);
       router.replace("/");
     } catch (err) {
-      const message =
-        err instanceof AuthApiError ? err.message : "Something went wrong.";
+      let message = "Something went wrong.";
+      if (err instanceof AuthApiError) {
+        if (err.status === 429) {
+          message =
+            "Too many login attempts. Wait a moment before trying again.";
+        } else {
+          message = err.message;
+        }
+      }
       setErrorMessage(message);
     }
   }
@@ -105,6 +113,15 @@ export default function LoginPage(): ReactElement {
             autoComplete="current-password"
             required
           />
+        </div>
+
+        <div className="flex justify-end">
+          <Link
+            href="/forgot-password"
+            className="text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
+          >
+            Forgot password?
+          </Link>
         </div>
 
         <Button

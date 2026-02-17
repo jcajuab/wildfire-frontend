@@ -251,15 +251,6 @@ export function EditPlaylistItemsDialog({
       .filter((orig) => !drafts.some((d) => d.id === orig.id))
       .map((orig) => orig.id);
 
-    const added = drafts
-      .filter((d) => d.id.startsWith("draft-"))
-      .map((d, _i, arr) => ({
-        contentId: d.content.id,
-        sequence: drafts.indexOf(d) + 1,
-        duration: d.duration,
-        // recalculate below
-      }));
-
     const updated = drafts
       .filter((d) => {
         if (!originalIds.has(d.id)) return false;
