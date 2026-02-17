@@ -284,11 +284,11 @@ export function EditPlaylistItemsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="!flex h-[90vh] max-h-[800px] w-[95vw] !max-w-5xl !flex-col !gap-0 !p-0"
+        className="flex! h-[90vh] max-h-[800px] w-[95vw] max-w-5xl! flex-col! gap-0! p-0!"
         showCloseButton={false}
       >
         {/* Header */}
-        <DialogHeader className="!flex-row items-center justify-between border-b px-6 py-4">
+        <DialogHeader className="flex-row! items-center justify-between border-b px-6 py-4">
           <div className="flex flex-col gap-0.5">
             <DialogTitle className="text-base font-semibold">
               Manage Playlist Items

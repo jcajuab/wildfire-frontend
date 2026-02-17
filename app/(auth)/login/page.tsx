@@ -95,7 +95,7 @@ export default function LoginPage(): ReactElement {
             placeholder="Admin"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="!h-10 !rounded-lg !bg-white !text-sm"
+            className="h-10! rounded-lg! bg-white! text-sm!"
             autoComplete="email"
             required
           />
@@ -109,7 +109,7 @@ export default function LoginPage(): ReactElement {
             placeholder="********"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="!h-10 !rounded-lg !bg-white !text-sm"
+            className="h-10! rounded-lg! bg-white! text-sm!"
             autoComplete="current-password"
             required
           />
@@ -126,7 +126,7 @@ export default function LoginPage(): ReactElement {
 
         <Button
           type="submit"
-          className="!h-10 w-full !rounded-lg !text-sm"
+          className="h-10! w-full rounded-lg! text-sm!"
           disabled={isLoading}
         >
           {isLoading ? "Logging in…" : "Login"}

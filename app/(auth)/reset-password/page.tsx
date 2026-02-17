@@ -84,7 +84,7 @@ export default function ResetPasswordPage(): ReactElement {
             type="text"
             value={token}
             onChange={(event) => setToken(event.target.value)}
-            className="!h-10 !rounded-lg !bg-white !text-sm"
+            className="h-10! rounded-lg! bg-white! text-sm!"
             required
           />
         </div>
@@ -96,7 +96,7 @@ export default function ResetPasswordPage(): ReactElement {
             type="password"
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
-            className="!h-10 !rounded-lg !bg-white !text-sm"
+            className="h-10! rounded-lg! bg-white! text-sm!"
             autoComplete="new-password"
             required
           />
@@ -109,7 +109,7 @@ export default function ResetPasswordPage(): ReactElement {
             type="password"
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
-            className="!h-10 !rounded-lg !bg-white !text-sm"
+            className="h-10! rounded-lg! bg-white! text-sm!"
             autoComplete="new-password"
             required
           />
@@ -117,7 +117,7 @@ export default function ResetPasswordPage(): ReactElement {
 
         <Button
           type="submit"
-          className="!h-10 w-full !rounded-lg !text-sm"
+          className="h-10! w-full rounded-lg! text-sm!"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Resetting..." : "Reset password"}

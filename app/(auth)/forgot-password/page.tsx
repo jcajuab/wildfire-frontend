@@ -66,7 +66,7 @@ export default function ForgotPasswordPage(): ReactElement {
             placeholder="admin@example.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="!h-10 !rounded-lg !bg-white !text-sm"
+            className="h-10! rounded-lg! bg-white! text-sm!"
             autoComplete="email"
             required
           />
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage(): ReactElement {
 
         <Button
           type="submit"
-          className="!h-10 w-full !rounded-lg !text-sm"
+          className="h-10! w-full rounded-lg! text-sm!"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Submitting..." : "Send reset request"}
