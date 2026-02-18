@@ -14,7 +14,6 @@ import {
   type PlaylistItemsDiff,
 } from "@/components/playlists/edit-playlist-items-dialog";
 import { Pagination } from "@/components/playlists/pagination";
-import { PlaylistFilterPopover } from "@/components/playlists/playlist-filter-popover";
 import { PlaylistGrid } from "@/components/playlists/playlist-grid";
 import { PlaylistSearchInput } from "@/components/playlists/playlist-search-input";
 import { PlaylistSortSelect } from "@/components/playlists/playlist-sort-select";
@@ -38,6 +37,7 @@ import {
 } from "@/hooks/use-query-state";
 import { useListContentQuery } from "@/lib/api/content-api";
 import {
+  type PlaylistListQuery,
   useAddPlaylistItemMutation,
   useCreatePlaylistMutation,
   useDeletePlaylistMutation,
@@ -52,14 +52,23 @@ import {
   mapBackendPlaylistBase,
   mapBackendPlaylistWithItems,
 } from "@/lib/mappers/playlist-mapper";
-import type { DurationFilter } from "@/components/playlists/playlist-filter-popover";
 import type { StatusFilter } from "@/components/playlists/playlist-status-tabs";
 import type { Content } from "@/types/content";
-import type { Playlist, PlaylistSortField } from "@/types/playlist";
+import type {
+  Playlist,
+  PlaylistItem,
+  PlaylistSortField,
+} from "@/types/playlist";
 
 const PLAYLIST_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
-const PLAYLIST_DURATION_VALUES = ["all", "short", "medium", "long"] as const;
-const PLAYLIST_SORT_VALUES = ["recent", "name", "duration", "items"] as const;
+const PLAYLIST_SORT_VALUES = ["recent", "name"] as const;
+
+interface NewPlaylistPayload {
+  readonly name: string;
+  readonly description: string | null;
+  readonly items: readonly PlaylistItem[];
+  readonly totalDuration: number;
+}
 
 export default function PlaylistsPage(): ReactElement {
   const canUpdatePlaylist = useCan("playlists:update");
@@ -68,11 +77,6 @@ export default function PlaylistsPage(): ReactElement {
     "status",
     "all",
     PLAYLIST_STATUS_VALUES,
-  );
-  const [durationFilter, setDurationFilter] = useQueryEnumState<DurationFilter>(
-    "duration",
-    "all",
-    PLAYLIST_DURATION_VALUES,
   );
   const [sortBy, setSortBy] = useQueryEnumState<PlaylistSortField>(
     "sort",
@@ -95,7 +99,18 @@ export default function PlaylistsPage(): ReactElement {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
-  const { data: playlistsData } = useListPlaylistsQuery();
+  const playlistQuery = useMemo<PlaylistListQuery>(
+    () => ({
+      page,
+      pageSize,
+      status: statusFilter === "all" ? undefined : statusFilter,
+      search: search.length > 0 ? search : undefined,
+      sortBy: sortBy === "name" ? "name" : "updatedAt",
+      sortDirection: sortBy === "name" ? "asc" : "desc",
+    }),
+    [page, pageSize, search, sortBy, statusFilter],
+  );
+  const { data: playlistsData } = useListPlaylistsQuery(playlistQuery);
   const { data: contentData } = useListContentQuery({ page: 1, pageSize: 200 });
   const [loadPlaylist] = useLazyGetPlaylistQuery();
   const [createPlaylist] = useCreatePlaylistMutation();
@@ -121,14 +136,6 @@ export default function PlaylistsPage(): ReactElement {
     [setStatusFilter, setPage],
   );
 
-  const handleDurationFilterChange = useCallback(
-    (value: DurationFilter) => {
-      setDurationFilter(value);
-      setPage(1);
-    },
-    [setDurationFilter, setPage],
-  );
-
   const handleSortChange = useCallback(
     (value: PlaylistSortField) => {
       setSortBy(value);
@@ -145,69 +152,10 @@ export default function PlaylistsPage(): ReactElement {
     [setSearch, setPage],
   );
 
-  const filteredPlaylists = useMemo(() => {
-    let result = [...playlists];
-
-    if (statusFilter !== "all") {
-      result = result.filter((playlist) => playlist.status === statusFilter);
-    }
-
-    if (durationFilter !== "all") {
-      result = result.filter((playlist) => {
-        const duration = playlist.totalDuration;
-        switch (durationFilter) {
-          case "short":
-            return duration < 60;
-          case "medium":
-            return duration >= 60 && duration <= 300;
-          case "long":
-            return duration > 300;
-          default:
-            return true;
-        }
-      });
-    }
-
-    if (search.length > 0) {
-      const searchLower = search.toLowerCase();
-      result = result.filter(
-        (playlist) =>
-          playlist.name.toLowerCase().includes(searchLower) ||
-          playlist.description?.toLowerCase().includes(searchLower),
-      );
-    }
-
-    result.sort((a, b) => {
-      switch (sortBy) {
-        case "name":
-          return a.name.localeCompare(b.name);
-        case "duration":
-          return b.totalDuration - a.totalDuration;
-        case "items":
-          return b.items.length - a.items.length;
-        case "recent":
-        default:
-          return (
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-          );
-      }
-    });
-
-    return result;
-  }, [playlists, statusFilter, durationFilter, search, sortBy]);
-
-  const paginatedPlaylists = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredPlaylists.slice(start, start + pageSize);
-  }, [filteredPlaylists, page]);
+  const totalPlaylists = playlistsData?.total ?? 0;
 
   const handleCreatePlaylist = useCallback(
-    async (
-      data: Omit<
-        Playlist,
-        "id" | "createdAt" | "updatedAt" | "createdBy" | "status"
-      >,
-    ) => {
+    async (data: NewPlaylistPayload) => {
       try {
         const created = await createPlaylist({
           name: data.name,
@@ -335,10 +283,6 @@ export default function PlaylistsPage(): ReactElement {
           />
 
           <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto">
-            <PlaylistFilterPopover
-              durationFilter={durationFilter}
-              onDurationFilterChange={handleDurationFilterChange}
-            />
             <PlaylistSortSelect
               value={sortBy}
               onValueChange={handleSortChange}
@@ -353,7 +297,7 @@ export default function PlaylistsPage(): ReactElement {
 
         <DashboardPage.Content className="pt-6">
           <PlaylistGrid
-            playlists={paginatedPlaylists}
+            playlists={playlists}
             onEdit={handleEditPlaylist}
             onManageItems={handleManageItems}
             onPreview={handlePreviewPlaylist}
@@ -367,7 +311,7 @@ export default function PlaylistsPage(): ReactElement {
           <Pagination
             page={page}
             pageSize={pageSize}
-            total={filteredPlaylists.length}
+            total={totalPlaylists}
             onPageChange={setPage}
           />
         </DashboardPage.Footer>

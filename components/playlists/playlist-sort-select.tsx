@@ -23,8 +23,6 @@ const sortOptions: readonly {
 }[] = [
   { value: "recent", label: "Recent" },
   { value: "name", label: "Name" },
-  { value: "duration", label: "Duration" },
-  { value: "items", label: "Items" },
 ] as const;
 
 export function PlaylistSortSelect({

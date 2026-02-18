@@ -38,22 +38,16 @@ function daysFromForm(data: ScheduleFormData): number[] {
   return [data.startDate.getDay()];
 }
 
-function deriveScheduleDateRange(): { startDate: string; endDate: string } {
-  const now = new Date();
-  const year = now.getFullYear();
-  return {
-    startDate: `${year}-01-01`,
-    endDate: `${year}-12-31`,
-  };
+function toIsoDate(value: Date): string {
+  return value.toISOString().slice(0, 10);
 }
 
 export function mapBackendScheduleToSchedule(item: BackendSchedule): Schedule {
-  const { startDate, endDate } = deriveScheduleDateRange();
   return {
     id: item.id,
     name: item.name,
-    startDate,
-    endDate,
+    startDate: item.startDate,
+    endDate: item.endDate,
     startTime: item.startTime,
     endTime: item.endTime,
     playlist: {
@@ -85,6 +79,8 @@ export function mapCreateFormToScheduleRequest(
     name: data.name.trim(),
     playlistId: data.playlistId,
     deviceId: data.targetDisplayIds[0] ?? "",
+    startDate: toIsoDate(data.startDate),
+    endDate: toIsoDate(data.endDate),
     startTime: data.startTime,
     endTime: data.endTime,
     daysOfWeek: daysFromForm(data),
@@ -102,6 +98,8 @@ export function mapUpdateFormToScheduleRequest(
     name: data.name.trim(),
     playlistId: data.playlistId,
     deviceId: data.targetDisplayIds[0] ?? "",
+    startDate: toIsoDate(data.startDate),
+    endDate: toIsoDate(data.endDate),
     startTime: data.startTime,
     endTime: data.endTime,
     daysOfWeek: daysFromForm(data),

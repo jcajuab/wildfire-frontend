@@ -11,6 +11,8 @@ export interface Device {
   readonly identifier: string;
   readonly name: string;
   readonly location: string | null;
+  readonly lastSeenAt: string;
+  readonly onlineStatus: "LIVE" | "DOWN";
   readonly createdAt: string;
   readonly updatedAt: string;
 }

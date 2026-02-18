@@ -32,7 +32,6 @@ import {
   useSetUserRolesMutation,
   useLazyGetUserRolesQuery,
 } from "@/lib/api/rbac-api";
-import { useAuth } from "@/context/auth-context";
 import type {
   Role,
   RoleFormData,
@@ -46,7 +45,6 @@ const ROLE_SORT_DIRECTIONS = ["asc", "desc"] as const;
 const HIGH_RISK_TARGET_THRESHOLD = 20;
 
 export default function RolesPage(): ReactElement {
-  const { user: currentUser, refreshSession } = useAuth();
   const canUpdateRole = useCan("roles:update");
   const canDeleteRole = useCan("roles:delete");
   const isSuperAdmin = useCan("*:manage");
@@ -213,9 +211,6 @@ export default function RolesPage(): ReactElement {
               }).unwrap();
             }),
           );
-          if (currentUser && data.userIds.includes(currentUser.id)) {
-            await refreshSession();
-          }
           setDialogOpen(false);
         } else if (selectedRole) {
           await updateRole({
@@ -267,13 +262,6 @@ export default function RolesPage(): ReactElement {
               }).unwrap();
             }),
           );
-          if (
-            currentUser &&
-            (desiredUserIds.includes(currentUser.id) ||
-              currentUserIds.includes(currentUser.id))
-          ) {
-            await refreshSession();
-          }
           setDialogOpen(false);
         }
       } catch (err) {
@@ -291,8 +279,6 @@ export default function RolesPage(): ReactElement {
       setRolePermissions,
       setUserRoles,
       getUserRolesTrigger,
-      currentUser,
-      refreshSession,
     ],
   );
 

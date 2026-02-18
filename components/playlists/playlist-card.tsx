@@ -118,7 +118,7 @@ export const PlaylistCard = memo(function PlaylistCard({
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
           <IconPlaylist className="size-3.5" />
-          {playlist.items.length} items
+          {playlist.itemsCount} items
         </span>
         <span className="flex items-center gap-1">
           <IconClock className="size-3.5" />

@@ -90,6 +90,7 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
   "rbac.permission.list": "Viewed permissions",
   "audit.event.list": "Viewed audit logs",
   "audit.event.export": "Exported audit logs",
+  "authz.permission.deny": "Denied by permission policy",
 };
 
 function toResourceLabel(resourceType: string | null): string {
@@ -169,6 +170,27 @@ export function mapAuditEventToLogEntry(
   }
   if (targetCount) {
     metadata["targets changed"] = targetCount;
+  }
+  const deniedPermission =
+    typeof rawMetadata.deniedPermission === "string"
+      ? rawMetadata.deniedPermission
+      : null;
+  const denyErrorCode =
+    typeof rawMetadata.denyErrorCode === "string"
+      ? rawMetadata.denyErrorCode
+      : null;
+  const denyErrorType =
+    typeof rawMetadata.denyErrorType === "string"
+      ? rawMetadata.denyErrorType
+      : null;
+  if (deniedPermission) {
+    metadata.permission = deniedPermission;
+  }
+  if (denyErrorCode) {
+    metadata["error code"] = denyErrorCode;
+  }
+  if (denyErrorType) {
+    metadata["error type"] = denyErrorType;
   }
   return {
     id: event.id,

@@ -43,17 +43,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Content } from "@/types/content";
-import type { Playlist, PlaylistItem } from "@/types/playlist";
+import type { PlaylistItem } from "@/types/playlist";
+
+interface NewPlaylistDraft {
+  readonly name: string;
+  readonly description: string | null;
+  readonly items: readonly PlaylistItem[];
+  readonly totalDuration: number;
+}
 
 interface CreatePlaylistDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onCreate: (
-    playlist: Omit<
-      Playlist,
-      "id" | "createdAt" | "updatedAt" | "createdBy" | "status"
-    >,
-  ) => void;
+  readonly onCreate: (playlist: NewPlaylistDraft) => void;
   readonly availableContent: readonly Content[];
 }
 

@@ -1,13 +1,12 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import {
   IconCalendar,
   IconClock,
   IconRepeat,
   IconSquareCheck,
-  IconX,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,25 +41,6 @@ function ScheduleFormFrame({
 }: ScheduleFormProps): ReactElement {
   const [formData, setFormData] = useState<ScheduleFormData>(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleAddDisplay = useCallback(
-    (displayId: string) => {
-      if (!formData.targetDisplayIds.includes(displayId)) {
-        setFormData((prev) => ({
-          ...prev,
-          targetDisplayIds: [...prev.targetDisplayIds, displayId],
-        }));
-      }
-    },
-    [formData.targetDisplayIds],
-  );
-
-  const handleRemoveDisplay = useCallback((displayId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      targetDisplayIds: prev.targetDisplayIds.filter((id) => id !== displayId),
-    }));
-  }, []);
 
   const canSubmit =
     formData.name.trim().length > 0 &&
@@ -221,48 +201,30 @@ function ScheduleFormFrame({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label>Target Displays</Label>
-          <Select onValueChange={handleAddDisplay}>
+          <Label>Target Display</Label>
+          <Select
+            value={formData.targetDisplayIds[0] ?? ""}
+            onValueChange={(value) =>
+              setFormData((prev) => ({ ...prev, targetDisplayIds: [value] }))
+            }
+          >
             <SelectTrigger>
-              <SelectValue placeholder="Add individual or display groups" />
+              <SelectValue placeholder="Select a display" />
             </SelectTrigger>
             <SelectContent>
-              {availableDisplays
-                .filter(
-                  (display) => !formData.targetDisplayIds.includes(display.id),
-                )
-                .map((display) => (
-                  <SelectItem key={display.id} value={display.id}>
-                    {display.name}
-                  </SelectItem>
-                ))}
+              {availableDisplays.map((display) => (
+                <SelectItem key={display.id} value={display.id}>
+                  {display.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          {formData.targetDisplayIds.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {formData.targetDisplayIds.map((displayId) => {
-                const display = availableDisplays.find(
-                  (d) => d.id === displayId,
-                );
-                return (
-                  <Badge
-                    key={displayId}
-                    variant="secondary"
-                    className="gap-1 pr-1"
-                  >
-                    {display?.name ?? displayId}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveDisplay(displayId)}
-                      className="ml-1 rounded-full p-0.5 hover:bg-muted"
-                      aria-label={`Remove ${display?.name ?? "display"}`}
-                    >
-                      <IconX className="size-3" />
-                    </button>
-                  </Badge>
-                );
-              })}
-            </div>
+          {formData.targetDisplayIds[0] ? (
+            <Badge variant="secondary" className="w-fit">
+              {availableDisplays.find(
+                (d) => d.id === formData.targetDisplayIds[0],
+              )?.name ?? formData.targetDisplayIds[0]}
+            </Badge>
           ) : null}
         </div>
 

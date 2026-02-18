@@ -5,6 +5,9 @@ export interface BackendPlaylist {
   readonly id: string;
   readonly name: string;
   readonly description: string | null;
+  readonly status: "DRAFT" | "IN_USE";
+  readonly itemsCount: number;
+  readonly totalDuration: number;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly createdBy: {
@@ -34,6 +37,15 @@ export interface BackendPlaylistListResponse {
   readonly total: number;
   readonly page: number;
   readonly pageSize: number;
+}
+
+export interface PlaylistListQuery {
+  readonly page?: number;
+  readonly pageSize?: number;
+  readonly status?: "DRAFT" | "IN_USE";
+  readonly search?: string;
+  readonly sortBy?: "updatedAt" | "name";
+  readonly sortDirection?: "asc" | "desc";
 }
 
 export interface CreatePlaylistRequest {
@@ -71,8 +83,14 @@ export const playlistsApi = createApi({
   baseQuery,
   tagTypes: ["Playlist"],
   endpoints: (build) => ({
-    listPlaylists: build.query<BackendPlaylistListResponse, void>({
-      query: () => "playlists",
+    listPlaylists: build.query<
+      BackendPlaylistListResponse,
+      PlaylistListQuery | void
+    >({
+      query: (params) => ({
+        url: "playlists",
+        params: params ?? {},
+      }),
       providesTags: (result) =>
         result
           ? [

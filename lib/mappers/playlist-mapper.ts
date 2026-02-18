@@ -3,23 +3,16 @@ import type {
   BackendPlaylistItem,
   BackendPlaylistWithItems,
 } from "@/lib/api/playlists-api";
-import type { Content } from "@/types/content";
 import type { Playlist, PlaylistItem } from "@/types/playlist";
 
-function mapBackendPlaylistItemToContent(item: BackendPlaylistItem): Content {
+function mapBackendPlaylistItemToContent(
+  item: BackendPlaylistItem,
+): PlaylistItem["content"] {
   return {
     id: item.content.id,
     title: item.content.title,
     type: item.content.type,
-    mimeType: "",
-    fileSize: 0,
     checksum: item.content.checksum,
-    width: null,
-    height: null,
-    duration: null,
-    status: "IN_USE",
-    createdAt: "",
-    createdBy: { id: "", name: "" },
   };
 }
 
@@ -39,9 +32,10 @@ export function mapBackendPlaylistBase(item: BackendPlaylist): Playlist {
     id: item.id,
     name: item.name,
     description: item.description,
-    status: "DRAFT", // Backend doesn't expose playlist status yet
+    status: item.status,
+    itemsCount: item.itemsCount,
     items: [],
-    totalDuration: 0,
+    totalDuration: item.totalDuration,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
     createdBy: {

@@ -38,13 +38,17 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Content } from "@/types/content";
-import type { Playlist, PlaylistItem } from "@/types/playlist";
+import type {
+  Playlist,
+  PlaylistItem,
+  PlaylistItemContent,
+} from "@/types/playlist";
 
 /** Local mutable copy of a playlist item used during editing. */
 interface DraftItem {
   /** Original backend item ID, or a `draft-*` prefix for newly added items. */
   readonly id: string;
-  readonly content: Content;
+  readonly content: Content | PlaylistItemContent;
   duration: number;
   order: number;
 }

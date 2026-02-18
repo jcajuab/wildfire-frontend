@@ -16,6 +16,11 @@ import {
   logoutApi,
   refreshToken,
 } from "@/lib/api-client";
+import {
+  AUTH_API_ERROR_EVENT,
+  AUTH_REFRESH_REQUEST_EVENT,
+  type AuthApiErrorEventDetail,
+} from "@/lib/auth-events";
 import { can as canPermission } from "@/lib/permissions";
 import type { AuthResponse, AuthUser } from "@/types/auth";
 
@@ -118,6 +123,12 @@ export function AuthProvider({
     userRef.current = user;
   }, [user]);
 
+  const clearAuthState = useCallback(() => {
+    setUser(null);
+    setPermissions([]);
+    clearSession();
+  }, []);
+
   useEffect(() => {
     if (!user) return;
 
@@ -145,9 +156,7 @@ export function AuthProvider({
         setPermissions(newSession.permissions);
       } catch (err) {
         if (err instanceof AuthApiError && err.status === 401) {
-          setUser(null);
-          setPermissions([]);
-          clearSession();
+          clearAuthState();
         }
       } finally {
         isRefreshingRef.current = false;
@@ -155,7 +164,7 @@ export function AuthProvider({
     }, REFRESH_CHECK_INTERVAL_MS);
 
     return () => clearInterval(refreshTokenCheckIntervalId);
-  }, [user]);
+  }, [clearAuthState, user]);
 
   const login = useCallback(
     async (credentials: { email: string; password: string }) => {
@@ -178,15 +187,13 @@ export function AuthProvider({
   );
 
   const logout = useCallback(async () => {
-    setUser(null);
-    setPermissions([]);
-    clearSession();
+    clearAuthState();
     try {
       await logoutApi();
     } catch {
       // Backend no-op; ignore network errors
     }
-  }, []);
+  }, [clearAuthState]);
 
   const refreshSession = useCallback(async () => {
     try {
@@ -204,13 +211,46 @@ export function AuthProvider({
         err instanceof AuthApiError &&
         (err.status === 401 || err.status === 403)
       ) {
-        setUser(null);
-        setPermissions([]);
-        clearSession();
+        clearAuthState();
       }
       throw err;
     }
-  }, []);
+  }, [clearAuthState]);
+
+  const refreshSessionRef = useRef(refreshSession);
+  useEffect(() => {
+    refreshSessionRef.current = refreshSession;
+  }, [refreshSession]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onAuthApiError = (event: Event) => {
+      const customEvent = event as CustomEvent<AuthApiErrorEventDetail>;
+      const status = customEvent.detail?.status;
+      if (status === 401 || status === 403) {
+        clearAuthState();
+      }
+    };
+
+    const onAuthRefreshRequested = () => {
+      if (!userRef.current || isRefreshingRef.current) return;
+      isRefreshingRef.current = true;
+      void refreshSessionRef.current().finally(() => {
+        isRefreshingRef.current = false;
+      });
+    };
+
+    window.addEventListener(AUTH_API_ERROR_EVENT, onAuthApiError);
+    window.addEventListener(AUTH_REFRESH_REQUEST_EVENT, onAuthRefreshRequested);
+    return () => {
+      window.removeEventListener(AUTH_API_ERROR_EVENT, onAuthApiError);
+      window.removeEventListener(
+        AUTH_REFRESH_REQUEST_EVENT,
+        onAuthRefreshRequested,
+      );
+    };
+  }, [clearAuthState]);
 
   const updateSession = useCallback((response: AuthResponse) => {
     const session: SessionData = {

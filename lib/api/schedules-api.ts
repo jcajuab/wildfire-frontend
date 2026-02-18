@@ -6,6 +6,8 @@ export interface BackendSchedule {
   readonly name: string;
   readonly playlistId: string;
   readonly deviceId: string;
+  readonly startDate: string;
+  readonly endDate: string;
   readonly startTime: string;
   readonly endTime: string;
   readonly daysOfWeek: readonly number[];
@@ -34,6 +36,8 @@ export interface CreateScheduleRequest {
   readonly name: string;
   readonly playlistId: string;
   readonly deviceId: string;
+  readonly startDate: string;
+  readonly endDate: string;
   readonly startTime: string;
   readonly endTime: string;
   readonly daysOfWeek: readonly number[];
@@ -46,6 +50,8 @@ export interface UpdateScheduleRequest {
   readonly name?: string;
   readonly playlistId?: string;
   readonly deviceId?: string;
+  readonly startDate?: string;
+  readonly endDate?: string;
   readonly startTime?: string;
   readonly endTime?: string;
   readonly daysOfWeek?: readonly number[];

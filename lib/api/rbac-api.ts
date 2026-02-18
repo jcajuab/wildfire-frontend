@@ -1,4 +1,5 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
+import { emitAuthRefreshRequested } from "@/lib/auth-events";
 import { baseQuery } from "@/lib/api/base-query";
 
 /** Backend RBAC response shapes (match overview). */
@@ -8,7 +9,7 @@ export interface RbacRole {
   readonly description: string | null;
   readonly isSystem: boolean;
   /** Number of users assigned to this role (from GET /roles). */
-  readonly usersCount?: number;
+  readonly usersCount: number;
 }
 
 export interface RbacPermission {
@@ -26,6 +27,13 @@ export interface RbacUser {
   readonly avatarUrl?: string | null;
 }
 
+interface PaginatedEnvelope<T> {
+  readonly items: T[];
+  readonly total: number;
+  readonly page: number;
+  readonly pageSize: number;
+}
+
 export const rbacApi = createApi({
   reducerPath: "rbacApi",
   baseQuery,
@@ -34,7 +42,8 @@ export const rbacApi = createApi({
     // Roles
     getRoles: build.query<RbacRole[], void>({
       query: () => "roles",
-      transformResponse: (response: { items: RbacRole[] }) => response.items,
+      transformResponse: (response: PaginatedEnvelope<RbacRole>) =>
+        response.items,
       providesTags: (result) =>
         result
           ? [
@@ -57,6 +66,14 @@ export const rbacApi = createApi({
         body,
       }),
       invalidatesTags: [{ type: "Role", id: "LIST" }],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          emitAuthRefreshRequested();
+        } catch {
+          // Ignore failed writes.
+        }
+      },
     }),
     updateRole: build.mutation<
       RbacRole,
@@ -70,17 +87,37 @@ export const rbacApi = createApi({
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Role", id },
         { type: "Role", id: "LIST" },
+        { type: "User", id: "LIST" },
       ],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          emitAuthRefreshRequested();
+        } catch {
+          // Ignore failed writes.
+        }
+      },
     }),
     deleteRole: build.mutation<void, string>({
       query: (id) => ({ url: `roles/${id}`, method: "DELETE" }),
       invalidatesTags: (_result, _error, id) => [
         { type: "Role", id },
         { type: "Role", id: "LIST" },
+        { type: "User", id: "LIST" },
       ],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          emitAuthRefreshRequested();
+        } catch {
+          // Ignore failed writes.
+        }
+      },
     }),
     getRolePermissions: build.query<RbacPermission[], string>({
       query: (roleId) => `roles/${roleId}/permissions`,
+      transformResponse: (response: PaginatedEnvelope<RbacPermission>) =>
+        response.items,
       providesTags: (_result, _error, roleId) => [
         { type: "Role", id: roleId },
         { type: "Permission", id: "LIST" },
@@ -97,11 +134,23 @@ export const rbacApi = createApi({
       }),
       invalidatesTags: (_result, _error, { roleId }) => [
         { type: "Role", id: roleId },
+        { type: "Role", id: "LIST" },
         { type: "Permission", id: "LIST" },
+        { type: "User", id: "LIST" },
       ],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          emitAuthRefreshRequested();
+        } catch {
+          // Ignore failed writes.
+        }
+      },
     }),
     getRoleUsers: build.query<RbacUser[], string>({
       query: (roleId) => `roles/${roleId}/users`,
+      transformResponse: (response: PaginatedEnvelope<RbacUser>) =>
+        response.items,
       providesTags: (_result, _error, roleId) => [
         { type: "Role", id: roleId },
         { type: "User", id: "LIST" },
@@ -111,7 +160,7 @@ export const rbacApi = createApi({
     // Permissions
     getPermissions: build.query<RbacPermission[], void>({
       query: () => "permissions",
-      transformResponse: (response: { items: RbacPermission[] }) =>
+      transformResponse: (response: PaginatedEnvelope<RbacPermission>) =>
         response.items,
       providesTags: (result) =>
         result
@@ -125,7 +174,8 @@ export const rbacApi = createApi({
     // Users
     getUsers: build.query<RbacUser[], void>({
       query: () => "users",
-      transformResponse: (response: { items: RbacUser[] }) => response.items,
+      transformResponse: (response: PaginatedEnvelope<RbacUser>) =>
+        response.items,
       providesTags: (result) =>
         result
           ? [
@@ -148,6 +198,14 @@ export const rbacApi = createApi({
         body,
       }),
       invalidatesTags: [{ type: "User", id: "LIST" }],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          emitAuthRefreshRequested();
+        } catch {
+          // Ignore failed writes.
+        }
+      },
     }),
     updateUser: build.mutation<
       RbacUser,
@@ -162,6 +220,14 @@ export const rbacApi = createApi({
         { type: "User", id },
         { type: "User", id: "LIST" },
       ],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          emitAuthRefreshRequested();
+        } catch {
+          // Ignore failed writes.
+        }
+      },
     }),
     deleteUser: build.mutation<void, string>({
       query: (id) => ({ url: `users/${id}`, method: "DELETE" }),
@@ -169,9 +235,19 @@ export const rbacApi = createApi({
         { type: "User", id },
         { type: "User", id: "LIST" },
       ],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          emitAuthRefreshRequested();
+        } catch {
+          // Ignore failed writes.
+        }
+      },
     }),
     getUserRoles: build.query<RbacRole[], string>({
       query: (userId) => `users/${userId}/roles`,
+      transformResponse: (response: PaginatedEnvelope<RbacRole>) =>
+        response.items,
       providesTags: (_result, _error, userId) => [
         { type: "User", id: userId },
         { type: "Role", id: "LIST" },
@@ -188,8 +264,18 @@ export const rbacApi = createApi({
       }),
       invalidatesTags: (_result, _error, { userId }) => [
         { type: "User", id: userId },
+        { type: "User", id: "LIST" },
         { type: "Role", id: "LIST" },
+        { type: "Permission", id: "LIST" },
       ],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          emitAuthRefreshRequested();
+        } catch {
+          // Ignore failed writes.
+        }
+      },
     }),
   }),
 });
