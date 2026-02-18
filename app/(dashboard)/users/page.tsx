@@ -14,12 +14,15 @@ import { InviteUsersDialog } from "@/components/users/invite-users-dialog";
 import { UserSearchInput } from "@/components/users/user-search-input";
 import { UsersPagination } from "@/components/users/users-pagination";
 import { UsersTable } from "@/components/users/users-table";
+import { PendingInvitationsTable } from "@/components/users/pending-invitations-table";
 import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
 import {
   AuthApiError,
   createInvitation,
   type CreateInvitationResponse,
+  getInvitations,
+  resendInvitation,
 } from "@/lib/api-client";
 import {
   useQueryEnumState,
@@ -42,6 +45,7 @@ import type {
   UserSortDirection,
   UserSortField,
 } from "@/types/user";
+import type { InvitationRecord } from "@/types/invitation";
 
 const USER_SORT_FIELDS = ["name", "lastSeen"] as const;
 const USER_SORT_DIRECTIONS = ["asc", "desc"] as const;
@@ -51,6 +55,7 @@ export default function UsersPage(): ReactElement {
   const { user: currentUser } = useAuth();
   const canUpdateUser = useCan("users:update");
   const canDeleteUser = useCan("users:delete");
+  const canCreateUser = useCan("users:create");
   const isSuperAdmin = useCan("*:manage");
   const {
     data: usersData,
@@ -82,6 +87,13 @@ export default function UsersPage(): ReactElement {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userToRemove, setUserToRemove] = useState<User | null>(null);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+  const [isInvitationsLoading, setIsInvitationsLoading] = useState(false);
+  const [invitations, setInvitations] = useState<readonly InvitationRecord[]>(
+    [],
+  );
+  const [resendingInvitationId, setResendingInvitationId] = useState<
+    string | null
+  >(null);
   const [userRolesByUserId, setUserRolesByUserId] = useState<
     Readonly<Record<string, readonly UserRole[]>>
   >({});
@@ -166,6 +178,8 @@ export default function UsersPage(): ReactElement {
       }
 
       setIsInviteDialogOpen(false);
+      const latestInvitations = await getInvitations();
+      setInvitations(latestInvitations);
     } catch (err) {
       if (err instanceof AuthApiError && err.status === 429) {
         toast.error("Too many invite requests. Please wait and try again.");
@@ -174,6 +188,47 @@ export default function UsersPage(): ReactElement {
       toast.error(
         err instanceof Error ? err.message : "Failed to invite user(s)",
       );
+    }
+  }, []);
+
+  const loadInvitations = useCallback(async (): Promise<void> => {
+    if (!canCreateUser) {
+      setInvitations([]);
+      return;
+    }
+
+    setIsInvitationsLoading(true);
+    try {
+      const list = await getInvitations();
+      setInvitations(list);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to load invitations",
+      );
+    } finally {
+      setIsInvitationsLoading(false);
+    }
+  }, [canCreateUser]);
+
+  const handleResendInvitation = useCallback(async (id: string) => {
+    setResendingInvitationId(id);
+    try {
+      const result = await resendInvitation(id);
+      if (result.inviteUrl) {
+        toast.success(
+          "Invitation resent. Dev invite URL available in response.",
+        );
+      } else {
+        toast.success("Invitation resent.");
+      }
+      const latestInvitations = await getInvitations();
+      setInvitations(latestInvitations);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to resend invite",
+      );
+    } finally {
+      setResendingInvitationId(null);
     }
   }, []);
 
@@ -334,6 +389,10 @@ export default function UsersPage(): ReactElement {
     };
   }, [getUserRolesTrigger, paginatedUsers]);
 
+  useEffect(() => {
+    void loadInvitations();
+  }, [loadInvitations]);
+
   if (usersLoading) {
     return (
       <DashboardPage.Root>
@@ -404,6 +463,23 @@ export default function UsersPage(): ReactElement {
               currentUserId={currentUser?.id}
             />
           </div>
+
+          <Can permission="users:create">
+            <section className="mt-6 overflow-hidden rounded-lg border">
+              <div className="border-b px-4 py-3">
+                <h3 className="text-sm font-semibold">Invitations</h3>
+                <p className="text-xs text-muted-foreground">
+                  Recent invitation status and expiration timestamps.
+                </p>
+              </div>
+              <PendingInvitationsTable
+                invitations={invitations}
+                isLoading={isInvitationsLoading}
+                resendingInvitationId={resendingInvitationId}
+                onResend={handleResendInvitation}
+              />
+            </section>
+          </Can>
         </DashboardPage.Content>
 
         <DashboardPage.Footer>

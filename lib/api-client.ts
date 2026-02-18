@@ -7,6 +7,7 @@ import type {
   AuthResponse,
   LoginCredentials,
 } from "@/types/auth";
+import type { InvitationRecord } from "@/types/invitation";
 
 function getBaseUrl(): string {
   const url = getApiBaseUrl();
@@ -294,6 +295,56 @@ export async function createInvitation(input: {
       ...getDevOnlyRequestHeaders(),
     },
     body: JSON.stringify(input),
+  });
+
+  const data = (await response.json()) as
+    | CreateInvitationResponse
+    | ApiErrorResponse;
+  if (!response.ok) {
+    const error = data as ApiErrorResponse;
+    const message =
+      error?.error?.message ?? `Request failed with status ${response.status}`;
+    throw new AuthApiError(message, response.status, error);
+  }
+
+  return data as CreateInvitationResponse;
+}
+
+/** GET /auth/invitations. Returns recent invitation records. */
+export async function getInvitations(): Promise<readonly InvitationRecord[]> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/invitations`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      ...getDevOnlyRequestHeaders(),
+    },
+  });
+
+  const data = (await response.json()) as
+    | readonly InvitationRecord[]
+    | ApiErrorResponse;
+  if (!response.ok) {
+    const error = data as ApiErrorResponse;
+    const message =
+      error?.error?.message ?? `Request failed with status ${response.status}`;
+    throw new AuthApiError(message, response.status, error);
+  }
+
+  return data as readonly InvitationRecord[];
+}
+
+/** POST /auth/invitations/:id/resend. */
+export async function resendInvitation(
+  id: string,
+): Promise<CreateInvitationResponse> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/invitations/${id}/resend`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...getDevOnlyRequestHeaders(),
+    },
   });
 
   const data = (await response.json()) as
