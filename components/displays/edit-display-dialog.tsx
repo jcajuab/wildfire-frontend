@@ -28,6 +28,7 @@ interface EditFormData {
   displayName: string;
   location: string;
   ipAddress: string;
+  macAddress: string;
   selectedOutput: string;
   selectedResolution: string;
   groups: readonly string[];
@@ -43,6 +44,7 @@ function createInitialFormData(display: Display): EditFormData {
     displayName: display.name,
     location: display.location,
     ipAddress: display.ipAddress,
+    macAddress: display.macAddress,
     selectedOutput: display.displayOutput,
     selectedResolution: display.resolution,
     groups: [...display.groups],
@@ -76,6 +78,7 @@ function EditDisplayForm({
       name: formData.displayName,
       location: formData.location,
       ipAddress: formData.ipAddress,
+      macAddress: formData.macAddress,
       displayOutput: formData.selectedOutput,
       resolution: formData.selectedResolution,
       groups: [...formData.groups],
@@ -102,11 +105,7 @@ function EditDisplayForm({
     }));
   }, []);
 
-  const canSave =
-    formData.displayName.length > 0 &&
-    formData.location.length > 0 &&
-    formData.ipAddress.length > 0 &&
-    formData.selectedOutput.length > 0;
+  const canSave = formData.displayName.trim().length > 0;
 
   return (
     <>
@@ -154,6 +153,17 @@ function EditDisplayForm({
           />
         </div>
 
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="edit-mac">MAC Address</Label>
+          <Input
+            id="edit-mac"
+            value={formData.macAddress}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, macAddress: e.target.value }))
+            }
+          />
+        </div>
+
         {/* Display Output */}
         <div className="flex flex-col gap-1.5">
           <Label>Display Output</Label>
@@ -195,6 +205,21 @@ function EditDisplayForm({
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="edit-resolution">Resolution</Label>
+          <Input
+            id="edit-resolution"
+            placeholder="e.g. 1920x1080"
+            value={formData.selectedResolution}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                selectedResolution: e.target.value,
+              }))
+            }
+          />
         </div>
 
         {/* Display Groups */}

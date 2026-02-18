@@ -39,7 +39,7 @@ function getStatusColor(status: DisplayStatus): string {
     case "READY":
       return "bg-emerald-500";
     case "LIVE":
-      return "bg-primary";
+      return "bg-destructive";
     case "DOWN":
       return "bg-destructive";
     default:
@@ -65,7 +65,7 @@ function getStatusTextColor(status: DisplayStatus): string {
     case "READY":
       return "text-emerald-600 dark:text-emerald-400";
     case "LIVE":
-      return "text-primary";
+      return "text-destructive";
     case "DOWN":
       return "text-destructive";
     default:
@@ -102,10 +102,16 @@ export const DisplayCard = memo(function DisplayCard({
           <div className="flex items-center gap-2">
             <h3 className="text-base font-semibold">{display.name}</h3>
             <div className="flex items-center gap-1.5">
-              <span
-                aria-hidden="true"
-                className={`size-2 rounded-full ${getStatusColor(display.status)}`}
-              />
+              <span className="relative flex size-2.5" aria-hidden="true">
+                {display.status === "LIVE" ? (
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-70" />
+                ) : null}
+                <span
+                  className={`relative inline-flex size-2.5 rounded-full ${getStatusColor(
+                    display.status,
+                  )}`}
+                />
+              </span>
               <span
                 className={`text-xs font-medium ${getStatusTextColor(display.status)}`}
               >
@@ -146,7 +152,7 @@ export const DisplayCard = memo(function DisplayCard({
             {canUpdate && (
               <DropdownMenuItem onClick={() => onToggleDisplay(display)}>
                 <IconToggleLeft className="size-4" />
-                Toggle Display
+                Edit Display
               </DropdownMenuItem>
             )}
             {canDelete && (

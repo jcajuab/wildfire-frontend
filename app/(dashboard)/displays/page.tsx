@@ -13,11 +13,16 @@ import { DisplayGrid } from "@/components/displays/display-grid";
 import { DisplaySearchInput } from "@/components/displays/display-search-input";
 import { DisplaySortSelect } from "@/components/displays/display-sort-select";
 import { DisplayStatusTabs } from "@/components/displays/display-status-tabs";
+import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
+import { PreviewDisplayDialog } from "@/components/displays/preview-display-dialog";
 import { ViewDisplayDialog } from "@/components/displays/view-display-dialog";
 import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetDevicesQuery } from "@/lib/api/devices-api";
+import {
+  useGetDevicesQuery,
+  useUpdateDeviceMutation,
+} from "@/lib/api/devices-api";
 import { mapDeviceToDisplay } from "@/lib/map-device-to-display";
 import { useCan } from "@/hooks/use-can";
 import {
@@ -56,7 +61,9 @@ export default function DisplaysPage(): ReactElement {
   const [isAddInfoDialogOpen, setIsAddInfoDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedDisplay, setSelectedDisplay] = useState<Display | null>(null);
+  const [updateDevice] = useUpdateDeviceMutation();
 
   const displays: Display[] = useMemo(
     () => (devicesData?.items ?? []).map(mapDeviceToDisplay),
@@ -99,20 +106,16 @@ export default function DisplaysPage(): ReactElement {
   }, []);
 
   const handleRefreshPage = useCallback((display: Display) => {
-    toast.info(
-      `Refreshed "${display.name}". Reload the page to see latest data.`,
-    );
+    toast.info(`"${display.name}" will refresh on its next device poll.`);
   }, []);
 
   // Signature required by DisplayCard; we only show a toast (no toggle from dashboard).
   const handleToggleDisplay = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- required by card callback signature
-    (_display: Display) => {
-      toast.info(
-        "Power state is not managed from the dashboard. Devices report their own status.",
-      );
+    (display: Display) => {
+      setSelectedDisplay(display);
+      setIsEditDialogOpen(true);
     },
-    [],
+    [setSelectedDisplay, setIsEditDialogOpen],
   );
 
   const handleRemoveDisplay = useCallback((display: Display) => {
@@ -121,16 +124,46 @@ export default function DisplaysPage(): ReactElement {
   }, []);
 
   const handleEditFromView = useCallback((display: Display) => {
-    void display;
+    setSelectedDisplay(display);
     setIsViewDialogOpen(false);
-    toast.info(DEVICE_SELF_REGISTRATION_MESSAGE);
+    setIsEditDialogOpen(true);
   }, []);
 
-  const handleEditPlaylist = useCallback((display: Display) => {
-    toast.info(
-      `Schedule assignment for "${display.name}" is done via the Schedules page.`,
-    );
-  }, []);
+  const handleSaveDisplay = useCallback(
+    async (display: Display) => {
+      const [screenWidthRaw, screenHeightRaw] = display.resolution.split("x");
+      const screenWidth =
+        screenWidthRaw && Number.isFinite(Number(screenWidthRaw))
+          ? Number(screenWidthRaw)
+          : null;
+      const screenHeight =
+        screenHeightRaw && Number.isFinite(Number(screenHeightRaw))
+          ? Number(screenHeightRaw)
+          : null;
+
+      try {
+        await updateDevice({
+          id: display.id,
+          name: display.name,
+          location: display.location,
+          ipAddress: display.ipAddress === "" ? null : display.ipAddress,
+          macAddress: display.macAddress === "" ? null : display.macAddress,
+          outputType:
+            display.displayOutput === "Not available"
+              ? null
+              : display.displayOutput,
+          screenWidth,
+          screenHeight,
+        }).unwrap();
+        toast.success(`Updated "${display.name}".`);
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to update display.",
+        );
+      }
+    },
+    [updateDevice],
+  );
 
   const filteredDisplays = useMemo(
     () =>
@@ -268,14 +301,23 @@ export default function DisplaysPage(): ReactElement {
 
       <ViewDisplayDialog
         display={selectedDisplay}
-        open={isViewDialogOpen || isPreviewDialogOpen}
-        onOpenChange={(open) => {
-          setIsViewDialogOpen(open);
-          setIsPreviewDialogOpen(open);
-        }}
+        open={isViewDialogOpen}
+        onOpenChange={setIsViewDialogOpen}
         onEdit={handleEditFromView}
-        onEditPlaylist={handleEditPlaylist}
         canEdit={canUpdateDisplay}
+      />
+
+      <PreviewDisplayDialog
+        display={selectedDisplay}
+        open={isPreviewDialogOpen}
+        onOpenChange={setIsPreviewDialogOpen}
+      />
+
+      <EditDisplayDialog
+        display={selectedDisplay}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSave={handleSaveDisplay}
       />
     </DashboardPage.Root>
   );

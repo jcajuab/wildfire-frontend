@@ -11,6 +11,12 @@ export interface Device {
   readonly identifier: string;
   readonly name: string;
   readonly location: string | null;
+  readonly ipAddress: string | null;
+  readonly macAddress: string | null;
+  readonly screenWidth: number | null;
+  readonly screenHeight: number | null;
+  readonly outputType: string | null;
+  readonly orientation: "LANDSCAPE" | "PORTRAIT" | null;
   readonly lastSeenAt: string;
   readonly onlineStatus: "LIVE" | "DOWN";
   readonly createdAt: string;
@@ -22,6 +28,18 @@ export interface DevicesListResponse {
   readonly total: number;
   readonly page: number;
   readonly pageSize: number;
+}
+
+export interface UpdateDeviceRequest {
+  readonly id: string;
+  readonly name?: string;
+  readonly location?: string | null;
+  readonly ipAddress?: string | null;
+  readonly macAddress?: string | null;
+  readonly screenWidth?: number | null;
+  readonly screenHeight?: number | null;
+  readonly outputType?: string | null;
+  readonly orientation?: "LANDSCAPE" | "PORTRAIT" | null;
 }
 
 export const devicesApi = createApi({
@@ -78,6 +96,17 @@ export const devicesApi = createApi({
     getDevice: build.query<Device, string>({
       query: (id) => `devices/${id}`,
       providesTags: (_result, _error, id) => [{ type: "Device", id }],
+    }),
+    updateDevice: build.mutation<Device, UpdateDeviceRequest>({
+      query: ({ id, ...body }) => ({
+        url: `devices/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Device", id: "LIST" },
+        { type: "Device", id },
+      ],
     }),
     registerDevice: build.mutation<
       Device,
@@ -148,5 +177,6 @@ export const {
   useGetDevicesQuery,
   useGetDeviceQuery,
   useLazyGetDeviceQuery,
+  useUpdateDeviceMutation,
   useRegisterDeviceMutation,
 } = devicesApi;
