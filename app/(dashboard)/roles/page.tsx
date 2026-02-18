@@ -317,10 +317,10 @@ export default function RolesPage(): ReactElement {
   if (rolesLoading) {
     return (
       <DashboardPage.Root>
-        <DashboardPage.Header title="Roles" />
+        <DashboardPage.Header title='Roles' />
         <DashboardPage.Body>
-          <DashboardPage.Content className="flex items-center justify-center">
-            <p className="text-muted-foreground">Loading roles…</p>
+          <DashboardPage.Content className='flex items-center justify-center'>
+            <p className='text-muted-foreground'>Loading roles…</p>
           </DashboardPage.Content>
         </DashboardPage.Body>
       </DashboardPage.Root>
@@ -330,10 +330,10 @@ export default function RolesPage(): ReactElement {
   if (rolesError) {
     return (
       <DashboardPage.Root>
-        <DashboardPage.Header title="Roles" />
+        <DashboardPage.Header title='Roles' />
         <DashboardPage.Body>
-          <DashboardPage.Content className="flex items-center justify-center">
-            <p className="text-destructive">
+          <DashboardPage.Content className='flex items-center justify-center'>
+            <p className='text-destructive'>
               Failed to load roles. Check the API and try again.
             </p>
           </DashboardPage.Content>
@@ -345,29 +345,28 @@ export default function RolesPage(): ReactElement {
   return (
     <DashboardPage.Root>
       <DashboardPage.Header
-        title="Roles"
+        title='Roles'
         actions={
-          <Can permission="roles:create">
+          <Can permission='roles:create'>
             <Button onClick={handleCreate}>
-              <IconPlus className="size-4" />
+              <IconPlus className='size-4' />
               Create Role
             </Button>
           </Can>
         }
       />
-
       <DashboardPage.Body>
         <DashboardPage.Toolbar>
-          <h2 className="text-base font-semibold">Search Results</h2>
+          <h2 className='text-base font-semibold'>Search Results</h2>
           <RoleSearchInput
             value={search}
             onChange={handleSearchChange}
-            className="w-full max-w-none md:w-72"
+            className='w-full max-w-none md:w-72'
           />
         </DashboardPage.Toolbar>
 
-        <DashboardPage.Content className="pt-6">
-          <div className="overflow-hidden rounded-lg border">
+        <DashboardPage.Content className='pt-6'>
+          <div className='overflow-hidden rounded-lg border'>
             <RolesTable
               roles={paginatedRoles}
               sort={sort}
@@ -412,17 +411,27 @@ export default function RolesPage(): ReactElement {
       <ConfirmActionDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        title="Delete role?"
+        title='Delete role?'
         description={
           roleToDelete
-            ? `This will permanently delete "${roleToDelete.name}".`
+            ? (roleToDelete.usersCount ?? 0) > 0
+              ? `This will permanently delete "${roleToDelete.name}" and unassign ${
+                  roleToDelete.usersCount ?? 0
+                } user(s). Users that have this role will have their permissions revoked.`
+              : `This will permanently delete "${roleToDelete.name}".`
             : undefined
         }
-        confirmLabel="Delete role"
+        confirmLabel='Delete role'
         onConfirm={async () => {
           if (!roleToDelete) return;
           try {
             await deleteRole(roleToDelete.id).unwrap();
+            const removedUsers = roleToDelete.usersCount ?? 0;
+            toast.success(
+              removedUsers > 0
+                ? `Deleted "${roleToDelete.name}" and removed ${removedUsers} assignment(s).`
+                : `Deleted "${roleToDelete.name}".`,
+            );
             setRoleToDelete(null);
           } catch (err) {
             toast.error(

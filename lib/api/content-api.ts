@@ -102,12 +102,16 @@ export const contentApi = createApi({
     }),
     updateContent: build.mutation<
       BackendContent,
-      { readonly id: string; readonly title: string }
+      {
+        readonly id: string;
+        readonly title?: string;
+        readonly status?: "DRAFT" | "IN_USE";
+      }
     >({
-      query: ({ id, title }) => ({
+      query: ({ id, ...body }) => ({
         url: `content/${id}`,
         method: "PATCH",
-        body: { title },
+        body,
       }),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Content", id: "LIST" },

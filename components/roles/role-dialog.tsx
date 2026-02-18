@@ -345,24 +345,30 @@ function RoleForm({
         users to this role.
       </div>
 
+      <div className="mt-3 rounded-md border p-3">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="policyVersion">Policy version</Label>
+          <Input
+            id="policyVersion"
+            type="number"
+            min={1}
+            step={1}
+            value={policyVersionText}
+            onChange={(e) => setPolicyVersionText(e.target.value)}
+            placeholder="e.g. 12"
+          />
+          <p className="text-xs text-muted-foreground">
+            Optional by default; required for high-impact changes.
+          </p>
+        </div>
+      </div>
+
       {isHighRiskOperation ? (
         <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3">
           <p className="text-xs text-amber-900">
             High-impact change detected. Enter policy version and confirm before
             saving.
           </p>
-          <div className="mt-3 flex flex-col gap-2">
-            <Label htmlFor="policyVersion">Policy version</Label>
-            <Input
-              id="policyVersion"
-              type="number"
-              min={1}
-              step={1}
-              value={policyVersionText}
-              onChange={(e) => setPolicyVersionText(e.target.value)}
-              placeholder="e.g. 12"
-            />
-          </div>
           <div className="mt-3 flex items-center justify-between rounded-md border bg-white px-3 py-2">
             <p className="text-xs text-muted-foreground">
               I confirm this governance update is reviewed and approved.

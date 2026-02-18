@@ -11,6 +11,7 @@ import {
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +53,11 @@ export const ContentCard = memo(function ContentCard({
           <p className="text-xs text-muted-foreground">
             by {content.createdBy.name}
           </p>
+          <div className="pt-1">
+            <Badge variant="outline" className="text-[10px]">
+              {content.status === "IN_USE" ? "In Use" : "Draft"}
+            </Badge>
+          </div>
         </div>
 
         {/* Actions menu */}

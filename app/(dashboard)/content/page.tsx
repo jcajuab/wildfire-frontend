@@ -25,6 +25,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
@@ -51,7 +58,11 @@ interface EditContentDialogProps {
   readonly content: Content | null;
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onSave: (contentId: string, title: string) => void;
+  readonly onSave: (
+    contentId: string,
+    title: string,
+    status: "DRAFT" | "IN_USE",
+  ) => void;
 }
 
 function EditContentDialog({
@@ -79,7 +90,11 @@ function EditContentDialog({
 interface EditContentDialogFormProps {
   readonly content: Content;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onSave: (contentId: string, title: string) => void;
+  readonly onSave: (
+    contentId: string,
+    title: string,
+    status: "DRAFT" | "IN_USE",
+  ) => void;
 }
 
 function EditContentDialogForm({
@@ -88,19 +103,37 @@ function EditContentDialogForm({
   onSave,
 }: EditContentDialogFormProps): ReactElement {
   const [title, setTitle] = useState(content.title);
+  const [status, setStatus] = useState<"DRAFT" | "IN_USE">(content.status);
 
   return (
     <>
       <DialogHeader>
         <DialogTitle>Edit Content</DialogTitle>
       </DialogHeader>
-      <div className="space-y-2">
-        <Label htmlFor="edit-content-title">Title</Label>
-        <Input
-          id="edit-content-title"
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-        />
+      <div className="space-y-3">
+        <div className="space-y-2">
+          <Label htmlFor="edit-content-title">Title</Label>
+          <Input
+            id="edit-content-title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <Select
+            value={status}
+            onValueChange={(value) => setStatus(value as "DRAFT" | "IN_USE")}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="DRAFT">Draft</SelectItem>
+              <SelectItem value="IN_USE">In Use</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -108,7 +141,7 @@ function EditContentDialogForm({
         </Button>
         <Button
           onClick={() => {
-            onSave(content.id, title.trim());
+            onSave(content.id, title.trim(), status);
             onOpenChange(false);
           }}
           disabled={title.trim().length === 0}
@@ -284,7 +317,13 @@ export default function ContentPage(): ReactElement {
     async (content: Content) => {
       try {
         const { downloadUrl } = await getContentFileUrl(content.id).unwrap();
-        window.open(downloadUrl, "_blank", "noopener,noreferrer");
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.rel = "noopener noreferrer";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
       } catch {
         toast.error("Failed to get download URL.");
       }
@@ -392,9 +431,9 @@ export default function ContentPage(): ReactElement {
         onOpenChange={(open) => {
           if (!open) setContentToEdit(null);
         }}
-        onSave={async (contentId, title) => {
+        onSave={async (contentId, title, status) => {
           try {
-            await updateContent({ id: contentId, title }).unwrap();
+            await updateContent({ id: contentId, title, status }).unwrap();
             toast.success("Content updated.");
           } catch {
             toast.error("Failed to update content.");
