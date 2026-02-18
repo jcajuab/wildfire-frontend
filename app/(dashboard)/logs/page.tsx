@@ -9,6 +9,14 @@ import { DashboardPage } from "@/components/layout";
 import { LogsPagination } from "@/components/logs/logs-pagination";
 import { LogsTable } from "@/components/logs/logs-table";
 import { Button } from "@/components/ui/button";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -44,6 +52,14 @@ import type { LogEntry } from "@/types/log";
 const PAGE_SIZE = 20;
 const ACTOR_TYPE_FILTERS = ["all", "user", "device"] as const;
 type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
+const COMMON_STATUS_CODES = ["200", "401", "403", "404", "500"] as const;
+const STATUS_CODE_LABELS: Record<(typeof COMMON_STATUS_CODES)[number], string> = {
+  "200": "200 (OK)",
+  "401": "401 (Unauthorized)",
+  "403": "403 (Forbidden)",
+  "404": "404 (Not Found)",
+  "500": "500 (Internal Server Error)",
+};
 
 function formatActorDisplay(
   userMap: Map<string, string>,
@@ -194,6 +210,14 @@ export default function LogsPage(): ReactElement {
     },
     [resetToFirstPage, setStatusRaw],
   );
+
+  const selectedStatusValue = useMemo<string | null>(() => {
+    return COMMON_STATUS_CODES.includes(
+      statusRaw as (typeof COMMON_STATUS_CODES)[number],
+    )
+      ? statusRaw
+      : null;
+  }, [statusRaw]);
 
   const handleRequestIdChange = useCallback(
     (nextValue: string): void => {
@@ -394,15 +418,31 @@ export default function LogsPage(): ReactElement {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="logs-filter-status">Status</Label>
-              <Input
-                id="logs-filter-status"
-                type="number"
-                min={100}
-                max={599}
-                value={statusRaw}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                placeholder="e.g. 403"
-              />
+              <Combobox
+                value={selectedStatusValue}
+                inputValue={statusRaw}
+                onValueChange={(nextValue) => handleStatusChange(nextValue ?? "")}
+                onInputValueChange={(nextInputValue) =>
+                  handleStatusChange(nextInputValue)
+                }
+              >
+                <ComboboxInput
+                  id="logs-filter-status"
+                  inputMode="numeric"
+                  placeholder="Type 100-599 or choose common code"
+                  showClear
+                />
+                <ComboboxContent>
+                  <ComboboxEmpty>No matching status code.</ComboboxEmpty>
+                  <ComboboxList>
+                    {COMMON_STATUS_CODES.map((code) => (
+                      <ComboboxItem key={code} value={code}>
+                        {STATUS_CODE_LABELS[code]}
+                      </ComboboxItem>
+                    ))}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
             </div>
             <div className="flex items-end">
               <Button

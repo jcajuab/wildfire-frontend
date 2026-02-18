@@ -56,7 +56,7 @@ export function LogMetadataDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[85vh] overflow-hidden sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-lg">Request metadata</DialogTitle>
           <DialogDescription>
@@ -64,7 +64,8 @@ export function LogMetadataDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-2">
+        <div className="min-h-0 overflow-y-auto pr-1">
+          <div className="flex flex-col gap-4 py-2">
           <div className="flex items-center gap-2 text-sm font-medium">
             <IconHistory className="size-4" />
             Log entry
@@ -117,19 +118,22 @@ export function LogMetadataDialog({
                   <IconListDetails className="size-4" />
                   Technical fields
                 </div>
-                <div className="grid grid-cols-2 gap-y-2 text-sm">
-                  {Object.entries(log.rawMetadata).map(([key, value]) => (
-                    <Fragment key={`raw-${key}`}>
-                      <span className="text-muted-foreground">{key}:</span>
-                      <span className="font-mono text-xs break-all">
-                        {formatMetadataValue(value)}
-                      </span>
-                    </Fragment>
-                  ))}
+                <div className="max-h-56 overflow-y-auto rounded-md border p-3">
+                  <div className="grid grid-cols-2 gap-y-2 text-sm">
+                    {Object.entries(log.rawMetadata).map(([key, value]) => (
+                      <Fragment key={`raw-${key}`}>
+                        <span className="text-muted-foreground">{key}:</span>
+                        <span className="font-mono text-xs break-all">
+                          {formatMetadataValue(value)}
+                        </span>
+                      </Fragment>
+                    ))}
+                  </div>
                 </div>
               </>
             )}
           </div>
+        </div>
         </div>
 
         <DialogFooter className="sm:justify-between">
