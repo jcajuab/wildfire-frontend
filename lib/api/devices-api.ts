@@ -42,10 +42,22 @@ export interface UpdateDeviceRequest {
   readonly orientation?: "LANDSCAPE" | "PORTRAIT" | null;
 }
 
+export interface DeviceGroup {
+  readonly id: string;
+  readonly name: string;
+  readonly deviceIds: readonly string[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface DeviceGroupsListResponse {
+  readonly items: readonly DeviceGroup[];
+}
+
 export const devicesApi = createApi({
   reducerPath: "devicesApi",
   baseQuery,
-  tagTypes: ["Device"],
+  tagTypes: ["Device", "DeviceGroup"],
   endpoints: (build) => ({
     getDevices: build.query<DevicesListResponse, void>({
       async queryFn(_arg, _api, _extraOptions, baseQueryFn) {
@@ -106,6 +118,39 @@ export const devicesApi = createApi({
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Device", id: "LIST" },
         { type: "Device", id },
+      ],
+    }),
+    getDeviceGroups: build.query<DeviceGroupsListResponse, void>({
+      query: () => "devices/groups",
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.items.map(({ id }) => ({
+                type: "DeviceGroup" as const,
+                id,
+              })),
+              { type: "DeviceGroup", id: "LIST" },
+            ]
+          : [{ type: "DeviceGroup", id: "LIST" }],
+    }),
+    createDeviceGroup: build.mutation<DeviceGroup, { name: string }>({
+      query: (body) => ({
+        url: "devices/groups",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "DeviceGroup", id: "LIST" }],
+    }),
+    setDeviceGroups: build.mutation<void, { deviceId: string; groupIds: string[] }>({
+      query: ({ deviceId, groupIds }) => ({
+        url: `devices/${deviceId}/groups`,
+        method: "PUT",
+        body: { groupIds },
+      }),
+      invalidatesTags: (_result, _error, { deviceId }) => [
+        { type: "Device", id: "LIST" },
+        { type: "Device", id: deviceId },
+        { type: "DeviceGroup", id: "LIST" },
       ],
     }),
     registerDevice: build.mutation<
@@ -178,5 +223,8 @@ export const {
   useGetDeviceQuery,
   useLazyGetDeviceQuery,
   useUpdateDeviceMutation,
+  useGetDeviceGroupsQuery,
+  useCreateDeviceGroupMutation,
+  useSetDeviceGroupsMutation,
   useRegisterDeviceMutation,
 } = devicesApi;

@@ -20,10 +20,13 @@ import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  useCreateDeviceGroupMutation,
+  useGetDeviceGroupsQuery,
   useGetDevicesQuery,
+  useSetDeviceGroupsMutation,
   useUpdateDeviceMutation,
 } from "@/lib/api/devices-api";
-import { mapDeviceToDisplay } from "@/lib/map-device-to-display";
+import { mapDeviceToDisplay, withDisplayGroups } from "@/lib/map-device-to-display";
 import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
@@ -43,6 +46,7 @@ export default function DisplaysPage(): ReactElement {
   const canUpdateDisplay = useCan("devices:update");
   const canDeleteDisplay = useCan("devices:delete");
   const { data: devicesData, isLoading, isError, error } = useGetDevicesQuery();
+  const { data: deviceGroupsData } = useGetDeviceGroupsQuery();
 
   const [statusFilter, setStatusFilter] =
     useQueryEnumState<DisplayStatusFilter>(
@@ -64,10 +68,27 @@ export default function DisplaysPage(): ReactElement {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedDisplay, setSelectedDisplay] = useState<Display | null>(null);
   const [updateDevice] = useUpdateDeviceMutation();
+  const [setDeviceGroups] = useSetDeviceGroupsMutation();
+  const [createDeviceGroup] = useCreateDeviceGroupMutation();
 
   const displays: Display[] = useMemo(
-    () => (devicesData?.items ?? []).map(mapDeviceToDisplay),
-    [devicesData?.items],
+    () => {
+      const groupNamesByDeviceId = new Map<string, string[]>();
+      for (const group of deviceGroupsData?.items ?? []) {
+        for (const deviceId of group.deviceIds) {
+          const existing = groupNamesByDeviceId.get(deviceId) ?? [];
+          existing.push(group.name);
+          groupNamesByDeviceId.set(deviceId, existing);
+        }
+      }
+      return (devicesData?.items ?? []).map((device) =>
+        withDisplayGroups(
+          mapDeviceToDisplay(device),
+          groupNamesByDeviceId.get(device.id) ?? [],
+        ),
+      );
+    },
+    [devicesData?.items, deviceGroupsData?.items],
   );
   const pageSize = 20;
 
@@ -155,6 +176,27 @@ export default function DisplaysPage(): ReactElement {
           screenWidth,
           screenHeight,
         }).unwrap();
+
+        const existingByName = new Map(
+          (deviceGroupsData?.items ?? []).map((group) => [group.name, group.id]),
+        );
+        const nextGroupIds: string[] = [];
+        for (const rawName of display.groups) {
+          const name = rawName.trim();
+          if (name.length === 0) continue;
+          const existingId = existingByName.get(name);
+          if (existingId) {
+            nextGroupIds.push(existingId);
+            continue;
+          }
+          const created = await createDeviceGroup({ name }).unwrap();
+          existingByName.set(created.name, created.id);
+          nextGroupIds.push(created.id);
+        }
+        await setDeviceGroups({
+          deviceId: display.id,
+          groupIds: nextGroupIds,
+        }).unwrap();
         toast.success(`Updated "${display.name}".`);
       } catch (err) {
         toast.error(
@@ -162,7 +204,7 @@ export default function DisplaysPage(): ReactElement {
         );
       }
     },
-    [updateDevice],
+    [updateDevice, deviceGroupsData, createDeviceGroup, setDeviceGroups],
   );
 
   const filteredDisplays = useMemo(

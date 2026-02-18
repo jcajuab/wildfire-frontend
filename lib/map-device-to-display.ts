@@ -21,3 +21,13 @@ export function mapDeviceToDisplay(device: Device): Display {
     nowPlaying: null,
   };
 }
+
+export function withDisplayGroups(
+  display: Display,
+  groups: readonly string[],
+): Display {
+  return {
+    ...display,
+    groups: [...groups],
+  };
+}
