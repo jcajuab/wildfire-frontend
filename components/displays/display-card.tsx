@@ -41,7 +41,7 @@ function getStatusColor(status: DisplayStatus): string {
     case "LIVE":
       return "bg-destructive";
     case "DOWN":
-      return "bg-destructive";
+      return "bg-amber-500";
     default:
       return "bg-muted-foreground";
   }
@@ -67,7 +67,7 @@ function getStatusTextColor(status: DisplayStatus): string {
     case "LIVE":
       return "text-destructive";
     case "DOWN":
-      return "text-destructive";
+      return "text-amber-600 dark:text-amber-400";
     default:
       return "text-muted-foreground";
   }
