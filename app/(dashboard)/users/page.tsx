@@ -17,6 +17,11 @@ import { UsersTable } from "@/components/users/users-table";
 import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
 import {
+  AuthApiError,
+  createInvitation,
+  type CreateInvitationResponse,
+} from "@/lib/api-client";
+import {
   useQueryEnumState,
   useQueryNumberState,
   useQueryStringState,
@@ -25,7 +30,6 @@ import {
   useLazyGetUserRolesQuery,
   useGetUsersQuery,
   useGetRolesQuery,
-  useCreateUserMutation,
   useUpdateUserMutation,
   useDeleteUserMutation,
   useSetUserRolesMutation,
@@ -54,7 +58,6 @@ export default function UsersPage(): ReactElement {
     isError: usersError,
   } = useGetUsersQuery();
   const { data: rolesData } = useGetRolesQuery();
-  const [createUser] = useCreateUserMutation();
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
   const [setUserRoles] = useSetUserRolesMutation();
@@ -130,42 +133,49 @@ export default function UsersPage(): ReactElement {
     [setSortField, setSortDirection, setPage],
   );
 
-  const handleInvite = useCallback(
-    async (emails: readonly string[]) => {
-      try {
-        const results = await Promise.allSettled(
-          emails.map((email) =>
-            createUser({
-              email,
-              name: email.split("@")[0] ?? "User",
-              isActive: true,
-            }).unwrap(),
-          ),
-        );
+  const handleInvite = useCallback(async (emails: readonly string[]) => {
+    try {
+      const results = await Promise.allSettled(
+        emails.map((email) => createInvitation({ email })),
+      );
 
-        const failedInvites = results.filter(
-          (result): result is PromiseRejectedResult =>
-            result.status === "rejected",
-        );
+      const failedInvites = results.filter(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      );
 
-        if (failedInvites.length > 0) {
-          const firstError = failedInvites[0]?.reason;
-          const details =
-            firstError instanceof Error ? `: ${firstError.message}` : "";
-          throw new Error(
-            `${failedInvites.length} of ${emails.length} invites failed${details}`,
-          );
-        }
-
-        setIsInviteDialogOpen(false);
-      } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to invite user(s)",
+      if (failedInvites.length > 0) {
+        const firstError = failedInvites[0]?.reason;
+        const details =
+          firstError instanceof Error ? `: ${firstError.message}` : "";
+        throw new Error(
+          `${failedInvites.length} of ${emails.length} invites failed${details}`,
         );
       }
-    },
-    [createUser],
-  );
+
+      const firstSuccess = results.find(
+        (result): result is PromiseFulfilledResult<CreateInvitationResponse> =>
+          result.status === "fulfilled",
+      );
+      if (firstSuccess?.value.inviteUrl) {
+        toast.success(
+          "Invitations created. Dev invite URL available in response.",
+        );
+      } else {
+        toast.success("Invitations created successfully.");
+      }
+
+      setIsInviteDialogOpen(false);
+    } catch (err) {
+      if (err instanceof AuthApiError && err.status === 429) {
+        toast.error("Too many invite requests. Please wait and try again.");
+        return;
+      }
+      toast.error(
+        err instanceof Error ? err.message : "Failed to invite user(s)",
+      );
+    }
+  }, []);
 
   const systemRoleIds = useMemo(
     () => (rolesData ?? []).filter((r) => r.isSystem).map((r) => r.id),
