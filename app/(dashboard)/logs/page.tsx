@@ -351,7 +351,7 @@ export default function LogsPage(): ReactElement {
                 id="logs-filter-action"
                 value={action}
                 onChange={(e) => handleActionChange(e.target.value)}
-                placeholder="e.g. rbac.user.update"
+                placeholder="e.g. auth.session or rbac.user.update"
               />
             </div>
             <div className="space-y-1.5">
@@ -360,7 +360,7 @@ export default function LogsPage(): ReactElement {
                 id="logs-filter-request-id"
                 value={requestId}
                 onChange={(e) => handleRequestIdChange(e.target.value)}
-                placeholder="req-..."
+                placeholder="e.g. 2be5fd5a or full UUID"
               />
             </div>
             <div className="space-y-1.5">

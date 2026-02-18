@@ -180,7 +180,7 @@ export function AppSidebar(): ReactElement {
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
+                  variant="destructive"
                   onSelect={(e) => {
                     e.preventDefault();
                     void logout();
