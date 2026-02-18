@@ -1,4 +1,13 @@
-import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import {
+  type BaseQueryFn,
+  fetchBaseQuery,
+  type FetchArgs,
+  type FetchBaseQueryError,
+} from "@reduxjs/toolkit/query/react";
+import {
+  AUTH_API_ERROR_EVENT,
+  type AuthApiErrorEventDetail,
+} from "@/lib/auth-events";
 
 /**
  * Backend API base URL (no trailing slash). Empty string if not set.
@@ -31,7 +40,7 @@ export function getDevOnlyRequestHeaders(): Record<string, string> {
 /**
  * Shared base query for all RTK Query APIs. Adds auth token and dev-only ngrok header.
  */
-export const baseQuery = fetchBaseQuery({
+const rawBaseQuery = fetchBaseQuery({
   baseUrl: getBaseUrl(),
   credentials: "include",
   prepareHeaders(headers) {
@@ -41,3 +50,38 @@ export const baseQuery = fetchBaseQuery({
     return headers;
   },
 });
+
+/**
+ * Shared baseQuery wrapper that emits global auth events for 401/403/429.
+ * AuthContext listens to this event for deterministic auth/session behavior.
+ */
+export const baseQuery: BaseQueryFn<
+  string | FetchArgs,
+  unknown,
+  FetchBaseQueryError
+> = async (args, api, extraOptions) => {
+  const result = await rawBaseQuery(args, api, extraOptions);
+  const status = result.error?.status;
+  if (
+    typeof window !== "undefined" &&
+    (status === 401 || status === 403 || status === 429)
+  ) {
+    const detail: AuthApiErrorEventDetail = {
+      status,
+      url:
+        typeof args === "string"
+          ? args
+          : typeof args.url === "string"
+            ? args.url
+            : "",
+      method:
+        typeof args === "string"
+          ? "GET"
+          : typeof args.method === "string"
+            ? args.method
+            : "GET",
+    };
+    window.dispatchEvent(new CustomEvent(AUTH_API_ERROR_EVENT, { detail }));
+  }
+  return result;
+};

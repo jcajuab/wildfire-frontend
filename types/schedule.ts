@@ -2,11 +2,6 @@ export type RecurrenceType = "DAILY" | "WEEKLY" | "MONTHLY" | "NONE";
 
 export type CalendarView = "resource-week" | "resource-day";
 
-export interface ScheduleCreator {
-  readonly id: string;
-  readonly name: string;
-}
-
 export interface SchedulePlaylist {
   readonly id: string;
   readonly name: string;
@@ -31,7 +26,6 @@ export interface Schedule {
   readonly isActive: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
-  readonly createdBy: ScheduleCreator;
 }
 
 export interface ScheduleFormData {

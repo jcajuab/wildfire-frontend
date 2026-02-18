@@ -65,10 +65,6 @@ export function mapBackendScheduleToSchedule(item: BackendSchedule): Schedule {
     isActive: item.isActive,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
-    createdBy: {
-      id: "",
-      name: "Unknown",
-    },
   };
 }
 

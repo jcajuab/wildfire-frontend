@@ -30,7 +30,40 @@ export const devicesApi = createApi({
   tagTypes: ["Device"],
   endpoints: (build) => ({
     getDevices: build.query<DevicesListResponse, void>({
-      query: () => "devices",
+      async queryFn(_arg, _api, _extraOptions, baseQueryFn) {
+        const pageSize = 100;
+        let page = 1;
+        let total = 0;
+        const allItems: Device[] = [];
+
+        while (true) {
+          const result = await baseQueryFn({
+            url: "devices",
+            params: { page, pageSize },
+          });
+          if (result.error) {
+            return { error: result.error };
+          }
+
+          const data = result.data as DevicesListResponse;
+          total = data.total;
+          allItems.push(...data.items);
+
+          if (allItems.length >= total || data.items.length === 0) {
+            break;
+          }
+          page += 1;
+        }
+
+        return {
+          data: {
+            items: allItems,
+            total: allItems.length,
+            page: 1,
+            pageSize: allItems.length === 0 ? pageSize : allItems.length,
+          },
+        };
+      },
       providesTags: (result) =>
         result
           ? [
