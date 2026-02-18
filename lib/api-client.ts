@@ -274,6 +274,66 @@ export async function resetPassword(
   throw new AuthApiError(message, response.status, data);
 }
 
+export interface CreateInvitationResponse {
+  readonly id: string;
+  readonly expiresAt: string;
+  readonly inviteUrl?: string;
+}
+
+/** POST /auth/invitations. Requires users:create permission. */
+export async function createInvitation(input: {
+  email: string;
+  name?: string;
+}): Promise<CreateInvitationResponse> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/invitations`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...getDevOnlyRequestHeaders(),
+    },
+    body: JSON.stringify(input),
+  });
+
+  const data = (await response.json()) as
+    | CreateInvitationResponse
+    | ApiErrorResponse;
+  if (!response.ok) {
+    const error = data as ApiErrorResponse;
+    const message =
+      error?.error?.message ?? `Request failed with status ${response.status}`;
+    throw new AuthApiError(message, response.status, error);
+  }
+
+  return data as CreateInvitationResponse;
+}
+
+/** POST /auth/invitations/accept. Returns 204 on success. */
+export async function acceptInvitation(input: {
+  token: string;
+  password: string;
+  name?: string;
+}): Promise<void> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/invitations/accept`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...getDevOnlyRequestHeaders(),
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (response.status === 204) return;
+
+  const data = (await response.json()) as ApiErrorResponse;
+  const message =
+    data?.error?.message ?? `Request failed with status ${response.status}`;
+  throw new AuthApiError(message, response.status, data);
+}
+
 /** Error thrown by auth API with status and optional backend body. */
 export class AuthApiError extends Error {
   constructor(
