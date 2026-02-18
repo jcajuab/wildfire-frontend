@@ -100,6 +100,7 @@ export default function UsersPage(): ReactElement {
         email: user.email,
         name: user.name,
         isActive: user.isActive,
+        lastSeenAt: user.lastSeenAt ?? null,
         avatarUrl: user.avatarUrl ?? null,
       })),
     [usersData],

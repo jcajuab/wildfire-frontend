@@ -102,36 +102,40 @@ function InviteUsersDialogContent({
   );
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">
       <DialogHeader>
         <DialogTitle>Invite New Users</DialogTitle>
       </DialogHeader>
 
-      <div className="flex flex-col gap-4 py-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 py-4">
         {/* Email inputs */}
-        <div className="flex flex-col gap-2">
+        <div className="flex min-h-0 flex-col gap-2">
           <Label>Email</Label>
-          {emails.map((email, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => handleEmailChange(index, e.target.value)}
-                placeholder="jane.doe@example.com"
-              />
-              {emails.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => handleRemoveEmail(index)}
-                  aria-label={`Remove email field ${index + 1}`}
-                >
-                  <IconX className="size-4" />
-                </Button>
-              )}
+          <div className="max-h-56 overflow-y-auto pr-1">
+            <div className="flex flex-col gap-2">
+              {emails.map((email, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => handleEmailChange(index, e.target.value)}
+                    placeholder="jane.doe@example.com"
+                  />
+                  {emails.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleRemoveEmail(index)}
+                      aria-label={`Remove email field ${index + 1}`}
+                    >
+                      <IconX className="size-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
 
         {/* Add another email link */}
@@ -205,7 +209,7 @@ export function InviteUsersDialog({
 }: InviteUsersDialogProps): ReactElement {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[85vh] overflow-hidden sm:max-w-md">
         {open && (
           <InviteUsersDialogContent
             key="invite-users-form"

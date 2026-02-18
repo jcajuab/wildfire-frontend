@@ -23,6 +23,7 @@ export interface RbacUser {
   readonly email: string;
   readonly name: string;
   readonly isActive: boolean;
+  readonly lastSeenAt?: string | null;
   /** Presigned avatar URL when user has profile picture in MinIO. */
   readonly avatarUrl?: string | null;
 }
