@@ -28,6 +28,7 @@ interface ContentCardProps {
   readonly onDownload: (content: Content) => void;
   readonly canUpdate?: boolean;
   readonly canDelete?: boolean;
+  readonly canDownload?: boolean;
 }
 
 export const ContentCard = memo(function ContentCard({
@@ -38,6 +39,7 @@ export const ContentCard = memo(function ContentCard({
   onDownload,
   canUpdate = true,
   canDelete = true,
+  canDownload = true,
 }: ContentCardProps): ReactElement {
   return (
     <div className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-md">
@@ -83,10 +85,12 @@ export const ContentCard = memo(function ContentCard({
               <IconEye className="size-4" />
               View Details
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDownload(content)}>
-              <IconDownload className="size-4" />
-              Download File
-            </DropdownMenuItem>
+            {canDownload && (
+              <DropdownMenuItem onClick={() => onDownload(content)}>
+                <IconDownload className="size-4" />
+                Download File
+              </DropdownMenuItem>
+            )}
             {canDelete && (
               <DropdownMenuItem
                 onClick={() => onDelete(content)}

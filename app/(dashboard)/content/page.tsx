@@ -209,6 +209,7 @@ function PreviewContentDialog({
 export default function ContentPage(): ReactElement {
   const canUpdateContent = useCan("content:update");
   const canDeleteContent = useCan("content:delete");
+  const canDownloadContent = useCan("content:download");
   const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(
     "status",
     "all",
@@ -406,6 +407,7 @@ export default function ContentPage(): ReactElement {
             onDownload={handleDownload}
             canUpdate={canUpdateContent}
             canDelete={canDeleteContent}
+            canDownload={canDownloadContent}
           />
         </DashboardPage.Content>
 

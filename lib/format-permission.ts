@@ -37,6 +37,8 @@ export function formatPermissionReadableLabel(permission: {
   switch (action) {
     case "read":
       return `View ${resource}`;
+    case "download":
+      return `Download ${resource}`;
     case "create":
       return `Create ${resource}`;
     case "update":

@@ -15,6 +15,7 @@ interface ContentGridProps {
   readonly onDownload: (content: Content) => void;
   readonly canUpdate?: boolean;
   readonly canDelete?: boolean;
+  readonly canDownload?: boolean;
 }
 
 export function ContentGrid({
@@ -25,6 +26,7 @@ export function ContentGrid({
   onDownload,
   canUpdate = true,
   canDelete = true,
+  canDownload = true,
 }: ContentGridProps): ReactElement {
   if (items.length === 0) {
     return (
@@ -48,6 +50,7 @@ export function ContentGrid({
           onDownload={onDownload}
           canUpdate={canUpdate}
           canDelete={canDelete}
+          canDownload={canDownload}
         />
       ))}
     </div>
