@@ -13,6 +13,7 @@ import { RoleSearchInput } from "@/components/roles/role-search-input";
 import { RolesPagination } from "@/components/roles/roles-pagination";
 import { RolesTable } from "@/components/roles/roles-table";
 import { Button } from "@/components/ui/button";
+import { formatDateTime } from "@/lib/formatters";
 import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
@@ -20,7 +21,10 @@ import {
   useQueryStringState,
 } from "@/hooks/use-query-state";
 import {
+  useApproveRoleDeletionRequestMutation,
+  useCreateRoleDeletionRequestMutation,
   useGetRolesQuery,
+  useGetRoleDeletionRequestsQuery,
   useGetPermissionsQuery,
   useGetUsersQuery,
   useGetRolePermissionsQuery,
@@ -28,6 +32,7 @@ import {
   useCreateRoleMutation,
   useUpdateRoleMutation,
   useDeleteRoleMutation,
+  useRejectRoleDeletionRequestMutation,
   useSetRolePermissionsMutation,
   useSetUserRolesMutation,
   useLazyGetUserRolesQuery,
@@ -55,10 +60,14 @@ export default function RolesPage(): ReactElement {
   } = useGetRolesQuery();
   const { data: permissionsData } = useGetPermissionsQuery();
   const { data: usersData } = useGetUsersQuery();
+  const { data: deletionRequestsData } = useGetRoleDeletionRequestsQuery();
 
   const [createRole] = useCreateRoleMutation();
   const [updateRole] = useUpdateRoleMutation();
   const [deleteRole] = useDeleteRoleMutation();
+  const [createRoleDeletionRequest] = useCreateRoleDeletionRequestMutation();
+  const [approveRoleDeletionRequest] = useApproveRoleDeletionRequestMutation();
+  const [rejectRoleDeletionRequest] = useRejectRoleDeletionRequestMutation();
   const [setRolePermissions] = useSetRolePermissionsMutation();
   const [setUserRoles] = useSetUserRolesMutation();
   const [getUserRolesTrigger] = useLazyGetUserRolesQuery();
@@ -317,10 +326,10 @@ export default function RolesPage(): ReactElement {
   if (rolesLoading) {
     return (
       <DashboardPage.Root>
-        <DashboardPage.Header title='Roles' />
+        <DashboardPage.Header title="Roles" />
         <DashboardPage.Body>
-          <DashboardPage.Content className='flex items-center justify-center'>
-            <p className='text-muted-foreground'>Loading roles…</p>
+          <DashboardPage.Content className="flex items-center justify-center">
+            <p className="text-muted-foreground">Loading roles…</p>
           </DashboardPage.Content>
         </DashboardPage.Body>
       </DashboardPage.Root>
@@ -330,10 +339,10 @@ export default function RolesPage(): ReactElement {
   if (rolesError) {
     return (
       <DashboardPage.Root>
-        <DashboardPage.Header title='Roles' />
+        <DashboardPage.Header title="Roles" />
         <DashboardPage.Body>
-          <DashboardPage.Content className='flex items-center justify-center'>
-            <p className='text-destructive'>
+          <DashboardPage.Content className="flex items-center justify-center">
+            <p className="text-destructive">
               Failed to load roles. Check the API and try again.
             </p>
           </DashboardPage.Content>
@@ -345,11 +354,11 @@ export default function RolesPage(): ReactElement {
   return (
     <DashboardPage.Root>
       <DashboardPage.Header
-        title='Roles'
+        title="Roles"
         actions={
-          <Can permission='roles:create'>
+          <Can permission="roles:create">
             <Button onClick={handleCreate}>
-              <IconPlus className='size-4' />
+              <IconPlus className="size-4" />
               Create Role
             </Button>
           </Can>
@@ -357,16 +366,16 @@ export default function RolesPage(): ReactElement {
       />
       <DashboardPage.Body>
         <DashboardPage.Toolbar>
-          <h2 className='text-base font-semibold'>Search Results</h2>
+          <h2 className="text-base font-semibold">Search Results</h2>
           <RoleSearchInput
             value={search}
             onChange={handleSearchChange}
-            className='w-full max-w-none md:w-72'
+            className="w-full max-w-none md:w-72"
           />
         </DashboardPage.Toolbar>
 
-        <DashboardPage.Content className='pt-6'>
-          <div className='overflow-hidden rounded-lg border'>
+        <DashboardPage.Content className="pt-6">
+          <div className="overflow-hidden rounded-lg border">
             <RolesTable
               roles={paginatedRoles}
               sort={sort}
@@ -375,6 +384,7 @@ export default function RolesPage(): ReactElement {
               onDelete={handleDeleteRequest}
               canEdit={canUpdateRole}
               canDelete={canDeleteRole}
+              deleteLabel={isSuperAdmin ? "Delete Role" : "Request Deletion"}
               isSuperAdmin={isSuperAdmin}
             />
           </div>
@@ -411,7 +421,7 @@ export default function RolesPage(): ReactElement {
       <ConfirmActionDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        title='Delete role?'
+        title={isSuperAdmin ? "Delete role?" : "Request role deletion?"}
         description={
           roleToDelete
             ? (roleToDelete.usersCount ?? 0) > 0
@@ -421,17 +431,26 @@ export default function RolesPage(): ReactElement {
               : `This will permanently delete "${roleToDelete.name}".`
             : undefined
         }
-        confirmLabel='Delete role'
+        confirmLabel={isSuperAdmin ? "Delete role" : "Request deletion"}
         onConfirm={async () => {
           if (!roleToDelete) return;
           try {
-            await deleteRole(roleToDelete.id).unwrap();
-            const removedUsers = roleToDelete.usersCount ?? 0;
-            toast.success(
-              removedUsers > 0
-                ? `Deleted "${roleToDelete.name}" and removed ${removedUsers} assignment(s).`
-                : `Deleted "${roleToDelete.name}".`,
-            );
+            if (isSuperAdmin) {
+              await deleteRole(roleToDelete.id).unwrap();
+              const removedUsers = roleToDelete.usersCount ?? 0;
+              toast.success(
+                removedUsers > 0
+                  ? `Deleted "${roleToDelete.name}" and removed ${removedUsers} assignment(s).`
+                  : `Deleted "${roleToDelete.name}".`,
+              );
+            } else {
+              await createRoleDeletionRequest({
+                roleId: roleToDelete.id,
+              }).unwrap();
+              toast.success(
+                `Deletion request for "${roleToDelete.name}" was sent to Super Admin.`,
+              );
+            }
             setRoleToDelete(null);
           } catch (err) {
             toast.error(
@@ -441,6 +460,101 @@ export default function RolesPage(): ReactElement {
           }
         }}
       />
+
+      <Can permission="roles:read">
+        <div className="mx-auto w-full max-w-[--breakpoint-2xl] px-4 pb-6 md:px-6 lg:px-8">
+          <div className="overflow-hidden rounded-lg border">
+            <div className="border-b px-4 py-3">
+              <h3 className="text-sm font-semibold">Role Deletion Requests</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-2">Role</th>
+                    <th className="px-4 py-2">Requested By</th>
+                    <th className="px-4 py-2">Requested At</th>
+                    <th className="px-4 py-2">Status</th>
+                    <th className="px-4 py-2">Reason</th>
+                    <th className="px-4 py-2 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(deletionRequestsData ?? []).map((request) => (
+                    <tr key={request.id} className="border-t">
+                      <td className="px-4 py-2">{request.roleName}</td>
+                      <td className="px-4 py-2">{request.requestedByName}</td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {formatDateTime(request.requestedAt)}
+                      </td>
+                      <td className="px-4 py-2">{request.status}</td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {request.reason ?? "-"}
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        {isSuperAdmin && request.status === "pending" ? (
+                          <div className="inline-flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={async () => {
+                                try {
+                                  await approveRoleDeletionRequest({
+                                    requestId: request.id,
+                                  }).unwrap();
+                                  toast.success("Deletion request approved.");
+                                } catch (err) {
+                                  toast.error(
+                                    err instanceof Error
+                                      ? err.message
+                                      : "Failed to approve request",
+                                  );
+                                }
+                              }}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={async () => {
+                                try {
+                                  await rejectRoleDeletionRequest({
+                                    requestId: request.id,
+                                  }).unwrap();
+                                  toast.success("Deletion request rejected.");
+                                } catch (err) {
+                                  toast.error(
+                                    err instanceof Error
+                                      ? err.message
+                                      : "Failed to reject request",
+                                  );
+                                }
+                              }}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                  {(deletionRequestsData ?? []).length === 0 ? (
+                    <tr>
+                      <td
+                        className="px-4 py-8 text-center text-muted-foreground"
+                        colSpan={6}
+                      >
+                        No role deletion requests yet.
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </Can>
     </DashboardPage.Root>
   );
 }

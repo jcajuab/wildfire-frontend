@@ -37,6 +37,7 @@ interface RolesTableProps {
   readonly onDelete: (role: Role) => void;
   readonly canEdit?: boolean;
   readonly canDelete?: boolean;
+  readonly deleteLabel?: string;
   /** When false, the 3-dot menu is hidden for system roles (e.g. Super Admin). */
   readonly isSuperAdmin?: boolean;
 }
@@ -90,6 +91,7 @@ interface RoleActionsMenuProps {
   readonly onDelete: (role: Role) => void;
   readonly canEdit: boolean;
   readonly canDelete: boolean;
+  readonly deleteLabel: string;
 }
 
 function RoleActionsMenu({
@@ -98,6 +100,7 @@ function RoleActionsMenu({
   onDelete,
   canEdit,
   canDelete,
+  deleteLabel,
 }: RoleActionsMenuProps): ReactElement | null {
   if (!canEdit && !canDelete) return null;
   return (
@@ -121,7 +124,7 @@ function RoleActionsMenu({
             className="text-destructive focus:text-destructive"
           >
             <IconTrash className="size-4" />
-            Delete Role
+            {deleteLabel}
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>
@@ -137,6 +140,7 @@ export function RolesTable({
   onDelete,
   canEdit = true,
   canDelete = true,
+  deleteLabel = "Delete Role",
   isSuperAdmin = false,
 }: RolesTableProps): ReactElement {
   if (roles.length === 0) {
@@ -195,6 +199,7 @@ export function RolesTable({
                 onDelete={onDelete}
                 canEdit={canEdit && (isSuperAdmin || !role.isSystem)}
                 canDelete={canDelete && (isSuperAdmin || !role.isSystem)}
+                deleteLabel={deleteLabel}
               />
             </TableCell>
           </TableRow>
