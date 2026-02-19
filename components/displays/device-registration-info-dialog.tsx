@@ -42,6 +42,8 @@ export function DeviceRegistrationInfoDialog({
   const [identifier, setIdentifier] = useState("");
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
+  const [screenWidth, setScreenWidth] = useState("");
+  const [screenHeight, setScreenHeight] = useState("");
   const [pairingCode, setPairingCode] = useState("");
   const [pairingCodeExpiresAt, setPairingCodeExpiresAt] = useState<
     string | null
@@ -57,6 +59,8 @@ export function DeviceRegistrationInfoDialog({
     setIdentifier("");
     setName("");
     setLocation("");
+    setScreenWidth("");
+    setScreenHeight("");
     setPairingCode("");
     setPairingCodeExpiresAt(null);
   }, []);
@@ -76,9 +80,21 @@ export function DeviceRegistrationInfoDialog({
       const trimmedName = name.trim();
       const trimmedLocation = location.trim();
       const trimmedPairingCode = pairingCode.trim();
+      const parsedScreenWidth = Number.parseInt(screenWidth, 10);
+      const parsedScreenHeight = Number.parseInt(screenHeight, 10);
 
-      if (!trimmedIdentifier || !trimmedName || !trimmedPairingCode) {
-        toast.error("Identifier, name, and pairing code are required.");
+      if (
+        !trimmedIdentifier ||
+        !trimmedName ||
+        !trimmedPairingCode ||
+        !Number.isInteger(parsedScreenWidth) ||
+        parsedScreenWidth <= 0 ||
+        !Number.isInteger(parsedScreenHeight) ||
+        parsedScreenHeight <= 0
+      ) {
+        toast.error(
+          "Identifier, name, pairing code, and valid resolution are required.",
+        );
         return;
       }
 
@@ -88,6 +104,8 @@ export function DeviceRegistrationInfoDialog({
           identifier: trimmedIdentifier,
           name: trimmedName,
           location: trimmedLocation || undefined,
+          screenWidth: parsedScreenWidth,
+          screenHeight: parsedScreenHeight,
         }).unwrap();
         toast.success("Display registered.");
         handleOpenChange(false);
@@ -107,6 +125,8 @@ export function DeviceRegistrationInfoDialog({
       identifier,
       name,
       location,
+      screenWidth,
+      screenHeight,
       pairingCode,
       registerDevice,
       handleOpenChange,
@@ -129,6 +149,8 @@ export function DeviceRegistrationInfoDialog({
   const canSubmit =
     identifier.trim().length > 0 &&
     name.trim().length > 0 &&
+    Number.parseInt(screenWidth, 10) > 0 &&
+    Number.parseInt(screenHeight, 10) > 0 &&
     pairingCode.trim().length > 0 &&
     !isSubmitting;
 
@@ -177,6 +199,34 @@ export function DeviceRegistrationInfoDialog({
               autoComplete="off"
               disabled={isSubmitting}
             />
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="register-screen-width">Screen width</Label>
+              <Input
+                id="register-screen-width"
+                type="number"
+                min={1}
+                placeholder="1366"
+                value={screenWidth}
+                onChange={(e) => setScreenWidth(e.target.value)}
+                autoComplete="off"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="register-screen-height">Screen height</Label>
+              <Input
+                id="register-screen-height"
+                type="number"
+                min={1}
+                placeholder="768"
+                value={screenHeight}
+                onChange={(e) => setScreenHeight(e.target.value)}
+                autoComplete="off"
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between gap-2">

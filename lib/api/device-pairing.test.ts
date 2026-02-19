@@ -60,10 +60,14 @@ describe("device pairing API", () => {
         pairingCode: "123456",
         identifier: "display-01",
         name: "Lobby",
+        screenWidth: 1366,
+        screenHeight: 768,
       }),
     );
     expect("error" in result).toBe(false);
     expect(capturedBody).toContain('"pairingCode":"123456"');
+    expect(capturedBody).toContain('"screenWidth":1366');
+    expect(capturedBody).toContain('"screenHeight":768');
     expect(capturedBody).not.toContain("apiKey");
     const headers = new Headers(capturedHeaders);
     expect(headers.has("x-api-key")).toBe(false);

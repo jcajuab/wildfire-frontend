@@ -197,6 +197,8 @@ export const devicesApi = createApi({
         deviceFingerprint?: string | null;
         name: string;
         location?: string | null;
+        screenWidth: number;
+        screenHeight: number;
       }
     >({
       queryFn: async (arg) => {
@@ -215,10 +217,14 @@ export const devicesApi = createApi({
           deviceFingerprint?: string;
           name: string;
           location?: string;
+          screenWidth: number;
+          screenHeight: number;
         } = {
           pairingCode: arg.pairingCode,
           identifier: arg.identifier,
           name: arg.name,
+          screenWidth: arg.screenWidth,
+          screenHeight: arg.screenHeight,
         };
         if (arg.deviceFingerprint != null && arg.deviceFingerprint !== "") {
           body.deviceFingerprint = arg.deviceFingerprint;

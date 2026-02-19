@@ -51,6 +51,8 @@ describe("DeviceRegistrationInfoDialog", () => {
 
     await user.type(screen.getByLabelText("Identifier"), "display-01");
     await user.type(screen.getByLabelText("Name"), "Lobby Display");
+    await user.type(screen.getByLabelText("Screen width"), "1366");
+    await user.type(screen.getByLabelText("Screen height"), "768");
     await user.click(screen.getByRole("button", { name: "Register" }));
 
     expect(registerDeviceMock).toHaveBeenCalledWith({
@@ -58,6 +60,8 @@ describe("DeviceRegistrationInfoDialog", () => {
       identifier: "display-01",
       name: "Lobby Display",
       location: undefined,
+      screenWidth: 1366,
+      screenHeight: 768,
     });
   });
 });

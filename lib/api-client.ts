@@ -281,6 +281,58 @@ export interface CreateInvitationResponse {
   readonly inviteUrl?: string;
 }
 
+export interface DeviceRuntimeSettingsResponse {
+  readonly scrollPxPerSecond: number;
+}
+
+/** GET /settings/device-runtime. Requires settings:read permission. */
+export async function getDeviceRuntimeSettings(): Promise<DeviceRuntimeSettingsResponse> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/settings/device-runtime`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      ...getDevOnlyRequestHeaders(),
+    },
+  });
+  const data = (await response.json()) as
+    | DeviceRuntimeSettingsResponse
+    | ApiErrorResponse;
+  if (!response.ok) {
+    const error = data as ApiErrorResponse;
+    const message =
+      error?.error?.message ?? `Request failed with status ${response.status}`;
+    throw new AuthApiError(message, response.status, error);
+  }
+  return data as DeviceRuntimeSettingsResponse;
+}
+
+/** PATCH /settings/device-runtime. Requires settings:update permission. */
+export async function updateDeviceRuntimeSettings(payload: {
+  scrollPxPerSecond: number;
+}): Promise<DeviceRuntimeSettingsResponse> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/settings/device-runtime`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...getDevOnlyRequestHeaders(),
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = (await response.json()) as
+    | DeviceRuntimeSettingsResponse
+    | ApiErrorResponse;
+  if (!response.ok) {
+    const error = data as ApiErrorResponse;
+    const message =
+      error?.error?.message ?? `Request failed with status ${response.status}`;
+    throw new AuthApiError(message, response.status, error);
+  }
+  return data as DeviceRuntimeSettingsResponse;
+}
+
 /** POST /auth/invitations. Requires users:create permission. */
 export async function createInvitation(input: {
   email: string;

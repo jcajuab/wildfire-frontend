@@ -2,7 +2,7 @@
 
 import type { ChangeEvent, FormEvent, ReactElement } from "react";
 import Image from "next/image";
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IconUserSquareRounded, IconUser } from "@tabler/icons-react";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
@@ -29,9 +29,12 @@ import { useAuth } from "@/context/auth-context";
 import {
   changePassword,
   deleteCurrentUser,
+  getDeviceRuntimeSettings,
   updateCurrentUserProfile,
+  updateDeviceRuntimeSettings,
   uploadAvatar,
 } from "@/lib/api-client";
+import { useCan } from "@/hooks/use-can";
 import { toast } from "sonner";
 
 const legacyTimezoneMap: Readonly<Record<string, string>> = {
@@ -88,6 +91,38 @@ export default function AccountPage(): ReactElement {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const [scrollPxPerSecond, setScrollPxPerSecond] = useState("24");
+  const [isLoadingRuntimeSettings, setIsLoadingRuntimeSettings] =
+    useState(false);
+  const [isSavingRuntimeSettings, setIsSavingRuntimeSettings] = useState(false);
+  const canReadRuntimeSettings = useCan("settings:read");
+  const canUpdateRuntimeSettings = useCan("settings:update");
+
+  useEffect(() => {
+    if (!canReadRuntimeSettings) return;
+    let cancelled = false;
+    setIsLoadingRuntimeSettings(true);
+    void getDeviceRuntimeSettings()
+      .then((result) => {
+        if (cancelled) return;
+        setScrollPxPerSecond(String(result.scrollPxPerSecond));
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to load device runtime settings.";
+        toast.error(message);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setIsLoadingRuntimeSettings(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [canReadRuntimeSettings]);
 
   const handleChangeProfilePicture = (): void => {
     profilePictureInputRef.current?.click();
@@ -235,6 +270,31 @@ export default function AccountPage(): ReactElement {
     }
   };
 
+  const handleSaveRuntimeSettings = async (): Promise<void> => {
+    if (!canUpdateRuntimeSettings) return;
+    const parsed = Number.parseInt(scrollPxPerSecond, 10);
+    if (!Number.isInteger(parsed) || parsed < 1 || parsed > 200) {
+      toast.error("Auto-scroll speed must be an integer between 1 and 200.");
+      return;
+    }
+    setIsSavingRuntimeSettings(true);
+    try {
+      const result = await updateDeviceRuntimeSettings({
+        scrollPxPerSecond: parsed,
+      });
+      setScrollPxPerSecond(String(result.scrollPxPerSecond));
+      toast.success("Runtime auto-scroll setting updated.");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to update runtime auto-scroll setting.";
+      toast.error(message);
+    } finally {
+      setIsSavingRuntimeSettings(false);
+    }
+  };
+
   return (
     <DashboardPage.Root>
       <DashboardPage.Header title="Account" />
@@ -372,6 +432,44 @@ export default function AccountPage(): ReactElement {
                 </SelectContent>
               </Select>
             </div>
+
+            {canReadRuntimeSettings ? (
+              <div className="grid grid-cols-[180px_1fr] items-center gap-4">
+                <Label
+                  htmlFor="runtime-scroll-speed"
+                  className="text-right text-sm font-medium text-muted-foreground"
+                >
+                  Runtime Auto-scroll
+                </Label>
+                <div className="flex max-w-lg items-center gap-2">
+                  <Input
+                    id="runtime-scroll-speed"
+                    type="number"
+                    min={1}
+                    max={200}
+                    value={scrollPxPerSecond}
+                    onChange={(e) => setScrollPxPerSecond(e.target.value)}
+                    disabled={
+                      isLoadingRuntimeSettings ||
+                      isSavingRuntimeSettings ||
+                      !canUpdateRuntimeSettings
+                    }
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSaveRuntimeSettings}
+                    disabled={
+                      isLoadingRuntimeSettings ||
+                      isSavingRuntimeSettings ||
+                      !canUpdateRuntimeSettings
+                    }
+                  >
+                    {isSavingRuntimeSettings ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </div>
 
           {/* Action Buttons */}

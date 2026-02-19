@@ -105,7 +105,15 @@ function EditDisplayForm({
     }));
   }, []);
 
-  const canSave = formData.displayName.trim().length > 0;
+  const [screenWidthRaw, screenHeightRaw] = formData.selectedResolution
+    .split("x")
+    .map((value) => value.trim());
+  const hasValidResolution =
+    Number.isInteger(Number(screenWidthRaw)) &&
+    Number(screenWidthRaw) > 0 &&
+    Number.isInteger(Number(screenHeightRaw)) &&
+    Number(screenHeightRaw) > 0;
+  const canSave = formData.displayName.trim().length > 0 && hasValidResolution;
 
   return (
     <>
@@ -220,6 +228,9 @@ function EditDisplayForm({
               }))
             }
           />
+          <p className="text-xs text-muted-foreground">
+            Required format: width x height (e.g. 1366x768)
+          </p>
         </div>
 
         {/* Display Groups */}
