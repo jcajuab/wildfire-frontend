@@ -59,6 +59,9 @@ export interface UpdateScheduleRequest {
   readonly isActive?: boolean;
 }
 
+const PAGE_SIZE = 100;
+const MAX_PAGES = 100;
+
 export const schedulesApi = createApi({
   reducerPath: "schedulesApi",
   baseQuery,
@@ -66,12 +69,20 @@ export const schedulesApi = createApi({
   endpoints: (build) => ({
     listSchedules: build.query<BackendScheduleListResponse, void>({
       async queryFn(_arg, _api, _extraOptions, baseQueryFn) {
-        const pageSize = 100;
+        const pageSize = PAGE_SIZE;
         let page = 1;
         let total = 0;
         const allItems: BackendSchedule[] = [];
 
         while (true) {
+          if (page > MAX_PAGES) {
+            return {
+              error: {
+                status: 500,
+                data: "Failed to load schedules: pagination limit reached.",
+              },
+            };
+          }
           const result = await baseQueryFn({
             url: "schedules",
             params: { page, pageSize },
@@ -95,7 +106,7 @@ export const schedulesApi = createApi({
             items: allItems,
             total: allItems.length,
             page: 1,
-            pageSize: allItems.length === 0 ? pageSize : allItems.length,
+            pageSize: allItems.length === 0 ? PAGE_SIZE : allItems.length,
           },
         };
       },

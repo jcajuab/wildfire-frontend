@@ -33,6 +33,10 @@ export default function ResetPasswordPage(): ReactElement {
       setErrorMessage("Passwords do not match.");
       return;
     }
+    if (newPassword.length < 8) {
+      setErrorMessage("New password must be at least 8 characters.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {

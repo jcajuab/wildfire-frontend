@@ -55,6 +55,9 @@ export interface DeviceGroupsListResponse {
   readonly items: readonly DeviceGroup[];
 }
 
+const PAGE_SIZE = 100;
+const MAX_PAGES = 100;
+
 export const devicesApi = createApi({
   reducerPath: "devicesApi",
   baseQuery,
@@ -62,12 +65,20 @@ export const devicesApi = createApi({
   endpoints: (build) => ({
     getDevices: build.query<DevicesListResponse, void>({
       async queryFn(_arg, _api, _extraOptions, baseQueryFn) {
-        const pageSize = 100;
+        const pageSize = PAGE_SIZE;
         let page = 1;
         let total = 0;
         const allItems: Device[] = [];
 
         while (true) {
+          if (page > MAX_PAGES) {
+            return {
+              error: {
+                status: 500,
+                data: "Failed to load devices: pagination limit reached.",
+              },
+            };
+          }
           const result = await baseQueryFn({
             url: "devices",
             params: { page, pageSize },
@@ -91,7 +102,7 @@ export const devicesApi = createApi({
             items: allItems,
             total: allItems.length,
             page: 1,
-            pageSize: allItems.length === 0 ? pageSize : allItems.length,
+            pageSize: allItems.length === 0 ? PAGE_SIZE : allItems.length,
           },
         };
       },

@@ -53,13 +53,14 @@ const PAGE_SIZE = 20;
 const ACTOR_TYPE_FILTERS = ["all", "user", "device"] as const;
 type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
 const COMMON_STATUS_CODES = ["200", "401", "403", "404", "500"] as const;
-const STATUS_CODE_LABELS: Record<(typeof COMMON_STATUS_CODES)[number], string> = {
-  "200": "200 (OK)",
-  "401": "401 (Unauthorized)",
-  "403": "403 (Forbidden)",
-  "404": "404 (Not Found)",
-  "500": "500 (Internal Server Error)",
-};
+const STATUS_CODE_LABELS: Record<(typeof COMMON_STATUS_CODES)[number], string> =
+  {
+    "200": "200 (OK)",
+    "401": "401 (Unauthorized)",
+    "403": "403 (Forbidden)",
+    "404": "404 (Not Found)",
+    "500": "500 (Internal Server Error)",
+  };
 
 function formatActorDisplay(
   userMap: Map<string, string>,
@@ -421,7 +422,9 @@ export default function LogsPage(): ReactElement {
               <Combobox
                 value={selectedStatusValue}
                 inputValue={statusRaw}
-                onValueChange={(nextValue) => handleStatusChange(nextValue ?? "")}
+                onValueChange={(nextValue) =>
+                  handleStatusChange(nextValue ?? "")
+                }
                 onInputValueChange={(nextInputValue) =>
                   handleStatusChange(nextInputValue)
                 }

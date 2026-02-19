@@ -34,23 +34,42 @@ import {
 } from "@/lib/api-client";
 import { toast } from "sonner";
 
-// Common timezones
+const legacyTimezoneMap: Readonly<Record<string, string>> = {
+  "Asia - Taipei": "Asia/Taipei",
+  "Asia - Tokyo": "Asia/Tokyo",
+  "Asia - Singapore": "Asia/Singapore",
+  "Asia - Hong Kong": "Asia/Hong_Kong",
+  "America - New York": "America/New_York",
+  "America - Los Angeles": "America/Los_Angeles",
+  "America - Chicago": "America/Chicago",
+  "Europe - London": "Europe/London",
+  "Europe - Paris": "Europe/Paris",
+  "Europe - Berlin": "Europe/Berlin",
+  "Australia - Sydney": "Australia/Sydney",
+  "Pacific - Auckland": "Pacific/Auckland",
+};
+
 const timezones = [
-  "Asia - Taipei",
-  "Asia - Tokyo",
-  "Asia - Singapore",
-  "Asia - Hong Kong",
-  "America - New York",
-  "America - Los Angeles",
-  "America - Chicago",
-  "Europe - London",
-  "Europe - Paris",
-  "Europe - Berlin",
-  "Australia - Sydney",
-  "Pacific - Auckland",
+  "Asia/Taipei",
+  "Asia/Tokyo",
+  "Asia/Singapore",
+  "Asia/Hong_Kong",
+  "America/New_York",
+  "America/Los_Angeles",
+  "America/Chicago",
+  "Europe/London",
+  "Europe/Paris",
+  "Europe/Berlin",
+  "Australia/Sydney",
+  "Pacific/Auckland",
 ] as const;
 
-const defaultTimezone = "Asia - Taipei";
+const defaultTimezone = "Asia/Taipei";
+
+const normalizeTimezone = (value?: string | null): string =>
+  value == null || value.length === 0
+    ? defaultTimezone
+    : (legacyTimezoneMap[value] ?? value);
 
 export default function AccountPage(): ReactElement {
   const { user, logout, updateSession } = useAuth();
@@ -61,7 +80,7 @@ export default function AccountPage(): ReactElement {
   const [lastName, setLastName] = useState(
     user?.name?.split(/\s+/).slice(1).join(" ") ?? "",
   );
-  const [timezone, setTimezone] = useState(user?.timezone ?? defaultTimezone);
+  const [timezone, setTimezone] = useState(normalizeTimezone(user?.timezone));
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");

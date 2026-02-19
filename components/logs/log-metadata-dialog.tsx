@@ -66,74 +66,76 @@ export function LogMetadataDialog({
 
         <div className="min-h-0 overflow-y-auto pr-1">
           <div className="flex flex-col gap-4 py-2">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <IconHistory className="size-4" />
-            Log entry
-          </div>
-
-          <div className="flex flex-col gap-3 rounded-lg border p-4">
-            <div className="flex items-start gap-2">
-              <IconFileText className="mt-0.5 size-4 text-muted-foreground" />
-              <div className="flex flex-col min-w-0">
-                <span className="font-medium">
-                  {formatDateTime(log.timestamp)}
-                </span>
-                <span className="text-xs text-muted-foreground wrap-break-word">
-                  {log.description}
-                </span>
-                <span className="text-xs text-muted-foreground wrap-break-word">
-                  {log.technicalDescription}
-                </span>
-              </div>
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <IconHistory className="size-4" />
+              Log entry
             </div>
 
-            <div className="flex items-center gap-2 text-sm font-medium pt-1">
-              <IconListDetails className="size-4" />
-              Summary details
-            </div>
-
-            <div className="grid grid-cols-2 gap-y-2 text-sm">
-              {Object.entries(log.metadata).map(([key, value]) => (
-                <Fragment key={key}>
-                  <span className="text-muted-foreground">{key}:</span>
-                  <span className="font-mono text-xs break-all">
-                    {formatMetadataValue(value)}
+            <div className="flex flex-col gap-3 rounded-lg border p-4">
+              <div className="flex items-start gap-2">
+                <IconFileText className="mt-0.5 size-4 text-muted-foreground" />
+                <div className="flex flex-col min-w-0">
+                  <span className="font-medium">
+                    {formatDateTime(log.timestamp)}
                   </span>
-                </Fragment>
-              ))}
-            </div>
-            <div className="pt-2">
-              <Button
-                type="button"
-                variant="ghost"
-                className="h-auto px-0 text-xs"
-                onClick={() => setShowAdvanced((prev) => !prev)}
-              >
-                {showAdvanced ? "Hide advanced fields" : "Show advanced fields"}
-              </Button>
-            </div>
-            {showAdvanced && (
-              <>
-                <div className="flex items-center gap-2 text-sm font-medium pt-1">
-                  <IconListDetails className="size-4" />
-                  Technical fields
+                  <span className="text-xs text-muted-foreground wrap-break-word">
+                    {log.description}
+                  </span>
+                  <span className="text-xs text-muted-foreground wrap-break-word">
+                    {log.technicalDescription}
+                  </span>
                 </div>
-                <div className="max-h-56 overflow-y-auto rounded-md border p-3">
-                  <div className="grid grid-cols-2 gap-y-2 text-sm">
-                    {Object.entries(log.rawMetadata).map(([key, value]) => (
-                      <Fragment key={`raw-${key}`}>
-                        <span className="text-muted-foreground">{key}:</span>
-                        <span className="font-mono text-xs break-all">
-                          {formatMetadataValue(value)}
-                        </span>
-                      </Fragment>
-                    ))}
+              </div>
+
+              <div className="flex items-center gap-2 text-sm font-medium pt-1">
+                <IconListDetails className="size-4" />
+                Summary details
+              </div>
+
+              <div className="grid grid-cols-2 gap-y-2 text-sm">
+                {Object.entries(log.metadata).map(([key, value]) => (
+                  <Fragment key={key}>
+                    <span className="text-muted-foreground">{key}:</span>
+                    <span className="font-mono text-xs break-all">
+                      {formatMetadataValue(value)}
+                    </span>
+                  </Fragment>
+                ))}
+              </div>
+              <div className="pt-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-auto px-0 text-xs"
+                  onClick={() => setShowAdvanced((prev) => !prev)}
+                >
+                  {showAdvanced
+                    ? "Hide advanced fields"
+                    : "Show advanced fields"}
+                </Button>
+              </div>
+              {showAdvanced && (
+                <>
+                  <div className="flex items-center gap-2 text-sm font-medium pt-1">
+                    <IconListDetails className="size-4" />
+                    Technical fields
                   </div>
-                </div>
-              </>
-            )}
+                  <div className="max-h-56 overflow-y-auto rounded-md border p-3">
+                    <div className="grid grid-cols-2 gap-y-2 text-sm">
+                      {Object.entries(log.rawMetadata).map(([key, value]) => (
+                        <Fragment key={`raw-${key}`}>
+                          <span className="text-muted-foreground">{key}:</span>
+                          <span className="font-mono text-xs break-all">
+                            {formatMetadataValue(value)}
+                          </span>
+                        </Fragment>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
         </div>
 
         <DialogFooter className="sm:justify-between">
