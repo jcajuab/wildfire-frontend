@@ -23,10 +23,14 @@ import {
   useCreateDeviceGroupMutation,
   useGetDeviceGroupsQuery,
   useGetDevicesQuery,
+  useRequestDeviceRefreshMutation,
   useSetDeviceGroupsMutation,
   useUpdateDeviceMutation,
 } from "@/lib/api/devices-api";
-import { mapDeviceToDisplay, withDisplayGroups } from "@/lib/map-device-to-display";
+import {
+  mapDeviceToDisplay,
+  withDisplayGroups,
+} from "@/lib/map-device-to-display";
 import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
@@ -70,26 +74,24 @@ export default function DisplaysPage(): ReactElement {
   const [updateDevice] = useUpdateDeviceMutation();
   const [setDeviceGroups] = useSetDeviceGroupsMutation();
   const [createDeviceGroup] = useCreateDeviceGroupMutation();
+  const [requestDeviceRefresh] = useRequestDeviceRefreshMutation();
 
-  const displays: Display[] = useMemo(
-    () => {
-      const groupNamesByDeviceId = new Map<string, string[]>();
-      for (const group of deviceGroupsData?.items ?? []) {
-        for (const deviceId of group.deviceIds) {
-          const existing = groupNamesByDeviceId.get(deviceId) ?? [];
-          existing.push(group.name);
-          groupNamesByDeviceId.set(deviceId, existing);
-        }
+  const displays: Display[] = useMemo(() => {
+    const groupNamesByDeviceId = new Map<string, string[]>();
+    for (const group of deviceGroupsData?.items ?? []) {
+      for (const deviceId of group.deviceIds) {
+        const existing = groupNamesByDeviceId.get(deviceId) ?? [];
+        existing.push(group.name);
+        groupNamesByDeviceId.set(deviceId, existing);
       }
-      return (devicesData?.items ?? []).map((device) =>
-        withDisplayGroups(
-          mapDeviceToDisplay(device),
-          groupNamesByDeviceId.get(device.id) ?? [],
-        ),
-      );
-    },
-    [devicesData?.items, deviceGroupsData?.items],
-  );
+    }
+    return (devicesData?.items ?? []).map((device) =>
+      withDisplayGroups(
+        mapDeviceToDisplay(device),
+        groupNamesByDeviceId.get(device.id) ?? [],
+      ),
+    );
+  }, [devicesData?.items, deviceGroupsData?.items]);
   const pageSize = 20;
 
   const handleStatusFilterChange = useCallback(
@@ -126,11 +128,25 @@ export default function DisplaysPage(): ReactElement {
     setIsPreviewDialogOpen(true);
   }, []);
 
-  const handleRefreshPage = useCallback((display: Display) => {
-    toast.info(`"${display.name}" will refresh on its next device poll.`);
-  }, []);
+  const handleRefreshPage = useCallback(
+    async (display: Display) => {
+      try {
+        await requestDeviceRefresh({ deviceId: display.id }).unwrap();
+        toast.success(
+          `"${display.name}" will refresh on its next device poll.`,
+        );
+      } catch (err) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Failed to queue display refresh.",
+        );
+      }
+    },
+    [requestDeviceRefresh],
+  );
 
-  // Signature required by DisplayCard; we only show a toast (no toggle from dashboard).
+  // Signature required by DisplayCard; this opens edit from the dashboard.
   const handleToggleDisplay = useCallback(
     (display: Display) => {
       setSelectedDisplay(display);
@@ -178,7 +194,10 @@ export default function DisplaysPage(): ReactElement {
         }).unwrap();
 
         const existingByName = new Map(
-          (deviceGroupsData?.items ?? []).map((group) => [group.name, group.id]),
+          (deviceGroupsData?.items ?? []).map((group) => [
+            group.name,
+            group.id,
+          ]),
         );
         const nextGroupIds: string[] = [];
         for (const rawName of display.groups) {

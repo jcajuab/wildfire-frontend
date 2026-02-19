@@ -145,10 +145,12 @@ export const DisplayCard = memo(function DisplayCard({
               <IconExternalLink className="size-4" />
               Preview Page
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onRefreshPage(display)}>
-              <IconRefresh className="size-4" />
-              Refresh Page
-            </DropdownMenuItem>
+            {canUpdate && (
+              <DropdownMenuItem onClick={() => onRefreshPage(display)}>
+                <IconRefresh className="size-4" />
+                Refresh Page
+              </DropdownMenuItem>
+            )}
             {canUpdate && (
               <DropdownMenuItem onClick={() => onToggleDisplay(display)}>
                 <IconToggleLeft className="size-4" />

@@ -141,7 +141,10 @@ export const devicesApi = createApi({
       }),
       invalidatesTags: [{ type: "DeviceGroup", id: "LIST" }],
     }),
-    setDeviceGroups: build.mutation<void, { deviceId: string; groupIds: string[] }>({
+    setDeviceGroups: build.mutation<
+      void,
+      { deviceId: string; groupIds: string[] }
+    >({
       query: ({ deviceId, groupIds }) => ({
         url: `devices/${deviceId}/groups`,
         method: "PUT",
@@ -151,6 +154,16 @@ export const devicesApi = createApi({
         { type: "Device", id: "LIST" },
         { type: "Device", id: deviceId },
         { type: "DeviceGroup", id: "LIST" },
+      ],
+    }),
+    requestDeviceRefresh: build.mutation<void, { deviceId: string }>({
+      query: ({ deviceId }) => ({
+        url: `devices/${deviceId}/refresh`,
+        method: "POST",
+      }),
+      invalidatesTags: (_result, _error, { deviceId }) => [
+        { type: "Device", id: "LIST" },
+        { type: "Device", id: deviceId },
       ],
     }),
     registerDevice: build.mutation<
@@ -226,5 +239,6 @@ export const {
   useGetDeviceGroupsQuery,
   useCreateDeviceGroupMutation,
   useSetDeviceGroupsMutation,
+  useRequestDeviceRefreshMutation,
   useRegisterDeviceMutation,
 } = devicesApi;
