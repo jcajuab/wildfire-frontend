@@ -9,6 +9,7 @@ import {
 export interface Device {
   readonly id: string;
   readonly identifier: string;
+  readonly deviceFingerprint?: string | null;
   readonly name: string;
   readonly location: string | null;
   readonly ipAddress: string | null;
@@ -170,6 +171,7 @@ export const devicesApi = createApi({
       Device,
       {
         identifier: string;
+        deviceFingerprint?: string | null;
         name: string;
         location?: string | null;
         apiKey: string;
@@ -185,10 +187,18 @@ export const devicesApi = createApi({
             },
           };
         }
-        const body: { identifier: string; name: string; location?: string } = {
+        const body: {
+          identifier: string;
+          deviceFingerprint?: string;
+          name: string;
+          location?: string;
+        } = {
           identifier: arg.identifier,
           name: arg.name,
         };
+        if (arg.deviceFingerprint != null && arg.deviceFingerprint !== "") {
+          body.deviceFingerprint = arg.deviceFingerprint;
+        }
         if (arg.location != null && arg.location !== "") {
           body.location = arg.location;
         }
