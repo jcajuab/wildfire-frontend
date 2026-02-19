@@ -60,7 +60,12 @@ export default function RolesPage(): ReactElement {
   } = useGetRolesQuery();
   const { data: permissionsData } = useGetPermissionsQuery();
   const { data: usersData } = useGetUsersQuery();
-  const { data: deletionRequestsData } = useGetRoleDeletionRequestsQuery();
+  const { data: deletionRequestsData } = useGetRoleDeletionRequestsQuery(
+    undefined,
+    {
+      skip: !canDeleteRole,
+    },
+  );
 
   const [createRole] = useCreateRoleMutation();
   const [updateRole] = useUpdateRoleMutation();
@@ -461,7 +466,7 @@ export default function RolesPage(): ReactElement {
         }}
       />
 
-      <Can permission="roles:read">
+      <Can permission="roles:delete">
         <div className="mx-auto w-full max-w-[--breakpoint-2xl] px-4 pb-6 md:px-6 lg:px-8">
           <div className="overflow-hidden rounded-lg border">
             <div className="border-b px-4 py-3">
