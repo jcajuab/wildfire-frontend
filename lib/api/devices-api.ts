@@ -55,6 +55,11 @@ export interface DeviceGroupsListResponse {
   readonly items: readonly DeviceGroup[];
 }
 
+export interface DevicePairingCodeResponse {
+  readonly code: string;
+  readonly expiresAt: string;
+}
+
 const PAGE_SIZE = 100;
 const MAX_PAGES = 100;
 
@@ -178,14 +183,20 @@ export const devicesApi = createApi({
         { type: "Device", id: deviceId },
       ],
     }),
+    createPairingCode: build.mutation<DevicePairingCodeResponse, void>({
+      query: () => ({
+        url: "devices/pairing-codes",
+        method: "POST",
+      }),
+    }),
     registerDevice: build.mutation<
       Device,
       {
+        pairingCode: string;
         identifier: string;
         deviceFingerprint?: string | null;
         name: string;
         location?: string | null;
-        apiKey: string;
       }
     >({
       queryFn: async (arg) => {
@@ -199,11 +210,13 @@ export const devicesApi = createApi({
           };
         }
         const body: {
+          pairingCode: string;
           identifier: string;
           deviceFingerprint?: string;
           name: string;
           location?: string;
         } = {
+          pairingCode: arg.pairingCode,
           identifier: arg.identifier,
           name: arg.name,
         };
@@ -217,7 +230,6 @@ export const devicesApi = createApi({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": arg.apiKey,
             ...getDevOnlyRequestHeaders(),
           },
           body: JSON.stringify(body),
@@ -261,5 +273,6 @@ export const {
   useCreateDeviceGroupMutation,
   useSetDeviceGroupsMutation,
   useRequestDeviceRefreshMutation,
+  useCreatePairingCodeMutation,
   useRegisterDeviceMutation,
 } = devicesApi;

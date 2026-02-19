@@ -44,7 +44,7 @@ const DISPLAY_STATUS_VALUES = ["all", "READY", "LIVE", "DOWN"] as const;
 const DISPLAY_SORT_VALUES = ["alphabetical", "status", "location"] as const;
 
 const DEVICE_SELF_REGISTRATION_MESSAGE =
-  "Devices are managed via self-registration. Use the device API key to register or update displays.";
+  "Devices are managed via self-registration. Use a one-time pairing code to register or update displays.";
 
 export default function DisplaysPage(): ReactElement {
   const canUpdateDisplay = useCan("devices:update");

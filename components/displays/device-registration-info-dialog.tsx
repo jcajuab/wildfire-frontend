@@ -15,7 +15,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useRegisterDeviceMutation } from "@/lib/api/devices-api";
+import {
+  useCreatePairingCodeMutation,
+  useRegisterDeviceMutation,
+} from "@/lib/api/devices-api";
+import { useCan } from "@/hooks/use-can";
 
 interface DeviceRegistrationInfoDialogProps {
   readonly open: boolean;
@@ -38,16 +42,23 @@ export function DeviceRegistrationInfoDialog({
   const [identifier, setIdentifier] = useState("");
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
-  const [apiKey, setApiKey] = useState("");
+  const [pairingCode, setPairingCode] = useState("");
+  const [pairingCodeExpiresAt, setPairingCodeExpiresAt] = useState<
+    string | null
+  >(null);
+  const canIssuePairingCode = useCan("devices:create");
 
   const [registerDevice, { isLoading: isSubmitting }] =
     useRegisterDeviceMutation();
+  const [createPairingCode, { isLoading: isIssuingPairingCode }] =
+    useCreatePairingCodeMutation();
 
   const resetForm = useCallback(() => {
     setIdentifier("");
     setName("");
     setLocation("");
-    setApiKey("");
+    setPairingCode("");
+    setPairingCodeExpiresAt(null);
   }, []);
 
   const handleOpenChange = useCallback(
@@ -64,19 +75,19 @@ export function DeviceRegistrationInfoDialog({
       const trimmedIdentifier = identifier.trim();
       const trimmedName = name.trim();
       const trimmedLocation = location.trim();
-      const trimmedApiKey = apiKey.trim();
+      const trimmedPairingCode = pairingCode.trim();
 
-      if (!trimmedIdentifier || !trimmedName || !trimmedApiKey) {
-        toast.error("Identifier, name, and device API key are required.");
+      if (!trimmedIdentifier || !trimmedName || !trimmedPairingCode) {
+        toast.error("Identifier, name, and pairing code are required.");
         return;
       }
 
       try {
         await registerDevice({
+          pairingCode: trimmedPairingCode,
           identifier: trimmedIdentifier,
           name: trimmedName,
           location: trimmedLocation || undefined,
-          apiKey: trimmedApiKey,
         }).unwrap();
         toast.success("Display registered.");
         handleOpenChange(false);
@@ -96,17 +107,29 @@ export function DeviceRegistrationInfoDialog({
       identifier,
       name,
       location,
-      apiKey,
+      pairingCode,
       registerDevice,
       handleOpenChange,
       resetForm,
     ],
   );
 
+  const handleGeneratePairingCode = useCallback(async () => {
+    try {
+      const result = await createPairingCode().unwrap();
+      setPairingCode(result.code);
+      setPairingCodeExpiresAt(result.expiresAt);
+      toast.success("Pairing code generated.");
+    } catch (err) {
+      const message = getRegisterErrorMessage(err);
+      toast.error(message);
+    }
+  }, [createPairingCode]);
+
   const canSubmit =
     identifier.trim().length > 0 &&
     name.trim().length > 0 &&
-    apiKey.trim().length > 0 &&
+    pairingCode.trim().length > 0 &&
     !isSubmitting;
 
   return (
@@ -115,8 +138,8 @@ export function DeviceRegistrationInfoDialog({
         <DialogHeader>
           <DialogTitle>Register your display</DialogTitle>
           <DialogDescription className="wrap-break-word">
-            Register a display by providing its details and the device API key
-            (from backend .env DEVICE_API_KEY).
+            Register a display by providing its details and a one-time pairing
+            code.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -156,16 +179,33 @@ export function DeviceRegistrationInfoDialog({
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="register-api-key">Device API key</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="register-pairing-code">Pairing code</Label>
+              {canIssuePairingCode ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGeneratePairingCode}
+                  disabled={isSubmitting || isIssuingPairingCode}
+                >
+                  {isIssuingPairingCode ? "Generating…" : "Generate code"}
+                </Button>
+              ) : null}
+            </div>
             <Input
-              id="register-api-key"
-              type="password"
-              placeholder="Value from backend .env DEVICE_API_KEY"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
+              id="register-pairing-code"
+              placeholder="6-digit one-time pairing code"
+              value={pairingCode}
+              onChange={(e) => setPairingCode(e.target.value)}
               autoComplete="off"
               disabled={isSubmitting}
             />
+            {pairingCodeExpiresAt ? (
+              <p className="text-xs text-muted-foreground">
+                Expires at {new Date(pairingCodeExpiresAt).toLocaleTimeString()}
+              </p>
+            ) : null}
           </div>
           <DialogFooter className="sm:justify-end">
             <Button type="submit" disabled={!canSubmit}>
