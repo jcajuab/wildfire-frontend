@@ -14,11 +14,14 @@ export interface ScheduleDisplay {
 
 export interface Schedule {
   readonly id: string;
+  readonly seriesId: string;
   readonly name: string;
   readonly startDate: string; // ISO date string
   readonly endDate: string; // ISO date string
   readonly startTime: string; // HH:mm format
   readonly endTime: string; // HH:mm format
+  readonly dayOfWeek: number;
+  readonly seriesDays: readonly number[];
   readonly playlist: SchedulePlaylist;
   readonly targetDisplays: readonly ScheduleDisplay[];
   readonly recurrence: RecurrenceType;

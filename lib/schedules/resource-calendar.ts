@@ -1,4 +1,4 @@
-import type { RecurrenceType, Schedule } from "@/types/schedule";
+import type { Schedule } from "@/types/schedule";
 
 const MINUTES_PER_HOUR = 60;
 export const MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR;
@@ -90,26 +90,6 @@ function isDateWithinRange(
   return date >= startDate && date <= endDate;
 }
 
-function matchesRecurrence(
-  recurrence: RecurrenceType,
-  scheduleStartDate: Date,
-  currentDate: Date,
-): boolean {
-  if (recurrence === "NONE" || recurrence === "DAILY") {
-    return true;
-  }
-
-  if (recurrence === "WEEKLY") {
-    return currentDate.getDay() === scheduleStartDate.getDay();
-  }
-
-  if (recurrence === "MONTHLY") {
-    return currentDate.getDate() === scheduleStartDate.getDate();
-  }
-
-  return false;
-}
-
 function occursOnDate(schedule: Schedule, date: Date): boolean {
   const scheduleStartDate = parseISODateOnly(schedule.startDate);
   const scheduleEndDate = parseISODateOnly(schedule.endDate);
@@ -119,7 +99,7 @@ function occursOnDate(schedule: Schedule, date: Date): boolean {
     return false;
   }
 
-  return matchesRecurrence(schedule.recurrence, scheduleStartDate, currentDate);
+  return currentDate.getDay() === schedule.dayOfWeek;
 }
 
 interface ProjectResourceEventsParams {

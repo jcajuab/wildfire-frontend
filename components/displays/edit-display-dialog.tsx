@@ -92,6 +92,13 @@ function EditDisplayForm({
   const [groupInput, setGroupInput] = useState("");
 
   const handleSave = useCallback(() => {
+    const normalizedResolution = formData.selectedResolution.trim();
+    const resolutionForSave =
+      normalizedResolution.length === 0 ||
+      normalizedResolution.toLowerCase() === "not available"
+        ? "Not available"
+        : normalizedResolution;
+
     const updatedDisplay: Display = {
       ...display,
       name: formData.displayName,
@@ -99,7 +106,7 @@ function EditDisplayForm({
       ipAddress: formData.ipAddress,
       macAddress: formData.macAddress,
       displayOutput: formData.selectedOutput ?? "Not available",
-      resolution: formData.selectedResolution,
+      resolution: resolutionForSave,
       groups: [...formData.groups],
     };
 
@@ -124,10 +131,14 @@ function EditDisplayForm({
     }));
   }, []);
 
-  const [screenWidthRaw, screenHeightRaw, ...extraParts] = formData.selectedResolution
+  const normalizedResolution = formData.selectedResolution.trim();
+  const isUnknownResolution =
+    normalizedResolution.length === 0 ||
+    normalizedResolution.toLowerCase() === "not available";
+  const [screenWidthRaw, screenHeightRaw, ...extraParts] = normalizedResolution
     .split("x")
     .map((value) => value.trim());
-  const hasValidResolution =
+  const hasNumericResolution =
     extraParts.length === 0 &&
     screenWidthRaw !== undefined &&
     screenHeightRaw !== undefined &&
@@ -135,6 +146,7 @@ function EditDisplayForm({
     Number(screenWidthRaw) > 0 &&
     Number.isInteger(Number(screenHeightRaw)) &&
     Number(screenHeightRaw) > 0;
+  const hasValidResolution = isUnknownResolution || hasNumericResolution;
   const canSave = formData.displayName.trim().length > 0 && hasValidResolution;
 
   return (
@@ -210,7 +222,10 @@ function EditDisplayForm({
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
-                    selectedOutput: option.value,
+                    selectedOutput:
+                      option.value !== null && prev.selectedOutput === option.value
+                        ? null
+                        : option.value,
                   }))
                 }
                 className={`flex items-center justify-between rounded-lg border p-3 text-left transition-colors ${

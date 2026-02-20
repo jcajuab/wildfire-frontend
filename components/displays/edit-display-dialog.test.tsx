@@ -94,4 +94,28 @@ describe("EditDisplayDialog", () => {
 
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   });
+
+  test("allows saving when resolution is not available", async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn();
+
+    render(
+      <EditDisplayDialog
+        display={makeDisplay({ resolution: "Not available" })}
+        open={true}
+        onOpenChange={vi.fn()}
+        onSave={onSave}
+      />,
+    );
+
+    const saveButton = screen.getByRole("button", { name: "Save" });
+    expect(saveButton).toBeEnabled();
+
+    await user.click(saveButton);
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resolution: "Not available",
+      }),
+    );
+  });
 });
