@@ -74,7 +74,7 @@ const normalizeTimezone = (value?: string | null): string =>
     ? defaultTimezone
     : (legacyTimezoneMap[value] ?? value);
 
-export default function AccountPage(): ReactElement {
+export default function SettingsPage(): ReactElement {
   const { user, logout, updateSession } = useAuth();
   const profilePictureInputRef = useRef<HTMLInputElement>(null);
   const [firstName, setFirstName] = useState(
@@ -299,14 +299,13 @@ export default function AccountPage(): ReactElement {
 
   return (
     <DashboardPage.Root>
-      <DashboardPage.Header title="Account" />
+      <DashboardPage.Header title="Settings" />
 
       <DashboardPage.Body>
         <DashboardPage.Content
           key={user?.id ?? "anonymous"}
           className="overflow-auto px-0 pb-0"
         >
-          {/* Account Information Section */}
           <div className="border-b px-8 py-4">
             <div className="flex items-center gap-2">
               <IconUserSquareRounded className="size-5" />
@@ -314,9 +313,7 @@ export default function AccountPage(): ReactElement {
             </div>
           </div>
 
-          {/* Form */}
           <div className="flex flex-col gap-6 px-8 py-6">
-            {/* Profile Picture */}
             <div className="grid grid-cols-[180px_1fr] items-start gap-4">
               <Label className="pt-2 text-right text-sm font-medium text-muted-foreground">
                 Profile Picture
@@ -345,7 +342,7 @@ export default function AccountPage(): ReactElement {
                     disabled={isAvatarUploading}
                   >
                     {isAvatarUploading
-                      ? "Uploading…"
+                      ? "Uploading..."
                       : "Change Profile Picture"}
                   </Button>
                   <input
@@ -356,13 +353,12 @@ export default function AccountPage(): ReactElement {
                     className="hidden"
                   />
                   <p className="text-xs text-muted-foreground">
-                    JPEG, PNG, WebP or GIF. Max 2 MB. Recommended: 320 × 320 px.
+                    JPEG, PNG, WebP or GIF. Max 2 MB. Recommended: 320 x 320 px.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* First Name */}
             <div className="grid grid-cols-[180px_1fr] items-center gap-4">
               <Label
                 htmlFor="firstName"
@@ -378,7 +374,6 @@ export default function AccountPage(): ReactElement {
               />
             </div>
 
-            {/* Last Name */}
             <div className="grid grid-cols-[180px_1fr] items-center gap-4">
               <Label
                 htmlFor="lastName"
@@ -394,15 +389,13 @@ export default function AccountPage(): ReactElement {
               />
             </div>
 
-            {/* Email (read-only) */}
             <div className="grid grid-cols-[180px_1fr] items-center gap-4">
               <Label className="text-right text-sm font-medium text-muted-foreground">
                 Email
               </Label>
-              <p className="text-sm">{user?.email ?? "—"}</p>
+              <p className="text-sm">{user?.email ?? "-"}</p>
             </div>
 
-            {/* Password */}
             <div className="grid grid-cols-[180px_1fr] items-center gap-4">
               <Label className="text-right text-sm font-medium text-muted-foreground">
                 Password
@@ -417,7 +410,6 @@ export default function AccountPage(): ReactElement {
               </Button>
             </div>
 
-            {/* Time Zone */}
             <div className="grid grid-cols-[180px_1fr] items-center gap-4">
               <Label className="text-right text-sm font-medium text-muted-foreground">
                 Time Zone
@@ -475,7 +467,6 @@ export default function AccountPage(): ReactElement {
             ) : null}
           </div>
 
-          {/* Action Buttons */}
           <div className="grid grid-cols-[180px_1fr] items-center gap-4 px-8 pb-6">
             <div />
             <div className="max-w-lg flex justify-end gap-2">

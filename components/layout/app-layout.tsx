@@ -1,7 +1,7 @@
 "use client";
 
-import type { ReactElement, ReactNode } from "react";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 
 interface AppLayoutProps {
@@ -10,11 +10,22 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps): ReactElement {
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      open
+      style={
+        {
+          "--sidebar-width": "15.5rem",
+          "--sidebar-width-icon": "4rem",
+        } as CSSProperties
+      }
+    >
       <AppSidebar />
-      <SidebarInset id="main-content" className="flex flex-col">
+      <main
+        id="main-content"
+        className="flex min-h-svh w-full flex-1 flex-col bg-background md:p-2"
+      >
         {children}
-      </SidebarInset>
+      </main>
     </SidebarProvider>
   );
 }
