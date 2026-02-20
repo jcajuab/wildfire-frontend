@@ -138,6 +138,18 @@
     box-shadow: none !important;
   }
 
+  button,
+  [role="button"],
+  [data-slot="button"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  [data-slot="button"][data-disabled] {
+    cursor: not-allowed;
+  }
+
   body {
     @apply bg-background text-foreground min-h-screen;
     font-family: var(--font-sans), sans-serif;

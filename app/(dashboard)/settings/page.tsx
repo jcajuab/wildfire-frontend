@@ -3,7 +3,7 @@
 import type { ChangeEvent, FormEvent, ReactElement } from "react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { IconUserSquareRounded, IconUser } from "@tabler/icons-react";
+import { IconPencil, IconUser } from "@tabler/icons-react";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { DashboardPage } from "@/components/layout";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -83,6 +84,12 @@ export default function SettingsPage(): ReactElement {
   const [lastName, setLastName] = useState(
     user?.name?.split(/\s+/).slice(1).join(" ") ?? "",
   );
+  const [savedFirstName, setSavedFirstName] = useState(
+    user?.name?.split(/\s+/)[0] ?? "Admin",
+  );
+  const [savedLastName, setSavedLastName] = useState(
+    user?.name?.split(/\s+/).slice(1).join(" ") ?? "",
+  );
   const [timezone, setTimezone] = useState(normalizeTimezone(user?.timezone));
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -92,13 +99,18 @@ export default function SettingsPage(): ReactElement {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<"firstName" | "lastName" | null>(
+    null,
+  );
   const [scrollPxPerSecond, setScrollPxPerSecond] = useState("24");
+  const [isSavingTimezone, setIsSavingTimezone] = useState(false);
   const [isLoadingRuntimeSettings, setIsLoadingRuntimeSettings] =
     useState(false);
   const [isSavingRuntimeSettings, setIsSavingRuntimeSettings] = useState(false);
   const canReadRuntimeSettings = useCan("settings:read");
   const canUpdateRuntimeSettings = useCan("settings:update");
   const avatarUrl = user?.avatarUrl ?? null;
+  const sectionTitleClass = "text-base font-semibold tracking-tight";
 
   useEffect(() => {
     if (!canReadRuntimeSettings) return;
@@ -187,21 +199,43 @@ export default function SettingsPage(): ReactElement {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSaveChanges = async (): Promise<void> => {
-    const name = [firstName.trim(), lastName.trim()]
+  const saveProfileName = async (
+    nextFirstName: string,
+    nextLastName: string,
+  ): Promise<void> => {
+    const name = [nextFirstName.trim(), nextLastName.trim()]
       .filter((part) => part.length > 0)
       .join(" ");
     try {
       const response = await updateCurrentUserProfile(undefined, {
         name,
-        timezone: timezone || null,
       });
       updateSession(response);
-      toast.success("Account settings saved.");
+      setSavedFirstName(nextFirstName);
+      setSavedLastName(nextLastName);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to save account settings.";
+        err instanceof Error ? err.message : "Failed to update profile.";
       toast.error(message);
+    }
+  };
+
+  const handleTimezoneChange = async (nextTimezone: string): Promise<void> => {
+    const previousTimezone = timezone;
+    setTimezone(nextTimezone);
+    setIsSavingTimezone(true);
+    try {
+      const response = await updateCurrentUserProfile(undefined, {
+        timezone: nextTimezone || null,
+      });
+      updateSession(response);
+    } catch (err) {
+      setTimezone(previousTimezone);
+      const message =
+        err instanceof Error ? err.message : "Failed to update time zone.";
+      toast.error(message);
+    } finally {
+      setIsSavingTimezone(false);
     }
   };
 
@@ -304,186 +338,236 @@ export default function SettingsPage(): ReactElement {
       <DashboardPage.Body>
         <DashboardPage.Content
           key={user?.id ?? "anonymous"}
-          className="overflow-auto px-0 pb-0"
+          className="overflow-visible px-8 py-4"
         >
-          <div className="border-b px-8 py-4">
-            <div className="flex items-center gap-2">
-              <IconUserSquareRounded className="size-5" />
-              <h2 className="text-base font-semibold">Account Information</h2>
-            </div>
-          </div>
+          <div className="mx-auto w-full max-w-5xl">
+            <section className="space-y-4 py-6">
+              <div>
+                <h2 className={sectionTitleClass}>Account Information</h2>
+              </div>
 
-          <div className="flex flex-col gap-6 px-8 py-6">
-            <div className="grid grid-cols-[180px_1fr] items-start gap-4">
-              <Label className="pt-2 text-right text-sm font-medium text-muted-foreground">
-                Profile Picture
-              </Label>
-              <div className="flex items-center gap-4">
-                <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
-                  {avatarUrl && failedAvatarUrl !== avatarUrl ? (
-                    <Image
-                      src={avatarUrl}
-                      alt="Profile"
-                      width={48}
-                      height={48}
-                      className="size-12 object-cover"
-                      unoptimized
-                      onError={() => setFailedAvatarUrl(avatarUrl)}
+              <div className="grid grid-cols-2 items-start gap-x-8 gap-y-4">
+                <div className="text-sm text-muted-foreground">Profile Picture</div>
+                <div className="flex items-center gap-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon-sm"
+                      onClick={handleChangeProfilePicture}
+                      disabled={isAvatarUploading}
+                      className="group relative size-12 overflow-hidden rounded-full border-0 bg-muted p-0 hover:opacity-90"
+                      aria-label="Change profile picture"
+                    >
+                      {avatarUrl && failedAvatarUrl !== avatarUrl ? (
+                        <Image
+                          src={avatarUrl}
+                          alt="Profile"
+                          width={48}
+                          height={48}
+                          className="size-12 object-cover"
+                          unoptimized
+                          onError={() => setFailedAvatarUrl(avatarUrl)}
+                        />
+                      ) : (
+                        <IconUser className="size-6 text-muted-foreground" />
+                      )}
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/35 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                        <IconPencil className="size-3.5" />
+                      </span>
+                    </Button>
+                </div>
+                <input
+                  ref={profilePictureInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={handleProfilePictureSelected}
+                  className="hidden"
+                />
+
+                <div className="text-sm text-muted-foreground">First Name</div>
+                <div className="w-48">
+                  {editingField === "firstName" ? (
+                    <Input
+                      id="firstName"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      onBlur={() => {
+                        setEditingField(null);
+                        void saveProfileName(firstName, lastName);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          setEditingField(null);
+                          void saveProfileName(firstName, lastName);
+                        }
+                        if (event.key === "Escape") {
+                          setFirstName(savedFirstName);
+                          setEditingField(null);
+                        }
+                      }}
+                      autoFocus
+                      className="w-full"
                     />
                   ) : (
-                    <IconUser className="size-6 text-muted-foreground" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="default"
+                      onClick={() => setEditingField("firstName")}
+                      className="group w-full justify-between gap-2 pr-2"
+                    >
+                      <span>{firstName || "Set first name"}</span>
+                      <IconPencil className="size-3.5 text-muted-foreground/80" />
+                    </Button>
                   )}
                 </div>
-                <div className="flex flex-col gap-1">
+
+                <div className="text-sm text-muted-foreground">Last Name</div>
+                <div className="w-48">
+                  {editingField === "lastName" ? (
+                    <Input
+                      id="lastName"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      onBlur={() => {
+                        setEditingField(null);
+                        void saveProfileName(firstName, lastName);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          setEditingField(null);
+                          void saveProfileName(firstName, lastName);
+                        }
+                        if (event.key === "Escape") {
+                          setLastName(savedLastName);
+                          setEditingField(null);
+                        }
+                      }}
+                      autoFocus
+                      className="w-full"
+                    />
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="default"
+                      onClick={() => setEditingField("lastName")}
+                      className="group w-full justify-between gap-2 pr-2"
+                    >
+                      <span>{lastName || "Set last name"}</span>
+                      <IconPencil className="size-3.5 text-muted-foreground/80" />
+                    </Button>
+                  )}
+                </div>
+
+                <div className="text-sm text-muted-foreground">Email</div>
+                <p className="pt-2 text-sm">{user?.email ?? "-"}</p>
+
+                <div className="text-sm text-muted-foreground">Password</div>
+                <div>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleChangeProfilePicture}
-                    disabled={isAvatarUploading}
+                    onClick={handleChangePassword}
+                    className="w-fit min-w-48"
                   >
-                    {isAvatarUploading
-                      ? "Uploading..."
-                      : "Change Profile Picture"}
+                    Change Password
                   </Button>
-                  <input
-                    ref={profilePictureInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    onChange={handleProfilePictureSelected}
-                    className="hidden"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    JPEG, PNG, WebP or GIF. Max 2 MB. Recommended: 320 x 320 px.
-                  </p>
                 </div>
               </div>
-            </div>
+            </section>
 
-            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-              <Label
-                htmlFor="firstName"
-                className="text-right text-sm font-medium text-muted-foreground"
-              >
-                First Name
-              </Label>
-              <Input
-                id="firstName"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="max-w-lg"
-              />
-            </div>
+            <Separator />
 
-            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-              <Label
-                htmlFor="lastName"
-                className="text-right text-sm font-medium text-muted-foreground"
-              >
-                Last Name
-              </Label>
-              <Input
-                id="lastName"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="max-w-lg"
-              />
-            </div>
+            <section className="space-y-4 py-6">
+              <div>
+                <h2 className={sectionTitleClass}>System Settings</h2>
+              </div>
 
-            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-              <Label className="text-right text-sm font-medium text-muted-foreground">
-                Email
-              </Label>
-              <p className="text-sm">{user?.email ?? "-"}</p>
-            </div>
+              <div className="grid grid-cols-2 items-start gap-x-8 gap-y-4">
+                <div className="text-sm text-muted-foreground">Time Zone</div>
+                <div className="w-full">
+                  <Select value={timezone} onValueChange={handleTimezoneChange}>
+                    <SelectTrigger className="w-fit min-w-48" disabled={isSavingTimezone}>
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-56">
+                      {timezones.map((tz) => (
+                        <SelectItem key={tz} value={tz}>
+                          {tz}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-              <Label className="text-right text-sm font-medium text-muted-foreground">
-                Password
-              </Label>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleChangePassword}
-                className="w-fit"
-              >
-                Change Password
-              </Button>
-            </div>
+                {canReadRuntimeSettings ? (
+                  <>
+                    <div className="text-sm text-muted-foreground">Auto Scroll</div>
+                    <div className="w-full">
+                      <Input
+                        id="runtime-scroll-speed"
+                        type="number"
+                        min={1}
+                        max={200}
+                        value={scrollPxPerSecond}
+                        onChange={(e) => setScrollPxPerSecond(e.target.value)}
+                        disabled={
+                          isLoadingRuntimeSettings ||
+                          isSavingRuntimeSettings ||
+                          !canUpdateRuntimeSettings
+                        }
+                        className="w-fit min-w-48"
+                        onBlur={() => {
+                          void handleSaveRuntimeSettings();
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            void handleSaveRuntimeSettings();
+                          }
+                        }}
+                      />
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            </section>
 
-            <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-              <Label className="text-right text-sm font-medium text-muted-foreground">
-                Time Zone
-              </Label>
-              <Select value={timezone} onValueChange={setTimezone}>
-                <SelectTrigger className="max-w-lg">
-                  <SelectValue placeholder="Select timezone" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timezones.map((tz) => (
-                    <SelectItem key={tz} value={tz}>
-                      {tz}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Separator />
 
-            {canReadRuntimeSettings ? (
-              <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-                <Label
-                  htmlFor="runtime-scroll-speed"
-                  className="text-right text-sm font-medium text-muted-foreground"
-                >
-                  Runtime Auto-scroll
-                </Label>
-                <div className="flex max-w-lg items-center gap-2">
-                  <Input
-                    id="runtime-scroll-speed"
-                    type="number"
-                    min={1}
-                    max={200}
-                    value={scrollPxPerSecond}
-                    onChange={(e) => setScrollPxPerSecond(e.target.value)}
-                    disabled={
-                      isLoadingRuntimeSettings ||
-                      isSavingRuntimeSettings ||
-                      !canUpdateRuntimeSettings
-                    }
-                  />
+            <section className="space-y-4 py-6">
+              <h2 className="text-lg font-semibold tracking-tight text-destructive">Danger Zone</h2>
+              <div className="overflow-hidden rounded-lg border border-destructive/40">
+                <div className="flex items-start justify-between gap-4 border-b border-destructive/25 px-4 py-4">
+                  <div className="max-w-2xl">
+                    <p className="text-sm font-semibold">Log out this session</p>
+                    <p className="text-sm text-muted-foreground">
+                      End your current session on this device.
+                    </p>
+                  </div>
                   <Button
-                    type="button"
                     variant="outline"
-                    onClick={handleSaveRuntimeSettings}
-                    disabled={
-                      isLoadingRuntimeSettings ||
-                      isSavingRuntimeSettings ||
-                      !canUpdateRuntimeSettings
-                    }
+                    className="border-destructive text-destructive hover:bg-destructive/10"
+                    onClick={handleLogOut}
                   >
-                    {isSavingRuntimeSettings ? "Saving..." : "Save"}
+                    Log Out
+                  </Button>
+                </div>
+
+                <div className="flex items-start justify-between gap-4 px-4 py-4">
+                  <div className="max-w-2xl">
+                    <p className="text-sm font-semibold">Delete this account</p>
+                    <p className="text-sm text-muted-foreground">
+                      Permanently delete your account. This cannot be undone.
+                    </p>
+                  </div>
+                  <Button variant="destructive" onClick={handleDeleteAccount}>
+                    Delete Account
                   </Button>
                 </div>
               </div>
-            ) : null}
-          </div>
-
-          <div className="grid grid-cols-[180px_1fr] items-center gap-4 px-8 pb-6">
-            <div />
-            <div className="max-w-lg flex justify-end gap-2">
-              <Button variant="default" onClick={handleSaveChanges}>
-                Save Changes
-              </Button>
-              <Button
-                variant="outline"
-                className="border-destructive text-destructive hover:bg-destructive/10"
-                onClick={handleLogOut}
-              >
-                Log Out
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteAccount}>
-                Delete Account
-              </Button>
-            </div>
+            </section>
           </div>
         </DashboardPage.Content>
       </DashboardPage.Body>
