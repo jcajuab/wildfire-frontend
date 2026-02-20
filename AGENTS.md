@@ -46,7 +46,7 @@ Single source of truth for workflow, architecture, and coding practices.
 
 - Login is integrated with the backend via `POST /auth/login`; auth now uses **httpOnly cookie-first sessions** and frontend requests must send credentials (`credentials: "include"`).
 - Frontend session state (`wildfire_session`) stores user/permissions/expiry for UI hydration only; it is not the source of truth for auth tokens.
-- Password recovery is available via `POST /auth/forgot-password` and `POST /auth/reset-password`; expose `/forgot-password` and `/reset-password` UX in auth flows.
+- Password recovery is available via `POST /auth/password/forgot` and `POST /auth/password/reset`; expose `/forgot-password` and `/reset-password` UX in auth flows.
 - Handle backend `429` auth responses with explicit lockout/rate-limit messaging (not generic errors).
 - Set `NEXT_PUBLIC_API_URL` (e.g. `http://localhost:3001`, no trailing slash) in `.env.local`; see `.env.example`. Restart the dev server after changing env.
 - For local login the backend at `localhost:3001` must allow the frontend origin (e.g. `http://localhost:3000`) in CORS so the browser allows the `POST /auth/login` request.

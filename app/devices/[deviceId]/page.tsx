@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/base-query";
 import { createPlayerController } from "@/lib/device-runtime/player-controller";
 import {
   buildRuntimeTimings,
-  computeOverflowExtraSeconds,
   type RuntimeManifestItem,
 } from "@/lib/device-runtime/overflow-timing";
+import { PdfRenderer } from "@/lib/device-runtime/pdf-renderer";
 import { createDeviceSseClient } from "@/lib/device-runtime/sse-client";
 
 interface DeviceManifest {
@@ -50,22 +50,44 @@ export default function DeviceRuntimePage() {
   >("closed");
   const [lastEventAt, setLastEventAt] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [viewport, setViewport] = useState({ width: 1920, height: 1080 });
+  const [measuredHeightByItemId, setMeasuredHeightByItemId] = useState<
+    Record<string, number>
+  >({});
+
+  const lastPlaylistVersionRef = useRef<string | null>(null);
 
   const baseUrl = getBaseUrl();
   const currentItem = manifest?.items[currentIndex] ?? null;
   const scrollPxPerSecond =
     manifest?.runtimeSettings.scrollPxPerSecond ?? DEFAULT_SCROLL_PX_PER_SECOND;
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const applyViewport = () => setViewport(getViewport());
+    applyViewport();
+    window.addEventListener("resize", applyViewport);
+    return () => {
+      window.removeEventListener("resize", applyViewport);
+    };
+  }, []);
+
   const timings = useMemo(() => {
-    if (!manifest || typeof window === "undefined") {
+    if (!manifest) {
       return [];
     }
     return buildRuntimeTimings({
       items: manifest.items,
-      viewport: getViewport(),
+      viewport,
       config: { scrollPixelsPerSecond: scrollPxPerSecond },
+      measuredHeightByItemId,
     });
-  }, [manifest, scrollPxPerSecond]);
+  }, [manifest, measuredHeightByItemId, scrollPxPerSecond, viewport]);
+
+  const currentTiming = timings[currentIndex] ?? null;
+  const overflowExtraSeconds = currentTiming?.overflowExtraSeconds ?? 0;
 
   useEffect(() => {
     if (!deviceId || !apiKey || !baseUrl) {
@@ -85,8 +107,14 @@ export default function DeviceRuntimePage() {
         throw new Error(`Manifest fetch failed (${response.status})`);
       }
       const payload = (await response.json()) as DeviceManifest;
+      const hasMaterialChange =
+        payload.playlistVersion !== lastPlaylistVersionRef.current;
       setManifest(payload);
-      setCurrentIndex(0);
+      if (hasMaterialChange) {
+        setCurrentIndex(0);
+        setMeasuredHeightByItemId({});
+      }
+      lastPlaylistVersionRef.current = payload.playlistVersion;
     };
 
     const fetchStreamToken = async () => {
@@ -149,37 +177,35 @@ export default function DeviceRuntimePage() {
     }
     const controller = createPlayerController({
       timings,
+      initialIndex: currentIndex,
       onTick: ({ index }) => setCurrentIndex(index),
     });
     controller.start();
     return () => {
       controller.stop();
     };
-  }, [timings]);
-
-  const overflowExtraSeconds =
-    currentItem && typeof window !== "undefined"
-      ? computeOverflowExtraSeconds({
-          item: currentItem,
-          viewport: getViewport(),
-          config: { scrollPixelsPerSecond: scrollPxPerSecond },
-        })
-      : 0;
+  }, [currentIndex, timings]);
 
   const scrollStyle = useMemo(() => {
-    if (!currentItem || typeof window === "undefined") return undefined;
-    const width = currentItem.content.width ?? window.innerWidth;
-    const height = currentItem.content.height ?? window.innerHeight;
-    const scaledHeight = (window.innerWidth / width) * height;
-    const overflow = Math.max(0, scaledHeight - window.innerHeight);
+    if (!currentItem) return undefined;
+    const measuredHeight = measuredHeightByItemId[currentItem.id];
+    const scaledHeight =
+      typeof measuredHeight === "number" && measuredHeight > 0
+        ? measuredHeight
+        : currentItem.content.width && currentItem.content.height
+          ? (viewport.width / currentItem.content.width) *
+            currentItem.content.height
+          : 0;
+    const overflow = Math.max(0, scaledHeight - viewport.height);
     if (overflow <= 0 || overflowExtraSeconds <= 0) {
       return undefined;
     }
     return {
       transform: `translateY(-${overflow}px)`,
       transition: `transform ${overflowExtraSeconds}s linear`,
+      willChange: "transform",
     };
-  }, [currentItem, overflowExtraSeconds]);
+  }, [currentItem, measuredHeightByItemId, overflowExtraSeconds, viewport]);
 
   if (!baseUrl || !deviceId || !apiKey) {
     return (
@@ -215,26 +241,34 @@ export default function DeviceRuntimePage() {
           playsInline
         />
       ) : currentItem.content.type === "IMAGE" ? (
-        <div className="h-screen w-screen overflow-hidden">
+        <div className="h-screen w-screen overflow-hidden select-none pointer-events-none">
           <Image
             key={currentItem.id}
             src={currentItem.content.downloadUrl}
             alt=""
-            width={currentItem.content.width ?? window.innerWidth}
-            height={currentItem.content.height ?? window.innerHeight}
+            width={currentItem.content.width ?? viewport.width}
+            height={currentItem.content.height ?? viewport.height}
             className="h-auto w-full"
             style={scrollStyle}
             unoptimized
           />
         </div>
       ) : (
-        <div className="h-screen w-screen overflow-hidden" style={scrollStyle}>
-          <iframe
-            key={currentItem.id}
-            src={currentItem.content.downloadUrl}
-            className="h-full w-full border-0 bg-white"
-            title="Device PDF content"
-          />
+        <div className="h-screen w-screen overflow-hidden bg-white">
+          <div style={scrollStyle}>
+            <PdfRenderer
+              key={currentItem.id}
+              src={currentItem.content.downloadUrl}
+              viewportWidth={viewport.width}
+              onMeasuredHeight={(height) =>
+                setMeasuredHeightByItemId((prev) =>
+                  prev[currentItem.id] === height
+                    ? prev
+                    : { ...prev, [currentItem.id]: height },
+                )
+              }
+            />
+          </div>
         </div>
       )}
     </main>

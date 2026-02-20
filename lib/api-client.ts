@@ -42,7 +42,7 @@ export async function login(
   return data as AuthResponse;
 }
 
-/** GET /auth/me. Refreshes JWT (sliding session). Returns auth payload or throws with backend error body. */
+/** GET /auth/session. Refreshes JWT (sliding session). Returns auth payload or throws with backend error body. */
 export async function refreshToken(
   token?: string | null,
 ): Promise<AuthResponse> {
@@ -53,7 +53,7 @@ export async function refreshToken(
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
-  const response = await fetch(`${baseUrl}/auth/me`, {
+  const response = await fetch(`${baseUrl}/auth/session`, {
     method: "GET",
     credentials: "include",
     headers,
@@ -94,7 +94,7 @@ export async function logoutApi(token?: string | null): Promise<void> {
   }
 }
 
-/** PATCH /auth/me. Update current user profile (e.g. name, timezone). Returns full auth payload; use it to refresh session. */
+/** PATCH /auth/profile. Update current user profile (e.g. name, timezone). Returns full auth payload; use it to refresh session. */
 export async function updateCurrentUserProfile(
   token: string | null | undefined,
   payload: { name?: string; timezone?: string | null },
@@ -107,7 +107,7 @@ export async function updateCurrentUserProfile(
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
-  const response = await fetch(`${baseUrl}/auth/me`, {
+  const response = await fetch(`${baseUrl}/auth/profile`, {
     method: "PATCH",
     credentials: "include",
     headers,
@@ -126,7 +126,7 @@ export async function updateCurrentUserProfile(
   return data as AuthResponse;
 }
 
-/** POST /auth/me/password. Change current user password. Returns 204 on success; 401 if current password wrong. */
+/** POST /auth/password/change. Change current user password. Returns 204 on success; 401 if current password wrong. */
 export async function changePassword(
   token: string | null | undefined,
   payload: { currentPassword: string; newPassword: string },
@@ -139,7 +139,7 @@ export async function changePassword(
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
-  const response = await fetch(`${baseUrl}/auth/me/password`, {
+  const response = await fetch(`${baseUrl}/auth/password/change`, {
     method: "POST",
     credentials: "include",
     headers,
@@ -207,7 +207,7 @@ export async function uploadAvatar(
   }
 }
 
-/** DELETE /auth/me. Deletes the current user (self-deletion). Returns on 204; throws AuthApiError on error. */
+/** DELETE /auth/profile. Deletes the current user (self-deletion). Returns on 204; throws AuthApiError on error. */
 export async function deleteCurrentUser(token?: string | null): Promise<void> {
   const baseUrl = getBaseUrl();
   const headers: Record<string, string> = {
@@ -216,7 +216,7 @@ export async function deleteCurrentUser(token?: string | null): Promise<void> {
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
-  const response = await fetch(`${baseUrl}/auth/me`, {
+  const response = await fetch(`${baseUrl}/auth/profile`, {
     method: "DELETE",
     credentials: "include",
     headers,
@@ -230,10 +230,10 @@ export async function deleteCurrentUser(token?: string | null): Promise<void> {
   throw new AuthApiError(message, response.status, data);
 }
 
-/** POST /auth/forgot-password. Always returns 204 when accepted. */
+/** POST /auth/password/forgot. Always returns 204 when accepted. */
 export async function forgotPassword(email: string): Promise<void> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/forgot-password`, {
+  const response = await fetch(`${baseUrl}/auth/password/forgot`, {
     method: "POST",
     credentials: "include",
     headers: {
@@ -251,13 +251,13 @@ export async function forgotPassword(email: string): Promise<void> {
   throw new AuthApiError(message, response.status, data);
 }
 
-/** POST /auth/reset-password. Returns 204 on success. */
+/** POST /auth/password/reset. Returns 204 on success. */
 export async function resetPassword(
   token: string,
   newPassword: string,
 ): Promise<void> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/reset-password`, {
+  const response = await fetch(`${baseUrl}/auth/password/reset`, {
     method: "POST",
     credentials: "include",
     headers: {

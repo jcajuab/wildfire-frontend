@@ -43,6 +43,7 @@ import {
   useDeletePlaylistMutation,
   useLazyGetPlaylistQuery,
   useListPlaylistsQuery,
+  useReorderPlaylistItemsMutation,
   useUpdatePlaylistMutation,
   useUpdatePlaylistItemMutation,
   useDeletePlaylistItemMutation,
@@ -119,6 +120,7 @@ export default function PlaylistsPage(): ReactElement {
   const [deletePlaylistMutation] = useDeletePlaylistMutation();
   const [updatePlaylistItem] = useUpdatePlaylistItemMutation();
   const [deletePlaylistItem] = useDeletePlaylistItemMutation();
+  const [reorderPlaylistItems] = useReorderPlaylistItemsMutation();
   const playlists = useMemo(
     () => (playlistsData?.items ?? []).map(mapBackendPlaylistBase),
     [playlistsData?.items],
@@ -202,35 +204,39 @@ export default function PlaylistsPage(): ReactElement {
   const handleSaveItems = useCallback(
     async (playlistId: string, diff: PlaylistItemsDiff) => {
       try {
-        const promises: Promise<unknown>[] = [];
+        for (const itemId of diff.deleted) {
+          await deletePlaylistItem({ playlistId, itemId }).unwrap();
+        }
 
-        diff.deleted.forEach((itemId) => {
-          promises.push(deletePlaylistItem({ playlistId, itemId }).unwrap());
-        });
+        for (const item of diff.updated) {
+          await updatePlaylistItem({
+            playlistId,
+            itemId: item.itemId,
+            duration: item.duration,
+          }).unwrap();
+        }
 
-        diff.updated.forEach((item) => {
-          promises.push(
-            updatePlaylistItem({
-              playlistId,
-              itemId: item.itemId,
-              sequence: item.sequence,
-              duration: item.duration,
-            }).unwrap(),
-          );
-        });
+        const persistedIdByLocalId = new Map<string, string>();
+        for (const item of diff.added) {
+          const created = await addPlaylistItem({
+            playlistId,
+            contentId: item.contentId,
+            // Temporary sequence; canonical order is set by atomic reorder.
+            sequence: 10_000 + persistedIdByLocalId.size + 1,
+            duration: item.duration,
+          }).unwrap();
+          persistedIdByLocalId.set(item.localId, created.id);
+        }
 
-        diff.added.forEach((item) => {
-          promises.push(
-            addPlaylistItem({
-              playlistId,
-              contentId: item.contentId,
-              sequence: item.sequence,
-              duration: item.duration,
-            }).unwrap(),
-          );
-        });
-
-        await Promise.all(promises);
+        const orderedItemIds = diff.orderedItemIds.map(
+          (id) => persistedIdByLocalId.get(id) ?? id,
+        );
+        if (orderedItemIds.length > 0) {
+          await reorderPlaylistItems({
+            playlistId,
+            orderedItemIds,
+          }).unwrap();
+        }
         toast.success("Playlist items updated.");
         setManageItemsPlaylist(null);
       } catch (err) {
@@ -241,7 +247,12 @@ export default function PlaylistsPage(): ReactElement {
         );
       }
     },
-    [addPlaylistItem, deletePlaylistItem, updatePlaylistItem],
+    [
+      addPlaylistItem,
+      deletePlaylistItem,
+      reorderPlaylistItems,
+      updatePlaylistItem,
+    ],
   );
 
   const handlePreviewPlaylist = useCallback(

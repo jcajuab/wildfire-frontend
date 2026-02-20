@@ -78,6 +78,11 @@ export interface DeletePlaylistItemRequest {
   readonly itemId: string;
 }
 
+export interface ReorderPlaylistItemsRequest {
+  readonly playlistId: string;
+  readonly orderedItemIds: readonly string[];
+}
+
 export const playlistsApi = createApi({
   reducerPath: "playlistsApi",
   baseQuery,
@@ -173,6 +178,17 @@ export const playlistsApi = createApi({
         { type: "Playlist", id: "LIST" },
       ],
     }),
+    reorderPlaylistItems: build.mutation<void, ReorderPlaylistItemsRequest>({
+      query: ({ playlistId, orderedItemIds }) => ({
+        url: `playlists/${playlistId}/items/reorder`,
+        method: "PUT",
+        body: { orderedItemIds },
+      }),
+      invalidatesTags: (_result, _error, { playlistId }) => [
+        { type: "Playlist", id: playlistId },
+        { type: "Playlist", id: "LIST" },
+      ],
+    }),
   }),
 });
 
@@ -186,4 +202,5 @@ export const {
   useAddPlaylistItemMutation,
   useUpdatePlaylistItemMutation,
   useDeletePlaylistItemMutation,
+  useReorderPlaylistItemsMutation,
 } = playlistsApi;

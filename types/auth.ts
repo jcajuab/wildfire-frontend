@@ -13,7 +13,7 @@ export interface AuthUser {
   readonly avatarUrl?: string | null;
 }
 
-/** Success response from POST /auth/login and GET /auth/me. */
+/** Success response from POST /auth/login and GET /auth/session. */
 export interface AuthResponse {
   readonly type: "bearer";
   readonly token: string;

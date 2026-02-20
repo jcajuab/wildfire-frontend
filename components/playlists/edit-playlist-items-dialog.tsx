@@ -136,6 +136,7 @@ function formatDuration(seconds: number): string {
 
 export interface PlaylistItemsDiff {
   readonly added: readonly {
+    readonly localId: string;
     readonly contentId: string;
     readonly sequence: number;
     readonly duration: number;
@@ -146,6 +147,7 @@ export interface PlaylistItemsDiff {
     readonly duration: number;
   }[];
   readonly deleted: readonly string[];
+  readonly orderedItemIds: readonly string[];
 }
 
 interface EditPlaylistItemsDialogProps {
@@ -159,11 +161,11 @@ interface EditPlaylistItemsDialogProps {
 
 /** Converts loaded PlaylistItem[] into local DraftItem[]. */
 function toDrafts(items: readonly PlaylistItem[]): DraftItem[] {
-  return items.map((item, index) => ({
+  return items.map((item) => ({
     id: item.id,
     content: item.content,
     duration: item.duration,
-    order: index,
+    order: item.order,
   }));
 }
 
@@ -250,6 +252,9 @@ export function EditPlaylistItemsDialog({
   const handleSave = useCallback(() => {
     const originalIds = new Set(playlist.items.map((i) => i.id));
     const originalById = new Map(playlist.items.map((i) => [i.id, i]));
+    const sequenceById = new Map(
+      drafts.map((draft, index) => [draft.id, index + 1] as const),
+    );
 
     const deleted = playlist.items
       .filter((orig) => !drafts.some((d) => d.id === orig.id))
@@ -260,12 +265,13 @@ export function EditPlaylistItemsDialog({
         if (!originalIds.has(d.id)) return false;
         const orig = originalById.get(d.id);
         if (!orig) return false;
-        const newSeq = drafts.indexOf(d) + 1;
-        return orig.duration !== d.duration || orig.order !== newSeq - 1;
+        const newSeq = sequenceById.get(d.id);
+        if (newSeq === undefined) return false;
+        return orig.duration !== d.duration || orig.order !== newSeq;
       })
       .map((d) => ({
         itemId: d.id,
-        sequence: drafts.indexOf(d) + 1,
+        sequence: sequenceById.get(d.id) ?? 1,
         duration: d.duration,
       }));
 
@@ -273,12 +279,18 @@ export function EditPlaylistItemsDialog({
     const addedFinal = drafts
       .filter((d) => d.id.startsWith("draft-"))
       .map((d) => ({
+        localId: d.id,
         contentId: d.content.id,
-        sequence: drafts.indexOf(d) + 1,
+        sequence: sequenceById.get(d.id) ?? 1,
         duration: d.duration,
       }));
 
-    onSave(playlist.id, { added: addedFinal, updated, deleted });
+    onSave(playlist.id, {
+      added: addedFinal,
+      updated,
+      deleted,
+      orderedItemIds: drafts.map((d) => d.id),
+    });
   }, [drafts, playlist, onSave]);
 
   const handleClose = useCallback(() => {

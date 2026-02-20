@@ -33,6 +33,7 @@ export const computeOverflowExtraSeconds = (input: {
   item: RuntimeManifestItem;
   viewport: RuntimeViewport;
   config: OverflowTimingConfig;
+  measuredContentHeight?: number;
 }): number => {
   const { item, viewport, config } = input;
   if (item.content.type !== "IMAGE" && item.content.type !== "PDF") {
@@ -48,7 +49,11 @@ export const computeOverflowExtraSeconds = (input: {
   }
 
   const scaledHeight =
-    (viewport.width / item.content.width) * item.content.height;
+    typeof input.measuredContentHeight === "number" &&
+    Number.isFinite(input.measuredContentHeight) &&
+    input.measuredContentHeight > 0
+      ? input.measuredContentHeight
+      : (viewport.width / item.content.width) * item.content.height;
   const verticalOverflow = Math.max(0, scaledHeight - viewport.height);
   const speed = toPositive(config.scrollPixelsPerSecond, 24);
   if (verticalOverflow <= 0) {
@@ -61,12 +66,14 @@ export const buildRuntimeTimings = (input: {
   items: readonly RuntimeManifestItem[];
   viewport: RuntimeViewport;
   config: OverflowTimingConfig;
+  measuredHeightByItemId?: Readonly<Record<string, number>>;
 }): readonly RuntimeItemTiming[] =>
   input.items.map((item) => {
     const overflowExtraSeconds = computeOverflowExtraSeconds({
       item,
       viewport: input.viewport,
       config: input.config,
+      measuredContentHeight: input.measuredHeightByItemId?.[item.id],
     });
     const baseDurationSeconds = toPositive(item.duration, 1);
     return {

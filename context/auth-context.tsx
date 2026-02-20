@@ -92,7 +92,7 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   /** Forces a backend-auth refresh to avoid stale permission UX after RBAC writes. */
   refreshSession: () => Promise<void>;
-  /** Replace session with auth payload (e.g. after PATCH /auth/me). */
+  /** Replace session with auth payload (e.g. after PATCH /auth/profile). */
   updateSession: (response: AuthResponse) => void;
 }
 

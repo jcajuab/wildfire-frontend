@@ -12,6 +12,7 @@ export interface PlayerController {
 export const createPlayerController = (input: {
   timings: readonly RuntimeItemTiming[];
   onTick: (tick: PlayerTick) => void;
+  initialIndex?: number;
 }): PlayerController => {
   let active = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -40,7 +41,9 @@ export const createPlayerController = (input: {
   return {
     start() {
       clearTimer();
-      currentIndex = 0;
+      const startIndex = input.initialIndex ?? 0;
+      currentIndex =
+        startIndex >= 0 && startIndex < input.timings.length ? startIndex : 0;
       active = true;
       loop();
     },
