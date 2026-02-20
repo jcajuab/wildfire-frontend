@@ -96,7 +96,7 @@ function StepIndicator({
                 {isCompleted ? <IconCheck className="size-4" /> : stepNumber}
               </div>
               <span
-                className={`text-[10px] ${
+                className={`text-xs ${
                   isCurrent
                     ? "font-medium text-primary"
                     : "text-muted-foreground"

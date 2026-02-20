@@ -222,7 +222,7 @@ export default function DeviceRuntimePage() {
         {lastEventAt ? ` • ${new Date(lastEventAt).toLocaleTimeString()}` : ""}
       </div>
       {errorMessage ? (
-        <div className="absolute right-2 top-2 z-10 rounded bg-red-600/80 px-2 py-1 text-xs">
+        <div className="absolute right-2 top-2 z-10 rounded bg-destructive/85 px-2 py-1 text-xs text-destructive-foreground">
           {errorMessage}
         </div>
       ) : null}

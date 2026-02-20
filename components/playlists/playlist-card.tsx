@@ -117,11 +117,11 @@ export const PlaylistCard = memo(function PlaylistCard({
       {/* Stats */}
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
-          <IconPlaylist className="size-3.5" />
+          <IconPlaylist className="size-4" />
           {playlist.itemsCount} items
         </span>
         <span className="flex items-center gap-1">
-          <IconClock className="size-3.5" />
+          <IconClock className="size-4" />
           {formatDuration(playlist.totalDuration)}
         </span>
       </div>
@@ -136,13 +136,13 @@ export const PlaylistCard = memo(function PlaylistCard({
             >
               {/* Thumbnail */}
               <div className="relative flex aspect-video items-center justify-center bg-muted">
-                <span className="absolute right-1 top-1 rounded bg-black/60 px-1 py-0.5 text-[10px] text-white">
+                <span className="absolute right-1 top-1 rounded bg-black/60 px-1 py-0.5 text-xs text-white">
                   {formatItemDuration(item.duration)}
                 </span>
               </div>
               {/* Title bar */}
               <div className="bg-primary px-1.5 py-1">
-                <span className="block truncate text-[10px] font-medium text-primary-foreground">
+                <span className="block truncate text-xs font-medium text-primary-foreground">
                   {item.content.title}
                 </span>
               </div>

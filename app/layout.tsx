@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
-import { Geist_Mono, Source_Sans_3 } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/auth-context";
 import StoreProvider from "@/lib/StoreProvider";
 import "./globals.css";
 
-const sourceSans = Source_Sans_3({
+const geistSans = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
 });
@@ -27,7 +27,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" className={sourceSans.variable}>
+    <html lang="en" className={geistSans.variable}>
       <body className={`${geistMono.variable} antialiased`}>
         <a href="#main-content" className="skip-link">
           Skip to Main Content

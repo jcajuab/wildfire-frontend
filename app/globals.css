@@ -80,6 +80,12 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.87 0.006 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+  --success: oklch(0.62 0.18 150);
+  --success-foreground: oklch(0.2 0.03 150);
+  --success-muted: oklch(0.96 0.04 150);
+  --warning: oklch(0.72 0.16 82);
+  --warning-foreground: oklch(0.36 0.08 82);
+  --warning-muted: oklch(0.97 0.03 82);
 }
 
 .dark {
@@ -114,6 +120,12 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 16%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+  --success: oklch(0.72 0.17 150);
+  --success-foreground: oklch(0.95 0.03 150);
+  --success-muted: oklch(0.26 0.04 150);
+  --warning: oklch(0.78 0.14 82);
+  --warning-foreground: oklch(0.96 0.03 82);
+  --warning-muted: oklch(0.28 0.04 82);
 }
 
 @layer base {
@@ -146,6 +158,28 @@
     text-wrap: balance;
   }
 
+  .text-overline {
+    @apply text-xs font-medium uppercase tracking-wide text-muted-foreground;
+  }
+
+  .status-success {
+    color: var(--success);
+  }
+
+  .status-success-muted {
+    background-color: var(--success-muted);
+    color: var(--success-foreground);
+  }
+
+  .status-warning {
+    color: var(--warning);
+  }
+
+  .status-warning-muted {
+    background-color: var(--warning-muted);
+    color: var(--warning-foreground);
+  }
+
   main {
     min-width: 0;
   }
@@ -160,7 +194,7 @@
   }
 
   .skip-link:focus-visible {
-    @apply not-sr-only fixed left-4 top-4 z-[100] rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-lg outline-none ring-2 ring-primary/30;
+    @apply not-sr-only fixed left-4 top-4 z-100 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-lg outline-none ring-2 ring-primary/30;
   }
 
   @media (prefers-reduced-motion: reduce) {

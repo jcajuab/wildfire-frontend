@@ -73,7 +73,7 @@ export function LogMetadataDialog({
 
             <div className="flex flex-col gap-3 rounded-lg border p-4">
               <div className="flex items-start gap-2">
-                <IconFileText className="mt-0.5 size-4 text-muted-foreground" />
+                <IconFileText className="size-4 text-muted-foreground" />
                 <div className="flex flex-col min-w-0">
                   <span className="font-medium">
                     {formatDateTime(log.timestamp)}

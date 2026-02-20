@@ -91,7 +91,7 @@ function SortableItemRow({
       <div className="flex flex-1 flex-col gap-0.5">
         <span className="text-sm font-medium">{item.content.title}</span>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <IconClock className="size-3" />
+          <IconClock className="size-4" />
           <input
             type="number"
             min="1"

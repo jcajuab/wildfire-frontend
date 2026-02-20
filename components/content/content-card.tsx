@@ -45,7 +45,7 @@ export const ContentCard = memo(function ContentCard({
     <div className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-md">
       {/* Thumbnail area */}
       <div className="flex aspect-4/3 items-center justify-center bg-muted/50">
-        <IconWorld className="size-12 text-muted-foreground/50" />
+        <IconWorld className="size-7 text-muted-foreground" />
       </div>
 
       {/* Content info */}
@@ -56,7 +56,7 @@ export const ContentCard = memo(function ContentCard({
             by {content.createdBy.name}
           </p>
           <div className="pt-1">
-            <Badge variant="outline" className="text-[10px]">
+            <Badge variant="outline">
               {content.status === "IN_USE" ? "In Use" : "Draft"}
             </Badge>
           </div>

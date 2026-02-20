@@ -91,12 +91,14 @@ export default function AccountPage(): ReactElement {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const [scrollPxPerSecond, setScrollPxPerSecond] = useState("24");
   const [isLoadingRuntimeSettings, setIsLoadingRuntimeSettings] =
     useState(false);
   const [isSavingRuntimeSettings, setIsSavingRuntimeSettings] = useState(false);
   const canReadRuntimeSettings = useCan("settings:read");
   const canUpdateRuntimeSettings = useCan("settings:update");
+  const avatarUrl = user?.avatarUrl ?? null;
 
   useEffect(() => {
     if (!canReadRuntimeSettings) return;
@@ -321,14 +323,15 @@ export default function AccountPage(): ReactElement {
               </Label>
               <div className="flex items-center gap-4">
                 <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
-                  {user?.avatarUrl ? (
+                  {avatarUrl && failedAvatarUrl !== avatarUrl ? (
                     <Image
-                      src={user.avatarUrl}
+                      src={avatarUrl}
                       alt="Profile"
                       width={48}
                       height={48}
                       className="size-12 object-cover"
                       unoptimized
+                      onError={() => setFailedAvatarUrl(avatarUrl)}
                     />
                   ) : (
                     <IconUser className="size-6 text-muted-foreground" />

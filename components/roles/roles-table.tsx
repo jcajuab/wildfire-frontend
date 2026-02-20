@@ -79,7 +79,7 @@ function SortableHeader({
           <IconSortDescending className="size-4" />
         )
       ) : (
-        <IconArrowsSort className="size-4 opacity-50" />
+        <IconArrowsSort className="size-4 text-muted-foreground" />
       )}
     </button>
   );

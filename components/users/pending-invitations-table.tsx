@@ -106,7 +106,7 @@ export function PendingInvitationsTable({
                   onClick={() => onResend(invitation.id)}
                   disabled={!canResend || isResending}
                 >
-                  <IconRefresh className="size-3.5" />
+                  <IconRefresh className="size-4" />
                   {isResending ? "Sending…" : "Resend"}
                 </Button>
               </TableCell>

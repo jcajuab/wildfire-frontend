@@ -51,7 +51,7 @@ export default function ForgotPasswordPage(): ReactElement {
 
         {isSubmitted ? (
           <p
-            className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700"
+            className="status-success-muted rounded-lg px-3 py-2 text-sm"
             role="status"
           >
             If that email exists, a reset token has been issued.

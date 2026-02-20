@@ -39,11 +39,11 @@ export function ViewDisplayDialog({
         </DialogHeader>
         <div className="mt-4 flex flex-col gap-4">
           <div className="flex items-start gap-2">
-            <IconDeviceDesktop className="mt-0.5 size-4 text-muted-foreground" />
+            <IconDeviceDesktop className="size-4 text-muted-foreground" />
             <div className="flex flex-col">
               <span className="font-medium">{display.name}</span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <IconMapPin className="size-3" />
+                <IconMapPin className="size-4" />
                 {display.location}
               </span>
             </div>

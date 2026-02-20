@@ -142,7 +142,7 @@ function ResourceWeekView({
                           <span className="block truncate text-xs font-medium text-primary">
                             {schedule.name}
                           </span>
-                          <span className="block truncate text-[11px] text-primary/80">
+                          <span className="block truncate text-xs text-primary/80">
                             {event.timeLabel}
                           </span>
                         </button>
@@ -192,7 +192,7 @@ function ResourceDayView({
               {HOURS.map((hour) => (
                 <div
                   key={hour}
-                  className="border-r px-1 py-2 text-center text-[11px] text-muted-foreground last:border-r-0"
+                  className="border-r px-1 py-2 text-center text-xs text-muted-foreground last:border-r-0"
                 >
                   {hour % 2 === 0 ? formatHourLabel(hour) : ""}
                 </div>
@@ -261,7 +261,7 @@ function ResourceDayView({
                         <span className="block truncate text-xs font-medium text-primary">
                           {schedule.name}
                         </span>
-                        <span className="block truncate text-[11px] text-primary/80">
+                        <span className="block truncate text-xs text-primary/80">
                           {event.timeLabel}
                         </span>
                       </button>

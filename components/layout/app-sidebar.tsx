@@ -41,6 +41,8 @@ import { useAuth } from "@/context/auth-context";
 import { DASHBOARD_ROUTE_READ_ENTRIES } from "@/lib/route-permissions";
 import type { ComponentType, ReactElement } from "react";
 import Image from "next/image";
+import type { CSSProperties } from "react";
+import { useState } from "react";
 
 interface NavItem {
   readonly title: string;
@@ -79,12 +81,23 @@ export function AppSidebar(): ReactElement {
     : [];
   const displayName = user?.name ?? "User";
   const displayEmail = user?.email ?? "";
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
+  const avatarUrl = user?.avatarUrl ?? null;
   // Only render tooltips after client mount to avoid hydration mismatch
   // Radix Tooltip generates IDs that differ between server and client
   const mounted = useMounted();
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar
+      variant="floating"
+      collapsible="icon"
+      style={
+        {
+          "--sidebar-width": "15.5rem",
+          "--sidebar-width-icon": "4rem",
+        } as CSSProperties
+      }
+    >
       <SidebarHeader className="flex flex-row items-center justify-between">
         {state === "expanded" ? (
           <>
@@ -111,11 +124,13 @@ export function AppSidebar(): ReactElement {
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       asChild
+                      size="lg"
                       isActive={isActive}
+                      className="text-base leading-6 [&_svg]:size-5"
                       tooltip={mounted ? item.title : undefined}
                     >
                       <Link href={item.href}>
-                        <item.icon className="size-4" />
+                        <item.icon className="size-5" />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -135,14 +150,15 @@ export function AppSidebar(): ReactElement {
                 <SidebarMenuButton size="lg" className="w-full justify-between">
                   <div className="flex items-center gap-2">
                     <div className="flex size-7 items-center justify-center rounded-full bg-muted">
-                      {user?.avatarUrl ? (
+                      {avatarUrl && failedAvatarUrl !== avatarUrl ? (
                         <Image
-                          src={user.avatarUrl}
+                          src={avatarUrl}
                           alt="User Avatar"
                           width={48}
                           height={48}
                           className="size-7 rounded-full object-cover"
                           unoptimized
+                          onError={() => setFailedAvatarUrl(avatarUrl)}
                         />
                       ) : (
                         <IconUser className="size-6 text-muted-foreground" />

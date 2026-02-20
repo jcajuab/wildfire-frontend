@@ -37,11 +37,11 @@ interface DisplayCardProps {
 function getStatusColor(status: DisplayStatus): string {
   switch (status) {
     case "READY":
-      return "bg-emerald-500";
+      return "bg-[var(--success)]";
     case "LIVE":
       return "bg-destructive";
     case "DOWN":
-      return "bg-amber-500";
+      return "bg-[var(--warning)]";
     default:
       return "bg-muted-foreground";
   }
@@ -63,11 +63,11 @@ function getStatusLabel(status: DisplayStatus): string {
 function getStatusTextColor(status: DisplayStatus): string {
   switch (status) {
     case "READY":
-      return "text-emerald-600 dark:text-emerald-400";
+      return "status-success";
     case "LIVE":
       return "text-destructive";
     case "DOWN":
-      return "text-amber-600 dark:text-amber-400";
+      return "status-warning";
     default:
       return "text-muted-foreground";
   }
@@ -120,7 +120,7 @@ export const DisplayCard = memo(function DisplayCard({
             </div>
           </div>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <IconMapPin className="size-3" />
+            <IconMapPin className="size-4" />
             <span>{display.location}</span>
           </div>
         </div>
@@ -183,9 +183,7 @@ export const DisplayCard = memo(function DisplayCard({
 
       {/* Now Playing section */}
       <div className="flex flex-col gap-2">
-        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-          Now Playing
-        </p>
+        <p className="text-overline">Now Playing</p>
         <div className="flex items-center gap-3">
           {/* Thumbnail */}
           <div className="flex size-10 shrink-0 items-center justify-center rounded bg-muted">
@@ -221,15 +219,11 @@ export const DisplayCard = memo(function DisplayCard({
       {/* Display info */}
       <div className="grid grid-cols-2 gap-4 border-t pt-3">
         <div className="flex flex-col gap-0.5">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            Display Output
-          </p>
+          <p className="text-overline">Display Output</p>
           <p className="text-sm font-medium">{display.displayOutput}</p>
         </div>
         <div className="flex flex-col gap-0.5">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            Resolution
-          </p>
+          <p className="text-overline">Resolution</p>
           <p className="text-sm font-medium">{display.resolution}</p>
         </div>
       </div>

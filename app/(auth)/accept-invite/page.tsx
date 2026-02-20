@@ -91,7 +91,7 @@ export default function AcceptInvitePage(): ReactElement {
 
         {isSubmitted ? (
           <p
-            className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700"
+            className="status-success-muted rounded-lg px-3 py-2 text-sm"
             role="status"
           >
             Invitation accepted. You can now sign in.

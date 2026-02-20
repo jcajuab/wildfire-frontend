@@ -74,7 +74,7 @@ export default function ResetPasswordPage(): ReactElement {
 
         {isSubmitted ? (
           <p
-            className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700"
+            className="status-success-muted rounded-lg px-3 py-2 text-sm"
             role="status"
           >
             Password reset complete. You can now sign in.
