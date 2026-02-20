@@ -18,8 +18,8 @@ export interface Device {
   readonly screenHeight: number | null;
   readonly outputType: string | null;
   readonly orientation: "LANDSCAPE" | "PORTRAIT" | null;
-  readonly lastSeenAt: string;
-  readonly onlineStatus: "LIVE" | "DOWN";
+  readonly lastSeenAt: string | null;
+  readonly onlineStatus: "READY" | "LIVE" | "DOWN";
   readonly createdAt: string;
   readonly updatedAt: string;
 }

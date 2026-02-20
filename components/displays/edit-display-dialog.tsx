@@ -7,6 +7,7 @@ import { IconDeviceFloppy, IconX } from "@tabler/icons-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -15,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import type { Display, DisplayOutput } from "@/types/display";
+import type { Display } from "@/types/display";
 
 interface EditDisplayDialogProps {
   readonly display: Display | null;
@@ -29,14 +30,31 @@ interface EditFormData {
   location: string;
   ipAddress: string;
   macAddress: string;
-  selectedOutput: string;
+  selectedOutput: string | null;
   selectedResolution: string;
   groups: readonly string[];
 }
 
-const availableDisplayOutputs: readonly DisplayOutput[] = [
-  { name: "HDMI-0", resolution: "Auto-detect" },
-  { name: "HDMI-1", resolution: "Auto-detect" },
+const outputOptions: ReadonlyArray<{
+  readonly value: string | null;
+  readonly label: string;
+  readonly description: string;
+}> = [
+  {
+    value: null,
+    label: "None",
+    description: "No fixed output selected",
+  },
+  {
+    value: "HDMI-0",
+    label: "HDMI-0",
+    description: "Primary HDMI output",
+  },
+  {
+    value: "HDMI-1",
+    label: "HDMI-1",
+    description: "Secondary HDMI output",
+  },
 ];
 
 function createInitialFormData(display: Display): EditFormData {
@@ -45,7 +63,8 @@ function createInitialFormData(display: Display): EditFormData {
     location: display.location,
     ipAddress: display.ipAddress,
     macAddress: display.macAddress,
-    selectedOutput: display.displayOutput,
+    selectedOutput:
+      display.displayOutput === "Not available" ? null : display.displayOutput,
     selectedResolution: display.resolution,
     groups: [...display.groups],
   };
@@ -79,7 +98,7 @@ function EditDisplayForm({
       location: formData.location,
       ipAddress: formData.ipAddress,
       macAddress: formData.macAddress,
-      displayOutput: formData.selectedOutput,
+      displayOutput: formData.selectedOutput ?? "Not available",
       resolution: formData.selectedResolution,
       groups: [...formData.groups],
     };
@@ -105,10 +124,13 @@ function EditDisplayForm({
     }));
   }, []);
 
-  const [screenWidthRaw, screenHeightRaw] = formData.selectedResolution
+  const [screenWidthRaw, screenHeightRaw, ...extraParts] = formData.selectedResolution
     .split("x")
     .map((value) => value.trim());
   const hasValidResolution =
+    extraParts.length === 0 &&
+    screenWidthRaw !== undefined &&
+    screenHeightRaw !== undefined &&
     Number.isInteger(Number(screenWidthRaw)) &&
     Number(screenWidthRaw) > 0 &&
     Number.isInteger(Number(screenHeightRaw)) &&
@@ -119,6 +141,9 @@ function EditDisplayForm({
     <>
       <DialogHeader>
         <DialogTitle>Edit Details</DialogTitle>
+        <DialogDescription className="sr-only">
+          Update display identity, network metadata, output, and grouping.
+        </DialogDescription>
       </DialogHeader>
 
       <div className="flex flex-col gap-4">
@@ -176,37 +201,38 @@ function EditDisplayForm({
         <div className="flex flex-col gap-1.5">
           <Label>Display Output</Label>
           <div className="flex flex-col gap-2">
-            {availableDisplayOutputs.map((output) => (
+            {outputOptions.map((option) => (
               <button
-                key={output.name}
+                key={option.value ?? "none"}
                 type="button"
+                role="radio"
+                aria-checked={formData.selectedOutput === option.value}
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
-                    selectedOutput: output.name,
-                    selectedResolution: output.resolution,
+                    selectedOutput: option.value,
                   }))
                 }
                 className={`flex items-center justify-between rounded-lg border p-3 text-left transition-colors ${
-                  formData.selectedOutput === output.name
+                  formData.selectedOutput === option.value
                     ? "border-primary bg-primary/5"
                     : "hover:bg-muted/50"
                 }`}
               >
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium">{output.name}</span>
+                  <span className="text-sm font-medium">{option.label}</span>
                   <span className="text-xs text-muted-foreground">
-                    {output.resolution}
+                    {option.description}
                   </span>
                 </div>
                 <div
                   className={`flex size-5 items-center justify-center rounded-full border-2 ${
-                    formData.selectedOutput === output.name
+                    formData.selectedOutput === option.value
                       ? "border-primary bg-primary"
                       : "border-muted-foreground/30"
                   }`}
                 >
-                  {formData.selectedOutput === output.name && (
+                  {formData.selectedOutput === option.value && (
                     <div className="size-2 rounded-full bg-white" />
                   )}
                 </div>
@@ -231,6 +257,11 @@ function EditDisplayForm({
           <p className="text-xs text-muted-foreground">
             Required format: width x height (e.g. 1366x768)
           </p>
+          {!hasValidResolution ? (
+            <p className="text-xs text-destructive">
+              Resolution must be numeric width x height (for example 1920x1080).
+            </p>
+          ) : null}
         </div>
 
         {/* Display Groups */}
