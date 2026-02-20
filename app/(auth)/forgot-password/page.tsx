@@ -31,11 +31,13 @@ export default function ForgotPasswordPage(): ReactElement {
   }
 
   return (
-    <div className="w-full max-w-sm px-4">
-      <div className="flex flex-col gap-2 text-center">
-        <h1 className="text-xl font-semibold text-primary">Reset password</h1>
+    <div className="w-full">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          Forgot password?
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Enter your email to request a reset token.
+          Enter your email to request a reset link
         </p>
       </div>
 
@@ -54,11 +56,11 @@ export default function ForgotPasswordPage(): ReactElement {
             className="status-success-muted rounded-lg px-3 py-2 text-sm"
             role="status"
           >
-            If that email exists, a reset token has been issued.
+            If that email exists, a reset link has been sent
           </p>
         ) : null}
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
@@ -66,7 +68,7 @@ export default function ForgotPasswordPage(): ReactElement {
             placeholder="admin@example.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="h-10! rounded-lg! bg-white! text-sm!"
+            className="h-11 rounded-lg bg-white text-sm"
             autoComplete="email"
             required
           />
@@ -74,10 +76,10 @@ export default function ForgotPasswordPage(): ReactElement {
 
         <Button
           type="submit"
-          className="h-10! w-full rounded-lg! text-sm!"
+          className="h-11 w-full rounded-lg text-sm"
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Submitting..." : "Send reset request"}
+          {isSubmitting ? "Submitting..." : "Continue"}
         </Button>
 
         <div className="text-center">

@@ -69,13 +69,13 @@ export default function AcceptInvitePage(): ReactElement {
   }
 
   return (
-    <div className="w-full max-w-sm px-4">
-      <div className="flex flex-col gap-2 text-center">
-        <h1 className="text-xl font-semibold text-primary">
+    <div className="w-full">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Accept invitation
         </h1>
         <p className="text-sm text-muted-foreground">
-          Set your display name and password to activate your account.
+          Set your display name and password to activate your account
         </p>
       </div>
 
@@ -98,51 +98,51 @@ export default function AcceptInvitePage(): ReactElement {
           </p>
         ) : null}
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label htmlFor="token">Invite token</Label>
           <Input
             id="token"
             type="text"
             value={token}
             onChange={(event) => setToken(event.target.value)}
-            className="h-10! rounded-lg! bg-white! text-sm!"
+            className="h-11 rounded-lg bg-white text-sm"
             required
           />
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label htmlFor="name">Display name</Label>
           <Input
             id="name"
             type="text"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            className="h-10! rounded-lg! bg-white! text-sm!"
+            className="h-11 rounded-lg bg-white text-sm"
             placeholder="Your name"
           />
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
           <Input
             id="password"
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="h-10! rounded-lg! bg-white! text-sm!"
+            className="h-11 rounded-lg bg-white text-sm"
             autoComplete="new-password"
             required
           />
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label htmlFor="confirmPassword">Confirm password</Label>
           <Input
             id="confirmPassword"
             type="password"
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
-            className="h-10! rounded-lg! bg-white! text-sm!"
+            className="h-11 rounded-lg bg-white text-sm"
             autoComplete="new-password"
             required
           />
@@ -150,7 +150,7 @@ export default function AcceptInvitePage(): ReactElement {
 
         <Button
           type="submit"
-          className="h-10! w-full rounded-lg! text-sm!"
+          className="h-11 w-full rounded-lg text-sm"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Accepting..." : "Accept invitation"}

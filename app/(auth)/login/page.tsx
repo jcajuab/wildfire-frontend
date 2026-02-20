@@ -4,7 +4,6 @@ import type { FormEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { IconFlame } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,7 +46,7 @@ export default function LoginPage(): ReactElement {
 
   if (!isInitialized) {
     return (
-      <div className="w-full max-w-sm px-4">
+      <div className="w-full">
         <div className="flex items-center justify-center py-12">
           <span className="text-sm text-muted-foreground">Loading…</span>
         </div>
@@ -57,7 +56,7 @@ export default function LoginPage(): ReactElement {
 
   if (isAuthenticated) {
     return (
-      <div className="w-full max-w-sm px-4">
+      <div className="w-full">
         <div className="flex items-center justify-center py-12">
           <span className="text-sm text-muted-foreground">Redirecting…</span>
         </div>
@@ -66,14 +65,11 @@ export default function LoginPage(): ReactElement {
   }
 
   return (
-    <div className="w-full max-w-sm px-4">
-      <div className="flex flex-col items-center text-center">
-        <IconFlame className="size-8 text-primary" stroke={1.5} />
-        <h1 className="mt-2 text-xl font-semibold text-primary">
-          Welcome to WILDFIRE!
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          WILDFIRE — bet you didn&apos;t catch that!
+    <div className="w-full">
+      <div className="flex flex-col items-start gap-2">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Login</h1>
+        <p className="text-sm text-muted-foreground">
+          Welcome back to WILDFIRE
         </p>
       </div>
 
@@ -87,7 +83,7 @@ export default function LoginPage(): ReactElement {
           </p>
         )}
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
@@ -95,38 +91,37 @@ export default function LoginPage(): ReactElement {
             placeholder="Admin"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-10! rounded-lg! bg-white! text-sm!"
+            className="h-11 rounded-lg bg-white text-sm"
             autoComplete="email"
             required
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="password">Password</Label>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="password">Password</Label>
+            <Link
+              href="/forgot-password"
+              className="text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <Input
             id="password"
             type="password"
             placeholder="********"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="h-10! rounded-lg! bg-white! text-sm!"
+            className="h-11 rounded-lg bg-white text-sm"
             autoComplete="current-password"
             required
           />
         </div>
 
-        <div className="flex justify-end">
-          <Link
-            href="/forgot-password"
-            className="text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
-          >
-            Forgot password?
-          </Link>
-        </div>
-
         <Button
           type="submit"
-          className="h-10! w-full rounded-lg! text-sm!"
+          className="h-11 w-full rounded-lg text-sm"
           disabled={isLoading}
         >
           {isLoading ? "Logging in…" : "Login"}
