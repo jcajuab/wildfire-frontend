@@ -599,65 +599,77 @@ export default function RolesPage(): ReactElement {
                   </tr>
                 </thead>
                 <tbody>
-                  {(deletionRequestsData ?? []).map((request) => (
-                    <tr key={request.id} className="border-t">
-                      <td className="px-4 py-2">{request.roleName}</td>
-                      <td className="px-4 py-2">{request.requestedByName}</td>
-                      <td className="px-4 py-2 text-muted-foreground">
-                        {formatDateTime(request.requestedAt)}
-                      </td>
-                      <td className="px-4 py-2">{request.status}</td>
-                      <td className="px-4 py-2 text-muted-foreground">
-                        {request.reason?.trim() ? request.reason : "-"}
-                      </td>
-                      <td className="px-4 py-2 text-right">
-                        {isSuperAdmin && request.status === "pending" ? (
-                          <div className="inline-flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={async () => {
-                                try {
-                                  await approveRoleDeletionRequest({
-                                    requestId: request.id,
-                                  }).unwrap();
-                                  toast.success("Deletion request approved.");
-                                } catch (err) {
-                                  toast.error(
-                                    err instanceof Error
-                                      ? err.message
-                                      : "Failed to approve request",
-                                  );
-                                }
-                              }}
+                  {(deletionRequestsData ?? []).map((request) => {
+                    const reasonText = request.reason?.trim() ?? "";
+                    return (
+                      <tr key={request.id} className="border-t">
+                        <td className="px-4 py-2">{request.roleName}</td>
+                        <td className="px-4 py-2">{request.requestedByName}</td>
+                        <td className="px-4 py-2 text-muted-foreground">
+                          {formatDateTime(request.requestedAt)}
+                        </td>
+                        <td className="px-4 py-2">{request.status}</td>
+                        <td className="px-4 py-2 text-muted-foreground">
+                          {reasonText ? (
+                            <span
+                              className="block max-w-[20rem] truncate md:max-w-[30rem]"
+                              title={reasonText}
                             >
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={async () => {
-                                try {
-                                  await rejectRoleDeletionRequest({
-                                    requestId: request.id,
-                                  }).unwrap();
-                                  toast.success("Deletion request rejected.");
-                                } catch (err) {
-                                  toast.error(
-                                    err instanceof Error
-                                      ? err.message
-                                      : "Failed to reject request",
-                                  );
-                                }
-                              }}
-                            >
-                              Reject
-                            </Button>
-                          </div>
-                        ) : null}
-                      </td>
-                    </tr>
-                  ))}
+                              {reasonText}
+                            </span>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                        <td className="px-4 py-2 text-right">
+                          {isSuperAdmin && request.status === "pending" ? (
+                            <div className="inline-flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  try {
+                                    await approveRoleDeletionRequest({
+                                      requestId: request.id,
+                                    }).unwrap();
+                                    toast.success("Deletion request approved.");
+                                  } catch (err) {
+                                    toast.error(
+                                      err instanceof Error
+                                        ? err.message
+                                        : "Failed to approve request",
+                                    );
+                                  }
+                                }}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={async () => {
+                                  try {
+                                    await rejectRoleDeletionRequest({
+                                      requestId: request.id,
+                                    }).unwrap();
+                                    toast.success("Deletion request rejected.");
+                                  } catch (err) {
+                                    toast.error(
+                                      err instanceof Error
+                                        ? err.message
+                                        : "Failed to reject request",
+                                    );
+                                  }
+                                }}
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          ) : null}
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {(deletionRequestsData ?? []).length === 0 ? (
                     <tr>
                       <td
