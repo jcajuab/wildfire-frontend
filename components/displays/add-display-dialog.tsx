@@ -10,7 +10,6 @@ import {
   IconWifi,
   IconSettings,
   IconClipboardCheck,
-  IconX,
 } from "@tabler/icons-react";
 
 import {
@@ -25,6 +24,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { DisplayGroupsCombobox } from "@/components/displays/display-groups-combobox";
+import { getGroupBadgeStyles } from "@/lib/display-group-colors";
+import type { DeviceGroup } from "@/lib/api/devices-api";
 import type { Display, DisplayOutput } from "@/types/display";
 
 type WizardStep = 1 | 2 | 3 | 4;
@@ -33,6 +35,7 @@ interface AddDisplayDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onRegister: (display: Omit<Display, "id" | "createdAt">) => void;
+  readonly existingGroups?: readonly DeviceGroup[];
 }
 
 interface WizardData {
@@ -123,15 +126,14 @@ export function AddDisplayDialog({
   open,
   onOpenChange,
   onRegister,
+  existingGroups = [],
 }: AddDisplayDialogProps): ReactElement {
   const [step, setStep] = useState<WizardStep>(1);
   const [data, setData] = useState<WizardData>(initialWizardData);
-  const [groupInput, setGroupInput] = useState("");
 
   const handleClose = useCallback(() => {
     setStep(1);
     setData(initialWizardData);
-    setGroupInput("");
     onOpenChange(false);
   }, [onOpenChange]);
 
@@ -155,6 +157,10 @@ export function AddDisplayDialog({
   }, [step]);
 
   const handleRegister = useCallback(() => {
+    const groups = data.groups.map((name) => ({
+      name,
+      colorIndex: existingGroups.find((g) => g.name === name)?.colorIndex ?? 0,
+    }));
     onRegister({
       name: data.displayName,
       status: "READY",
@@ -163,28 +169,11 @@ export function AddDisplayDialog({
       macAddress: data.macAddress,
       displayOutput: data.selectedOutput,
       resolution: data.selectedResolution,
-      groups: data.groups,
+      groups,
       nowPlaying: null,
     });
     handleClose();
-  }, [data, onRegister, handleClose]);
-
-  const handleAddGroup = useCallback(() => {
-    if (groupInput.trim() && !data.groups.includes(groupInput.trim())) {
-      setData((prev) => ({
-        ...prev,
-        groups: [...prev.groups, groupInput.trim()],
-      }));
-      setGroupInput("");
-    }
-  }, [groupInput, data.groups]);
-
-  const handleRemoveGroup = useCallback((group: string) => {
-    setData((prev) => ({
-      ...prev,
-      groups: prev.groups.filter((g) => g !== group),
-    }));
-  }, []);
+  }, [data, existingGroups, onRegister, handleClose]);
 
   const canProceed = (): boolean => {
     switch (step) {
@@ -376,44 +365,14 @@ export function AddDisplayDialog({
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="groups">Display Groups (Optional)</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="groups"
-                    placeholder="Add display groups or create a new one"
-                    value={groupInput}
-                    onChange={(e) => setGroupInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddGroup();
-                      }
-                    }}
-                  />
-                </div>
-                {data.groups.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {data.groups.map((group) => (
-                      <Badge
-                        key={group}
-                        variant="secondary"
-                        className="gap-1 pr-1"
-                      >
-                        {group}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveGroup(group)}
-                          aria-label={`Remove ${group}`}
-                          className="ml-1 rounded-full p-0.5 hover:bg-muted"
-                        >
-                          <IconX className="size-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <DisplayGroupsCombobox
+                id="groups"
+                value={data.groups}
+                onValueChange={(names) =>
+                  setData((prev) => ({ ...prev, groups: names }))
+                }
+                existingGroups={existingGroups}
+              />
             </>
           )}
 
@@ -450,15 +409,21 @@ export function AddDisplayDialog({
                   <span className="text-muted-foreground">Display Groups:</span>
                   <div className="flex flex-wrap gap-1">
                     {data.groups.length > 0 ? (
-                      data.groups.map((group) => (
-                        <Badge
-                          key={group}
-                          variant="secondary"
-                          className="text-xs"
-                        >
-                          {group}
-                        </Badge>
-                      ))
+                      data.groups.map((name) => {
+                        const colorIndex =
+                          existingGroups.find((g) => g.name === name)
+                            ?.colorIndex ?? 0;
+                        const styles = getGroupBadgeStyles(colorIndex);
+                        return (
+                          <Badge
+                            key={name}
+                            variant="secondary"
+                            className={`text-xs border ${styles.fill}`}
+                          >
+                            {name}
+                          </Badge>
+                        );
+                      })
                     ) : (
                       <span className="text-muted-foreground">None</span>
                     )}

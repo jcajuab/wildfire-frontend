@@ -77,18 +77,25 @@ export default function DisplaysPage(): ReactElement {
   const [requestDeviceRefresh] = useRequestDeviceRefreshMutation();
 
   const displays: Display[] = useMemo(() => {
-    const groupNamesByDeviceId = new Map<string, string[]>();
+    const groupsByDeviceId = new Map<
+      string,
+      Array<{ name: string; colorIndex: number }>
+    >();
     for (const group of deviceGroupsData?.items ?? []) {
+      const displayGroup = {
+        name: group.name,
+        colorIndex: group.colorIndex ?? 0,
+      };
       for (const deviceId of group.deviceIds) {
-        const existing = groupNamesByDeviceId.get(deviceId) ?? [];
-        existing.push(group.name);
-        groupNamesByDeviceId.set(deviceId, existing);
+        const existing = groupsByDeviceId.get(deviceId) ?? [];
+        existing.push(displayGroup);
+        groupsByDeviceId.set(deviceId, existing);
       }
     }
     return (devicesData?.items ?? []).map((device) =>
       withDisplayGroups(
         mapDeviceToDisplay(device),
-        groupNamesByDeviceId.get(device.id) ?? [],
+        groupsByDeviceId.get(device.id) ?? [],
       ),
     );
   }, [devicesData?.items, deviceGroupsData?.items]);
@@ -200,8 +207,8 @@ export default function DisplaysPage(): ReactElement {
           ]),
         );
         const nextGroupIds: string[] = [];
-        for (const rawName of display.groups) {
-          const name = rawName.trim();
+        for (const group of display.groups) {
+          const name = group.name.trim();
           if (name.length === 0) continue;
           const existingId = existingByName.get(name);
           if (existingId) {
@@ -376,6 +383,7 @@ export default function DisplaysPage(): ReactElement {
 
       <EditDisplayDialog
         display={selectedDisplay}
+        existingGroups={deviceGroupsData?.items ?? []}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSave={handleSaveDisplay}

@@ -13,6 +13,7 @@ import {
   IconPlayerPause,
 } from "@tabler/icons-react";
 
+import { getGroupBadgeStyles } from "@/lib/display-group-colors";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -173,11 +174,18 @@ export const DisplayCard = memo(function DisplayCard({
       {/* Tags */}
       {display.groups.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {display.groups.map((group) => (
-            <Badge key={group} variant="secondary" className="text-xs">
-              {group}
-            </Badge>
-          ))}
+          {display.groups.map((group) => {
+            const styles = getGroupBadgeStyles(group.colorIndex ?? 0);
+            return (
+              <Badge
+                key={group.name}
+                variant="secondary"
+                className={`text-xs border ${styles.fill}`}
+              >
+                {group.name}
+              </Badge>
+            );
+          })}
         </div>
       )}
 

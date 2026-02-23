@@ -46,6 +46,8 @@ export interface UpdateDeviceRequest {
 export interface DeviceGroup {
   readonly id: string;
   readonly name: string;
+  /** Optional: backend may not send; use 0 for badge styling when missing. */
+  readonly colorIndex?: number;
   readonly deviceIds: readonly string[];
   readonly createdAt: string;
   readonly updatedAt: string;

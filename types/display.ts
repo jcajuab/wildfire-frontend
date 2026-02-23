@@ -12,6 +12,11 @@ export interface NowPlaying {
   readonly duration: number;
 }
 
+export interface DisplayGroup {
+  readonly name: string;
+  readonly colorIndex?: number;
+}
+
 export interface Display {
   readonly id: string;
   /** Backend device identifier (for registration/debugging). */
@@ -23,7 +28,8 @@ export interface Display {
   readonly macAddress: string;
   readonly displayOutput: string;
   readonly resolution: string;
-  readonly groups: readonly string[];
+  /** Group names with optional color index for badge styling. */
+  readonly groups: readonly DisplayGroup[];
   readonly nowPlaying: NowPlaying | null;
   readonly createdAt: string;
 }

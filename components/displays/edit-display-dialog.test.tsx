@@ -29,6 +29,7 @@ describe("EditDisplayDialog", () => {
     render(
       <EditDisplayDialog
         display={makeDisplay()}
+        existingGroups={[]}
         open={true}
         onOpenChange={onOpenChange}
         onSave={onSave}
@@ -60,6 +61,7 @@ describe("EditDisplayDialog", () => {
     render(
       <EditDisplayDialog
         display={makeDisplay({ displayOutput: "HDMI-0" })}
+        existingGroups={[]}
         open={true}
         onOpenChange={onOpenChange}
         onSave={onSave}
@@ -82,6 +84,7 @@ describe("EditDisplayDialog", () => {
     render(
       <EditDisplayDialog
         display={makeDisplay()}
+        existingGroups={[]}
         open={true}
         onOpenChange={vi.fn()}
         onSave={vi.fn()}
@@ -102,6 +105,7 @@ describe("EditDisplayDialog", () => {
     render(
       <EditDisplayDialog
         display={makeDisplay({ resolution: "Not available" })}
+        existingGroups={[]}
         open={true}
         onOpenChange={vi.fn()}
         onSave={onSave}

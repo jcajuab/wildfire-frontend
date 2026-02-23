@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getGroupBadgeStyles } from "@/lib/display-group-colors";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Display } from "@/types/display";
@@ -71,11 +72,18 @@ export function ViewDisplayDialog({
             <span className="text-muted-foreground">Display Groups:</span>
             <div className="flex flex-wrap gap-1">
               {display.groups.length > 0 ? (
-                display.groups.map((group) => (
-                  <Badge key={group} variant="secondary" className="text-xs">
-                    {group}
-                  </Badge>
-                ))
+                display.groups.map((group) => {
+                  const styles = getGroupBadgeStyles(group.colorIndex ?? 0);
+                  return (
+                    <Badge
+                      key={group.name}
+                      variant="secondary"
+                      className={`text-xs border ${styles.fill}`}
+                    >
+                      {group.name}
+                    </Badge>
+                  );
+                })
               ) : (
                 <span className="text-muted-foreground">None</span>
               )}

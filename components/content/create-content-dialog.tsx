@@ -5,6 +5,10 @@ import { useState, useCallback } from "react";
 import { IconUpload } from "@tabler/icons-react";
 
 import {
+  SUPPORTED_CONTENT_FILE_LABELS,
+  SUPPORTED_CONTENT_FILE_MIME_TYPES,
+} from "@/components/content/content-file-types";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -21,10 +25,6 @@ interface CreateContentDialogProps {
   readonly onOpenChange: (open: boolean) => void;
   readonly onUploadFile: (name: string, file: File) => void;
 }
-
-const SUPPORTED_FILE_MIME_TYPES =
-  "image/jpeg,image/png,image/webp,image/gif,video/mp4,application/pdf";
-const SUPPORTED_FILE_LABELS = "JPG, PNG, WEBP, GIF, MP4, PDF";
 
 export function CreateContentDialog({
   open,
@@ -138,14 +138,14 @@ export function CreateContentDialog({
                 id="file-upload"
                 type="file"
                 className="sr-only"
-                accept={SUPPORTED_FILE_MIME_TYPES}
+                accept={SUPPORTED_CONTENT_FILE_MIME_TYPES}
                 onChange={handleFileInputChange}
               />
               <p className="text-xs text-muted-foreground">
                 Supported files types:
               </p>
               <p className="text-xs text-muted-foreground">
-                {SUPPORTED_FILE_LABELS}
+                {SUPPORTED_CONTENT_FILE_LABELS}
               </p>
             </div>
             {selectedFile && (

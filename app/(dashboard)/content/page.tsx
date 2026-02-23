@@ -1,13 +1,17 @@
 "use client";
 
-import type { ReactElement } from "react";
+import type { ChangeEvent, DragEvent, ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
-import { IconEye, IconPlus } from "@tabler/icons-react";
+import { IconEye, IconPlus, IconUpload } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { ContentFilterPopover } from "@/components/content/content-filter-popover";
+import {
+  SUPPORTED_CONTENT_FILE_LABELS,
+  SUPPORTED_CONTENT_FILE_MIME_TYPES,
+} from "@/components/content/content-file-types";
 import { ContentGrid } from "@/components/content/content-grid";
 import { CreateContentDialog } from "@/components/content/create-content-dialog";
 import { Pagination } from "@/components/content/pagination";
@@ -41,6 +45,7 @@ import {
 import {
   useDeleteContentMutation,
   useListContentQuery,
+  useReplaceContentFileMutation,
   useUploadContentMutation,
   useUpdateContentMutation,
   useLazyGetContentFileUrlQuery,
@@ -60,11 +65,12 @@ interface EditContentDialogProps {
   readonly content: Content | null;
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onSave: (
-    contentId: string,
-    title: string,
-    status: "DRAFT" | "IN_USE",
-  ) => void;
+  readonly onSave: (input: {
+    contentId: string;
+    title: string;
+    status: "DRAFT" | "IN_USE";
+    file: File | null;
+  }) => Promise<void>;
 }
 
 function EditContentDialog({
@@ -92,11 +98,12 @@ function EditContentDialog({
 interface EditContentDialogFormProps {
   readonly content: Content;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onSave: (
-    contentId: string,
-    title: string,
-    status: "DRAFT" | "IN_USE",
-  ) => void;
+  readonly onSave: (input: {
+    contentId: string;
+    title: string;
+    status: "DRAFT" | "IN_USE";
+    file: File | null;
+  }) => Promise<void>;
 }
 
 function EditContentDialogForm({
@@ -106,6 +113,49 @@ function EditContentDialogForm({
 }: EditContentDialogFormProps): ReactElement {
   const [title, setTitle] = useState(content.title);
   const [status, setStatus] = useState<"DRAFT" | "IN_USE">(content.status);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const canReplaceFile = content.status === "DRAFT";
+
+  const handleFileSelect = useCallback((file: File) => {
+    setSelectedFile(file);
+  }, []);
+
+  const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsDragging(false);
+      const files = event.dataTransfer.files;
+      if (files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    },
+    [handleFileSelect],
+  );
+
+  const handleFileInputChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (files && files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    },
+    [handleFileSelect],
+  );
 
   return (
     <>
@@ -136,17 +186,88 @@ function EditContentDialogForm({
             </SelectContent>
           </Select>
         </div>
+        <div className="space-y-2">
+          <Label>Replace File</Label>
+          <p className="text-xs text-muted-foreground">
+            Current file type: {content.type} ({content.mimeType || "Unknown"})
+          </p>
+          {canReplaceFile ? (
+            <>
+              <p className="text-xs text-muted-foreground">
+                Optional: choose a new file to replace it.
+              </p>
+              <div
+                className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 transition-colors ${
+                  isDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-muted-foreground/25"
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
+                  <IconUpload className="size-5 text-muted-foreground" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm">
+                    <label
+                      htmlFor={`edit-content-file-${content.id}`}
+                      className="cursor-pointer font-medium text-primary hover:underline"
+                    >
+                      Choose a file
+                    </label>{" "}
+                    or drag it here.
+                  </p>
+                  <input
+                    id={`edit-content-file-${content.id}`}
+                    type="file"
+                    className="sr-only"
+                    accept={SUPPORTED_CONTENT_FILE_MIME_TYPES}
+                    onChange={handleFileInputChange}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Supported files: {SUPPORTED_CONTENT_FILE_LABELS}
+                  </p>
+                </div>
+                {selectedFile && (
+                  <p className="text-xs font-medium text-primary">
+                    Selected: {selectedFile.name}
+                  </p>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Set status to Draft to replace the file.
+            </p>
+          )}
+        </div>
       </div>
       <DialogFooter>
-        <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <Button
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          disabled={isSaving}
+        >
           Cancel
         </Button>
         <Button
-          onClick={() => {
-            onSave(content.id, title.trim(), status);
-            onOpenChange(false);
+          onClick={async () => {
+            setIsSaving(true);
+            try {
+              await onSave({
+                contentId: content.id,
+                title: title.trim(),
+                status,
+                file: selectedFile,
+              });
+              onOpenChange(false);
+            } finally {
+              setIsSaving(false);
+            }
           }}
-          disabled={title.trim().length === 0}
+          disabled={title.trim().length === 0 || isSaving}
         >
           Save
         </Button>
@@ -250,6 +371,7 @@ export default function ContentPage(): ReactElement {
   const [uploadContent] = useUploadContentMutation();
   const [deleteContent] = useDeleteContentMutation();
   const [updateContent] = useUpdateContentMutation();
+  const [replaceContentFile] = useReplaceContentFileMutation();
   const [getContentFileUrl] = useLazyGetContentFileUrlQuery();
 
   const visibleContents = useMemo(
@@ -435,12 +557,31 @@ export default function ContentPage(): ReactElement {
         onOpenChange={(open) => {
           if (!open) setContentToEdit(null);
         }}
-        onSave={async (contentId, title, status) => {
+        onSave={async ({ contentId, title, status, file }) => {
           try {
+            if (file) {
+              await replaceContentFile({
+                id: contentId,
+                file,
+                title,
+                status,
+              }).unwrap();
+              toast.success("Content file replaced.");
+              return;
+            }
+
             await updateContent({ id: contentId, title, status }).unwrap();
             toast.success("Content updated.");
-          } catch {
-            toast.error("Failed to update content.");
+          } catch (err) {
+            toast.error(
+              getApiErrorMessage(
+                err,
+                file
+                  ? "Failed to replace content file."
+                  : "Failed to update content.",
+              ),
+            );
+            throw err;
           }
         }}
       />

@@ -1,5 +1,5 @@
 import type { Device } from "@/lib/api/devices-api";
-import type { Display } from "@/types/display";
+import type { Display, DisplayGroup } from "@/types/display";
 
 export function mapDeviceToDisplay(device: Device): Display {
   const resolution =
@@ -22,9 +22,13 @@ export function mapDeviceToDisplay(device: Device): Display {
   };
 }
 
+/**
+ * Attaches display groups with optional colorIndex for badge styling.
+ * Pass group metadata (e.g. from device groups API) to get colorIndex per name.
+ */
 export function withDisplayGroups(
   display: Display,
-  groups: readonly string[],
+  groups: readonly DisplayGroup[],
 ): Display {
   return {
     ...display,

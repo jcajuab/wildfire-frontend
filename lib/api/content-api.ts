@@ -42,6 +42,13 @@ export interface UploadContentRequest {
   readonly file: File;
 }
 
+export interface ReplaceContentFileRequest {
+  readonly id: string;
+  readonly file: File;
+  readonly title?: string;
+  readonly status?: "DRAFT" | "IN_USE";
+}
+
 export const contentApi = createApi({
   reducerPath: "contentApi",
   baseQuery,
@@ -119,6 +126,30 @@ export const contentApi = createApi({
         { type: "Content", id },
       ],
     }),
+    replaceContentFile: build.mutation<
+      BackendContent,
+      ReplaceContentFileRequest
+    >({
+      query: ({ id, file, title, status }) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        if (title !== undefined) {
+          formData.append("title", title);
+        }
+        if (status !== undefined) {
+          formData.append("status", status);
+        }
+        return {
+          url: `content/${id}/file`,
+          method: "PUT",
+          body: formData,
+        };
+      },
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Content", id: "LIST" },
+        { type: "Content", id },
+      ],
+    }),
     getContentFileUrl: build.query<{ downloadUrl: string }, string>({
       query: (id) => `content/${id}/file`,
     }),
@@ -131,5 +162,6 @@ export const {
   useUploadContentMutation,
   useDeleteContentMutation,
   useUpdateContentMutation,
+  useReplaceContentFileMutation,
   useLazyGetContentFileUrlQuery,
 } = contentApi;

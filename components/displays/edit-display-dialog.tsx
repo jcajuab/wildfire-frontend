@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useState, useCallback } from "react";
-import { IconDeviceFloppy, IconX } from "@tabler/icons-react";
+import { IconDeviceFloppy } from "@tabler/icons-react";
 
 import {
   Dialog,
@@ -15,11 +15,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { DisplayGroupsCombobox } from "@/components/displays/display-groups-combobox";
+import type { DeviceGroup } from "@/lib/api/devices-api";
 import type { Display } from "@/types/display";
 
 interface EditDisplayDialogProps {
   readonly display: Display | null;
+  readonly existingGroups: readonly DeviceGroup[];
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onSave: (display: Display) => void;
@@ -66,12 +68,13 @@ function createInitialFormData(display: Display): EditFormData {
     selectedOutput:
       display.displayOutput === "Not available" ? null : display.displayOutput,
     selectedResolution: display.resolution,
-    groups: [...display.groups],
+    groups: display.groups.map((g) => g.name),
   };
 }
 
 interface EditDisplayFormProps {
   readonly display: Display;
+  readonly existingGroups: readonly DeviceGroup[];
   readonly onClose: () => void;
   readonly onSave: (display: Display) => void;
 }
@@ -83,13 +86,13 @@ interface EditDisplayFormProps {
  */
 function EditDisplayForm({
   display,
+  existingGroups,
   onClose,
   onSave,
 }: EditDisplayFormProps): ReactElement {
   const [formData, setFormData] = useState<EditFormData>(() =>
     createInitialFormData(display),
   );
-  const [groupInput, setGroupInput] = useState("");
 
   const handleSave = useCallback(() => {
     const normalizedResolution = formData.selectedResolution.trim();
@@ -99,6 +102,11 @@ function EditDisplayForm({
         ? "Not available"
         : normalizedResolution;
 
+    const groups = formData.groups.map((name) => ({
+      name,
+      colorIndex: existingGroups.find((g) => g.name === name)?.colorIndex ?? 0,
+    }));
+
     const updatedDisplay: Display = {
       ...display,
       name: formData.displayName,
@@ -107,29 +115,12 @@ function EditDisplayForm({
       macAddress: formData.macAddress,
       displayOutput: formData.selectedOutput ?? "Not available",
       resolution: resolutionForSave,
-      groups: [...formData.groups],
+      groups,
     };
 
     onSave(updatedDisplay);
     onClose();
-  }, [display, formData, onSave, onClose]);
-
-  const handleAddGroup = useCallback(() => {
-    if (groupInput.trim() && !formData.groups.includes(groupInput.trim())) {
-      setFormData((prev) => ({
-        ...prev,
-        groups: [...prev.groups, groupInput.trim()],
-      }));
-      setGroupInput("");
-    }
-  }, [groupInput, formData.groups]);
-
-  const handleRemoveGroup = useCallback((group: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      groups: prev.groups.filter((g) => g !== group),
-    }));
-  }, []);
+  }, [display, formData, existingGroups, onSave, onClose]);
 
   const normalizedResolution = formData.selectedResolution.trim();
   const isUnknownResolution =
@@ -281,38 +272,14 @@ function EditDisplayForm({
         </div>
 
         {/* Display Groups */}
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-groups">Display Groups (Optional)</Label>
-          <Input
-            id="edit-groups"
-            placeholder="Add display groups or create a new one"
-            value={groupInput}
-            onChange={(e) => setGroupInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleAddGroup();
-              }
-            }}
-          />
-          {formData.groups.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {formData.groups.map((group) => (
-                <Badge key={group} variant="secondary" className="gap-1 pr-1">
-                  {group}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveGroup(group)}
-                    aria-label={`Remove ${group}`}
-                    className="ml-1 rounded-full p-0.5 hover:bg-muted"
-                  >
-                    <IconX className="size-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          )}
-        </div>
+        <DisplayGroupsCombobox
+          id="edit-groups"
+          value={formData.groups}
+          onValueChange={(names) =>
+            setFormData((prev) => ({ ...prev, groups: names }))
+          }
+          existingGroups={existingGroups}
+        />
       </div>
 
       <DialogFooter className="sm:justify-between">
@@ -330,6 +297,7 @@ function EditDisplayForm({
 
 export function EditDisplayDialog({
   display,
+  existingGroups,
   open,
   onOpenChange,
   onSave,
@@ -347,6 +315,7 @@ export function EditDisplayDialog({
         <EditDisplayForm
           key={display.id}
           display={display}
+          existingGroups={existingGroups}
           onClose={handleClose}
           onSave={onSave}
         />

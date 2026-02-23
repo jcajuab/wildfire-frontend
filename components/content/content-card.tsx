@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactElement, memo } from "react";
+import Image from "next/image";
 import {
   IconDotsVertical,
   IconDownload,
@@ -56,13 +57,12 @@ export const ContentCard = memo(function ContentCard({
       {/* Thumbnail area */}
       <div className="flex aspect-4/3 items-center justify-center bg-muted/50">
         {content.thumbnailUrl ? (
-          <img
+          <Image
             src={content.thumbnailUrl}
             alt=""
             width={400}
             height={300}
-            loading="lazy"
-            decoding="async"
+            unoptimized
             className="h-full w-full object-cover"
           />
         ) : (
