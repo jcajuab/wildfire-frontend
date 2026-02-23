@@ -157,12 +157,11 @@ export default function LogsPage(): ReactElement {
 
   const total = data?.total ?? 0;
 
-  const isRangeValid = from.trim() !== "" && to.trim() !== "" && from <= to;
-  const isExportRangeValid =
+  const exportRangeValid =
     exportFrom.trim() !== "" &&
     exportTo.trim() !== "" &&
     exportFrom <= exportTo;
-  const canDownload = isExportRangeValid;
+  const canDownload = exportRangeValid;
 
   const resetToFirstPage = useCallback((): void => {
     if (page !== 1) {
@@ -350,13 +349,11 @@ export default function LogsPage(): ReactElement {
                       Current result set may exceed backend export limits.
                     </p>
                   )}
-                  {!isExportRangeValid &&
-                    exportFrom !== "" &&
-                    exportTo !== "" && (
-                      <p className="text-destructive text-xs">
-                        From date must be before or equal to To date.
-                      </p>
-                    )}
+                  {!exportRangeValid && exportFrom !== "" && exportTo !== "" && (
+                    <p className="text-destructive text-xs">
+                      From date must be before or equal to To date.
+                    </p>
+                  )}
                   <Button
                     onClick={handleExportSubmit}
                     disabled={!canDownload || isExporting}
