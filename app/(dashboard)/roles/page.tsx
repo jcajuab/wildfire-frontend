@@ -174,6 +174,16 @@ export default function RolesPage(): ReactElement {
     [usersData],
   );
 
+  const pendingDeletionRoleIds = useMemo(() => {
+    const pendingIds = new Set<string>();
+    for (const request of deletionRequestsData ?? []) {
+      if (request.status === "pending") {
+        pendingIds.add(request.roleId);
+      }
+    }
+    return pendingIds;
+  }, [deletionRequestsData]);
+
   const handleSearchChange = useCallback(
     (value: string) => {
       setSearch(value);
@@ -313,6 +323,12 @@ export default function RolesPage(): ReactElement {
 
   const handleDeleteRequest = useCallback(
     (role: Role) => {
+      if (!isSuperAdmin && pendingDeletionRoleIds.has(role.id)) {
+        toast.error(
+          `A pending deletion request already exists for "${role.name}".`,
+        );
+        return;
+      }
       setRoleToDelete(role);
       if (isSuperAdmin) {
         setIsDeleteDialogOpen(true);
@@ -321,7 +337,7 @@ export default function RolesPage(): ReactElement {
       setDeleteRequestReason("");
       setIsRequestDialogOpen(true);
     },
-    [isSuperAdmin],
+    [isSuperAdmin, pendingDeletionRoleIds],
   );
 
   const trimmedDeleteRequestReason = deleteRequestReason.trim();
@@ -418,6 +434,16 @@ export default function RolesPage(): ReactElement {
               canEdit={canUpdateRole}
               canDelete={canDeleteRole}
               deleteLabel={isSuperAdmin ? "Delete Role" : "Request Deletion"}
+              getDeleteLabel={(role) =>
+                !isSuperAdmin && pendingDeletionRoleIds.has(role.id)
+                  ? "Request Pending"
+                  : isSuperAdmin
+                    ? "Delete Role"
+                    : "Request Deletion"
+              }
+              isDeleteDisabled={(role) =>
+                !isSuperAdmin && pendingDeletionRoleIds.has(role.id)
+              }
               isSuperAdmin={isSuperAdmin}
             />
           </div>
