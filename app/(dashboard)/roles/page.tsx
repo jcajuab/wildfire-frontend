@@ -626,7 +626,7 @@ export default function RolesPage(): ReactElement {
                             <div className="inline-flex gap-2">
                               <Button
                                 size="sm"
-                                variant="outline"
+                                variant="destructive"
                                 onClick={async () => {
                                   try {
                                     await approveRoleDeletionRequest({
@@ -642,11 +642,11 @@ export default function RolesPage(): ReactElement {
                                   }
                                 }}
                               >
-                                Approve
+                                Delete
                               </Button>
                               <Button
                                 size="sm"
-                                variant="destructive"
+                                variant="outline"
                                 onClick={async () => {
                                   try {
                                     await rejectRoleDeletionRequest({
