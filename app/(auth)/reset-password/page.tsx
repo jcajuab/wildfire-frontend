@@ -63,7 +63,9 @@ export default function ResetPasswordPage(): ReactElement {
   return (
     <div className="w-full">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Reset password</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          Reset password
+        </h1>
         <p className="text-sm text-muted-foreground">Update your password</p>
       </div>
 

@@ -98,14 +98,16 @@ export function ViewScheduleDialog({
             <div className="flex items-center gap-2 text-sm">
               <IconCalendar className="size-4" />
               <span>
-                {formatDate(schedule.startDate)} - {formatDate(schedule.endDate)}
+                {formatDate(schedule.startDate)} -{" "}
+                {formatDate(schedule.endDate)}
               </span>
             </div>
 
             <div className="flex items-center gap-2 text-sm">
               <IconClock className="size-4" />
               <span>
-                {formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}
+                {formatTime(schedule.startTime)} -{" "}
+                {formatTime(schedule.endTime)}
               </span>
             </div>
 
