@@ -45,6 +45,7 @@ import {
   useUpdateContentMutation,
   useLazyGetContentFileUrlQuery,
 } from "@/lib/api/content-api";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { formatContentStatus } from "@/lib/formatters";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import type { TypeFilter } from "@/components/content/content-filter-popover";
@@ -469,15 +470,7 @@ export default function ContentPage(): ReactElement {
             toast.success("Content deleted.");
             setContentToDelete(null);
           } catch (err) {
-            const message =
-              err instanceof Error ? err.message : "Failed to delete content.";
-            if (message.toLowerCase().includes("used by")) {
-              toast.error(
-                "Content is still referenced in playlists. Remove those references first.",
-              );
-            } else {
-              toast.error(message);
-            }
+            toast.error(getApiErrorMessage(err, "Failed to delete content."));
             throw err;
           }
         }}

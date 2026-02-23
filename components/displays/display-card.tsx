@@ -159,8 +159,8 @@ export const DisplayCard = memo(function DisplayCard({
             )}
             {canDelete && (
               <DropdownMenuItem
+                variant="destructive"
                 onClick={() => onRemoveDisplay(display)}
-                className="text-destructive focus:text-destructive"
               >
                 <IconTrash className="size-4" />
                 Remove Display

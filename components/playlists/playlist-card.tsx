@@ -98,8 +98,8 @@ export const PlaylistCard = memo(function PlaylistCard({
             </DropdownMenuItem>
             {canDelete && (
               <DropdownMenuItem
+                variant="destructive"
                 onClick={() => onDelete?.(playlist)}
-                className="text-destructive focus:text-destructive"
               >
                 <IconTrash className="size-4" />
                 Delete Playlist

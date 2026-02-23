@@ -1,4 +1,5 @@
 import type { BackendAuditEvent } from "@/lib/api/audit-api";
+import { getResourceTypeLabel } from "@/lib/audit-resource-types";
 import type { LogEntry } from "@/types/log";
 
 function safeParseMetadata(
@@ -24,19 +25,6 @@ export interface MapAuditEventOptions {
     actorType: string | null,
   ) => string | null;
 }
-
-const RESOURCE_LABELS: Readonly<Record<string, string>> = {
-  user: "user",
-  role: "role",
-  permission: "permission",
-  content: "content item",
-  playlist: "playlist",
-  "playlist-item": "playlist item",
-  schedule: "schedule",
-  device: "display",
-  "audit-event": "audit event",
-  session: "session",
-};
 
 const ACTION_LABELS: Readonly<Record<string, string>> = {
   "auth.session.login": "Signed in",
@@ -97,7 +85,7 @@ function toResourceLabel(resourceType: string | null): string {
   if (resourceType == null || resourceType.length === 0) {
     return "record";
   }
-  return RESOURCE_LABELS[resourceType] ?? resourceType.replaceAll("-", " ");
+  return getResourceTypeLabel(resourceType);
 }
 
 function humanizeAuditAction(event: BackendAuditEvent): string {

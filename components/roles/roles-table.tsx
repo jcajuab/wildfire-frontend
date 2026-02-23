@@ -124,6 +124,7 @@ function RoleActionsMenu({
         )}
         {canDelete && (
           <DropdownMenuItem
+            variant={deleteDisabled ? "default" : "destructive"}
             onClick={() => {
               if (deleteDisabled) return;
               onDelete(role);
@@ -132,7 +133,7 @@ function RoleActionsMenu({
             className={
               deleteDisabled
                 ? "text-muted-foreground focus:text-muted-foreground"
-                : "text-destructive focus:text-destructive"
+                : undefined
             }
           >
             <IconTrash className="size-4" />

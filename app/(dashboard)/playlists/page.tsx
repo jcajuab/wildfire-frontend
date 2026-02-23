@@ -469,9 +469,7 @@ export default function PlaylistsPage(): ReactElement {
             setPlaylistToDelete(null);
             toast.success("Playlist deleted.");
           } catch (err) {
-            toast.error(
-              getApiErrorMessage(err, "Failed to delete playlist."),
-            );
+            toast.error(getApiErrorMessage(err, "Failed to delete playlist."));
             throw err;
           }
         }}

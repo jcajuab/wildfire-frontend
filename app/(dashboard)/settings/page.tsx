@@ -559,7 +559,7 @@ export default function SettingsPage(): ReactElement {
                   </div>
                   <Button
                     variant="outline"
-                    className="border-destructive text-destructive hover:bg-destructive/10"
+                    className="border-destructive text-black hover:bg-destructive/10 hover:text-black focus-visible:text-black"
                     onClick={handleLogOut}
                   >
                     Log Out

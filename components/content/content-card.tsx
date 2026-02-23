@@ -118,8 +118,8 @@ export const ContentCard = memo(function ContentCard({
             )}
             {canDelete && (
               <DropdownMenuItem
+                variant="destructive"
                 onClick={() => onDelete(content)}
-                className="text-destructive focus:text-destructive"
               >
                 <IconTrash className="size-4" />
                 Delete Content

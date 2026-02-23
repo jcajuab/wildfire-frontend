@@ -181,8 +181,8 @@ function UserActionsMenu({
         )}
         {canDelete && (
           <DropdownMenuItem
+            variant="destructive"
             onClick={() => onRemoveUser(user)}
-            className="text-destructive focus:text-destructive"
           >
             <IconTrash className="size-4" />
             Remove User
