@@ -32,6 +32,7 @@ import {
   collapseDisplayGroupWhitespace,
   toDisplayGroupKey,
 } from "@/lib/display-group-normalization";
+import { getNextDisplayGroupColorIndex } from "@/lib/display-group-colors";
 
 interface GroupRenameEvent {
   readonly groupId: string;
@@ -105,7 +106,10 @@ export function DisplayGroupManagerDialog({
     }
 
     try {
-      await createDeviceGroup({ name: nextName }).unwrap();
+      await createDeviceGroup({
+        name: nextName,
+        colorIndex: getNextDisplayGroupColorIndex(groups),
+      }).unwrap();
       setCreateName("");
       toast.success(`Created \"${nextName}\".`);
     } catch (error) {

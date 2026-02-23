@@ -37,6 +37,7 @@ import {
   dedupeDisplayGroupNames,
   toDisplayGroupKey,
 } from "@/lib/display-group-normalization";
+import { getNextDisplayGroupColorIndex } from "@/lib/display-group-colors";
 import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
@@ -216,8 +217,10 @@ export default function DisplaysPage(): ReactElement {
       }
 
       try {
+        const workingGroups = [...(deviceGroupsData?.items ?? [])];
+        let nextColorIndex = getNextDisplayGroupColorIndex(workingGroups);
         const existingByKey = new Map<string, string>();
-        for (const group of deviceGroupsData?.items ?? []) {
+        for (const group of workingGroups) {
           const groupKey = toDisplayGroupKey(group.name);
           if (!existingByKey.has(groupKey)) {
             existingByKey.set(groupKey, group.id);
@@ -241,10 +244,13 @@ export default function DisplaysPage(): ReactElement {
 
           const created = await createDeviceGroup({
             name: normalizedName,
+            colorIndex: nextColorIndex,
           }).unwrap();
           const createdKey = toDisplayGroupKey(created.name);
           existingByKey.set(createdKey, created.id);
           nextGroupIds.add(created.id);
+          workingGroups.push(created);
+          nextColorIndex = getNextDisplayGroupColorIndex(workingGroups);
         }
 
         await setDeviceGroups({

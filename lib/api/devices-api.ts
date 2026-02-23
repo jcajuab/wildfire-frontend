@@ -152,7 +152,10 @@ export const devicesApi = createApi({
             ]
           : [{ type: "DeviceGroup", id: "LIST" }],
     }),
-    createDeviceGroup: build.mutation<DeviceGroup, { name: string }>({
+    createDeviceGroup: build.mutation<
+      DeviceGroup,
+      { name: string; colorIndex?: number }
+    >({
       query: (body) => ({
         url: "devices/groups",
         method: "POST",
@@ -162,12 +165,12 @@ export const devicesApi = createApi({
     }),
     updateDeviceGroup: build.mutation<
       DeviceGroup,
-      { groupId: string; name: string }
+      { groupId: string; name: string; colorIndex?: number }
     >({
-      query: ({ groupId, name }) => ({
+      query: ({ groupId, name, colorIndex }) => ({
         url: `devices/groups/${groupId}`,
         method: "PATCH",
-        body: { name },
+        body: { name, colorIndex },
       }),
       invalidatesTags: (_result, _error, { groupId }) => [
         { type: "DeviceGroup", id: "LIST" },

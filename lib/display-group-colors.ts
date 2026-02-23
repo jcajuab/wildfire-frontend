@@ -9,6 +9,10 @@ export interface GroupBadgeStyles {
   readonly outline: string;
 }
 
+interface GroupWithColorIndex {
+  readonly colorIndex?: number;
+}
+
 const PALETTE: readonly GroupBadgeStyles[] = [
   {
     fill: "bg-red-500 text-white",
@@ -70,6 +74,20 @@ export function getGroupBadgeStyles(colorIndex: number): GroupBadgeStyles {
       ? ((colorIndex % PALETTE_SIZE) + PALETTE_SIZE) % PALETTE_SIZE
       : 0;
   return PALETTE[index] ?? PALETTE[0];
+}
+
+/**
+ * Returns the next color index in cycle order based on existing groups.
+ * If there are no groups, starts at 0.
+ */
+export function getNextDisplayGroupColorIndex(
+  groups: readonly GroupWithColorIndex[],
+): number {
+  if (groups.length === 0) return 0;
+  const maxColorIndex = Math.max(
+    ...groups.map((group) => group.colorIndex ?? 0),
+  );
+  return (((maxColorIndex + 1) % PALETTE_SIZE) + PALETTE_SIZE) % PALETTE_SIZE;
 }
 
 export { PALETTE_SIZE };

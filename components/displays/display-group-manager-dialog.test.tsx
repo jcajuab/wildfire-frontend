@@ -81,7 +81,10 @@ describe("DisplayGroupManagerDialog", () => {
     await user.click(screen.getByRole("button", { name: "Add" }));
 
     await waitFor(() => {
-      expect(createDeviceGroup).toHaveBeenCalledWith({ name: "Main Hall" });
+      expect(createDeviceGroup).toHaveBeenCalledWith({
+        name: "Main Hall",
+        colorIndex: 0,
+      });
     });
   });
 
