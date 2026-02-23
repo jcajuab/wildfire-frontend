@@ -621,7 +621,9 @@ export default function RolesPage(): ReactElement {
                     <th className="px-4 py-2">Requested At</th>
                     <th className="px-4 py-2">Status</th>
                     <th className="px-4 py-2">Reason</th>
-                    <th className="px-4 py-2 text-right">Actions</th>
+                    {isSuperAdmin ? (
+                      <th className="px-4 py-2 text-right">Actions</th>
+                    ) : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -647,52 +649,58 @@ export default function RolesPage(): ReactElement {
                             "-"
                           )}
                         </td>
-                        <td className="px-4 py-2 text-right">
-                          {isSuperAdmin && request.status === "pending" ? (
-                            <div className="inline-flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={async () => {
-                                  try {
-                                    await approveRoleDeletionRequest({
-                                      requestId: request.id,
-                                    }).unwrap();
-                                    toast.success("Deletion request approved.");
-                                  } catch (err) {
-                                    toast.error(
-                                      err instanceof Error
-                                        ? err.message
-                                        : "Failed to approve request",
-                                    );
-                                  }
-                                }}
-                              >
-                                Delete
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={async () => {
-                                  try {
-                                    await rejectRoleDeletionRequest({
-                                      requestId: request.id,
-                                    }).unwrap();
-                                    toast.success("Deletion request rejected.");
-                                  } catch (err) {
-                                    toast.error(
-                                      err instanceof Error
-                                        ? err.message
-                                        : "Failed to reject request",
-                                    );
-                                  }
-                                }}
-                              >
-                                Reject
-                              </Button>
-                            </div>
-                          ) : null}
-                        </td>
+                        {isSuperAdmin ? (
+                          <td className="px-4 py-2 text-right">
+                            {request.status === "pending" ? (
+                              <div className="inline-flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={async () => {
+                                    try {
+                                      await approveRoleDeletionRequest({
+                                        requestId: request.id,
+                                      }).unwrap();
+                                      toast.success(
+                                        "Deletion request approved.",
+                                      );
+                                    } catch (err) {
+                                      toast.error(
+                                        err instanceof Error
+                                          ? err.message
+                                          : "Failed to approve request",
+                                      );
+                                    }
+                                  }}
+                                >
+                                  Delete
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    try {
+                                      await rejectRoleDeletionRequest({
+                                        requestId: request.id,
+                                      }).unwrap();
+                                      toast.success(
+                                        "Deletion request rejected.",
+                                      );
+                                    } catch (err) {
+                                      toast.error(
+                                        err instanceof Error
+                                          ? err.message
+                                          : "Failed to reject request",
+                                      );
+                                    }
+                                  }}
+                                >
+                                  Reject
+                                </Button>
+                              </div>
+                            ) : null}
+                          </td>
+                        ) : null}
                       </tr>
                     );
                   })}
@@ -700,7 +708,7 @@ export default function RolesPage(): ReactElement {
                     <tr>
                       <td
                         className="px-4 py-8 text-center text-muted-foreground"
-                        colSpan={6}
+                        colSpan={isSuperAdmin ? 6 : 5}
                       >
                         No role deletion requests yet.
                       </td>
