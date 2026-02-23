@@ -42,6 +42,9 @@ import {
 import type { Role, Permission, RoleUser, RoleFormData } from "@/types/role";
 
 const HIGH_RISK_TARGET_THRESHOLD = 20;
+const MAX_VISIBLE_UNASSIGNED_USERS = 100;
+const INITIAL_ASSIGNED_VISIBLE_COUNT = 25;
+const ASSIGNED_VISIBLE_COUNT_STEP = 25;
 
 interface RoleDialogProps {
   readonly mode: "create" | "edit";
@@ -95,6 +98,10 @@ function RoleForm({
       : [],
   );
   const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [userSearch, setUserSearch] = useState("");
+  const [visibleAssignedCount, setVisibleAssignedCount] = useState(
+    INITIAL_ASSIGNED_VISIBLE_COUNT,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [policyVersionText, setPolicyVersionText] = useState<string>("");
   const [highRiskConfirmed, setHighRiskConfirmed] = useState(false);
@@ -161,23 +168,61 @@ function RoleForm({
     [permissions],
   );
 
+  const availableUsersById = useMemo(
+    () => new Map(availableUsers.map((user) => [user.id, user])),
+    [availableUsers],
+  );
+
+  const assignedUserIdSet = useMemo(
+    () => new Set(assignedUsers.map((user) => user.id)),
+    [assignedUsers],
+  );
+
+  const unassignedUsers = useMemo(
+    () => availableUsers.filter((user) => !assignedUserIdSet.has(user.id)),
+    [availableUsers, assignedUserIdSet],
+  );
+
+  const normalizedUserSearch = userSearch.trim().toLowerCase();
+  const filteredUnassignedUsers = useMemo(() => {
+    if (normalizedUserSearch.length === 0) {
+      return unassignedUsers;
+    }
+
+    return unassignedUsers.filter((user) => {
+      return (
+        user.name.toLowerCase().includes(normalizedUserSearch) ||
+        user.email.toLowerCase().includes(normalizedUserSearch)
+      );
+    });
+  }, [normalizedUserSearch, unassignedUsers]);
+
+  const visibleUnassignedUsers = useMemo(
+    () => filteredUnassignedUsers.slice(0, MAX_VISIBLE_UNASSIGNED_USERS),
+    [filteredUnassignedUsers],
+  );
+
+  const visibleAssignedUsers = useMemo(
+    () => assignedUsers.slice(0, visibleAssignedCount),
+    [assignedUsers, visibleAssignedCount],
+  );
+
+  const hasMoreAssignedUsers = visibleAssignedCount < assignedUsers.length;
+
   const handleAddUser = (): void => {
     if (!selectedUserId) return;
-    const user = availableUsers.find((u) => u.id === selectedUserId);
+    const user = availableUsersById.get(selectedUserId);
     if (!user) return;
-    if (assignedUsers.some((u) => u.id === user.id)) return;
+    if (assignedUserIdSet.has(user.id)) return;
     setAssignedUsers((prev) => [...prev, user]);
     setSelectedUserId("");
+    setUserSearch("");
+    setVisibleAssignedCount((prev) => prev + 1);
   };
 
   const handleRemoveUser = (userId: string): void => {
     setAssignedUsers((prev) => prev.filter((u) => u.id !== userId));
   };
-
-  // Filter out already assigned users from available users
-  const unassignedUsers = availableUsers.filter(
-    (u) => !assignedUsers.some((au) => au.id === u.id),
-  );
 
   const isValid = name.trim().length > 0;
   const isCreate = mode === "create";
@@ -278,34 +323,56 @@ function RoleForm({
         <TabsContent value="users" className="mt-4">
           <div className="flex flex-col gap-4">
             {/* Add user row */}
-            <div className="flex items-center gap-2">
-              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Select user" />
-                </SelectTrigger>
-                <SelectContent>
-                  {unassignedUsers.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleAddUser}
-                disabled={!selectedUserId}
-              >
-                <IconUserPlus className="size-4" />
-                Add User
-              </Button>
+            <div className="flex flex-col gap-2">
+              <Input
+                placeholder="Search users by name or email"
+                value={userSearch}
+                onChange={(event) => setUserSearch(event.target.value)}
+              />
+              <div className="flex items-center gap-2">
+                <Select
+                  value={selectedUserId}
+                  onValueChange={setSelectedUserId}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select user" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {visibleUnassignedUsers.length > 0 ? (
+                      visibleUnassignedUsers.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                        No matching users.
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddUser}
+                  disabled={!selectedUserId}
+                >
+                  <IconUserPlus className="size-4" />
+                  Add User
+                </Button>
+              </div>
+              {filteredUnassignedUsers.length > MAX_VISIBLE_UNASSIGNED_USERS ? (
+                <p className="text-xs text-muted-foreground">
+                  Showing first {MAX_VISIBLE_UNASSIGNED_USERS} results. Keep
+                  typing to narrow the list.
+                </p>
+              ) : null}
             </div>
 
             {/* Assigned users list */}
             {assignedUsers.length > 0 && (
-              <div className="flex flex-col gap-2">
-                {assignedUsers.map((user) => (
+              <div className="flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
+                {visibleAssignedUsers.map((user) => (
                   <div
                     key={user.id}
                     className="flex items-center justify-between rounded-md border px-3 py-2"
@@ -327,6 +394,20 @@ function RoleForm({
                     </Button>
                   </div>
                 ))}
+                {hasMoreAssignedUsers ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      setVisibleAssignedCount(
+                        (prev) => prev + ASSIGNED_VISIBLE_COUNT_STEP,
+                      )
+                    }
+                    className="mt-1"
+                  >
+                    Load More Users
+                  </Button>
+                ) : null}
               </div>
             )}
           </div>
