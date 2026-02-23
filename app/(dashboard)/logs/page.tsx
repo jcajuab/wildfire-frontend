@@ -107,6 +107,8 @@ export default function LogsPage(): ReactElement {
   );
   const [exportPopoverOpen, setExportPopoverOpen] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportFrom, setExportFrom] = useState<string>("");
+  const [exportTo, setExportTo] = useState<string>("");
 
   const parsedStatus = useMemo<number | undefined>(() => {
     const parsed = Number.parseInt(statusRaw, 10);
@@ -156,7 +158,11 @@ export default function LogsPage(): ReactElement {
   const total = data?.total ?? 0;
 
   const isRangeValid = from.trim() !== "" && to.trim() !== "" && from <= to;
-  const canDownload = isRangeValid;
+  const isExportRangeValid =
+    exportFrom.trim() !== "" &&
+    exportTo.trim() !== "" &&
+    exportFrom <= exportTo;
+  const canDownload = isExportRangeValid;
 
   const resetToFirstPage = useCallback((): void => {
     if (page !== 1) {
@@ -232,8 +238,8 @@ export default function LogsPage(): ReactElement {
     setIsExporting(true);
     try {
       const query: AuditExportQuery = {
-        from: dateToISOStart(from),
-        to: dateToISOEnd(to),
+        from: dateToISOStart(exportFrom),
+        to: dateToISOEnd(exportTo),
         action: action || undefined,
         actorType: actorType === "all" ? undefined : actorType,
         resourceType: resourceType || undefined,
@@ -262,7 +268,15 @@ export default function LogsPage(): ReactElement {
     } finally {
       setIsExporting(false);
     }
-  }, [action, actorType, from, parsedStatus, requestId, resourceType, to]);
+  }, [
+    action,
+    actorType,
+    exportFrom,
+    exportTo,
+    parsedStatus,
+    requestId,
+    resourceType,
+  ]);
 
   const handleResetFilters = useCallback((): void => {
     setFrom("");
@@ -292,7 +306,13 @@ export default function LogsPage(): ReactElement {
           canExport ? (
             <Popover
               open={exportPopoverOpen}
-              onOpenChange={setExportPopoverOpen}
+              onOpenChange={(open) => {
+                setExportPopoverOpen(open);
+                if (open) {
+                  setExportFrom(from);
+                  setExportTo(to);
+                }
+              }}
             >
               <PopoverTrigger asChild>
                 <Button>
@@ -308,8 +328,8 @@ export default function LogsPage(): ReactElement {
                       <Input
                         id="export-from"
                         type="date"
-                        value={from}
-                        onChange={(e) => handleFromChange(e.target.value)}
+                        value={exportFrom}
+                        onChange={(e) => setExportFrom(e.target.value)}
                       />
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -317,8 +337,8 @@ export default function LogsPage(): ReactElement {
                       <Input
                         id="export-to"
                         type="date"
-                        value={to}
-                        onChange={(e) => handleToChange(e.target.value)}
+                        value={exportTo}
+                        onChange={(e) => setExportTo(e.target.value)}
                       />
                     </div>
                   </div>
@@ -330,11 +350,13 @@ export default function LogsPage(): ReactElement {
                       Current result set may exceed backend export limits.
                     </p>
                   )}
-                  {!isRangeValid && from !== "" && to !== "" && (
-                    <p className="text-destructive text-xs">
-                      From date must be before or equal to To date.
-                    </p>
-                  )}
+                  {!isExportRangeValid &&
+                    exportFrom !== "" &&
+                    exportTo !== "" && (
+                      <p className="text-destructive text-xs">
+                        From date must be before or equal to To date.
+                      </p>
+                    )}
                   <Button
                     onClick={handleExportSubmit}
                     disabled={!canDownload || isExporting}
