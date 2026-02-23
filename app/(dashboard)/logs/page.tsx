@@ -287,7 +287,7 @@ export default function LogsPage(): ReactElement {
   return (
     <DashboardPage.Root>
       <DashboardPage.Header
-        title="Logs"
+        title='Logs'
         actions={
           canExport ? (
             <Popover
@@ -296,49 +296,49 @@ export default function LogsPage(): ReactElement {
             >
               <PopoverTrigger asChild>
                 <Button>
-                  <IconFileExport className="size-4" />
+                  <IconFileExport className='size-4' />
                   Export Logs
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-80" align="end">
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
-                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                      <Label htmlFor="export-from">From</Label>
+              <PopoverContent className='w-80' align='end'>
+                <div className='flex flex-col gap-4'>
+                  <div className='flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3'>
+                    <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
+                      <Label htmlFor='export-from'>From</Label>
                       <Input
-                        id="export-from"
-                        type="date"
+                        id='export-from'
+                        type='date'
                         value={from}
                         onChange={(e) => handleFromChange(e.target.value)}
                       />
                     </div>
-                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                      <Label htmlFor="export-to">To</Label>
+                    <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
+                      <Label htmlFor='export-to'>To</Label>
                       <Input
-                        id="export-to"
-                        type="date"
+                        id='export-to'
+                        type='date'
                         value={to}
                         onChange={(e) => handleToChange(e.target.value)}
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className='text-xs text-muted-foreground'>
                     Export applies your active table filters.
                   </p>
                   {total > 100000 && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className='text-xs text-muted-foreground'>
                       Current result set may exceed backend export limits.
                     </p>
                   )}
                   {!isRangeValid && from !== "" && to !== "" && (
-                    <p className="text-destructive text-xs">
+                    <p className='text-destructive text-xs'>
                       From date must be before or equal to To date.
                     </p>
                   )}
                   <Button
                     onClick={handleExportSubmit}
                     disabled={!canDownload || isExporting}
-                    className="w-full"
+                    className='w-full'
                   >
                     {isExporting ? "Exporting..." : "Download CSV"}
                   </Button>
@@ -350,45 +350,45 @@ export default function LogsPage(): ReactElement {
       />
 
       <DashboardPage.Body>
-        <DashboardPage.Content className="border-b pb-4">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="logs-filter-from">From</Label>
+        <DashboardPage.Content className='border-b pb-4'>
+          <div className='grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4'>
+            <div className='space-y-1.5'>
+              <Label htmlFor='logs-filter-from'>From</Label>
               <Input
-                id="logs-filter-from"
-                type="date"
+                id='logs-filter-from'
+                type='date'
                 value={from}
                 onChange={(e) => handleFromChange(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="logs-filter-to">To</Label>
+            <div className='space-y-1.5'>
+              <Label htmlFor='logs-filter-to'>To</Label>
               <Input
-                id="logs-filter-to"
-                type="date"
+                id='logs-filter-to'
+                type='date'
                 value={to}
                 onChange={(e) => handleToChange(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="logs-filter-action">Action</Label>
+            <div className='space-y-1.5'>
+              <Label htmlFor='logs-filter-action'>Action</Label>
               <Input
-                id="logs-filter-action"
+                id='logs-filter-action'
                 value={action}
                 onChange={(e) => handleActionChange(e.target.value)}
-                placeholder="e.g. auth.session or rbac.user.update"
+                placeholder='e.g. auth.session or rbac.user.update'
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="logs-filter-request-id">Request ID</Label>
+            <div className='space-y-1.5'>
+              <Label htmlFor='logs-filter-request-id'>Request ID</Label>
               <Input
-                id="logs-filter-request-id"
+                id='logs-filter-request-id'
                 value={requestId}
                 onChange={(e) => handleRequestIdChange(e.target.value)}
-                placeholder="e.g. 2be5fd5a or full UUID"
+                placeholder='e.g. 2be5fd5a or full UUID'
               />
             </div>
-            <div className="space-y-1.5">
+            <div className='space-y-1.5'>
               <Label>Actor Type</Label>
               <Select
                 value={actorType}
@@ -398,27 +398,27 @@ export default function LogsPage(): ReactElement {
                   }
                 }}
               >
-                <SelectTrigger className="w-full justify-between">
-                  <SelectValue placeholder="All actor types" />
+                <SelectTrigger className='w-full justify-between'>
+                  <SelectValue placeholder='All actor types' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="device">Device</SelectItem>
+                  <SelectItem value='all'>All</SelectItem>
+                  <SelectItem value='user'>User</SelectItem>
+                  <SelectItem value='device'>Device</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="logs-filter-resource-type">Resource Type</Label>
+            <div className='space-y-1.5'>
+              <Label htmlFor='logs-filter-resource-type'>Resource Type</Label>
               <Input
-                id="logs-filter-resource-type"
+                id='logs-filter-resource-type'
                 value={resourceType}
                 onChange={(e) => handleResourceTypeChange(e.target.value)}
-                placeholder="e.g. user, content, schedule"
+                placeholder='e.g. user, content, schedule'
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="logs-filter-status">Status</Label>
+            <div className='space-y-1.5'>
+              <Label htmlFor='logs-filter-status'>Status</Label>
               <Combobox
                 value={selectedStatusValue}
                 inputValue={statusRaw}
@@ -430,9 +430,9 @@ export default function LogsPage(): ReactElement {
                 }
               >
                 <ComboboxInput
-                  id="logs-filter-status"
-                  inputMode="numeric"
-                  placeholder="Type 100-599 or choose common code"
+                  id='logs-filter-status'
+                  inputMode='numeric'
+                  placeholder='Type 100-599 or choose common code'
                   showClear
                 />
                 <ComboboxContent>
@@ -447,11 +447,13 @@ export default function LogsPage(): ReactElement {
                 </ComboboxContent>
               </Combobox>
             </div>
-            <div className="flex items-end">
+            <div className='space-y-1.5'>
+              <Label htmlFor='logs-reset-filters'>Action</Label>
               <Button
-                type="button"
-                variant="outline"
-                className="w-full"
+                id='logs-reset-filters'
+                type='button'
+                variant='outline'
+                className='w-full'
                 onClick={handleResetFilters}
               >
                 Reset Filters
@@ -459,8 +461,8 @@ export default function LogsPage(): ReactElement {
             </div>
           </div>
         </DashboardPage.Content>
-        <DashboardPage.Content className="pt-6">
-          <div className="overflow-hidden rounded-lg border">
+        <DashboardPage.Content className='pt-6'>
+          <div className='overflow-hidden rounded-lg border'>
             <LogsTable logs={logs} />
           </div>
         </DashboardPage.Content>
