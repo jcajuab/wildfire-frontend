@@ -38,6 +38,8 @@ interface RolesTableProps {
   readonly canEdit?: boolean;
   readonly canDelete?: boolean;
   readonly deleteLabel?: string;
+  readonly getDeleteLabel?: (role: Role) => string;
+  readonly isDeleteDisabled?: (role: Role) => boolean;
   /** When false, the 3-dot menu is hidden for system roles (e.g. Super Admin). */
   readonly isSuperAdmin?: boolean;
 }
@@ -92,6 +94,7 @@ interface RoleActionsMenuProps {
   readonly canEdit: boolean;
   readonly canDelete: boolean;
   readonly deleteLabel: string;
+  readonly deleteDisabled?: boolean;
 }
 
 function RoleActionsMenu({
@@ -101,6 +104,7 @@ function RoleActionsMenu({
   canEdit,
   canDelete,
   deleteLabel,
+  deleteDisabled = false,
 }: RoleActionsMenuProps): ReactElement | null {
   if (!canEdit && !canDelete) return null;
   return (
@@ -120,8 +124,16 @@ function RoleActionsMenu({
         )}
         {canDelete && (
           <DropdownMenuItem
-            onClick={() => onDelete(role)}
-            className="text-destructive focus:text-destructive"
+            onClick={() => {
+              if (deleteDisabled) return;
+              onDelete(role);
+            }}
+            disabled={deleteDisabled}
+            className={
+              deleteDisabled
+                ? "text-muted-foreground focus:text-muted-foreground"
+                : "text-destructive focus:text-destructive"
+            }
           >
             <IconTrash className="size-4" />
             {deleteLabel}
@@ -141,6 +153,8 @@ export function RolesTable({
   canEdit = true,
   canDelete = true,
   deleteLabel = "Delete Role",
+  getDeleteLabel,
+  isDeleteDisabled,
   isSuperAdmin = false,
 }: RolesTableProps): ReactElement {
   if (roles.length === 0) {
@@ -199,7 +213,8 @@ export function RolesTable({
                 onDelete={onDelete}
                 canEdit={canEdit && (isSuperAdmin || !role.isSystem)}
                 canDelete={canDelete && (isSuperAdmin || !role.isSystem)}
-                deleteLabel={deleteLabel}
+                deleteLabel={getDeleteLabel?.(role) ?? deleteLabel}
+                deleteDisabled={isDeleteDisabled?.(role) ?? false}
               />
             </TableCell>
           </TableRow>

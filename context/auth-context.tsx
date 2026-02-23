@@ -27,6 +27,7 @@ import type { AuthResponse, AuthUser } from "@/types/auth";
 const SESSION_KEY = "wildfire_session";
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes before expiry
 const REFRESH_CHECK_INTERVAL_MS = 60_000; // check every 60 seconds
+const AUTH_ERROR_SUPPRESSION_MS = 2_000;
 
 interface SessionData {
   readonly user: AuthUser;
@@ -117,7 +118,9 @@ export function AuthProvider({
     setIsInitialized(true);
   }, []);
 
-  const isRefreshingRef = useRef(false);
+  const inFlightRefreshPromiseRef = useRef<Promise<void> | null>(null);
+  const refreshRequestedWhileRunningRef = useRef(false);
+  const suppressAuthErrorUntilRef = useRef(0);
   const userRef = useRef(user);
   useEffect(() => {
     userRef.current = user;
@@ -133,7 +136,6 @@ export function AuthProvider({
     if (!user) return;
 
     const refreshTokenCheckIntervalId = setInterval(async () => {
-      if (isRefreshingRef.current) return;
       if (!userRef.current) return;
 
       const session = readSession();
@@ -143,24 +145,7 @@ export function AuthProvider({
       const nowMs = Date.now();
       if (expiresAtMs - nowMs > REFRESH_THRESHOLD_MS) return;
 
-      isRefreshingRef.current = true;
-      try {
-        const response = await refreshToken();
-        const newSession: SessionData = {
-          user: response.user,
-          expiresAt: response.expiresAt,
-          permissions: response.permissions,
-        };
-        writeSession(newSession);
-        setUser(newSession.user);
-        setPermissions(newSession.permissions);
-      } catch (err) {
-        if (err instanceof AuthApiError && err.status === 401) {
-          clearAuthState();
-        }
-      } finally {
-        isRefreshingRef.current = false;
-      }
+      void refreshSessionRef.current().catch(() => undefined);
     }, REFRESH_CHECK_INTERVAL_MS);
 
     return () => clearInterval(refreshTokenCheckIntervalId);
@@ -196,25 +181,43 @@ export function AuthProvider({
   }, [clearAuthState]);
 
   const refreshSession = useCallback(async () => {
-    try {
-      const response = await refreshToken();
-      const session: SessionData = {
-        user: response.user,
-        expiresAt: response.expiresAt,
-        permissions: response.permissions,
-      };
-      writeSession(session);
-      setUser(session.user);
-      setPermissions(session.permissions);
-    } catch (err) {
-      if (
-        err instanceof AuthApiError &&
-        (err.status === 401 || err.status === 403)
-      ) {
-        clearAuthState();
-      }
-      throw err;
+    if (!userRef.current) return;
+    if (inFlightRefreshPromiseRef.current) {
+      refreshRequestedWhileRunningRef.current = true;
+      return inFlightRefreshPromiseRef.current;
     }
+
+    const refreshTask = (async () => {
+      try {
+        do {
+          refreshRequestedWhileRunningRef.current = false;
+          suppressAuthErrorUntilRef.current =
+            Date.now() + AUTH_ERROR_SUPPRESSION_MS;
+
+          const response = await refreshToken();
+          const session: SessionData = {
+            user: response.user,
+            expiresAt: response.expiresAt,
+            permissions: response.permissions,
+          };
+          writeSession(session);
+          setUser(session.user);
+          setPermissions(session.permissions);
+        } while (refreshRequestedWhileRunningRef.current);
+      } catch (err) {
+        suppressAuthErrorUntilRef.current = 0;
+        if (err instanceof AuthApiError && err.status === 401) {
+          clearAuthState();
+        }
+        throw err;
+      }
+    })();
+
+    inFlightRefreshPromiseRef.current = refreshTask.finally(() => {
+      inFlightRefreshPromiseRef.current = null;
+    });
+
+    return inFlightRefreshPromiseRef.current;
   }, [clearAuthState]);
 
   const refreshSessionRef = useRef(refreshSession);
@@ -228,17 +231,23 @@ export function AuthProvider({
     const onAuthApiError = (event: Event) => {
       const customEvent = event as CustomEvent<AuthApiErrorEventDetail>;
       const status = customEvent.detail?.status;
-      if (status === 401 || status === 403) {
+      if (status === 401) {
+        const url = customEvent.detail?.url ?? "";
+        const isAuthSessionRequest =
+          url === "auth/session" ||
+          url === "/auth/session" ||
+          url.endsWith("/auth/session");
+        const isSuppressed = Date.now() < suppressAuthErrorUntilRef.current;
+        if (isSuppressed && !isAuthSessionRequest) {
+          return;
+        }
         clearAuthState();
       }
     };
 
     const onAuthRefreshRequested = () => {
-      if (!userRef.current || isRefreshingRef.current) return;
-      isRefreshingRef.current = true;
-      void refreshSessionRef.current().finally(() => {
-        isRefreshingRef.current = false;
-      });
+      if (!userRef.current) return;
+      void refreshSessionRef.current().catch(() => undefined);
     };
 
     window.addEventListener(AUTH_API_ERROR_EVENT, onAuthApiError);
