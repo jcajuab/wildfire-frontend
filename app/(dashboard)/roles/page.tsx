@@ -13,6 +13,16 @@ import { RoleSearchInput } from "@/components/roles/role-search-input";
 import { RolesPagination } from "@/components/roles/roles-pagination";
 import { RolesTable } from "@/components/roles/roles-table";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/formatters";
 import { useCan } from "@/hooks/use-can";
 import {
@@ -48,6 +58,7 @@ import type {
 const ROLE_SORT_FIELDS = ["name", "usersCount"] as const;
 const ROLE_SORT_DIRECTIONS = ["asc", "desc"] as const;
 const HIGH_RISK_TARGET_THRESHOLD = 20;
+const ROLE_DELETION_REASON_MAX_LENGTH = 1024;
 
 export default function RolesPage(): ReactElement {
   const canUpdateRole = useCan("roles:update");
@@ -95,6 +106,10 @@ export default function RolesPage(): ReactElement {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [deleteRequestReason, setDeleteRequestReason] = useState("");
+  const [isSubmittingDeleteRequest, setIsSubmittingDeleteRequest] =
+    useState(false);
 
   const {
     data: rolePermissionsData,
@@ -158,6 +173,16 @@ export default function RolesPage(): ReactElement {
       })),
     [usersData],
   );
+
+  const pendingDeletionRoleIds = useMemo(() => {
+    const pendingIds = new Set<string>();
+    for (const request of deletionRequestsData ?? []) {
+      if (request.status === "pending") {
+        pendingIds.add(request.roleId);
+      }
+    }
+    return pendingIds;
+  }, [deletionRequestsData]);
 
   const handleSearchChange = useCallback(
     (value: string) => {
@@ -296,10 +321,29 @@ export default function RolesPage(): ReactElement {
     ],
   );
 
-  const handleDeleteRequest = useCallback((role: Role) => {
-    setRoleToDelete(role);
-    setIsDeleteDialogOpen(true);
-  }, []);
+  const handleDeleteRequest = useCallback(
+    (role: Role) => {
+      if (!isSuperAdmin && pendingDeletionRoleIds.has(role.id)) {
+        toast.error(
+          `A pending deletion request already exists for "${role.name}".`,
+        );
+        return;
+      }
+      setRoleToDelete(role);
+      if (isSuperAdmin) {
+        setIsDeleteDialogOpen(true);
+        return;
+      }
+      setDeleteRequestReason("");
+      setIsRequestDialogOpen(true);
+    },
+    [isSuperAdmin, pendingDeletionRoleIds],
+  );
+
+  const trimmedDeleteRequestReason = deleteRequestReason.trim();
+  const isDeleteRequestReasonValid =
+    trimmedDeleteRequestReason.length > 0 &&
+    trimmedDeleteRequestReason.length <= ROLE_DELETION_REASON_MAX_LENGTH;
 
   const filteredRoles = useMemo(() => {
     if (!search) return roles;
@@ -390,6 +434,16 @@ export default function RolesPage(): ReactElement {
               canEdit={canUpdateRole}
               canDelete={canDeleteRole}
               deleteLabel={isSuperAdmin ? "Delete Role" : "Request Deletion"}
+              getDeleteLabel={(role) =>
+                !isSuperAdmin && pendingDeletionRoleIds.has(role.id)
+                  ? "Request Pending"
+                  : isSuperAdmin
+                    ? "Delete Role"
+                    : "Request Deletion"
+              }
+              isDeleteDisabled={(role) =>
+                !isSuperAdmin && pendingDeletionRoleIds.has(role.id)
+              }
               isSuperAdmin={isSuperAdmin}
             />
           </div>
@@ -423,24 +477,29 @@ export default function RolesPage(): ReactElement {
         onSubmit={handleSubmit}
       />
 
-      <ConfirmActionDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        title={isSuperAdmin ? "Delete role?" : "Request role deletion?"}
-        description={
-          roleToDelete
-            ? (roleToDelete.usersCount ?? 0) > 0
-              ? `This will permanently delete "${roleToDelete.name}" and unassign ${
-                  roleToDelete.usersCount ?? 0
-                } user(s). Users that have this role will have their permissions revoked.`
-              : `This will permanently delete "${roleToDelete.name}".`
-            : undefined
-        }
-        confirmLabel={isSuperAdmin ? "Delete role" : "Request deletion"}
-        onConfirm={async () => {
-          if (!roleToDelete) return;
-          try {
-            if (isSuperAdmin) {
+      {isSuperAdmin ? (
+        <ConfirmActionDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={(open) => {
+            setIsDeleteDialogOpen(open);
+            if (!open) {
+              setRoleToDelete(null);
+            }
+          }}
+          title="Delete role?"
+          description={
+            roleToDelete
+              ? (roleToDelete.usersCount ?? 0) > 0
+                ? `This will permanently delete "${roleToDelete.name}" and unassign ${
+                    roleToDelete.usersCount ?? 0
+                  } user(s). Users that have this role will have their permissions revoked.`
+                : `This will permanently delete "${roleToDelete.name}".`
+              : undefined
+          }
+          confirmLabel="Delete role"
+          onConfirm={async () => {
+            if (!roleToDelete) return;
+            try {
               await deleteRole(roleToDelete.id).unwrap();
               const removedUsers = roleToDelete.usersCount ?? 0;
               toast.success(
@@ -448,23 +507,104 @@ export default function RolesPage(): ReactElement {
                   ? `Deleted "${roleToDelete.name}" and removed ${removedUsers} assignment(s).`
                   : `Deleted "${roleToDelete.name}".`,
               );
-            } else {
-              await createRoleDeletionRequest({
-                roleId: roleToDelete.id,
-              }).unwrap();
-              toast.success(
-                `Deletion request for "${roleToDelete.name}" was sent to Super Admin.`,
+              setRoleToDelete(null);
+            } catch (err) {
+              toast.error(
+                err instanceof Error ? err.message : "Failed to delete role",
               );
+              throw err;
             }
+          }}
+        />
+      ) : null}
+
+      <Dialog
+        open={isRequestDialogOpen}
+        onOpenChange={(open) => {
+          setIsRequestDialogOpen(open);
+          if (!open) {
+            setDeleteRequestReason("");
             setRoleToDelete(null);
-          } catch (err) {
-            toast.error(
-              err instanceof Error ? err.message : "Failed to delete role",
-            );
-            throw err;
           }
         }}
-      />
+      >
+        <DialogContent className="sm:max-w-lg" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Request role deletion?</DialogTitle>
+            <DialogDescription>
+              {roleToDelete
+                ? `Submit your request to delete "${roleToDelete.name}". A Super Admin must review and approve this request.`
+                : "Submit your request for Super Admin approval."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="role-delete-request-reason">Reason</Label>
+            <Textarea
+              id="role-delete-request-reason"
+              rows={4}
+              value={deleteRequestReason}
+              onChange={(event) => setDeleteRequestReason(event.target.value)}
+              maxLength={ROLE_DELETION_REASON_MAX_LENGTH}
+              placeholder="Explain why this role should be deleted"
+            />
+            <p className="text-xs text-muted-foreground">
+              {trimmedDeleteRequestReason.length}/
+              {ROLE_DELETION_REASON_MAX_LENGTH}
+            </p>
+            {!isDeleteRequestReasonValid ? (
+              <p className="text-destructive text-xs">
+                A reason is required to request role deletion.
+              </p>
+            ) : null}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsRequestDialogOpen(false);
+                setDeleteRequestReason("");
+                setRoleToDelete(null);
+              }}
+              disabled={isSubmittingDeleteRequest}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!roleToDelete || !isDeleteRequestReasonValid) return;
+                setIsSubmittingDeleteRequest(true);
+                try {
+                  await createRoleDeletionRequest({
+                    roleId: roleToDelete.id,
+                    reason: trimmedDeleteRequestReason,
+                  }).unwrap();
+                  toast.success(
+                    `Deletion request for "${roleToDelete.name}" was sent to Super Admin.`,
+                  );
+                  setIsRequestDialogOpen(false);
+                  setDeleteRequestReason("");
+                  setRoleToDelete(null);
+                } catch (err) {
+                  toast.error(
+                    err instanceof Error
+                      ? err.message
+                      : "Failed to request role deletion",
+                  );
+                } finally {
+                  setIsSubmittingDeleteRequest(false);
+                }
+              }}
+              disabled={
+                !isDeleteRequestReasonValid || isSubmittingDeleteRequest
+              }
+            >
+              {isSubmittingDeleteRequest ? "Requesting..." : "Request deletion"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Can permission="roles:delete">
         <div className="mx-auto w-full max-w-[--breakpoint-2xl] px-4 pb-6 md:px-6 lg:px-8">
@@ -481,74 +621,94 @@ export default function RolesPage(): ReactElement {
                     <th className="px-4 py-2">Requested At</th>
                     <th className="px-4 py-2">Status</th>
                     <th className="px-4 py-2">Reason</th>
-                    <th className="px-4 py-2 text-right">Actions</th>
+                    {isSuperAdmin ? (
+                      <th className="px-4 py-2 text-right">Actions</th>
+                    ) : null}
                   </tr>
                 </thead>
                 <tbody>
-                  {(deletionRequestsData ?? []).map((request) => (
-                    <tr key={request.id} className="border-t">
-                      <td className="px-4 py-2">{request.roleName}</td>
-                      <td className="px-4 py-2">{request.requestedByName}</td>
-                      <td className="px-4 py-2 text-muted-foreground">
-                        {formatDateTime(request.requestedAt)}
-                      </td>
-                      <td className="px-4 py-2">{request.status}</td>
-                      <td className="px-4 py-2 text-muted-foreground">
-                        {request.reason ?? "-"}
-                      </td>
-                      <td className="px-4 py-2 text-right">
-                        {isSuperAdmin && request.status === "pending" ? (
-                          <div className="inline-flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={async () => {
-                                try {
-                                  await approveRoleDeletionRequest({
-                                    requestId: request.id,
-                                  }).unwrap();
-                                  toast.success("Deletion request approved.");
-                                } catch (err) {
-                                  toast.error(
-                                    err instanceof Error
-                                      ? err.message
-                                      : "Failed to approve request",
-                                  );
-                                }
-                              }}
+                  {(deletionRequestsData ?? []).map((request) => {
+                    const reasonText = request.reason?.trim() ?? "";
+                    return (
+                      <tr key={request.id} className="border-t">
+                        <td className="px-4 py-2">{request.roleName}</td>
+                        <td className="px-4 py-2">{request.requestedByName}</td>
+                        <td className="px-4 py-2 text-muted-foreground">
+                          {formatDateTime(request.requestedAt)}
+                        </td>
+                        <td className="px-4 py-2">{request.status}</td>
+                        <td className="px-4 py-2 text-muted-foreground">
+                          {reasonText ? (
+                            <span
+                              className="block max-w-[20rem] truncate md:max-w-[30rem]"
+                              title={reasonText}
                             >
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={async () => {
-                                try {
-                                  await rejectRoleDeletionRequest({
-                                    requestId: request.id,
-                                  }).unwrap();
-                                  toast.success("Deletion request rejected.");
-                                } catch (err) {
-                                  toast.error(
-                                    err instanceof Error
-                                      ? err.message
-                                      : "Failed to reject request",
-                                  );
-                                }
-                              }}
-                            >
-                              Reject
-                            </Button>
-                          </div>
+                              {reasonText}
+                            </span>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                        {isSuperAdmin ? (
+                          <td className="px-4 py-2 text-right">
+                            {request.status === "pending" ? (
+                              <div className="inline-flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={async () => {
+                                    try {
+                                      await approveRoleDeletionRequest({
+                                        requestId: request.id,
+                                      }).unwrap();
+                                      toast.success(
+                                        "Deletion request approved.",
+                                      );
+                                    } catch (err) {
+                                      toast.error(
+                                        err instanceof Error
+                                          ? err.message
+                                          : "Failed to approve request",
+                                      );
+                                    }
+                                  }}
+                                >
+                                  Delete
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    try {
+                                      await rejectRoleDeletionRequest({
+                                        requestId: request.id,
+                                      }).unwrap();
+                                      toast.success(
+                                        "Deletion request rejected.",
+                                      );
+                                    } catch (err) {
+                                      toast.error(
+                                        err instanceof Error
+                                          ? err.message
+                                          : "Failed to reject request",
+                                      );
+                                    }
+                                  }}
+                                >
+                                  Reject
+                                </Button>
+                              </div>
+                            ) : null}
+                          </td>
                         ) : null}
-                      </td>
-                    </tr>
-                  ))}
+                      </tr>
+                    );
+                  })}
                   {(deletionRequestsData ?? []).length === 0 ? (
                     <tr>
                       <td
                         className="px-4 py-8 text-center text-muted-foreground"
-                        colSpan={6}
+                        colSpan={isSuperAdmin ? 6 : 5}
                       >
                         No role deletion requests yet.
                       </td>

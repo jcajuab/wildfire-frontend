@@ -26,8 +26,12 @@ export function CreateScheduleDialog({
   availableDisplays,
 }: CreateScheduleDialogProps): ReactElement {
   async function handleCreate(data: ScheduleFormData): Promise<void> {
-    await onCreate(data);
-    onOpenChange(false);
+    try {
+      await onCreate(data);
+      onOpenChange(false);
+    } catch {
+      // Keep dialog open so users can adjust and resubmit.
+    }
   }
 
   return (

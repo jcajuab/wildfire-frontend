@@ -74,6 +74,8 @@ export function EditScheduleDialog({
       await onSave(currentSchedule, pendingData, scope);
       setScopeDialogOpen(false);
       onOpenChange(false);
+    } catch {
+      // Keep dialogs open so users can adjust and resubmit.
     } finally {
       setIsSaving(false);
     }
@@ -103,7 +105,8 @@ export function EditScheduleDialog({
           <DialogHeader>
             <DialogTitle>Apply changes</DialogTitle>
             <DialogDescription>
-              Choose whether to update only this day or all days in this recurring schedule.
+              Choose whether to update only this day or all days in this
+              recurring schedule.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-between">

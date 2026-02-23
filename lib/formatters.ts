@@ -25,17 +25,27 @@ export function formatDateTime(value: string | Date): string {
 }
 
 /**
- * Converts a YYYY-MM-DD date string to ISO 8601 start-of-day UTC.
+ * Converts a YYYY-MM-DD date string to ISO 8601 start-of-day in UTC.
+ * Interprets the date as the user's local calendar day (e.g. "today" = midnight to end of day in user's timezone).
  */
 export function dateToISOStart(date: string): string {
-  return `${date}T00:00:00.000Z`;
+  const localStart = new Date(`${date}T00:00:00`);
+  if (!Number.isFinite(localStart.getTime())) {
+    return `${date}T00:00:00.000Z`;
+  }
+  return localStart.toISOString();
 }
 
 /**
- * Converts a YYYY-MM-DD date string to ISO 8601 end-of-day UTC.
+ * Converts a YYYY-MM-DD date string to ISO 8601 end-of-day in UTC.
+ * Interprets the date as the user's local calendar day (e.g. "today" = midnight to end of day in user's timezone).
  */
 export function dateToISOEnd(date: string): string {
-  return `${date}T23:59:59.999Z`;
+  const localEnd = new Date(`${date}T23:59:59.999`);
+  if (!Number.isFinite(localEnd.getTime())) {
+    return `${date}T23:59:59.999Z`;
+  }
+  return localEnd.toISOString();
 }
 
 export function formatClockTime(time: string): string {

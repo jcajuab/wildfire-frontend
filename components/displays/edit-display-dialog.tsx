@@ -223,7 +223,8 @@ function EditDisplayForm({
                   setFormData((prev) => ({
                     ...prev,
                     selectedOutput:
-                      option.value !== null && prev.selectedOutput === option.value
+                      option.value !== null &&
+                      prev.selectedOutput === option.value
                         ? null
                         : option.value,
                   }))

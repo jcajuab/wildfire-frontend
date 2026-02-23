@@ -80,7 +80,12 @@ const extendedNavItems: readonly NavItem[] = [
   },
 ];
 
-const CORE_PATHS = new Set<string>(["/displays", "/content", "/playlists", "/schedules"]);
+const CORE_PATHS = new Set<string>([
+  "/displays",
+  "/content",
+  "/playlists",
+  "/schedules",
+]);
 const MANAGE_PATHS = new Set<string>(["/users", "/roles", "/logs"]);
 
 export function AppSidebar(): ReactElement {
@@ -89,8 +94,12 @@ export function AppSidebar(): ReactElement {
   const visibleNavItems = isInitialized
     ? extendedNavItems.filter((item) => can(item.permission))
     : [];
-  const coreNavItems = visibleNavItems.filter((item) => CORE_PATHS.has(item.href));
-  const manageNavItems = visibleNavItems.filter((item) => MANAGE_PATHS.has(item.href));
+  const coreNavItems = visibleNavItems.filter((item) =>
+    CORE_PATHS.has(item.href),
+  );
+  const manageNavItems = visibleNavItems.filter((item) =>
+    MANAGE_PATHS.has(item.href),
+  );
   const displayName = user?.name ?? "User";
   const displayEmail = user?.email ?? "";
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);

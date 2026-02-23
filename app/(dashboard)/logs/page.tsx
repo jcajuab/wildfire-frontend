@@ -107,6 +107,8 @@ export default function LogsPage(): ReactElement {
   );
   const [exportPopoverOpen, setExportPopoverOpen] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportFrom, setExportFrom] = useState<string>("");
+  const [exportTo, setExportTo] = useState<string>("");
 
   const parsedStatus = useMemo<number | undefined>(() => {
     const parsed = Number.parseInt(statusRaw, 10);
@@ -155,8 +157,11 @@ export default function LogsPage(): ReactElement {
 
   const total = data?.total ?? 0;
 
-  const isRangeValid = from.trim() !== "" && to.trim() !== "" && from <= to;
-  const canDownload = isRangeValid;
+  const exportRangeValid =
+    exportFrom.trim() !== "" &&
+    exportTo.trim() !== "" &&
+    exportFrom <= exportTo;
+  const canDownload = exportRangeValid;
 
   const resetToFirstPage = useCallback((): void => {
     if (page !== 1) {
@@ -232,8 +237,8 @@ export default function LogsPage(): ReactElement {
     setIsExporting(true);
     try {
       const query: AuditExportQuery = {
-        from: dateToISOStart(from),
-        to: dateToISOEnd(to),
+        from: dateToISOStart(exportFrom),
+        to: dateToISOEnd(exportTo),
         action: action || undefined,
         actorType: actorType === "all" ? undefined : actorType,
         resourceType: resourceType || undefined,
@@ -262,7 +267,15 @@ export default function LogsPage(): ReactElement {
     } finally {
       setIsExporting(false);
     }
-  }, [action, actorType, from, parsedStatus, requestId, resourceType, to]);
+  }, [
+    action,
+    actorType,
+    exportFrom,
+    exportTo,
+    parsedStatus,
+    requestId,
+    resourceType,
+  ]);
 
   const handleResetFilters = useCallback((): void => {
     setFrom("");
@@ -292,7 +305,13 @@ export default function LogsPage(): ReactElement {
           canExport ? (
             <Popover
               open={exportPopoverOpen}
-              onOpenChange={setExportPopoverOpen}
+              onOpenChange={(open) => {
+                setExportPopoverOpen(open);
+                if (open) {
+                  setExportFrom(from);
+                  setExportTo(to);
+                }
+              }}
             >
               <PopoverTrigger asChild>
                 <Button>
@@ -330,11 +349,13 @@ export default function LogsPage(): ReactElement {
                       Current result set may exceed backend export limits.
                     </p>
                   )}
-                  {!isRangeValid && from !== "" && to !== "" && (
-                    <p className='text-destructive text-xs'>
-                      From date must be before or equal to To date.
-                    </p>
-                  )}
+                  {!exportRangeValid &&
+                    exportFrom !== "" &&
+                    exportTo !== "" && (
+                      <p className='text-destructive text-xs'>
+                        From date must be before or equal to To date.
+                      </p>
+                    )}
                   <Button
                     onClick={handleExportSubmit}
                     disabled={!canDownload || isExporting}
@@ -350,7 +371,7 @@ export default function LogsPage(): ReactElement {
       />
 
       <DashboardPage.Body>
-        <DashboardPage.Content className='border-b pb-4'>
+        <DashboardPage.Content className='flex-none border-b pb-3'>
           <div className='grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4'>
             <div className='space-y-1.5'>
               <Label htmlFor='logs-filter-from'>From</Label>
@@ -461,7 +482,7 @@ export default function LogsPage(): ReactElement {
             </div>
           </div>
         </DashboardPage.Content>
-        <DashboardPage.Content className='pt-6'>
+        <DashboardPage.Content className='pt-4'>
           <div className='overflow-hidden rounded-lg border'>
             <LogsTable logs={logs} />
           </div>
