@@ -1,3 +1,9 @@
+import type { ContentStatus } from "@/types/content";
+
+export function formatContentStatus(status: ContentStatus): string {
+  return status === "IN_USE" ? "In use" : "Draft";
+}
+
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-US").format(value);
 }

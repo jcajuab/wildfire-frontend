@@ -45,6 +45,7 @@ import {
   useUpdateContentMutation,
   useLazyGetContentFileUrlQuery,
 } from "@/lib/api/content-api";
+import { formatContentStatus } from "@/lib/formatters";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import type { TypeFilter } from "@/components/content/content-filter-popover";
 import type { StatusFilter } from "@/components/content/content-status-tabs";
@@ -193,7 +194,7 @@ function PreviewContentDialog({
           </p>
           <p>
             <span className="text-muted-foreground">Status:</span>{" "}
-            {content.status}
+            {formatContentStatus(content.status)}
           </p>
         </div>
         <DialogFooter>

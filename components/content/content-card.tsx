@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatContentStatus } from "@/lib/formatters";
 import type { Content } from "@/types/content";
 
 interface ContentCardProps {
@@ -57,7 +58,7 @@ export const ContentCard = memo(function ContentCard({
           </p>
           <div className="pt-1">
             <Badge variant="outline">
-              {content.status === "IN_USE" ? "In Use" : "Draft"}
+              {formatContentStatus(content.status)}
             </Badge>
           </div>
         </div>
