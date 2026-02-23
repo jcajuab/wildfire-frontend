@@ -1,9 +1,12 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState, useCallback } from "react";
-import { IconDeviceFloppy } from "@tabler/icons-react";
+import { useCallback, useMemo, useState } from "react";
+import { IconDeviceFloppy, IconSettings } from "@tabler/icons-react";
 
+import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";
+import { DisplayGroupsCombobox } from "@/components/displays/display-groups-combobox";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,11 +15,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DisplayGroupsCombobox } from "@/components/displays/display-groups-combobox";
 import type { DeviceGroup } from "@/lib/api/devices-api";
+import {
+  dedupeDisplayGroupNames,
+  toDisplayGroupKey,
+} from "@/lib/display-group-normalization";
 import type { Display } from "@/types/display";
 
 interface EditDisplayDialogProps {
@@ -24,17 +29,18 @@ interface EditDisplayDialogProps {
   readonly existingGroups: readonly DeviceGroup[];
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onSave: (display: Display) => void;
+  readonly onSave: (display: Display) => Promise<boolean>;
+  readonly canManageGroups?: boolean;
 }
 
 interface EditFormData {
-  displayName: string;
-  location: string;
-  ipAddress: string;
-  macAddress: string;
-  selectedOutput: string | null;
-  selectedResolution: string;
-  groups: readonly string[];
+  readonly displayName: string;
+  readonly location: string;
+  readonly ipAddress: string;
+  readonly macAddress: string;
+  readonly selectedOutput: string | null;
+  readonly selectedResolution: string;
+  readonly groups: readonly string[];
 }
 
 const outputOptions: ReadonlyArray<{
@@ -68,7 +74,7 @@ function createInitialFormData(display: Display): EditFormData {
     selectedOutput:
       display.displayOutput === "Not available" ? null : display.displayOutput,
     selectedResolution: display.resolution,
-    groups: display.groups.map((g) => g.name),
+    groups: display.groups.map((group) => group.name),
   };
 }
 
@@ -76,7 +82,8 @@ interface EditDisplayFormProps {
   readonly display: Display;
   readonly existingGroups: readonly DeviceGroup[];
   readonly onClose: () => void;
-  readonly onSave: (display: Display) => void;
+  readonly onSave: (display: Display) => Promise<boolean>;
+  readonly canManageGroups: boolean;
 }
 
 /**
@@ -89,12 +96,25 @@ function EditDisplayForm({
   existingGroups,
   onClose,
   onSave,
+  canManageGroups,
 }: EditDisplayFormProps): ReactElement {
   const [formData, setFormData] = useState<EditFormData>(() =>
     createInitialFormData(display),
   );
+  const [isSaving, setIsSaving] = useState(false);
+  const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
 
-  const handleSave = useCallback(() => {
+  const groupColorByKey = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const group of existingGroups) {
+      map.set(toDisplayGroupKey(group.name), group.colorIndex ?? 0);
+    }
+    return map;
+  }, [existingGroups]);
+
+  const handleSave = useCallback(async () => {
+    if (isSaving) return;
+
     const normalizedResolution = formData.selectedResolution.trim();
     const resolutionForSave =
       normalizedResolution.length === 0 ||
@@ -102,9 +122,9 @@ function EditDisplayForm({
         ? "Not available"
         : normalizedResolution;
 
-    const groups = formData.groups.map((name) => ({
+    const groups = dedupeDisplayGroupNames(formData.groups).map((name) => ({
       name,
-      colorIndex: existingGroups.find((g) => g.name === name)?.colorIndex ?? 0,
+      colorIndex: groupColorByKey.get(toDisplayGroupKey(name)) ?? 0,
     }));
 
     const updatedDisplay: Display = {
@@ -118,9 +138,16 @@ function EditDisplayForm({
       groups,
     };
 
-    onSave(updatedDisplay);
-    onClose();
-  }, [display, formData, existingGroups, onSave, onClose]);
+    setIsSaving(true);
+    try {
+      const didSave = await onSave(updatedDisplay);
+      if (didSave) {
+        onClose();
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  }, [display, formData, groupColorByKey, isSaving, onClose, onSave]);
 
   const normalizedResolution = formData.selectedResolution.trim();
   const isUnknownResolution =
@@ -138,7 +165,8 @@ function EditDisplayForm({
     Number.isInteger(Number(screenHeightRaw)) &&
     Number(screenHeightRaw) > 0;
   const hasValidResolution = isUnknownResolution || hasNumericResolution;
-  const canSave = formData.displayName.trim().length > 0 && hasValidResolution;
+  const canSave =
+    formData.displayName.trim().length > 0 && hasValidResolution && !isSaving;
 
   return (
     <>
@@ -150,42 +178,45 @@ function EditDisplayForm({
       </DialogHeader>
 
       <div className="flex flex-col gap-4">
-        {/* Display Name */}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="edit-display-name">Display Name</Label>
           <Input
             id="edit-display-name"
             value={formData.displayName}
-            onChange={(e) =>
+            onChange={(event) =>
               setFormData((prev) => ({
                 ...prev,
-                displayName: e.target.value,
+                displayName: event.target.value,
               }))
             }
+            disabled={isSaving}
           />
         </div>
 
-        {/* Physical Location */}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="edit-location">Physical Location</Label>
           <Input
             id="edit-location"
             value={formData.location}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, location: e.target.value }))
+            onChange={(event) =>
+              setFormData((prev) => ({ ...prev, location: event.target.value }))
             }
+            disabled={isSaving}
           />
         </div>
 
-        {/* IP Address */}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="edit-ip">IP Address or Hostname</Label>
           <Input
             id="edit-ip"
             value={formData.ipAddress}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, ipAddress: e.target.value }))
+            onChange={(event) =>
+              setFormData((prev) => ({
+                ...prev,
+                ipAddress: event.target.value,
+              }))
             }
+            disabled={isSaving}
           />
         </div>
 
@@ -194,13 +225,16 @@ function EditDisplayForm({
           <Input
             id="edit-mac"
             value={formData.macAddress}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, macAddress: e.target.value }))
+            onChange={(event) =>
+              setFormData((prev) => ({
+                ...prev,
+                macAddress: event.target.value,
+              }))
             }
+            disabled={isSaving}
           />
         </div>
 
-        {/* Display Output */}
         <div className="flex flex-col gap-1.5">
           <Label>Display Output</Label>
           <div className="flex flex-col gap-2">
@@ -220,6 +254,7 @@ function EditDisplayForm({
                         : option.value,
                   }))
                 }
+                disabled={isSaving}
                 className={`flex items-center justify-between rounded-lg border p-3 text-left transition-colors ${
                   formData.selectedOutput === option.value
                     ? "border-primary bg-primary/5"
@@ -239,9 +274,9 @@ function EditDisplayForm({
                       : "border-muted-foreground/30"
                   }`}
                 >
-                  {formData.selectedOutput === option.value && (
+                  {formData.selectedOutput === option.value ? (
                     <div className="size-2 rounded-full bg-white" />
-                  )}
+                  ) : null}
                 </div>
               </button>
             ))}
@@ -254,12 +289,13 @@ function EditDisplayForm({
             id="edit-resolution"
             placeholder="e.g. 1920x1080"
             value={formData.selectedResolution}
-            onChange={(e) =>
+            onChange={(event) =>
               setFormData((prev) => ({
                 ...prev,
-                selectedResolution: e.target.value,
+                selectedResolution: event.target.value,
               }))
             }
+            disabled={isSaving}
           />
           <p className="text-xs text-muted-foreground">
             Required format: width x height (e.g. 1366x768)
@@ -271,26 +307,81 @@ function EditDisplayForm({
           ) : null}
         </div>
 
-        {/* Display Groups */}
-        <DisplayGroupsCombobox
-          id="edit-groups"
-          value={formData.groups}
-          onValueChange={(names) =>
-            setFormData((prev) => ({ ...prev, groups: names }))
-          }
-          existingGroups={existingGroups}
-        />
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="edit-groups">Display Groups (Optional)</Label>
+            {canManageGroups ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsGroupManagerOpen(true)}
+                disabled={isSaving}
+              >
+                <IconSettings className="size-4" />
+                Manage Groups
+              </Button>
+            ) : null}
+          </div>
+          <DisplayGroupsCombobox
+            id="edit-groups"
+            value={formData.groups}
+            onValueChange={(names) =>
+              setFormData((prev) => ({ ...prev, groups: names }))
+            }
+            existingGroups={existingGroups}
+            showLabel={false}
+            disabled={isSaving}
+          />
+        </div>
       </div>
 
       <DialogFooter className="sm:justify-between">
-        <Button variant="outline" onClick={onClose} className="flex-1">
+        <Button
+          variant="outline"
+          onClick={onClose}
+          className="flex-1"
+          disabled={isSaving}
+        >
           Cancel
         </Button>
-        <Button onClick={handleSave} disabled={!canSave} className="flex-1">
+        <Button
+          onClick={() => void handleSave()}
+          disabled={!canSave}
+          className="flex-1"
+        >
           <IconDeviceFloppy className="size-4" />
-          Save
+          {isSaving ? "Saving..." : "Save"}
         </Button>
       </DialogFooter>
+
+      {isGroupManagerOpen ? (
+        <DisplayGroupManagerDialog
+          open={isGroupManagerOpen}
+          onOpenChange={setIsGroupManagerOpen}
+          groups={existingGroups}
+          onGroupRenamed={({ previousName, nextName }) => {
+            const previousKey = toDisplayGroupKey(previousName);
+            setFormData((prev) => ({
+              ...prev,
+              groups: dedupeDisplayGroupNames(
+                prev.groups.map((name) =>
+                  toDisplayGroupKey(name) === previousKey ? nextName : name,
+                ),
+              ),
+            }));
+          }}
+          onGroupDeleted={({ name }) => {
+            const deletedKey = toDisplayGroupKey(name);
+            setFormData((prev) => ({
+              ...prev,
+              groups: prev.groups.filter(
+                (groupName) => toDisplayGroupKey(groupName) !== deletedKey,
+              ),
+            }));
+          }}
+        />
+      ) : null}
     </>
   );
 }
@@ -301,6 +392,7 @@ export function EditDisplayDialog({
   open,
   onOpenChange,
   onSave,
+  canManageGroups = true,
 }: EditDisplayDialogProps): ReactElement | null {
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -311,13 +403,13 @@ export function EditDisplayDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        {/* Key prop forces remount when display changes, resetting form state */}
         <EditDisplayForm
           key={display.id}
           display={display}
           existingGroups={existingGroups}
           onClose={handleClose}
           onSave={onSave}
+          canManageGroups={canManageGroups}
         />
       </DialogContent>
     </Dialog>

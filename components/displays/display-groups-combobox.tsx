@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Combobox,
@@ -16,6 +16,10 @@ import {
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { getGroupBadgeStyles } from "@/lib/display-group-colors";
+import {
+  dedupeDisplayGroupNames,
+  toDisplayGroupKey,
+} from "@/lib/display-group-normalization";
 import type { DeviceGroup } from "@/lib/api/devices-api";
 
 export interface DisplayGroupsComboboxProps {
@@ -25,6 +29,7 @@ export interface DisplayGroupsComboboxProps {
   readonly existingGroups: readonly DeviceGroup[];
   readonly disabled?: boolean;
   readonly placeholder?: string;
+  readonly showLabel?: boolean;
 }
 
 /**
@@ -38,33 +43,43 @@ export function DisplayGroupsCombobox({
   existingGroups,
   disabled = false,
   placeholder = "Search or add display groups…",
+  showLabel = true,
 }: DisplayGroupsComboboxProps): ReactElement {
   const anchorRef = useComboboxAnchor();
+  const portalContainerRef = useRef<HTMLDivElement | null>(null);
   const [inputValue, setInputValue] = useState("");
 
   const existingNames = useMemo(
-    () => existingGroups.map((g) => g.name),
+    () => dedupeDisplayGroupNames(existingGroups.map((g) => g.name)),
     [existingGroups],
+  );
+  const selectedKeys = useMemo(
+    () => new Set(value.map((name) => toDisplayGroupKey(name))),
+    [value],
+  );
+  const existingKeys = useMemo(
+    () => new Set(existingNames.map((name) => toDisplayGroupKey(name))),
+    [existingNames],
   );
   const nameToColorIndex = useMemo(() => {
     const map = new Map<string, number>();
     for (const g of existingGroups) {
-      map.set(g.name, g.colorIndex ?? 0);
+      map.set(toDisplayGroupKey(g.name), g.colorIndex ?? 0);
     }
     return map;
   }, [existingGroups]);
 
   const createOption = useMemo(() => {
-    const trimmed = inputValue.trim();
+    const trimmed = dedupeDisplayGroupNames([inputValue])[0];
     if (
-      trimmed.length === 0 ||
-      value.includes(trimmed) ||
-      existingNames.includes(trimmed)
+      trimmed === undefined ||
+      selectedKeys.has(toDisplayGroupKey(trimmed)) ||
+      existingKeys.has(toDisplayGroupKey(trimmed))
     ) {
       return null;
     }
     return trimmed;
-  }, [inputValue, value, existingNames]);
+  }, [inputValue, selectedKeys, existingKeys]);
 
   const optionNames = useMemo(() => {
     if (createOption) return [...existingNames, createOption];
@@ -73,8 +88,14 @@ export function DisplayGroupsCombobox({
 
   const handleValueChange = useCallback(
     (next: string[] | null) => {
-      onValueChange(next ?? []);
-      if (createOption && next?.includes(createOption)) {
+      const normalizedSelection = dedupeDisplayGroupNames(next ?? []);
+      onValueChange(normalizedSelection);
+      if (
+        createOption &&
+        normalizedSelection.some(
+          (name) => toDisplayGroupKey(name) === toDisplayGroupKey(createOption),
+        )
+      ) {
         setInputValue("");
       }
     },
@@ -82,8 +103,8 @@ export function DisplayGroupsCombobox({
   );
 
   return (
-    <div className="flex flex-col gap-1.5">
-      {id ? (
+    <div ref={portalContainerRef} className="flex flex-col gap-1.5">
+      {id && showLabel ? (
         <Label htmlFor={id} className="text-sm font-medium">
           Display Groups (Optional)
         </Label>
@@ -102,7 +123,8 @@ export function DisplayGroupsCombobox({
               <>
                 {Array.isArray(selected) &&
                   selected.map((name) => {
-                    const colorIndex = nameToColorIndex.get(name) ?? 0;
+                    const colorIndex =
+                      nameToColorIndex.get(toDisplayGroupKey(name)) ?? 0;
                     const styles = getGroupBadgeStyles(colorIndex);
                     return (
                       <ComboboxChip
@@ -122,7 +144,7 @@ export function DisplayGroupsCombobox({
             )}
           </ComboboxValue>
         </ComboboxChips>
-        <ComboboxContent anchor={anchorRef}>
+        <ComboboxContent anchor={anchorRef} container={portalContainerRef}>
           <ComboboxEmpty>No matching display group.</ComboboxEmpty>
           <ComboboxList>
             {optionNames.map((name) => (

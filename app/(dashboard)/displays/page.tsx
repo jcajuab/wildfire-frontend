@@ -2,13 +2,14 @@
 
 import type { ReactElement } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { IconPlus } from "@tabler/icons-react";
+import { IconPlus, IconSettings } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { Pagination } from "@/components/content/pagination";
 import { DeviceRegistrationInfoDialog } from "@/components/displays/device-registration-info-dialog";
 import { DisplayFilterPopover } from "@/components/displays/display-filter-popover";
+import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";
 import { DisplayGrid } from "@/components/displays/display-grid";
 import { DisplaySearchInput } from "@/components/displays/display-search-input";
 import { DisplaySortSelect } from "@/components/displays/display-sort-select";
@@ -31,6 +32,11 @@ import {
   mapDeviceToDisplay,
   withDisplayGroups,
 } from "@/lib/map-device-to-display";
+import {
+  collapseDisplayGroupWhitespace,
+  dedupeDisplayGroupNames,
+  toDisplayGroupKey,
+} from "@/lib/display-group-normalization";
 import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
@@ -70,6 +76,7 @@ export default function DisplaysPage(): ReactElement {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
   const [selectedDisplay, setSelectedDisplay] = useState<Display | null>(null);
   const [updateDevice] = useUpdateDeviceMutation();
   const [setDeviceGroups] = useSetDeviceGroupsMutation();
@@ -174,7 +181,7 @@ export default function DisplaysPage(): ReactElement {
   }, []);
 
   const handleSaveDisplay = useCallback(
-    async (display: Display) => {
+    async (display: Display): Promise<boolean> => {
       const [screenWidthRaw, screenHeightRaw] = display.resolution.split("x");
       const screenWidth =
         screenWidthRaw && Number.isFinite(Number(screenWidthRaw))
@@ -199,36 +206,62 @@ export default function DisplaysPage(): ReactElement {
           screenWidth,
           screenHeight,
         }).unwrap();
-
-        const existingByName = new Map(
-          (deviceGroupsData?.items ?? []).map((group) => [
-            group.name,
-            group.id,
-          ]),
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? `Failed to save display details: ${error.message}`
+            : "Failed to save display details. Group assignments were not changed.",
         );
-        const nextGroupIds: string[] = [];
-        for (const group of display.groups) {
-          const name = group.name.trim();
-          if (name.length === 0) continue;
-          const existingId = existingByName.get(name);
+        return false;
+      }
+
+      try {
+        const existingByKey = new Map<string, string>();
+        for (const group of deviceGroupsData?.items ?? []) {
+          const groupKey = toDisplayGroupKey(group.name);
+          if (!existingByKey.has(groupKey)) {
+            existingByKey.set(groupKey, group.id);
+          }
+        }
+
+        const selectedGroupNames = dedupeDisplayGroupNames(
+          display.groups.map((group) => group.name),
+        );
+        const nextGroupIds = new Set<string>();
+        for (const groupName of selectedGroupNames) {
+          const normalizedName = collapseDisplayGroupWhitespace(groupName);
+          if (normalizedName.length === 0) continue;
+
+          const groupKey = toDisplayGroupKey(normalizedName);
+          const existingId = existingByKey.get(groupKey);
           if (existingId) {
-            nextGroupIds.push(existingId);
+            nextGroupIds.add(existingId);
             continue;
           }
-          const created = await createDeviceGroup({ name }).unwrap();
-          existingByName.set(created.name, created.id);
-          nextGroupIds.push(created.id);
+
+          const created = await createDeviceGroup({
+            name: normalizedName,
+          }).unwrap();
+          const createdKey = toDisplayGroupKey(created.name);
+          existingByKey.set(createdKey, created.id);
+          nextGroupIds.add(created.id);
         }
+
         await setDeviceGroups({
           deviceId: display.id,
-          groupIds: nextGroupIds,
+          groupIds: [...nextGroupIds],
         }).unwrap();
-        toast.success(`Updated "${display.name}".`);
-      } catch (err) {
+      } catch (error) {
         toast.error(
-          err instanceof Error ? err.message : "Failed to update display.",
+          error instanceof Error
+            ? `Display details were saved, but display-group assignment failed: ${error.message}`
+            : "Display details were saved, but display-group assignment failed.",
         );
+        return false;
       }
+
+      toast.success(`Updated "${display.name}".`);
+      return true;
     },
     [updateDevice, deviceGroupsData, createDeviceGroup, setDeviceGroups],
   );
@@ -328,6 +361,15 @@ export default function DisplaysPage(): ReactElement {
               onChange={handleSearchChange}
               className="w-full max-w-none md:w-72"
             />
+            <Can permission="devices:update">
+              <Button
+                variant="outline"
+                onClick={() => setIsGroupManagerOpen(true)}
+              >
+                <IconSettings className="size-4" />
+                Manage Groups
+              </Button>
+            </Can>
           </div>
         </DashboardPage.Toolbar>
 
@@ -387,6 +429,13 @@ export default function DisplaysPage(): ReactElement {
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSave={handleSaveDisplay}
+        canManageGroups={canUpdateDisplay}
+      />
+
+      <DisplayGroupManagerDialog
+        open={isGroupManagerOpen}
+        onOpenChange={setIsGroupManagerOpen}
+        groups={deviceGroupsData?.items ?? []}
       />
     </DashboardPage.Root>
   );

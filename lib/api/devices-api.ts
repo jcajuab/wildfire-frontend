@@ -160,6 +160,32 @@ export const devicesApi = createApi({
       }),
       invalidatesTags: [{ type: "DeviceGroup", id: "LIST" }],
     }),
+    updateDeviceGroup: build.mutation<
+      DeviceGroup,
+      { groupId: string; name: string }
+    >({
+      query: ({ groupId, name }) => ({
+        url: `devices/groups/${groupId}`,
+        method: "PATCH",
+        body: { name },
+      }),
+      invalidatesTags: (_result, _error, { groupId }) => [
+        { type: "DeviceGroup", id: "LIST" },
+        { type: "DeviceGroup", id: groupId },
+        { type: "Device", id: "LIST" },
+      ],
+    }),
+    deleteDeviceGroup: build.mutation<void, { groupId: string }>({
+      query: ({ groupId }) => ({
+        url: `devices/groups/${groupId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_result, _error, { groupId }) => [
+        { type: "DeviceGroup", id: "LIST" },
+        { type: "DeviceGroup", id: groupId },
+        { type: "Device", id: "LIST" },
+      ],
+    }),
     setDeviceGroups: build.mutation<
       void,
       { deviceId: string; groupIds: string[] }
@@ -279,6 +305,8 @@ export const {
   useUpdateDeviceMutation,
   useGetDeviceGroupsQuery,
   useCreateDeviceGroupMutation,
+  useUpdateDeviceGroupMutation,
+  useDeleteDeviceGroupMutation,
   useSetDeviceGroupsMutation,
   useRequestDeviceRefreshMutation,
   useCreatePairingCodeMutation,
