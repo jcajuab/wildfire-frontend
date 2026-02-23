@@ -6,6 +6,7 @@ export interface BackendContent {
   readonly title: string;
   readonly type: "IMAGE" | "VIDEO" | "PDF";
   readonly status: "DRAFT" | "IN_USE";
+  readonly thumbnailUrl?: string;
   readonly mimeType: string;
   readonly fileSize: number;
   readonly checksum: string;

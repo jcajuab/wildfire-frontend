@@ -15,6 +15,7 @@ export interface Content {
   readonly id: string;
   readonly title: string;
   readonly type: ContentType;
+  readonly thumbnailUrl?: string;
   readonly mimeType: string;
   readonly fileSize: number;
   readonly checksum: string;

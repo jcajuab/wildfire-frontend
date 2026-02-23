@@ -6,6 +6,7 @@ export function mapBackendContentToContent(item: BackendContent): Content {
     id: item.id,
     title: item.title,
     type: item.type,
+    thumbnailUrl: item.thumbnailUrl,
     mimeType: item.mimeType,
     fileSize: item.fileSize,
     checksum: item.checksum,

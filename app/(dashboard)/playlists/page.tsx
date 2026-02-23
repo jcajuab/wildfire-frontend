@@ -36,6 +36,7 @@ import {
   useQueryStringState,
 } from "@/hooks/use-query-state";
 import { useListContentQuery } from "@/lib/api/content-api";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   type PlaylistListQuery,
   useAddPlaylistItemMutation,
@@ -469,7 +470,7 @@ export default function PlaylistsPage(): ReactElement {
             toast.success("Playlist deleted.");
           } catch (err) {
             toast.error(
-              err instanceof Error ? err.message : "Failed to delete playlist.",
+              getApiErrorMessage(err, "Failed to delete playlist."),
             );
             throw err;
           }

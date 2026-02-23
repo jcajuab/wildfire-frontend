@@ -6,8 +6,10 @@ import {
   IconDownload,
   IconPencil,
   IconEye,
+  IconFileTypePdf,
+  IconPhoto,
   IconTrash,
-  IconWorld,
+  IconVideo,
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -42,11 +44,33 @@ export const ContentCard = memo(function ContentCard({
   canDelete = true,
   canDownload = true,
 }: ContentCardProps): ReactElement {
+  const ThumbnailFallbackIcon =
+    content.type === "PDF"
+      ? IconFileTypePdf
+      : content.type === "VIDEO"
+        ? IconVideo
+        : IconPhoto;
+
   return (
-    <div className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-md">
+    <div className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-md focus-within:ring-2 focus-within:ring-ring/40 focus-within:ring-offset-2">
       {/* Thumbnail area */}
       <div className="flex aspect-4/3 items-center justify-center bg-muted/50">
-        <IconWorld className="size-7 text-muted-foreground" />
+        {content.thumbnailUrl ? (
+          <img
+            src={content.thumbnailUrl}
+            alt=""
+            width={400}
+            height={300}
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <ThumbnailFallbackIcon
+            className="size-7 text-muted-foreground"
+            aria-hidden="true"
+          />
+        )}
       </div>
 
       {/* Content info */}
