@@ -67,7 +67,9 @@ export default function LoginPage(): ReactElement {
   return (
     <div className="w-full">
       <div className="flex flex-col items-start gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Login</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          Login
+        </h1>
         <p className="text-sm text-muted-foreground">
           Welcome back to WILDFIRE
         </p>

@@ -36,6 +36,42 @@ import type {
   ScheduleFormData,
 } from "@/types/schedule";
 
+interface ApiErrorBody {
+  readonly error?: {
+    readonly code?: string;
+    readonly message?: string;
+  };
+}
+
+const SCHEDULE_CONFLICT_FALLBACK_MESSAGE =
+  "Schedule overlaps with an existing schedule on the selected display.";
+
+const getScheduleMutationErrorMessage = (
+  err: unknown,
+  fallback: string,
+): string => {
+  if (typeof err === "object" && err !== null && "status" in err) {
+    const status = (err as { status?: unknown }).status;
+    const data = (err as { data?: unknown }).data;
+    const backendMessage =
+      typeof data === "object" && data !== null
+        ? (data as ApiErrorBody).error?.message
+        : undefined;
+    if (status === 409) {
+      return backendMessage ?? SCHEDULE_CONFLICT_FALLBACK_MESSAGE;
+    }
+    if (typeof backendMessage === "string" && backendMessage.length > 0) {
+      return backendMessage;
+    }
+  }
+
+  if (err instanceof Error) {
+    return err.message;
+  }
+
+  return fallback;
+};
+
 export default function SchedulesPage(): ReactElement {
   const canEditSchedule = useCan("schedules:update");
   const canDeleteSchedule = useCan("schedules:delete");
@@ -119,9 +155,12 @@ export default function SchedulesPage(): ReactElement {
         await createSchedule(mapCreateFormToScheduleRequest(data)).unwrap();
         toast.success("Schedule created.");
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to create schedule.",
+        const message = getScheduleMutationErrorMessage(
+          err,
+          "Failed to create schedule.",
         );
+        toast.error(message);
+        throw err;
       }
     },
     [createSchedule],
@@ -165,9 +204,12 @@ export default function SchedulesPage(): ReactElement {
           toast.success("Schedule day updated.");
         }
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to update schedule.",
+        const message = getScheduleMutationErrorMessage(
+          err,
+          "Failed to update schedule.",
         );
+        toast.error(message);
+        throw err;
       }
     },
     [updateSchedule, updateScheduleSeries],

@@ -99,9 +99,9 @@ export default function SettingsPage(): ReactElement {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
-  const [editingField, setEditingField] = useState<"firstName" | "lastName" | null>(
-    null,
-  );
+  const [editingField, setEditingField] = useState<
+    "firstName" | "lastName" | null
+  >(null);
   const [scrollPxPerSecond, setScrollPxPerSecond] = useState("24");
   const [isSavingTimezone, setIsSavingTimezone] = useState(false);
   const [isLoadingRuntimeSettings, setIsLoadingRuntimeSettings] =
@@ -347,34 +347,36 @@ export default function SettingsPage(): ReactElement {
               </div>
 
               <div className="grid grid-cols-2 items-start gap-x-8 gap-y-4">
-                <div className="text-sm text-muted-foreground">Profile Picture</div>
+                <div className="text-sm text-muted-foreground">
+                  Profile Picture
+                </div>
                 <div className="flex items-center gap-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon-sm"
-                      onClick={handleChangeProfilePicture}
-                      disabled={isAvatarUploading}
-                      className="group relative size-12 overflow-hidden rounded-full border-0 bg-muted p-0 hover:opacity-90"
-                      aria-label="Change profile picture"
-                    >
-                      {avatarUrl && failedAvatarUrl !== avatarUrl ? (
-                        <Image
-                          src={avatarUrl}
-                          alt="Profile"
-                          width={48}
-                          height={48}
-                          className="size-12 object-cover"
-                          unoptimized
-                          onError={() => setFailedAvatarUrl(avatarUrl)}
-                        />
-                      ) : (
-                        <IconUser className="size-6 text-muted-foreground" />
-                      )}
-                      <span className="absolute inset-0 flex items-center justify-center bg-black/35 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                        <IconPencil className="size-3.5" />
-                      </span>
-                    </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={handleChangeProfilePicture}
+                    disabled={isAvatarUploading}
+                    className="group relative size-12 overflow-hidden rounded-full border-0 bg-muted p-0 hover:opacity-90"
+                    aria-label="Change profile picture"
+                  >
+                    {avatarUrl && failedAvatarUrl !== avatarUrl ? (
+                      <Image
+                        src={avatarUrl}
+                        alt="Profile"
+                        width={48}
+                        height={48}
+                        className="size-12 object-cover"
+                        unoptimized
+                        onError={() => setFailedAvatarUrl(avatarUrl)}
+                      />
+                    ) : (
+                      <IconUser className="size-6 text-muted-foreground" />
+                    )}
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/35 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                      <IconPencil className="size-3.5" />
+                    </span>
+                  </Button>
                 </div>
                 <input
                   ref={profilePictureInputRef}
@@ -488,7 +490,10 @@ export default function SettingsPage(): ReactElement {
                 <div className="text-sm text-muted-foreground">Time Zone</div>
                 <div className="w-full">
                   <Select value={timezone} onValueChange={handleTimezoneChange}>
-                    <SelectTrigger className="w-fit min-w-48" disabled={isSavingTimezone}>
+                    <SelectTrigger
+                      className="w-fit min-w-48"
+                      disabled={isSavingTimezone}
+                    >
                       <SelectValue placeholder="Select timezone" />
                     </SelectTrigger>
                     <SelectContent className="max-h-56">
@@ -503,7 +508,9 @@ export default function SettingsPage(): ReactElement {
 
                 {canReadRuntimeSettings ? (
                   <>
-                    <div className="text-sm text-muted-foreground">Auto Scroll</div>
+                    <div className="text-sm text-muted-foreground">
+                      Auto Scroll
+                    </div>
                     <div className="w-full">
                       <Input
                         id="runtime-scroll-speed"
@@ -537,11 +544,15 @@ export default function SettingsPage(): ReactElement {
             <Separator />
 
             <section className="space-y-4 py-6">
-              <h2 className="text-lg font-semibold tracking-tight text-destructive">Danger Zone</h2>
+              <h2 className="text-lg font-semibold tracking-tight text-destructive">
+                Danger Zone
+              </h2>
               <div className="overflow-hidden rounded-lg border border-destructive/40">
                 <div className="flex items-start justify-between gap-4 border-b border-destructive/25 px-4 py-4">
                   <div className="max-w-2xl">
-                    <p className="text-sm font-semibold">Log out this session</p>
+                    <p className="text-sm font-semibold">
+                      Log out this session
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       End your current session on this device.
                     </p>
