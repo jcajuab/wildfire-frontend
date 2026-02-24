@@ -16,10 +16,8 @@ import { Button } from "@/components/ui/button";
 import { useGetDevicesQuery } from "@/lib/api/devices-api";
 import {
   useCreateScheduleMutation,
-  useDeleteScheduleSeriesMutation,
   useDeleteScheduleMutation,
   useListSchedulesQuery,
-  useUpdateScheduleSeriesMutation,
   useUpdateScheduleMutation,
 } from "@/lib/api/schedules-api";
 import { useListPlaylistsQuery } from "@/lib/api/playlists-api";
@@ -28,7 +26,6 @@ import {
   mapBackendSchedulesToSchedules,
   mapCreateFormToScheduleRequest,
   mapUpdateFormToScheduleRequest,
-  mapUpdateFormToScheduleSeriesRequest,
 } from "@/lib/mappers/schedule-mapper";
 import type {
   Schedule,
@@ -80,9 +77,7 @@ export default function SchedulesPage(): ReactElement {
   const { data: playlistsData } = useListPlaylistsQuery();
   const [createSchedule] = useCreateScheduleMutation();
   const [updateSchedule] = useUpdateScheduleMutation();
-  const [updateScheduleSeries] = useUpdateScheduleSeriesMutation();
   const [deleteSchedule] = useDeleteScheduleMutation();
-  const [deleteScheduleSeries] = useDeleteScheduleSeriesMutation();
 
   const availablePlaylists: readonly { id: string; name: string }[] = useMemo(
     () =>
@@ -167,42 +162,26 @@ export default function SchedulesPage(): ReactElement {
   );
 
   const handleDeleteSchedule = useCallback(
-    async (schedule: Schedule, scope: "single" | "series") => {
+    async (schedule: Schedule) => {
       try {
-        if (scope === "series") {
-          await deleteScheduleSeries(schedule.seriesId).unwrap();
-          toast.success("Schedule series deleted.");
-        } else {
-          await deleteSchedule(schedule.id).unwrap();
-          toast.success("Schedule day deleted.");
-        }
+        await deleteSchedule(schedule.id).unwrap();
+        toast.success("Schedule deleted.");
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "Failed to delete schedule.",
         );
       }
     },
-    [deleteSchedule, deleteScheduleSeries],
+    [deleteSchedule],
   );
 
   const handleSaveSchedule = useCallback(
-    async (
-      schedule: Schedule,
-      data: ScheduleFormData,
-      scope: "single" | "series",
-    ) => {
+    async (schedule: Schedule, data: ScheduleFormData) => {
       try {
-        if (scope === "series") {
-          await updateScheduleSeries(
-            mapUpdateFormToScheduleSeriesRequest(schedule.seriesId, data),
-          ).unwrap();
-          toast.success("Schedule series updated.");
-        } else {
-          await updateSchedule(
-            mapUpdateFormToScheduleRequest(schedule.id, data),
-          ).unwrap();
-          toast.success("Schedule day updated.");
-        }
+        await updateSchedule(
+          mapUpdateFormToScheduleRequest(schedule.id, data),
+        ).unwrap();
+        toast.success("Schedule updated.");
       } catch (err) {
         const message = getScheduleMutationErrorMessage(
           err,
@@ -212,7 +191,7 @@ export default function SchedulesPage(): ReactElement {
         throw err;
       }
     },
-    [updateSchedule, updateScheduleSeries],
+    [updateSchedule],
   );
 
   return (

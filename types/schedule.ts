@@ -1,5 +1,3 @@
-export type RecurrenceType = "DAILY" | "WEEKLY" | "MONTHLY" | "NONE";
-
 export type CalendarView = "resource-week" | "resource-day";
 
 export interface SchedulePlaylist {
@@ -14,17 +12,13 @@ export interface ScheduleDisplay {
 
 export interface Schedule {
   readonly id: string;
-  readonly seriesId: string;
   readonly name: string;
   readonly startDate: string; // ISO date string
   readonly endDate: string; // ISO date string
   readonly startTime: string; // HH:mm format
   readonly endTime: string; // HH:mm format
-  readonly dayOfWeek: number;
-  readonly seriesDays: readonly number[];
   readonly playlist: SchedulePlaylist;
   readonly targetDisplays: readonly ScheduleDisplay[];
-  readonly recurrence: RecurrenceType;
   readonly priority: number;
   readonly isActive: boolean;
   readonly createdAt: string;
@@ -39,9 +33,6 @@ export interface ScheduleFormData {
   endTime: string;
   playlistId: string;
   targetDisplayIds: string[];
-  recurrenceEnabled: boolean;
-  recurrence: RecurrenceType;
-  selectedDays?: number[];
   priority: number;
   isActive: boolean;
 }

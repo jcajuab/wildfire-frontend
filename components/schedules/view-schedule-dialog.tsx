@@ -6,7 +6,6 @@ import {
   IconCalendarEvent,
   IconCalendar,
   IconClock,
-  IconRepeat,
   IconDeviceDesktop,
   IconPencil,
   IconTrash,
@@ -30,7 +29,7 @@ interface ViewScheduleDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onEdit: (schedule: Schedule) => void;
-  readonly onDelete: (schedule: Schedule, scope: "single" | "series") => void;
+  readonly onDelete: (schedule: Schedule) => void;
   readonly canEdit?: boolean;
   readonly canDelete?: boolean;
 }
@@ -49,19 +48,6 @@ function formatTime(time: string): string {
   const period = hours >= 12 ? "PM" : "AM";
   const displayHours = hours % 12 || 12;
   return `${displayHours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")} ${period}`;
-}
-
-function formatRecurrence(recurrence: string): string {
-  switch (recurrence) {
-    case "DAILY":
-      return "Daily";
-    case "WEEKLY":
-      return "Weekly";
-    case "MONTHLY":
-      return "Monthly";
-    default:
-      return "None";
-  }
 }
 
 export function ViewScheduleDialog({
@@ -109,11 +95,6 @@ export function ViewScheduleDialog({
                 {formatTime(schedule.startTime)} -{" "}
                 {formatTime(schedule.endTime)}
               </span>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm">
-              <IconRepeat className="size-4" />
-              <span>{formatRecurrence(schedule.recurrence)}</span>
             </div>
 
             <div className="flex items-center gap-2 text-sm">
@@ -171,29 +152,19 @@ export function ViewScheduleDialog({
           <DialogHeader>
             <DialogTitle>Delete schedule?</DialogTitle>
             <DialogDescription>
-              Delete only this day, or remove the entire recurring series.
+              This action removes the schedule from the calendar.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col gap-2 sm:flex-col sm:justify-start">
             <Button
               variant="destructive"
               onClick={() => {
-                onDelete(schedule, "single");
+                onDelete(schedule);
                 setConfirmDeleteOpen(false);
                 onOpenChange(false);
               }}
             >
-              Delete this day
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                onDelete(schedule, "series");
-                setConfirmDeleteOpen(false);
-                onOpenChange(false);
-              }}
-            >
-              Delete whole series
+              Delete schedule
             </Button>
             <Button
               variant="outline"

@@ -95,11 +95,7 @@ function occursOnDate(schedule: Schedule, date: Date): boolean {
   const scheduleEndDate = parseISODateOnly(schedule.endDate);
   const currentDate = toDateOnly(date);
 
-  if (!isDateWithinRange(currentDate, scheduleStartDate, scheduleEndDate)) {
-    return false;
-  }
-
-  return currentDate.getDay() === schedule.dayOfWeek;
+  return isDateWithinRange(currentDate, scheduleStartDate, scheduleEndDate);
 }
 
 interface ProjectResourceEventsParams {

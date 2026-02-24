@@ -3,7 +3,6 @@ import { baseQuery } from "@/lib/api/base-query";
 
 export interface BackendSchedule {
   readonly id: string;
-  readonly seriesId: string;
   readonly name: string;
   readonly playlistId: string;
   readonly deviceId: string;
@@ -11,7 +10,6 @@ export interface BackendSchedule {
   readonly endDate: string;
   readonly startTime: string;
   readonly endTime: string;
-  readonly dayOfWeek: number;
   readonly priority: number;
   readonly isActive: boolean;
   readonly createdAt: string;
@@ -45,7 +43,6 @@ export interface CreateScheduleRequest {
   readonly endDate: string;
   readonly startTime: string;
   readonly endTime: string;
-  readonly daysOfWeek: readonly number[];
   readonly priority: number;
   readonly isActive?: boolean;
 }
@@ -59,21 +56,6 @@ export interface UpdateScheduleRequest {
   readonly endDate?: string;
   readonly startTime?: string;
   readonly endTime?: string;
-  readonly dayOfWeek?: number;
-  readonly priority?: number;
-  readonly isActive?: boolean;
-}
-
-export interface UpdateScheduleSeriesRequest {
-  readonly seriesId: string;
-  readonly name?: string;
-  readonly playlistId?: string;
-  readonly deviceId?: string;
-  readonly startDate?: string;
-  readonly endDate?: string;
-  readonly startTime?: string;
-  readonly endTime?: string;
-  readonly daysOfWeek?: readonly number[];
   readonly priority?: number;
   readonly isActive?: boolean;
 }
@@ -166,17 +148,6 @@ export const schedulesApi = createApi({
         { type: "Schedule", id },
       ],
     }),
-    updateScheduleSeries: build.mutation<
-      BackendScheduleItemsResponse,
-      UpdateScheduleSeriesRequest
-    >({
-      query: ({ seriesId, ...body }) => ({
-        url: `schedules/series/${seriesId}`,
-        method: "PATCH",
-        body,
-      }),
-      invalidatesTags: [{ type: "Schedule", id: "LIST" }],
-    }),
     deleteSchedule: build.mutation<void, string>({
       query: (id) => ({
         url: `schedules/${id}`,
@@ -187,13 +158,6 @@ export const schedulesApi = createApi({
         { type: "Schedule", id },
       ],
     }),
-    deleteScheduleSeries: build.mutation<void, string>({
-      query: (seriesId) => ({
-        url: `schedules/series/${seriesId}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: [{ type: "Schedule", id: "LIST" }],
-    }),
   }),
 });
 
@@ -202,7 +166,5 @@ export const {
   useGetScheduleQuery,
   useCreateScheduleMutation,
   useUpdateScheduleMutation,
-  useUpdateScheduleSeriesMutation,
   useDeleteScheduleMutation,
-  useDeleteScheduleSeriesMutation,
 } = schedulesApi;

@@ -2,12 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useState } from "react";
-import {
-  IconCalendar,
-  IconClock,
-  IconRepeat,
-  IconSquareCheck,
-} from "@tabler/icons-react";
+import { IconCalendar, IconClock } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import type { RecurrenceType, ScheduleFormData } from "@/types/schedule";
+import type { ScheduleFormData } from "@/types/schedule";
 
 interface ScheduleFormProps {
   readonly initialData: ScheduleFormData;
@@ -227,55 +222,6 @@ function ScheduleFormFrame({
             </Badge>
           ) : null}
         </div>
-
-        <div className="flex flex-col gap-3 rounded-lg border p-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IconRepeat className="size-4" />
-              <span className="text-sm font-medium">Recurrence</span>
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                setFormData((prev) => ({
-                  ...prev,
-                  recurrenceEnabled: !prev.recurrenceEnabled,
-                }))
-              }
-              className="flex items-center gap-1.5 text-sm"
-              aria-label="Toggle recurrence"
-            >
-              <IconSquareCheck
-                className={`size-4 ${formData.recurrenceEnabled ? "text-primary" : "text-muted-foreground"}`}
-              />
-              Enable
-            </button>
-          </div>
-
-          {formData.recurrenceEnabled ? (
-            <div className="flex flex-col gap-1.5">
-              <Label>Repeat</Label>
-              <Select
-                value={formData.recurrence}
-                onValueChange={(value) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    recurrence: value as RecurrenceType,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="DAILY">Daily</SelectItem>
-                  <SelectItem value="WEEKLY">Weekly</SelectItem>
-                  <SelectItem value="MONTHLY">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          ) : null}
-        </div>
       </div>
 
       <div className="flex items-center justify-end gap-2">
@@ -318,8 +264,6 @@ export function CreateScheduleForm({
         endTime: "17:00",
         playlistId: "",
         targetDisplayIds: [],
-        recurrenceEnabled: false,
-        recurrence: "DAILY",
         priority: 1,
         isActive: true,
       }}
