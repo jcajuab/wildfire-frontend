@@ -84,7 +84,7 @@ export function ViewScheduleDialog({
             <DialogTitle>View Details</DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4 rounded-lg border-2 border-dashed border-primary/30 p-4">
+          <div className="flex flex-col gap-4 rounded-lg bg-muted/20 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <IconCalendarEvent className="size-4" />
@@ -141,7 +141,7 @@ export function ViewScheduleDialog({
             </div>
           </div>
 
-          <DialogFooter className="flex items-center justify-between border-t-2 border-dashed border-primary/30 pt-4 sm:justify-between">
+          <DialogFooter className="flex items-center justify-between pt-4 sm:justify-between">
             {canDelete && (
               <Button
                 variant="destructive"
