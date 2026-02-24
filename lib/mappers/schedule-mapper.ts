@@ -15,6 +15,7 @@ const DAILY_DAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 function recurrenceFromDays(days: readonly number[]): RecurrenceType {
   if (days.length === 0) return "NONE";
   const unique = new Set(days);
+  if (unique.size === 1) return "NONE";
   if (unique.size === 7) return "DAILY";
   return "WEEKLY";
 }
