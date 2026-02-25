@@ -24,6 +24,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/formatters";
+import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
@@ -61,9 +62,10 @@ const HIGH_RISK_TARGET_THRESHOLD = 20;
 const ROLE_DELETION_REASON_MAX_LENGTH = 1024;
 
 export default function RolesPage(): ReactElement {
+  const { user } = useAuth();
   const canUpdateRole = useCan("roles:update");
   const canDeleteRole = useCan("roles:delete");
-  const isSuperAdmin = useCan("*:manage");
+  const isRoot = user?.isRoot === true;
   const {
     data: rolesData,
     isLoading: rolesLoading,
@@ -323,21 +325,21 @@ export default function RolesPage(): ReactElement {
 
   const handleDeleteRequest = useCallback(
     (role: Role) => {
-      if (!isSuperAdmin && pendingDeletionRoleIds.has(role.id)) {
+      if (!isRoot && pendingDeletionRoleIds.has(role.id)) {
         toast.error(
           `A pending deletion request already exists for "${role.name}".`,
         );
         return;
       }
       setRoleToDelete(role);
-      if (isSuperAdmin) {
+      if (isRoot) {
         setIsDeleteDialogOpen(true);
         return;
       }
       setDeleteRequestReason("");
       setIsRequestDialogOpen(true);
     },
-    [isSuperAdmin, pendingDeletionRoleIds],
+    [isRoot, pendingDeletionRoleIds],
   );
 
   const trimmedDeleteRequestReason = deleteRequestReason.trim();
@@ -433,18 +435,17 @@ export default function RolesPage(): ReactElement {
               onDelete={handleDeleteRequest}
               canEdit={canUpdateRole}
               canDelete={canDeleteRole}
-              deleteLabel={isSuperAdmin ? "Delete Role" : "Request Deletion"}
+              deleteLabel={isRoot ? "Delete Role" : "Request Deletion"}
               getDeleteLabel={(role) =>
-                !isSuperAdmin && pendingDeletionRoleIds.has(role.id)
+                !isRoot && pendingDeletionRoleIds.has(role.id)
                   ? "Request Pending"
-                  : isSuperAdmin
+                  : isRoot
                     ? "Delete Role"
                     : "Request Deletion"
               }
               isDeleteDisabled={(role) =>
-                !isSuperAdmin && pendingDeletionRoleIds.has(role.id)
+                !isRoot && pendingDeletionRoleIds.has(role.id)
               }
-              isSuperAdmin={isSuperAdmin}
             />
           </div>
         </DashboardPage.Content>
@@ -477,7 +478,7 @@ export default function RolesPage(): ReactElement {
         onSubmit={handleSubmit}
       />
 
-      {isSuperAdmin ? (
+      {isRoot ? (
         <ConfirmActionDialog
           open={isDeleteDialogOpen}
           onOpenChange={(open) => {
@@ -533,8 +534,8 @@ export default function RolesPage(): ReactElement {
             <DialogTitle>Request role deletion?</DialogTitle>
             <DialogDescription>
               {roleToDelete
-                ? `Submit your request to delete "${roleToDelete.name}". A Super Admin must review and approve this request.`
-                : "Submit your request for Super Admin approval."}
+                ? `Submit your request to delete "${roleToDelete.name}". A Root user must review and approve this request.`
+                : "Submit your request for Root approval."}
             </DialogDescription>
           </DialogHeader>
 
@@ -581,7 +582,7 @@ export default function RolesPage(): ReactElement {
                     reason: trimmedDeleteRequestReason,
                   }).unwrap();
                   toast.success(
-                    `Deletion request for "${roleToDelete.name}" was sent to Super Admin.`,
+                    `Deletion request for "${roleToDelete.name}" was sent to Root.`,
                   );
                   setIsRequestDialogOpen(false);
                   setDeleteRequestReason("");
@@ -621,7 +622,7 @@ export default function RolesPage(): ReactElement {
                     <th className="px-4 py-2">Requested At</th>
                     <th className="px-4 py-2">Status</th>
                     <th className="px-4 py-2">Reason</th>
-                    {isSuperAdmin ? (
+                    {isRoot ? (
                       <th className="px-4 py-2 text-right">Actions</th>
                     ) : null}
                   </tr>
@@ -649,7 +650,7 @@ export default function RolesPage(): ReactElement {
                             "-"
                           )}
                         </td>
-                        {isSuperAdmin ? (
+                        {isRoot ? (
                           <td className="px-4 py-2 text-right">
                             {request.status === "pending" ? (
                               <div className="inline-flex gap-2">
@@ -708,7 +709,7 @@ export default function RolesPage(): ReactElement {
                     <tr>
                       <td
                         className="px-4 py-8 text-center text-muted-foreground"
-                        colSpan={isSuperAdmin ? 6 : 5}
+                        colSpan={isRoot ? 6 : 5}
                       >
                         No role deletion requests yet.
                       </td>

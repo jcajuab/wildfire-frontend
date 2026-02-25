@@ -54,8 +54,8 @@ const DEVICE_SELF_REGISTRATION_MESSAGE =
   "Devices are managed via self-registration. Use a one-time pairing code to register or update displays.";
 
 export default function DisplaysPage(): ReactElement {
-  const canUpdateDisplay = useCan("devices:update");
-  const canDeleteDisplay = useCan("devices:delete");
+  const canUpdateDisplay = useCan("displays:update");
+  const canDeleteDisplay = useCan("displays:delete");
   const { data: devicesData, isLoading, isError, error } = useGetDevicesQuery();
   const { data: deviceGroupsData } = useGetDeviceGroupsQuery();
 
@@ -334,7 +334,7 @@ export default function DisplaysPage(): ReactElement {
       <DashboardPage.Header
         title="Displays"
         actions={
-          <Can permission="devices:create">
+          <Can permission="displays:create">
             <Button onClick={() => setIsAddInfoDialogOpen(true)}>
               <IconPlus className="size-4" />
               Add Display
@@ -367,7 +367,7 @@ export default function DisplaysPage(): ReactElement {
               onChange={handleSearchChange}
               className="w-full max-w-none md:w-72"
             />
-            <Can permission="devices:update">
+            <Can permission="displays:update">
               <Button
                 variant="outline"
                 onClick={() => setIsGroupManagerOpen(true)}

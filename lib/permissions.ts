@@ -1,21 +1,21 @@
+import type { PermissionType } from "@/types/permission";
+
 /**
- * Permission check: matches backend Permission.matches logic.
- * Required is "resource:action"; userPermissions are "resource:action" strings.
- * Resource "*" matches any resource; action "manage" matches any action.
+ * Permission check mirroring backend authorization behavior.
+ * Root users bypass all checks; non-root users require exact resource/action match.
  */
 export function can(
-  requiredPermission: string,
-  userPermissions: string[],
+  requiredPermission: PermissionType,
+  userPermissions: PermissionType[],
+  isRoot = false,
 ): boolean {
+  if (isRoot) return true;
   const [requiredResource, requiredAction] = requiredPermission.split(":");
   if (!requiredResource || !requiredAction) return false;
 
   return userPermissions.some((p) => {
     const [resource, action] = p.split(":");
     if (!resource || !action) return false;
-    const resourceMatches = resource === "*" || resource === requiredResource;
-    if (!resourceMatches) return false;
-    if (action === "manage") return true;
-    return action === requiredAction;
+    return resource === requiredResource && action === requiredAction;
   });
 }

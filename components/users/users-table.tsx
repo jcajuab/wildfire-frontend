@@ -49,9 +49,9 @@ interface UsersTableProps {
   readonly onRemoveUser: (user: User) => void;
   readonly canUpdate?: boolean;
   readonly canDelete?: boolean;
-  /** When true, allow update/delete for Super Admin users. When false, hide actions for users who have a system role. */
+  /** When true, allow update/delete for Root users. When false, hide actions for users who have a system role. */
   readonly isSuperAdmin?: boolean;
-  /** Role ids that are system roles (e.g. Super Admin). Used with isSuperAdmin to hide actions per row. */
+  /** Role ids that are system roles (e.g. Root). Used with isSuperAdmin to hide actions per row. */
   readonly systemRoleIds?: readonly string[];
   /** When set, the row for this user id will show " (You)" after the name. */
   readonly currentUserId?: string | null;

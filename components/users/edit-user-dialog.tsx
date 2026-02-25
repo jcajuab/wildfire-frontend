@@ -14,8 +14,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useAuth } from "@/context/auth-context";
 import type { User } from "@/types/user";
-import { useCan } from "@/hooks/use-can";
 
 export interface EditUserFormData {
   readonly id: string;
@@ -45,7 +45,8 @@ function EditUserForm({
   const [email, setEmail] = useState(user.email);
   const [isActive, setIsActive] = useState(user.isActive);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isSuperAdmin = useCan("*:manage");
+  const { user: currentUser } = useAuth();
+  const isRoot = currentUser?.isRoot === true;
 
   const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
@@ -101,7 +102,7 @@ function EditUserForm({
             id="edit-user-active"
             checked={isActive}
             onCheckedChange={setIsActive}
-            disabled={!isSuperAdmin}
+            disabled={!isRoot}
           />
         </div>
       </div>

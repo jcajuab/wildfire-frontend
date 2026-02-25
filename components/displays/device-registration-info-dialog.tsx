@@ -48,7 +48,7 @@ export function DeviceRegistrationInfoDialog({
   const [pairingCodeExpiresAt, setPairingCodeExpiresAt] = useState<
     string | null
   >(null);
-  const canIssuePairingCode = useCan("devices:create");
+  const canIssuePairingCode = useCan("displays:create");
 
   const [registerDevice, { isLoading: isSubmitting }] =
     useRegisterDeviceMutation();
@@ -113,7 +113,7 @@ export function DeviceRegistrationInfoDialog({
       } catch (err) {
         const message = getRegisterErrorMessage(err);
         if (typeof console !== "undefined" && console.error) {
-          console.error("[devices.register] Registration failed", {
+          console.error("[displays.register] Registration failed", {
             message,
             identifier: trimmedIdentifier,
           });

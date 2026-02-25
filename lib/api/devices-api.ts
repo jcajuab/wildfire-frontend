@@ -5,7 +5,7 @@ import {
   getDevOnlyRequestHeaders,
 } from "@/lib/api/base-query";
 
-/** Backend device shape (matches GET /devices and GET /devices/:id). */
+/** Backend device shape (matches GET /displays and GET /displays/:id). */
 export interface Device {
   readonly id: string;
   readonly identifier: string;
@@ -82,12 +82,12 @@ export const devicesApi = createApi({
             return {
               error: {
                 status: 500,
-                data: "Failed to load devices: pagination limit reached.",
+                data: "Failed to load displays: pagination limit reached.",
               },
             };
           }
           const result = await baseQueryFn({
-            url: "devices",
+            url: "displays",
             params: { page, pageSize },
           });
           if (result.error) {
@@ -125,12 +125,12 @@ export const devicesApi = createApi({
           : [{ type: "Device", id: "LIST" }],
     }),
     getDevice: build.query<Device, string>({
-      query: (id) => `devices/${id}`,
+      query: (id) => `displays/${id}`,
       providesTags: (_result, _error, id) => [{ type: "Device", id }],
     }),
     updateDevice: build.mutation<Device, UpdateDeviceRequest>({
       query: ({ id, ...body }) => ({
-        url: `devices/${id}`,
+        url: `displays/${id}`,
         method: "PATCH",
         body,
       }),
@@ -140,7 +140,7 @@ export const devicesApi = createApi({
       ],
     }),
     getDeviceGroups: build.query<DeviceGroupsListResponse, void>({
-      query: () => "devices/groups",
+      query: () => "displays/groups",
       providesTags: (result) =>
         result
           ? [
@@ -157,7 +157,7 @@ export const devicesApi = createApi({
       { name: string; colorIndex?: number }
     >({
       query: (body) => ({
-        url: "devices/groups",
+        url: "displays/groups",
         method: "POST",
         body,
       }),
@@ -168,7 +168,7 @@ export const devicesApi = createApi({
       { groupId: string; name: string; colorIndex?: number }
     >({
       query: ({ groupId, name, colorIndex }) => ({
-        url: `devices/groups/${groupId}`,
+        url: `displays/groups/${groupId}`,
         method: "PATCH",
         body: { name, colorIndex },
       }),
@@ -180,7 +180,7 @@ export const devicesApi = createApi({
     }),
     deleteDeviceGroup: build.mutation<void, { groupId: string }>({
       query: ({ groupId }) => ({
-        url: `devices/groups/${groupId}`,
+        url: `displays/groups/${groupId}`,
         method: "DELETE",
       }),
       invalidatesTags: (_result, _error, { groupId }) => [
@@ -194,7 +194,7 @@ export const devicesApi = createApi({
       { deviceId: string; groupIds: string[] }
     >({
       query: ({ deviceId, groupIds }) => ({
-        url: `devices/${deviceId}/groups`,
+        url: `displays/${deviceId}/groups`,
         method: "PUT",
         body: { groupIds },
       }),
@@ -206,7 +206,7 @@ export const devicesApi = createApi({
     }),
     requestDeviceRefresh: build.mutation<void, { deviceId: string }>({
       query: ({ deviceId }) => ({
-        url: `devices/${deviceId}/refresh`,
+        url: `displays/${deviceId}/refresh`,
         method: "POST",
       }),
       invalidatesTags: (_result, _error, { deviceId }) => [
@@ -216,7 +216,7 @@ export const devicesApi = createApi({
     }),
     createPairingCode: build.mutation<DevicePairingCodeResponse, void>({
       query: () => ({
-        url: "devices/pairing-codes",
+        url: "displays/pairing-codes",
         method: "POST",
       }),
     }),
@@ -263,7 +263,7 @@ export const devicesApi = createApi({
         if (arg.location != null && arg.location !== "") {
           body.location = arg.location;
         }
-        const response = await fetch(`${baseUrl}/devices`, {
+        const response = await fetch(`${baseUrl}/displays`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

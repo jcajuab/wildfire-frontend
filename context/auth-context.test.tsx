@@ -30,8 +30,8 @@ function AuthProbe(): ReactElement {
       <div data-testid="auth-status">
         {auth.isAuthenticated ? "authenticated" : "anonymous"}
       </div>
-      <div data-testid="can-devices-read">
-        {auth.can("devices:read") ? "yes" : "no"}
+      <div data-testid="can-displays-read">
+        {auth.can("displays:read") ? "yes" : "no"}
       </div>
       <button type="button" onClick={() => void auth.logout()}>
         Logout
@@ -58,7 +58,7 @@ describe("AuthProvider", () => {
           name: "User",
         },
         expiresAt: "2099-01-01T00:00:00.000Z",
-        permissions: ["devices:read"],
+        permissions: ["displays:read"],
       }),
     );
 
@@ -73,7 +73,7 @@ describe("AuthProvider", () => {
         "authenticated",
       );
     });
-    expect(screen.getByTestId("can-devices-read")).toHaveTextContent("yes");
+    expect(screen.getByTestId("can-displays-read")).toHaveTextContent("yes");
   });
 
   test("clears local session on logout even if API logout fails", async () => {
@@ -86,7 +86,7 @@ describe("AuthProvider", () => {
           name: "User",
         },
         expiresAt: "2099-01-01T00:00:00.000Z",
-        permissions: ["devices:read"],
+        permissions: ["displays:read"],
       }),
     );
     logoutMock.mockRejectedValueOnce(new Error("network down"));

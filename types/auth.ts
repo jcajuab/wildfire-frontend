@@ -9,6 +9,7 @@ export interface AuthUser {
   readonly id: string;
   readonly email: string;
   readonly name: string;
+  readonly isRoot: boolean;
   readonly timezone?: string | null;
   readonly avatarUrl?: string | null;
 }
@@ -20,7 +21,7 @@ export interface AuthResponse {
   readonly expiresAt: string;
   readonly user: AuthUser;
   /** Current user's permissions (resource:action). Empty if no roles. */
-  readonly permissions: string[];
+  readonly permissions: PermissionType[];
 }
 
 /** Backend error response shape. */
@@ -30,3 +31,4 @@ export interface ApiErrorResponse {
     readonly message: string;
   };
 }
+import type { PermissionType } from "@/types/permission";

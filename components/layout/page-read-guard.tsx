@@ -34,7 +34,7 @@ export function PageReadGuard({ children }: PageReadGuardProps): ReactElement {
           icon={<IconShieldLock className="size-12 text-muted-foreground" />}
           action={
             <Button asChild variant="default">
-              <Link href="/">Go to dashboard</Link>
+              <Link href="/admin/displays">Go to dashboard</Link>
             </Button>
           }
         />

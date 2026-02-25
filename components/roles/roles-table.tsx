@@ -40,8 +40,6 @@ interface RolesTableProps {
   readonly deleteLabel?: string;
   readonly getDeleteLabel?: (role: Role) => string;
   readonly isDeleteDisabled?: (role: Role) => boolean;
-  /** When false, the 3-dot menu is hidden for system roles (e.g. Super Admin). */
-  readonly isSuperAdmin?: boolean;
 }
 
 interface SortableHeaderProps {
@@ -156,7 +154,6 @@ export function RolesTable({
   deleteLabel = "Delete Role",
   getDeleteLabel,
   isDeleteDisabled,
-  isSuperAdmin = false,
 }: RolesTableProps): ReactElement {
   if (roles.length === 0) {
     return (
@@ -212,8 +209,8 @@ export function RolesTable({
                 role={role}
                 onEdit={onEdit}
                 onDelete={onDelete}
-                canEdit={canEdit && (isSuperAdmin || !role.isSystem)}
-                canDelete={canDelete && (isSuperAdmin || !role.isSystem)}
+                canEdit={canEdit && !role.isSystem}
+                canDelete={canDelete && !role.isSystem}
                 deleteLabel={getDeleteLabel?.(role) ?? deleteLabel}
                 deleteDisabled={isDeleteDisabled?.(role) ?? false}
               />

@@ -68,7 +68,7 @@ describe("paginated aggregate query guards", () => {
     if ("error" in result) {
       expect(result.error).toMatchObject({
         status: 500,
-        data: "Failed to load devices: pagination limit reached.",
+        data: "Failed to load displays: pagination limit reached.",
       });
     }
   });

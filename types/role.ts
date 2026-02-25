@@ -1,8 +1,10 @@
+import type { PermissionAction, PermissionResource } from "@/types/permission";
+
 /** Permission shape aligned with backend (resource:action). */
 export interface Permission {
   readonly id: string;
-  readonly resource: string;
-  readonly action: string;
+  readonly resource: PermissionResource;
+  readonly action: PermissionAction;
 }
 
 /** User assigned to a role (for dialog display). */

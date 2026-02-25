@@ -38,10 +38,10 @@ const getViewport = () => ({
   height: window.innerHeight,
 });
 
-export default function DeviceRuntimePage() {
-  const params = useParams<{ deviceId: string }>();
+export default function DisplayRuntimePage() {
+  const params = useParams<{ displayId: string }>();
   const searchParams = useSearchParams();
-  const deviceId = params.deviceId;
+  const displayId = params.displayId;
   const apiKey = searchParams.get("apiKey") ?? "";
   const [manifest, setManifest] = useState<DeviceManifest | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -90,7 +90,7 @@ export default function DeviceRuntimePage() {
   const overflowExtraSeconds = currentTiming?.overflowExtraSeconds ?? 0;
 
   useEffect(() => {
-    if (!deviceId || !apiKey || !baseUrl) {
+    if (!displayId || !apiKey || !baseUrl) {
       return;
     }
 
@@ -100,9 +100,12 @@ export default function DeviceRuntimePage() {
     };
 
     const fetchManifest = async (): Promise<void> => {
-      const response = await fetch(`${baseUrl}/devices/${deviceId}/manifest`, {
-        headers: commonHeaders,
-      });
+      const response = await fetch(
+        `${baseUrl}/displays/${displayId}/manifest`,
+        {
+          headers: commonHeaders,
+        },
+      );
       if (!response.ok) {
         throw new Error(`Manifest fetch failed (${response.status})`);
       }
@@ -119,7 +122,7 @@ export default function DeviceRuntimePage() {
 
     const fetchStreamToken = async () => {
       const response = await fetch(
-        `${baseUrl}/devices/${deviceId}/stream-token`,
+        `${baseUrl}/displays/${displayId}/stream-token`,
         { headers: commonHeaders },
       );
       if (!response.ok) {
@@ -143,7 +146,7 @@ export default function DeviceRuntimePage() {
     void start();
 
     const sse = createDeviceSseClient({
-      streamUrl: `${baseUrl}/devices/${deviceId}/stream`,
+      streamUrl: `${baseUrl}/displays/${displayId}/stream`,
       getToken: fetchStreamToken,
       onStateChange: setConnectionState,
       onEvent: () => {
@@ -169,7 +172,7 @@ export default function DeviceRuntimePage() {
       clearInterval(pollTimer);
       sse.close();
     };
-  }, [apiKey, baseUrl, deviceId]);
+  }, [apiKey, baseUrl, displayId]);
 
   useEffect(() => {
     if (timings.length === 0) {
@@ -207,10 +210,10 @@ export default function DeviceRuntimePage() {
     };
   }, [currentItem, measuredHeightByItemId, overflowExtraSeconds, viewport]);
 
-  if (!baseUrl || !deviceId || !apiKey) {
+  if (!baseUrl || !displayId || !apiKey) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-black text-white">
-        Runtime requires `deviceId` route and `apiKey` query parameter.
+        Runtime requires `displayId` route and `apiKey` query parameter.
       </main>
     );
   }

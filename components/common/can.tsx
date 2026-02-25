@@ -2,9 +2,10 @@
 
 import type { ReactElement, ReactNode } from "react";
 import { useCan } from "@/hooks/use-can";
+import type { PermissionType } from "@/types/permission";
 
 interface CanProps {
-  readonly permission: string;
+  readonly permission: PermissionType;
   readonly children: ReactNode;
 }
 

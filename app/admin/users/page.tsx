@@ -56,7 +56,7 @@ export default function UsersPage(): ReactElement {
   const canUpdateUser = useCan("users:update");
   const canDeleteUser = useCan("users:delete");
   const canCreateUser = useCan("users:create");
-  const isSuperAdmin = useCan("*:manage");
+  const isRoot = currentUser?.isRoot === true;
   const {
     data: usersData,
     isLoading: usersLoading,
@@ -122,11 +122,11 @@ export default function UsersPage(): ReactElement {
   );
   const availableRoles = useMemo(() => {
     const roles = rolesData ?? [];
-    const filtered = isSuperAdmin
+    const filtered = isRoot
       ? roles
       : roles.filter((role) => !role.isSystem);
     return filtered.map((role) => ({ id: role.id, name: role.name }));
-  }, [rolesData, isSuperAdmin]);
+  }, [rolesData, isRoot]);
 
   const handleSearchChange = useCallback(
     (value: string) => {
@@ -240,7 +240,7 @@ export default function UsersPage(): ReactElement {
   const handleRoleToggle = useCallback(
     async (userId: string, newRoleIds: string[]) => {
       try {
-        const roleIdsToSend = isSuperAdmin
+        const roleIdsToSend = isRoot
           ? newRoleIds
           : (() => {
               const currentIds =
@@ -292,7 +292,7 @@ export default function UsersPage(): ReactElement {
         );
       }
     },
-    [setUserRoles, isSuperAdmin, userRolesByUserId, systemRoleIds],
+    [setUserRoles, isRoot, userRolesByUserId, systemRoleIds],
   );
 
   const handleEdit = useCallback((user: User) => {
@@ -458,7 +458,7 @@ export default function UsersPage(): ReactElement {
               onRemoveUser={handleRequestRemoveUser}
               canUpdate={canUpdateUser}
               canDelete={canDeleteUser}
-              isSuperAdmin={isSuperAdmin}
+              isSuperAdmin={isRoot}
               systemRoleIds={systemRoleIds}
               currentUserId={currentUser?.id}
             />

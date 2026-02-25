@@ -23,6 +23,7 @@ import {
 } from "@/lib/auth-events";
 import { can as canPermission } from "@/lib/permissions";
 import type { AuthResponse, AuthUser } from "@/types/auth";
+import type { PermissionType } from "@/types/permission";
 
 const SESSION_KEY = "wildfire_session";
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes before expiry
@@ -32,13 +33,17 @@ const AUTH_ERROR_SUPPRESSION_MS = 2_000;
 interface SessionData {
   readonly user: AuthUser;
   readonly expiresAt: string;
-  readonly permissions: string[];
+  readonly permissions: PermissionType[];
 }
 
 /** Old sessions without permissions get []. */
-function getPermissionsFromSession(data: Record<string, unknown>): string[] {
+function getPermissionsFromSession(
+  data: Record<string, unknown>,
+): PermissionType[] {
   if (!Array.isArray(data.permissions)) return [];
-  return data.permissions.filter((p): p is string => typeof p === "string");
+  return data.permissions.filter(
+    (p): p is PermissionType => typeof p === "string" && p.includes(":"),
+  );
 }
 
 function readSession(): SessionData | null {
@@ -62,9 +67,18 @@ function readSession(): SessionData | null {
       )
     )
       return null;
+    const isRoot = typeof u.isRoot === "boolean" ? u.isRoot : false;
+    const normalizedUser: AuthUser = {
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      isRoot,
+      timezone: typeof u.timezone === "string" ? u.timezone : null,
+      avatarUrl: typeof u.avatarUrl === "string" ? u.avatarUrl : null,
+    };
     const permissions = getPermissionsFromSession(d);
     return {
-      user: user as AuthUser,
+      user: normalizedUser,
       expiresAt: d.expiresAt as string,
       permissions,
     };
@@ -84,11 +98,11 @@ function clearSession(): void {
 interface AuthContextValue {
   readonly user: AuthUser | null;
   readonly token: string | null;
-  readonly permissions: string[];
+  readonly permissions: PermissionType[];
   readonly isAuthenticated: boolean;
   readonly isLoading: boolean;
   readonly isInitialized: boolean;
-  can: (permission: string) => boolean;
+  can: (permission: PermissionType) => boolean;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   /** Forces a backend-auth refresh to avoid stale permission UX after RBAC writes. */
@@ -105,7 +119,7 @@ export function AuthProvider({
   children: ReactNode;
 }): ReactElement {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [permissions, setPermissions] = useState<string[]>([]);
+  const [permissions, setPermissions] = useState<PermissionType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -273,8 +287,9 @@ export function AuthProvider({
   }, []);
 
   const can = useCallback(
-    (permission: string) => canPermission(permission, permissions),
-    [permissions],
+    (permission: PermissionType) =>
+      canPermission(permission, permissions, user?.isRoot === true),
+    [permissions, user?.isRoot],
   );
 
   const value = useMemo<AuthContextValue>(

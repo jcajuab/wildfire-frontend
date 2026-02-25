@@ -1,6 +1,7 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { emitAuthRefreshRequested } from "@/lib/auth-events";
 import { baseQuery } from "@/lib/api/base-query";
+import type { PermissionAction, PermissionResource } from "@/types/permission";
 
 /** Backend RBAC response shapes (match overview). */
 export interface RbacRole {
@@ -14,8 +15,8 @@ export interface RbacRole {
 
 export interface RbacPermission {
   readonly id: string;
-  readonly resource: string;
-  readonly action: string;
+  readonly resource: PermissionResource;
+  readonly action: PermissionAction;
 }
 
 export interface RbacUser {

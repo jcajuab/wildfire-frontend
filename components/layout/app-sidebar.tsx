@@ -41,24 +41,25 @@ import type { ComponentType, ReactElement } from "react";
 import Image from "next/image";
 import type { CSSProperties } from "react";
 import { useState } from "react";
+import type { PermissionType } from "@/types/permission";
 
 interface NavItem {
   readonly title: string;
   readonly href: string;
   readonly icon: ComponentType<{ className?: string }>;
-  readonly permission: string;
+  readonly permission: PermissionType;
 }
 
 const ICON_BY_PATH: Record<
   (typeof DASHBOARD_ROUTE_READ_ENTRIES)[number]["path"],
   ComponentType<{ className?: string }>
 > = {
-  "/displays": IconDeviceDesktop,
-  "/content": IconPhoto,
-  "/playlists": IconPlaylist,
-  "/schedules": IconCalendarEvent,
-  "/users": IconUsers,
-  "/roles": IconShield,
+  "/admin/displays": IconDeviceDesktop,
+  "/admin/content": IconPhoto,
+  "/admin/playlists": IconPlaylist,
+  "/admin/schedules": IconCalendarEvent,
+  "/admin/users": IconUsers,
+  "/admin/roles": IconShield,
 };
 
 const navItems: readonly NavItem[] = DASHBOARD_ROUTE_READ_ENTRIES.map(
@@ -74,19 +75,23 @@ const extendedNavItems: readonly NavItem[] = [
   ...navItems,
   {
     title: "Logs",
-    href: "/logs",
+    href: "/admin/logs",
     permission: "audit:read",
     icon: IconList,
   },
 ];
 
 const CORE_PATHS = new Set<string>([
-  "/displays",
-  "/content",
-  "/playlists",
-  "/schedules",
+  "/admin/displays",
+  "/admin/content",
+  "/admin/playlists",
+  "/admin/schedules",
 ]);
-const MANAGE_PATHS = new Set<string>(["/users", "/roles", "/logs"]);
+const MANAGE_PATHS = new Set<string>([
+  "/admin/users",
+  "/admin/roles",
+  "/admin/logs",
+]);
 
 export function AppSidebar(): ReactElement {
   const pathname = usePathname();
@@ -130,7 +135,7 @@ export function AppSidebar(): ReactElement {
     >
       <SidebarHeader className="flex flex-row items-center justify-between">
         <Link
-          href="/"
+          href="/admin/displays"
           className="flex items-center gap-2 px-2 font-semibold text-primary-foreground"
         >
           <span className="text-xl tracking-tight">WILDFIRE</span>
@@ -235,7 +240,7 @@ export function AppSidebar(): ReactElement {
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" align="center" sideOffset={8}>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings">
+                  <Link href="/admin/settings">
                     <IconSettings className="size-4" />
                     Settings
                   </Link>
