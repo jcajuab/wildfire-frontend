@@ -35,6 +35,7 @@ import {
   updateDeviceRuntimeSettings,
   uploadAvatar,
 } from "@/lib/api-client";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { useCan } from "@/hooks/use-can";
 import { toast } from "sonner";
 
@@ -124,9 +125,10 @@ export default function SettingsPage(): ReactElement {
       .catch((error) => {
         if (cancelled) return;
         const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to load display runtime settings.";
+          getApiErrorMessage(
+            error,
+            "Failed to load display runtime settings.",
+          );
         toast.error(message);
       })
       .finally(() => {
@@ -174,9 +176,7 @@ export default function SettingsPage(): ReactElement {
       toast.success("Profile picture updated.");
     } catch (err) {
       const message =
-        err instanceof Error
-          ? err.message
-          : "Failed to upload profile picture.";
+        getApiErrorMessage(err, "Failed to upload profile picture.");
       toast.error(message);
     } finally {
       setIsAvatarUploading(false);
@@ -215,7 +215,7 @@ export default function SettingsPage(): ReactElement {
       setSavedLastName(nextLastName);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to update profile.";
+        getApiErrorMessage(err, "Failed to update profile.");
       toast.error(message);
     }
   };
@@ -232,7 +232,7 @@ export default function SettingsPage(): ReactElement {
     } catch (err) {
       setTimezone(previousTimezone);
       const message =
-        err instanceof Error ? err.message : "Failed to update time zone.";
+        getApiErrorMessage(err, "Failed to update time zone.");
       toast.error(message);
     } finally {
       setIsSavingTimezone(false);
@@ -272,7 +272,7 @@ export default function SettingsPage(): ReactElement {
       setConfirmPassword("");
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to update password.";
+        getApiErrorMessage(err, "Failed to update password.");
       setPasswordError(
         message.toLowerCase().includes("current")
           ? "Current password is incorrect."
@@ -301,7 +301,7 @@ export default function SettingsPage(): ReactElement {
       await logout();
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to delete account.";
+        getApiErrorMessage(err, "Failed to delete account.");
       toast.error(message);
     }
   };
@@ -322,9 +322,10 @@ export default function SettingsPage(): ReactElement {
       toast.success("Runtime auto-scroll setting updated.");
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to update runtime auto-scroll setting.";
+        getApiErrorMessage(
+          error,
+          "Failed to update runtime auto-scroll setting.",
+        );
       toast.error(message);
     } finally {
       setIsSavingRuntimeSettings(false);

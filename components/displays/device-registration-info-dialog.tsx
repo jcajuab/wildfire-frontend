@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   useCreatePairingCodeMutation,
   useRegisterDeviceMutation,
@@ -24,15 +25,6 @@ import { useCan } from "@/hooks/use-can";
 interface DeviceRegistrationInfoDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-}
-
-function getRegisterErrorMessage(err: unknown): string {
-  if (err && typeof err === "object" && "data" in err) {
-    const data = (err as { data: unknown }).data;
-    if (typeof data === "string") return data;
-  }
-  if (err instanceof Error) return err.message;
-  return "Failed to register display.";
 }
 
 export function DeviceRegistrationInfoDialog({
@@ -111,7 +103,7 @@ export function DeviceRegistrationInfoDialog({
         handleOpenChange(false);
         resetForm();
       } catch (err) {
-        const message = getRegisterErrorMessage(err);
+        const message = getApiErrorMessage(err, "Failed to register display.");
         if (typeof console !== "undefined" && console.error) {
           console.error("[displays.register] Registration failed", {
             message,
@@ -141,7 +133,7 @@ export function DeviceRegistrationInfoDialog({
       setPairingCodeExpiresAt(result.expiresAt);
       toast.success("Pairing code generated.");
     } catch (err) {
-      const message = getRegisterErrorMessage(err);
+      const message = getApiErrorMessage(err, "Failed to generate pairing code.");
       toast.error(message);
     }
   }, [createPairingCode]);

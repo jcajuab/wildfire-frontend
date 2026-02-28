@@ -34,6 +34,7 @@ import {
   getInvitations,
   resendInvitation,
 } from "@/lib/api-client";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   useQueryEnumState,
   useQueryNumberState,
@@ -205,15 +206,15 @@ export default function UsersPage(): ReactElement {
       setIsInviteDialogOpen(false);
       const latestInvitations = await getInvitations();
       setInvitations(latestInvitations);
-    } catch (err) {
-      if (err instanceof AuthApiError && err.status === 429) {
-        toast.error("Too many invite requests. Please wait and try again.");
-        return;
+      } catch (err) {
+        if (err instanceof AuthApiError && err.status === 429) {
+          toast.error("Too many invite requests. Please wait and try again.");
+          return;
+        }
+        toast.error(
+          getApiErrorMessage(err, "Failed to invite user(s)"),
+        );
       }
-      toast.error(
-        err instanceof Error ? err.message : "Failed to invite user(s)",
-      );
-    }
   }, []);
 
   const loadInvitations = useCallback(async (): Promise<void> => {
@@ -228,7 +229,7 @@ export default function UsersPage(): ReactElement {
       setInvitations(list);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to load invitations",
+        getApiErrorMessage(err, "Failed to load invitations"),
       );
     } finally {
       setIsInvitationsLoading(false);
@@ -250,7 +251,7 @@ export default function UsersPage(): ReactElement {
       setInvitations(latestInvitations);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to resend invite",
+        getApiErrorMessage(err, "Failed to resend invite"),
       );
     } finally {
       setResendingInvitationId(null);
@@ -303,7 +304,7 @@ export default function UsersPage(): ReactElement {
         roleIds: roleIdsToSend,
       }).catch((err) => {
         toast.error(
-          err instanceof Error ? err.message : "Failed to update user roles",
+          getApiErrorMessage(err, "Failed to update user roles"),
         );
       });
     },
@@ -334,7 +335,7 @@ export default function UsersPage(): ReactElement {
       clearPendingRoleUpdate();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to update user roles",
+        getApiErrorMessage(err, "Failed to update user roles"),
       );
     } finally {
       setIsPolicyVersionSubmitting(false);
@@ -365,7 +366,7 @@ export default function UsersPage(): ReactElement {
         setSelectedUser(null);
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : "Failed to update user",
+          getApiErrorMessage(err, "Failed to update user"),
         );
       }
     },
@@ -574,7 +575,7 @@ export default function UsersPage(): ReactElement {
             setUserToRemove(null);
           } catch (err) {
             toast.error(
-              err instanceof Error ? err.message : "Failed to remove user",
+              getApiErrorMessage(err, "Failed to remove user"),
             );
             throw err;
           }

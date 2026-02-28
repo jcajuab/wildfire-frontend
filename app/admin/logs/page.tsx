@@ -38,6 +38,7 @@ import {
 } from "@/lib/api/audit-api";
 import { useGetDevicesQuery } from "@/lib/api/devices-api";
 import { useGetUsersQuery } from "@/lib/api/rbac-api";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   getResourceTypeLabel,
   RESOURCE_TYPE_FILTER_OPTIONS,
@@ -299,7 +300,7 @@ export default function LogsPage(): ReactElement {
       toast.success("Logs exported.");
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to export audit logs.";
+        getApiErrorMessage(err, "Failed to export audit logs.");
       if (message.includes("Export limit exceeded")) {
         toast.error(
           "Export is too large for one file. Narrow your filters or date range.",

@@ -11,6 +11,15 @@ export function getApiErrorMessage(err: unknown, fallback: string): string {
     if (apiError?.error?.message) {
       return apiError.error.message;
     }
+
+    if (
+      data !== null &&
+      typeof data === "object" &&
+      typeof (data as { message?: unknown }).message === "string" &&
+      typeof (data as { code?: unknown }).code === "string"
+    ) {
+      return (data as { message: string }).message;
+    }
   }
   if (err instanceof Error) {
     return err.message;

@@ -359,7 +359,7 @@ export default function ContentPage(): ReactElement {
   const [contentToDelete, setContentToDelete] = useState<Content | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const pageSize = 20;
-  const { data, isLoading, isError } = useListContentQuery({
+  const { data, isLoading, isError, error } = useListContentQuery({
     page,
     pageSize,
     status: statusFilter === "all" ? undefined : statusFilter,
@@ -417,9 +417,7 @@ export default function ContentPage(): ReactElement {
         await uploadContent({ title: name, file }).unwrap();
         toast.success("Content uploaded.");
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to upload content.",
-        );
+        toast.error(getApiErrorMessage(err, "Failed to upload content."));
       }
     },
     [uploadContent],
@@ -449,8 +447,8 @@ export default function ContentPage(): ReactElement {
         document.body.appendChild(link);
         link.click();
         link.remove();
-      } catch {
-        toast.error("Failed to get download URL.");
+      } catch (err) {
+        toast.error(getApiErrorMessage(err, "Failed to get download URL."));
       }
     },
     [getContentFileUrl],
@@ -476,7 +474,10 @@ export default function ContentPage(): ReactElement {
         <DashboardPage.Body>
           <DashboardPage.Content className="flex items-center justify-center">
             <p className="text-destructive">
-              Failed to load content. Check the API and try again.
+              {getApiErrorMessage(
+                error,
+                "Failed to load content. Check the API and try again.",
+              )}
             </p>
           </DashboardPage.Content>
         </DashboardPage.Body>

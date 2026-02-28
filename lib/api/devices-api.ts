@@ -15,7 +15,7 @@ import {
 export interface Display {
   readonly id: string;
   readonly identifier: string;
-  readonly deviceFingerprint?: string | null;
+  readonly displayFingerprint?: string | null;
   readonly name: string;
   readonly location: string | null;
   readonly ipAddress: string | null;
@@ -72,11 +72,13 @@ const PAGE_SIZE = 100;
 const MAX_PAGES = 100;
 
 const buildResponseParseError = (scope: string, error: unknown) => ({
-  code: "INVALID_API_RESPONSE",
-  message:
-    error instanceof Error
-      ? error.message
-      : "Response payload does not match API contract.",
+  error: {
+    code: "INVALID_API_RESPONSE",
+    message:
+      error instanceof Error
+        ? `${scope}: ${error.message}`
+        : "Response payload does not match API contract.",
+  },
 });
 
 export const devicesApi = createApi({
@@ -273,7 +275,7 @@ export const devicesApi = createApi({
       {
         pairingCode: string;
         identifier: string;
-        deviceFingerprint?: string | null;
+        displayFingerprint?: string | null;
         name: string;
         location?: string | null;
         screenWidth: number;
@@ -293,7 +295,7 @@ export const devicesApi = createApi({
         const body: {
           pairingCode: string;
           identifier: string;
-          deviceFingerprint?: string;
+          displayFingerprint?: string;
           name: string;
           location?: string;
           screenWidth: number;
@@ -305,8 +307,8 @@ export const devicesApi = createApi({
           screenWidth: arg.screenWidth,
           screenHeight: arg.screenHeight,
         };
-        if (arg.deviceFingerprint != null && arg.deviceFingerprint !== "") {
-          body.deviceFingerprint = arg.deviceFingerprint;
+        if (arg.displayFingerprint != null && arg.displayFingerprint !== "") {
+          body.displayFingerprint = arg.displayFingerprint;
         }
         if (arg.location != null && arg.location !== "") {
           body.location = arg.location;

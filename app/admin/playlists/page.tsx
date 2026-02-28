@@ -181,7 +181,7 @@ export default function PlaylistsPage(): ReactElement {
         toast.success("Playlist created.");
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : "Failed to create playlist.",
+          getApiErrorMessage(err, "Failed to create playlist."),
         );
       }
     },
@@ -199,8 +199,10 @@ export default function PlaylistsPage(): ReactElement {
       try {
         const detailed = await loadPlaylist(playlist.id, true).unwrap();
         setManageItemsPlaylist(mapBackendPlaylistWithItems(detailed));
-      } catch {
-        toast.error("Failed to load playlist items.");
+      } catch (err) {
+        toast.error(
+          getApiErrorMessage(err, "Failed to load playlist items."),
+        );
       }
     },
     [loadPlaylist],
@@ -246,9 +248,7 @@ export default function PlaylistsPage(): ReactElement {
         setManageItemsPlaylist(null);
       } catch (err) {
         toast.error(
-          err instanceof Error
-            ? err.message
-            : "Failed to update playlist items.",
+          getApiErrorMessage(err, "Failed to update playlist items."),
         );
       }
     },
@@ -399,9 +399,7 @@ export default function PlaylistsPage(): ReactElement {
                   toast.success("Playlist updated.");
                 } catch (err) {
                   toast.error(
-                    err instanceof Error
-                      ? err.message
-                      : "Failed to update playlist.",
+                    getApiErrorMessage(err, "Failed to update playlist."),
                   );
                 }
               }}

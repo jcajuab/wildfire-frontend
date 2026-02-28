@@ -22,6 +22,7 @@ import {
 } from "@/lib/api/schedules-api";
 import { useListPlaylistsQuery } from "@/lib/api/playlists-api";
 import { useCan } from "@/hooks/use-can";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   mapBackendSchedulesToSchedules,
   mapCreateFormToScheduleRequest,
@@ -54,19 +55,14 @@ const getScheduleMutationErrorMessage = (
       typeof data === "object" && data !== null
         ? (data as ApiErrorBody).error?.message
         : undefined;
-    if (status === 409) {
+  if (status === 409) {
       return backendMessage ?? SCHEDULE_CONFLICT_FALLBACK_MESSAGE;
     }
     if (typeof backendMessage === "string" && backendMessage.length > 0) {
       return backendMessage;
     }
   }
-
-  if (err instanceof Error) {
-    return err.message;
-  }
-
-  return fallback;
+  return getApiErrorMessage(err, fallback);
 };
 
 export default function SchedulesPage(): ReactElement {
@@ -174,7 +170,7 @@ export default function SchedulesPage(): ReactElement {
         toast.success("Schedule deleted.");
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : "Failed to delete schedule.",
+          getScheduleMutationErrorMessage(err, "Failed to delete schedule."),
         );
       }
     },

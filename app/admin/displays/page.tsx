@@ -20,6 +20,7 @@ import { ViewDisplayDialog } from "@/components/displays/view-display-dialog";
 import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   useCreateDeviceGroupMutation,
   useGetDeviceGroupsQuery,
@@ -54,6 +55,10 @@ export default function DisplaysPage(): ReactElement {
   const canUpdateDisplay = useCan("displays:update");
   const { data: devicesData, isLoading, isError, error } = useGetDevicesQuery();
   const { data: deviceGroupsData } = useGetDeviceGroupsQuery();
+  const loadErrorMessage = getApiErrorMessage(
+    error,
+    "Failed to load displays. Check your connection and permissions.",
+  );
 
   const [statusFilter, setStatusFilter] =
     useQueryEnumState<DisplayStatusFilter>(
@@ -148,9 +153,7 @@ export default function DisplaysPage(): ReactElement {
         );
       } catch (err) {
         toast.error(
-          err instanceof Error
-            ? err.message
-            : "Failed to queue display refresh.",
+          getApiErrorMessage(err, "Failed to queue display refresh."),
         );
       }
     },
@@ -200,9 +203,10 @@ export default function DisplaysPage(): ReactElement {
         }).unwrap();
       } catch (error) {
         toast.error(
-          error instanceof Error
-            ? `Failed to save display details: ${error.message}`
-            : "Failed to save display details. Group assignments were not changed.",
+          `Failed to save display details: ${getApiErrorMessage(
+            error,
+            "Group assignments were not changed.",
+          )}`,
         );
         return false;
       }
@@ -250,9 +254,10 @@ export default function DisplaysPage(): ReactElement {
         }).unwrap();
       } catch (error) {
         toast.error(
-          error instanceof Error
-            ? `Display details were saved, but display-group assignment failed: ${error.message}`
-            : "Display details were saved, but display-group assignment failed.",
+          `Display details were saved, but display-group assignment failed: ${getApiErrorMessage(
+            error,
+            "Display details were saved, but display-group assignment failed.",
+          )}`,
         );
         return false;
       }
@@ -314,9 +319,12 @@ export default function DisplaysPage(): ReactElement {
   useEffect(() => {
     if (!isError) return;
     toast.error(
-      error && "status" in error && error.status === 403
-        ? "You don’t have permission to view displays."
-        : "Failed to load displays.",
+      getApiErrorMessage(
+        error,
+        error && "status" in error && error.status === 403
+          ? "You don’t have permission to view displays."
+          : "Failed to load displays.",
+      ),
     );
   }, [isError, error]);
 
@@ -336,7 +344,7 @@ export default function DisplaysPage(): ReactElement {
 
       {isError ? (
         <DashboardPage.Banner tone="danger">
-          Failed to load displays. Check your connection and permissions.
+          {loadErrorMessage}
         </DashboardPage.Banner>
       ) : null}
 

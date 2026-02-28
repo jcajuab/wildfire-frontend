@@ -24,6 +24,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/formatters";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
 import {
@@ -310,7 +311,7 @@ export default function RolesPage(): ReactElement {
         }
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : "Something went wrong",
+          getApiErrorMessage(err, "Something went wrong"),
         );
       }
     },
@@ -514,7 +515,7 @@ export default function RolesPage(): ReactElement {
               setRoleToDelete(null);
             } catch (err) {
               toast.error(
-                err instanceof Error ? err.message : "Failed to delete role",
+                getApiErrorMessage(err, "Failed to delete role"),
               );
               throw err;
             }
@@ -592,9 +593,10 @@ export default function RolesPage(): ReactElement {
                   setRoleToDelete(null);
                 } catch (err) {
                   toast.error(
-                    err instanceof Error
-                      ? err.message
-                      : "Failed to request role deletion",
+                    getApiErrorMessage(
+                      err,
+                      "Failed to request role deletion",
+                    ),
                   );
                 } finally {
                   setIsSubmittingDeleteRequest(false);
@@ -670,9 +672,10 @@ export default function RolesPage(): ReactElement {
                                       );
                                     } catch (err) {
                                       toast.error(
-                                        err instanceof Error
-                                          ? err.message
-                                          : "Failed to approve request",
+                                        getApiErrorMessage(
+                                          err,
+                                          "Failed to approve request",
+                                        ),
                                       );
                                     }
                                   }}
@@ -692,9 +695,10 @@ export default function RolesPage(): ReactElement {
                                       );
                                     } catch (err) {
                                       toast.error(
-                                        err instanceof Error
-                                          ? err.message
-                                          : "Failed to reject request",
+                                        getApiErrorMessage(
+                                          err,
+                                          "Failed to reject request",
+                                        ),
                                       );
                                     }
                                   }}

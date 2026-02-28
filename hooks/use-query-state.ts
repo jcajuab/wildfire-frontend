@@ -65,7 +65,7 @@ export function useQueryStringState(
     (raw: string | null) => raw ?? defaultValue,
     [defaultValue],
   );
-  const serialize = useCallback((value: string) => value.trim(), []);
+  const serialize = useCallback((value: string) => value, []);
 
   return useQueryState<string>({
     key,
