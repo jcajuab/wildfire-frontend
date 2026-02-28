@@ -28,10 +28,14 @@ async function readJsonPayload(response: Response): Promise<unknown> {
   }
 }
 
-function createAuthApiError(response: Response, payload: unknown): AuthApiError {
+function createAuthApiError(
+  response: Response,
+  payload: unknown,
+): AuthApiError {
   const parsedError = extractApiError(payload) ?? undefined;
   const message =
-    parsedError?.error?.message ?? `Request failed with status ${response.status}`;
+    parsedError?.error?.message ??
+    `Request failed with status ${response.status}`;
   return new AuthApiError(message, response.status, parsedError);
 }
 
@@ -332,7 +336,10 @@ export async function getInvitations(): Promise<readonly InvitationRecord[]> {
   if (!response.ok) {
     throw createAuthApiError(response, payload);
   }
-  return parseApiListResponseDataSafe<InvitationRecord>(payload, "getInvitations");
+  return parseApiListResponseDataSafe<InvitationRecord>(
+    payload,
+    "getInvitations",
+  );
 }
 
 /** POST /auth/invitations/:id/resend. */

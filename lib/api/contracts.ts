@@ -96,9 +96,7 @@ function parseApiEnvelope<T>(value: UnknownObject): ApiResponse<T> {
   const data = value.data;
   const links = isObject(value.links)
     ? ({
-        self: isString(value.links.self)
-          ? value.links.self
-          : "unknown",
+        self: isString(value.links.self) ? value.links.self : "unknown",
         first: isString(value.links.first) ? value.links.first : undefined,
         prev: isString(value.links.prev) ? value.links.prev : undefined,
         next: isString(value.links.next) ? value.links.next : undefined,
@@ -158,9 +156,8 @@ export function parseApiListResponse<T>(payload: unknown): ApiListResponse<T> {
   const totalValue = isInteger(total) && total >= 0 ? total : undefined;
   const pageValue = isInteger(page) && page >= 1 ? page : undefined;
   const perPageValue = isInteger(perPage) && perPage >= 1 ? perPage : undefined;
-  const totalPagesValue = isInteger(totalPages) && totalPages >= 0
-    ? totalPages
-    : undefined;
+  const totalPagesValue =
+    isInteger(totalPages) && totalPages >= 0 ? totalPages : undefined;
 
   if (totalValue === undefined) {
     throw new Error("API payload list response has invalid meta.total.");
@@ -192,7 +189,8 @@ export function parseApiResponseData<T>(payload: unknown): T {
 }
 
 const buildApiParseError = (context: string, error: unknown): Error => {
-  const message = error instanceof Error ? error.message : "Invalid payload format.";
+  const message =
+    error instanceof Error ? error.message : "Invalid payload format.";
   return new Error(`${context}: ${message}`);
 };
 

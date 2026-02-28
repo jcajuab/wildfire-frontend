@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useMemo, useState, useCallback, useRef } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Combobox,
@@ -46,7 +46,6 @@ export function DisplayGroupsCombobox({
   showLabel = true,
 }: DisplayGroupsComboboxProps): ReactElement {
   const anchorRef = useComboboxAnchor();
-  const portalContainerRef = useRef<HTMLDivElement | null>(null);
   const [inputValue, setInputValue] = useState("");
 
   const existingNames = useMemo(
@@ -103,7 +102,7 @@ export function DisplayGroupsCombobox({
   );
 
   return (
-    <div ref={portalContainerRef} className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5">
       {id && showLabel ? (
         <Label htmlFor={id} className="text-sm font-medium">
           Display Groups (Optional)
@@ -130,7 +129,6 @@ export function DisplayGroupsCombobox({
                       <ComboboxChip
                         key={name}
                         className={`border ${styles.fill}`}
-                        removeAriaLabel={`Remove ${name}`}
                       >
                         {name}
                       </ComboboxChip>
@@ -144,7 +142,7 @@ export function DisplayGroupsCombobox({
             )}
           </ComboboxValue>
         </ComboboxChips>
-        <ComboboxContent anchor={anchorRef} container={portalContainerRef}>
+        <ComboboxContent anchor={anchorRef}>
           <ComboboxEmpty>No matching display group.</ComboboxEmpty>
           <ComboboxList>
             {optionNames.map((name) => (

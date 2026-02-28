@@ -34,36 +34,8 @@ import type {
   ScheduleFormData,
 } from "@/types/schedule";
 
-interface ApiErrorBody {
-  readonly error?: {
-    readonly code?: string;
-    readonly message?: string;
-  };
-}
-
 const SCHEDULE_CONFLICT_FALLBACK_MESSAGE =
   "Schedule overlaps with an existing schedule on the selected display.";
-
-const getScheduleMutationErrorMessage = (
-  err: unknown,
-  fallback: string,
-): string => {
-  if (typeof err === "object" && err !== null && "status" in err) {
-    const status = (err as { status?: unknown }).status;
-    const data = (err as { data?: unknown }).data;
-    const backendMessage =
-      typeof data === "object" && data !== null
-        ? (data as ApiErrorBody).error?.message
-        : undefined;
-  if (status === 409) {
-      return backendMessage ?? SCHEDULE_CONFLICT_FALLBACK_MESSAGE;
-    }
-    if (typeof backendMessage === "string" && backendMessage.length > 0) {
-      return backendMessage;
-    }
-  }
-  return getApiErrorMessage(err, fallback);
-};
 
 export default function SchedulesPage(): ReactElement {
   const canEditSchedule = useCan("schedules:update");
@@ -152,9 +124,9 @@ export default function SchedulesPage(): ReactElement {
         await createSchedule(mapCreateFormToScheduleRequest(data)).unwrap();
         toast.success("Schedule created.");
       } catch (err) {
-        const message = getScheduleMutationErrorMessage(
+        const message = getApiErrorMessage(
           err,
-          "Failed to create schedule.",
+          SCHEDULE_CONFLICT_FALLBACK_MESSAGE,
         );
         toast.error(message);
         throw err;
@@ -170,7 +142,7 @@ export default function SchedulesPage(): ReactElement {
         toast.success("Schedule deleted.");
       } catch (err) {
         toast.error(
-          getScheduleMutationErrorMessage(err, "Failed to delete schedule."),
+          getApiErrorMessage(err, "Failed to delete schedule."),
         );
       }
     },
@@ -185,7 +157,7 @@ export default function SchedulesPage(): ReactElement {
         ).unwrap();
         toast.success("Schedule updated.");
       } catch (err) {
-        const message = getScheduleMutationErrorMessage(
+        const message = getApiErrorMessage(
           err,
           "Failed to update schedule.",
         );

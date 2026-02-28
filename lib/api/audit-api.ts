@@ -97,9 +97,7 @@ export async function exportAuditEventsCsv(
       })
       .catch(() => undefined);
     const message = extractApiError(payload)?.error.message;
-    throw new Error(
-      message ?? `Export failed with status ${response.status}`,
-    );
+    throw new Error(message ?? `Export failed with status ${response.status}`);
   }
 
   return await response.blob();

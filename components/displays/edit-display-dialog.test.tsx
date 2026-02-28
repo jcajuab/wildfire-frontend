@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
 import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
@@ -188,8 +188,12 @@ describe("EditDisplayDialog", () => {
 
     const groupInput = screen.getByLabelText("Search or add display groups");
     await user.click(groupInput);
-    await user.click(screen.getByRole("option", { name: "Lobby" }));
-    expect(screen.getByLabelText("Remove Lobby")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("option", { name: "Lobby" }));
+    const lobbyMatches = screen.getAllByText("Lobby");
+    const hasSelectedChip = lobbyMatches.some(
+      (node) => node.closest('[data-slot="combobox-chip"]') !== null,
+    );
+    expect(hasSelectedChip).toBe(true);
     expect(onSave).not.toHaveBeenCalled();
   });
 });

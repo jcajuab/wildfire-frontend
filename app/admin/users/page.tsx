@@ -116,13 +116,14 @@ export default function UsersPage(): ReactElement {
   const [userRolesByUserId, setUserRolesByUserId] = useState<
     Readonly<Record<string, readonly UserRole[]>>
   >({});
-  const [pendingRoleUpdate, setPendingRoleUpdate] = useState<
-    PendingRoleUpdate | null
-  >(null);
+  const [pendingRoleUpdate, setPendingRoleUpdate] =
+    useState<PendingRoleUpdate | null>(null);
   const [policyVersionInput, setPolicyVersionInput] = useState("");
-  const [isPolicyVersionSubmitting, setIsPolicyVersionSubmitting] = useState(
-    false,
+  const [policyVersionError, setPolicyVersionError] = useState<string | null>(
+    null,
   );
+  const [isPolicyVersionSubmitting, setIsPolicyVersionSubmitting] =
+    useState(false);
 
   const pageSize = 10;
 
@@ -148,9 +149,7 @@ export default function UsersPage(): ReactElement {
   );
   const availableRoles = useMemo(() => {
     const roles = rolesData ?? [];
-    const filtered = isRoot
-      ? roles
-      : roles.filter((role) => !role.isSystem);
+    const filtered = isRoot ? roles : roles.filter((role) => !role.isSystem);
     return filtered.map((role) => ({ id: role.id, name: role.name }));
   }, [rolesData, isRoot]);
 
@@ -206,15 +205,13 @@ export default function UsersPage(): ReactElement {
       setIsInviteDialogOpen(false);
       const latestInvitations = await getInvitations();
       setInvitations(latestInvitations);
-      } catch (err) {
-        if (err instanceof AuthApiError && err.status === 429) {
-          toast.error("Too many invite requests. Please wait and try again.");
-          return;
-        }
-        toast.error(
-          getApiErrorMessage(err, "Failed to invite user(s)"),
-        );
+    } catch (err) {
+      if (err instanceof AuthApiError && err.status === 429) {
+        toast.error("Too many invite requests. Please wait and try again.");
+        return;
       }
+      toast.error(getApiErrorMessage(err, "Failed to invite user(s)"));
+    }
   }, []);
 
   const loadInvitations = useCallback(async (): Promise<void> => {
@@ -228,9 +225,7 @@ export default function UsersPage(): ReactElement {
       const list = await getInvitations();
       setInvitations(list);
     } catch (err) {
-      toast.error(
-        getApiErrorMessage(err, "Failed to load invitations"),
-      );
+      toast.error(getApiErrorMessage(err, "Failed to load invitations"));
     } finally {
       setIsInvitationsLoading(false);
     }
@@ -250,9 +245,7 @@ export default function UsersPage(): ReactElement {
       const latestInvitations = await getInvitations();
       setInvitations(latestInvitations);
     } catch (err) {
-      toast.error(
-        getApiErrorMessage(err, "Failed to resend invite"),
-      );
+      toast.error(getApiErrorMessage(err, "Failed to resend invite"));
     } finally {
       setResendingInvitationId(null);
     }
@@ -272,7 +265,10 @@ export default function UsersPage(): ReactElement {
       const roles = await setUserRoles(payload).unwrap();
       setUserRolesByUserId((prev) => ({
         ...prev,
-        [payload.userId]: roles.map((role) => ({ id: role.id, name: role.name })),
+        [payload.userId]: roles.map((role) => ({
+          id: role.id,
+          name: role.name,
+        })),
       }));
     },
     [setUserRoles],
@@ -283,7 +279,8 @@ export default function UsersPage(): ReactElement {
       const roleIdsToSend = isRoot
         ? newRoleIds
         : (() => {
-            const currentIds = userRolesByUserId[userId]?.map((r) => r.id) ?? [];
+            const currentIds =
+              userRolesByUserId[userId]?.map((r) => r.id) ?? [];
             const preservedSystem = currentIds.filter((id) =>
               systemRoleIds.includes(id),
             );
@@ -303,26 +300,27 @@ export default function UsersPage(): ReactElement {
         userId,
         roleIds: roleIdsToSend,
       }).catch((err) => {
-        toast.error(
-          getApiErrorMessage(err, "Failed to update user roles"),
-        );
+        toast.error(getApiErrorMessage(err, "Failed to update user roles"));
       });
     },
     [applyUserRoles, isRoot, systemRoleIds, userRolesByUserId],
   );
 
   const parsedPolicyVersion = Number.parseInt(policyVersionInput, 10);
-  const isPolicyVersionValid = Number.isInteger(parsedPolicyVersion) && parsedPolicyVersion > 0;
+  const isPolicyVersionValid =
+    Number.isInteger(parsedPolicyVersion) && parsedPolicyVersion > 0;
 
   const clearPendingRoleUpdate = useCallback((): void => {
     setPendingRoleUpdate(null);
     setPolicyVersionInput("");
+    setPolicyVersionError(null);
   }, []);
 
   const handlePolicyVersionSubmit = useCallback(async (): Promise<void> => {
     if (!pendingRoleUpdate) return;
+    setPolicyVersionError(null);
     if (!isPolicyVersionValid) {
-      toast.error("Policy version must be a positive whole number.");
+      setPolicyVersionError("Policy version must be a positive whole number.");
       return;
     }
 
@@ -334,9 +332,7 @@ export default function UsersPage(): ReactElement {
       });
       clearPendingRoleUpdate();
     } catch (err) {
-      toast.error(
-        getApiErrorMessage(err, "Failed to update user roles"),
-      );
+      toast.error(getApiErrorMessage(err, "Failed to update user roles"));
     } finally {
       setIsPolicyVersionSubmitting(false);
     }
@@ -365,9 +361,7 @@ export default function UsersPage(): ReactElement {
         setIsEditDialogOpen(false);
         setSelectedUser(null);
       } catch (err) {
-        toast.error(
-          getApiErrorMessage(err, "Failed to update user"),
-        );
+        toast.error(getApiErrorMessage(err, "Failed to update user"));
       }
     },
     [updateUser],
@@ -574,9 +568,7 @@ export default function UsersPage(): ReactElement {
             await deleteUser(userToRemove.id).unwrap();
             setUserToRemove(null);
           } catch (err) {
-            toast.error(
-              getApiErrorMessage(err, "Failed to remove user"),
-            );
+            toast.error(getApiErrorMessage(err, "Failed to remove user"));
             throw err;
           }
         }}
@@ -616,6 +608,11 @@ export default function UsersPage(): ReactElement {
               Example: enter the current policy change number used by your
               governance process.
             </p>
+            {policyVersionError ? (
+              <p className="text-xs text-destructive">
+                {policyVersionError}
+              </p>
+            ) : null}
           </div>
 
           <DialogFooter>

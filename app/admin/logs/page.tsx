@@ -299,8 +299,7 @@ export default function LogsPage(): ReactElement {
       setExportPopoverOpen(false);
       toast.success("Logs exported.");
     } catch (err) {
-      const message =
-        getApiErrorMessage(err, "Failed to export audit logs.");
+      const message = getApiErrorMessage(err, "Failed to export audit logs.");
       if (message.includes("Export limit exceeded")) {
         toast.error(
           "Export is too large for one file. Narrow your filters or date range.",

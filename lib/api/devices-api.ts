@@ -175,13 +175,12 @@ export const devicesApi = createApi({
     }),
     getDeviceGroups: build.query<DisplayGroupsListResponse, void>({
       query: () => "displays/groups",
-      transformResponse: (response) =>
-        ({
-          items: parseApiResponseDataSafe<readonly DisplayGroup[]>(
-            response,
-            "getDeviceGroups",
-          ),
-        }),
+      transformResponse: (response) => ({
+        items: parseApiResponseDataSafe<readonly DisplayGroup[]>(
+          response,
+          "getDeviceGroups",
+        ),
+      }),
       providesTags: (result) =>
         result
           ? [

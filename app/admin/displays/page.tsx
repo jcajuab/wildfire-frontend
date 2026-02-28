@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { IconPlus, IconSettings } from "@tabler/icons-react";
 import { toast } from "sonner";
 
@@ -95,7 +95,7 @@ export default function DisplaysPage(): ReactElement {
         name: group.name,
         colorIndex: group.colorIndex ?? 0,
       };
-    for (const displayId of group.displayIds) {
+      for (const displayId of group.displayIds) {
         const existing = groupsByDeviceId.get(displayId) ?? [];
         existing.push(displayGroup);
         groupsByDeviceId.set(displayId, existing);
@@ -315,18 +315,6 @@ export default function DisplaysPage(): ReactElement {
     () => sortedDisplays.slice((page - 1) * pageSize, page * pageSize),
     [sortedDisplays, page],
   );
-
-  useEffect(() => {
-    if (!isError) return;
-    toast.error(
-      getApiErrorMessage(
-        error,
-        error && "status" in error && error.status === 403
-          ? "You don’t have permission to view displays."
-          : "Failed to load displays.",
-      ),
-    );
-  }, [isError, error]);
 
   return (
     <DashboardPage.Root>

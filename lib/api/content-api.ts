@@ -168,7 +168,10 @@ export const contentApi = createApi({
         };
       },
       transformResponse: (response) =>
-        parseApiResponseDataSafe<BackendContent>(response, "replaceContentFile"),
+        parseApiResponseDataSafe<BackendContent>(
+          response,
+          "replaceContentFile",
+        ),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Content", id: "LIST" },
         { type: "Content", id },

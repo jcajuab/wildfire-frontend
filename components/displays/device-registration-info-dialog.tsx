@@ -40,6 +40,7 @@ export function DeviceRegistrationInfoDialog({
   const [pairingCodeExpiresAt, setPairingCodeExpiresAt] = useState<
     string | null
   >(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const canIssuePairingCode = useCan("displays:create");
 
   const [registerDevice, { isLoading: isSubmitting }] =
@@ -60,6 +61,9 @@ export function DeviceRegistrationInfoDialog({
   const handleOpenChange = useCallback(
     (next: boolean) => {
       if (!next) resetForm();
+      if (!next) {
+        setFormError(null);
+      }
       onOpenChange(next);
     },
     [onOpenChange, resetForm],
@@ -68,6 +72,7 @@ export function DeviceRegistrationInfoDialog({
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
+      setFormError(null);
       const trimmedIdentifier = identifier.trim();
       const trimmedName = name.trim();
       const trimmedLocation = location.trim();
@@ -84,7 +89,7 @@ export function DeviceRegistrationInfoDialog({
         !Number.isInteger(parsedScreenHeight) ||
         parsedScreenHeight <= 0
       ) {
-        toast.error(
+        setFormError(
           "Identifier, name, pairing code, and valid resolution are required.",
         );
         return;
@@ -127,13 +132,17 @@ export function DeviceRegistrationInfoDialog({
   );
 
   const handleGeneratePairingCode = useCallback(async () => {
+    setFormError(null);
     try {
       const result = await createPairingCode().unwrap();
       setPairingCode(result.code);
       setPairingCodeExpiresAt(result.expiresAt);
       toast.success("Pairing code generated.");
     } catch (err) {
-      const message = getApiErrorMessage(err, "Failed to generate pairing code.");
+      const message = getApiErrorMessage(
+        err,
+        "Failed to generate pairing code.",
+      );
       toast.error(message);
     }
   }, [createPairingCode]);
@@ -243,12 +252,15 @@ export function DeviceRegistrationInfoDialog({
               autoComplete="off"
               disabled={isSubmitting}
             />
-            {pairingCodeExpiresAt ? (
-              <p className="text-xs text-muted-foreground">
-                Expires at {new Date(pairingCodeExpiresAt).toLocaleTimeString()}
-              </p>
-            ) : null}
-          </div>
+              {pairingCodeExpiresAt ? (
+                <p className="text-xs text-muted-foreground">
+                  Expires at {new Date(pairingCodeExpiresAt).toLocaleTimeString()}
+                </p>
+              ) : null}
+              {formError ? (
+                <p className="text-xs text-destructive">{formError}</p>
+              ) : null}
+            </div>
           <DialogFooter className="sm:justify-end">
             <Button type="submit" disabled={!canSubmit}>
               {isSubmitting ? "Registering…" : "Register"}

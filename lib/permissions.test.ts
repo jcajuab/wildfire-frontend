@@ -16,8 +16,8 @@ describe("permissions.can", () => {
 
   test("returns false for malformed permissions", () => {
     expect(can("displays:read", ["broken" as never])).toBe(false);
-    expect(
-      can("broken" as never, ["displays:read"] as ["displays:read"]),
-    ).toBe(false);
+    expect(can("broken" as never, ["displays:read"] as ["displays:read"])).toBe(
+      false,
+    );
   });
 });

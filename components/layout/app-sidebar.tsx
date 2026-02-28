@@ -61,7 +61,10 @@ type SidebarStyleVariables = CSSProperties & {
   [key: `--${string}`]: string;
 };
 
-const NAV_ICON_BY_PATH: Record<string, ComponentType<{ className?: string }>> = {
+const NAV_ICON_BY_PATH: Record<
+  string,
+  ComponentType<{ className?: string }>
+> = {
   "/admin/displays": IconDeviceDesktop,
   "/admin/content": IconPhoto,
   "/admin/playlists": IconPlaylist,
@@ -88,7 +91,11 @@ function resolveNavItems(
     .filter((item): item is NavItem => item.icon !== undefined);
 }
 
-function isActiveRoute(pathname: string | null, href: string, match: "exact" | "prefix"): boolean {
+function isActiveRoute(
+  pathname: string | null,
+  href: string,
+  match: "exact" | "prefix",
+): boolean {
   if (!pathname) return false;
   return isPathMatch(pathname, href, match);
 }
@@ -159,7 +166,11 @@ export function AppSidebar(): ReactElement {
             <SidebarMenu className="gap-1">
               {isReadyNavigationSectionVisible(coreNavItems) &&
                 coreNavItems.map((item) => {
-                  const isActive = isActiveRoute(pathname, item.href, item.match);
+                  const isActive = isActiveRoute(
+                    pathname,
+                    item.href,
+                    item.match,
+                  );
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
@@ -189,7 +200,11 @@ export function AppSidebar(): ReactElement {
             <SidebarMenu className="gap-1">
               {isReadyNavigationSectionVisible(manageNavItems) &&
                 manageNavItems.map((item) => {
-                  const isActive = isActiveRoute(pathname, item.href, item.match);
+                  const isActive = isActiveRoute(
+                    pathname,
+                    item.href,
+                    item.match,
+                  );
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton

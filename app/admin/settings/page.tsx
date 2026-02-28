@@ -100,6 +100,12 @@ export default function SettingsPage(): ReactElement {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
+  const [profilePictureError, setProfilePictureError] = useState<string | null>(
+    null,
+  );
+  const [runtimeSettingsError, setRuntimeSettingsError] = useState<string | null>(
+    null,
+  );
   const [editingField, setEditingField] = useState<
     "firstName" | "lastName" | null
   >(null);
@@ -124,11 +130,10 @@ export default function SettingsPage(): ReactElement {
       })
       .catch((error) => {
         if (cancelled) return;
-        const message =
-          getApiErrorMessage(
-            error,
-            "Failed to load display runtime settings.",
-          );
+        const message = getApiErrorMessage(
+          error,
+          "Failed to load display runtime settings.",
+        );
         toast.error(message);
       })
       .finally(() => {
@@ -141,6 +146,7 @@ export default function SettingsPage(): ReactElement {
   }, [canReadRuntimeSettings]);
 
   const handleChangeProfilePicture = (): void => {
+    setProfilePictureError(null);
     profilePictureInputRef.current?.click();
   };
 
@@ -148,6 +154,7 @@ export default function SettingsPage(): ReactElement {
     event: ChangeEvent<HTMLInputElement>,
   ): Promise<void> => {
     const file = event.target.files?.[0];
+    setProfilePictureError(null);
     event.target.value = "";
     if (!file) return;
 
@@ -159,13 +166,13 @@ export default function SettingsPage(): ReactElement {
     ] as const;
     const maxBytes = 2 * 1024 * 1024; // 2 MB
     if (!allowedTypes.includes(file.type as (typeof allowedTypes)[number])) {
-      toast.error(
+      setProfilePictureError(
         "Use a JPEG, PNG, WebP or GIF image. Some image types from your device are not supported.",
       );
       return;
     }
     if (file.size > maxBytes) {
-      toast.error("Image must be 2 MB or smaller.");
+      setProfilePictureError("Image must be 2 MB or smaller.");
       return;
     }
 
@@ -175,8 +182,10 @@ export default function SettingsPage(): ReactElement {
       updateSession(response);
       toast.success("Profile picture updated.");
     } catch (err) {
-      const message =
-        getApiErrorMessage(err, "Failed to upload profile picture.");
+      const message = getApiErrorMessage(
+        err,
+        "Failed to upload profile picture.",
+      );
       toast.error(message);
     } finally {
       setIsAvatarUploading(false);
@@ -214,8 +223,7 @@ export default function SettingsPage(): ReactElement {
       setSavedFirstName(nextFirstName);
       setSavedLastName(nextLastName);
     } catch (err) {
-      const message =
-        getApiErrorMessage(err, "Failed to update profile.");
+      const message = getApiErrorMessage(err, "Failed to update profile.");
       toast.error(message);
     }
   };
@@ -231,8 +239,7 @@ export default function SettingsPage(): ReactElement {
       updateSession(response);
     } catch (err) {
       setTimezone(previousTimezone);
-      const message =
-        getApiErrorMessage(err, "Failed to update time zone.");
+      const message = getApiErrorMessage(err, "Failed to update time zone.");
       toast.error(message);
     } finally {
       setIsSavingTimezone(false);
@@ -271,8 +278,7 @@ export default function SettingsPage(): ReactElement {
       setNewPassword("");
       setConfirmPassword("");
     } catch (err) {
-      const message =
-        getApiErrorMessage(err, "Failed to update password.");
+      const message = getApiErrorMessage(err, "Failed to update password.");
       setPasswordError(
         message.toLowerCase().includes("current")
           ? "Current password is incorrect."
@@ -300,17 +306,19 @@ export default function SettingsPage(): ReactElement {
       await deleteCurrentUser(token);
       await logout();
     } catch (err) {
-      const message =
-        getApiErrorMessage(err, "Failed to delete account.");
+      const message = getApiErrorMessage(err, "Failed to delete account.");
       toast.error(message);
     }
   };
 
   const handleSaveRuntimeSettings = async (): Promise<void> => {
     if (!canUpdateRuntimeSettings) return;
+    setRuntimeSettingsError(null);
     const parsed = Number.parseInt(scrollPxPerSecond, 10);
     if (!Number.isInteger(parsed) || parsed < 1 || parsed > 200) {
-      toast.error("Auto-scroll speed must be an integer between 1 and 200.");
+      setRuntimeSettingsError(
+        "Auto-scroll speed must be an integer between 1 and 200.",
+      );
       return;
     }
     setIsSavingRuntimeSettings(true);
@@ -321,11 +329,10 @@ export default function SettingsPage(): ReactElement {
       setScrollPxPerSecond(String(result.scrollPxPerSecond));
       toast.success("Runtime auto-scroll setting updated.");
     } catch (error) {
-      const message =
-        getApiErrorMessage(
-          error,
-          "Failed to update runtime auto-scroll setting.",
-        );
+      const message = getApiErrorMessage(
+        error,
+        "Failed to update runtime auto-scroll setting.",
+      );
       toast.error(message);
     } finally {
       setIsSavingRuntimeSettings(false);
@@ -386,6 +393,11 @@ export default function SettingsPage(): ReactElement {
                   onChange={handleProfilePictureSelected}
                   className="hidden"
                 />
+                {profilePictureError ? (
+                  <p className="text-xs text-destructive">
+                    {profilePictureError}
+                  </p>
+                ) : null}
 
                 <div className="text-sm text-muted-foreground">First Name</div>
                 <div className="w-48">
@@ -512,7 +524,7 @@ export default function SettingsPage(): ReactElement {
                     <div className="text-sm text-muted-foreground">
                       Auto Scroll
                     </div>
-                    <div className="w-full">
+                  <div className="w-full">
                       <Input
                         id="runtime-scroll-speed"
                         type="number"
@@ -536,6 +548,11 @@ export default function SettingsPage(): ReactElement {
                           }
                         }}
                       />
+                      {runtimeSettingsError ? (
+                        <p className="text-xs text-destructive">
+                          {runtimeSettingsError}
+                        </p>
+                      ) : null}
                     </div>
                   </>
                 ) : null}

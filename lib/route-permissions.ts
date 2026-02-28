@@ -51,41 +51,40 @@ const CORE_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] = [
   },
 ];
 
-const MANAGE_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] = [
-  {
-    path: "/admin/users",
-    permission: "users:read",
-    title: "Users",
-    match: "exact",
-    section: "manage",
-  },
-  {
-    path: "/admin/roles",
-    permission: "roles:read",
-    title: "Roles",
-    match: "exact",
-    section: "manage",
-  },
-  {
-    path: "/admin/logs",
-    permission: "audit:read",
-    title: "Logs",
-    match: "exact",
-    section: "manage",
-  },
-  {
-    path: "/admin/settings",
-    permission: "settings:read",
-    title: "Settings",
-    match: "exact",
-    section: "manage",
-  },
-];
+const MANAGE_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
+  [
+    {
+      path: "/admin/users",
+      permission: "users:read",
+      title: "Users",
+      match: "exact",
+      section: "manage",
+    },
+    {
+      path: "/admin/roles",
+      permission: "roles:read",
+      title: "Roles",
+      match: "exact",
+      section: "manage",
+    },
+    {
+      path: "/admin/logs",
+      permission: "audit:read",
+      title: "Logs",
+      match: "exact",
+      section: "manage",
+    },
+    {
+      path: "/admin/settings",
+      permission: "settings:read",
+      title: "Settings",
+      match: "exact",
+      section: "manage",
+    },
+  ];
 
-export const DASHBOARD_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] = [
-  ...CORE_ROUTE_READ_ENTRIES,
-  ...MANAGE_ROUTE_READ_ENTRIES,
-];
+export const DASHBOARD_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
+  [...CORE_ROUTE_READ_ENTRIES, ...MANAGE_ROUTE_READ_ENTRIES];
 
 export const ROUTE_READ_PERMISSION_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
   DASHBOARD_ROUTE_READ_ENTRIES;
@@ -114,7 +113,9 @@ export const isPathMatch = (
     return currentPath === candidatePath;
   }
 
-  return currentPath === candidatePath || currentPath.startsWith(`${candidatePath}/`);
+  return (
+    currentPath === candidatePath || currentPath.startsWith(`${candidatePath}/`)
+  );
 };
 
 export const getRequiredReadPermission = (

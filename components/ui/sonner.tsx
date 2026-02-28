@@ -1,21 +1,45 @@
 "use client";
 
-import type { ReactElement } from "react";
-import { Toaster as SonnerToaster } from "sonner";
+import { useTheme } from "next-themes";
+import { Toaster as Sonner, type ToasterProps } from "sonner";
+import {
+  IconCircleCheck,
+  IconInfoCircle,
+  IconAlertTriangle,
+  IconAlertOctagon,
+  IconLoader,
+} from "@tabler/icons-react";
 
-/**
- * Global toast container. Renders at bottom-right by default.
- * Use `import { toast } from "sonner"` to show toasts (e.g. toast.error("Failed to remove user")).
- */
-export function Toaster(): ReactElement {
+const Toaster = ({ ...props }: ToasterProps) => {
+  const { theme = "system" } = useTheme();
+
   return (
-    <SonnerToaster
-      position="bottom-right"
+    <Sonner
+      theme={theme as ToasterProps["theme"]}
+      className="toaster group"
+      icons={{
+        success: <IconCircleCheck className="size-4" />,
+        info: <IconInfoCircle className="size-4" />,
+        warning: <IconAlertTriangle className="size-4" />,
+        error: <IconAlertOctagon className="size-4" />,
+        loading: <IconLoader className="size-4 animate-spin" />,
+      }}
+      style={
+        {
+          "--normal-bg": "var(--popover)",
+          "--normal-text": "var(--popover-foreground)",
+          "--normal-border": "var(--border)",
+          "--border-radius": "var(--radius)",
+        } as React.CSSProperties
+      }
       toastOptions={{
         classNames: {
-          error: "border-destructive/50 bg-destructive/10 text-destructive",
+          toast: "cn-toast",
         },
       }}
+      {...props}
     />
   );
-}
+};
+
+export { Toaster };

@@ -147,14 +147,13 @@ export default function DisplayRuntimePage() {
       if (disposed) {
         return;
       }
-      setErrorMessage(
-        error instanceof Error ? error.message : fallback,
-      );
+      setErrorMessage(error instanceof Error ? error.message : fallback);
     };
 
     const refreshManifest = async (): Promise<void> => {
       const payload = await api.fetchManifest();
-      const hasMaterialChange = payload.playlistVersion !== lastPlaylistVersionRef.current;
+      const hasMaterialChange =
+        payload.playlistVersion !== lastPlaylistVersionRef.current;
       setManifest(payload);
       setErrorMessage(null);
       if (hasMaterialChange) {

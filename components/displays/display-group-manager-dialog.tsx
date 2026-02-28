@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   type DisplayGroup,
   useCreateDeviceGroupMutation,
@@ -61,8 +62,10 @@ export function DisplayGroupManagerDialog({
   onGroupDeleted,
 }: DisplayGroupManagerDialogProps): ReactElement {
   const [createName, setCreateName] = useState("");
+  const [createNameError, setCreateNameError] = useState<string | null>(null);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [renameName, setRenameName] = useState("");
+  const [renameNameError, setRenameNameError] = useState<string | null>(null);
   const [deleteCandidate, setDeleteCandidate] = useState<DisplayGroup | null>(
     null,
   );
@@ -81,17 +84,20 @@ export function DisplayGroupManagerDialog({
   const startRename = useCallback((group: DisplayGroup) => {
     setEditingGroupId(group.id);
     setRenameName(group.name);
+    setRenameNameError(null);
   }, []);
 
   const cancelRename = useCallback(() => {
     setEditingGroupId(null);
     setRenameName("");
+    setRenameNameError(null);
   }, []);
 
   const createGroup = useCallback(async () => {
+    setCreateNameError(null);
     const nextName = collapseDisplayGroupWhitespace(createName);
     if (nextName.length === 0) {
-      toast.error("Group name is required.");
+      setCreateNameError("Group name is required.");
       return;
     }
 
@@ -100,7 +106,7 @@ export function DisplayGroupManagerDialog({
       (group) => toDisplayGroupKey(group.name) === nextKey,
     );
     if (existing) {
-      toast.info(`\"${existing.name}\" already exists.`);
+      setCreateNameError(`"${existing.name}" already exists.`);
       setCreateName("");
       return;
     }
@@ -113,17 +119,16 @@ export function DisplayGroupManagerDialog({
       setCreateName("");
       toast.success(`Created \"${nextName}\".`);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to create group.",
-      );
+      toast.error(getApiErrorMessage(error, "Failed to create group."));
     }
   }, [createName, createDeviceGroup, groups]);
 
   const saveRename = useCallback(
     async (group: DisplayGroup) => {
+      setRenameNameError(null);
       const nextName = collapseDisplayGroupWhitespace(renameName);
       if (nextName.length === 0) {
-        toast.error("Group name is required.");
+        setRenameNameError("Group name is required.");
         return;
       }
 
@@ -139,7 +144,7 @@ export function DisplayGroupManagerDialog({
           item.id !== group.id && toDisplayGroupKey(item.name) === nextKey,
       );
       if (conflict) {
-        toast.error(`\"${conflict.name}\" already exists.`);
+        setRenameNameError(`"${conflict.name}" already exists.`);
         return;
       }
 
@@ -156,9 +161,7 @@ export function DisplayGroupManagerDialog({
         cancelRename();
         toast.success(`Renamed group to \"${updated.name}\".`);
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to rename group.",
-        );
+        toast.error(getApiErrorMessage(error, "Failed to rename group."));
       }
     },
     [cancelRename, groups, onGroupRenamed, renameName, updateDeviceGroup],
@@ -175,16 +178,26 @@ export function DisplayGroupManagerDialog({
       toast.success(`Deleted \"${deleteCandidate.name}\".`);
       setDeleteCandidate(null);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete group.",
-      );
+      toast.error(getApiErrorMessage(error, "Failed to delete group."));
       throw error;
     }
   }, [deleteCandidate, deleteDeviceGroup, onGroupDeleted]);
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) {
+            setCreateName("");
+            setCreateNameError(null);
+            setEditingGroupId(null);
+            setRenameName("");
+            setRenameNameError(null);
+          }
+          onOpenChange(next);
+        }}
+      >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Manage Groups</DialogTitle>
@@ -210,6 +223,9 @@ export function DisplayGroupManagerDialog({
               Add
             </Button>
           </div>
+          {createNameError ? (
+            <p className="text-xs text-destructive">{createNameError}</p>
+          ) : null}
 
           <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
             {sortedGroups.length === 0 ? (
@@ -288,6 +304,11 @@ export function DisplayGroupManagerDialog({
                         </Button>
                       </>
                     )}
+                    {isEditing && renameNameError ? (
+                      <p className="mt-1 text-xs text-destructive">
+                        {renameNameError}
+                      </p>
+                    ) : null}
                   </div>
                 );
               })

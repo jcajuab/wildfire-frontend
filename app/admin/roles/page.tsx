@@ -114,6 +114,9 @@ export default function RolesPage(): ReactElement {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [deleteRequestReason, setDeleteRequestReason] = useState("");
+  const [deleteRequestError, setDeleteRequestError] = useState<string | null>(
+    null,
+  );
   const [isSubmittingDeleteRequest, setIsSubmittingDeleteRequest] =
     useState(false);
 
@@ -310,9 +313,7 @@ export default function RolesPage(): ReactElement {
           setDialogOpen(false);
         }
       } catch (err) {
-        toast.error(
-          getApiErrorMessage(err, "Something went wrong"),
-        );
+        toast.error(getApiErrorMessage(err, "Something went wrong"));
       }
     },
     [
@@ -330,12 +331,16 @@ export default function RolesPage(): ReactElement {
   const handleDeleteRequest = useCallback(
     (role: Role) => {
       if (!isRoot && pendingDeletionRoleIds.has(role.id)) {
-        toast.error(
+        setRoleToDelete(role);
+        setDeleteRequestReason("");
+        setDeleteRequestError(
           `A pending deletion request already exists for "${role.name}".`,
         );
+        setIsRequestDialogOpen(true);
         return;
       }
       setRoleToDelete(role);
+      setDeleteRequestError(null);
       if (isRoot) {
         setIsDeleteDialogOpen(true);
         return;
@@ -514,9 +519,7 @@ export default function RolesPage(): ReactElement {
               );
               setRoleToDelete(null);
             } catch (err) {
-              toast.error(
-                getApiErrorMessage(err, "Failed to delete role"),
-              );
+              toast.error(getApiErrorMessage(err, "Failed to delete role"));
               throw err;
             }
           }}
@@ -528,6 +531,7 @@ export default function RolesPage(): ReactElement {
         onOpenChange={(open) => {
           setIsRequestDialogOpen(open);
           if (!open) {
+            setDeleteRequestError(null);
             setDeleteRequestReason("");
             setRoleToDelete(null);
           }
@@ -543,7 +547,7 @@ export default function RolesPage(): ReactElement {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-1.5">
+            <div className="space-y-1.5">
             <Label htmlFor="role-delete-request-reason">Reason</Label>
             <Textarea
               id="role-delete-request-reason"
@@ -557,6 +561,9 @@ export default function RolesPage(): ReactElement {
               {trimmedDeleteRequestReason.length}/
               {ROLE_DELETION_REASON_MAX_LENGTH}
             </p>
+            {deleteRequestError ? (
+              <p className="text-xs text-destructive">{deleteRequestError}</p>
+            ) : null}
             {!isDeleteRequestReasonValid ? (
               <p className="text-destructive text-xs">
                 A reason is required to request role deletion.
@@ -593,10 +600,7 @@ export default function RolesPage(): ReactElement {
                   setRoleToDelete(null);
                 } catch (err) {
                   toast.error(
-                    getApiErrorMessage(
-                      err,
-                      "Failed to request role deletion",
-                    ),
+                    getApiErrorMessage(err, "Failed to request role deletion"),
                   );
                 } finally {
                   setIsSubmittingDeleteRequest(false);
