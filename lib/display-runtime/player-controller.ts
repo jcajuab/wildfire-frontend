@@ -1,4 +1,4 @@
-import type { RuntimeItemTiming } from "@/lib/device-runtime/overflow-timing";
+import type { RuntimeItemTiming } from "@/lib/display-runtime/overflow-timing";
 
 export interface PlayerTick {
   readonly index: number;

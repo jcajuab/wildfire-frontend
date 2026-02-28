@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { createPlayerController } from "@/lib/device-runtime/player-controller";
+import { createPlayerController } from "@/lib/display-runtime/player-controller";
 
 describe("player controller", () => {
   afterEach(() => {

@@ -268,12 +268,12 @@ export interface CreateInvitationResponse {
   readonly inviteUrl?: string;
 }
 
-export interface DeviceRuntimeSettingsResponse {
+export interface DisplayRuntimeSettingsResponse {
   readonly scrollPxPerSecond: number;
 }
 
 /** GET /settings/display-runtime. Requires settings:read permission. */
-export async function getDeviceRuntimeSettings(): Promise<DeviceRuntimeSettingsResponse> {
+export async function getDisplayRuntimeSettings(): Promise<DisplayRuntimeSettingsResponse> {
   const baseUrl = getBaseUrl();
   const response = await fetch(`${baseUrl}/settings/display-runtime`, {
     method: "GET",
@@ -282,13 +282,13 @@ export async function getDeviceRuntimeSettings(): Promise<DeviceRuntimeSettingsR
       ...getDevOnlyRequestHeaders(),
     },
   });
-  return parseApiPayload<DeviceRuntimeSettingsResponse>(response);
+  return parseApiPayload<DisplayRuntimeSettingsResponse>(response);
 }
 
 /** PATCH /settings/display-runtime. Requires settings:update permission. */
-export async function updateDeviceRuntimeSettings(payload: {
+export async function updateDisplayRuntimeSettings(payload: {
   scrollPxPerSecond: number;
-}): Promise<DeviceRuntimeSettingsResponse> {
+}): Promise<DisplayRuntimeSettingsResponse> {
   const baseUrl = getBaseUrl();
   const response = await fetch(`${baseUrl}/settings/display-runtime`, {
     method: "PATCH",
@@ -299,7 +299,7 @@ export async function updateDeviceRuntimeSettings(payload: {
     },
     body: JSON.stringify(payload),
   });
-  return parseApiPayload<DeviceRuntimeSettingsResponse>(response);
+  return parseApiPayload<DisplayRuntimeSettingsResponse>(response);
 }
 
 /** POST /auth/invitations. Requires users:create permission. */

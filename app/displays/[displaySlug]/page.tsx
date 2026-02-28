@@ -1,42 +1,30 @@
 "use client";
 
 import Image from "next/image";
-import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/base-query";
-import { createPlayerController } from "@/lib/device-runtime/player-controller";
+import { getBaseUrl } from "@/lib/api/base-query";
 import {
-  buildRuntimeTimings,
-  type RuntimeManifestItem,
-} from "@/lib/device-runtime/overflow-timing";
-import { PdfRenderer } from "@/lib/device-runtime/pdf-renderer";
-import { createDeviceSseClient } from "@/lib/device-runtime/sse-client";
-import { parseApiResponseData } from "@/lib/api/contracts";
-
-interface DeviceManifest {
-  readonly playlistId: string | null;
-  readonly playlistVersion: string;
-  readonly generatedAt: string;
-  readonly runtimeSettings: {
-    readonly scrollPxPerSecond: number;
-  };
-  readonly items: readonly RuntimeManifestItemWithContent[];
-}
-
-interface RuntimeManifestItemWithContent extends RuntimeManifestItem {
-  readonly content: RuntimeManifestItem["content"] & {
-    readonly id: string;
-    readonly downloadUrl: string;
-    readonly mimeType: string;
-  };
-}
-
-interface StreamTokenResponse {
-  readonly token: string;
-  readonly expiresAt: string;
-}
+  createAuthChallenge,
+  fetchSignedManifest,
+  postSignedHeartbeat,
+  verifyAuthChallenge,
+  type DisplayManifest,
+} from "@/lib/display-api/client";
+import { getStoredDisplayKeyPair, signText } from "@/lib/crypto/key-manager";
+import { createSignedHeaders } from "@/lib/crypto/request-signer";
+import {
+  type DisplayRegistrationRecord,
+  getDisplayRegistrationBySlug,
+} from "@/lib/display-identity/registration-store";
+import { createPlayerController } from "@/lib/display-runtime/player-controller";
+import { buildRuntimeTimings } from "@/lib/display-runtime/overflow-timing";
+import { PdfRenderer } from "@/lib/display-runtime/pdf-renderer";
+import { createDisplaySseClient } from "@/lib/display-runtime/sse-client";
 
 const POLL_MS = 60_000;
+const HEARTBEAT_MS = 30_000;
 const DEFAULT_SCROLL_PX_PER_SECOND = 24;
 
 const getViewport = () => ({
@@ -44,45 +32,25 @@ const getViewport = () => ({
   height: window.innerHeight,
 });
 
-function createDisplayRuntimeApi(input: {
-  baseUrl: string;
-  displayId: string;
-  headers: Record<string, string>;
-}) {
-  return {
-    async fetchManifest(): Promise<DeviceManifest> {
-      const response = await fetch(
-        `${input.baseUrl}/displays/${input.displayId}/manifest`,
-        { headers: input.headers },
-      );
-      if (!response.ok) {
-        throw new Error(`Manifest fetch failed (${response.status})`);
-      }
-      const payload = await response.json();
-      return parseApiResponseData<DeviceManifest>(payload);
-    },
-    async fetchStreamToken(): Promise<StreamTokenResponse> {
-      const response = await fetch(
-        `${input.baseUrl}/displays/${input.displayId}/stream-token`,
-        {
-          headers: input.headers,
-        },
-      );
-      if (!response.ok) {
-        throw new Error(`Stream token request failed (${response.status})`);
-      }
-      const payload = await response.json();
-      return parseApiResponseData<StreamTokenResponse>(payload);
-    },
-  };
-}
+const createChallengePayload = (input: {
+  challengeToken: string;
+  displaySlug: string;
+  keyId: string;
+}): string =>
+  ["CHALLENGE", input.challengeToken, input.displaySlug, input.keyId].join(
+    "\n",
+  );
 
 export default function DisplayRuntimePage() {
-  const params = useParams<{ displayId: string }>();
-  const searchParams = useSearchParams();
-  const displayId = params.displayId;
-  const apiKey = searchParams.get("apiKey") ?? "";
-  const [manifest, setManifest] = useState<DeviceManifest | null>(null);
+  const params = useParams<{ displaySlug: string }>();
+  const displaySlug = params.displaySlug;
+  const registration = useMemo<DisplayRegistrationRecord | null>(() => {
+    if (!displaySlug) {
+      return null;
+    }
+    return getDisplayRegistrationBySlug(displaySlug);
+  }, [displaySlug]);
+  const [manifest, setManifest] = useState<DisplayManifest | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [connectionState, setConnectionState] = useState<
     "connected" | "reconnecting" | "closed"
@@ -95,11 +63,11 @@ export default function DisplayRuntimePage() {
   >({});
 
   const lastPlaylistVersionRef = useRef<string | null>(null);
-
-  const baseUrl = getBaseUrl();
   const currentItem = manifest?.items[currentIndex] ?? null;
   const scrollPxPerSecond =
     manifest?.runtimeSettings.scrollPxPerSecond ?? DEFAULT_SCROLL_PX_PER_SECOND;
+  const baseUrl = getBaseUrl();
+  const staticConfigError = baseUrl ? null : "API URL is not configured.";
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -129,29 +97,21 @@ export default function DisplayRuntimePage() {
   const overflowExtraSeconds = currentTiming?.overflowExtraSeconds ?? 0;
 
   useEffect(() => {
-    if (!displayId || !apiKey || !baseUrl) {
+    if (!registration) {
       return;
     }
 
-    const commonHeaders = {
-      ...getDevOnlyRequestHeaders(),
-      "x-api-key": apiKey,
-    };
-    const api = createDisplayRuntimeApi({
-      baseUrl,
-      displayId,
-      headers: commonHeaders,
-    });
-    let disposed = false;
-    const setManifestError = (error: unknown, fallback: string) => {
-      if (disposed) {
-        return;
-      }
-      setErrorMessage(error instanceof Error ? error.message : fallback);
-    };
+    if (!baseUrl) {
+      return;
+    }
 
-    const refreshManifest = async (): Promise<void> => {
-      const payload = await api.fetchManifest();
+    let disposed = false;
+
+    const refreshManifest = async (privateKey: CryptoKey): Promise<void> => {
+      const payload = await fetchSignedManifest({
+        registration,
+        privateKey,
+      });
       const hasMaterialChange =
         payload.playlistVersion !== lastPlaylistVersionRef.current;
       setManifest(payload);
@@ -163,34 +123,109 @@ export default function DisplayRuntimePage() {
       lastPlaylistVersionRef.current = payload.playlistVersion;
     };
 
-    void refreshManifest().catch((error) => {
-      setManifestError(error, "Failed to load manifest");
-    });
+    const connectRuntime = async (): Promise<(() => void) | null> => {
+      const keyPair = await getStoredDisplayKeyPair(registration.keyAlias);
+      if (!keyPair) {
+        throw new Error(
+          "Display keypair is unavailable. Re-register this display from /displays/register.",
+        );
+      }
 
-    const sse = createDeviceSseClient({
-      streamUrl: `${baseUrl}/displays/${displayId}/stream`,
-      getToken: api.fetchStreamToken,
-      onStateChange: setConnectionState,
-      onEvent: () => {
-        setLastEventAt(new Date().toISOString());
-        void refreshManifest().catch((error) => {
-          setManifestError(error, "Failed to refresh manifest");
-        });
-      },
-    });
-
-    const pollTimer = setInterval(() => {
-      void refreshManifest().catch((error) => {
-        setManifestError(error, "Failed to poll manifest");
+      const challenge = await createAuthChallenge({
+        displaySlug: registration.displaySlug,
+        keyId: registration.keyId,
       });
-    }, POLL_MS);
+      const challengePayload = createChallengePayload({
+        challengeToken: challenge.challengeToken,
+        displaySlug: registration.displaySlug,
+        keyId: registration.keyId,
+      });
+      const challengeSignature = await signText(
+        keyPair.privateKey,
+        challengePayload,
+      );
+      await verifyAuthChallenge({
+        challengeToken: challenge.challengeToken,
+        displaySlug: registration.displaySlug,
+        keyId: registration.keyId,
+        signature: challengeSignature,
+      });
+
+      await refreshManifest(keyPair.privateKey);
+
+      const streamUrl = `${baseUrl}/display/${encodeURIComponent(
+        registration.displaySlug,
+      )}/stream`;
+
+      const sse = createDisplaySseClient({
+        streamUrl,
+        getHeaders: () =>
+          createSignedHeaders({
+            method: "GET",
+            url: streamUrl,
+            displaySlug: registration.displaySlug,
+            keyId: registration.keyId,
+            privateKey: keyPair.privateKey,
+            body: "",
+          }),
+        onStateChange: setConnectionState,
+        onEvent: () => {
+          setLastEventAt(new Date().toISOString());
+          void refreshManifest(keyPair.privateKey).catch((error) => {
+            setErrorMessage(
+              error instanceof Error
+                ? error.message
+                : "Failed to refresh manifest",
+            );
+          });
+        },
+      });
+
+      const pollTimer = setInterval(() => {
+        void refreshManifest(keyPair.privateKey).catch((error) => {
+          setErrorMessage(
+            error instanceof Error ? error.message : "Failed to poll manifest",
+          );
+        });
+      }, POLL_MS);
+
+      const heartbeatTimer = setInterval(() => {
+        void postSignedHeartbeat({
+          registration,
+          privateKey: keyPair.privateKey,
+        }).catch(() => {
+          // Heartbeat failures are non-fatal; manifest polling still runs.
+        });
+      }, HEARTBEAT_MS);
+
+      return () => {
+        clearInterval(pollTimer);
+        clearInterval(heartbeatTimer);
+        sse.close();
+      };
+    };
+
+    let cleanup: (() => void) | null = null;
+
+    void connectRuntime()
+      .then((fn) => {
+        if (disposed) {
+          fn?.();
+          return;
+        }
+        cleanup = fn;
+      })
+      .catch((error) => {
+        setErrorMessage(
+          error instanceof Error ? error.message : "Runtime startup failed",
+        );
+      });
 
     return () => {
       disposed = true;
-      clearInterval(pollTimer);
-      sse.close();
+      cleanup?.();
     };
-  }, [apiKey, baseUrl, displayId]);
+  }, [baseUrl, registration]);
 
   useEffect(() => {
     if (timings.length === 0) {
@@ -228,10 +263,15 @@ export default function DisplayRuntimePage() {
     };
   }, [currentItem, measuredHeightByItemId, overflowExtraSeconds, viewport]);
 
-  if (!baseUrl || !displayId || !apiKey) {
+  if (!registration) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-black text-white">
-        Runtime requires `displayId` route and `apiKey` query parameter.
+      <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-black px-4 text-white">
+        <p className="text-sm text-white/80">
+          This display slug is not registered on this display.
+        </p>
+        <Link className="underline" href="/displays/register">
+          Open /displays/register to complete registration
+        </Link>
       </main>
     );
   }
@@ -242,9 +282,9 @@ export default function DisplayRuntimePage() {
         {connectionState}
         {lastEventAt ? ` • ${new Date(lastEventAt).toLocaleTimeString()}` : ""}
       </div>
-      {errorMessage ? (
+      {staticConfigError || errorMessage ? (
         <div className="absolute right-2 top-2 z-10 rounded bg-destructive/85 px-2 py-1 text-xs text-destructive-foreground">
-          {errorMessage}
+          {staticConfigError ?? errorMessage}
         </div>
       ) : null}
 
@@ -262,7 +302,7 @@ export default function DisplayRuntimePage() {
           playsInline
         />
       ) : currentItem.content.type === "IMAGE" ? (
-        <div className="h-screen w-screen overflow-hidden select-none pointer-events-none">
+        <div className="pointer-events-none h-screen w-screen overflow-hidden select-none">
           <Image
             key={currentItem.id}
             src={currentItem.content.downloadUrl}

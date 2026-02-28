@@ -4,10 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   IconCalendarEvent,
-  IconDeviceDesktop,
+  IconPhoto,
   IconDotsVertical,
   IconList,
-  IconPhoto,
   IconPlaylist,
   IconLogout,
   IconSettings,
@@ -65,7 +64,7 @@ const NAV_ICON_BY_PATH: Record<
   string,
   ComponentType<{ className?: string }>
 > = {
-  "/admin/displays": IconDeviceDesktop,
+  "/admin/displays": IconPhoto,
   "/admin/content": IconPhoto,
   "/admin/playlists": IconPlaylist,
   "/admin/schedules": IconCalendarEvent,

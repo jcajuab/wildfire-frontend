@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
-  getDeviceRuntimeSettings,
-  updateDeviceRuntimeSettings,
+  getDisplayRuntimeSettings,
+  updateDisplayRuntimeSettings,
 } from "@/lib/api-client";
 
 describe("runtime settings api", () => {
@@ -29,7 +29,7 @@ describe("runtime settings api", () => {
       });
     }) as typeof fetch;
 
-    const result = await getDeviceRuntimeSettings();
+    const result = await getDisplayRuntimeSettings();
     expect(result.scrollPxPerSecond).toBe(24);
   });
 
@@ -45,7 +45,9 @@ describe("runtime settings api", () => {
       });
     }) as typeof fetch;
 
-    const result = await updateDeviceRuntimeSettings({ scrollPxPerSecond: 36 });
+    const result = await updateDisplayRuntimeSettings({
+      scrollPxPerSecond: 36,
+    });
     expect(method).toBe("PATCH");
     expect(body).toContain('"scrollPxPerSecond":36');
     expect(result.scrollPxPerSecond).toBe(36);

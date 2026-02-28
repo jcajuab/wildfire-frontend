@@ -13,7 +13,7 @@ import { EditScheduleDialog } from "@/components/schedules/edit-schedule-dialog"
 import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog";
 import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { useGetDevicesQuery } from "@/lib/api/devices-api";
+import { useGetDisplaysQuery } from "@/lib/api/displays-api";
 import {
   useCreateScheduleMutation,
   useDeleteScheduleMutation,
@@ -42,7 +42,7 @@ export default function SchedulesPage(): ReactElement {
   const canDeleteSchedule = useCan("schedules:delete");
   const canReadDisplays = useCan("displays:read");
   const canReadPlaylists = useCan("playlists:read");
-  const { data: devicesData } = useGetDevicesQuery(undefined, {
+  const { data: displaysData } = useGetDisplaysQuery(undefined, {
     skip: !canReadDisplays,
   });
   const { data: schedulesData } = useListSchedulesQuery();
@@ -62,8 +62,8 @@ export default function SchedulesPage(): ReactElement {
     [playlistsData?.items],
   );
   const availableDisplays: readonly { id: string; name: string }[] = useMemo(
-    () => devicesData?.items?.map((d) => ({ id: d.id, name: d.name })) ?? [],
-    [devicesData?.items],
+    () => displaysData?.items?.map((d) => ({ id: d.id, name: d.name })) ?? [],
+    [displaysData?.items],
   );
 
   // Calendar state
@@ -141,9 +141,7 @@ export default function SchedulesPage(): ReactElement {
         await deleteSchedule(schedule.id).unwrap();
         toast.success("Schedule deleted.");
       } catch (err) {
-        toast.error(
-          getApiErrorMessage(err, "Failed to delete schedule."),
-        );
+        toast.error(getApiErrorMessage(err, "Failed to delete schedule."));
       }
     },
     [deleteSchedule],
@@ -157,10 +155,7 @@ export default function SchedulesPage(): ReactElement {
         ).unwrap();
         toast.success("Schedule updated.");
       } catch (err) {
-        const message = getApiErrorMessage(
-          err,
-          "Failed to update schedule.",
-        );
+        const message = getApiErrorMessage(err, "Failed to update schedule.");
         toast.error(message);
         throw err;
       }

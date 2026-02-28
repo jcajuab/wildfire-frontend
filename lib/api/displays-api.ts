@@ -1,11 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQuery } from "@/lib/api/base-query";
 import {
-  baseQuery,
-  getBaseUrl,
-  getDevOnlyRequestHeaders,
-} from "@/lib/api/base-query";
-import {
-  extractApiError,
   parseApiListResponseSafe,
   parseApiResponseDataSafe,
   parseApiListResponse,
@@ -14,6 +9,7 @@ import {
 /** Backend display shape (matches GET /displays and GET /displays/:id). */
 export interface Display {
   readonly id: string;
+  readonly displaySlug?: string;
   readonly identifier: string;
   readonly displayFingerprint?: string | null;
   readonly name: string;
@@ -63,7 +59,7 @@ export interface DisplayGroupsListResponse {
   readonly items: readonly DisplayGroup[];
 }
 
-export interface DevicePairingCodeResponse {
+export interface DisplayRegistrationCodeResponse {
   readonly code: string;
   readonly expiresAt: string;
 }
@@ -81,12 +77,12 @@ const buildResponseParseError = (scope: string, error: unknown) => ({
   },
 });
 
-export const devicesApi = createApi({
-  reducerPath: "devicesApi",
+export const displaysApi = createApi({
+  reducerPath: "displaysApi",
   baseQuery,
   tagTypes: ["Display", "DisplayGroup"],
   endpoints: (build) => ({
-    getDevices: build.query<DisplaysListResponse, void>({
+    getDisplays: build.query<DisplaysListResponse, void>({
       async queryFn(_arg, _api, _extraOptions, baseQueryFn) {
         const pageSize = PAGE_SIZE;
         let page = 1;
@@ -114,13 +110,13 @@ export const devicesApi = createApi({
           try {
             response = parseApiListResponseSafe<Display>(
               result.data,
-              "getDevices",
+              "getDisplays",
             );
           } catch (error) {
             return {
               error: {
                 status: 502,
-                data: buildResponseParseError("getDevices", error),
+                data: buildResponseParseError("getDisplays", error),
               },
             };
           }
@@ -154,31 +150,31 @@ export const devicesApi = createApi({
             ]
           : [{ type: "Display", id: "LIST" }],
     }),
-    getDevice: build.query<Display, string>({
+    getDisplay: build.query<Display, string>({
       query: (id) => `displays/${id}`,
       transformResponse: (response) =>
-        parseApiResponseDataSafe<Display>(response, "getDevice"),
+        parseApiResponseDataSafe<Display>(response, "getDisplay"),
       providesTags: (_result, _error, id) => [{ type: "Display", id }],
     }),
-    updateDevice: build.mutation<Display, UpdateDisplayRequest>({
+    updateDisplay: build.mutation<Display, UpdateDisplayRequest>({
       query: ({ id, ...body }) => ({
         url: `displays/${id}`,
         method: "PATCH",
         body,
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<Display>(response, "updateDevice"),
+        parseApiResponseDataSafe<Display>(response, "updateDisplay"),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Display", id: "LIST" },
         { type: "Display", id },
       ],
     }),
-    getDeviceGroups: build.query<DisplayGroupsListResponse, void>({
+    getDisplayGroups: build.query<DisplayGroupsListResponse, void>({
       query: () => "displays/groups",
       transformResponse: (response) => ({
         items: parseApiResponseDataSafe<readonly DisplayGroup[]>(
           response,
-          "getDeviceGroups",
+          "getDisplayGroups",
         ),
       }),
       providesTags: (result) =>
@@ -192,7 +188,7 @@ export const devicesApi = createApi({
             ]
           : [{ type: "DisplayGroup", id: "LIST" }],
     }),
-    createDeviceGroup: build.mutation<
+    createDisplayGroup: build.mutation<
       DisplayGroup,
       { name: string; colorIndex?: number }
     >({
@@ -202,10 +198,10 @@ export const devicesApi = createApi({
         body,
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<DisplayGroup>(response, "createDeviceGroup"),
+        parseApiResponseDataSafe<DisplayGroup>(response, "createDisplayGroup"),
       invalidatesTags: [{ type: "DisplayGroup", id: "LIST" }],
     }),
-    updateDeviceGroup: build.mutation<
+    updateDisplayGroup: build.mutation<
       DisplayGroup,
       { groupId: string; name: string; colorIndex?: number }
     >({
@@ -215,14 +211,14 @@ export const devicesApi = createApi({
         body: { name, colorIndex },
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<DisplayGroup>(response, "updateDeviceGroup"),
+        parseApiResponseDataSafe<DisplayGroup>(response, "updateDisplayGroup"),
       invalidatesTags: (_result, _error, { groupId }) => [
         { type: "DisplayGroup", id: "LIST" },
         { type: "DisplayGroup", id: groupId },
         { type: "Display", id: "LIST" },
       ],
     }),
-    deleteDeviceGroup: build.mutation<void, { groupId: string }>({
+    deleteDisplayGroup: build.mutation<void, { groupId: string }>({
       query: ({ groupId }) => ({
         url: `displays/groups/${groupId}`,
         method: "DELETE",
@@ -233,7 +229,7 @@ export const devicesApi = createApi({
         { type: "Display", id: "LIST" },
       ],
     }),
-    setDeviceGroups: build.mutation<
+    setDisplayGroups: build.mutation<
       void,
       { displayId: string; groupIds: string[] }
     >({
@@ -248,7 +244,7 @@ export const devicesApi = createApi({
         { type: "DisplayGroup", id: "LIST" },
       ],
     }),
-    requestDeviceRefresh: build.mutation<void, { displayId: string }>({
+    requestDisplayRefresh: build.mutation<void, { displayId: string }>({
       query: ({ displayId }) => ({
         url: `displays/${displayId}/refresh`,
         method: "POST",
@@ -258,123 +254,33 @@ export const devicesApi = createApi({
         { type: "Display", id: displayId },
       ],
     }),
-    createPairingCode: build.mutation<DevicePairingCodeResponse, void>({
+    createRegistrationCode: build.mutation<
+      DisplayRegistrationCodeResponse,
+      void
+    >({
       query: () => ({
-        url: "displays/pairing-codes",
+        url: "displays/registration-codes",
         method: "POST",
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<DevicePairingCodeResponse>(
+        parseApiResponseDataSafe<DisplayRegistrationCodeResponse>(
           response,
-          "createPairingCode",
+          "createRegistrationCode",
         ),
-    }),
-    registerDevice: build.mutation<
-      Display,
-      {
-        pairingCode: string;
-        identifier: string;
-        displayFingerprint?: string | null;
-        name: string;
-        location?: string | null;
-        screenWidth: number;
-        screenHeight: number;
-      }
-    >({
-      queryFn: async (arg) => {
-        const baseUrl = getBaseUrl();
-        if (!baseUrl) {
-          return {
-            error: {
-              status: 0,
-              data: "API URL not configured (NEXT_PUBLIC_API_URL).",
-            },
-          };
-        }
-        const body: {
-          pairingCode: string;
-          identifier: string;
-          displayFingerprint?: string;
-          name: string;
-          location?: string;
-          screenWidth: number;
-          screenHeight: number;
-        } = {
-          pairingCode: arg.pairingCode,
-          identifier: arg.identifier,
-          name: arg.name,
-          screenWidth: arg.screenWidth,
-          screenHeight: arg.screenHeight,
-        };
-        if (arg.displayFingerprint != null && arg.displayFingerprint !== "") {
-          body.displayFingerprint = arg.displayFingerprint;
-        }
-        if (arg.location != null && arg.location !== "") {
-          body.location = arg.location;
-        }
-        const response = await fetch(`${baseUrl}/displays`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...getDevOnlyRequestHeaders(),
-          },
-          body: JSON.stringify(body),
-        });
-        let data: unknown;
-        try {
-          data = await response.json();
-        } catch {
-          data = undefined;
-        }
-
-        if (response.ok) {
-          try {
-            return {
-              data: parseApiResponseDataSafe<Display>(data, "registerDevice"),
-            };
-          } catch {
-            return {
-              error: {
-                status: 500,
-                data: "Invalid register display response format.",
-              },
-            };
-          }
-        }
-
-        const parsedError = extractApiError(data);
-        const message =
-          parsedError?.error.message ?? "Failed to register display.";
-        const normalizedError = parsedError ?? {
-          error: {
-            code: "register_display_error",
-            message,
-          },
-        };
-
-        return {
-          error: {
-            status: response.status,
-            data: normalizedError,
-          },
-        };
-      },
-      invalidatesTags: [{ type: "Display", id: "LIST" }],
     }),
   }),
 });
 
 export const {
-  useGetDevicesQuery,
-  useGetDeviceQuery,
-  useLazyGetDeviceQuery,
-  useUpdateDeviceMutation,
-  useGetDeviceGroupsQuery,
-  useCreateDeviceGroupMutation,
-  useUpdateDeviceGroupMutation,
-  useDeleteDeviceGroupMutation,
-  useSetDeviceGroupsMutation,
-  useRequestDeviceRefreshMutation,
-  useCreatePairingCodeMutation,
-  useRegisterDeviceMutation,
-} = devicesApi;
+  useGetDisplaysQuery,
+  useGetDisplayQuery,
+  useLazyGetDisplayQuery,
+  useUpdateDisplayMutation,
+  useGetDisplayGroupsQuery,
+  useCreateDisplayGroupMutation,
+  useUpdateDisplayGroupMutation,
+  useDeleteDisplayGroupMutation,
+  useSetDisplayGroupsMutation,
+  useRequestDisplayRefreshMutation,
+  useCreateRegistrationCodeMutation,
+} = displaysApi;

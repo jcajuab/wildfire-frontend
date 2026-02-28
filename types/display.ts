@@ -19,7 +19,8 @@ export interface DisplayGroup {
 
 export interface Display {
   readonly id: string;
-  /** Backend device identifier (for registration/debugging). */
+  readonly displaySlug?: string;
+  /** Backend display identifier (for registration/debugging). */
   readonly identifier?: string;
   readonly name: string;
   readonly status: DisplayStatus;

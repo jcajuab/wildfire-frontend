@@ -609,9 +609,7 @@ export default function UsersPage(): ReactElement {
               governance process.
             </p>
             {policyVersionError ? (
-              <p className="text-xs text-destructive">
-                {policyVersionError}
-              </p>
+              <p className="text-xs text-destructive">{policyVersionError}</p>
             ) : null}
           </div>
 

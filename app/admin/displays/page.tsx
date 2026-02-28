@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { Pagination } from "@/components/content/pagination";
-import { DeviceRegistrationInfoDialog } from "@/components/displays/device-registration-info-dialog";
+import { DisplayRegistrationInfoDialog } from "@/components/displays/display-registration-info-dialog";
 import { DisplayFilterPopover } from "@/components/displays/display-filter-popover";
 import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";
 import { DisplayGrid } from "@/components/displays/display-grid";
@@ -22,17 +22,17 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
-  useCreateDeviceGroupMutation,
-  useGetDeviceGroupsQuery,
-  useGetDevicesQuery,
-  useRequestDeviceRefreshMutation,
-  useSetDeviceGroupsMutation,
-  useUpdateDeviceMutation,
-} from "@/lib/api/devices-api";
+  useCreateDisplayGroupMutation,
+  useGetDisplayGroupsQuery,
+  useGetDisplaysQuery,
+  useRequestDisplayRefreshMutation,
+  useSetDisplayGroupsMutation,
+  useUpdateDisplayMutation,
+} from "@/lib/api/displays-api";
 import {
   mapDisplayApiToDisplay,
   withDisplayGroups,
-} from "@/lib/map-device-to-display";
+} from "@/lib/map-display-to-display";
 import {
   collapseDisplayGroupWhitespace,
   dedupeDisplayGroupNames,
@@ -53,8 +53,17 @@ const DISPLAY_SORT_VALUES = ["alphabetical", "status", "location"] as const;
 
 export default function DisplaysPage(): ReactElement {
   const canUpdateDisplay = useCan("displays:update");
-  const { data: devicesData, isLoading, isError, error } = useGetDevicesQuery();
-  const { data: deviceGroupsData } = useGetDeviceGroupsQuery();
+  const {
+    data: displaysData,
+    isLoading,
+    isError,
+    error,
+  } = useGetDisplaysQuery(undefined, {
+    pollingInterval: 5000,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
+  const { data: displayGroupsData } = useGetDisplayGroupsQuery();
   const loadErrorMessage = getApiErrorMessage(
     error,
     "Failed to load displays. Check your connection and permissions.",
@@ -80,34 +89,34 @@ export default function DisplaysPage(): ReactElement {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
   const [selectedDisplay, setSelectedDisplay] = useState<Display | null>(null);
-  const [updateDevice] = useUpdateDeviceMutation();
-  const [setDeviceGroups] = useSetDeviceGroupsMutation();
-  const [createDeviceGroup] = useCreateDeviceGroupMutation();
-  const [requestDeviceRefresh] = useRequestDeviceRefreshMutation();
+  const [updateDisplay] = useUpdateDisplayMutation();
+  const [setDisplayGroups] = useSetDisplayGroupsMutation();
+  const [createDisplayGroup] = useCreateDisplayGroupMutation();
+  const [requestDisplayRefresh] = useRequestDisplayRefreshMutation();
 
   const displays: Display[] = useMemo(() => {
-    const groupsByDeviceId = new Map<
+    const groupsByDisplayId = new Map<
       string,
       Array<{ name: string; colorIndex: number }>
     >();
-    for (const group of deviceGroupsData?.items ?? []) {
+    for (const group of displayGroupsData?.items ?? []) {
       const displayGroup = {
         name: group.name,
         colorIndex: group.colorIndex ?? 0,
       };
       for (const displayId of group.displayIds) {
-        const existing = groupsByDeviceId.get(displayId) ?? [];
+        const existing = groupsByDisplayId.get(displayId) ?? [];
         existing.push(displayGroup);
-        groupsByDeviceId.set(displayId, existing);
+        groupsByDisplayId.set(displayId, existing);
       }
     }
-    return (devicesData?.items ?? []).map((device) =>
+    return (displaysData?.items ?? []).map((display) =>
       withDisplayGroups(
-        mapDisplayApiToDisplay(device),
-        groupsByDeviceId.get(device.id) ?? [],
+        mapDisplayApiToDisplay(display),
+        groupsByDisplayId.get(display.id) ?? [],
       ),
     );
-  }, [devicesData?.items, deviceGroupsData?.items]);
+  }, [displaysData?.items, displayGroupsData?.items]);
   const pageSize = 20;
 
   const handleStatusFilterChange = useCallback(
@@ -147,7 +156,7 @@ export default function DisplaysPage(): ReactElement {
   const handleRefreshPage = useCallback(
     async (display: Display) => {
       try {
-        await requestDeviceRefresh({ displayId: display.id }).unwrap();
+        await requestDisplayRefresh({ displayId: display.id }).unwrap();
         toast.success(
           `"${display.name}" will refresh on its next display poll.`,
         );
@@ -157,7 +166,7 @@ export default function DisplaysPage(): ReactElement {
         );
       }
     },
-    [requestDeviceRefresh],
+    [requestDisplayRefresh],
   );
 
   // Signature required by DisplayCard; this opens edit from the dashboard.
@@ -188,7 +197,7 @@ export default function DisplaysPage(): ReactElement {
           : null;
 
       try {
-        await updateDevice({
+        await updateDisplay({
           id: display.id,
           name: display.name,
           location: display.location,
@@ -212,7 +221,7 @@ export default function DisplaysPage(): ReactElement {
       }
 
       try {
-        const workingGroups = [...(deviceGroupsData?.items ?? [])];
+        const workingGroups = [...(displayGroupsData?.items ?? [])];
         let nextColorIndex = getNextDisplayGroupColorIndex(workingGroups);
         const existingByKey = new Map<string, string>();
         for (const group of workingGroups) {
@@ -237,7 +246,7 @@ export default function DisplaysPage(): ReactElement {
             continue;
           }
 
-          const created = await createDeviceGroup({
+          const created = await createDisplayGroup({
             name: normalizedName,
             colorIndex: nextColorIndex,
           }).unwrap();
@@ -248,7 +257,7 @@ export default function DisplaysPage(): ReactElement {
           nextColorIndex = getNextDisplayGroupColorIndex(workingGroups);
         }
 
-        await setDeviceGroups({
+        await setDisplayGroups({
           displayId: display.id,
           groupIds: [...nextGroupIds],
         }).unwrap();
@@ -265,7 +274,7 @@ export default function DisplaysPage(): ReactElement {
       toast.success(`Updated "${display.name}".`);
       return true;
     },
-    [updateDevice, deviceGroupsData, createDeviceGroup, setDeviceGroups],
+    [updateDisplay, displayGroupsData, createDisplayGroup, setDisplayGroups],
   );
 
   const filteredDisplays = useMemo(
@@ -395,7 +404,7 @@ export default function DisplaysPage(): ReactElement {
         </DashboardPage.Footer>
       </DashboardPage.Body>
 
-      <DeviceRegistrationInfoDialog
+      <DisplayRegistrationInfoDialog
         open={isAddInfoDialogOpen}
         onOpenChange={setIsAddInfoDialogOpen}
       />
@@ -416,7 +425,7 @@ export default function DisplaysPage(): ReactElement {
 
       <EditDisplayDialog
         display={selectedDisplay}
-        existingGroups={deviceGroupsData?.items ?? []}
+        existingGroups={displayGroupsData?.items ?? []}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSave={handleSaveDisplay}
@@ -426,7 +435,7 @@ export default function DisplaysPage(): ReactElement {
       <DisplayGroupManagerDialog
         open={isGroupManagerOpen}
         onOpenChange={setIsGroupManagerOpen}
-        groups={deviceGroupsData?.items ?? []}
+        groups={displayGroupsData?.items ?? []}
       />
     </DashboardPage.Root>
   );

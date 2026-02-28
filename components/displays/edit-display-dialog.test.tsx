@@ -5,7 +5,7 @@ import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
 import type { Display } from "@/types/display";
 
 const makeDisplay = (overrides?: Partial<Display>): Display => ({
-  id: "device-1",
+  id: "display-1",
   identifier: "AA:BB:CC:DD:EE:FF",
   name: "Lobby Display",
   status: "READY",

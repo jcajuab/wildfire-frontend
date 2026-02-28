@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useMemo } from "react";
-import { IconDeviceTv } from "@tabler/icons-react";
+import { IconPhoto } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import type { CalendarView, Schedule, ScheduleDisplay } from "@/types/schedule";
@@ -280,7 +280,7 @@ function EmptyResourcesState(): ReactElement {
     <EmptyState
       title="No displays available for scheduling"
       description="Add displays first, then assign schedules to resources."
-      icon={<IconDeviceTv className="size-7" aria-hidden="true" />}
+      icon={<IconPhoto className="size-7" aria-hidden="true" />}
     />
   );
 }

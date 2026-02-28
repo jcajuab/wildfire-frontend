@@ -302,10 +302,7 @@ export const rbacApi = createApi({
         body: { roleIds, policyVersion },
       }),
       transformResponse: (response) =>
-        parseApiListResponseDataSafe<RbacRole>(
-          response,
-          "setUserRoles",
-        ),
+        parseApiListResponseDataSafe<RbacRole>(response, "setUserRoles"),
       invalidatesTags: (_result, _error, { userId }) => [
         { type: "User", id: userId },
         { type: "User", id: "LIST" },

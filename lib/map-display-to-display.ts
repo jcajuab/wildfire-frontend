@@ -1,4 +1,4 @@
-import type { Display as DisplayApi } from "@/lib/api/devices-api";
+import type { Display as DisplayApi } from "@/lib/api/displays-api";
 import type { Display, DisplayGroup } from "@/types/display";
 
 export function mapDisplayApiToDisplay(display: DisplayApi): Display {
@@ -8,6 +8,7 @@ export function mapDisplayApiToDisplay(display: DisplayApi): Display {
       : "Not available";
   return {
     id: display.id,
+    displaySlug: display.displaySlug,
     identifier: display.identifier,
     name: display.name,
     location: display.location ?? "",

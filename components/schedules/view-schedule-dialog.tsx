@@ -6,7 +6,7 @@ import {
   IconCalendarEvent,
   IconCalendar,
   IconClock,
-  IconDeviceDesktop,
+  IconPhoto,
   IconPencil,
   IconTrash,
   IconFlag,
@@ -114,7 +114,7 @@ export function ViewScheduleDialog({
               <div className="flex flex-wrap gap-1">
                 {schedule.targetDisplays.map((display) => (
                   <Badge key={display.id} variant="outline" className="gap-1">
-                    <IconDeviceDesktop className="size-3" />
+                    <IconPhoto className="size-3" />
                     {display.name}
                   </Badge>
                 ))}

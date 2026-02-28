@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconDeviceDesktop, IconMapPin, IconPencil } from "@tabler/icons-react";
+import { IconPhoto, IconMapPin, IconPencil } from "@tabler/icons-react";
 
 import {
   Dialog,
@@ -40,7 +40,7 @@ export function ViewDisplayDialog({
         </DialogHeader>
         <div className="mt-4 flex flex-col gap-4">
           <div className="flex items-start gap-2">
-            <IconDeviceDesktop className="size-4 text-muted-foreground" />
+            <IconPhoto className="size-4 text-muted-foreground" />
             <div className="flex flex-col">
               <span className="font-medium">{display.name}</span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">

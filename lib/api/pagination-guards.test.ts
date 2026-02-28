@@ -18,9 +18,9 @@ describe("paginated aggregate query guards", () => {
     }
   });
 
-  test("devices query stops at guard limit and returns error", async () => {
+  test("displays query stops at guard limit and returns error", async () => {
     process.env.NEXT_PUBLIC_API_URL = "http://example.test";
-    const { devicesApi } = await import("@/lib/api/devices-api");
+    const { displaysApi } = await import("@/lib/api/displays-api");
     global.fetch = vi.fn(async () => {
       return new Response(
         JSON.stringify({
@@ -58,14 +58,14 @@ describe("paginated aggregate query guards", () => {
 
     const store = configureStore({
       reducer: {
-        [devicesApi.reducerPath]: devicesApi.reducer,
+        [displaysApi.reducerPath]: displaysApi.reducer,
       },
       middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(devicesApi.middleware),
+        getDefaultMiddleware().concat(displaysApi.middleware),
     });
 
     const result = await store.dispatch(
-      devicesApi.endpoints.getDevices.initiate(),
+      displaysApi.endpoints.getDisplays.initiate(),
     );
     expect("error" in result).toBe(true);
     if ("error" in result) {
@@ -88,7 +88,7 @@ describe("paginated aggregate query guards", () => {
               seriesId: crypto.randomUUID(),
               name: "Daily",
               playlistId: crypto.randomUUID(),
-              deviceId: crypto.randomUUID(),
+              displayId: crypto.randomUUID(),
               startDate: "2025-01-01",
               endDate: "2025-12-31",
               startTime: "00:00",
@@ -99,7 +99,7 @@ describe("paginated aggregate query guards", () => {
               createdAt: "2025-01-01T00:00:00.000Z",
               updatedAt: "2025-01-01T00:00:00.000Z",
               playlist: { id: crypto.randomUUID(), name: "Playlist" },
-              device: { id: crypto.randomUUID(), name: "Device" },
+              display: { id: crypto.randomUUID(), name: "Display" },
             },
           ],
           meta: {

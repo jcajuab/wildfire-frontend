@@ -5,25 +5,25 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";
 
 const {
-  useCreateDeviceGroupMutationMock,
-  useUpdateDeviceGroupMutationMock,
-  useDeleteDeviceGroupMutationMock,
+  useCreateDisplayGroupMutationMock,
+  useUpdateDisplayGroupMutationMock,
+  useDeleteDisplayGroupMutationMock,
 } = vi.hoisted(() => ({
-  useCreateDeviceGroupMutationMock: vi.fn(),
-  useUpdateDeviceGroupMutationMock: vi.fn(),
-  useDeleteDeviceGroupMutationMock: vi.fn(),
+  useCreateDisplayGroupMutationMock: vi.fn(),
+  useUpdateDisplayGroupMutationMock: vi.fn(),
+  useDeleteDisplayGroupMutationMock: vi.fn(),
 }));
 
-vi.mock("@/lib/api/devices-api", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/api/devices-api")>(
-    "@/lib/api/devices-api",
+vi.mock("@/lib/api/displays-api", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/api/displays-api")>(
+    "@/lib/api/displays-api",
   );
 
   return {
     ...actual,
-    useCreateDeviceGroupMutation: useCreateDeviceGroupMutationMock,
-    useUpdateDeviceGroupMutation: useUpdateDeviceGroupMutationMock,
-    useDeleteDeviceGroupMutation: useDeleteDeviceGroupMutationMock,
+    useCreateDisplayGroupMutation: useCreateDisplayGroupMutationMock,
+    useUpdateDisplayGroupMutation: useUpdateDisplayGroupMutationMock,
+    useDeleteDisplayGroupMutation: useDeleteDisplayGroupMutationMock,
   };
 });
 
@@ -44,15 +44,15 @@ describe("DisplayGroupManagerDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    useCreateDeviceGroupMutationMock.mockReturnValue([
+    useCreateDisplayGroupMutationMock.mockReturnValue([
       vi.fn(() => ({ unwrap: vi.fn().mockResolvedValue(makeGroup()) })),
       { isLoading: false },
     ]);
-    useUpdateDeviceGroupMutationMock.mockReturnValue([
+    useUpdateDisplayGroupMutationMock.mockReturnValue([
       vi.fn(() => ({ unwrap: vi.fn().mockResolvedValue(makeGroup()) })),
       { isLoading: false },
     ]);
-    useDeleteDeviceGroupMutationMock.mockReturnValue([
+    useDeleteDisplayGroupMutationMock.mockReturnValue([
       vi.fn(() => ({ unwrap: vi.fn().mockResolvedValue(undefined) })),
       { isLoading: false },
     ]);
@@ -63,9 +63,9 @@ describe("DisplayGroupManagerDialog", () => {
     const unwrapCreate = vi
       .fn()
       .mockResolvedValue(makeGroup({ name: "Main Hall" }));
-    const createDeviceGroup = vi.fn(() => ({ unwrap: unwrapCreate }));
-    useCreateDeviceGroupMutationMock.mockReturnValue([
-      createDeviceGroup,
+    const createDisplayGroup = vi.fn(() => ({ unwrap: unwrapCreate }));
+    useCreateDisplayGroupMutationMock.mockReturnValue([
+      createDisplayGroup,
       { isLoading: false },
     ]);
 
@@ -81,7 +81,7 @@ describe("DisplayGroupManagerDialog", () => {
     await user.click(screen.getByRole("button", { name: "Add" }));
 
     await waitFor(() => {
-      expect(createDeviceGroup).toHaveBeenCalledWith({
+      expect(createDisplayGroup).toHaveBeenCalledWith({
         name: "Main Hall",
         colorIndex: 0,
       });
@@ -97,9 +97,9 @@ describe("DisplayGroupManagerDialog", () => {
         name: "Main Hall",
       }),
     );
-    const updateDeviceGroup = vi.fn(() => ({ unwrap: unwrapRename }));
-    useUpdateDeviceGroupMutationMock.mockReturnValue([
-      updateDeviceGroup,
+    const updateDisplayGroup = vi.fn(() => ({ unwrap: unwrapRename }));
+    useUpdateDisplayGroupMutationMock.mockReturnValue([
+      updateDisplayGroup,
       { isLoading: false },
     ]);
 
@@ -119,7 +119,7 @@ describe("DisplayGroupManagerDialog", () => {
     await user.click(screen.getByRole("button", { name: "Save rename" }));
 
     await waitFor(() => {
-      expect(updateDeviceGroup).toHaveBeenCalledWith({
+      expect(updateDisplayGroup).toHaveBeenCalledWith({
         groupId: "group-1",
         name: "Main Hall",
       });
@@ -135,9 +135,9 @@ describe("DisplayGroupManagerDialog", () => {
     const user = userEvent.setup();
     const onGroupDeleted = vi.fn();
     const unwrapDelete = vi.fn().mockResolvedValue(undefined);
-    const deleteDeviceGroup = vi.fn(() => ({ unwrap: unwrapDelete }));
-    useDeleteDeviceGroupMutationMock.mockReturnValue([
-      deleteDeviceGroup,
+    const deleteDisplayGroup = vi.fn(() => ({ unwrap: unwrapDelete }));
+    useDeleteDisplayGroupMutationMock.mockReturnValue([
+      deleteDisplayGroup,
       { isLoading: false },
     ]);
 
@@ -156,7 +156,7 @@ describe("DisplayGroupManagerDialog", () => {
     await user.click(screen.getByRole("button", { name: "Delete group" }));
 
     await waitFor(() => {
-      expect(deleteDeviceGroup).toHaveBeenCalledWith({ groupId: "group-1" });
+      expect(deleteDisplayGroup).toHaveBeenCalledWith({ groupId: "group-1" });
       expect(onGroupDeleted).toHaveBeenCalledWith({
         groupId: "group-1",
         name: "Lobby",

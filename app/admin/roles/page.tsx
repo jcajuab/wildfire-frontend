@@ -547,7 +547,7 @@ export default function RolesPage(): ReactElement {
             </DialogDescription>
           </DialogHeader>
 
-            <div className="space-y-1.5">
+          <div className="space-y-1.5">
             <Label htmlFor="role-delete-request-reason">Reason</Label>
             <Textarea
               id="role-delete-request-reason"

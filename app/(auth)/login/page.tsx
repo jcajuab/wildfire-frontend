@@ -91,6 +91,7 @@ export default function LoginPage(): ReactElement {
             id="email"
             type="email"
             placeholder="Admin"
+            name="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="h-11 rounded-lg bg-white text-sm"
@@ -113,6 +114,7 @@ export default function LoginPage(): ReactElement {
             id="password"
             type="password"
             placeholder="********"
+            name="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="h-11 rounded-lg bg-white text-sm"

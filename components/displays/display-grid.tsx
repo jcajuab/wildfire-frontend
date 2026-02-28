@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconDeviceTv } from "@tabler/icons-react";
+import { IconPhoto } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { DisplayCard } from "./display-card";
@@ -29,7 +29,7 @@ export function DisplayGrid({
       <EmptyState
         title="No displays found"
         description="Displays register themselves automatically. Use Add Display to see registration instructions for your Raspberry Pi displays."
-        icon={<IconDeviceTv className="size-7" aria-hidden="true" />}
+        icon={<IconPhoto className="size-7" aria-hidden="true" />}
       />
     );
   }

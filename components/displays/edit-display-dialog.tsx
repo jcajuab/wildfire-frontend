@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
-import { IconDeviceFloppy, IconSettings } from "@tabler/icons-react";
+import { IconSettings } from "@tabler/icons-react";
 
 import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";
 import { DisplayGroupsCombobox } from "@/components/displays/display-groups-combobox";
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { DisplayGroup } from "@/lib/api/devices-api";
+import type { DisplayGroup } from "@/lib/api/displays-api";
 import {
   dedupeDisplayGroupNames,
   toDisplayGroupKey,
@@ -350,7 +350,7 @@ function EditDisplayForm({
           disabled={!canSave}
           className="flex-1"
         >
-          <IconDeviceFloppy className="size-4" />
+          <IconSettings className="size-4" />
           {isSaving ? "Saving..." : "Save"}
         </Button>
       </DialogFooter>

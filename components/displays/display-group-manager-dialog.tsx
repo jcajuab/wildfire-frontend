@@ -25,10 +25,10 @@ import { Input } from "@/components/ui/input";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   type DisplayGroup,
-  useCreateDeviceGroupMutation,
-  useDeleteDeviceGroupMutation,
-  useUpdateDeviceGroupMutation,
-} from "@/lib/api/devices-api";
+  useCreateDisplayGroupMutation,
+  useDeleteDisplayGroupMutation,
+  useUpdateDisplayGroupMutation,
+} from "@/lib/api/displays-api";
 import {
   collapseDisplayGroupWhitespace,
   toDisplayGroupKey,
@@ -69,12 +69,12 @@ export function DisplayGroupManagerDialog({
   const [deleteCandidate, setDeleteCandidate] = useState<DisplayGroup | null>(
     null,
   );
-  const [createDeviceGroup, { isLoading: isCreating }] =
-    useCreateDeviceGroupMutation();
-  const [updateDeviceGroup, { isLoading: isRenaming }] =
-    useUpdateDeviceGroupMutation();
-  const [deleteDeviceGroup, { isLoading: isDeleting }] =
-    useDeleteDeviceGroupMutation();
+  const [createDisplayGroup, { isLoading: isCreating }] =
+    useCreateDisplayGroupMutation();
+  const [updateDisplayGroup, { isLoading: isRenaming }] =
+    useUpdateDisplayGroupMutation();
+  const [deleteDisplayGroup, { isLoading: isDeleting }] =
+    useDeleteDisplayGroupMutation();
 
   const sortedGroups = useMemo(
     () => [...groups].sort((a, b) => a.name.localeCompare(b.name)),
@@ -112,7 +112,7 @@ export function DisplayGroupManagerDialog({
     }
 
     try {
-      await createDeviceGroup({
+      await createDisplayGroup({
         name: nextName,
         colorIndex: getNextDisplayGroupColorIndex(groups),
       }).unwrap();
@@ -121,7 +121,7 @@ export function DisplayGroupManagerDialog({
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Failed to create group."));
     }
-  }, [createName, createDeviceGroup, groups]);
+  }, [createName, createDisplayGroup, groups]);
 
   const saveRename = useCallback(
     async (group: DisplayGroup) => {
@@ -149,7 +149,7 @@ export function DisplayGroupManagerDialog({
       }
 
       try {
-        const updated = await updateDeviceGroup({
+        const updated = await updateDisplayGroup({
           groupId: group.id,
           name: nextName,
         }).unwrap();
@@ -164,13 +164,13 @@ export function DisplayGroupManagerDialog({
         toast.error(getApiErrorMessage(error, "Failed to rename group."));
       }
     },
-    [cancelRename, groups, onGroupRenamed, renameName, updateDeviceGroup],
+    [cancelRename, groups, onGroupRenamed, renameName, updateDisplayGroup],
   );
 
   const confirmDelete = useCallback(async () => {
     if (!deleteCandidate) return;
     try {
-      await deleteDeviceGroup({ groupId: deleteCandidate.id }).unwrap();
+      await deleteDisplayGroup({ groupId: deleteCandidate.id }).unwrap();
       onGroupDeleted?.({
         groupId: deleteCandidate.id,
         name: deleteCandidate.name,
@@ -181,7 +181,7 @@ export function DisplayGroupManagerDialog({
       toast.error(getApiErrorMessage(error, "Failed to delete group."));
       throw error;
     }
-  }, [deleteCandidate, deleteDeviceGroup, onGroupDeleted]);
+  }, [deleteCandidate, deleteDisplayGroup, onGroupDeleted]);
 
   return (
     <>

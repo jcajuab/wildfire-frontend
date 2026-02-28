@@ -32,7 +32,7 @@ export default function ForgotPasswordPage(): ReactElement {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col items-start gap-2">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Forgot password?
         </h1>
@@ -66,6 +66,7 @@ export default function ForgotPasswordPage(): ReactElement {
             id="email"
             type="email"
             placeholder="admin@example.com"
+            name="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             className="h-11 rounded-lg bg-white text-sm"

@@ -63,7 +63,7 @@ function ResetPasswordPageBody(): ReactElement {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col items-start gap-2">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Reset password
         </h1>
@@ -95,6 +95,7 @@ function ResetPasswordPageBody(): ReactElement {
             id="newPassword"
             type="password"
             value={newPassword}
+            name="newPassword"
             onChange={(event) => setNewPassword(event.target.value)}
             className="h-11 rounded-lg bg-white text-sm"
             autoComplete="new-password"
@@ -108,6 +109,7 @@ function ResetPasswordPageBody(): ReactElement {
             id="confirmPassword"
             type="password"
             value={confirmPassword}
+            name="confirmPassword"
             onChange={(event) => setConfirmPassword(event.target.value)}
             className="h-11 rounded-lg bg-white text-sm"
             autoComplete="new-password"

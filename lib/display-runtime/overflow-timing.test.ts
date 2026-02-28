@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   buildRuntimeTimings,
   computeOverflowExtraSeconds,
-} from "@/lib/device-runtime/overflow-timing";
+} from "@/lib/display-runtime/overflow-timing";
 
 describe("overflow timing", () => {
   test("adds extra duration for overflowing image content", () => {

@@ -5,7 +5,7 @@ import { useState, useCallback } from "react";
 import {
   IconCheck,
   IconChevronRight,
-  IconDeviceDesktop,
+  IconPhoto,
   IconMapPin,
   IconWifi,
   IconSettings,
@@ -26,7 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { DisplayGroupsCombobox } from "@/components/displays/display-groups-combobox";
 import { getGroupBadgeStyles } from "@/lib/display-group-colors";
-import type { DisplayGroup } from "@/lib/api/devices-api";
+import type { DisplayGroup } from "@/lib/api/displays-api";
 import type { Display, DisplayOutput } from "@/types/display";
 
 type WizardStep = 1 | 2 | 3 | 4;
@@ -42,7 +42,7 @@ interface WizardData {
   ipAddress: string;
   username: string;
   password: string;
-  isNewDevice: boolean;
+  isNewDisplay: boolean;
   selectedOutput: string;
   selectedResolution: string;
   displayName: string;
@@ -55,7 +55,7 @@ const initialWizardData: WizardData = {
   ipAddress: "",
   username: "pi",
   password: "",
-  isNewDevice: false,
+  isNewDisplay: false,
   selectedOutput: "",
   selectedResolution: "",
   displayName: "",
@@ -143,7 +143,7 @@ export function AddDisplayDialog({
       if (step === 1 && data.ipAddress) {
         setData((prev) => ({
           ...prev,
-          isNewDevice: true,
+          isNewDisplay: true,
         }));
       }
       setStep((prev) => (prev + 1) as WizardStep);
@@ -180,7 +180,7 @@ export function AddDisplayDialog({
       case 1:
         return (
           data.ipAddress.length > 0 &&
-          (!data.isNewDevice ||
+          (!data.isNewDisplay ||
             (data.username.length > 0 && data.password.length > 0))
         );
       case 2:
@@ -225,13 +225,13 @@ export function AddDisplayDialog({
                     setData((prev) => ({
                       ...prev,
                       ipAddress: e.target.value,
-                      isNewDevice: e.target.value.length > 0,
+                      isNewDisplay: e.target.value.length > 0,
                     }))
                   }
                 />
               </div>
 
-              {data.isNewDevice && (
+              {data.isNewDisplay && (
                 <>
                   <div className="flex flex-col gap-1 rounded-md bg-muted/50 p-3">
                     <p className="text-sm font-medium">New Display Detected</p>
@@ -278,7 +278,7 @@ export function AddDisplayDialog({
           {step === 2 && (
             <>
               <div className="flex items-center gap-2 text-sm font-medium">
-                <IconDeviceDesktop className="size-4" />
+                <IconPhoto className="size-4" />
                 Select Display Output
               </div>
 
@@ -386,7 +386,7 @@ export function AddDisplayDialog({
 
               <div className="flex flex-col gap-3 rounded-lg border p-4">
                 <div className="flex items-start gap-2">
-                  <IconDeviceDesktop className="mt-0.5 size-4 text-muted-foreground" />
+                  <IconPhoto className="mt-0.5 size-4 text-muted-foreground" />
                   <div className="flex flex-col">
                     <span className="font-medium">{data.displayName}</span>
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">

@@ -30,9 +30,9 @@ import { useAuth } from "@/context/auth-context";
 import {
   changePassword,
   deleteCurrentUser,
-  getDeviceRuntimeSettings,
+  getDisplayRuntimeSettings,
   updateCurrentUserProfile,
-  updateDeviceRuntimeSettings,
+  updateDisplayRuntimeSettings,
   uploadAvatar,
 } from "@/lib/api-client";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
@@ -103,9 +103,9 @@ export default function SettingsPage(): ReactElement {
   const [profilePictureError, setProfilePictureError] = useState<string | null>(
     null,
   );
-  const [runtimeSettingsError, setRuntimeSettingsError] = useState<string | null>(
-    null,
-  );
+  const [runtimeSettingsError, setRuntimeSettingsError] = useState<
+    string | null
+  >(null);
   const [editingField, setEditingField] = useState<
     "firstName" | "lastName" | null
   >(null);
@@ -123,7 +123,7 @@ export default function SettingsPage(): ReactElement {
     if (!canReadRuntimeSettings) return;
     let cancelled = false;
     setIsLoadingRuntimeSettings(true);
-    void getDeviceRuntimeSettings()
+    void getDisplayRuntimeSettings()
       .then((result) => {
         if (cancelled) return;
         setScrollPxPerSecond(String(result.scrollPxPerSecond));
@@ -167,7 +167,7 @@ export default function SettingsPage(): ReactElement {
     const maxBytes = 2 * 1024 * 1024; // 2 MB
     if (!allowedTypes.includes(file.type as (typeof allowedTypes)[number])) {
       setProfilePictureError(
-        "Use a JPEG, PNG, WebP or GIF image. Some image types from your device are not supported.",
+        "Use a JPEG, PNG, WebP or GIF image. Some image types from your display are not supported.",
       );
       return;
     }
@@ -323,7 +323,7 @@ export default function SettingsPage(): ReactElement {
     }
     setIsSavingRuntimeSettings(true);
     try {
-      const result = await updateDeviceRuntimeSettings({
+      const result = await updateDisplayRuntimeSettings({
         scrollPxPerSecond: parsed,
       });
       setScrollPxPerSecond(String(result.scrollPxPerSecond));
@@ -524,7 +524,7 @@ export default function SettingsPage(): ReactElement {
                     <div className="text-sm text-muted-foreground">
                       Auto Scroll
                     </div>
-                  <div className="w-full">
+                    <div className="w-full">
                       <Input
                         id="runtime-scroll-speed"
                         type="number"
@@ -572,7 +572,7 @@ export default function SettingsPage(): ReactElement {
                       Log out this session
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      End your current session on this device.
+                      End your current session on this display.
                     </p>
                   </div>
                   <Button

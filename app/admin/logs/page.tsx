@@ -36,7 +36,7 @@ import {
   exportAuditEventsCsv,
   useListAuditEventsQuery,
 } from "@/lib/api/audit-api";
-import { useGetDevicesQuery } from "@/lib/api/devices-api";
+import { useGetDisplaysQuery } from "@/lib/api/displays-api";
 import { useGetUsersQuery } from "@/lib/api/rbac-api";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
@@ -154,7 +154,7 @@ export default function LogsPage(): ReactElement {
   const { data: users = [] } = useGetUsersQuery(undefined, {
     skip: !canReadUsers,
   });
-  const { data: devicesData } = useGetDevicesQuery(undefined, {
+  const { data: displaysData } = useGetDisplaysQuery(undefined, {
     skip: !canReadDisplays,
   });
 
@@ -164,7 +164,7 @@ export default function LogsPage(): ReactElement {
       users.map((u) => [u.id, u.avatarUrl ?? null]),
     );
     const displayMap = new Map(
-      (devicesData?.items ?? []).map((d) => [d.id, d.name || d.identifier]),
+      (displaysData?.items ?? []).map((d) => [d.id, d.name || d.identifier]),
     );
     const getActorName = formatActorDisplay(userMap, displayMap);
     const getActorAvatarUrlFn = getActorAvatarUrl(avatarUrlByUserId);
@@ -174,7 +174,7 @@ export default function LogsPage(): ReactElement {
         getActorAvatarUrl: getActorAvatarUrlFn,
       }),
     );
-  }, [data?.items, users, devicesData?.items]);
+  }, [data?.items, users, displaysData?.items]);
 
   const total = data?.total ?? 0;
 

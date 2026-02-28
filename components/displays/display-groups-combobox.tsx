@@ -20,7 +20,7 @@ import {
   dedupeDisplayGroupNames,
   toDisplayGroupKey,
 } from "@/lib/display-group-normalization";
-import type { DisplayGroup } from "@/lib/api/devices-api";
+import type { DisplayGroup } from "@/lib/api/displays-api";
 
 export interface DisplayGroupsComboboxProps {
   readonly id?: string;

@@ -77,7 +77,7 @@ function AcceptInvitePageBody(): ReactElement {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col items-start gap-2">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Accept invitation
         </h1>
@@ -111,6 +111,7 @@ function AcceptInvitePageBody(): ReactElement {
             id="token"
             type="text"
             value={token}
+            name="token"
             onChange={(event) => setToken(event.target.value)}
             className="h-11 rounded-lg bg-white text-sm"
             required
@@ -123,6 +124,7 @@ function AcceptInvitePageBody(): ReactElement {
             id="name"
             type="text"
             value={name}
+            name="name"
             onChange={(event) => setName(event.target.value)}
             className="h-11 rounded-lg bg-white text-sm"
             placeholder="Your name"
@@ -135,6 +137,7 @@ function AcceptInvitePageBody(): ReactElement {
             id="password"
             type="password"
             value={password}
+            name="password"
             onChange={(event) => setPassword(event.target.value)}
             className="h-11 rounded-lg bg-white text-sm"
             autoComplete="new-password"
@@ -148,6 +151,7 @@ function AcceptInvitePageBody(): ReactElement {
             id="confirmPassword"
             type="password"
             value={confirmPassword}
+            name="confirmPassword"
             onChange={(event) => setConfirmPassword(event.target.value)}
             className="h-11 rounded-lg bg-white text-sm"
             autoComplete="new-password"

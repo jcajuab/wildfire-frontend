@@ -13,7 +13,7 @@ const makeFormData = (): ScheduleFormData => ({
   startTime: "08:00",
   endTime: "17:00",
   playlistId: "playlist-1",
-  targetDisplayIds: ["device-1"],
+  targetDisplayIds: ["display-1"],
   priority: 10,
   isActive: true,
 });
@@ -25,7 +25,7 @@ describe("schedule-mapper", () => {
         id: "schedule-1",
         name: "Week 1",
         playlistId: "playlist-1",
-        displayId: "device-1",
+        displayId: "display-1",
         startDate: "2026-01-01",
         endDate: "2026-01-31",
         startTime: "08:00",
@@ -35,13 +35,13 @@ describe("schedule-mapper", () => {
         createdAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-01-01T00:00:00.000Z",
         playlist: { id: "playlist-1", name: "Morning" },
-        display: { id: "device-1", name: "Lobby" },
+        display: { id: "display-1", name: "Lobby" },
       },
     ]);
 
     expect(schedules).toHaveLength(1);
     expect(schedules[0]?.id).toBe("schedule-1");
-    expect(schedules[0]?.targetDisplays[0]?.id).toBe("device-1");
+    expect(schedules[0]?.targetDisplays[0]?.id).toBe("display-1");
     expect(schedules[0]?.playlist.name).toBe("Morning");
   });
 
@@ -53,7 +53,7 @@ describe("schedule-mapper", () => {
     expect(createPayload).toMatchObject({
       name: "January Campaign",
       playlistId: "playlist-1",
-      displayId: "device-1",
+      displayId: "display-1",
       startTime: "08:00",
       endTime: "17:00",
       priority: 10,
