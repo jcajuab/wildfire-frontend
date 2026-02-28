@@ -52,6 +52,49 @@ export function formatPermissionReadableLabel(permission: {
   }
 }
 
+function formatPermissionResource(resource: string): string {
+  if (resource === "*") return "all resources";
+
+  switch (resource.toLowerCase()) {
+    case "audit":
+      return "audit logs";
+    default:
+      return resource.toLowerCase();
+  }
+}
+
+/**
+ * Friendly permission description for role assignment tooltips.
+ */
+export function formatPermissionTooltipDescription(permission: {
+  readonly resource: string;
+  readonly action: string;
+}): string {
+  const action = permission.action.toLowerCase();
+  const resource = formatPermissionResource(permission.resource);
+
+  if (permission.resource === "*" && action === "*") {
+    return "Allows users with this role to manage all resources.";
+  }
+
+  switch (action) {
+    case "read":
+      return `Allows users with this role to view ${resource}.`;
+    case "download":
+      return `Allows users with this role to download ${resource}.`;
+    case "create":
+      return `Allows users with this role to create ${resource}.`;
+    case "update":
+      return `Allows users with this role to edit ${resource}.`;
+    case "delete":
+      return `Allows users with this role to delete ${resource}.`;
+    case "*":
+      return `Allows users with this role to manage ${resource}.`;
+    default:
+      return `Allows users with this role to ${action} ${resource}.`;
+  }
+}
+
 /**
  * Short identifier for tooltips (e.g. "content:read").
  */
