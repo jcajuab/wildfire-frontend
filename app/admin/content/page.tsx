@@ -51,7 +51,7 @@ import {
   useLazyGetContentFileUrlQuery,
 } from "@/lib/api/content-api";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
-import { formatContentStatus } from "@/lib/formatters";
+import { formatContentStatus, formatFileSize } from "@/lib/formatters";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import type { TypeFilter } from "@/components/content/content-filter-popover";
 import type { StatusFilter } from "@/components/content/content-status-tabs";
@@ -312,7 +312,7 @@ function PreviewContentDialog({
           </p>
           <p>
             <span className="text-muted-foreground">Size:</span>{" "}
-            {content.fileSize.toLocaleString()} bytes
+            {formatFileSize(content.fileSize)}
           </p>
           <p>
             <span className="text-muted-foreground">Status:</span>{" "}
