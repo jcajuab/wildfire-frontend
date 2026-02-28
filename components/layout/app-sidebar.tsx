@@ -72,7 +72,6 @@ const NAV_ICON_BY_PATH: Record<
   "/admin/users": IconUsers,
   "/admin/roles": IconShield,
   "/admin/logs": IconList,
-  "/admin/settings": IconSettings,
 };
 
 function resolveNavItems(
@@ -123,7 +122,6 @@ export function AppSidebar(): ReactElement {
       ? resolveNavItems(getRoutesBySection("manage"), can)
       : [];
   }, [can, isInitialized]);
-
   const canAccessSettings = isInitialized && can("settings:read");
   const displayName = user?.name ?? "User";
   const displayEmail = user?.email ?? "";
