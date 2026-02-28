@@ -96,7 +96,7 @@ export const DisplayCard = memo(function DisplayCard({
     : 0;
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
+    <div className="flex h-full flex-col gap-3 rounded-lg border bg-card p-4">
       {/* Header row */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col gap-1">
@@ -225,7 +225,7 @@ export const DisplayCard = memo(function DisplayCard({
       </div>
 
       {/* Display info */}
-      <div className="grid grid-cols-2 gap-4 border-t pt-3">
+      <div className="mt-auto grid grid-cols-2 gap-4 border-t pt-3">
         <div className="flex flex-col gap-0.5">
           <p className="text-overline">Display Output</p>
           <p className="text-sm font-medium">{display.displayOutput}</p>
