@@ -8,7 +8,7 @@ import { IconShieldLock } from "@tabler/icons-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
-import { ROUTE_READ_PERMISSION_MAP } from "@/lib/route-permissions";
+import { getRequiredReadPermission } from "@/lib/route-permissions";
 
 interface PageReadGuardProps {
   readonly children: ReactNode;
@@ -20,12 +20,17 @@ interface PageReadGuardProps {
  */
 export function PageReadGuard({ children }: PageReadGuardProps): ReactElement {
   const pathname = usePathname();
-  const { can } = useAuth();
+  const { can, isInitialized } = useAuth();
 
-  const requiredPermission = ROUTE_READ_PERMISSION_MAP[pathname ?? ""];
-  const hasAccess = requiredPermission === undefined || can(requiredPermission);
+  if (!isInitialized) {
+    return <>{children}</>;
+  }
 
-  if (!hasAccess && requiredPermission !== undefined) {
+  const requiredPermission = getRequiredReadPermission(pathname ?? "");
+  const hasAccess =
+    requiredPermission === null ? true : can(requiredPermission);
+
+  if (!hasAccess && requiredPermission !== null) {
     return (
       <div className="flex flex-1 items-center justify-center p-8">
         <EmptyState

@@ -4,12 +4,14 @@ import type { FormEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthApiError, resetPassword } from "@/lib/api-client";
 
 export default function ResetPasswordPage(): ReactElement {
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
@@ -19,16 +21,14 @@ export default function ResetPasswordPage(): ReactElement {
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const queryToken = params.get("token");
-    if (queryToken && queryToken.trim().length > 0) {
+    const queryToken = searchParams.get("token")?.trim();
+    if (queryToken) {
       setToken(queryToken);
       return;
     }
     router.replace("/forgot-password");
     setToken("");
-  }, [router]);
+  }, [router, searchParams]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
@@ -81,7 +81,7 @@ export default function ResetPasswordPage(): ReactElement {
 
         {isSubmitted ? (
           <p
-            className="status-success-muted rounded-lg px-3 py-2 text-sm"
+            className="rounded-lg bg-[var(--success-muted)] px-3 py-2 text-sm text-[var(--success-foreground)]"
             role="status"
           >
             Password reset complete. You can now sign in.

@@ -76,7 +76,7 @@ const normalizeTimezone = (value?: string | null): string =>
     : (legacyTimezoneMap[value] ?? value);
 
 export default function SettingsPage(): ReactElement {
-  const { user, logout, updateSession } = useAuth();
+  const { user, token, logout, updateSession } = useAuth();
   const profilePictureInputRef = useRef<HTMLInputElement>(null);
   const [firstName, setFirstName] = useState(
     user?.name?.split(/\s+/)[0] ?? "Admin",
@@ -169,7 +169,7 @@ export default function SettingsPage(): ReactElement {
 
     setIsAvatarUploading(true);
     try {
-      const response = await uploadAvatar(undefined, file);
+      const response = await uploadAvatar(token, file);
       updateSession(response);
       toast.success("Profile picture updated.");
     } catch (err) {
@@ -207,7 +207,7 @@ export default function SettingsPage(): ReactElement {
       .filter((part) => part.length > 0)
       .join(" ");
     try {
-      const response = await updateCurrentUserProfile(undefined, {
+      const response = await updateCurrentUserProfile(token, {
         name,
       });
       updateSession(response);
@@ -225,7 +225,7 @@ export default function SettingsPage(): ReactElement {
     setTimezone(nextTimezone);
     setIsSavingTimezone(true);
     try {
-      const response = await updateCurrentUserProfile(undefined, {
+      const response = await updateCurrentUserProfile(token, {
         timezone: nextTimezone || null,
       });
       updateSession(response);
@@ -261,7 +261,7 @@ export default function SettingsPage(): ReactElement {
     }
 
     try {
-      await changePassword(undefined, {
+      await changePassword(token, {
         currentPassword,
         newPassword,
       });
@@ -297,7 +297,7 @@ export default function SettingsPage(): ReactElement {
 
   const handleDeleteAccountConfirm = async (): Promise<void> => {
     try {
-      await deleteCurrentUser();
+      await deleteCurrentUser(token);
       await logout();
     } catch (err) {
       const message =

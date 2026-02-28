@@ -30,6 +30,11 @@ interface RuntimeManifestItemWithContent extends RuntimeManifestItem {
   };
 }
 
+interface StreamTokenResponse {
+  readonly token: string;
+  readonly expiresAt: string;
+}
+
 const POLL_MS = 60_000;
 const DEFAULT_SCROLL_PX_PER_SECOND = 24;
 
@@ -37,6 +42,37 @@ const getViewport = () => ({
   width: window.innerWidth,
   height: window.innerHeight,
 });
+
+function createDisplayRuntimeApi(input: {
+  baseUrl: string;
+  displayId: string;
+  headers: Record<string, string>;
+}) {
+  return {
+    async fetchManifest(): Promise<DeviceManifest> {
+      const response = await fetch(
+        `${input.baseUrl}/displays/${input.displayId}/manifest`,
+        { headers: input.headers },
+      );
+      if (!response.ok) {
+        throw new Error(`Manifest fetch failed (${response.status})`);
+      }
+      return (await response.json()) as DeviceManifest;
+    },
+    async fetchStreamToken(): Promise<StreamTokenResponse> {
+      const response = await fetch(
+        `${input.baseUrl}/displays/${input.displayId}/stream-token`,
+        {
+          headers: input.headers,
+        },
+      );
+      if (!response.ok) {
+        throw new Error(`Stream token request failed (${response.status})`);
+      }
+      return (await response.json()) as StreamTokenResponse;
+    },
+  };
+}
 
 export default function DisplayRuntimePage() {
   const params = useParams<{ displayId: string }>();
@@ -98,20 +134,16 @@ export default function DisplayRuntimePage() {
       ...getDevOnlyRequestHeaders(),
       "x-api-key": apiKey,
     };
+    const api = createDisplayRuntimeApi({
+      baseUrl,
+      displayId,
+      headers: commonHeaders,
+    });
+    let disposed = false;
 
-    const fetchManifest = async (): Promise<void> => {
-      const response = await fetch(
-        `${baseUrl}/displays/${displayId}/manifest`,
-        {
-          headers: commonHeaders,
-        },
-      );
-      if (!response.ok) {
-        throw new Error(`Manifest fetch failed (${response.status})`);
-      }
-      const payload = (await response.json()) as DeviceManifest;
-      const hasMaterialChange =
-        payload.playlistVersion !== lastPlaylistVersionRef.current;
+    const refreshManifest = async (): Promise<void> => {
+      const payload = await api.fetchManifest();
+      const hasMaterialChange = payload.playlistVersion !== lastPlaylistVersionRef.current;
       setManifest(payload);
       if (hasMaterialChange) {
         setCurrentIndex(0);
@@ -120,38 +152,21 @@ export default function DisplayRuntimePage() {
       lastPlaylistVersionRef.current = payload.playlistVersion;
     };
 
-    const fetchStreamToken = async () => {
-      const response = await fetch(
-        `${baseUrl}/displays/${displayId}/stream-token`,
-        { headers: commonHeaders },
-      );
-      if (!response.ok) {
-        throw new Error(`Stream token request failed (${response.status})`);
+    void refreshManifest().catch((error) => {
+      if (!disposed) {
+        setErrorMessage(
+          error instanceof Error ? error.message : "Failed to load manifest",
+        );
       }
-      return (await response.json()) as { token: string; expiresAt: string };
-    };
-
-    let disposed = false;
-    const start = async () => {
-      try {
-        await fetchManifest();
-      } catch (error) {
-        if (!disposed) {
-          setErrorMessage(
-            error instanceof Error ? error.message : "Failed to load manifest",
-          );
-        }
-      }
-    };
-    void start();
+    });
 
     const sse = createDeviceSseClient({
       streamUrl: `${baseUrl}/displays/${displayId}/stream`,
-      getToken: fetchStreamToken,
+      getToken: api.fetchStreamToken,
       onStateChange: setConnectionState,
       onEvent: () => {
         setLastEventAt(new Date().toISOString());
-        void fetchManifest().catch((error) => {
+        void refreshManifest().catch((error) => {
           if (!disposed) {
             setErrorMessage(
               error instanceof Error
@@ -164,7 +179,7 @@ export default function DisplayRuntimePage() {
     });
 
     const pollTimer = setInterval(() => {
-      void fetchManifest().catch(() => undefined);
+      void refreshManifest().catch(() => undefined);
     }, POLL_MS);
 
     return () => {
@@ -277,3 +292,4 @@ export default function DisplayRuntimePage() {
     </main>
   );
 }
+

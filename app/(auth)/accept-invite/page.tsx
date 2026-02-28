@@ -3,6 +3,7 @@
 import type { FormEvent, ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ import { acceptInvitation, AuthApiError } from "@/lib/api-client";
 const MIN_PASSWORD_LENGTH = 8;
 
 export default function AcceptInvitePage(): ReactElement {
+  const searchParams = useSearchParams();
   const [token, setToken] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -20,12 +22,11 @@ export default function AcceptInvitePage(): ReactElement {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const queryToken = new URLSearchParams(window.location.search).get("token");
+    const queryToken = searchParams.get("token");
     if (queryToken) {
       setToken(queryToken);
     }
-  }, []);
+  }, [searchParams]);
 
   const passwordTooShort = useMemo(
     () => password.length > 0 && password.length < MIN_PASSWORD_LENGTH,
@@ -35,11 +36,16 @@ export default function AcceptInvitePage(): ReactElement {
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     setErrorMessage(null);
+    const trimmedToken = token.trim();
 
     if (passwordTooShort) {
       setErrorMessage(
         `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
       );
+      return;
+    }
+    if (trimmedToken.length === 0) {
+      setErrorMessage("Invite token is required.");
       return;
     }
     if (password !== confirmPassword) {
@@ -50,7 +56,7 @@ export default function AcceptInvitePage(): ReactElement {
     setIsSubmitting(true);
     try {
       await acceptInvitation({
-        token: token.trim(),
+        token: trimmedToken,
         password,
         name: name.trim() || undefined,
       });
@@ -91,7 +97,7 @@ export default function AcceptInvitePage(): ReactElement {
 
         {isSubmitted ? (
           <p
-            className="status-success-muted rounded-lg px-3 py-2 text-sm"
+            className="rounded-lg bg-[var(--success-muted)] px-3 py-2 text-sm text-[var(--success-foreground)]"
             role="status"
           >
             Invitation accepted. You can now sign in.

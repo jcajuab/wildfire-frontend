@@ -61,14 +61,14 @@ function getStatusLabel(status: DisplayStatus): string {
   }
 }
 
-function getStatusTextColor(status: DisplayStatus): string {
+function getStatusTextColorClass(status: DisplayStatus): string {
   switch (status) {
     case "READY":
-      return "status-success";
+      return "text-[var(--success)]";
     case "LIVE":
       return "text-destructive";
     case "DOWN":
-      return "status-warning";
+      return "text-[var(--warning)]";
     default:
       return "text-muted-foreground";
   }
@@ -114,7 +114,7 @@ export const DisplayCard = memo(function DisplayCard({
                 />
               </span>
               <span
-                className={`text-xs font-medium ${getStatusTextColor(display.status)}`}
+                className={`text-xs font-medium ${getStatusTextColorClass(display.status)}`}
               >
                 {getStatusLabel(display.status)}
               </span>
@@ -191,7 +191,9 @@ export const DisplayCard = memo(function DisplayCard({
 
       {/* Now Playing section */}
       <div className="flex flex-col gap-2">
-        <p className="text-overline">Now Playing</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Now Playing
+        </p>
         <div className="flex items-center gap-3">
           {/* Thumbnail */}
           <div className="flex size-10 shrink-0 items-center justify-center rounded bg-muted">
@@ -227,11 +229,15 @@ export const DisplayCard = memo(function DisplayCard({
       {/* Display info */}
       <div className="grid grid-cols-2 gap-4 border-t pt-3">
         <div className="flex flex-col gap-0.5">
-          <p className="text-overline">Display Output</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Display Output
+          </p>
           <p className="text-sm font-medium">{display.displayOutput}</p>
         </div>
         <div className="flex flex-col gap-0.5">
-          <p className="text-overline">Resolution</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Resolution
+          </p>
           <p className="text-sm font-medium">{display.resolution}</p>
         </div>
       </div>

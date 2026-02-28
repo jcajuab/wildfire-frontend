@@ -285,10 +285,10 @@ export interface DeviceRuntimeSettingsResponse {
   readonly scrollPxPerSecond: number;
 }
 
-/** GET /settings/device-runtime. Requires settings:read permission. */
+/** GET /settings/display-runtime. Requires settings:read permission. */
 export async function getDeviceRuntimeSettings(): Promise<DeviceRuntimeSettingsResponse> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/settings/device-runtime`, {
+  const response = await fetch(`${baseUrl}/settings/display-runtime`, {
     method: "GET",
     credentials: "include",
     headers: {
@@ -307,12 +307,12 @@ export async function getDeviceRuntimeSettings(): Promise<DeviceRuntimeSettingsR
   return data as DeviceRuntimeSettingsResponse;
 }
 
-/** PATCH /settings/device-runtime. Requires settings:update permission. */
+/** PATCH /settings/display-runtime. Requires settings:update permission. */
 export async function updateDeviceRuntimeSettings(payload: {
   scrollPxPerSecond: number;
 }): Promise<DeviceRuntimeSettingsResponse> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/settings/device-runtime`, {
+  const response = await fetch(`${baseUrl}/settings/display-runtime`, {
     method: "PATCH",
     credentials: "include",
     headers: {

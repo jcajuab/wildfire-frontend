@@ -34,9 +34,10 @@ interface SessionData {
   readonly user: AuthUser;
   readonly expiresAt: string;
   readonly permissions: PermissionType[];
+  readonly token: string | null;
 }
 
-/** Old sessions without permissions get []. */
+/** Old sessions without permissions get [] and can still be used. */
 function getPermissionsFromSession(
   data: Record<string, unknown>,
 ): PermissionType[] {
@@ -67,6 +68,7 @@ function readSession(): SessionData | null {
       )
     )
       return null;
+
     const isRoot = typeof u.isRoot === "boolean" ? u.isRoot : false;
     const normalizedUser: AuthUser = {
       id: u.id,
@@ -77,10 +79,13 @@ function readSession(): SessionData | null {
       avatarUrl: typeof u.avatarUrl === "string" ? u.avatarUrl : null,
     };
     const permissions = getPermissionsFromSession(d);
+    const token = typeof d.token === "string" ? d.token : null;
+
     return {
       user: normalizedUser,
       expiresAt: d.expiresAt as string,
       permissions,
+      token,
     };
   } catch {
     return null;
@@ -119,6 +124,7 @@ export function AuthProvider({
   children: ReactNode;
 }): ReactElement {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<PermissionType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -128,6 +134,7 @@ export function AuthProvider({
     if (session) {
       setUser(session.user);
       setPermissions(session.permissions);
+      setToken(session.token);
     }
     setIsInitialized(true);
   }, []);
@@ -136,12 +143,19 @@ export function AuthProvider({
   const refreshRequestedWhileRunningRef = useRef(false);
   const suppressAuthErrorUntilRef = useRef(0);
   const userRef = useRef(user);
+  const tokenRef = useRef(token);
+
   useEffect(() => {
     userRef.current = user;
   }, [user]);
 
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
+
   const clearAuthState = useCallback(() => {
     setUser(null);
+    setToken(null);
     setPermissions([]);
     clearSession();
   }, []);
@@ -174,10 +188,12 @@ export function AuthProvider({
           user: result.user,
           expiresAt: result.expiresAt,
           permissions: result.permissions,
+          token: result.token,
         };
         writeSession(session);
         setUser(session.user);
         setPermissions(session.permissions);
+        setToken(session.token);
       } finally {
         setIsLoading(false);
       }
@@ -188,7 +204,7 @@ export function AuthProvider({
   const logout = useCallback(async () => {
     clearAuthState();
     try {
-      await logoutApi();
+      await logoutApi(tokenRef.current);
     } catch {
       // Backend no-op; ignore network errors
     }
@@ -208,15 +224,17 @@ export function AuthProvider({
           suppressAuthErrorUntilRef.current =
             Date.now() + AUTH_ERROR_SUPPRESSION_MS;
 
-          const response = await refreshToken();
+          const response = await refreshToken(tokenRef.current);
           const session: SessionData = {
             user: response.user,
             expiresAt: response.expiresAt,
             permissions: response.permissions,
+            token: response.token,
           };
           writeSession(session);
           setUser(session.user);
           setPermissions(session.permissions);
+          setToken(session.token);
         } while (refreshRequestedWhileRunningRef.current);
       } catch (err) {
         suppressAuthErrorUntilRef.current = 0;
@@ -280,10 +298,12 @@ export function AuthProvider({
       user: response.user,
       expiresAt: response.expiresAt,
       permissions: response.permissions,
+      token: response.token,
     };
     writeSession(session);
     setUser(session.user);
     setPermissions(session.permissions);
+    setToken(session.token);
   }, []);
 
   const can = useCallback(
@@ -295,7 +315,7 @@ export function AuthProvider({
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
-      token: null,
+      token,
       permissions,
       isAuthenticated: user !== null,
       isLoading,
@@ -308,6 +328,7 @@ export function AuthProvider({
     }),
     [
       user,
+      token,
       permissions,
       isLoading,
       isInitialized,

@@ -445,7 +445,7 @@ function RoleForm({
       </div>
 
       {isHighRiskOperation ? (
-        <div className="status-warning-muted mt-3 rounded-md border p-3">
+        <div className="bg-[var(--warning-muted)] text-[var(--warning-foreground)] mt-3 rounded-md border p-3">
           <p className="text-xs">
             High-impact change detected. Enter policy version and confirm before
             saving.

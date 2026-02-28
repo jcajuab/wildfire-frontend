@@ -1,21 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface QueryStateOptions<T> {
   readonly key: string;
   readonly defaultValue: T;
   readonly parse: (raw: string | null) => T;
   readonly serialize: (value: T) => string;
-}
-
-function getSearchParamsFromLocation(): URLSearchParams {
-  if (typeof window === "undefined") {
-    return new URLSearchParams();
-  }
-
-  return new URLSearchParams(window.location.search);
 }
 
 export function useQueryState<T>({
@@ -26,11 +18,11 @@ export function useQueryState<T>({
 }: QueryStateOptions<T>): readonly [T, (nextValue: T) => void] {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const readValue = useCallback((): T => {
-    const params = getSearchParamsFromLocation();
-    return parse(params.get(key));
-  }, [key, parse]);
+    return parse(searchParams.get(key));
+  }, [key, parse, searchParams]);
 
   const [value, setValue] = useState<T>(readValue);
 
@@ -38,28 +30,11 @@ export function useQueryState<T>({
     setValue(readValue());
   }, [readValue]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const handlePopstate = (): void => {
-      setValue(readValue());
-    };
-
-    window.addEventListener("popstate", handlePopstate);
-    return () => window.removeEventListener("popstate", handlePopstate);
-  }, [readValue]);
-
   const setQueryValue = useCallback(
     (nextValue: T): void => {
       setValue(nextValue);
 
-      if (typeof window === "undefined") {
-        return;
-      }
-
-      const params = getSearchParamsFromLocation();
+      const params = new URLSearchParams(searchParams.toString());
       const serializedValue = serialize(nextValue);
       const defaultSerializedValue = serialize(defaultValue);
 
@@ -76,7 +51,7 @@ export function useQueryState<T>({
       const nextPath = query.length > 0 ? `${pathname}?${query}` : pathname;
       router.replace(nextPath, { scroll: false });
     },
-    [defaultValue, key, pathname, router, serialize],
+    [defaultValue, key, pathname, router, serialize, searchParams],
   );
 
   return [value, setQueryValue] as const;
