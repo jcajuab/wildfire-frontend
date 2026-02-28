@@ -38,6 +38,7 @@ import {
 import {
   formatPermissionId,
   formatPermissionReadableLabel,
+  formatPermissionTooltipDescription,
 } from "@/lib/format-permission";
 import type { Role, Permission, RoleUser, RoleFormData } from "@/types/role";
 
@@ -297,7 +298,10 @@ function RoleForm({
                           </button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{formatPermissionId(perm)}</p>
+                          <p>{formatPermissionTooltipDescription(perm)}</p>
+                          <p className="font-mono text-xs text-muted-foreground">
+                            {formatPermissionId(perm)}
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                     </div>
