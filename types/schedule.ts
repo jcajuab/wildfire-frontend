@@ -18,7 +18,7 @@ export interface Schedule {
   readonly startTime: string; // HH:mm format
   readonly endTime: string; // HH:mm format
   readonly playlist: SchedulePlaylist;
-  readonly targetDisplays: readonly ScheduleDisplay[];
+  readonly targetDisplay: ScheduleDisplay;
   readonly priority: number;
   readonly isActive: boolean;
   readonly createdAt: string;
@@ -27,12 +27,12 @@ export interface Schedule {
 
 export interface ScheduleFormData {
   name: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
   startTime: string;
   endTime: string;
   playlistId: string;
-  targetDisplayIds: string[];
+  targetDisplayId: string;
   priority: number;
   isActive: boolean;
 }

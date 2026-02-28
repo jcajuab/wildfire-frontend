@@ -8,12 +8,12 @@ import type { ScheduleFormData } from "@/types/schedule";
 
 const makeFormData = (): ScheduleFormData => ({
   name: "January Campaign",
-  startDate: new Date("2026-01-05T00:00:00.000Z"),
-  endDate: new Date("2026-02-05T00:00:00.000Z"),
+  startDate: "2026-01-05",
+  endDate: "2026-02-05",
   startTime: "08:00",
   endTime: "17:00",
   playlistId: "playlist-1",
-  targetDisplayIds: ["display-1"],
+  targetDisplayId: "display-1",
   priority: 10,
   isActive: true,
 });
@@ -41,7 +41,7 @@ describe("schedule-mapper", () => {
 
     expect(schedules).toHaveLength(1);
     expect(schedules[0]?.id).toBe("schedule-1");
-    expect(schedules[0]?.targetDisplays[0]?.id).toBe("display-1");
+    expect(schedules[0]?.targetDisplay.id).toBe("display-1");
     expect(schedules[0]?.playlist.name).toBe("Morning");
   });
 

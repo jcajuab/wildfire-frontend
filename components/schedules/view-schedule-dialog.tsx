@@ -110,14 +110,12 @@ export function ViewScheduleDialog({
             </div>
 
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Target Displays:</span>
+              <span className="text-muted-foreground">Target Display:</span>
               <div className="flex flex-wrap gap-1">
-                {schedule.targetDisplays.map((display) => (
-                  <Badge key={display.id} variant="outline" className="gap-1">
-                    <IconPhoto className="size-3" />
-                    {display.name}
-                  </Badge>
-                ))}
+                <Badge variant="outline" className="gap-1">
+                  <IconPhoto className="size-3" />
+                  {schedule.targetDisplay.name}
+                </Badge>
               </div>
             </div>
           </div>

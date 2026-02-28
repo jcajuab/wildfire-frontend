@@ -24,10 +24,16 @@ describe("display registration API", () => {
     let capturedHeaders: HeadersInit | undefined;
     let capturedMethod = "";
 
-    global.fetch = vi.fn(async (_input, init) => {
-      capturedBody = init?.body;
-      capturedHeaders = init?.headers;
-      capturedMethod = String(init?.method ?? "").toUpperCase();
+    global.fetch = vi.fn(async (input, init) => {
+      if (input instanceof Request) {
+        capturedBody = input.body;
+        capturedHeaders = input.headers;
+        capturedMethod = input.method.toUpperCase();
+      } else {
+        capturedBody = init?.body;
+        capturedHeaders = init?.headers;
+        capturedMethod = String(init?.method ?? "").toUpperCase();
+      }
       return new Response(
         JSON.stringify({
           data: {

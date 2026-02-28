@@ -57,6 +57,9 @@ export interface DisplayGroup {
 
 export interface DisplayGroupsListResponse {
   readonly items: readonly DisplayGroup[];
+  readonly total: number;
+  readonly page: number;
+  readonly pageSize: number;
 }
 
 export interface DisplayRegistrationCodeResponse {
@@ -171,12 +174,18 @@ export const displaysApi = createApi({
     }),
     getDisplayGroups: build.query<DisplayGroupsListResponse, void>({
       query: () => "displays/groups",
-      transformResponse: (response) => ({
-        items: parseApiResponseDataSafe<readonly DisplayGroup[]>(
+      transformResponse: (response) => {
+        const parsed = parseApiListResponseSafe<DisplayGroup>(
           response,
           "getDisplayGroups",
-        ),
-      }),
+        );
+        return {
+          items: parsed.data,
+          total: parsed.meta.total,
+          page: parsed.meta.page,
+          pageSize: parsed.meta.per_page,
+        };
+      },
       providesTags: (result) =>
         result
           ? [

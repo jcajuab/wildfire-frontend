@@ -40,7 +40,7 @@ function ScheduleFormFrame({
   const canSubmit =
     formData.name.trim().length > 0 &&
     formData.playlistId.length > 0 &&
-    formData.targetDisplayIds.length > 0;
+    formData.targetDisplayId.length > 0;
 
   async function handleSubmit(): Promise<void> {
     if (!canSubmit || isSubmitting) return;
@@ -107,11 +107,11 @@ function ScheduleFormFrame({
               <Input
                 id="schedule-start-date"
                 type="date"
-                value={formData.startDate.toISOString().split("T")[0]}
+                value={formData.startDate}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    startDate: new Date(e.target.value),
+                    startDate: e.target.value,
                   }))
                 }
                 className="pl-8"
@@ -125,11 +125,11 @@ function ScheduleFormFrame({
               <Input
                 id="schedule-end-date"
                 type="date"
-                value={formData.endDate.toISOString().split("T")[0]}
+                value={formData.endDate}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    endDate: new Date(e.target.value),
+                    endDate: e.target.value,
                   }))
                 }
                 className="pl-8"
@@ -198,9 +198,9 @@ function ScheduleFormFrame({
         <div className="flex flex-col gap-1.5">
           <Label>Target Display</Label>
           <Select
-            value={formData.targetDisplayIds[0] ?? ""}
+            value={formData.targetDisplayId}
             onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, targetDisplayIds: [value] }))
+              setFormData((prev) => ({ ...prev, targetDisplayId: value }))
             }
           >
             <SelectTrigger>
@@ -214,11 +214,11 @@ function ScheduleFormFrame({
               ))}
             </SelectContent>
           </Select>
-          {formData.targetDisplayIds[0] ? (
+          {formData.targetDisplayId ? (
             <Badge variant="secondary" className="w-fit">
               {availableDisplays.find(
-                (d) => d.id === formData.targetDisplayIds[0],
-              )?.name ?? formData.targetDisplayIds[0]}
+                (d) => d.id === formData.targetDisplayId,
+              )?.name ?? formData.targetDisplayId}
             </Badge>
           ) : null}
         </div>
@@ -248,6 +248,14 @@ interface EditScheduleFormProps extends Omit<ScheduleFormProps, "submitLabel"> {
   readonly initialData: ScheduleFormData;
 }
 
+function getTodayDateString(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function CreateScheduleForm({
   availablePlaylists,
   availableDisplays,
@@ -258,12 +266,12 @@ export function CreateScheduleForm({
     <ScheduleFormFrame
       initialData={{
         name: "",
-        startDate: new Date(),
-        endDate: new Date(),
+        startDate: getTodayDateString(),
+        endDate: getTodayDateString(),
         startTime: "08:00",
         endTime: "17:00",
         playlistId: "",
-        targetDisplayIds: [],
+        targetDisplayId: "",
         priority: 1,
         isActive: true,
       }}

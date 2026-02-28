@@ -34,8 +34,16 @@ import type {
   ScheduleFormData,
 } from "@/types/schedule";
 
-const SCHEDULE_CONFLICT_FALLBACK_MESSAGE =
+const SCHEDULE_CREATE_FALLBACK_MESSAGE = "Failed to create schedule.";
+const SCHEDULE_CONFLICT_MESSAGE =
   "Schedule overlaps with an existing schedule on the selected display.";
+
+function isConflictError(err: unknown): boolean {
+  if (typeof err !== "object" || err == null || !("status" in err)) {
+    return false;
+  }
+  return (err as { status?: unknown }).status === 409;
+}
 
 export default function SchedulesPage(): ReactElement {
   const canEditSchedule = useCan("schedules:update");
@@ -124,9 +132,13 @@ export default function SchedulesPage(): ReactElement {
         await createSchedule(mapCreateFormToScheduleRequest(data)).unwrap();
         toast.success("Schedule created.");
       } catch (err) {
+        if (isConflictError(err)) {
+          toast.error(SCHEDULE_CONFLICT_MESSAGE);
+          throw err;
+        }
         const message = getApiErrorMessage(
           err,
-          SCHEDULE_CONFLICT_FALLBACK_MESSAGE,
+          SCHEDULE_CREATE_FALLBACK_MESSAGE,
         );
         toast.error(message);
         throw err;

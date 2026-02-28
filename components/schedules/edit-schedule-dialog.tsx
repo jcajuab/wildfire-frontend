@@ -26,12 +26,12 @@ interface EditScheduleDialogProps {
 function toFormData(schedule: Schedule): ScheduleFormData {
   return {
     name: schedule.name,
-    startDate: new Date(schedule.startDate),
-    endDate: new Date(schedule.endDate),
+    startDate: schedule.startDate,
+    endDate: schedule.endDate,
     startTime: schedule.startTime,
     endTime: schedule.endTime,
     playlistId: schedule.playlist.id,
-    targetDisplayIds: schedule.targetDisplays.map((display) => display.id),
+    targetDisplayId: schedule.targetDisplay.id,
     priority: schedule.priority,
     isActive: schedule.isActive,
   };

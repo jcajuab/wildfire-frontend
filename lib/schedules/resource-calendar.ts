@@ -128,21 +128,20 @@ export function projectResourceEvents({
       }
 
       const dateKey = toDateKey(date);
-      for (const targetDisplay of schedule.targetDisplays) {
-        if (!resourceIds.has(targetDisplay.id)) {
-          continue;
-        }
-
-        events.push({
-          id: `${schedule.id}:${targetDisplay.id}:${dateKey}`,
-          scheduleId: schedule.id,
-          resourceId: targetDisplay.id,
-          dateKey,
-          startMinutes,
-          endMinutes,
-          timeLabel,
-        });
+      const targetDisplay = schedule.targetDisplay;
+      if (!resourceIds.has(targetDisplay.id)) {
+        continue;
       }
+
+      events.push({
+        id: `${schedule.id}:${targetDisplay.id}:${dateKey}`,
+        scheduleId: schedule.id,
+        resourceId: targetDisplay.id,
+        dateKey,
+        startMinutes,
+        endMinutes,
+        timeLabel,
+      });
     }
   }
 

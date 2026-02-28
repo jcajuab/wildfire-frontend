@@ -5,10 +5,6 @@ import type {
 } from "@/lib/api/schedules-api";
 import type { Schedule, ScheduleFormData } from "@/types/schedule";
 
-function toIsoDate(value: Date): string {
-  return value.toISOString().slice(0, 10);
-}
-
 export function mapBackendScheduleToSchedule(item: BackendSchedule): Schedule {
   return {
     id: item.id,
@@ -21,12 +17,10 @@ export function mapBackendScheduleToSchedule(item: BackendSchedule): Schedule {
       id: item.playlist.id,
       name: item.playlist.name ?? "Untitled playlist",
     },
-    targetDisplays: [
-      {
-        id: item.display.id,
-        name: item.display.name ?? "Unnamed display",
-      },
-    ],
+    targetDisplay: {
+      id: item.display.id,
+      name: item.display.name ?? "Unnamed display",
+    },
     priority: item.priority,
     isActive: item.isActive,
     createdAt: item.createdAt,
@@ -46,9 +40,9 @@ export function mapCreateFormToScheduleRequest(
   return {
     name: data.name.trim(),
     playlistId: data.playlistId,
-    displayId: data.targetDisplayIds[0] ?? "",
-    startDate: toIsoDate(data.startDate),
-    endDate: toIsoDate(data.endDate),
+    displayId: data.targetDisplayId,
+    startDate: data.startDate,
+    endDate: data.endDate,
     startTime: data.startTime,
     endTime: data.endTime,
     priority: data.priority,
@@ -64,9 +58,9 @@ export function mapUpdateFormToScheduleRequest(
     id,
     name: data.name.trim(),
     playlistId: data.playlistId,
-    displayId: data.targetDisplayIds[0] ?? "",
-    startDate: toIsoDate(data.startDate),
-    endDate: toIsoDate(data.endDate),
+    displayId: data.targetDisplayId,
+    startDate: data.startDate,
+    endDate: data.endDate,
     startTime: data.startTime,
     endTime: data.endTime,
     priority: data.priority,

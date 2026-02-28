@@ -131,20 +131,14 @@ export const schedulesApi = createApi({
         parseApiResponseDataSafe<BackendSchedule>(response, "getSchedule"),
       providesTags: (_result, _error, id) => [{ type: "Schedule", id }],
     }),
-    createSchedule: build.mutation<
-      readonly BackendSchedule[],
-      CreateScheduleRequest
-    >({
+    createSchedule: build.mutation<BackendSchedule, CreateScheduleRequest>({
       query: (body) => ({
         url: "schedules",
         method: "POST",
         body,
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<readonly BackendSchedule[]>(
-          response,
-          "createSchedule",
-        ),
+        parseApiResponseDataSafe<BackendSchedule>(response, "createSchedule"),
       invalidatesTags: [{ type: "Schedule", id: "LIST" }],
     }),
     updateSchedule: build.mutation<BackendSchedule, UpdateScheduleRequest>({

@@ -85,7 +85,6 @@ describe("paginated aggregate query guards", () => {
           data: [
             {
               id: crypto.randomUUID(),
-              seriesId: crypto.randomUUID(),
               name: "Daily",
               playlistId: crypto.randomUUID(),
               displayId: crypto.randomUUID(),
@@ -93,7 +92,6 @@ describe("paginated aggregate query guards", () => {
               endDate: "2025-12-31",
               startTime: "00:00",
               endTime: "23:59",
-              dayOfWeek: 1,
               priority: 1,
               isActive: true,
               createdAt: "2025-01-01T00:00:00.000Z",
