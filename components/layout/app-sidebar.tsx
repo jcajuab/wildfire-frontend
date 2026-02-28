@@ -166,14 +166,14 @@ export function AppSidebar(): ReactElement {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-primary-foreground/70">
-            {CORE_SECTION}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
-              {isReadyNavigationSectionVisible(coreNavItems) &&
-                coreNavItems.map((item) => {
+        {isReadyNavigationSectionVisible(coreNavItems) ? (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-primary-foreground/70">
+              {CORE_SECTION}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1">
+                {coreNavItems.map((item) => {
                   const isActive = isActiveRoute(
                     pathname,
                     item.href,
@@ -196,18 +196,19 @@ export function AppSidebar(): ReactElement {
                     </SidebarMenuItem>
                   );
                 })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-primary-foreground/70">
-            {MANAGE_SECTION}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
-              {isReadyNavigationSectionVisible(manageNavItems) &&
-                manageNavItems.map((item) => {
+        {isReadyNavigationSectionVisible(manageNavItems) ? (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-primary-foreground/70">
+              {MANAGE_SECTION}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1">
+                {manageNavItems.map((item) => {
                   const isActive = isActiveRoute(
                     pathname,
                     item.href,
@@ -230,9 +231,10 @@ export function AppSidebar(): ReactElement {
                     </SidebarMenuItem>
                   );
                 })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
       </SidebarContent>
 
       <SidebarFooter>
