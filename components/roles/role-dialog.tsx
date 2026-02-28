@@ -277,7 +277,7 @@ function RoleForm({
 
         {/* Permissions Tab */}
         <TabsContent value="permissions" className="mt-4">
-          <div className="flex max-h-[400px] flex-col gap-0 overflow-y-auto">
+          <div className="flex max-h-[400px] flex-col gap-0 overflow-y-auto pr-4">
             <TooltipProvider>
               {displayPermissions.map((perm, index) => (
                 <div key={`${perm.resource}:${perm.action}`}>
