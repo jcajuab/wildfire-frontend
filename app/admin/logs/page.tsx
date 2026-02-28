@@ -41,6 +41,7 @@ import { useGetUsersQuery } from "@/lib/api/rbac-api";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   getResourceTypeLabel,
+  getResourceTypeValueFromInput,
   RESOURCE_TYPE_FILTER_OPTIONS,
   RESOURCE_TYPE_SELECT_ALL_VALUE,
   type ResourceTypeFilter,
@@ -235,6 +236,15 @@ export default function LogsPage(): ReactElement {
 
   const handleResourceTypeInputChange = useCallback(
     (nextInputValue: string): void => {
+      const resolvedValue = getResourceTypeValueFromInput(nextInputValue);
+
+      if (resolvedValue !== null && resolvedValue !== "") {
+        setResourceType(resolvedValue);
+        setResourceTypeInput(getResourceTypeLabel(resolvedValue));
+        resetToFirstPage();
+        return;
+      }
+
       setResourceTypeInput(nextInputValue);
       if (nextInputValue === "") {
         setResourceType("");
@@ -254,11 +264,11 @@ export default function LogsPage(): ReactElement {
 
   const selectedResourceTypeValue = useMemo<string | null>(() => {
     if (resourceTypeInput === "") return RESOURCE_TYPE_SELECT_ALL_VALUE;
-    const found = RESOURCE_TYPE_FILTER_OPTIONS.find(
-      (v): v is NonNullable<ResourceTypeFilter> =>
-        v !== "" && getResourceTypeLabel(v) === resourceTypeInput,
-    );
-    return found ?? (resourceType || RESOURCE_TYPE_SELECT_ALL_VALUE);
+    const resolvedValue = getResourceTypeValueFromInput(resourceTypeInput);
+    if (resolvedValue !== null && resolvedValue !== "") {
+      return resolvedValue;
+    }
+    return resourceType || RESOURCE_TYPE_SELECT_ALL_VALUE;
   }, [resourceTypeInput, resourceType]);
 
   const selectedStatusValue = useMemo<string | null>(() => {
