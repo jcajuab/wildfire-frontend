@@ -175,7 +175,7 @@ describe("EditDisplayDialog", () => {
             id: "group-1",
             name: "Lobby",
             colorIndex: 0,
-            deviceIds: [],
+            displayIds: [],
             createdAt: "2025-01-01T00:00:00.000Z",
             updatedAt: "2025-01-01T00:00:00.000Z",
           },

@@ -90,7 +90,7 @@ export default function DisplaysPage(): ReactElement {
         name: group.name,
         colorIndex: group.colorIndex ?? 0,
       };
-      for (const displayId of group.deviceIds) {
+    for (const displayId of group.displayIds) {
         const existing = groupsByDeviceId.get(displayId) ?? [];
         existing.push(displayGroup);
         groupsByDeviceId.set(displayId, existing);

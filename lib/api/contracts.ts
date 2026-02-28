@@ -65,30 +65,6 @@ const toPositiveInteger = (value: unknown): number | undefined =>
         })()
       : undefined;
 
-const parseLegacyListMeta = (
-  payload: UnknownObject,
-): ApiMeta | null => {
-  const total = toNonNegativeInteger(payload.total);
-  const page = toPositiveInteger(payload.page);
-  const perPage = toPositiveInteger(payload.per_page) ?? toPositiveInteger(payload.pageSize);
-
-  if (total === undefined || page === undefined || perPage === undefined) {
-    return null;
-  }
-
-  const totalPages =
-    toNonNegativeInteger(payload.total_pages) ??
-    toNonNegativeInteger(payload.totalPages) ??
-    Math.max(1, Math.ceil(total / perPage));
-
-  return {
-    total,
-    page,
-    per_page: perPage,
-    total_pages: totalPages,
-  };
-};
-
 const parseApiErrorResponse = (value: unknown): ApiErrorResponse => {
   if (!isObject(value) || !isObject(value.error)) {
     throw new Error("Invalid API error payload shape.");
@@ -169,17 +145,15 @@ export function parseApiListResponse<T>(payload: unknown): ApiListResponse<T> {
     throw new Error("API payload list response must include an array.");
   }
 
-  const hasMeta = isObject(payload.meta);
-  const meta =
-    hasMeta && payload.meta != null ? payload.meta : parseLegacyListMeta(payload);
-  if (!isObject(meta)) {
+  if (!isObject(payload.meta)) {
     throw new Error("API payload list response is missing meta.");
   }
 
-  const total = hasMeta ? payload.meta.total : meta.total;
-  const page = hasMeta ? payload.meta.page : meta.page;
-  const perPage = hasMeta ? payload.meta.per_page : meta.per_page;
-  const totalPages = hasMeta ? payload.meta.total_pages : meta.total_pages;
+  const meta = payload.meta;
+  const total = toNonNegativeInteger(meta.total);
+  const page = toPositiveInteger(meta.page);
+  const perPage = toPositiveInteger(meta.per_page);
+  const totalPages = toNonNegativeInteger(meta.total_pages);
 
   const totalValue = isInteger(total) && total >= 0 ? total : undefined;
   const pageValue = isInteger(page) && page >= 1 ? page : undefined;

@@ -30,12 +30,12 @@ vi.mock("@/lib/api/devices-api", async () => {
 const makeGroup = (overrides?: {
   id?: string;
   name?: string;
-  deviceIds?: string[];
+  displayIds?: string[];
 }) => ({
   id: overrides?.id ?? "group-1",
   name: overrides?.name ?? "Lobby",
   colorIndex: 0,
-  deviceIds: overrides?.deviceIds ?? [],
+  displayIds: overrides?.displayIds ?? [],
   createdAt: "2025-01-01T00:00:00.000Z",
   updatedAt: "2025-01-01T00:00:00.000Z",
 });
@@ -146,7 +146,7 @@ describe("DisplayGroupManagerDialog", () => {
         open={true}
         onOpenChange={vi.fn()}
         groups={[
-          makeGroup({ id: "group-1", name: "Lobby", deviceIds: ["a", "b"] }),
+          makeGroup({ id: "group-1", name: "Lobby", displayIds: ["a", "b"] }),
         ]}
         onGroupDeleted={onGroupDeleted}
       />,

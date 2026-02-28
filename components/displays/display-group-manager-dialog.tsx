@@ -235,8 +235,8 @@ export function DisplayGroupManagerDialog({
                           {group.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {group.deviceIds.length} display
-                          {group.deviceIds.length === 1 ? "" : "s"}
+                          {group.displayIds.length} display
+                          {group.displayIds.length === 1 ? "" : "s"}
                         </p>
                       </div>
                     )}
@@ -244,7 +244,7 @@ export function DisplayGroupManagerDialog({
                     {!isEditing ? (
                       <>
                         <Badge variant="secondary" className="shrink-0">
-                          {group.deviceIds.length}
+                          {group.displayIds.length}
                         </Badge>
                         <Button
                           type="button"
@@ -308,8 +308,8 @@ export function DisplayGroupManagerDialog({
         }
         description={
           deleteCandidate
-            ? `This removes the group for ${deleteCandidate.deviceIds.length} display${
-                deleteCandidate.deviceIds.length === 1 ? "" : "s"
+            ? `This removes the group for ${deleteCandidate.displayIds.length} display${
+                deleteCandidate.displayIds.length === 1 ? "" : "s"
               }.`
             : undefined
         }
