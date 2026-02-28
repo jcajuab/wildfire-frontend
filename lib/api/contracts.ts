@@ -41,6 +41,54 @@ const isInteger = (value: unknown): value is number =>
   Number.isFinite(value) &&
   Number.isInteger(value);
 
+const toNonNegativeInteger = (value: unknown): number | undefined =>
+  isInteger(value) && value >= 0
+    ? value
+    : typeof value === "string"
+      ? (() => {
+          const normalized = value.trim();
+          if (!/^-?\d+$/.test(normalized)) return undefined;
+          const parsed = Number.parseInt(normalized, 10);
+          return parsed >= 0 ? parsed : undefined;
+        })()
+      : undefined;
+
+const toPositiveInteger = (value: unknown): number | undefined =>
+  isInteger(value) && value > 0
+    ? value
+    : typeof value === "string"
+      ? (() => {
+          const normalized = value.trim();
+          if (!/^-?\d+$/.test(normalized)) return undefined;
+          const parsed = Number.parseInt(normalized, 10);
+          return parsed > 0 ? parsed : undefined;
+        })()
+      : undefined;
+
+const parseLegacyListMeta = (
+  payload: UnknownObject,
+): ApiMeta | null => {
+  const total = toNonNegativeInteger(payload.total);
+  const page = toPositiveInteger(payload.page);
+  const perPage = toPositiveInteger(payload.per_page) ?? toPositiveInteger(payload.pageSize);
+
+  if (total === undefined || page === undefined || perPage === undefined) {
+    return null;
+  }
+
+  const totalPages =
+    toNonNegativeInteger(payload.total_pages) ??
+    toNonNegativeInteger(payload.totalPages) ??
+    Math.max(1, Math.ceil(total / perPage));
+
+  return {
+    total,
+    page,
+    per_page: perPage,
+    total_pages: totalPages,
+  };
+};
+
 const parseApiErrorResponse = (value: unknown): ApiErrorResponse => {
   if (!isObject(value) || !isObject(value.error)) {
     throw new Error("Invalid API error payload shape.");
@@ -121,15 +169,17 @@ export function parseApiListResponse<T>(payload: unknown): ApiListResponse<T> {
     throw new Error("API payload list response must include an array.");
   }
 
-  const meta = payload.meta;
+  const hasMeta = isObject(payload.meta);
+  const meta =
+    hasMeta && payload.meta != null ? payload.meta : parseLegacyListMeta(payload);
   if (!isObject(meta)) {
     throw new Error("API payload list response is missing meta.");
   }
 
-  const total = meta.total;
-  const page = meta.page;
-  const perPage = meta.per_page;
-  const totalPages = meta.total_pages;
+  const total = hasMeta ? payload.meta.total : meta.total;
+  const page = hasMeta ? payload.meta.page : meta.page;
+  const perPage = hasMeta ? payload.meta.per_page : meta.per_page;
+  const totalPages = hasMeta ? payload.meta.total_pages : meta.total_pages;
 
   const totalValue = isInteger(total) && total >= 0 ? total : undefined;
   const pageValue = isInteger(page) && page >= 1 ? page : undefined;
