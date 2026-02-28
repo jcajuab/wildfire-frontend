@@ -1,11 +1,15 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
+import {
+  parseApiListResponseSafe,
+  parseApiResponseDataSafe,
+} from "@/lib/api/contracts";
 import { baseQuery } from "@/lib/api/base-query";
 
 export interface BackendSchedule {
   readonly id: string;
   readonly name: string;
   readonly playlistId: string;
-  readonly deviceId: string;
+  readonly displayId: string;
   readonly startDate: string;
   readonly endDate: string;
   readonly startTime: string;
@@ -18,7 +22,7 @@ export interface BackendSchedule {
     readonly id: string;
     readonly name: string | null;
   };
-  readonly device: {
+  readonly display: {
     readonly id: string;
     readonly name: string | null;
   };
@@ -31,14 +35,10 @@ export interface BackendScheduleListResponse {
   readonly pageSize: number;
 }
 
-export interface BackendScheduleItemsResponse {
-  readonly items: readonly BackendSchedule[];
-}
-
 export interface CreateScheduleRequest {
   readonly name: string;
   readonly playlistId: string;
-  readonly deviceId: string;
+  readonly displayId: string;
   readonly startDate: string;
   readonly endDate: string;
   readonly startTime: string;
@@ -51,7 +51,7 @@ export interface UpdateScheduleRequest {
   readonly id: string;
   readonly name?: string;
   readonly playlistId?: string;
-  readonly deviceId?: string;
+  readonly displayId?: string;
   readonly startDate?: string;
   readonly endDate?: string;
   readonly startTime?: string;
@@ -92,11 +92,14 @@ export const schedulesApi = createApi({
             return { error: result.error };
           }
 
-          const data = result.data as BackendScheduleListResponse;
-          total = data.total;
-          allItems.push(...data.items);
+          const response = parseApiListResponseSafe<BackendSchedule>(
+            result.data,
+            "listSchedules",
+          );
+          total = response.meta.total;
+          allItems.push(...response.data);
 
-          if (allItems.length >= total || data.items.length === 0) {
+          if (allItems.length >= total || response.data.length === 0) {
             break;
           }
           page += 1;
@@ -105,9 +108,9 @@ export const schedulesApi = createApi({
         return {
           data: {
             items: allItems,
-            total: allItems.length,
+            total,
             page: 1,
-            pageSize: allItems.length === 0 ? PAGE_SIZE : allItems.length,
+            pageSize: PAGE_SIZE,
           },
         };
       },
@@ -124,17 +127,21 @@ export const schedulesApi = createApi({
     }),
     getSchedule: build.query<BackendSchedule, string>({
       query: (id) => `schedules/${id}`,
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendSchedule>(response, "getSchedule"),
       providesTags: (_result, _error, id) => [{ type: "Schedule", id }],
     }),
-    createSchedule: build.mutation<
-      BackendScheduleItemsResponse,
-      CreateScheduleRequest
-    >({
+    createSchedule: build.mutation<readonly BackendSchedule[], CreateScheduleRequest>({
       query: (body) => ({
         url: "schedules",
         method: "POST",
         body,
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<readonly BackendSchedule[]>(
+          response,
+          "createSchedule",
+        ),
       invalidatesTags: [{ type: "Schedule", id: "LIST" }],
     }),
     updateSchedule: build.mutation<BackendSchedule, UpdateScheduleRequest>({
@@ -143,6 +150,8 @@ export const schedulesApi = createApi({
         method: "PATCH",
         body,
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendSchedule>(response, "updateSchedule"),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Schedule", id: "LIST" },
         { type: "Schedule", id },

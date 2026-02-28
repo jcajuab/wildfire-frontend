@@ -8,7 +8,6 @@ import {
   IconExternalLink,
   IconRefresh,
   IconToggleLeft,
-  IconTrash,
   IconPlayerPlay,
   IconPlayerPause,
 } from "@tabler/icons-react";
@@ -30,9 +29,7 @@ interface DisplayCardProps {
   readonly onPreviewPage: (display: Display) => void;
   readonly onRefreshPage: (display: Display) => void;
   readonly onToggleDisplay: (display: Display) => void;
-  readonly onRemoveDisplay: (display: Display) => void;
   readonly canUpdate?: boolean;
-  readonly canDelete?: boolean;
 }
 
 function getStatusColor(status: DisplayStatus): string {
@@ -86,9 +83,7 @@ export const DisplayCard = memo(function DisplayCard({
   onPreviewPage,
   onRefreshPage,
   onToggleDisplay,
-  onRemoveDisplay,
   canUpdate = true,
-  canDelete = true,
 }: DisplayCardProps): ReactElement {
   const nowPlaying = display.nowPlaying;
   const progress = nowPlaying
@@ -156,15 +151,6 @@ export const DisplayCard = memo(function DisplayCard({
               <DropdownMenuItem onClick={() => onToggleDisplay(display)}>
                 <IconToggleLeft className="size-4" />
                 Edit Display
-              </DropdownMenuItem>
-            )}
-            {canDelete && (
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => onRemoveDisplay(display)}
-              >
-                <IconTrash className="size-4" />
-                Remove Display
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
-  type DeviceGroup,
+  type DisplayGroup,
   useCreateDeviceGroupMutation,
   useDeleteDeviceGroupMutation,
   useUpdateDeviceGroupMutation,
@@ -48,7 +48,7 @@ interface GroupDeleteEvent {
 interface DisplayGroupManagerDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly groups: readonly DeviceGroup[];
+  readonly groups: readonly DisplayGroup[];
   readonly onGroupRenamed?: (event: GroupRenameEvent) => void;
   readonly onGroupDeleted?: (event: GroupDeleteEvent) => void;
 }
@@ -63,7 +63,7 @@ export function DisplayGroupManagerDialog({
   const [createName, setCreateName] = useState("");
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [renameName, setRenameName] = useState("");
-  const [deleteCandidate, setDeleteCandidate] = useState<DeviceGroup | null>(
+  const [deleteCandidate, setDeleteCandidate] = useState<DisplayGroup | null>(
     null,
   );
   const [createDeviceGroup, { isLoading: isCreating }] =
@@ -78,7 +78,7 @@ export function DisplayGroupManagerDialog({
     [groups],
   );
 
-  const startRename = useCallback((group: DeviceGroup) => {
+  const startRename = useCallback((group: DisplayGroup) => {
     setEditingGroupId(group.id);
     setRenameName(group.name);
   }, []);
@@ -120,7 +120,7 @@ export function DisplayGroupManagerDialog({
   }, [createName, createDeviceGroup, groups]);
 
   const saveRename = useCallback(
-    async (group: DeviceGroup) => {
+    async (group: DisplayGroup) => {
       const nextName = collapseDisplayGroupWhitespace(renameName);
       if (nextName.length === 0) {
         toast.error("Group name is required.");

@@ -13,9 +13,7 @@ interface DisplayGridProps {
   readonly onPreviewPage: (display: Display) => void;
   readonly onRefreshPage: (display: Display) => void;
   readonly onToggleDisplay: (display: Display) => void;
-  readonly onRemoveDisplay: (display: Display) => void;
   readonly canUpdate?: boolean;
-  readonly canDelete?: boolean;
 }
 
 export function DisplayGrid({
@@ -24,15 +22,13 @@ export function DisplayGrid({
   onPreviewPage,
   onRefreshPage,
   onToggleDisplay,
-  onRemoveDisplay,
   canUpdate = true,
-  canDelete = true,
 }: DisplayGridProps): ReactElement {
   if (items.length === 0) {
     return (
       <EmptyState
         title="No displays found"
-        description="Displays register themselves automatically. Use Add Display to see registration instructions for your Raspberry Pi devices."
+        description="Displays register themselves automatically. Use Add Display to see registration instructions for your Raspberry Pi displays."
         icon={<IconDeviceTv className="size-7" aria-hidden="true" />}
       />
     );
@@ -48,9 +44,7 @@ export function DisplayGrid({
           onPreviewPage={onPreviewPage}
           onRefreshPage={onRefreshPage}
           onToggleDisplay={onToggleDisplay}
-          onRemoveDisplay={onRemoveDisplay}
           canUpdate={canUpdate}
-          canDelete={canDelete}
         />
       ))}
     </div>

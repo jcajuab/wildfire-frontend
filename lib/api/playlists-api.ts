@@ -1,4 +1,8 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
+import {
+  parseApiListResponseSafe,
+  parseApiResponseDataSafe,
+} from "@/lib/api/contracts";
 import { baseQuery } from "@/lib/api/base-query";
 
 export interface BackendPlaylist {
@@ -96,6 +100,18 @@ export const playlistsApi = createApi({
         url: "playlists",
         params: params ?? {},
       }),
+      transformResponse: (response) => {
+        const parsed = parseApiListResponseSafe<BackendPlaylist>(
+          response,
+          "listPlaylists",
+        );
+        return {
+          items: parsed.data,
+          total: parsed.meta.total,
+          page: parsed.meta.page,
+          pageSize: parsed.meta.per_page,
+        };
+      },
       providesTags: (result) =>
         result
           ? [
@@ -109,6 +125,11 @@ export const playlistsApi = createApi({
     }),
     getPlaylist: build.query<BackendPlaylistWithItems, string>({
       query: (id) => `playlists/${id}`,
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendPlaylistWithItems>(
+          response,
+          "getPlaylist",
+        ),
       providesTags: (_result, _error, id) => [{ type: "Playlist", id }],
     }),
     createPlaylist: build.mutation<BackendPlaylist, CreatePlaylistRequest>({
@@ -117,6 +138,8 @@ export const playlistsApi = createApi({
         method: "POST",
         body,
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendPlaylist>(response, "createPlaylist"),
       invalidatesTags: [{ type: "Playlist", id: "LIST" }],
     }),
     updatePlaylist: build.mutation<BackendPlaylist, UpdatePlaylistRequest>({
@@ -125,6 +148,8 @@ export const playlistsApi = createApi({
         method: "PATCH",
         body,
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendPlaylist>(response, "updatePlaylist"),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Playlist", id: "LIST" },
         { type: "Playlist", id },
@@ -149,6 +174,11 @@ export const playlistsApi = createApi({
         method: "POST",
         body,
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendPlaylistItem>(
+          response,
+          "addPlaylistItem",
+        ),
       invalidatesTags: (_result, _error, { playlistId }) => [
         { type: "Playlist", id: playlistId },
         { type: "Playlist", id: "LIST" },
@@ -163,6 +193,11 @@ export const playlistsApi = createApi({
         method: "PATCH",
         body,
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendPlaylistItem>(
+          response,
+          "updatePlaylistItem",
+        ),
       invalidatesTags: (_result, _error, { playlistId }) => [
         { type: "Playlist", id: playlistId },
         { type: "Playlist", id: "LIST" },

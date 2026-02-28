@@ -75,6 +75,7 @@ interface NewPlaylistPayload {
 export default function PlaylistsPage(): ReactElement {
   const canUpdatePlaylist = useCan("playlists:update");
   const canDeletePlaylist = useCan("playlists:delete");
+  const canReadContent = useCan("content:read");
   const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(
     "status",
     "all",
@@ -113,7 +114,10 @@ export default function PlaylistsPage(): ReactElement {
     [page, pageSize, search, sortBy, statusFilter],
   );
   const { data: playlistsData } = useListPlaylistsQuery(playlistQuery);
-  const { data: contentData } = useListContentQuery({ page: 1, pageSize: 100 });
+  const { data: contentData } = useListContentQuery(
+    { page: 1, pageSize: 100 },
+    { skip: !canReadContent },
+  );
   const [loadPlaylist] = useLazyGetPlaylistQuery();
   const [createPlaylist] = useCreatePlaylistMutation();
   const [addPlaylistItem] = useAddPlaylistItemMutation();
@@ -338,6 +342,7 @@ export default function PlaylistsPage(): ReactElement {
 
       {manageItemsPlaylist && (
         <EditPlaylistItemsDialog
+          key={manageItemsPlaylist.id}
           open={manageItemsPlaylist !== null}
           onOpenChange={(open) => {
             if (!open) setManageItemsPlaylist(null);

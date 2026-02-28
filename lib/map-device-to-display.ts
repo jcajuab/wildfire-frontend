@@ -1,21 +1,21 @@
-import type { Device } from "@/lib/api/devices-api";
+import type { Display as DisplayApi } from "@/lib/api/devices-api";
 import type { Display, DisplayGroup } from "@/types/display";
 
-export function mapDeviceToDisplay(device: Device): Display {
+export function mapDisplayApiToDisplay(display: DisplayApi): Display {
   const resolution =
-    device.screenWidth != null && device.screenHeight != null
-      ? `${device.screenWidth}x${device.screenHeight}`
+    display.screenWidth != null && display.screenHeight != null
+      ? `${display.screenWidth}x${display.screenHeight}`
       : "Not available";
   return {
-    id: device.id,
-    identifier: device.identifier,
-    name: device.name,
-    location: device.location ?? "",
-    createdAt: device.createdAt,
-    status: device.onlineStatus,
-    ipAddress: device.ipAddress ?? "",
-    macAddress: device.macAddress ?? "",
-    displayOutput: device.outputType ?? "Not available",
+    id: display.id,
+    identifier: display.identifier,
+    name: display.name,
+    location: display.location ?? "",
+    createdAt: display.createdAt,
+    status: display.onlineStatus,
+    ipAddress: display.ipAddress ?? "",
+    macAddress: display.macAddress ?? "",
+    displayOutput: display.outputType ?? "Not available",
     resolution,
     groups: [],
     nowPlaying: null,
@@ -24,7 +24,7 @@ export function mapDeviceToDisplay(device: Device): Display {
 
 /**
  * Attaches display groups with optional colorIndex for badge styling.
- * Pass group metadata (e.g. from device groups API) to get colorIndex per name.
+ * Pass group metadata (e.g. from display groups API) to get colorIndex per name.
  */
 export function withDisplayGroups(
   display: Display,

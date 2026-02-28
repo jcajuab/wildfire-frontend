@@ -26,7 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { DisplayGroupsCombobox } from "@/components/displays/display-groups-combobox";
 import { getGroupBadgeStyles } from "@/lib/display-group-colors";
-import type { DeviceGroup } from "@/lib/api/devices-api";
+import type { DisplayGroup } from "@/lib/api/devices-api";
 import type { Display, DisplayOutput } from "@/types/display";
 
 type WizardStep = 1 | 2 | 3 | 4;
@@ -35,7 +35,7 @@ interface AddDisplayDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onRegister: (display: Omit<Display, "id" | "createdAt">) => void;
-  readonly existingGroups?: readonly DeviceGroup[];
+  readonly existingGroups?: readonly DisplayGroup[];
 }
 
 interface WizardData {
@@ -64,7 +64,7 @@ const initialWizardData: WizardData = {
   macAddress: "",
 };
 
-// Display outputs will be populated from device detection when available
+// Display outputs will be populated from display detection when available
 const availableDisplayOutputs: DisplayOutput[] = [
   { name: "HDMI-0", resolution: "Auto-detect" },
   { name: "HDMI-1", resolution: "Auto-detect" },
@@ -139,7 +139,7 @@ export function AddDisplayDialog({
 
   const handleNext = useCallback(() => {
     if (step < 4) {
-      // Simulate device detection on step 1
+      // Simulate display detection on step 1
       if (step === 1 && data.ipAddress) {
         setData((prev) => ({
           ...prev,
@@ -234,10 +234,10 @@ export function AddDisplayDialog({
               {data.isNewDevice && (
                 <>
                   <div className="flex flex-col gap-1 rounded-md bg-muted/50 p-3">
-                    <p className="text-sm font-medium">New Device Detected</p>
+                    <p className="text-sm font-medium">New Display Detected</p>
                     <p className="text-xs text-muted-foreground">
-                      It looks like you are connecting to a new device. Please
-                      enter the device credentials to continue
+                      It looks like you are connecting to a new display. Please
+                      enter the display credentials to continue
                     </p>
                   </div>
 

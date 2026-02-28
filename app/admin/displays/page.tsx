@@ -29,7 +29,7 @@ import {
   useUpdateDeviceMutation,
 } from "@/lib/api/devices-api";
 import {
-  mapDeviceToDisplay,
+  mapDisplayApiToDisplay,
   withDisplayGroups,
 } from "@/lib/map-device-to-display";
 import {
@@ -50,12 +50,8 @@ import type { Display, DisplaySortField } from "@/types/display";
 const DISPLAY_STATUS_VALUES = ["all", "READY", "LIVE", "DOWN"] as const;
 const DISPLAY_SORT_VALUES = ["alphabetical", "status", "location"] as const;
 
-const DEVICE_SELF_REGISTRATION_MESSAGE =
-  "Devices are managed via self-registration. Use a one-time pairing code to register or update displays.";
-
 export default function DisplaysPage(): ReactElement {
   const canUpdateDisplay = useCan("displays:update");
-  const canDeleteDisplay = useCan("displays:delete");
   const { data: devicesData, isLoading, isError, error } = useGetDevicesQuery();
   const { data: deviceGroupsData } = useGetDeviceGroupsQuery();
 
@@ -94,15 +90,15 @@ export default function DisplaysPage(): ReactElement {
         name: group.name,
         colorIndex: group.colorIndex ?? 0,
       };
-      for (const deviceId of group.deviceIds) {
-        const existing = groupsByDeviceId.get(deviceId) ?? [];
+      for (const displayId of group.deviceIds) {
+        const existing = groupsByDeviceId.get(displayId) ?? [];
         existing.push(displayGroup);
-        groupsByDeviceId.set(deviceId, existing);
+        groupsByDeviceId.set(displayId, existing);
       }
     }
     return (devicesData?.items ?? []).map((device) =>
       withDisplayGroups(
-        mapDeviceToDisplay(device),
+        mapDisplayApiToDisplay(device),
         groupsByDeviceId.get(device.id) ?? [],
       ),
     );
@@ -146,9 +142,9 @@ export default function DisplaysPage(): ReactElement {
   const handleRefreshPage = useCallback(
     async (display: Display) => {
       try {
-        await requestDeviceRefresh({ deviceId: display.id }).unwrap();
+        await requestDeviceRefresh({ displayId: display.id }).unwrap();
         toast.success(
-          `"${display.name}" will refresh on its next device poll.`,
+          `"${display.name}" will refresh on its next display poll.`,
         );
       } catch (err) {
         toast.error(
@@ -169,11 +165,6 @@ export default function DisplaysPage(): ReactElement {
     },
     [setSelectedDisplay, setIsEditDialogOpen],
   );
-
-  const handleRemoveDisplay = useCallback((display: Display) => {
-    void display;
-    toast.info(DEVICE_SELF_REGISTRATION_MESSAGE);
-  }, []);
 
   const handleEditFromView = useCallback((display: Display) => {
     setSelectedDisplay(display);
@@ -254,7 +245,7 @@ export default function DisplaysPage(): ReactElement {
         }
 
         await setDeviceGroups({
-          deviceId: display.id,
+          displayId: display.id,
           groupIds: [...nextGroupIds],
         }).unwrap();
       } catch (error) {
@@ -393,9 +384,7 @@ export default function DisplaysPage(): ReactElement {
               onPreviewPage={handlePreviewPage}
               onRefreshPage={handleRefreshPage}
               onToggleDisplay={handleToggleDisplay}
-              onRemoveDisplay={handleRemoveDisplay}
               canUpdate={canUpdateDisplay}
-              canDelete={canDeleteDisplay}
             />
           )}
         </DashboardPage.Content>

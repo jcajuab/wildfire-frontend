@@ -65,7 +65,7 @@ const PALETTE: readonly GroupBadgeStyles[] = [
 ] as const;
 
 /**
- * Returns badge class names for a given color index (e.g. from device group).
+ * Returns badge class names for a given color index (e.g. from display group).
  * Uses fill variant by default; use .outline for outline variant.
  */
 export function getGroupBadgeStyles(colorIndex: number): GroupBadgeStyles {

@@ -56,7 +56,7 @@ import {
 import type { LogEntry } from "@/types/log";
 
 const PAGE_SIZE = 20;
-const ACTOR_TYPE_FILTERS = ["all", "user", "device"] as const;
+const ACTOR_TYPE_FILTERS = ["all", "user", "display"] as const;
 type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
 const COMMON_STATUS_CODES = ["200", "401", "403", "404", "500"] as const;
 const STATUS_CODE_LABELS: Record<(typeof COMMON_STATUS_CODES)[number], string> =
@@ -70,14 +70,14 @@ const STATUS_CODE_LABELS: Record<(typeof COMMON_STATUS_CODES)[number], string> =
 
 function formatActorDisplay(
   userMap: Map<string, string>,
-  deviceMap: Map<string, string>,
+  displayMap: Map<string, string>,
 ): (actorId: string, actorType: string | null) => string {
   return (actorId: string, actorType: string | null) => {
     if (actorType === "user") {
       return userMap.get(actorId) ?? "Unknown user";
     }
-    if (actorType === "device") {
-      return deviceMap.get(actorId) ?? "Device";
+    if (actorType === "display") {
+      return displayMap.get(actorId) ?? "Display";
     }
     return actorType ?? "Unknown";
   };
@@ -148,18 +148,24 @@ export default function LogsPage(): ReactElement {
   );
 
   const { data } = useListAuditEventsQuery(listQuery);
-  const { data: users = [] } = useGetUsersQuery();
-  const { data: devicesData } = useGetDevicesQuery();
+  const canReadUsers = useCan("users:read");
+  const canReadDisplays = useCan("displays:read");
+  const { data: users = [] } = useGetUsersQuery(undefined, {
+    skip: !canReadUsers,
+  });
+  const { data: devicesData } = useGetDevicesQuery(undefined, {
+    skip: !canReadDisplays,
+  });
 
   const logs = useMemo<LogEntry[]>(() => {
     const userMap = new Map(users.map((u) => [u.id, u.name]));
     const avatarUrlByUserId = new Map(
       users.map((u) => [u.id, u.avatarUrl ?? null]),
     );
-    const deviceMap = new Map(
+    const displayMap = new Map(
       (devicesData?.items ?? []).map((d) => [d.id, d.name || d.identifier]),
     );
-    const getActorName = formatActorDisplay(userMap, deviceMap);
+    const getActorName = formatActorDisplay(userMap, displayMap);
     const getActorAvatarUrlFn = getActorAvatarUrl(avatarUrlByUserId);
     return (data?.items ?? []).map((event) =>
       mapAuditEventToLogEntry(event, {
@@ -463,7 +469,7 @@ export default function LogsPage(): ReactElement {
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="device">Device</SelectItem>
+                  <SelectItem value="display">Display</SelectItem>
                 </SelectContent>
               </Select>
             </div>

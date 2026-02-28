@@ -72,9 +72,15 @@ const getScheduleMutationErrorMessage = (
 export default function SchedulesPage(): ReactElement {
   const canEditSchedule = useCan("schedules:update");
   const canDeleteSchedule = useCan("schedules:delete");
-  const { data: devicesData } = useGetDevicesQuery();
+  const canReadDisplays = useCan("displays:read");
+  const canReadPlaylists = useCan("playlists:read");
+  const { data: devicesData } = useGetDevicesQuery(undefined, {
+    skip: !canReadDisplays,
+  });
   const { data: schedulesData } = useListSchedulesQuery();
-  const { data: playlistsData } = useListPlaylistsQuery();
+  const { data: playlistsData } = useListPlaylistsQuery(undefined, {
+    skip: !canReadPlaylists,
+  });
   const [createSchedule] = useCreateScheduleMutation();
   const [updateSchedule] = useUpdateScheduleMutation();
   const [deleteSchedule] = useDeleteScheduleMutation();

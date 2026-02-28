@@ -23,7 +23,6 @@ export const DESIGN_PERMISSIONS: ReadonlyArray<{
   { resource: "displays", action: "read" },
   { resource: "displays", action: "create" },
   { resource: "displays", action: "update" },
-  { resource: "displays", action: "delete" },
   { resource: "users", action: "read" },
   { resource: "users", action: "create" },
   { resource: "users", action: "update" },

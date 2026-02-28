@@ -126,7 +126,7 @@ export default function SettingsPage(): ReactElement {
         const message =
           error instanceof Error
             ? error.message
-            : "Failed to load device runtime settings.";
+            : "Failed to load display runtime settings.";
         toast.error(message);
       })
       .finally(() => {

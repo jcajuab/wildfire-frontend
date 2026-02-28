@@ -23,7 +23,16 @@ export function PageReadGuard({ children }: PageReadGuardProps): ReactElement {
   const { can, isInitialized } = useAuth();
 
   if (!isInitialized) {
-    return <>{children}</>;
+    return (
+      <div className="flex flex-1 items-center justify-center p-8">
+        <EmptyState
+          title="Checking access"
+          description="Verifying permissions for this page."
+          icon={null}
+          action={null}
+        />
+      </div>
+    );
   }
 
   const requiredPermission = getRequiredReadPermission(pathname ?? "");

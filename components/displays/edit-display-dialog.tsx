@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { DeviceGroup } from "@/lib/api/devices-api";
+import type { DisplayGroup } from "@/lib/api/devices-api";
 import {
   dedupeDisplayGroupNames,
   toDisplayGroupKey,
@@ -26,7 +26,7 @@ import type { Display } from "@/types/display";
 
 interface EditDisplayDialogProps {
   readonly display: Display | null;
-  readonly existingGroups: readonly DeviceGroup[];
+  readonly existingGroups: readonly DisplayGroup[];
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onSave: (display: Display) => Promise<boolean>;
@@ -80,7 +80,7 @@ function createInitialFormData(display: Display): EditFormData {
 
 interface EditDisplayFormProps {
   readonly display: Display;
-  readonly existingGroups: readonly DeviceGroup[];
+  readonly existingGroups: readonly DisplayGroup[];
   readonly onClose: () => void;
   readonly onSave: (display: Display) => Promise<boolean>;
   readonly canManageGroups: boolean;

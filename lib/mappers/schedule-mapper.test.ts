@@ -25,7 +25,7 @@ describe("schedule-mapper", () => {
         id: "schedule-1",
         name: "Week 1",
         playlistId: "playlist-1",
-        deviceId: "device-1",
+        displayId: "device-1",
         startDate: "2026-01-01",
         endDate: "2026-01-31",
         startTime: "08:00",
@@ -35,7 +35,7 @@ describe("schedule-mapper", () => {
         createdAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-01-01T00:00:00.000Z",
         playlist: { id: "playlist-1", name: "Morning" },
-        device: { id: "device-1", name: "Lobby" },
+        display: { id: "device-1", name: "Lobby" },
       },
     ]);
 
@@ -53,7 +53,7 @@ describe("schedule-mapper", () => {
     expect(createPayload).toMatchObject({
       name: "January Campaign",
       playlistId: "playlist-1",
-      deviceId: "device-1",
+      displayId: "device-1",
       startTime: "08:00",
       endTime: "17:00",
       priority: 10,

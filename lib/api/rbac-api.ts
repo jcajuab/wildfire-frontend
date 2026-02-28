@@ -1,5 +1,9 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { emitAuthRefreshRequested } from "@/lib/auth-events";
+import {
+  parseApiListResponseDataSafe,
+  parseApiResponseDataSafe,
+} from "@/lib/api/contracts";
 import { baseQuery } from "@/lib/api/base-query";
 import type { PermissionAction, PermissionResource } from "@/types/permission";
 
@@ -45,13 +49,6 @@ export interface RbacRoleDeletionRequest {
   readonly reason: string | null;
 }
 
-interface PaginatedEnvelope<T> {
-  readonly items: T[];
-  readonly total: number;
-  readonly page: number;
-  readonly pageSize: number;
-}
-
 export const rbacApi = createApi({
   reducerPath: "rbacApi",
   baseQuery,
@@ -60,8 +57,8 @@ export const rbacApi = createApi({
     // Roles
     getRoles: build.query<RbacRole[], void>({
       query: () => "roles",
-      transformResponse: (response: PaginatedEnvelope<RbacRole>) =>
-        response.items,
+      transformResponse: (response) =>
+        parseApiListResponseDataSafe<RbacRole>(response, "getRoles"),
       providesTags: (result) =>
         result
           ? [
@@ -72,6 +69,8 @@ export const rbacApi = createApi({
     }),
     getRole: build.query<RbacRole, string>({
       query: (id) => `roles/${id}`,
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<RbacRole>(response, "getRole"),
       providesTags: (_result, _error, id) => [{ type: "Role", id }],
     }),
     createRole: build.mutation<
@@ -83,6 +82,8 @@ export const rbacApi = createApi({
         method: "POST",
         body,
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<RbacRole>(response, "createRole"),
       invalidatesTags: [{ type: "Role", id: "LIST" }],
       async onQueryStarted(_arg, { queryFulfilled }) {
         try {
@@ -102,6 +103,8 @@ export const rbacApi = createApi({
         method: "PATCH",
         body,
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<RbacRole>(response, "updateRole"),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Role", id },
         { type: "Role", id: "LIST" },
@@ -135,8 +138,11 @@ export const rbacApi = createApi({
     }),
     getRolePermissions: build.query<RbacPermission[], string>({
       query: (roleId) => `roles/${roleId}/permissions`,
-      transformResponse: (response: PaginatedEnvelope<RbacPermission>) =>
-        response.items,
+      transformResponse: (response) =>
+        parseApiListResponseDataSafe<RbacPermission>(
+          response,
+          "getRolePermissions",
+        ),
       providesTags: (_result, _error, roleId) => [
         { type: "Role", id: roleId },
         { type: "Permission", id: "LIST" },
@@ -151,6 +157,11 @@ export const rbacApi = createApi({
         method: "PUT",
         body: { permissionIds, policyVersion },
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<RbacPermission[]>(
+          response,
+          "setRolePermissions",
+        ),
       invalidatesTags: (_result, _error, { roleId }) => [
         { type: "Role", id: roleId },
         { type: "Role", id: "LIST" },
@@ -168,8 +179,8 @@ export const rbacApi = createApi({
     }),
     getRoleUsers: build.query<RbacUser[], string>({
       query: (roleId) => `roles/${roleId}/users`,
-      transformResponse: (response: PaginatedEnvelope<RbacUser>) =>
-        response.items,
+      transformResponse: (response) =>
+        parseApiListResponseDataSafe<RbacUser>(response, "getRoleUsers"),
       providesTags: (_result, _error, roleId) => [
         { type: "Role", id: roleId },
         { type: "User", id: "LIST" },
@@ -179,8 +190,11 @@ export const rbacApi = createApi({
     // Permissions
     getPermissions: build.query<RbacPermission[], void>({
       query: () => "permissions",
-      transformResponse: (response: PaginatedEnvelope<RbacPermission>) =>
-        response.items,
+      transformResponse: (response) =>
+        parseApiListResponseDataSafe<RbacPermission>(
+          response,
+          "getPermissions",
+        ),
       providesTags: (result) =>
         result
           ? [
@@ -193,8 +207,8 @@ export const rbacApi = createApi({
     // Users
     getUsers: build.query<RbacUser[], void>({
       query: () => "users",
-      transformResponse: (response: PaginatedEnvelope<RbacUser>) =>
-        response.items,
+      transformResponse: (response) =>
+        parseApiListResponseDataSafe<RbacUser>(response, "getUsers"),
       providesTags: (result) =>
         result
           ? [
@@ -205,6 +219,8 @@ export const rbacApi = createApi({
     }),
     getUser: build.query<RbacUser, string>({
       query: (id) => `users/${id}`,
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<RbacUser>(response, "getUser"),
       providesTags: (_result, _error, id) => [{ type: "User", id }],
     }),
     createUser: build.mutation<
@@ -216,6 +232,8 @@ export const rbacApi = createApi({
         method: "POST",
         body,
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<RbacUser>(response, "createUser"),
       invalidatesTags: [{ type: "User", id: "LIST" }],
       async onQueryStarted(_arg, { queryFulfilled }) {
         try {
@@ -235,6 +253,8 @@ export const rbacApi = createApi({
         method: "PATCH",
         body,
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<RbacUser>(response, "updateUser"),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "User", id },
         { type: "User", id: "LIST" },
@@ -265,8 +285,8 @@ export const rbacApi = createApi({
     }),
     getUserRoles: build.query<RbacRole[], string>({
       query: (userId) => `users/${userId}/roles`,
-      transformResponse: (response: PaginatedEnvelope<RbacRole>) =>
-        response.items,
+      transformResponse: (response) =>
+        parseApiListResponseDataSafe<RbacRole>(response, "getUserRoles"),
       providesTags: (_result, _error, userId) => [
         { type: "User", id: userId },
         { type: "Role", id: "LIST" },
@@ -281,6 +301,8 @@ export const rbacApi = createApi({
         method: "PUT",
         body: { roleIds, policyVersion },
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<RbacRole[]>(response, "setUserRoles"),
       invalidatesTags: (_result, _error, { userId }) => [
         { type: "User", id: userId },
         { type: "User", id: "LIST" },
@@ -309,9 +331,11 @@ export const rbacApi = createApi({
     }),
     getRoleDeletionRequests: build.query<RbacRoleDeletionRequest[], void>({
       query: () => "roles/deletion-requests",
-      transformResponse: (
-        response: PaginatedEnvelope<RbacRoleDeletionRequest>,
-      ) => response.items,
+      transformResponse: (response) =>
+        parseApiListResponseDataSafe<RbacRoleDeletionRequest>(
+          response,
+          "getRoleDeletionRequests",
+        ),
       providesTags: (result) =>
         result
           ? [

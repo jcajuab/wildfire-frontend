@@ -4,6 +4,7 @@ import {
   getBaseUrl,
   getDevOnlyRequestHeaders,
 } from "@/lib/api/base-query";
+import { extractApiError, parseApiListResponseSafe } from "@/lib/api/contracts";
 
 export interface BackendAuditEvent {
   readonly id: string;
@@ -85,22 +86,19 @@ export async function exportAuditEventsCsv(
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    let message: string | undefined;
-    try {
-      const parsed = JSON.parse(text) as {
-        error?: {
-          message?: unknown;
-        };
-      };
-      if (typeof parsed?.error?.message === "string") {
-        message = parsed.error.message;
-      }
-    } catch {
-      message = undefined;
-    }
+    const payload = await response
+      .text()
+      .then((text) => {
+        try {
+          return text ? JSON.parse(text) : undefined;
+        } catch {
+          return undefined;
+        }
+      })
+      .catch(() => undefined);
+    const message = extractApiError(payload)?.error.message;
     throw new Error(
-      (message ?? text) || `Export failed with status ${response.status}`,
+      message ?? `Export failed with status ${response.status}`,
     );
   }
 
@@ -132,6 +130,18 @@ export const auditApi = createApi({
           requestId: query?.requestId,
         },
       }),
+      transformResponse: (response) => {
+        const parsed = parseApiListResponseSafe<BackendAuditEvent>(
+          response,
+          "listAuditEvents",
+        );
+        return {
+          items: parsed.data,
+          total: parsed.meta.total,
+          page: parsed.meta.page,
+          pageSize: parsed.meta.per_page,
+        };
+      },
       providesTags: (result) =>
         result
           ? [

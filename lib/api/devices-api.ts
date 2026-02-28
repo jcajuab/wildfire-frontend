@@ -4,9 +4,15 @@ import {
   getBaseUrl,
   getDevOnlyRequestHeaders,
 } from "@/lib/api/base-query";
+import {
+  extractApiError,
+  parseApiListResponseSafe,
+  parseApiResponseDataSafe,
+  parseApiListResponse,
+} from "@/lib/api/contracts";
 
-/** Backend device shape (matches GET /displays and GET /displays/:id). */
-export interface Device {
+/** Backend display shape (matches GET /displays and GET /displays/:id). */
+export interface Display {
   readonly id: string;
   readonly identifier: string;
   readonly deviceFingerprint?: string | null;
@@ -24,14 +30,14 @@ export interface Device {
   readonly updatedAt: string;
 }
 
-export interface DevicesListResponse {
-  readonly items: readonly Device[];
+export interface DisplaysListResponse {
+  readonly items: readonly Display[];
   readonly total: number;
   readonly page: number;
   readonly pageSize: number;
 }
 
-export interface UpdateDeviceRequest {
+export interface UpdateDisplayRequest {
   readonly id: string;
   readonly name?: string;
   readonly location?: string | null;
@@ -43,7 +49,7 @@ export interface UpdateDeviceRequest {
   readonly orientation?: "LANDSCAPE" | "PORTRAIT" | null;
 }
 
-export interface DeviceGroup {
+export interface DisplayGroup {
   readonly id: string;
   readonly name: string;
   /** Optional: backend may not send; use 0 for badge styling when missing. */
@@ -53,8 +59,8 @@ export interface DeviceGroup {
   readonly updatedAt: string;
 }
 
-export interface DeviceGroupsListResponse {
-  readonly items: readonly DeviceGroup[];
+export interface DisplayGroupsListResponse {
+  readonly items: readonly DisplayGroup[];
 }
 
 export interface DevicePairingCodeResponse {
@@ -65,17 +71,25 @@ export interface DevicePairingCodeResponse {
 const PAGE_SIZE = 100;
 const MAX_PAGES = 100;
 
+const buildResponseParseError = (scope: string, error: unknown) => ({
+  code: "INVALID_API_RESPONSE",
+  message:
+    error instanceof Error
+      ? error.message
+      : "Response payload does not match API contract.",
+});
+
 export const devicesApi = createApi({
   reducerPath: "devicesApi",
   baseQuery,
-  tagTypes: ["Device", "DeviceGroup"],
+  tagTypes: ["Display", "DisplayGroup"],
   endpoints: (build) => ({
-    getDevices: build.query<DevicesListResponse, void>({
+    getDevices: build.query<DisplaysListResponse, void>({
       async queryFn(_arg, _api, _extraOptions, baseQueryFn) {
         const pageSize = PAGE_SIZE;
         let page = 1;
         let total = 0;
-        const allItems: Device[] = [];
+        const allItems: Display[] = [];
 
         while (true) {
           if (page > MAX_PAGES) {
@@ -94,11 +108,25 @@ export const devicesApi = createApi({
             return { error: result.error };
           }
 
-          const data = result.data as DevicesListResponse;
-          total = data.total;
-          allItems.push(...data.items);
+          let response: ReturnType<typeof parseApiListResponse<Display>>;
+          try {
+            response = parseApiListResponseSafe<Display>(
+              result.data,
+              "getDevices",
+            );
+          } catch (error) {
+            return {
+              error: {
+                status: 502,
+                data: buildResponseParseError("getDevices", error),
+              },
+            };
+          }
+          const pageData = response.data;
+          total = response.meta.total;
+          allItems.push(...pageData);
 
-          if (allItems.length >= total || data.items.length === 0) {
+          if (allItems.length >= total || pageData.length === 0) {
             break;
           }
           page += 1;
@@ -107,9 +135,9 @@ export const devicesApi = createApi({
         return {
           data: {
             items: allItems,
-            total: allItems.length,
+            total,
             page: 1,
-            pageSize: allItems.length === 0 ? PAGE_SIZE : allItems.length,
+            pageSize: PAGE_SIZE,
           },
         };
       },
@@ -117,43 +145,54 @@ export const devicesApi = createApi({
         result
           ? [
               ...result.items.map(({ id }) => ({
-                type: "Device" as const,
+                type: "Display" as const,
                 id,
               })),
-              { type: "Device", id: "LIST" },
+              { type: "Display", id: "LIST" },
             ]
-          : [{ type: "Device", id: "LIST" }],
+          : [{ type: "Display", id: "LIST" }],
     }),
-    getDevice: build.query<Device, string>({
+    getDevice: build.query<Display, string>({
       query: (id) => `displays/${id}`,
-      providesTags: (_result, _error, id) => [{ type: "Device", id }],
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<Display>(response, "getDevice"),
+      providesTags: (_result, _error, id) => [{ type: "Display", id }],
     }),
-    updateDevice: build.mutation<Device, UpdateDeviceRequest>({
+    updateDevice: build.mutation<Display, UpdateDisplayRequest>({
       query: ({ id, ...body }) => ({
         url: `displays/${id}`,
         method: "PATCH",
         body,
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<Display>(response, "updateDevice"),
       invalidatesTags: (_result, _error, { id }) => [
-        { type: "Device", id: "LIST" },
-        { type: "Device", id },
+        { type: "Display", id: "LIST" },
+        { type: "Display", id },
       ],
     }),
-    getDeviceGroups: build.query<DeviceGroupsListResponse, void>({
+    getDeviceGroups: build.query<DisplayGroupsListResponse, void>({
       query: () => "displays/groups",
+      transformResponse: (response) =>
+        ({
+          items: parseApiResponseDataSafe<readonly DisplayGroup[]>(
+            response,
+            "getDeviceGroups",
+          ),
+        }),
       providesTags: (result) =>
         result
           ? [
               ...result.items.map(({ id }) => ({
-                type: "DeviceGroup" as const,
+                type: "DisplayGroup" as const,
                 id,
               })),
-              { type: "DeviceGroup", id: "LIST" },
+              { type: "DisplayGroup", id: "LIST" },
             ]
-          : [{ type: "DeviceGroup", id: "LIST" }],
+          : [{ type: "DisplayGroup", id: "LIST" }],
     }),
     createDeviceGroup: build.mutation<
-      DeviceGroup,
+      DisplayGroup,
       { name: string; colorIndex?: number }
     >({
       query: (body) => ({
@@ -161,10 +200,12 @@ export const devicesApi = createApi({
         method: "POST",
         body,
       }),
-      invalidatesTags: [{ type: "DeviceGroup", id: "LIST" }],
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<DisplayGroup>(response, "createDeviceGroup"),
+      invalidatesTags: [{ type: "DisplayGroup", id: "LIST" }],
     }),
     updateDeviceGroup: build.mutation<
-      DeviceGroup,
+      DisplayGroup,
       { groupId: string; name: string; colorIndex?: number }
     >({
       query: ({ groupId, name, colorIndex }) => ({
@@ -172,10 +213,12 @@ export const devicesApi = createApi({
         method: "PATCH",
         body: { name, colorIndex },
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<DisplayGroup>(response, "updateDeviceGroup"),
       invalidatesTags: (_result, _error, { groupId }) => [
-        { type: "DeviceGroup", id: "LIST" },
-        { type: "DeviceGroup", id: groupId },
-        { type: "Device", id: "LIST" },
+        { type: "DisplayGroup", id: "LIST" },
+        { type: "DisplayGroup", id: groupId },
+        { type: "Display", id: "LIST" },
       ],
     }),
     deleteDeviceGroup: build.mutation<void, { groupId: string }>({
@@ -184,34 +227,34 @@ export const devicesApi = createApi({
         method: "DELETE",
       }),
       invalidatesTags: (_result, _error, { groupId }) => [
-        { type: "DeviceGroup", id: "LIST" },
-        { type: "DeviceGroup", id: groupId },
-        { type: "Device", id: "LIST" },
+        { type: "DisplayGroup", id: "LIST" },
+        { type: "DisplayGroup", id: groupId },
+        { type: "Display", id: "LIST" },
       ],
     }),
     setDeviceGroups: build.mutation<
       void,
-      { deviceId: string; groupIds: string[] }
+      { displayId: string; groupIds: string[] }
     >({
-      query: ({ deviceId, groupIds }) => ({
-        url: `displays/${deviceId}/groups`,
+      query: ({ displayId, groupIds }) => ({
+        url: `displays/${displayId}/groups`,
         method: "PUT",
         body: { groupIds },
       }),
-      invalidatesTags: (_result, _error, { deviceId }) => [
-        { type: "Device", id: "LIST" },
-        { type: "Device", id: deviceId },
-        { type: "DeviceGroup", id: "LIST" },
+      invalidatesTags: (_result, _error, { displayId }) => [
+        { type: "Display", id: "LIST" },
+        { type: "Display", id: displayId },
+        { type: "DisplayGroup", id: "LIST" },
       ],
     }),
-    requestDeviceRefresh: build.mutation<void, { deviceId: string }>({
-      query: ({ deviceId }) => ({
-        url: `displays/${deviceId}/refresh`,
+    requestDeviceRefresh: build.mutation<void, { displayId: string }>({
+      query: ({ displayId }) => ({
+        url: `displays/${displayId}/refresh`,
         method: "POST",
       }),
-      invalidatesTags: (_result, _error, { deviceId }) => [
-        { type: "Device", id: "LIST" },
-        { type: "Device", id: deviceId },
+      invalidatesTags: (_result, _error, { displayId }) => [
+        { type: "Display", id: "LIST" },
+        { type: "Display", id: displayId },
       ],
     }),
     createPairingCode: build.mutation<DevicePairingCodeResponse, void>({
@@ -219,9 +262,14 @@ export const devicesApi = createApi({
         url: "displays/pairing-codes",
         method: "POST",
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<DevicePairingCodeResponse>(
+          response,
+          "createPairingCode",
+        ),
     }),
     registerDevice: build.mutation<
-      Device,
+      Display,
       {
         pairingCode: string;
         identifier: string;
@@ -271,32 +319,46 @@ export const devicesApi = createApi({
           },
           body: JSON.stringify(body),
         });
-        const raw = await response.text();
         let data: unknown;
         try {
-          data = raw ? JSON.parse(raw) : undefined;
+          data = await response.json();
         } catch {
           data = undefined;
         }
+
         if (response.ok) {
-          return { data: data as Device };
+          try {
+            return {
+              data: parseApiResponseDataSafe<Display>(data, "registerDevice"),
+            };
+          } catch {
+            return {
+              error: {
+                status: 500,
+                data: "Invalid register display response format.",
+              },
+            };
+          }
         }
+
+        const parsedError = extractApiError(data);
         const message =
-          typeof data === "object" &&
-          data !== null &&
-          "error" in data &&
-          typeof (data as { error?: { message?: unknown } }).error?.message ===
-            "string"
-            ? (data as { error: { message: string } }).error.message
-            : "Failed to register display.";
+          parsedError?.error.message ?? "Failed to register display.";
+        const normalizedError = parsedError ?? {
+          error: {
+            code: "register_display_error",
+            message,
+          },
+        };
+
         return {
           error: {
             status: response.status,
-            data: message as unknown,
+            data: normalizedError,
           },
         };
       },
-      invalidatesTags: [{ type: "Device", id: "LIST" }],
+      invalidatesTags: [{ type: "Display", id: "LIST" }],
     }),
   }),
 });

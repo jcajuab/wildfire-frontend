@@ -11,6 +11,7 @@ import {
 } from "@/lib/device-runtime/overflow-timing";
 import { PdfRenderer } from "@/lib/device-runtime/pdf-renderer";
 import { createDeviceSseClient } from "@/lib/device-runtime/sse-client";
+import { parseApiResponseData } from "@/lib/api/contracts";
 
 interface DeviceManifest {
   readonly playlistId: string | null;
@@ -57,7 +58,8 @@ function createDisplayRuntimeApi(input: {
       if (!response.ok) {
         throw new Error(`Manifest fetch failed (${response.status})`);
       }
-      return (await response.json()) as DeviceManifest;
+      const payload = await response.json();
+      return parseApiResponseData<DeviceManifest>(payload);
     },
     async fetchStreamToken(): Promise<StreamTokenResponse> {
       const response = await fetch(
@@ -69,7 +71,8 @@ function createDisplayRuntimeApi(input: {
       if (!response.ok) {
         throw new Error(`Stream token request failed (${response.status})`);
       }
-      return (await response.json()) as StreamTokenResponse;
+      const payload = await response.json();
+      return parseApiResponseData<StreamTokenResponse>(payload);
     },
   };
 }
@@ -140,11 +143,20 @@ export default function DisplayRuntimePage() {
       headers: commonHeaders,
     });
     let disposed = false;
+    const setManifestError = (error: unknown, fallback: string) => {
+      if (disposed) {
+        return;
+      }
+      setErrorMessage(
+        error instanceof Error ? error.message : fallback,
+      );
+    };
 
     const refreshManifest = async (): Promise<void> => {
       const payload = await api.fetchManifest();
       const hasMaterialChange = payload.playlistVersion !== lastPlaylistVersionRef.current;
       setManifest(payload);
+      setErrorMessage(null);
       if (hasMaterialChange) {
         setCurrentIndex(0);
         setMeasuredHeightByItemId({});
@@ -153,11 +165,7 @@ export default function DisplayRuntimePage() {
     };
 
     void refreshManifest().catch((error) => {
-      if (!disposed) {
-        setErrorMessage(
-          error instanceof Error ? error.message : "Failed to load manifest",
-        );
-      }
+      setManifestError(error, "Failed to load manifest");
     });
 
     const sse = createDeviceSseClient({
@@ -167,19 +175,15 @@ export default function DisplayRuntimePage() {
       onEvent: () => {
         setLastEventAt(new Date().toISOString());
         void refreshManifest().catch((error) => {
-          if (!disposed) {
-            setErrorMessage(
-              error instanceof Error
-                ? error.message
-                : "Failed to refresh manifest",
-            );
-          }
+          setManifestError(error, "Failed to refresh manifest");
         });
       },
     });
 
     const pollTimer = setInterval(() => {
-      void refreshManifest().catch(() => undefined);
+      void refreshManifest().catch((error) => {
+        setManifestError(error, "Failed to poll manifest");
+      });
     }, POLL_MS);
 
     return () => {
@@ -263,7 +267,7 @@ export default function DisplayRuntimePage() {
           <Image
             key={currentItem.id}
             src={currentItem.content.downloadUrl}
-            alt=""
+            alt="Display content image"
             width={currentItem.content.width ?? viewport.width}
             height={currentItem.content.height ?? viewport.height}
             className="h-auto w-full"
@@ -292,4 +296,3 @@ export default function DisplayRuntimePage() {
     </main>
   );
 }
-

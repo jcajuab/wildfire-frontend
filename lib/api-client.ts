@@ -2,6 +2,11 @@ import {
   getBaseUrl as getApiBaseUrl,
   getDevOnlyRequestHeaders,
 } from "@/lib/api/base-query";
+import {
+  extractApiError,
+  parseApiListResponseDataSafe,
+  parseApiResponseData,
+} from "@/lib/api/contracts";
 import type {
   ApiErrorResponse,
   AuthResponse,
@@ -13,6 +18,29 @@ function getBaseUrl(): string {
   const url = getApiBaseUrl();
   if (!url) throw new Error("NEXT_PUBLIC_API_URL is not set");
   return url;
+}
+
+async function readJsonPayload(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return undefined;
+  }
+}
+
+function createAuthApiError(response: Response, payload: unknown): AuthApiError {
+  const parsedError = extractApiError(payload);
+  const message =
+    parsedError?.error?.message ?? `Request failed with status ${response.status}`;
+  return new AuthApiError(message, response.status, parsedError);
+}
+
+async function parseApiPayload<T>(response: Response): Promise<T> {
+  const payload = await readJsonPayload(response);
+  if (!response.ok) {
+    throw createAuthApiError(response, payload);
+  }
+  return parseApiResponseData<T>(payload);
 }
 
 /** POST /auth/login. Returns auth payload or throws with backend error body. */
@@ -30,16 +58,7 @@ export async function login(
     body: JSON.stringify(credentials),
   });
 
-  const data = (await response.json()) as AuthResponse | ApiErrorResponse;
-
-  if (!response.ok) {
-    const error = data as ApiErrorResponse;
-    const message =
-      error?.error?.message ?? `Request failed with status ${response.status}`;
-    throw new AuthApiError(message, response.status, error);
-  }
-
-  return data as AuthResponse;
+  return parseApiPayload<AuthResponse>(response);
 }
 
 /** GET /auth/session. Refreshes JWT (sliding session). Returns auth payload or throws with backend error body. */
@@ -59,16 +78,7 @@ export async function refreshToken(
     headers,
   });
 
-  const data = (await response.json()) as AuthResponse | ApiErrorResponse;
-
-  if (!response.ok) {
-    const error = data as ApiErrorResponse;
-    const message =
-      error?.error?.message ?? `Request failed with status ${response.status}`;
-    throw new AuthApiError(message, response.status, error);
-  }
-
-  return data as AuthResponse;
+  return parseApiPayload<AuthResponse>(response);
 }
 
 /** POST /auth/logout. No-op on backend; call for consistency. Does not throw. */
@@ -114,16 +124,7 @@ export async function updateCurrentUserProfile(
     body: JSON.stringify(payload),
   });
 
-  const data = (await response.json()) as AuthResponse | ApiErrorResponse;
-
-  if (!response.ok) {
-    const error = data as ApiErrorResponse;
-    const message =
-      error?.error?.message ?? `Request failed with status ${response.status}`;
-    throw new AuthApiError(message, response.status, error);
-  }
-
-  return data as AuthResponse;
+  return parseApiPayload<AuthResponse>(response);
 }
 
 /** POST /auth/password/change. Change current user password. Returns 204 on success; 401 if current password wrong. */
@@ -148,10 +149,8 @@ export async function changePassword(
 
   if (response.status === 204) return;
 
-  const data = (await response.json()) as ApiErrorResponse;
-  const message =
-    data?.error?.message ?? `Request failed with status ${response.status}`;
-  throw new AuthApiError(message, response.status, data);
+  const payloadData = await readJsonPayload(response);
+  throw createAuthApiError(response, payloadData);
 }
 
 const AVATAR_UPLOAD_TIMEOUT_MS = 30_000;
@@ -186,17 +185,7 @@ export async function uploadAvatar(
       signal: controller.signal,
     });
 
-    const data = (await response.json()) as AuthResponse | ApiErrorResponse;
-
-    if (!response.ok) {
-      const error = data as ApiErrorResponse;
-      const message =
-        error?.error?.message ??
-        `Request failed with status ${response.status}`;
-      throw new AuthApiError(message, response.status, error);
-    }
-
-    return data as AuthResponse;
+    return parseApiPayload<AuthResponse>(response);
   } catch (err) {
     if (err instanceof Error && err.name === "AbortError") {
       throw new Error("Request timed out. Please try again.");
@@ -224,10 +213,8 @@ export async function deleteCurrentUser(token?: string | null): Promise<void> {
 
   if (response.status === 204) return;
 
-  const data = (await response.json()) as ApiErrorResponse;
-  const message =
-    data?.error?.message ?? `Request failed with status ${response.status}`;
-  throw new AuthApiError(message, response.status, data);
+  const payload = await readJsonPayload(response);
+  throw createAuthApiError(response, payload);
 }
 
 /** POST /auth/password/forgot. Always returns 204 when accepted. */
@@ -245,10 +232,8 @@ export async function forgotPassword(email: string): Promise<void> {
 
   if (response.status === 204) return;
 
-  const data = (await response.json()) as ApiErrorResponse;
-  const message =
-    data?.error?.message ?? `Request failed with status ${response.status}`;
-  throw new AuthApiError(message, response.status, data);
+  const payload = await readJsonPayload(response);
+  throw createAuthApiError(response, payload);
 }
 
 /** POST /auth/password/reset. Returns 204 on success. */
@@ -269,10 +254,8 @@ export async function resetPassword(
 
   if (response.status === 204) return;
 
-  const data = (await response.json()) as ApiErrorResponse;
-  const message =
-    data?.error?.message ?? `Request failed with status ${response.status}`;
-  throw new AuthApiError(message, response.status, data);
+  const payload = await readJsonPayload(response);
+  throw createAuthApiError(response, payload);
 }
 
 export interface CreateInvitationResponse {
@@ -295,16 +278,7 @@ export async function getDeviceRuntimeSettings(): Promise<DeviceRuntimeSettingsR
       ...getDevOnlyRequestHeaders(),
     },
   });
-  const data = (await response.json()) as
-    | DeviceRuntimeSettingsResponse
-    | ApiErrorResponse;
-  if (!response.ok) {
-    const error = data as ApiErrorResponse;
-    const message =
-      error?.error?.message ?? `Request failed with status ${response.status}`;
-    throw new AuthApiError(message, response.status, error);
-  }
-  return data as DeviceRuntimeSettingsResponse;
+  return parseApiPayload<DeviceRuntimeSettingsResponse>(response);
 }
 
 /** PATCH /settings/display-runtime. Requires settings:update permission. */
@@ -321,16 +295,7 @@ export async function updateDeviceRuntimeSettings(payload: {
     },
     body: JSON.stringify(payload),
   });
-  const data = (await response.json()) as
-    | DeviceRuntimeSettingsResponse
-    | ApiErrorResponse;
-  if (!response.ok) {
-    const error = data as ApiErrorResponse;
-    const message =
-      error?.error?.message ?? `Request failed with status ${response.status}`;
-    throw new AuthApiError(message, response.status, error);
-  }
-  return data as DeviceRuntimeSettingsResponse;
+  return parseApiPayload<DeviceRuntimeSettingsResponse>(response);
 }
 
 /** POST /auth/invitations. Requires users:create permission. */
@@ -349,17 +314,7 @@ export async function createInvitation(input: {
     body: JSON.stringify(input),
   });
 
-  const data = (await response.json()) as
-    | CreateInvitationResponse
-    | ApiErrorResponse;
-  if (!response.ok) {
-    const error = data as ApiErrorResponse;
-    const message =
-      error?.error?.message ?? `Request failed with status ${response.status}`;
-    throw new AuthApiError(message, response.status, error);
-  }
-
-  return data as CreateInvitationResponse;
+  return parseApiPayload<CreateInvitationResponse>(response);
 }
 
 /** GET /auth/invitations. Returns recent invitation records. */
@@ -373,17 +328,11 @@ export async function getInvitations(): Promise<readonly InvitationRecord[]> {
     },
   });
 
-  const data = (await response.json()) as
-    | readonly InvitationRecord[]
-    | ApiErrorResponse;
+  const payload = await readJsonPayload(response);
   if (!response.ok) {
-    const error = data as ApiErrorResponse;
-    const message =
-      error?.error?.message ?? `Request failed with status ${response.status}`;
-    throw new AuthApiError(message, response.status, error);
+    throw createAuthApiError(response, payload);
   }
-
-  return data as readonly InvitationRecord[];
+  return parseApiListResponseDataSafe<InvitationRecord>(payload, "getInvitations");
 }
 
 /** POST /auth/invitations/:id/resend. */
@@ -399,17 +348,7 @@ export async function resendInvitation(
     },
   });
 
-  const data = (await response.json()) as
-    | CreateInvitationResponse
-    | ApiErrorResponse;
-  if (!response.ok) {
-    const error = data as ApiErrorResponse;
-    const message =
-      error?.error?.message ?? `Request failed with status ${response.status}`;
-    throw new AuthApiError(message, response.status, error);
-  }
-
-  return data as CreateInvitationResponse;
+  return parseApiPayload<CreateInvitationResponse>(response);
 }
 
 /** POST /auth/invitations/accept. Returns 204 on success. */
@@ -431,10 +370,8 @@ export async function acceptInvitation(input: {
 
   if (response.status === 204) return;
 
-  const data = (await response.json()) as ApiErrorResponse;
-  const message =
-    data?.error?.message ?? `Request failed with status ${response.status}`;
-  throw new AuthApiError(message, response.status, data);
+  const payload = await readJsonPayload(response);
+  throw createAuthApiError(response, payload);
 }
 
 /** Error thrown by auth API with status and optional backend body. */

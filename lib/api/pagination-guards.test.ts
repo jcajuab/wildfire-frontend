@@ -24,7 +24,7 @@ describe("paginated aggregate query guards", () => {
     global.fetch = vi.fn(async () => {
       return new Response(
         JSON.stringify({
-          items: [
+          data: [
             {
               id: crypto.randomUUID(),
               identifier: "id",
@@ -42,9 +42,12 @@ describe("paginated aggregate query guards", () => {
               updatedAt: "2025-01-01T00:00:00.000Z",
             },
           ],
-          total: 9999,
-          page: 1,
-          pageSize: 100,
+          meta: {
+            total: 9999,
+            page: 1,
+            per_page: 100,
+            total_pages: 100,
+          },
         }),
         {
           status: 200,
@@ -79,7 +82,7 @@ describe("paginated aggregate query guards", () => {
     global.fetch = vi.fn(async () => {
       return new Response(
         JSON.stringify({
-          items: [
+          data: [
             {
               id: crypto.randomUUID(),
               seriesId: crypto.randomUUID(),
@@ -99,9 +102,12 @@ describe("paginated aggregate query guards", () => {
               device: { id: crypto.randomUUID(), name: "Device" },
             },
           ],
-          total: 9999,
-          page: 1,
-          pageSize: 100,
+          meta: {
+            total: 9999,
+            page: 1,
+            per_page: 100,
+            total_pages: 100,
+          },
         }),
         {
           status: 200,

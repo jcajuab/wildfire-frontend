@@ -20,13 +20,13 @@ import {
   dedupeDisplayGroupNames,
   toDisplayGroupKey,
 } from "@/lib/display-group-normalization";
-import type { DeviceGroup } from "@/lib/api/devices-api";
+import type { DisplayGroup } from "@/lib/api/devices-api";
 
 export interface DisplayGroupsComboboxProps {
   readonly id?: string;
   readonly value: readonly string[];
   readonly onValueChange: (names: string[]) => void;
-  readonly existingGroups: readonly DeviceGroup[];
+  readonly existingGroups: readonly DisplayGroup[];
   readonly disabled?: boolean;
   readonly placeholder?: string;
   readonly showLabel?: boolean;

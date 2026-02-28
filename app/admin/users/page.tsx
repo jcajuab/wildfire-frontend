@@ -71,13 +71,16 @@ export default function UsersPage(): ReactElement {
   const canUpdateUser = useCan("users:update");
   const canDeleteUser = useCan("users:delete");
   const canCreateUser = useCan("users:create");
+  const canReadRoles = useCan("roles:read");
   const isRoot = currentUser?.isRoot === true;
   const {
     data: usersData,
     isLoading: usersLoading,
     isError: usersError,
   } = useGetUsersQuery();
-  const { data: rolesData } = useGetRolesQuery();
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !canReadRoles,
+  });
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
   const [setUserRoles] = useSetUserRolesMutation();

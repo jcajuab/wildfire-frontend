@@ -23,8 +23,8 @@ export function mapBackendScheduleToSchedule(item: BackendSchedule): Schedule {
     },
     targetDisplays: [
       {
-        id: item.device.id,
-        name: item.device.name ?? "Unnamed display",
+        id: item.display.id,
+        name: item.display.name ?? "Unnamed display",
       },
     ],
     priority: item.priority,
@@ -46,7 +46,7 @@ export function mapCreateFormToScheduleRequest(
   return {
     name: data.name.trim(),
     playlistId: data.playlistId,
-    deviceId: data.targetDisplayIds[0] ?? "",
+    displayId: data.targetDisplayIds[0] ?? "",
     startDate: toIsoDate(data.startDate),
     endDate: toIsoDate(data.endDate),
     startTime: data.startTime,
@@ -64,7 +64,7 @@ export function mapUpdateFormToScheduleRequest(
     id,
     name: data.name.trim(),
     playlistId: data.playlistId,
-    deviceId: data.targetDisplayIds[0] ?? "",
+    displayId: data.targetDisplayIds[0] ?? "",
     startDate: toIsoDate(data.startDate),
     endDate: toIsoDate(data.endDate),
     startTime: data.startTime,

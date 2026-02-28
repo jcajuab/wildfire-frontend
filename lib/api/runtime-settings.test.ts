@@ -23,7 +23,7 @@ describe("runtime settings api", () => {
 
   test("gets runtime settings", async () => {
     global.fetch = vi.fn(async () => {
-      return new Response(JSON.stringify({ scrollPxPerSecond: 24 }), {
+      return new Response(JSON.stringify({ data: { scrollPxPerSecond: 24 } }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
@@ -39,7 +39,7 @@ describe("runtime settings api", () => {
     global.fetch = vi.fn(async (_input, init) => {
       method = String(init?.method ?? "");
       body = String(init?.body ?? "");
-      return new Response(JSON.stringify({ scrollPxPerSecond: 36 }), {
+      return new Response(JSON.stringify({ data: { scrollPxPerSecond: 36 } }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });

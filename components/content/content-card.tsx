@@ -59,7 +59,7 @@ export const ContentCard = memo(function ContentCard({
         {content.thumbnailUrl ? (
           <Image
             src={content.thumbnailUrl}
-            alt=""
+            alt={`${content.title} preview`}
             width={400}
             height={300}
             unoptimized

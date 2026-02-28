@@ -1,4 +1,8 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
+import {
+  parseApiListResponseSafe,
+  parseApiResponseDataSafe,
+} from "@/lib/api/contracts";
 import { baseQuery } from "@/lib/api/base-query";
 
 export interface BackendContent {
@@ -70,6 +74,18 @@ export const contentApi = createApi({
           sortDirection: query?.sortDirection ?? "desc",
         },
       }),
+      transformResponse: (response) => {
+        const parsed = parseApiListResponseSafe<BackendContent>(
+          response,
+          "listContent",
+        );
+        return {
+          items: parsed.data,
+          total: parsed.meta.total,
+          page: parsed.meta.page,
+          pageSize: parsed.meta.per_page,
+        };
+      },
       providesTags: (result) =>
         result
           ? [
@@ -83,6 +99,8 @@ export const contentApi = createApi({
     }),
     getContent: build.query<BackendContent, string>({
       query: (id) => `content/${id}`,
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendContent>(response, "getContent"),
       providesTags: (_result, _error, id) => [{ type: "Content", id }],
     }),
     uploadContent: build.mutation<BackendContent, UploadContentRequest>({
@@ -96,6 +114,8 @@ export const contentApi = createApi({
           body: formData,
         };
       },
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendContent>(response, "uploadContent"),
       invalidatesTags: [{ type: "Content", id: "LIST" }],
     }),
     deleteContent: build.mutation<void, string>({
@@ -121,6 +141,8 @@ export const contentApi = createApi({
         method: "PATCH",
         body,
       }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendContent>(response, "updateContent"),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Content", id: "LIST" },
         { type: "Content", id },
@@ -145,6 +167,8 @@ export const contentApi = createApi({
           body: formData,
         };
       },
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendContent>(response, "replaceContentFile"),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Content", id: "LIST" },
         { type: "Content", id },
@@ -152,6 +176,11 @@ export const contentApi = createApi({
     }),
     getContentFileUrl: build.query<{ downloadUrl: string }, string>({
       query: (id) => `content/${id}/file`,
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<{ downloadUrl: string }>(
+          response,
+          "getContentFileUrl",
+        ),
     }),
   }),
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState, useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -182,14 +182,6 @@ export function EditPlaylistItemsDialog({
   );
   const [contentSearch, setContentSearch] = useState("");
 
-  // Reset local state when dialog opens with a different playlist.
-  const [lastPlaylistId, setLastPlaylistId] = useState(playlist.id);
-  if (playlist.id !== lastPlaylistId) {
-    setLastPlaylistId(playlist.id);
-    setDrafts(toDrafts(playlist.items));
-    setContentSearch("");
-  }
-
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, {
@@ -346,7 +338,7 @@ export function EditPlaylistItemsDialog({
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext
-                    items={drafts}
+                    items={drafts.map((item) => item.id)}
                     strategy={verticalListSortingStrategy}
                   >
                     {drafts.length === 0 ? (

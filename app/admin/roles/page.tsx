@@ -65,6 +65,7 @@ export default function RolesPage(): ReactElement {
   const { user } = useAuth();
   const canUpdateRole = useCan("roles:update");
   const canDeleteRole = useCan("roles:delete");
+  const canReadUsers = useCan("users:read");
   const isRoot = user?.isRoot === true;
   const {
     data: rolesData,
@@ -72,7 +73,9 @@ export default function RolesPage(): ReactElement {
     isError: rolesError,
   } = useGetRolesQuery();
   const { data: permissionsData } = useGetPermissionsQuery();
-  const { data: usersData } = useGetUsersQuery();
+  const { data: usersData } = useGetUsersQuery(undefined, {
+    skip: !canReadUsers,
+  });
   const { data: deletionRequestsData } = useGetRoleDeletionRequestsQuery(
     undefined,
     {

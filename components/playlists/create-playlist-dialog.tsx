@@ -367,7 +367,7 @@ export function CreatePlaylistDialog({
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext
-                    items={playlistItems}
+                    items={playlistItems.map((item) => item.id)}
                     strategy={verticalListSortingStrategy}
                   >
                     {playlistItems.length === 0 ? (
