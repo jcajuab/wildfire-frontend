@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import type { FormEvent, ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -11,7 +12,7 @@ import { acceptInvitation, AuthApiError } from "@/lib/api-client";
 
 const MIN_PASSWORD_LENGTH = 8;
 
-export default function AcceptInvitePage(): ReactElement {
+function AcceptInvitePageBody(): ReactElement {
   const searchParams = useSearchParams();
   const [token, setToken] = useState("");
   const [name, setName] = useState("");
@@ -172,5 +173,23 @@ export default function AcceptInvitePage(): ReactElement {
         </div>
       </form>
     </div>
+  );
+}
+
+function AcceptInvitePageShell(): ReactElement {
+  return (
+    <div className="w-full">
+      <AcceptInvitePageBody />
+    </div>
+  );
+}
+
+export default function AcceptInvitePage(): ReactElement {
+  return (
+    <Suspense
+      fallback={<div className="rounded-lg bg-muted px-3 py-2">Loading...</div>}
+    >
+      <AcceptInvitePageShell />
+    </Suspense>
   );
 }

@@ -57,6 +57,10 @@ interface NavItem {
 const CORE_SECTION = "CORE";
 const MANAGE_SECTION = "MANAGE";
 
+type SidebarStyleVariables = CSSProperties & {
+  [key: `--${string}`]: string;
+};
+
 const NAV_ICON_BY_PATH: Record<string, ComponentType<{ className?: string }>> = {
   "/admin/displays": IconDeviceDesktop,
   "/admin/content": IconPhoto,
@@ -117,7 +121,7 @@ export function AppSidebar(): ReactElement {
   const displayName = user?.name ?? "User";
   const displayEmail = user?.email ?? "";
 
-  const sidebarColors: CSSProperties = {
+  const sidebarColors: SidebarStyleVariables = {
     "--sidebar": "var(--primary)",
     "--sidebar-foreground": "var(--primary-foreground)",
     "--sidebar-primary": "var(--primary-foreground)",
@@ -227,7 +231,9 @@ export function AppSidebar(): ReactElement {
                           height={48}
                           className="size-7 rounded-full object-cover"
                           unoptimized
-                          onError={() => setFailedAvatarUrl(user.avatarUrl)}
+                          onError={() =>
+                            setFailedAvatarUrl(user?.avatarUrl ?? null)
+                          }
                         />
                       ) : (
                         <IconUser className="size-6 text-primary-foreground/80" />

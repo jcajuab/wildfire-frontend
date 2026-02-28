@@ -29,7 +29,7 @@ async function readJsonPayload(response: Response): Promise<unknown> {
 }
 
 function createAuthApiError(response: Response, payload: unknown): AuthApiError {
-  const parsedError = extractApiError(payload);
+  const parsedError = extractApiError(payload) ?? undefined;
   const message =
     parsedError?.error?.message ?? `Request failed with status ${response.status}`;
   return new AuthApiError(message, response.status, parsedError);

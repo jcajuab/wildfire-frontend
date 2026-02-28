@@ -218,13 +218,13 @@ export function parseApiListResponseSafe<T>(
   }
 }
 
-export function parseApiListResponseData<T>(payload: unknown): readonly T[] {
-  return parseApiListResponse<T>(payload).data;
+export function parseApiListResponseData<T>(payload: unknown): T[] {
+  return [...parseApiListResponse<T>(payload).data];
 }
 
 export function parseApiListResponseDataSafe<T>(
   payload: unknown,
   context: string,
-): readonly T[] {
-  return parseApiListResponseSafe<T>(payload, context).data;
+): T[] {
+  return [...parseApiListResponseSafe<T>(payload, context).data];
 }

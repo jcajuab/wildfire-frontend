@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import type { FormEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -10,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthApiError, resetPassword } from "@/lib/api-client";
 
-export default function ResetPasswordPage(): ReactElement {
+function ResetPasswordPageBody(): ReactElement {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
@@ -132,5 +133,23 @@ export default function ResetPasswordPage(): ReactElement {
         </div>
       </form>
     </div>
+  );
+}
+
+function ResetPasswordPageContent(): ReactElement {
+  return <ResetPasswordPageBody />;
+}
+
+export default function ResetPasswordPage(): ReactElement {
+  return (
+    <Suspense
+      fallback={
+        <div className="rounded-lg bg-muted px-3 py-2">
+          Loading reset password form...
+        </div>
+      }
+    >
+      <ResetPasswordPageContent />
+    </Suspense>
   );
 }

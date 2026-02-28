@@ -64,7 +64,7 @@ const HIGH_RISK_TARGET_THRESHOLD = 20;
 
 interface PendingRoleUpdate {
   readonly userId: string;
-  readonly roleIds: readonly string[];
+  readonly roleIds: string[];
 }
 
 export default function UsersPage(): ReactElement {
@@ -266,7 +266,7 @@ export default function UsersPage(): ReactElement {
   const applyUserRoles = useCallback(
     async (payload: {
       userId: string;
-      roleIds: readonly string[];
+      roleIds: string[];
       policyVersion?: number;
     }): Promise<void> => {
       const roles = await setUserRoles(payload).unwrap();
