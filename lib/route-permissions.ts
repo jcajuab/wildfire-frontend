@@ -1,4 +1,5 @@
 import type { PermissionType } from "@/types/permission";
+import { can } from "@/lib/permissions";
 
 /**
  * Single source of truth for dashboard routes and their required read permission.
@@ -8,8 +9,16 @@ import type { PermissionType } from "@/types/permission";
 export const DASHBOARD_ROUTE_READ_ENTRIES = [
   { path: "/admin/displays", permission: "displays:read", title: "Displays" },
   { path: "/admin/content", permission: "content:read", title: "Content" },
-  { path: "/admin/playlists", permission: "playlists:read", title: "Playlists" },
-  { path: "/admin/schedules", permission: "schedules:read", title: "Schedules" },
+  {
+    path: "/admin/playlists",
+    permission: "playlists:read",
+    title: "Playlists",
+  },
+  {
+    path: "/admin/schedules",
+    permission: "schedules:read",
+    title: "Schedules",
+  },
   { path: "/admin/users", permission: "users:read", title: "Users" },
   { path: "/admin/roles", permission: "roles:read", title: "Roles" },
 ] as const;
@@ -24,3 +33,20 @@ export const ROUTE_READ_PERMISSION_MAP: Readonly<
   "/admin/logs": "audit:read",
   "/admin/settings": "settings:read",
 };
+
+const DEFAULT_ADMIN_ROUTE_ENTRIES = [
+  ...DASHBOARD_ROUTE_READ_ENTRIES,
+  { path: "/admin/logs", permission: "audit:read", title: "Logs" },
+  { path: "/admin/settings", permission: "settings:read", title: "Settings" },
+] as const;
+
+export function getFirstPermittedAdminRoute(
+  userPermissions: readonly PermissionType[],
+  isRoot = false,
+): string | null {
+  const firstPermittedRoute = DEFAULT_ADMIN_ROUTE_ENTRIES.find((route) =>
+    can(route.permission, userPermissions, isRoot),
+  );
+
+  return firstPermittedRoute?.path ?? null;
+}

@@ -36,7 +36,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useMounted } from "@/hooks/use-mounted";
 import { useAuth } from "@/context/auth-context";
-import { DASHBOARD_ROUTE_READ_ENTRIES } from "@/lib/route-permissions";
+import {
+  DASHBOARD_ROUTE_READ_ENTRIES,
+  getFirstPermittedAdminRoute,
+} from "@/lib/route-permissions";
 import type { ComponentType, ReactElement } from "react";
 import Image from "next/image";
 import type { CSSProperties } from "react";
@@ -95,7 +98,7 @@ const MANAGE_PATHS = new Set<string>([
 
 export function AppSidebar(): ReactElement {
   const pathname = usePathname();
-  const { user, logout, can, isInitialized } = useAuth();
+  const { user, logout, can, isInitialized, permissions } = useAuth();
   const visibleNavItems = isInitialized
     ? extendedNavItems.filter((item) => can(item.permission))
     : [];
@@ -107,6 +110,9 @@ export function AppSidebar(): ReactElement {
   );
   const displayName = user?.name ?? "User";
   const displayEmail = user?.email ?? "";
+  const homeRoute =
+    getFirstPermittedAdminRoute(permissions, user?.isRoot === true) ??
+    "/unauthorized";
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const avatarUrl = user?.avatarUrl ?? null;
   // Only render tooltips after client mount to avoid hydration mismatch
@@ -135,7 +141,7 @@ export function AppSidebar(): ReactElement {
     >
       <SidebarHeader className="flex flex-row items-center justify-between">
         <Link
-          href="/admin/displays"
+          href={homeRoute}
           className="flex items-center gap-2 px-2 font-semibold text-primary-foreground"
         >
           <span className="text-xl tracking-tight">WILDFIRE</span>

@@ -122,9 +122,7 @@ export default function UsersPage(): ReactElement {
   );
   const availableRoles = useMemo(() => {
     const roles = rolesData ?? [];
-    const filtered = isRoot
-      ? roles
-      : roles.filter((role) => !role.isSystem);
+    const filtered = isRoot ? roles : roles.filter((role) => !role.isSystem);
     return filtered.map((role) => ({ id: role.id, name: role.name }));
   }, [rolesData, isRoot]);
 

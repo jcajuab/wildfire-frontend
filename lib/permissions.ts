@@ -6,7 +6,7 @@ import type { PermissionType } from "@/types/permission";
  */
 export function can(
   requiredPermission: PermissionType,
-  userPermissions: PermissionType[],
+  userPermissions: readonly PermissionType[],
   isRoot = false,
 ): boolean {
   if (isRoot) return true;
