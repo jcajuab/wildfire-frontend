@@ -106,7 +106,7 @@ export const DisplayCard = memo(function DisplayCard({
       : 0;
 
   return (
-    <article className="group flex flex-col gap-4 rounded-md border border-border bg-card/95 p-4 transition-colors duration-200 hover:border-primary/30 motion-reduce:transition-none">
+    <article className="group flex h-full flex-col gap-4 rounded-md border border-border bg-card/95 p-4 transition-colors duration-200 hover:border-primary/30 motion-reduce:transition-none">
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1.5">
           <div className="flex min-w-0 items-center gap-2">
@@ -229,7 +229,7 @@ export const DisplayCard = memo(function DisplayCard({
         </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-3 rounded-md border border-border bg-background p-3">
+      <section className="mt-auto grid grid-cols-2 gap-3 rounded-md border border-border bg-background p-3">
         <div className="space-y-0.5">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Display Output
