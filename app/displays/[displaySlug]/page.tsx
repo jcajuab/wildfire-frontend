@@ -153,7 +153,7 @@ export default function DisplayRuntimePage() {
 
       await refreshManifest(keyPair.privateKey);
 
-      const streamUrl = `${baseUrl}/display/${encodeURIComponent(
+      const streamUrl = `${baseUrl}/display-runtime/${encodeURIComponent(
         registration.displaySlug,
       )}/stream`;
 

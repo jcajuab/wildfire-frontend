@@ -216,9 +216,8 @@ function ScheduleFormFrame({
           </Select>
           {formData.targetDisplayId ? (
             <Badge variant="secondary" className="w-fit">
-              {availableDisplays.find(
-                (d) => d.id === formData.targetDisplayId,
-              )?.name ?? formData.targetDisplayId}
+              {availableDisplays.find((d) => d.id === formData.targetDisplayId)
+                ?.name ?? formData.targetDisplayId}
             </Badge>
           ) : null}
         </div>
