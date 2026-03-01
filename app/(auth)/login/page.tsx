@@ -9,19 +9,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { AuthApiError } from "@/lib/api-client";
+import {
+  getFirstPermittedAdminRoute,
+  UNAUTHORIZED_ROUTE,
+} from "@/lib/route-permissions";
 
 export default function LoginPage(): ReactElement {
   const router = useRouter();
-  const { login, isAuthenticated, isInitialized, isLoading } = useAuth();
+  const { login, isAuthenticated, isInitialized, isLoading, can } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const postLoginRedirect =
+    getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE;
 
   useEffect(() => {
     if (isInitialized && isAuthenticated) {
-      router.replace("/");
+      router.replace(postLoginRedirect);
     }
-  }, [isInitialized, isAuthenticated, router]);
+  }, [isInitialized, isAuthenticated, postLoginRedirect, router]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
@@ -29,7 +35,6 @@ export default function LoginPage(): ReactElement {
     const credentials = { email, password };
     try {
       await login(credentials);
-      router.replace("/");
     } catch (err) {
       let message = "Something went wrong.";
       if (err instanceof AuthApiError) {

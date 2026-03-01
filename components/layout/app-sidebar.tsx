@@ -41,6 +41,8 @@ import { useAuth } from "@/context/auth-context";
 import {
   getRoutesBySection,
   isPathMatch,
+  getFirstPermittedAdminRoute,
+  UNAUTHORIZED_ROUTE,
   type DashboardRouteReadPermissionEntry,
 } from "@/lib/route-permissions";
 import type { PermissionType } from "@/types/permission";
@@ -122,6 +124,13 @@ export function AppSidebar(): ReactElement {
       : [];
   }, [can, isInitialized]);
   const canAccessSettings = isInitialized && can("settings:read");
+  const homeRoute = useMemo(
+    () =>
+      isInitialized
+        ? (getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE)
+        : UNAUTHORIZED_ROUTE,
+    [can, isInitialized],
+  );
   const displayName = user?.name ?? "User";
   const displayEmail = user?.email ?? "";
 
@@ -147,7 +156,7 @@ export function AppSidebar(): ReactElement {
     >
       <SidebarHeader className="flex flex-row items-center justify-between">
         <Link
-          href="/admin/displays"
+          href={homeRoute}
           className="flex items-center gap-2 px-2 font-semibold text-primary-foreground"
         >
           <span className="text-xl tracking-tight">WILDFIRE</span>

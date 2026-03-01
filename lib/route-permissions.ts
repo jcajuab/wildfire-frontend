@@ -11,6 +11,12 @@ export interface DashboardRouteReadPermissionEntry {
   readonly section: SidebarSection;
 }
 
+export type AdminRoutePermissionPredicate = (
+  permission: PermissionType,
+) => boolean;
+
+export const UNAUTHORIZED_ROUTE = "/unauthorized";
+
 const normalizeRoutePath = (path: string): string => {
   const normalized = `/${path}`.replace(/\/+/g, "/").replace(/\/+$/, "");
   return normalized === "" ? "/" : normalized;
@@ -142,3 +148,12 @@ export const getRoutesBySection = (
   section: keyof typeof ROUTE_READ_ENTRIES_BY_SECTION,
 ): readonly DashboardRouteReadPermissionEntry[] =>
   ROUTE_READ_ENTRIES_BY_SECTION[section];
+
+export const getFirstPermittedAdminRoute = (
+  hasPermission: AdminRoutePermissionPredicate,
+): string | null => {
+  const first = DASHBOARD_ROUTE_READ_ENTRIES.find((entry) =>
+    hasPermission(entry.permission),
+  );
+  return first?.path ?? null;
+};

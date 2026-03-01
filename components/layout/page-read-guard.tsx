@@ -8,7 +8,11 @@ import { IconShieldLock } from "@tabler/icons-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
-import { getRequiredReadPermission } from "@/lib/route-permissions";
+import {
+  getRequiredReadPermission,
+  getFirstPermittedAdminRoute,
+  UNAUTHORIZED_ROUTE,
+} from "@/lib/route-permissions";
 
 interface PageReadGuardProps {
   readonly children: ReactNode;
@@ -21,6 +25,7 @@ interface PageReadGuardProps {
 export function PageReadGuard({ children }: PageReadGuardProps): ReactElement {
   const pathname = usePathname();
   const { can, isInitialized } = useAuth();
+  const fallbackRoute = getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE;
 
   if (!isInitialized) {
     return (
@@ -48,7 +53,7 @@ export function PageReadGuard({ children }: PageReadGuardProps): ReactElement {
           icon={<IconShieldLock className="size-12 text-muted-foreground" />}
           action={
             <Button asChild variant="default">
-              <Link href="/admin/displays">Go to dashboard</Link>
+              <Link href={fallbackRoute}>Go to dashboard</Link>
             </Button>
           }
         />
