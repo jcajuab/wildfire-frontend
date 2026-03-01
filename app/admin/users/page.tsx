@@ -493,7 +493,7 @@ export default function UsersPage(): ReactElement {
         </DashboardPage.Toolbar>
 
         <DashboardPage.Content className="pt-6">
-          <div className="overflow-hidden rounded-lg border">
+          <div className="overflow-hidden rounded-md border border-border">
             <UsersTable
               users={paginatedUsers}
               availableRoles={availableRoles}
@@ -512,8 +512,8 @@ export default function UsersPage(): ReactElement {
           </div>
 
           <Can permission="users:create">
-            <section className="mt-6 overflow-hidden rounded-lg border">
-              <div className="border-b px-4 py-3">
+            <section className="mt-6 overflow-hidden rounded-md border border-border">
+              <div className="border-b border-border px-4 py-3">
                 <h3 className="text-sm font-semibold">Invitations</h3>
                 <p className="text-xs text-muted-foreground">
                   Recent invitation status and expiration timestamps.

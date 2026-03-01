@@ -10,11 +10,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import type { DisplaySortField } from "@/types/display";
 
 interface DisplaySortSelectProps {
   readonly value: DisplaySortField;
   readonly onValueChange: (value: DisplaySortField) => void;
+  readonly className?: string;
 }
 
 const sortOptions: readonly {
@@ -29,6 +31,7 @@ const sortOptions: readonly {
 export function DisplaySortSelect({
   value,
   onValueChange,
+  className,
 }: DisplaySortSelectProps): ReactElement {
   const currentLabel =
     sortOptions.find((option) => option.value === value)?.label ??
@@ -37,8 +40,12 @@ export function DisplaySortSelect({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="default">
-          <IconSortAscendingLetters className="size-4" />
+        <Button
+          variant="outline"
+          size="default"
+          className={cn("gap-2", className)}
+        >
+          <IconSortAscendingLetters className="size-4" aria-hidden="true" />
           <span>Sort: {currentLabel}</span>
         </Button>
       </DropdownMenuTrigger>

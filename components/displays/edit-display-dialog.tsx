@@ -255,7 +255,7 @@ function EditDisplayForm({
                   }))
                 }
                 disabled={isSaving}
-                className={`flex items-center justify-between rounded-lg border p-3 text-left transition-colors ${
+                className={`flex items-center justify-between rounded-md border border-border p-3 text-left transition-colors ${
                   formData.selectedOutput === option.value
                     ? "border-primary bg-primary/5"
                     : "hover:bg-muted/50"

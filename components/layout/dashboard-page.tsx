@@ -12,7 +12,12 @@ function DashboardPageRoot({
   className,
 }: DashboardPageRootProps): ReactElement {
   return (
-    <div className={cn("flex h-full min-w-0 flex-col", className)}>
+    <div
+      className={cn(
+        "flex h-full min-w-0 flex-col overflow-hidden rounded-md border border-border bg-background/95",
+        className,
+      )}
+    >
       {children}
     </div>
   );
@@ -44,7 +49,7 @@ function DashboardPageBanner({
   return (
     <div
       className={cn(
-        "mx-8 mt-2 rounded-lg border px-4 py-2.5 text-sm",
+        "mx-6 mt-3 rounded-md border border-border px-4 py-2.5 text-sm sm:mx-8",
         tone === "info" && "border-primary/30 bg-primary/10 text-primary",
         tone === "danger" &&
           "border-destructive/50 bg-destructive/10 text-destructive",
@@ -68,7 +73,7 @@ function DashboardPageToolbar({
   return (
     <section
       className={cn(
-        "flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-8 py-3",
+        "flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/15 px-6 py-3 sm:px-8",
         className,
       )}
     >
@@ -103,7 +108,12 @@ function DashboardPageContent({
   className,
 }: DashboardPageContentProps): ReactElement {
   return (
-    <div className={cn("flex-1 overflow-auto px-8 pb-8", className)}>
+    <div
+      className={cn(
+        "flex-1 overflow-auto px-6 pb-6 sm:px-8 sm:pb-8",
+        className,
+      )}
+    >
       {children}
     </div>
   );
@@ -119,7 +129,12 @@ function DashboardPageFooter({
   className,
 }: DashboardPageFooterProps): ReactElement {
   return (
-    <footer className={cn("border-t border-border/70", className)}>
+    <footer
+      className={cn(
+        "empty:hidden border-t border-border bg-background/80",
+        className,
+      )}
+    >
       {children}
     </footer>
   );

@@ -565,7 +565,7 @@ export default function SettingsPage(): ReactElement {
               <h2 className="text-lg font-semibold tracking-tight text-destructive">
                 Danger Zone
               </h2>
-              <div className="overflow-hidden rounded-lg border border-destructive/40">
+              <div className="overflow-hidden rounded-md border border-destructive/40">
                 <div className="flex items-start justify-between gap-4 border-b border-destructive/25 px-4 py-4">
                   <div className="max-w-2xl">
                     <p className="text-sm font-semibold">

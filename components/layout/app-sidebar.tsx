@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   IconCalendarEvent,
-  IconPhoto,
+  IconDeviceTv,
   IconDotsVertical,
+  IconPhoto,
   IconList,
   IconPlaylist,
   IconLogout,
@@ -66,13 +67,14 @@ const NAV_ICON_BY_PATH: Record<
   string,
   ComponentType<{ className?: string }>
 > = {
-  "/admin/displays": IconPhoto,
+  "/admin/displays": IconDeviceTv,
   "/admin/content": IconPhoto,
   "/admin/playlists": IconPlaylist,
   "/admin/schedules": IconCalendarEvent,
   "/admin/users": IconUsers,
   "/admin/roles": IconShield,
   "/admin/logs": IconList,
+  "/admin/settings": IconSettings,
 };
 
 function resolveNavItems(

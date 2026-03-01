@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { parseApiListResponse } from "./contracts";
+import {
+  parseApiListResponse,
+  parseApiResponse,
+  parseApiResponseData,
+} from "./contracts";
 
 describe("parseApiListResponse", () => {
   test("parses canonical meta list responses", () => {
@@ -24,5 +28,33 @@ describe("parseApiListResponse", () => {
         data: [{ id: "1" }],
       }),
     ).toThrow("API payload list response is missing meta.");
+  });
+});
+
+describe("parseApiResponse", () => {
+  test("throws descriptive error for non-object payload", () => {
+    expect(() => parseApiResponse<string>("OK")).toThrow(
+      "API payload is not a JSON object: received string.",
+    );
+  });
+
+  test("parseApiResponseData throws for non-object payload", () => {
+    expect(() => parseApiResponseData<string>(123)).toThrow(
+      "API payload is not a JSON object: received number.",
+    );
+  });
+
+  test("surfaces non-JSON marker details from API client parsing", () => {
+    expect(() =>
+      parseApiResponse<string>({
+        __parseFailure: true,
+        message: "Response body is not valid JSON",
+        status: 500,
+        statusText: "Internal Server Error",
+        contentType: "text/plain",
+        bodyPreview: "<html><body>oops</body></html>",
+        url: "/api/v1/schedules",
+      }),
+    ).toThrow("Response body is not valid JSON");
   });
 });

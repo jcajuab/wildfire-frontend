@@ -20,19 +20,19 @@ export function PaginationFooter({
   total,
   onPageChange,
   variant = "compact",
-}: PaginationFooterProps): ReactElement {
+}: PaginationFooterProps): ReactElement | null {
   const totalPages = Math.ceil(total / pageSize);
   const startItem = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const endItem = Math.min(page * pageSize, total);
   const canGoPrevious = page > 1;
   const canGoNext = page < totalPages;
 
-  if (total === 0) {
-    return <div className="border-t px-6 py-3" />;
+  if (total <= pageSize || totalPages <= 1) {
+    return null;
   }
 
   return (
-    <div className="flex items-center justify-between border-t px-6 py-3">
+    <div className="flex items-center justify-between border-t border-border px-6 py-3">
       <p className="text-sm text-muted-foreground">
         Showing {startItem} to {endItem} of {total} results
       </p>

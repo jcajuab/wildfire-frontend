@@ -375,7 +375,7 @@ function RoleForm({
                 {visibleAssignedUsers.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center justify-between rounded-md border px-3 py-2"
+                    className="flex items-center justify-between rounded-md border border-border px-3 py-2"
                   >
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">{user.name}</span>
@@ -414,7 +414,7 @@ function RoleForm({
         </TabsContent>
       </Tabs>
 
-      <div className="mt-4 rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+      <div className="mt-4 rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
         This change will assign{" "}
         <span className="font-medium text-foreground">
           {selectedPermissions.length}
@@ -426,7 +426,7 @@ function RoleForm({
         users to this role.
       </div>
 
-      <div className="mt-3 rounded-md border p-3">
+      <div className="mt-3 rounded-md border border-border p-3">
         <div className="flex flex-col gap-2">
           <Label htmlFor="policyVersion">Policy version</Label>
           <Input
@@ -445,12 +445,12 @@ function RoleForm({
       </div>
 
       {isHighRiskOperation ? (
-        <div className="bg-[var(--warning-muted)] text-[var(--warning-foreground)] mt-3 rounded-md border p-3">
+        <div className="bg-[var(--warning-muted)] text-[var(--warning-foreground)] mt-3 rounded-md border border-border p-3">
           <p className="text-xs">
             High-impact change detected. Enter policy version and confirm before
             saving.
           </p>
-          <div className="mt-3 flex items-center justify-between rounded-md border bg-white px-3 py-2">
+          <div className="mt-3 flex items-center justify-between rounded-md border border-border bg-white px-3 py-2">
             <p className="text-xs text-muted-foreground">
               I confirm this governance update is reviewed and approved.
             </p>

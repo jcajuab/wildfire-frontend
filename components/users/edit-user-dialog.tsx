@@ -91,7 +91,7 @@ function EditUserForm({
             placeholder="user@example.com"
           />
         </div>
-        <div className="flex items-center justify-between rounded-lg border p-4">
+        <div className="flex items-center justify-between rounded-md border border-border p-4">
           <div className="space-y-0.5">
             <Label htmlFor="edit-user-active">Active</Label>
             <p className="text-sm text-muted-foreground">

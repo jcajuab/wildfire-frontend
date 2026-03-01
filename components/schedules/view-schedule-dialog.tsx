@@ -70,7 +70,7 @@ export function ViewScheduleDialog({
             <DialogTitle>View Details</DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4 rounded-lg bg-muted/20 p-4">
+          <div className="flex flex-col gap-4 rounded-md bg-muted/20 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <IconCalendarEvent className="size-4" />

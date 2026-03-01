@@ -58,7 +58,7 @@ export const PlaylistCard = memo(function PlaylistCard({
   const visibleItems = playlist.items.slice(0, 4);
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
+    <div className="flex flex-col gap-3 rounded-md border border-border bg-card p-4">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col gap-0.5">

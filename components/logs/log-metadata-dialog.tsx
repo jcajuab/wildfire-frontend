@@ -71,7 +71,7 @@ export function LogMetadataDialog({
               Log entry
             </div>
 
-            <div className="flex flex-col gap-3 rounded-lg border p-4">
+            <div className="flex flex-col gap-3 rounded-md border border-border p-4">
               <div className="flex items-start gap-2">
                 <IconFileText className="size-4 text-muted-foreground" />
                 <div className="flex flex-col min-w-0">
@@ -120,7 +120,7 @@ export function LogMetadataDialog({
                     <IconListDetails className="size-4" />
                     Technical fields
                   </div>
-                  <div className="max-h-56 overflow-y-auto rounded-md border p-3">
+                  <div className="max-h-56 overflow-y-auto rounded-md border border-border p-3">
                     <div className="grid grid-cols-2 gap-y-2 text-sm">
                       {Object.entries(log.rawMetadata).map(([key, value]) => (
                         <Fragment key={`raw-${key}`}>

@@ -108,7 +108,7 @@ function SortablePlaylistItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3"
+      className="flex items-center gap-3 rounded-md border border-border bg-muted/30 p-3"
     >
       {/* Thumbnail */}
       <div className="flex size-12 items-center justify-center rounded bg-muted">
@@ -127,7 +127,7 @@ function SortablePlaylistItem({
             onChange={(e) =>
               onUpdateDuration(item.id, parseInt(e.target.value, 10) || 1)
             }
-            className="w-12 rounded border bg-transparent px-1 text-center"
+            className="w-12 rounded border border-border bg-transparent px-1 text-center"
             onPointerDown={(e) => e.stopPropagation()} // Prevent drag when interacting with input
             onKeyDown={(e) => e.stopPropagation()}
           />
@@ -274,7 +274,7 @@ export function CreatePlaylistDialog({
         showCloseButton={false}
       >
         {/* Header */}
-        <DialogHeader className="!flex-row items-center justify-between border-b px-6 py-4">
+        <DialogHeader className="!flex-row items-center justify-between border-b border-border px-6 py-4">
           <div className="flex flex-col gap-0.5">
             <DialogTitle className="text-base font-semibold">
               Create New Playlist
@@ -298,7 +298,7 @@ export function CreatePlaylistDialog({
           {/* Left Column - Playlist Info & Items */}
           <div className="flex flex-1 flex-col gap-4 overflow-hidden">
             {/* Playlist Information Card */}
-            <div className="flex flex-col gap-4 rounded-lg border p-4">
+            <div className="flex flex-col gap-4 rounded-md border border-border p-4">
               <div className="flex items-center gap-2">
                 <IconInfoCircle className="size-4" />
                 <span className="text-sm font-semibold">
@@ -347,7 +347,7 @@ export function CreatePlaylistDialog({
             </div>
 
             {/* Playlist Items Card */}
-            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg border p-4">
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-md border border-border p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <IconPlaylist className="size-4" />
@@ -391,7 +391,7 @@ export function CreatePlaylistDialog({
           </div>
 
           {/* Right Column - Content Library */}
-          <div className="flex w-80 flex-col gap-4 overflow-hidden rounded-lg border p-4">
+          <div className="flex w-80 flex-col gap-4 overflow-hidden rounded-md border border-border p-4">
             <div className="flex items-center gap-2">
               <IconPhoto className="size-4" />
               <span className="text-sm font-semibold">Content Library</span>
@@ -418,7 +418,7 @@ export function CreatePlaylistDialog({
                     key={content.id}
                     type="button"
                     onClick={() => handleAddContent(content)}
-                    className="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted/50"
+                    className="flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted/50"
                   >
                     <div className="flex size-10 items-center justify-center rounded bg-muted">
                       {/* Placeholder for thumbnail */}

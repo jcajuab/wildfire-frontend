@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface QueryStateOptions<T> {
@@ -8,6 +8,7 @@ interface QueryStateOptions<T> {
   readonly defaultValue: T;
   readonly parse: (raw: string | null) => T;
   readonly serialize: (value: T) => string;
+  readonly isEqual?: (left: T, right: T) => boolean;
 }
 
 export function useQueryState<T>({
@@ -15,24 +16,22 @@ export function useQueryState<T>({
   defaultValue,
   parse,
   serialize,
+  isEqual,
 }: QueryStateOptions<T>): readonly [T, (nextValue: T) => void] {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const readValue = useCallback((): T => {
-    return parse(searchParams.get(key));
-  }, [key, parse, searchParams]);
-
-  const [value, setValue] = useState<T>(readValue);
-
-  useEffect(() => {
-    setValue(readValue());
-  }, [readValue]);
+  const rawValue = searchParams.get(key);
+  const parsedValue = useMemo(() => parse(rawValue), [parse, rawValue]);
 
   const setQueryValue = useCallback(
     (nextValue: T): void => {
-      setValue(nextValue);
+      if (
+        isEqual ? isEqual(parsedValue, nextValue) : parsedValue === nextValue
+      ) {
+        return;
+      }
 
       const params = new URLSearchParams(searchParams.toString());
       const serializedValue = serialize(nextValue);
@@ -48,13 +47,26 @@ export function useQueryState<T>({
       }
 
       const query = params.toString();
+      const currentQuery = searchParams.toString();
+      if (query === currentQuery) {
+        return;
+      }
       const nextPath = query.length > 0 ? `${pathname}?${query}` : pathname;
       router.replace(nextPath, { scroll: false });
     },
-    [defaultValue, key, pathname, router, serialize, searchParams],
+    [
+      defaultValue,
+      isEqual,
+      key,
+      parsedValue,
+      pathname,
+      router,
+      searchParams,
+      serialize,
+    ],
   );
 
-  return [value, setQueryValue] as const;
+  return [parsedValue, setQueryValue] as const;
 }
 
 export function useQueryStringState(
@@ -124,5 +136,70 @@ export function useQueryEnumState<T extends string>(
     defaultValue,
     parse,
     serialize,
+  });
+}
+
+function normalizeQueryList(values: readonly string[]): readonly string[] {
+  const seen = new Set<string>();
+  const normalizedValues: string[] = [];
+
+  for (const value of values) {
+    const trimmedValue = value.trim();
+    if (trimmedValue.length === 0 || seen.has(trimmedValue)) {
+      continue;
+    }
+    seen.add(trimmedValue);
+    normalizedValues.push(trimmedValue);
+  }
+
+  return normalizedValues;
+}
+
+function areStringArraysEqual(
+  left: readonly string[],
+  right: readonly string[],
+): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function useQueryListState(
+  key: string,
+  defaultValue: readonly string[] = [],
+): readonly [readonly string[], (nextValue: readonly string[]) => void] {
+  const normalizedDefaultValue = useMemo(
+    () => normalizeQueryList(defaultValue),
+    [defaultValue],
+  );
+
+  const parse = useCallback(
+    (raw: string | null): readonly string[] => {
+      if (raw == null || raw.length === 0) {
+        return normalizedDefaultValue;
+      }
+      return normalizeQueryList(raw.split(","));
+    },
+    [normalizedDefaultValue],
+  );
+
+  const serialize = useCallback((value: readonly string[]): string => {
+    return normalizeQueryList(value).join(",");
+  }, []);
+
+  return useQueryState<readonly string[]>({
+    key,
+    defaultValue: normalizedDefaultValue,
+    parse,
+    serialize,
+    isEqual: areStringArraysEqual,
   });
 }

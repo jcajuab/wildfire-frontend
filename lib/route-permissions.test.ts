@@ -12,7 +12,7 @@ describe("getFirstPermittedAdminRoute", () => {
 
   test("falls back to the next available route in priority order", () => {
     const actual = getFirstPermittedAdminRoute(
-      (permission) => permission === "logs:read",
+      (permission) => permission === "audit:read",
     );
     expect(actual).toBe("/admin/logs");
   });

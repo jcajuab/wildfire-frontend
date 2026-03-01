@@ -11,9 +11,8 @@ interface DisplayGridProps {
   readonly items: readonly Display[];
   readonly onViewDetails: (display: Display) => void;
   readonly onPreviewPage: (display: Display) => void;
-  readonly onRefreshPage: (display: Display) => void;
-  readonly onToggleDisplay: (display: Display) => void;
-  readonly canUpdate?: boolean;
+  readonly onRefreshPage?: (display: Display) => void;
+  readonly onEditDisplay?: (display: Display) => void;
 }
 
 export function DisplayGrid({
@@ -21,8 +20,7 @@ export function DisplayGrid({
   onViewDetails,
   onPreviewPage,
   onRefreshPage,
-  onToggleDisplay,
-  canUpdate = true,
+  onEditDisplay,
 }: DisplayGridProps): ReactElement {
   if (items.length === 0) {
     return (
@@ -35,7 +33,7 @@ export function DisplayGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
       {items.map((display) => (
         <DisplayCard
           key={display.id}
@@ -43,8 +41,7 @@ export function DisplayGrid({
           onViewDetails={onViewDetails}
           onPreviewPage={onPreviewPage}
           onRefreshPage={onRefreshPage}
-          onToggleDisplay={onToggleDisplay}
-          canUpdate={canUpdate}
+          onEditDisplay={onEditDisplay}
         />
       ))}
     </div>

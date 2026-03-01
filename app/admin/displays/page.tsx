@@ -1,25 +1,29 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { IconPlus, IconSettings } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { Pagination } from "@/components/content/pagination";
 import { DisplayRegistrationInfoDialog } from "@/components/displays/display-registration-info-dialog";
-import { DisplayFilterPopover } from "@/components/displays/display-filter-popover";
 import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";
 import { DisplayGrid } from "@/components/displays/display-grid";
-import { DisplaySearchInput } from "@/components/displays/display-search-input";
-import { DisplaySortSelect } from "@/components/displays/display-sort-select";
-import { DisplayStatusTabs } from "@/components/displays/display-status-tabs";
+import { DisplaysToolbar } from "@/components/displays/displays-toolbar";
 import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
 import { PreviewDisplayDialog } from "@/components/displays/preview-display-dialog";
 import { ViewDisplayDialog } from "@/components/displays/view-display-dialog";
 import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCan } from "@/hooks/use-can";
+import {
+  useQueryEnumState,
+  useQueryListState,
+  useQueryNumberState,
+  useQueryStringState,
+} from "@/hooks/use-query-state";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   useCreateDisplayGroupMutation,
@@ -29,27 +33,26 @@ import {
   useSetDisplayGroupsMutation,
   useUpdateDisplayMutation,
 } from "@/lib/api/displays-api";
-import {
-  mapDisplayApiToDisplay,
-  withDisplayGroups,
-} from "@/lib/map-display-to-display";
+import { getNextDisplayGroupColorIndex } from "@/lib/display-group-colors";
 import {
   collapseDisplayGroupWhitespace,
   dedupeDisplayGroupNames,
   toDisplayGroupKey,
 } from "@/lib/display-group-normalization";
-import { getNextDisplayGroupColorIndex } from "@/lib/display-group-colors";
-import { useCan } from "@/hooks/use-can";
 import {
-  useQueryEnumState,
-  useQueryNumberState,
-  useQueryStringState,
-} from "@/hooks/use-query-state";
+  mapDisplayApiToDisplay,
+  withDisplayGroups,
+} from "@/lib/map-display-to-display";
 import type { DisplayStatusFilter } from "@/components/displays/display-status-tabs";
-import type { Display, DisplaySortField } from "@/types/display";
+import type {
+  Display,
+  DisplayOutputFilter,
+  DisplaySortField,
+} from "@/types/display";
 
 const DISPLAY_STATUS_VALUES = ["all", "READY", "LIVE", "DOWN"] as const;
 const DISPLAY_SORT_VALUES = ["alphabetical", "status", "location"] as const;
+const PAGE_SIZE = 20;
 
 export default function DisplaysPage(): ReactElement {
   const canUpdateDisplay = useCan("displays:update");
@@ -82,6 +85,8 @@ export default function DisplaysPage(): ReactElement {
   );
   const [search, setSearch] = useQueryStringState("q", "");
   const [page, setPage] = useQueryNumberState("page", 1);
+  const [groupFilters, setGroupFilters] = useQueryListState("groups", []);
+  const [outputFilter, setOutputFilter] = useQueryStringState("output", "all");
 
   const [isAddInfoDialogOpen, setIsAddInfoDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -93,23 +98,26 @@ export default function DisplaysPage(): ReactElement {
   const [setDisplayGroups] = useSetDisplayGroupsMutation();
   const [createDisplayGroup] = useCreateDisplayGroupMutation();
   const [requestDisplayRefresh] = useRequestDisplayRefreshMutation();
+  const deferredSearch = useDeferredValue(search);
 
   const displays: Display[] = useMemo(() => {
     const groupsByDisplayId = new Map<
       string,
       Array<{ name: string; colorIndex: number }>
     >();
+
     for (const group of displayGroupsData?.items ?? []) {
       const displayGroup = {
         name: group.name,
         colorIndex: group.colorIndex ?? 0,
       };
       for (const displayId of group.displayIds) {
-        const existing = groupsByDisplayId.get(displayId) ?? [];
-        existing.push(displayGroup);
-        groupsByDisplayId.set(displayId, existing);
+        const existingGroups = groupsByDisplayId.get(displayId) ?? [];
+        existingGroups.push(displayGroup);
+        groupsByDisplayId.set(displayId, existingGroups);
       }
     }
+
     return (displaysData?.items ?? []).map((display) =>
       withDisplayGroups(
         mapDisplayApiToDisplay(display),
@@ -117,7 +125,27 @@ export default function DisplaysPage(): ReactElement {
       ),
     );
   }, [displaysData?.items, displayGroupsData?.items]);
-  const pageSize = 20;
+
+  const normalizedOutputFilter: DisplayOutputFilter =
+    outputFilter.length > 0 ? outputFilter : "all";
+
+  const availableGroupFilters = useMemo(
+    () =>
+      dedupeDisplayGroupNames(
+        (displayGroupsData?.items ?? []).map((g) => g.name),
+      ),
+    [displayGroupsData?.items],
+  );
+
+  const availableOutputFilters = useMemo(() => {
+    const outputNames = new Set<string>();
+    for (const display of displays) {
+      const outputName = display.displayOutput.trim();
+      if (outputName.length === 0) continue;
+      outputNames.add(outputName);
+    }
+    return [...outputNames].sort((left, right) => left.localeCompare(right));
+  }, [displays]);
 
   const handleStatusFilterChange = useCallback(
     (value: DisplayStatusFilter) => {
@@ -142,6 +170,28 @@ export default function DisplaysPage(): ReactElement {
     },
     [setSearch, setPage],
   );
+
+  const handleGroupFilterChange = useCallback(
+    (value: readonly string[]) => {
+      setGroupFilters(value);
+      setPage(1);
+    },
+    [setGroupFilters, setPage],
+  );
+
+  const handleOutputFilterChange = useCallback(
+    (value: DisplayOutputFilter) => {
+      setOutputFilter(value);
+      setPage(1);
+    },
+    [setOutputFilter, setPage],
+  );
+
+  const handleClearFilters = useCallback(() => {
+    setGroupFilters([]);
+    setOutputFilter("all");
+    setPage(1);
+  }, [setGroupFilters, setOutputFilter, setPage]);
 
   const handleViewDetails = useCallback((display: Display) => {
     setSelectedDisplay(display);
@@ -169,14 +219,10 @@ export default function DisplaysPage(): ReactElement {
     [requestDisplayRefresh],
   );
 
-  // Signature required by DisplayCard; this opens edit from the dashboard.
-  const handleToggleDisplay = useCallback(
-    (display: Display) => {
-      setSelectedDisplay(display);
-      setIsEditDialogOpen(true);
-    },
-    [setSelectedDisplay, setIsEditDialogOpen],
-  );
+  const handleEditDisplay = useCallback((display: Display) => {
+    setSelectedDisplay(display);
+    setIsEditDialogOpen(true);
+  }, []);
 
   const handleEditFromView = useCallback((display: Display) => {
     setSelectedDisplay(display);
@@ -210,10 +256,10 @@ export default function DisplaysPage(): ReactElement {
           screenWidth,
           screenHeight,
         }).unwrap();
-      } catch (error) {
+      } catch (updateError) {
         toast.error(
           `Failed to save display details: ${getApiErrorMessage(
-            error,
+            updateError,
             "Group assignments were not changed.",
           )}`,
         );
@@ -261,10 +307,10 @@ export default function DisplaysPage(): ReactElement {
           displayId: display.id,
           groupIds: [...nextGroupIds],
         }).unwrap();
-      } catch (error) {
+      } catch (groupsError) {
         toast.error(
           `Display details were saved, but display-group assignment failed: ${getApiErrorMessage(
-            error,
+            groupsError,
             "Display details were saved, but display-group assignment failed.",
           )}`,
         );
@@ -277,42 +323,71 @@ export default function DisplaysPage(): ReactElement {
     [updateDisplay, displayGroupsData, createDisplayGroup, setDisplayGroups],
   );
 
-  const filteredDisplays = useMemo(
+  const groupFilterKeys = useMemo(
     () =>
-      displays.filter((display) => {
-        if (statusFilter !== "all" && display.status !== statusFilter) {
+      new Set(groupFilters.map((groupName) => toDisplayGroupKey(groupName))),
+    [groupFilters],
+  );
+
+  const filteredDisplays = useMemo(() => {
+    const normalizedSearch = deferredSearch.trim().toLowerCase();
+
+    return displays.filter((display) => {
+      if (statusFilter !== "all" && display.status !== statusFilter) {
+        return false;
+      }
+
+      if (normalizedSearch.length > 0) {
+        const matchesName = display.name
+          .toLowerCase()
+          .includes(normalizedSearch);
+        const matchesLocation = display.location
+          .toLowerCase()
+          .includes(normalizedSearch);
+        const matchesIdentifier = display.identifier
+          ?.toLowerCase()
+          .includes(normalizedSearch);
+        if (!matchesName && !matchesLocation && !matchesIdentifier) {
           return false;
         }
+      }
 
-        if (search.length > 0) {
-          const searchLower = search.toLowerCase();
-          const matchesName = display.name.toLowerCase().includes(searchLower);
-          const matchesLocation = display.location
-            .toLowerCase()
-            .includes(searchLower);
-          const matchesIdentifier = display.identifier
-            ?.toLowerCase()
-            .includes(searchLower);
-          if (!matchesName && !matchesLocation && !matchesIdentifier) {
-            return false;
-          }
+      if (groupFilterKeys.size > 0) {
+        const hasMatchingGroup = display.groups.some((group) =>
+          groupFilterKeys.has(toDisplayGroupKey(group.name)),
+        );
+        if (!hasMatchingGroup) {
+          return false;
         }
+      }
 
-        return true;
-      }),
-    [displays, statusFilter, search],
-  );
+      if (
+        normalizedOutputFilter !== "all" &&
+        display.displayOutput !== normalizedOutputFilter
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [
+    displays,
+    statusFilter,
+    deferredSearch,
+    groupFilterKeys,
+    normalizedOutputFilter,
+  ]);
 
   const sortedDisplays = useMemo(
     () =>
-      [...filteredDisplays].sort((a, b) => {
+      [...filteredDisplays].sort((leftDisplay, rightDisplay) => {
         switch (sortBy) {
           case "alphabetical":
-            return a.name.localeCompare(b.name);
+            return leftDisplay.name.localeCompare(rightDisplay.name);
           case "status":
-            return a.status.localeCompare(b.status);
+            return leftDisplay.status.localeCompare(rightDisplay.status);
           case "location":
-            return a.location.localeCompare(b.location);
+            return leftDisplay.location.localeCompare(rightDisplay.location);
           default:
             return 0;
         }
@@ -321,7 +396,7 @@ export default function DisplaysPage(): ReactElement {
   );
 
   const paginatedDisplays = useMemo(
-    () => sortedDisplays.slice((page - 1) * pageSize, page * pageSize),
+    () => sortedDisplays.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
     [sortedDisplays, page],
   );
 
@@ -330,12 +405,24 @@ export default function DisplaysPage(): ReactElement {
       <DashboardPage.Header
         title="Displays"
         actions={
-          <Can permission="displays:create">
-            <Button onClick={() => setIsAddInfoDialogOpen(true)}>
-              <IconPlus className="size-4" />
-              Add Display
-            </Button>
-          </Can>
+          <>
+            <Can permission="displays:create">
+              <Button onClick={() => setIsAddInfoDialogOpen(true)}>
+                <IconPlus className="size-4" aria-hidden="true" />
+                Add Display
+              </Button>
+            </Can>
+            <Can permission="displays:update">
+              <Button
+                variant="outline"
+                onClick={() => setIsGroupManagerOpen(true)}
+                className="gap-2"
+              >
+                <IconSettings className="size-4" aria-hidden="true" />
+                Add Display Group
+              </Button>
+            </Can>
+          </>
         }
       />
 
@@ -347,39 +434,28 @@ export default function DisplaysPage(): ReactElement {
 
       <DashboardPage.Body>
         <DashboardPage.Toolbar>
-          <DisplayStatusTabs
-            value={statusFilter}
-            onValueChange={handleStatusFilterChange}
+          <DisplaysToolbar
+            statusFilter={statusFilter}
+            sortBy={sortBy}
+            search={search}
+            selectedGroups={groupFilters}
+            selectedOutput={normalizedOutputFilter}
+            availableGroups={availableGroupFilters}
+            availableOutputs={availableOutputFilters}
+            onStatusFilterChange={handleStatusFilterChange}
+            onSortChange={handleSortChange}
+            onSearchChange={handleSearchChange}
+            onGroupFilterChange={handleGroupFilterChange}
+            onOutputFilterChange={handleOutputFilterChange}
+            onClearFilters={handleClearFilters}
           />
-
-          <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto">
-            <DisplayFilterPopover />
-            <DisplaySortSelect
-              value={sortBy}
-              onValueChange={handleSortChange}
-            />
-            <DisplaySearchInput
-              value={search}
-              onChange={handleSearchChange}
-              className="w-full max-w-none md:w-72"
-            />
-            <Can permission="displays:update">
-              <Button
-                variant="outline"
-                onClick={() => setIsGroupManagerOpen(true)}
-              >
-                <IconSettings className="size-4" />
-                Manage Groups
-              </Button>
-            </Can>
-          </div>
         </DashboardPage.Toolbar>
 
-        <DashboardPage.Content className="pt-6">
+        <DashboardPage.Content className="pt-5">
           {isLoading ? (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-[200px] rounded-lg" />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} className="h-[220px] rounded-md" />
               ))}
             </div>
           ) : (
@@ -387,9 +463,8 @@ export default function DisplaysPage(): ReactElement {
               items={paginatedDisplays}
               onViewDetails={handleViewDetails}
               onPreviewPage={handlePreviewPage}
-              onRefreshPage={handleRefreshPage}
-              onToggleDisplay={handleToggleDisplay}
-              canUpdate={canUpdateDisplay}
+              onRefreshPage={canUpdateDisplay ? handleRefreshPage : undefined}
+              onEditDisplay={canUpdateDisplay ? handleEditDisplay : undefined}
             />
           )}
         </DashboardPage.Content>
@@ -397,7 +472,7 @@ export default function DisplaysPage(): ReactElement {
         <DashboardPage.Footer>
           <Pagination
             page={page}
-            pageSize={pageSize}
+            pageSize={PAGE_SIZE}
             total={sortedDisplays.length}
             onPageChange={setPage}
           />

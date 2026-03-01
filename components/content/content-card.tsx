@@ -53,7 +53,7 @@ export const ContentCard = memo(function ContentCard({
         : IconPhoto;
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-md focus-within:ring-2 focus-within:ring-ring/40 focus-within:ring-offset-2">
+    <div className="group flex flex-col overflow-hidden rounded-md border border-border bg-card focus-within:ring-2 focus-within:ring-ring/40 focus-within:ring-offset-2">
       {/* Thumbnail area */}
       <div className="flex aspect-4/3 items-center justify-center bg-muted/50">
         {content.thumbnailUrl ? (

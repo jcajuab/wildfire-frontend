@@ -31,6 +31,16 @@ export interface ApiErrorResponse {
 
 type UnknownObject = Record<string, unknown>;
 
+interface NonJsonPayloadFailure {
+  readonly __parseFailure: true;
+  readonly message: string;
+  readonly status: number;
+  readonly statusText: string;
+  readonly contentType: string;
+  readonly bodyPreview: string;
+  readonly url: string;
+}
+
 const isObject = (value: unknown): value is UnknownObject =>
   value != null && typeof value === "object" && !Array.isArray(value);
 
@@ -40,6 +50,44 @@ const isInteger = (value: unknown): value is number =>
   typeof value === "number" &&
   Number.isFinite(value) &&
   Number.isInteger(value);
+
+const formatPayloadType = (value: unknown): string => {
+  if (value === null) {
+    return "null";
+  }
+  if (Array.isArray(value)) {
+    return `array(${value.length})`;
+  }
+  return typeof value;
+};
+
+const isNonJsonPayloadFailure = (
+  payload: unknown,
+): payload is NonJsonPayloadFailure => {
+  return (
+    isObject(payload) &&
+    payload.__parseFailure === true &&
+    typeof payload.message === "string" &&
+    typeof payload.status === "number" &&
+    typeof payload.statusText === "string" &&
+    typeof payload.contentType === "string" &&
+    typeof payload.bodyPreview === "string" &&
+    typeof payload.url === "string"
+  );
+};
+
+const getParseFailureMessage = (payload: unknown): string | undefined => {
+  if (isNonJsonPayloadFailure(payload)) {
+    const parseFailure = payload;
+    const preview =
+      parseFailure.bodyPreview === ""
+        ? "empty"
+        : `body preview ${parseFailure.bodyPreview}`;
+    return `${parseFailure.message}. ${preview}.`;
+  }
+
+  return undefined;
+};
 
 const toNonNegativeInteger = (value: unknown): number | undefined =>
   isInteger(value) && value >= 0
@@ -108,8 +156,15 @@ function parseApiEnvelope<T>(value: UnknownObject): ApiResponse<T> {
 }
 
 export function parseApiResponse<T>(payload: unknown): ApiResponse<T> {
+  const parseFailureMessage = getParseFailureMessage(payload);
+  if (parseFailureMessage) {
+    throw new Error(parseFailureMessage);
+  }
+
   if (!isObject(payload)) {
-    throw new Error("API payload is not a JSON object.");
+    throw new Error(
+      `API payload is not a JSON object: received ${formatPayloadType(payload)}.`,
+    );
   }
 
   const apiError = extractApiError(payload);
@@ -123,8 +178,15 @@ export function parseApiResponse<T>(payload: unknown): ApiResponse<T> {
 }
 
 export function parseApiListResponse<T>(payload: unknown): ApiListResponse<T> {
+  const parseFailureMessage = getParseFailureMessage(payload);
+  if (parseFailureMessage) {
+    throw new Error(parseFailureMessage);
+  }
+
   if (!isObject(payload)) {
-    throw new Error("API payload is not a JSON object.");
+    throw new Error(
+      `API payload is not a JSON object: received ${formatPayloadType(payload)}.`,
+    );
   }
 
   const apiError = extractApiError(payload);

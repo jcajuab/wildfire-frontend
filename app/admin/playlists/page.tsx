@@ -434,7 +434,7 @@ export default function PlaylistsPage(): ReactElement {
                 <span className="text-muted-foreground">Duration:</span>{" "}
                 {previewPlaylist.totalDuration} sec
               </p>
-              <div className="rounded-md border p-3">
+              <div className="rounded-md border border-border p-3">
                 {previewPlaylist.items.map((item) => (
                   <p key={item.id} className="text-xs text-muted-foreground">
                     • {item.content.title} ({item.duration}s)

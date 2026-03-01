@@ -77,7 +77,7 @@ export function DisplayRegistrationInfoDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-md border bg-muted/30 p-4 text-sm">
+        <div className="rounded-md border border-border bg-muted/30 p-4 text-sm">
           <p className="text-muted-foreground">Current registration code</p>
           <p className="mt-2 text-3xl font-semibold tracking-[0.25em]">
             {registrationCode ?? "------"}

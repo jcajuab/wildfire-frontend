@@ -84,7 +84,7 @@ function SortableItemRow({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3"
+      className="flex items-center gap-3 rounded-md border border-border bg-muted/30 p-3"
     >
       <div className="flex size-12 items-center justify-center rounded bg-muted" />
 
@@ -99,7 +99,7 @@ function SortableItemRow({
             onChange={(e) =>
               onUpdateDuration(item.id, parseInt(e.target.value, 10) || 1)
             }
-            className="w-12 rounded border bg-transparent px-1 text-center"
+            className="w-12 rounded border border-border bg-transparent px-1 text-center"
             onPointerDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           />
@@ -296,7 +296,7 @@ export function EditPlaylistItemsDialog({
         showCloseButton={false}
       >
         {/* Header */}
-        <DialogHeader className="flex-row! items-center justify-between border-b px-6 py-4">
+        <DialogHeader className="flex-row! items-center justify-between border-b border-border px-6 py-4">
           <div className="flex flex-col gap-0.5">
             <DialogTitle className="text-base font-semibold">
               Manage Playlist Items
@@ -320,7 +320,7 @@ export function EditPlaylistItemsDialog({
         <div className="flex flex-1 gap-6 overflow-hidden p-6">
           {/* Left — Current items */}
           <div className="flex flex-1 flex-col gap-4 overflow-hidden">
-            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg border p-4">
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-md border border-border p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <IconPlaylist className="size-4" />
@@ -362,7 +362,7 @@ export function EditPlaylistItemsDialog({
           </div>
 
           {/* Right — Content library */}
-          <div className="flex w-80 flex-col gap-4 overflow-hidden rounded-lg border p-4">
+          <div className="flex w-80 flex-col gap-4 overflow-hidden rounded-md border border-border p-4">
             <div className="flex items-center gap-2">
               <IconPhoto className="size-4" />
               <span className="text-sm font-semibold">Content Library</span>
@@ -387,7 +387,7 @@ export function EditPlaylistItemsDialog({
                     key={content.id}
                     type="button"
                     onClick={() => handleAddContent(content)}
-                    className="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted/50"
+                    className="flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted/50"
                   >
                     <div className="flex size-10 items-center justify-center rounded bg-muted" />
                     <span className="flex-1 truncate text-sm">

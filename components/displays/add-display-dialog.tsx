@@ -300,7 +300,7 @@ export function AddDisplayDialog({
                         selectedResolution: output.resolution,
                       }))
                     }
-                    className={`flex items-center justify-between rounded-lg border p-3 text-left transition-colors ${
+                    className={`flex items-center justify-between rounded-md border border-border p-3 text-left transition-colors ${
                       data.selectedOutput === output.name
                         ? "border-primary bg-primary/5"
                         : "hover:bg-muted/50"
@@ -384,7 +384,7 @@ export function AddDisplayDialog({
                 Review & Register
               </div>
 
-              <div className="flex flex-col gap-3 rounded-lg border p-4">
+              <div className="flex flex-col gap-3 rounded-md border border-border p-4">
                 <div className="flex items-start gap-2">
                   <IconPhoto className="mt-0.5 size-4 text-muted-foreground" />
                   <div className="flex flex-col">

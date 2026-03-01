@@ -435,7 +435,7 @@ export default function RolesPage(): ReactElement {
         </DashboardPage.Toolbar>
 
         <DashboardPage.Content className="pt-6">
-          <div className="overflow-hidden rounded-lg border">
+          <div className="overflow-hidden rounded-md border border-border">
             <RolesTable
               roles={paginatedRoles}
               sort={sort}
@@ -618,14 +618,14 @@ export default function RolesPage(): ReactElement {
 
       <Can permission="roles:delete">
         <div className="mx-auto w-full max-w-[--breakpoint-2xl] px-4 pb-6 md:px-6 lg:px-8">
-          <div className="overflow-hidden rounded-lg border">
-            <div className="border-b px-4 py-3">
+          <div className="overflow-hidden rounded-md border border-border">
+            <div className="border-b border-border px-4 py-3">
               <h3 className="text-sm font-semibold">Role Deletion Requests</h3>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full border-collapse border border-border text-sm">
                 <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <tr>
+                  <tr className="border-b border-border">
                     <th className="px-4 py-2">Role</th>
                     <th className="px-4 py-2">Requested By</th>
                     <th className="px-4 py-2">Requested At</th>
@@ -640,7 +640,7 @@ export default function RolesPage(): ReactElement {
                   {(deletionRequestsData ?? []).map((request) => {
                     const reasonText = request.reason?.trim() ?? "";
                     return (
-                      <tr key={request.id} className="border-t">
+                      <tr key={request.id} className="border-t border-border">
                         <td className="px-4 py-2">{request.roleName}</td>
                         <td className="px-4 py-2">{request.requestedByName}</td>
                         <td className="px-4 py-2 text-muted-foreground">

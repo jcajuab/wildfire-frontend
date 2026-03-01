@@ -112,7 +112,7 @@ export function CreateContentDialog({
 
           {/* File upload area */}
           <div
-            className={`flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 transition-colors ${
+            className={`flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-8 transition-colors ${
               isDragging
                 ? "border-primary bg-primary/5"
                 : "border-muted-foreground/25"
@@ -121,7 +121,7 @@ export function CreateContentDialog({
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <div className="flex size-12 items-center justify-center rounded-lg bg-muted">
+            <div className="flex size-12 items-center justify-center rounded-md bg-muted">
               <IconUpload className="size-6 text-muted-foreground" />
             </div>
             <div className="flex flex-col items-center gap-1 text-center">

@@ -415,7 +415,7 @@ export default function LogsPage(): ReactElement {
       />
 
       <DashboardPage.Body>
-        <DashboardPage.Content className="flex-none border-b pb-3">
+        <DashboardPage.Content className="flex-none border-b border-border pb-3">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="space-y-1.5">
               <Label htmlFor="logs-filter-from">From</Label>
@@ -561,7 +561,7 @@ export default function LogsPage(): ReactElement {
           </div>
         </DashboardPage.Content>
         <DashboardPage.Content className="pt-4">
-          <div className="overflow-hidden rounded-lg border">
+          <div className="overflow-hidden rounded-md border border-border">
             <LogsTable logs={logs} />
           </div>
         </DashboardPage.Content>

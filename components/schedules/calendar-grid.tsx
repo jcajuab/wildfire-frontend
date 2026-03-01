@@ -77,20 +77,20 @@ function ResourceWeekView({
   onScheduleClick,
 }: ResourceGridSharedProps): ReactElement {
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border max-h-[calc(100vh-14rem)]">
+    <div className="flex flex-col overflow-hidden rounded-md border border-border max-h-[calc(100vh-14rem)]">
       <div className="overflow-auto">
         <div className="w-full min-w-0">
           <div
-            className="sticky top-0 z-30 grid border-b bg-muted/30 backdrop-blur-sm"
+            className="sticky top-0 z-30 grid border-b border-border bg-muted/30 backdrop-blur-sm"
             style={{ gridTemplateColumns: WEEK_GRID_TEMPLATE }}
           >
-            <div className="sticky left-0 z-40 border-r bg-muted/30 px-4 py-2 text-sm font-semibold">
+            <div className="sticky left-0 z-40 border-r border-border bg-muted/30 px-4 py-2 text-sm font-semibold">
               Display
             </div>
             {days.map((day) => (
               <div
                 key={day.toISOString()}
-                className="border-r px-2 py-2 last:border-r-0"
+                className="border-r border-border px-2 py-2 last:border-r-0"
               >
                 <div className="text-xs font-medium text-muted-foreground">
                   {formatDayHeader(day)}
@@ -105,10 +105,10 @@ function ResourceWeekView({
           {resources.map((resource) => (
             <div
               key={resource.id}
-              className="grid border-b"
+              className="grid border-b border-border"
               style={{ gridTemplateColumns: WEEK_GRID_TEMPLATE }}
             >
-              <div className="sticky left-0 z-20 flex items-center border-r bg-background px-4 py-3">
+              <div className="sticky left-0 z-20 flex items-center border-r border-border bg-background px-4 py-3">
                 <p className="truncate text-sm font-medium">{resource.name}</p>
               </div>
 
@@ -120,7 +120,7 @@ function ResourceWeekView({
                 return (
                   <div
                     key={resourceDateKey}
-                    className="relative border-r bg-background/60 p-1.5 last:border-r-0"
+                    className="relative border-r border-border bg-background/60 p-1.5 last:border-r-0"
                     style={{ minHeight: 72 }}
                   >
                     {dayEvents.map((event) => {
@@ -167,8 +167,8 @@ function ResourceDayView({
   const day = days[0];
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border max-h-[calc(100vh-14rem)]">
-      <div className="border-b px-4 py-2 text-sm font-medium">
+    <div className="flex flex-col overflow-hidden rounded-md border border-border max-h-[calc(100vh-14rem)]">
+      <div className="border-b border-border px-4 py-2 text-sm font-medium">
         {day.toLocaleDateString("en-US", {
           weekday: "long",
           month: "long",
@@ -180,17 +180,17 @@ function ResourceDayView({
       <div className="overflow-auto">
         <div className="min-w-[1100px]">
           <div
-            className="sticky top-0 z-30 grid border-b bg-muted/30 backdrop-blur-sm"
+            className="sticky top-0 z-30 grid border-b border-border bg-muted/30 backdrop-blur-sm"
             style={{ gridTemplateColumns: DAY_GRID_TEMPLATE }}
           >
-            <div className="sticky left-0 z-40 border-r bg-muted/30 px-4 py-2 text-sm font-semibold">
+            <div className="sticky left-0 z-40 border-r border-border bg-muted/30 px-4 py-2 text-sm font-semibold">
               Display
             </div>
             <div className="grid grid-cols-24">
               {HOURS.map((hour) => (
                 <div
                   key={hour}
-                  className="border-r px-1 py-2 text-center text-xs text-muted-foreground last:border-r-0"
+                  className="border-r border-border px-1 py-2 text-center text-xs text-muted-foreground last:border-r-0"
                 >
                   {hour % 2 === 0 ? formatHourLabel(hour) : ""}
                 </div>
@@ -206,10 +206,10 @@ function ResourceDayView({
             return (
               <div
                 key={resource.id}
-                className="grid border-b"
+                className="grid border-b border-border"
                 style={{ gridTemplateColumns: DAY_GRID_TEMPLATE }}
               >
-                <div className="sticky left-0 z-20 flex items-center border-r bg-background px-4 py-3">
+                <div className="sticky left-0 z-20 flex items-center border-r border-border bg-background px-4 py-3">
                   <p className="truncate text-sm font-medium">
                     {resource.name}
                   </p>
@@ -223,7 +223,7 @@ function ResourceDayView({
                     {HOURS.map((hour) => (
                       <div
                         key={hour}
-                        className="border-r border-border/60 last:border-r-0"
+                        className="border-r border-border last:border-r-0"
                       />
                     ))}
                   </div>

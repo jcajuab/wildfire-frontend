@@ -236,7 +236,7 @@ export function DisplayGroupManagerDialog({
                 return (
                   <div
                     key={group.id}
-                    className="flex items-center gap-2 rounded-md border p-2"
+                    className="flex items-center gap-2 rounded-md border border-border p-2"
                   >
                     {isEditing ? (
                       <Input

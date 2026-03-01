@@ -197,7 +197,7 @@ function EditContentDialogForm({
                 Optional: choose a new file to replace it.
               </p>
               <div
-                className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 transition-colors ${
+                className={`flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-4 transition-colors ${
                   isDragging
                     ? "border-primary bg-primary/5"
                     : "border-muted-foreground/25"
@@ -206,7 +206,7 @@ function EditContentDialogForm({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
-                <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
+                <div className="flex size-10 items-center justify-center rounded-md bg-muted">
                   <IconUpload className="size-5 text-muted-foreground" />
                 </div>
                 <div className="text-center">

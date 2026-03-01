@@ -2,6 +2,7 @@
 
 import type { ReactElement } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 import type { DisplayStatus } from "@/types/display";
 
 export type DisplayStatusFilter = "all" | DisplayStatus;
@@ -9,6 +10,7 @@ export type DisplayStatusFilter = "all" | DisplayStatus;
 interface DisplayStatusTabsProps {
   readonly value: DisplayStatusFilter;
   readonly onValueChange: (value: DisplayStatusFilter) => void;
+  readonly className?: string;
 }
 
 const statusOptions: readonly {
@@ -24,6 +26,7 @@ const statusOptions: readonly {
 export function DisplayStatusTabs({
   value,
   onValueChange,
+  className,
 }: DisplayStatusTabsProps): ReactElement {
   return (
     <ToggleGroup
@@ -36,6 +39,7 @@ export function DisplayStatusTabs({
       }}
       variant="outline"
       size="default"
+      className={cn("w-full justify-start sm:w-auto", className)}
     >
       {statusOptions.map((option) => (
         <ToggleGroupItem

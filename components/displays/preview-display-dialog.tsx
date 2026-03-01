@@ -39,7 +39,7 @@ export function PreviewDisplayDialog({
           <DialogTitle>Preview Page</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-4">
-          <div className="rounded-lg border p-4">
+          <div className="rounded-md border border-border p-4">
             <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Currently Playing
             </p>
@@ -61,7 +61,7 @@ export function PreviewDisplayDialog({
             </div>
           </div>
 
-          <div className="rounded-lg border p-3">
+          <div className="rounded-md border border-border p-3">
             <p className="text-xs text-muted-foreground">Current playlist</p>
             <p className="text-sm font-medium">
               {nowPlaying?.playlist ?? "N/A"}
