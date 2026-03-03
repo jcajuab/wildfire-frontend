@@ -1,9 +1,8 @@
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { DisplayRegistrationInfoDialog } from "@/components/displays/display-registration-info-dialog";
 
-const createRegistrationCodeMock = vi.fn();
+const createRegistrationAttemptMock = vi.fn();
 
 vi.mock("sonner", () => ({
   toast: {
@@ -17,35 +16,39 @@ vi.mock("@/hooks/use-can", () => ({
 }));
 
 vi.mock("@/lib/api/displays-api", () => ({
-  useCreateRegistrationCodeMutation: () =>
-    [createRegistrationCodeMock, { isLoading: false }] as const,
+  useCreateRegistrationAttemptMutation: () =>
+    [createRegistrationAttemptMock, { isLoading: false }] as const,
+  useRotateRegistrationAttemptMutation: () =>
+    [vi.fn(), { isLoading: false }] as const,
+  useCloseRegistrationAttemptMutation: () => [vi.fn()] as const,
+}));
+
+vi.mock("@/lib/api/base-query", () => ({
+  getBaseUrl: () => "",
 }));
 
 describe("DisplayRegistrationInfoDialog", () => {
   beforeEach(() => {
-    createRegistrationCodeMock.mockReset();
-    createRegistrationCodeMock.mockReturnValue({
+    createRegistrationAttemptMock.mockReset();
+    createRegistrationAttemptMock.mockReturnValue({
       unwrap: async () => ({
+        attemptId: "attempt-1",
         code: "123456",
         expiresAt: "2099-01-01T00:00:00.000Z",
       }),
     });
   });
 
-  test("generates and displays one-time registration code", async () => {
+  test("creates and displays one-time registration code on open", async () => {
     const onOpenChange = vi.fn();
     render(
       <DisplayRegistrationInfoDialog open={true} onOpenChange={onOpenChange} />,
     );
-    const user = userEvent.setup();
 
-    await user.click(screen.getByRole("button", { name: "Generate code" }));
-
-    expect(createRegistrationCodeMock).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(createRegistrationAttemptMock).toHaveBeenCalledTimes(1);
+    });
     expect(screen.getByText("123456")).toBeInTheDocument();
     expect(screen.getByText(/Expires at/i)).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Register" }),
-    ).not.toBeInTheDocument();
   });
 });

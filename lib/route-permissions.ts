@@ -89,11 +89,22 @@ const MANAGE_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
     },
   ];
 
+const NON_NAV_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
+  [
+    {
+      path: "/admin/displays/register",
+      permission: "displays:register",
+      title: "Display Registration",
+      match: "exact",
+      section: "core",
+    },
+  ];
+
 export const DASHBOARD_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
   [...CORE_ROUTE_READ_ENTRIES, ...MANAGE_ROUTE_READ_ENTRIES];
 
 export const ROUTE_READ_PERMISSION_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
-  DASHBOARD_ROUTE_READ_ENTRIES;
+  [...NON_NAV_ROUTE_READ_ENTRIES, ...DASHBOARD_ROUTE_READ_ENTRIES];
 
 export const ROUTE_READ_ENTRIES_BY_SECTION: Readonly<{
   core: readonly DashboardRouteReadPermissionEntry[];

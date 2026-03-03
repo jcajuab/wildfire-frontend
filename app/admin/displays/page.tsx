@@ -1,7 +1,13 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { IconPlus, IconSettings } from "@tabler/icons-react";
 import { toast } from "sonner";
 
@@ -33,6 +39,7 @@ import {
   useSetDisplayGroupsMutation,
   useUpdateDisplayMutation,
 } from "@/lib/api/displays-api";
+import { getBaseUrl } from "@/lib/api/base-query";
 import { getNextDisplayGroupColorIndex } from "@/lib/display-group-colors";
 import {
   collapseDisplayGroupWhitespace,
@@ -55,14 +62,15 @@ const DISPLAY_SORT_VALUES = ["alphabetical", "status", "location"] as const;
 const PAGE_SIZE = 20;
 
 export default function DisplaysPage(): ReactElement {
+  const canReadDisplays = useCan("displays:read");
   const canUpdateDisplay = useCan("displays:update");
   const {
     data: displaysData,
     isLoading,
     isError,
     error,
+    refetch,
   } = useGetDisplaysQuery(undefined, {
-    pollingInterval: 5000,
     refetchOnFocus: true,
     refetchOnReconnect: true,
   });
@@ -99,6 +107,27 @@ export default function DisplaysPage(): ReactElement {
   const [createDisplayGroup] = useCreateDisplayGroupMutation();
   const [requestDisplayRefresh] = useRequestDisplayRefreshMutation();
   const deferredSearch = useDeferredValue(search);
+
+  useEffect(() => {
+    if (!canReadDisplays) return;
+    const baseUrl = getBaseUrl();
+    if (!baseUrl) return;
+
+    const stream = new EventSource(`${baseUrl}/displays/events`, {
+      withCredentials: true,
+    });
+    const refresh = () => {
+      void refetch();
+    };
+    stream.addEventListener("display_registered", refresh);
+    stream.addEventListener("display_unregistered", refresh);
+
+    return () => {
+      stream.removeEventListener("display_registered", refresh);
+      stream.removeEventListener("display_unregistered", refresh);
+      stream.close();
+    };
+  }, [canReadDisplays, refetch]);
 
   const displays: Display[] = useMemo(() => {
     const groupsByDisplayId = new Map<
@@ -406,7 +435,7 @@ export default function DisplaysPage(): ReactElement {
         title="Displays"
         actions={
           <>
-            <Can permission="displays:create">
+            <Can permission="displays:register">
               <Button onClick={() => setIsAddInfoDialogOpen(true)}>
                 <IconPlus className="size-4" aria-hidden="true" />
                 Add Display
@@ -482,6 +511,7 @@ export default function DisplaysPage(): ReactElement {
       <DisplayRegistrationInfoDialog
         open={isAddInfoDialogOpen}
         onOpenChange={setIsAddInfoDialogOpen}
+        onRegistrationSucceeded={refetch}
       />
 
       <ViewDisplayDialog

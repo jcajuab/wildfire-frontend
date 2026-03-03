@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -13,72 +13,183 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { getBaseUrl } from "@/lib/api/base-query";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
-import { useCreateRegistrationCodeMutation } from "@/lib/api/displays-api";
+import {
+  useCloseRegistrationAttemptMutation,
+  useCreateRegistrationAttemptMutation,
+  useRotateRegistrationAttemptMutation,
+} from "@/lib/api/displays-api";
 import { useCan } from "@/hooks/use-can";
 
 interface DisplayRegistrationInfoDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
+  readonly onRegistrationSucceeded?: () => void;
 }
+
+interface RegistrationSucceededEvent {
+  readonly type: "registration_succeeded";
+  readonly attemptId: string;
+  readonly displayId: string;
+  readonly displaySlug: string;
+  readonly occurredAt: string;
+}
+
+const isRegistrationSucceededEvent = (
+  value: unknown,
+): value is RegistrationSucceededEvent => {
+  if (typeof value !== "object" || value === null) return false;
+  const event = value as Partial<RegistrationSucceededEvent>;
+  return (
+    event.type === "registration_succeeded" &&
+    typeof event.displaySlug === "string" &&
+    typeof event.attemptId === "string"
+  );
+};
 
 export function DisplayRegistrationInfoDialog({
   open,
   onOpenChange,
+  onRegistrationSucceeded,
 }: DisplayRegistrationInfoDialogProps): ReactElement {
-  const canIssueRegistrationCode = useCan("displays:create");
+  const canIssueRegistrationCode = useCan("displays:register");
+  const [attemptId, setAttemptId] = useState<string | null>(null);
   const [registrationCode, setRegistrationCode] = useState<string | null>(null);
   const [registrationCodeExpiresAt, setRegistrationCodeExpiresAt] = useState<
     string | null
   >(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const [createRegistrationCode, { isLoading: isIssuingRegistrationCode }] =
-    useCreateRegistrationCodeMutation();
+  const [createRegistrationAttempt, { isLoading: isCreatingAttempt }] =
+    useCreateRegistrationAttemptMutation();
+  const [rotateRegistrationAttempt, { isLoading: isRotatingAttempt }] =
+    useRotateRegistrationAttemptMutation();
+  const [closeRegistrationAttempt] = useCloseRegistrationAttemptMutation();
 
   const reset = useCallback(() => {
+    setAttemptId(null);
     setRegistrationCode(null);
     setRegistrationCodeExpiresAt(null);
+    setSuccessMessage(null);
   }, []);
+
+  const rotateCode = useCallback(
+    async (targetAttemptId: string): Promise<void> => {
+      const rotated = await rotateRegistrationAttempt({
+        attemptId: targetAttemptId,
+      }).unwrap();
+      setRegistrationCode(rotated.code);
+      setRegistrationCodeExpiresAt(rotated.expiresAt);
+    },
+    [rotateRegistrationAttempt],
+  );
+
+  useEffect(() => {
+    if (!open || !canIssueRegistrationCode) return;
+    let isCancelled = false;
+    (async () => {
+      try {
+        const created = await createRegistrationAttempt().unwrap();
+        if (isCancelled) return;
+        setAttemptId(created.attemptId);
+        setRegistrationCode(created.code);
+        setRegistrationCodeExpiresAt(created.expiresAt);
+      } catch (err) {
+        if (isCancelled) return;
+        toast.error(
+          getApiErrorMessage(err, "Failed to create registration attempt."),
+        );
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [open, canIssueRegistrationCode, createRegistrationAttempt]);
+
+  useEffect(() => {
+    if (!open || !attemptId) return;
+    const baseUrl = getBaseUrl();
+    if (!baseUrl) return;
+
+    const stream = new EventSource(
+      `${baseUrl}/displays/registration-attempts/${attemptId}/events`,
+      { withCredentials: true },
+    );
+
+    const onSucceeded = (event: Event): void => {
+      if (!(event instanceof MessageEvent)) return;
+      try {
+        const payload = JSON.parse(String(event.data)) as unknown;
+        if (!isRegistrationSucceededEvent(payload)) return;
+        setSuccessMessage(
+          `Device "${payload.displaySlug}" has been registered successfully.`,
+        );
+        onRegistrationSucceeded?.();
+        void rotateCode(attemptId);
+      } catch {
+        // Ignore malformed events to keep stream resilient.
+      }
+    };
+
+    stream.addEventListener("registration_succeeded", onSucceeded);
+
+    return () => {
+      stream.removeEventListener("registration_succeeded", onSucceeded);
+      stream.close();
+    };
+  }, [open, attemptId, onRegistrationSucceeded, rotateCode]);
+
+  useEffect(() => {
+    if (!open || !attemptId || !registrationCodeExpiresAt) return;
+    const expiresAtMs = Date.parse(registrationCodeExpiresAt);
+    if (!Number.isFinite(expiresAtMs)) return;
+    const timeoutMs = Math.max(0, expiresAtMs - Date.now());
+    const timer = window.setTimeout(() => {
+      void rotateCode(attemptId);
+    }, timeoutMs);
+    return () => window.clearTimeout(timer);
+  }, [open, attemptId, registrationCodeExpiresAt, rotateCode]);
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
-      if (!next) {
-        reset();
+      if (next) {
+        onOpenChange(next);
+        return;
       }
-      onOpenChange(next);
+
+      const currentAttemptId = attemptId;
+      reset();
+      onOpenChange(false);
+
+      if (currentAttemptId) {
+        void closeRegistrationAttempt({ attemptId: currentAttemptId }).unwrap();
+      }
     },
-    [onOpenChange, reset],
+    [attemptId, closeRegistrationAttempt, onOpenChange, reset],
   );
 
-  const handleGenerateRegistrationCode = useCallback(async () => {
-    try {
-      const result = await createRegistrationCode().unwrap();
-      setRegistrationCode(result.code);
-      setRegistrationCodeExpiresAt(result.expiresAt);
-      toast.success("Registration code generated.");
-    } catch (err) {
-      toast.error(
-        getApiErrorMessage(err, "Failed to generate registration code."),
-      );
-    }
-  }, [createRegistrationCode]);
+  const statusText = useMemo(() => {
+    if (isCreatingAttempt) return "Creating registration attempt...";
+    if (isRotatingAttempt) return "Rotating code...";
+    return null;
+  }, [isCreatingAttempt, isRotatingAttempt]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Generate Display Registration Code</DialogTitle>
+          <DialogTitle>Register Display</DialogTitle>
           <DialogDescription>
-            Generate a one-time code, then complete registration on the display
-            at
-            <span className="mx-1 font-medium">/displays/register</span>
-            using display slug, output, and resolution. The display will appear
-            in the admin list after registration completes on the display.
+            A one-time code is generated automatically. Open
+            <span className="mx-1 font-medium">/admin/displays/register</span>
+            on the display machine and complete registration before expiration.
           </DialogDescription>
         </DialogHeader>
 
         <div className="rounded-md border border-border bg-muted/30 p-4 text-sm">
-          <p className="text-muted-foreground">Current registration code</p>
+          <p className="text-muted-foreground">Active registration code</p>
           <p className="mt-2 text-3xl font-semibold tracking-[0.25em]">
             {registrationCode ?? "------"}
           </p>
@@ -88,16 +199,32 @@ export function DisplayRegistrationInfoDialog({
               {new Date(registrationCodeExpiresAt).toLocaleTimeString()}
             </p>
           ) : null}
+          {statusText ? (
+            <p className="mt-2 text-xs text-muted-foreground">{statusText}</p>
+          ) : null}
         </div>
+
+        {successMessage ? (
+          <p
+            className="rounded-md bg-[var(--success-muted)] px-3 py-2 text-sm text-[var(--success-foreground)]"
+            role="status"
+          >
+            {successMessage}
+          </p>
+        ) : null}
 
         <DialogFooter className="sm:justify-end">
           {canIssueRegistrationCode ? (
             <Button
               type="button"
-              onClick={handleGenerateRegistrationCode}
-              disabled={isIssuingRegistrationCode}
+              variant="outline"
+              disabled={!attemptId || isCreatingAttempt || isRotatingAttempt}
+              onClick={() => {
+                if (!attemptId) return;
+                void rotateCode(attemptId);
+              }}
             >
-              {isIssuingRegistrationCode ? "Generating…" : "Generate code"}
+              Rotate Code
             </Button>
           ) : null}
         </DialogFooter>

@@ -62,7 +62,13 @@ export interface DisplayGroupsListResponse {
   readonly pageSize: number;
 }
 
-export interface DisplayRegistrationCodeResponse {
+export interface DisplayRegistrationAttemptResponse {
+  readonly attemptId: string;
+  readonly code: string;
+  readonly expiresAt: string;
+}
+
+export interface DisplayRegistrationAttemptRotateResponse {
   readonly code: string;
   readonly expiresAt: string;
 }
@@ -263,19 +269,39 @@ export const displaysApi = createApi({
         { type: "Display", id: displayId },
       ],
     }),
-    createRegistrationCode: build.mutation<
-      DisplayRegistrationCodeResponse,
+    createRegistrationAttempt: build.mutation<
+      DisplayRegistrationAttemptResponse,
       void
     >({
       query: () => ({
-        url: "displays/registration-codes",
+        url: "displays/registration-attempts",
         method: "POST",
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<DisplayRegistrationCodeResponse>(
+        parseApiResponseDataSafe<DisplayRegistrationAttemptResponse>(
           response,
-          "createRegistrationCode",
+          "createRegistrationAttempt",
         ),
+    }),
+    rotateRegistrationAttempt: build.mutation<
+      DisplayRegistrationAttemptRotateResponse,
+      { attemptId: string }
+    >({
+      query: ({ attemptId }) => ({
+        url: `displays/registration-attempts/${attemptId}/rotate`,
+        method: "POST",
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<DisplayRegistrationAttemptRotateResponse>(
+          response,
+          "rotateRegistrationAttempt",
+        ),
+    }),
+    closeRegistrationAttempt: build.mutation<void, { attemptId: string }>({
+      query: ({ attemptId }) => ({
+        url: `displays/registration-attempts/${attemptId}`,
+        method: "DELETE",
+      }),
     }),
   }),
 });
@@ -291,5 +317,7 @@ export const {
   useDeleteDisplayGroupMutation,
   useSetDisplayGroupsMutation,
   useRequestDisplayRefreshMutation,
-  useCreateRegistrationCodeMutation,
+  useCreateRegistrationAttemptMutation,
+  useRotateRegistrationAttemptMutation,
+  useCloseRegistrationAttemptMutation,
 } = displaysApi;

@@ -10,6 +10,7 @@ export type PermissionResource =
 
 export type PermissionAction =
   | "read"
+  | "register"
   | "create"
   | "update"
   | "delete"

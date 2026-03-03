@@ -17,7 +17,7 @@ export interface RegistrationSessionResponse {
 export interface RegisterDisplayResponse {
   readonly displayId: string;
   readonly displaySlug: string;
-  readonly state: "registered" | "active";
+  readonly state: "registered";
   readonly keyId: string;
 }
 
@@ -76,17 +76,15 @@ export async function createRegistrationSession(
   registrationCode: string,
 ): Promise<RegistrationSessionResponse> {
   const baseUrl = getRequiredBaseUrl();
-  const response = await fetch(
-    `${baseUrl}/display-runtime/registration-sessions`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...getDevOnlyRequestHeaders(),
-      },
-      body: JSON.stringify({ registrationCode }),
+  const response = await fetch(`${baseUrl}/displays/registration-sessions`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...getDevOnlyRequestHeaders(),
     },
-  );
+    body: JSON.stringify({ registrationCode }),
+  });
 
   if (!response.ok) {
     throw new Error(await parseErrorMessage(response));
@@ -110,8 +108,9 @@ export async function registerDisplay(input: {
   registrationSignature: string;
 }): Promise<RegisterDisplayResponse> {
   const baseUrl = getRequiredBaseUrl();
-  const response = await fetch(`${baseUrl}/display-runtime/registrations`, {
+  const response = await fetch(`${baseUrl}/displays/registrations`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...getDevOnlyRequestHeaders(),

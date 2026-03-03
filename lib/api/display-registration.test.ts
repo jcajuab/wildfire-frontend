@@ -18,7 +18,7 @@ describe("display registration API", () => {
     }
   });
 
-  test("createRegistrationCode posts without shared API key", async () => {
+  test("createRegistrationAttempt posts without shared API key", async () => {
     const { displaysApi } = await import("@/lib/api/displays-api");
     let capturedBody: BodyInit | null | undefined;
     let capturedHeaders: HeadersInit | undefined;
@@ -37,11 +37,12 @@ describe("display registration API", () => {
       return new Response(
         JSON.stringify({
           data: {
+            attemptId: "attempt-1",
             code: "123456",
             expiresAt: "2099-01-01T00:00:00.000Z",
           },
         }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
+        { status: 201, headers: { "Content-Type": "application/json" } },
       );
     }) as typeof fetch;
 
@@ -54,7 +55,7 @@ describe("display registration API", () => {
     });
 
     const result = await store.dispatch(
-      displaysApi.endpoints.createRegistrationCode.initiate(),
+      displaysApi.endpoints.createRegistrationAttempt.initiate(),
     );
 
     expect("error" in result).toBe(false);

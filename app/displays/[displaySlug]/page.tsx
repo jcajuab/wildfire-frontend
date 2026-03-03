@@ -127,7 +127,7 @@ export default function DisplayRuntimePage() {
       const keyPair = await getStoredDisplayKeyPair(registration.keyAlias);
       if (!keyPair) {
         throw new Error(
-          "Display keypair is unavailable. Re-register this display from /displays/register.",
+          "Display keypair is unavailable. Re-register this display from /admin/displays/register.",
         );
       }
 
@@ -269,8 +269,8 @@ export default function DisplayRuntimePage() {
         <p className="text-sm text-white/80">
           This display slug is not registered on this display.
         </p>
-        <Link className="underline" href="/displays/register">
-          Open /displays/register to complete registration
+        <Link className="underline" href="/admin/displays/register">
+          Open /admin/displays/register to complete registration
         </Link>
       </main>
     );
