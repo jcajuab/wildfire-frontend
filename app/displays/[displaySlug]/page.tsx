@@ -44,12 +44,10 @@ const createChallengePayload = (input: {
 export default function DisplayRuntimePage() {
   const params = useParams<{ displaySlug: string }>();
   const displaySlug = params.displaySlug;
-  const registration = useMemo<DisplayRegistrationRecord | null>(() => {
-    if (!displaySlug) {
-      return null;
-    }
-    return getDisplayRegistrationBySlug(displaySlug);
-  }, [displaySlug]);
+  const [registration, setRegistration] = useState<DisplayRegistrationRecord | null>(
+    null,
+  );
+  const [isRegistrationResolved, setIsRegistrationResolved] = useState(false);
   const [manifest, setManifest] = useState<DisplayManifest | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [connectionState, setConnectionState] = useState<
@@ -95,6 +93,20 @@ export default function DisplayRuntimePage() {
 
   const currentTiming = timings[currentIndex] ?? null;
   const overflowExtraSeconds = currentTiming?.overflowExtraSeconds ?? 0;
+
+  useEffect(() => {
+    setIsRegistrationResolved(false);
+
+    if (!displaySlug) {
+      setRegistration(null);
+      setIsRegistrationResolved(true);
+      return;
+    }
+
+    const record = getDisplayRegistrationBySlug(displaySlug);
+    setRegistration(record);
+    setIsRegistrationResolved(true);
+  }, [displaySlug]);
 
   useEffect(() => {
     if (!registration) {
@@ -263,15 +275,27 @@ export default function DisplayRuntimePage() {
     };
   }, [currentItem, measuredHeightByItemId, overflowExtraSeconds, viewport]);
 
+  if (!isRegistrationResolved) {
+    return (
+      <main className="relative min-h-screen bg-black text-white">
+        <div className="absolute left-2 top-2 z-10 rounded bg-black/60 px-2 py-1 text-xs">
+          Initializing display
+        </div>
+      </main>
+    );
+  }
+
   if (!registration) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-black px-4 text-white">
-        <p className="text-sm text-white/80">
-          This display slug is not registered on this display.
-        </p>
-        <Link className="underline" href="/admin/displays/register">
-          Open /admin/displays/register to complete registration
-        </Link>
+      <main className="relative min-h-screen bg-black text-white">
+        <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-black px-4 text-white">
+          <p className="text-sm text-white/80">
+            This display slug is not registered on this display.
+          </p>
+          <Link className="underline" href="/admin/displays/register">
+            Open /admin/displays/register to complete registration
+          </Link>
+        </div>
       </main>
     );
   }
