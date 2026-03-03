@@ -210,7 +210,7 @@ export const DisplayCard = memo(function DisplayCard({
         <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-background p-2.5">
           {display.status === "LIVE" ? (
             <IconPlayerPlay
-              className="size-8 shrink-0 text-red-500"
+              className="size-8 shrink-0 text-primary"
               aria-hidden="true"
             />
           ) : (
