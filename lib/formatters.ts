@@ -1,7 +1,16 @@
 import type { ContentStatus } from "@/types/content";
 
 export function formatContentStatus(status: ContentStatus): string {
-  return status === "IN_USE" ? "In use" : "Draft";
+  switch (status) {
+    case "PROCESSING":
+      return "Processing";
+    case "READY":
+      return "Ready";
+    case "FAILED":
+      return "Failed";
+    default:
+      return status;
+  }
 }
 
 export function formatNumber(value: number): string {

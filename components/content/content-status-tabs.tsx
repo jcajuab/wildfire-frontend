@@ -16,8 +16,9 @@ const statusOptions: readonly {
   readonly label: string;
 }[] = [
   { value: "all", label: "All" },
-  { value: "DRAFT", label: "Draft" },
-  { value: "IN_USE", label: "In Use" },
+  { value: "PROCESSING", label: "Processing" },
+  { value: "READY", label: "Ready" },
+  { value: "FAILED", label: "Failed" },
 ] as const;
 
 export function ContentStatusTabs({

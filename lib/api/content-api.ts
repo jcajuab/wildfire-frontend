@@ -9,7 +9,7 @@ export interface BackendContent {
   readonly id: string;
   readonly title: string;
   readonly type: "IMAGE" | "VIDEO" | "PDF";
-  readonly status: "DRAFT" | "IN_USE";
+  readonly status: "PROCESSING" | "READY" | "FAILED";
   readonly thumbnailUrl?: string;
   readonly mimeType: string;
   readonly fileSize: number;
@@ -34,7 +34,7 @@ export interface BackendContentListResponse {
 export interface ContentListQuery {
   readonly page?: number;
   readonly pageSize?: number;
-  readonly status?: "DRAFT" | "IN_USE";
+  readonly status?: "PROCESSING" | "READY" | "FAILED";
   readonly type?: "IMAGE" | "VIDEO" | "PDF";
   readonly search?: string;
   readonly sortBy?: "createdAt" | "title" | "fileSize" | "type";
@@ -50,7 +50,7 @@ export interface ReplaceContentFileRequest {
   readonly id: string;
   readonly file: File;
   readonly title?: string;
-  readonly status?: "DRAFT" | "IN_USE";
+  readonly status?: "PROCESSING" | "READY" | "FAILED";
 }
 
 export const contentApi = createApi({
@@ -133,7 +133,7 @@ export const contentApi = createApi({
       {
         readonly id: string;
         readonly title?: string;
-        readonly status?: "DRAFT" | "IN_USE";
+        readonly status?: "PROCESSING" | "READY" | "FAILED";
       }
     >({
       query: ({ id, ...body }) => ({

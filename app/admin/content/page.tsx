@@ -57,7 +57,7 @@ import type { TypeFilter } from "@/components/content/content-filter-popover";
 import type { StatusFilter } from "@/components/content/content-status-tabs";
 import type { Content, ContentSortField } from "@/types/content";
 
-const CONTENT_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
+const CONTENT_STATUS_VALUES = ["all", "PROCESSING", "READY", "FAILED"] as const;
 const CONTENT_TYPE_VALUES = ["all", "IMAGE", "VIDEO", "PDF"] as const;
 const CONTENT_SORT_VALUES = ["createdAt", "title", "fileSize", "type"] as const;
 
@@ -68,7 +68,7 @@ interface EditContentDialogProps {
   readonly onSave: (input: {
     contentId: string;
     title: string;
-    status: "DRAFT" | "IN_USE";
+    status: "PROCESSING" | "READY" | "FAILED";
     file: File | null;
   }) => Promise<void>;
 }
@@ -101,7 +101,7 @@ interface EditContentDialogFormProps {
   readonly onSave: (input: {
     contentId: string;
     title: string;
-    status: "DRAFT" | "IN_USE";
+    status: "PROCESSING" | "READY" | "FAILED";
     file: File | null;
   }) => Promise<void>;
 }
@@ -112,11 +112,13 @@ function EditContentDialogForm({
   onSave,
 }: EditContentDialogFormProps): ReactElement {
   const [title, setTitle] = useState(content.title);
-  const [status, setStatus] = useState<"DRAFT" | "IN_USE">(content.status);
+  const [status, setStatus] = useState<"PROCESSING" | "READY" | "FAILED">(
+    content.status,
+  );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const canReplaceFile = content.status === "DRAFT";
+  const canReplaceFile = content.status !== "PROCESSING";
 
   const handleFileSelect = useCallback((file: File) => {
     setSelectedFile(file);
@@ -175,14 +177,17 @@ function EditContentDialogForm({
           <Label>Status</Label>
           <Select
             value={status}
-            onValueChange={(value) => setStatus(value as "DRAFT" | "IN_USE")}
+            onValueChange={(value) =>
+              setStatus(value as "PROCESSING" | "READY" | "FAILED")
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="DRAFT">Draft</SelectItem>
-              <SelectItem value="IN_USE">In Use</SelectItem>
+              <SelectItem value="PROCESSING">Processing</SelectItem>
+              <SelectItem value="READY">Ready</SelectItem>
+              <SelectItem value="FAILED">Failed</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -239,7 +244,7 @@ function EditContentDialogForm({
             </>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Set status to Draft to replace the file.
+              Processing content cannot be replaced right now.
             </p>
           )}
         </div>

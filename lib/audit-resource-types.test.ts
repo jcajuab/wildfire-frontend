@@ -18,7 +18,9 @@ describe("getResourceTypeValueFromInput", () => {
     expect(getResourceTypeValueFromInput("Audit Event")).toBe("audit-event");
     expect(getResourceTypeValueFromInput("Content Item")).toBe("content");
     expect(getResourceTypeValueFromInput("Displays")).toBe("display");
-    expect(getResourceTypeValueFromInput("Display Group")).toBe("display-group");
+    expect(getResourceTypeValueFromInput("Display Group")).toBe(
+      "display-group",
+    );
   });
 
   test("resolves legacy device aliases", () => {

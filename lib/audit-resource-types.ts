@@ -58,10 +58,11 @@ export const RESOURCE_TYPE_LABELS: Readonly<Record<string, string>> = {
   "device-group": "Display Group",
 };
 
-const RESOURCE_TYPE_INPUT_ALIASES: Readonly<Record<string, ResourceTypeValue>> = {
-  device: "display",
-  "device-group": "display-group",
-};
+const RESOURCE_TYPE_INPUT_ALIASES: Readonly<Record<string, ResourceTypeValue>> =
+  {
+    device: "display",
+    "device-group": "display-group",
+  };
 
 const titleCaseLabel = (value: string): string =>
   value

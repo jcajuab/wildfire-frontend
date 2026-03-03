@@ -4,7 +4,7 @@ export type { SortDirection };
 
 export type ContentType = "IMAGE" | "VIDEO" | "PDF";
 
-export type ContentStatus = "DRAFT" | "IN_USE";
+export type ContentStatus = "PROCESSING" | "READY" | "FAILED";
 
 export interface ContentCreator {
   readonly id: string;
