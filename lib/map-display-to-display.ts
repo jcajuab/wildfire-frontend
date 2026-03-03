@@ -13,7 +13,7 @@ export function mapDisplayApiToDisplay(display: DisplayApi): Display {
     name: display.name,
     location: display.location ?? "",
     createdAt: display.createdAt,
-    status: display.onlineStatus,
+    status: display.status,
     ipAddress: display.ipAddress ?? "",
     macAddress: display.macAddress ?? "",
     displayOutput: display.outputType ?? "Not available",

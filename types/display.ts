@@ -1,4 +1,4 @@
-export type DisplayStatus = "READY" | "LIVE" | "DOWN";
+export type DisplayStatus = "PROCESSING" | "READY" | "LIVE" | "DOWN";
 
 export interface DisplayOutput {
   readonly name: string;

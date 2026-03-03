@@ -121,10 +121,12 @@ export default function DisplaysPage(): ReactElement {
     };
     stream.addEventListener("display_registered", refresh);
     stream.addEventListener("display_unregistered", refresh);
+    stream.addEventListener("display_status_changed", refresh);
 
     return () => {
       stream.removeEventListener("display_registered", refresh);
       stream.removeEventListener("display_unregistered", refresh);
+      stream.removeEventListener("display_status_changed", refresh);
       stream.close();
     };
   }, [canReadDisplays, refetch]);

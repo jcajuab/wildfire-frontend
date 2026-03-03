@@ -37,7 +37,7 @@ describe("paginated aggregate query guards", () => {
               outputType: null,
               orientation: null,
               lastSeenAt: "2025-01-01T00:00:00.000Z",
-              onlineStatus: "LIVE",
+              status: "LIVE",
               createdAt: "2025-01-01T00:00:00.000Z",
               updatedAt: "2025-01-01T00:00:00.000Z",
             },

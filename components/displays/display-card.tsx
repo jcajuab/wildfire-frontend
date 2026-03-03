@@ -39,6 +39,12 @@ interface DisplayStatusStyles {
 
 function getStatusStyles(status: DisplayStatus): DisplayStatusStyles {
   switch (status) {
+    case "PROCESSING":
+      return {
+        dotClassName: "bg-amber-500",
+        labelClassName: "text-amber-700",
+        badgeClassName: "bg-amber-100 text-amber-800",
+      };
     case "READY":
       return {
         dotClassName: "bg-[var(--success)]",
@@ -70,6 +76,8 @@ function getStatusStyles(status: DisplayStatus): DisplayStatusStyles {
 
 function getStatusLabel(status: DisplayStatus): string {
   switch (status) {
+    case "PROCESSING":
+      return "Processing";
     case "READY":
       return "Ready";
     case "LIVE":

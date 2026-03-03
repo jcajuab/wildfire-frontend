@@ -21,7 +21,7 @@ export interface Display {
   readonly outputType: string | null;
   readonly orientation: "LANDSCAPE" | "PORTRAIT" | null;
   readonly lastSeenAt: string | null;
-  readonly onlineStatus: "READY" | "LIVE" | "DOWN";
+  readonly status: "PROCESSING" | "READY" | "LIVE" | "DOWN";
   readonly createdAt: string;
   readonly updatedAt: string;
 }
