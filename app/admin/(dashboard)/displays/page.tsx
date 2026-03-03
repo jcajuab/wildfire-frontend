@@ -12,13 +12,13 @@ import { IconPlus, IconSettings } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
+import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { Pagination } from "@/components/content/pagination";
 import { DisplayRegistrationInfoDialog } from "@/components/displays/display-registration-info-dialog";
 import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";
 import { DisplayGrid } from "@/components/displays/display-grid";
 import { DisplaysToolbar } from "@/components/displays/displays-toolbar";
 import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
-import { PreviewDisplayDialog } from "@/components/displays/preview-display-dialog";
 import { ViewDisplayDialog } from "@/components/displays/view-display-dialog";
 import { DashboardPage } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -35,8 +35,8 @@ import {
   useCreateDisplayGroupMutation,
   useGetDisplayGroupsQuery,
   useGetDisplaysQuery,
-  useRequestDisplayRefreshMutation,
   useSetDisplayGroupsMutation,
+  useUnregisterDisplayMutation,
   useUpdateDisplayMutation,
 } from "@/lib/api/displays-api";
 import { getBaseUrl } from "@/lib/api/base-query";
@@ -98,14 +98,16 @@ export default function DisplaysPage(): ReactElement {
 
   const [isAddInfoDialogOpen, setIsAddInfoDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
+  const [isUnregisterDialogOpen, setIsUnregisterDialogOpen] = useState(false);
   const [selectedDisplay, setSelectedDisplay] = useState<Display | null>(null);
+  const [displayToUnregister, setDisplayToUnregister] =
+    useState<Display | null>(null);
   const [updateDisplay] = useUpdateDisplayMutation();
   const [setDisplayGroups] = useSetDisplayGroupsMutation();
   const [createDisplayGroup] = useCreateDisplayGroupMutation();
-  const [requestDisplayRefresh] = useRequestDisplayRefreshMutation();
+  const [unregisterDisplay] = useUnregisterDisplayMutation();
   const deferredSearch = useDeferredValue(search);
 
   useEffect(() => {
@@ -229,26 +231,45 @@ export default function DisplaysPage(): ReactElement {
     setIsViewDialogOpen(true);
   }, []);
 
-  const handlePreviewPage = useCallback((display: Display) => {
-    setSelectedDisplay(display);
-    setIsPreviewDialogOpen(true);
+  const handleViewPage = useCallback((display: Display) => {
+    const slug = display.displaySlug?.trim();
+    if (!slug) {
+      toast.error(
+        "Display page is unavailable because display slug is missing.",
+      );
+      return;
+    }
+    window.open(
+      `/displays/${encodeURIComponent(slug)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   }, []);
 
-  const handleRefreshPage = useCallback(
-    async (display: Display) => {
-      try {
-        await requestDisplayRefresh({ displayId: display.id }).unwrap();
-        toast.success(
-          `"${display.name}" will refresh on its next display poll.`,
-        );
-      } catch (err) {
-        toast.error(
-          getApiErrorMessage(err, "Failed to queue display refresh."),
-        );
-      }
-    },
-    [requestDisplayRefresh],
-  );
+  const handleUnregisterDisplay = useCallback((display: Display) => {
+    setDisplayToUnregister(display);
+    setIsUnregisterDialogOpen(true);
+  }, []);
+
+  const handleUnregisterDialogOpenChange = useCallback((open: boolean) => {
+    setIsUnregisterDialogOpen(open);
+    if (!open) {
+      setDisplayToUnregister(null);
+    }
+  }, []);
+
+  const handleConfirmUnregisterDisplay = useCallback(async () => {
+    if (!displayToUnregister) {
+      return;
+    }
+    try {
+      await unregisterDisplay({ displayId: displayToUnregister.id }).unwrap();
+      toast.success(`"${displayToUnregister.name}" was unregistered.`);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Failed to unregister display."));
+      throw err;
+    }
+  }, [displayToUnregister, unregisterDisplay]);
 
   const handleEditDisplay = useCallback((display: Display) => {
     setSelectedDisplay(display);
@@ -493,8 +514,10 @@ export default function DisplaysPage(): ReactElement {
             <DisplayGrid
               items={paginatedDisplays}
               onViewDetails={handleViewDetails}
-              onPreviewPage={handlePreviewPage}
-              onRefreshPage={canUpdateDisplay ? handleRefreshPage : undefined}
+              onViewPage={handleViewPage}
+              onUnregisterDisplay={
+                canUpdateDisplay ? handleUnregisterDisplay : undefined
+              }
               onEditDisplay={canUpdateDisplay ? handleEditDisplay : undefined}
             />
           )}
@@ -524,12 +547,6 @@ export default function DisplaysPage(): ReactElement {
         canEdit={canUpdateDisplay}
       />
 
-      <PreviewDisplayDialog
-        display={selectedDisplay}
-        open={isPreviewDialogOpen}
-        onOpenChange={setIsPreviewDialogOpen}
-      />
-
       <EditDisplayDialog
         display={selectedDisplay}
         existingGroups={displayGroupsData?.items ?? []}
@@ -543,6 +560,19 @@ export default function DisplaysPage(): ReactElement {
         open={isGroupManagerOpen}
         onOpenChange={setIsGroupManagerOpen}
         groups={displayGroupsData?.items ?? []}
+      />
+
+      <ConfirmActionDialog
+        open={isUnregisterDialogOpen}
+        onOpenChange={handleUnregisterDialogOpenChange}
+        title="Unregister display?"
+        description={
+          displayToUnregister
+            ? `This will disconnect \"${displayToUnregister.name}\" and revoke its runtime authentication key.`
+            : "This will disconnect the display and revoke its runtime authentication key."
+        }
+        confirmLabel="Unregister Display"
+        onConfirm={handleConfirmUnregisterDisplay}
       />
     </DashboardPage.Root>
   );

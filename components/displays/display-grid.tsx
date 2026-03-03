@@ -10,16 +10,16 @@ import type { Display } from "@/types/display";
 interface DisplayGridProps {
   readonly items: readonly Display[];
   readonly onViewDetails: (display: Display) => void;
-  readonly onPreviewPage: (display: Display) => void;
-  readonly onRefreshPage?: (display: Display) => void;
+  readonly onViewPage: (display: Display) => void;
+  readonly onUnregisterDisplay?: (display: Display) => void;
   readonly onEditDisplay?: (display: Display) => void;
 }
 
 export function DisplayGrid({
   items,
   onViewDetails,
-  onPreviewPage,
-  onRefreshPage,
+  onViewPage,
+  onUnregisterDisplay,
   onEditDisplay,
 }: DisplayGridProps): ReactElement {
   if (items.length === 0) {
@@ -39,8 +39,8 @@ export function DisplayGrid({
           key={display.id}
           display={display}
           onViewDetails={onViewDetails}
-          onPreviewPage={onPreviewPage}
-          onRefreshPage={onRefreshPage}
+          onViewPage={onViewPage}
+          onUnregisterDisplay={onUnregisterDisplay}
           onEditDisplay={onEditDisplay}
         />
       ))}

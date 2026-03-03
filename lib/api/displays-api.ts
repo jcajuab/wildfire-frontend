@@ -259,9 +259,9 @@ export const displaysApi = createApi({
         { type: "DisplayGroup", id: "LIST" },
       ],
     }),
-    requestDisplayRefresh: build.mutation<void, { displayId: string }>({
+    unregisterDisplay: build.mutation<void, { displayId: string }>({
       query: ({ displayId }) => ({
-        url: `displays/${displayId}/refresh`,
+        url: `displays/${displayId}/unregister`,
         method: "POST",
       }),
       invalidatesTags: (_result, _error, { displayId }) => [
@@ -316,7 +316,7 @@ export const {
   useUpdateDisplayGroupMutation,
   useDeleteDisplayGroupMutation,
   useSetDisplayGroupsMutation,
-  useRequestDisplayRefreshMutation,
+  useUnregisterDisplayMutation,
   useCreateRegistrationAttemptMutation,
   useRotateRegistrationAttemptMutation,
   useCloseRegistrationAttemptMutation,

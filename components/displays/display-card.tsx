@@ -6,8 +6,8 @@ import {
   IconMapPin,
   IconEye,
   IconExternalLink,
-  IconRefresh,
   IconEdit,
+  IconTrash,
   IconPlayerPlay,
   IconPlayerPause,
 } from "@tabler/icons-react";
@@ -19,6 +19,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Display, DisplayStatus } from "@/types/display";
@@ -26,8 +27,8 @@ import type { Display, DisplayStatus } from "@/types/display";
 interface DisplayCardProps {
   readonly display: Display;
   readonly onViewDetails: (display: Display) => void;
-  readonly onPreviewPage: (display: Display) => void;
-  readonly onRefreshPage?: (display: Display) => void;
+  readonly onViewPage: (display: Display) => void;
+  readonly onUnregisterDisplay?: (display: Display) => void;
   readonly onEditDisplay?: (display: Display) => void;
 }
 
@@ -99,8 +100,8 @@ function formatDuration(totalSeconds: number): string {
 export const DisplayCard = memo(function DisplayCard({
   display,
   onViewDetails,
-  onPreviewPage,
-  onRefreshPage,
+  onViewPage,
+  onUnregisterDisplay,
   onEditDisplay,
 }: DisplayCardProps): ReactElement {
   const statusStyles = getStatusStyles(display.status);
@@ -159,23 +160,29 @@ export const DisplayCard = memo(function DisplayCard({
             <DropdownMenuContent align="end" className="min-w-44">
               <DropdownMenuItem onClick={() => onViewDetails(display)}>
                 <IconEye className="size-4" aria-hidden="true" />
-                View Details
+                More Details
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onPreviewPage(display)}>
+              <DropdownMenuItem onClick={() => onViewPage(display)}>
                 <IconExternalLink className="size-4" aria-hidden="true" />
-                Preview Page
+                View Page
               </DropdownMenuItem>
-              {onRefreshPage ? (
-                <DropdownMenuItem onClick={() => onRefreshPage(display)}>
-                  <IconRefresh className="size-4" aria-hidden="true" />
-                  Refresh Page
-                </DropdownMenuItem>
-              ) : null}
               {onEditDisplay ? (
                 <DropdownMenuItem onClick={() => onEditDisplay(display)}>
                   <IconEdit className="size-4" aria-hidden="true" />
                   Edit Display
                 </DropdownMenuItem>
+              ) : null}
+              {onUnregisterDisplay ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onUnregisterDisplay(display)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <IconTrash className="size-4" aria-hidden="true" />
+                    Unregister Display
+                  </DropdownMenuItem>
+                </>
               ) : null}
             </DropdownMenuContent>
           </DropdownMenu>

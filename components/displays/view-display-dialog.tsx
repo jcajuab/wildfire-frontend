@@ -36,7 +36,7 @@ export function ViewDisplayDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>View Details</DialogTitle>
+          <DialogTitle>More Details</DialogTitle>
         </DialogHeader>
         <div className="mt-4 flex flex-col gap-4">
           <div className="flex items-start gap-2">
