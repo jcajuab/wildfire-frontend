@@ -19,7 +19,14 @@ export function mapDisplayApiToDisplay(display: DisplayApi): Display {
     displayOutput: display.outputType ?? "Not available",
     resolution,
     groups: [],
-    nowPlaying: null,
+    nowPlaying: display.nowPlaying
+      ? {
+          title: display.nowPlaying.title,
+          playlist: display.nowPlaying.playlist,
+          progress: Math.max(0, display.nowPlaying.progress),
+          duration: Math.max(0, display.nowPlaying.duration),
+        }
+      : null,
   };
 }
 

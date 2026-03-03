@@ -22,6 +22,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Display, DisplayStatus } from "@/types/display";
 
 interface DisplayCardProps {
@@ -34,8 +39,7 @@ interface DisplayCardProps {
 
 interface DisplayStatusStyles {
   readonly dotClassName: string;
-  readonly labelClassName: string;
-  readonly badgeClassName: string;
+  readonly pulseClassName: string;
 }
 
 function getStatusStyles(status: DisplayStatus): DisplayStatusStyles {
@@ -43,34 +47,27 @@ function getStatusStyles(status: DisplayStatus): DisplayStatusStyles {
     case "PROCESSING":
       return {
         dotClassName: "bg-amber-500",
-        labelClassName: "text-amber-700",
-        badgeClassName: "bg-amber-100 text-amber-800",
+        pulseClassName: "bg-amber-500",
       };
     case "READY":
       return {
         dotClassName: "bg-[var(--success)]",
-        labelClassName: "text-[var(--success)]",
-        badgeClassName:
-          "bg-[var(--success-muted)] text-[var(--success-foreground)]",
+        pulseClassName: "bg-[var(--success)]",
       };
     case "LIVE":
       return {
         dotClassName: "bg-primary",
-        labelClassName: "text-primary",
-        badgeClassName: "bg-primary/12 text-primary",
+        pulseClassName: "bg-primary",
       };
     case "DOWN":
       return {
         dotClassName: "bg-[var(--warning)]",
-        labelClassName: "text-[var(--warning-foreground)]",
-        badgeClassName:
-          "bg-[var(--warning-muted)] text-[var(--warning-foreground)]",
+        pulseClassName: "bg-[var(--warning)]",
       };
     default:
       return {
         dotClassName: "bg-muted-foreground",
-        labelClassName: "text-muted-foreground",
-        badgeClassName: "bg-muted text-muted-foreground",
+        pulseClassName: "bg-muted-foreground",
       };
   }
 }
@@ -106,26 +103,18 @@ export const DisplayCard = memo(function DisplayCard({
 }: DisplayCardProps): ReactElement {
   const statusStyles = getStatusStyles(display.status);
   const nowPlaying = display.nowPlaying;
-  const progress =
+  const shouldPulse = display.status === "LIVE" || display.status === "READY";
+  const statusLabel = getStatusLabel(display.status);
+  const durationLabel =
     nowPlaying != null && nowPlaying.duration > 0
-      ? Math.min(
-          100,
-          Math.max(0, (nowPlaying.progress / nowPlaying.duration) * 100),
-        )
-      : 0;
+      ? formatDuration(nowPlaying.duration)
+      : "N/A";
 
   return (
-    <article className="group flex h-full flex-col gap-4 rounded-md border border-border bg-card/95 p-4 transition-colors duration-200 hover:border-primary/30 motion-reduce:transition-none">
+    <article className="group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors duration-200 hover:border-primary/25 motion-reduce:transition-none">
       <header className="flex items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1.5">
-          <div className="flex min-w-0 items-center gap-2">
-            <h3 className="truncate text-base font-semibold">{display.name}</h3>
-            <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-wide uppercase ${statusStyles.badgeClassName}`}
-            >
-              {getStatusLabel(display.status)}
-            </span>
-          </div>
+        <div className="min-w-0 space-y-1">
+          <h3 className="truncate text-lg font-semibold leading-none">{display.name}</h3>
           <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
             <IconMapPin className="size-3.5 shrink-0" aria-hidden="true" />
             <span className="truncate">{display.location}</span>
@@ -133,19 +122,25 @@ export const DisplayCard = memo(function DisplayCard({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="relative flex size-2.5 shrink-0" aria-hidden="true">
-            {display.status === "LIVE" ? (
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60 motion-reduce:animate-none" />
-            ) : null}
-            <span
-              className={`relative inline-flex size-2.5 rounded-full ${statusStyles.dotClassName}`}
-            />
-          </span>
-          <span
-            className={`text-xs font-medium ${statusStyles.labelClassName}`}
-          >
-            {getStatusLabel(display.status)}
-          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className="relative inline-flex size-4 shrink-0 cursor-default items-center justify-center"
+                aria-label={statusLabel}
+              >
+                {shouldPulse ? (
+                  <span
+                    className={`absolute inline-flex h-full w-full animate-ping rounded-full ${statusStyles.pulseClassName} opacity-55 motion-reduce:animate-none`}
+                  />
+                ) : null}
+                <span
+                  className={`relative inline-flex size-2.5 rounded-full ${statusStyles.dotClassName}`}
+                  aria-hidden="true"
+                />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{statusLabel}</TooltipContent>
+          </Tooltip>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -189,75 +184,59 @@ export const DisplayCard = memo(function DisplayCard({
         </div>
       </header>
 
-      {display.groups.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5">
-          {display.groups.map((group) => {
+      <div className="flex min-h-6 flex-wrap gap-1.5">
+        {display.groups.length > 0 ? (
+          display.groups.map((group) => {
             const styles = getGroupBadgeStyles(group.colorIndex ?? 0);
             return (
               <Badge
                 key={group.name}
                 variant="secondary"
-                className={`max-w-full truncate border text-xs ${styles.fill}`}
+                className={`max-w-full truncate border text-[11px] font-medium ${styles.fill}`}
               >
                 {group.name}
               </Badge>
             );
-          })}
-        </div>
-      ) : null}
+          })
+        ) : (
+          <Badge
+            variant="secondary"
+            className="border border-border/70 bg-muted/40 text-[11px] font-medium text-muted-foreground"
+          >
+            Ungrouped
+          </Badge>
+        )}
+      </div>
 
-      <section className="space-y-2.5 rounded-md border border-border bg-muted/20 p-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <section className="space-y-2 rounded-lg border border-border/80 bg-muted/15 p-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/90">
           Now Playing
         </p>
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-background">
+        <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-background p-2.5">
+          <div className="flex size-24 shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-muted/35">
             {display.status === "LIVE" ? (
               <IconPlayerPlay
-                className="size-4 text-primary"
+                className="size-8 text-primary"
                 aria-hidden="true"
               />
             ) : (
               <IconPlayerPause
-                className="size-4 text-muted-foreground"
+                className="size-8 text-muted-foreground"
                 aria-hidden="true"
               />
             )}
           </div>
-          <div className="min-w-0 flex-1 space-y-0.5">
-            <p className="truncate text-sm font-medium">
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="truncate text-base font-semibold leading-tight">
               {nowPlaying?.title ?? "N/A"}
             </p>
             <p className="truncate text-xs text-muted-foreground">
+              Duration: {durationLabel}
+            </p>
+            <p className="truncate text-sm text-muted-foreground">
               Playlist: {nowPlaying?.playlist ?? "N/A"}
             </p>
           </div>
-          <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-            {nowPlaying ? formatDuration(nowPlaying.progress) : "0:00"}
-          </span>
-        </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-background">
-          <div
-            className="h-full bg-primary transition-[width] duration-200 motion-reduce:transition-none"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </section>
-
-      <section className="mt-auto grid grid-cols-2 gap-3 rounded-md border border-border bg-background p-3">
-        <div className="space-y-0.5">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Display Output
-          </p>
-          <p className="truncate text-sm font-medium">
-            {display.displayOutput}
-          </p>
-        </div>
-        <div className="space-y-0.5">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Resolution
-          </p>
-          <p className="truncate text-sm font-medium">{display.resolution}</p>
         </div>
       </section>
     </article>

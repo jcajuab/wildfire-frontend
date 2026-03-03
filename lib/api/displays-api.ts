@@ -22,6 +22,12 @@ export interface Display {
   readonly orientation: "LANDSCAPE" | "PORTRAIT" | null;
   readonly lastSeenAt: string | null;
   readonly status: "PROCESSING" | "READY" | "LIVE" | "DOWN";
+  readonly nowPlaying?: {
+    readonly title: string | null;
+    readonly playlist: string | null;
+    readonly progress: number;
+    readonly duration: number;
+  } | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
