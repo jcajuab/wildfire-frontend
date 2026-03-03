@@ -11,12 +11,12 @@ import {
   registerDisplay,
 } from "@/lib/display-api/client";
 import {
+  assertDisplayCryptoSupport,
   exportPublicKeyPem,
   getOrCreateDisplayKeyPair,
   signText,
 } from "@/lib/crypto/key-manager";
 import { deriveDisplayFingerprint } from "@/lib/display-identity/fingerprint";
-import { getProvisionedMachineId } from "@/lib/display-identity/provisioning";
 import { saveDisplayRegistration } from "@/lib/display-identity/registration-store";
 
 const PAIRING_CODE_PATTERN = /^\d{6}$/;
@@ -32,6 +32,20 @@ interface RegisterFormState {
   readonly resolutionHeight: string;
 }
 
+type RegisterField =
+  | "registrationCode"
+  | "displayName"
+  | "displaySlug"
+  | "displayOutput"
+  | "resolutionWidth"
+  | "resolutionHeight";
+
+type RegisterStatus =
+  | { kind: "idle" }
+  | { kind: "submitting" }
+  | { kind: "error"; message: string }
+  | { kind: "success"; message: string };
+
 const INITIAL_REGISTER_FORM: RegisterFormState = {
   registrationCode: "",
   displayName: "",
@@ -40,6 +54,8 @@ const INITIAL_REGISTER_FORM: RegisterFormState = {
   resolutionWidth: "",
   resolutionHeight: "",
 };
+
+const INITIAL_STATUS: RegisterStatus = { kind: "idle" };
 
 function toPositiveInteger(value: string): number | null {
   const parsed = Number.parseInt(value, 10);
@@ -53,15 +69,21 @@ function toPositiveInteger(value: string): number | null {
   return parsed;
 }
 
+const focusField = (form: HTMLFormElement, fieldName: RegisterField): void => {
+  const field = form.elements.namedItem(fieldName);
+  if (field instanceof HTMLElement) {
+    field.focus();
+  }
+};
+
 export default function RegisterDisplayPage(): ReactElement {
   const [formState, setFormState] = useState<RegisterFormState>(
     INITIAL_REGISTER_FORM,
   );
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<RegisterStatus>(INITIAL_STATUS);
 
   const normalizedSlug = formState.displaySlug.trim().toLowerCase();
+  const isSubmitting = status.kind === "submitting";
 
   const updateField = useCallback(
     (field: keyof RegisterFormState) =>
@@ -75,9 +97,9 @@ export default function RegisterDisplayPage(): ReactElement {
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>): Promise<void> => {
       event.preventDefault();
-      setErrorMessage(null);
-      setSuccessMessage(null);
+      setStatus(INITIAL_STATUS);
 
+      const form = event.currentTarget;
       const code = formState.registrationCode.trim();
       const name = formState.displayName.trim();
       const slug = normalizedSlug;
@@ -86,49 +108,68 @@ export default function RegisterDisplayPage(): ReactElement {
       const height = toPositiveInteger(formState.resolutionHeight);
 
       if (!PAIRING_CODE_PATTERN.test(code)) {
-        setErrorMessage("Registration code must be a 6-digit number.");
+        setStatus({
+          kind: "error",
+          message: "Registration code must be a 6-digit number.",
+        });
+        focusField(form, "registrationCode");
         return;
       }
       if (!name) {
-        setErrorMessage("Display name is required.");
+        setStatus({ kind: "error", message: "Display name is required." });
+        focusField(form, "displayName");
         return;
       }
       if (!DISPLAY_SLUG_PATTERN.test(slug)) {
-        setErrorMessage(
-          "Display slug must be lowercase kebab-case (letters, numbers, hyphens).",
-        );
+        setStatus({
+          kind: "error",
+          message:
+            "Display slug must be lowercase kebab-case with letters, numbers, and hyphens.",
+        });
+        focusField(form, "displaySlug");
         return;
       }
       if (!outputName) {
-        setErrorMessage("Display output is required.");
+        setStatus({ kind: "error", message: "Display output is required." });
+        focusField(form, "displayOutput");
         return;
       }
       if (width === null || height === null) {
-        setErrorMessage(
-          "Resolution width and height must be positive integers.",
+        setStatus({
+          kind: "error",
+          message: "Resolution width and height must be positive integers.",
+        });
+        focusField(
+          form,
+          width === null ? "resolutionWidth" : "resolutionHeight",
         );
         return;
       }
 
-      setIsSubmitting(true);
+      setStatus({ kind: "submitting" });
       try {
-        const registrationSession = await createRegistrationSession(code);
-        const machineId = await getProvisionedMachineId();
-        const displayFingerprint = await deriveDisplayFingerprint({
-          machineId,
-          displayOutput: outputName,
-        });
+        assertDisplayCryptoSupport();
 
-        const keyAlias = `${displayFingerprint}:${outputName}`;
-        const keyPair = await getOrCreateDisplayKeyPair(keyAlias);
+        const canonicalOutput = outputName.toLowerCase();
+        const keyAlias = `display-output:${canonicalOutput}`;
+        const registrationSessionPromise = createRegistrationSession(code);
+        const keyPairPromise = getOrCreateDisplayKeyPair(keyAlias);
+        const [registrationSession, keyPair] = await Promise.all([
+          registrationSessionPromise,
+          keyPairPromise,
+        ]);
         const publicKeyPem = await exportPublicKeyPem(keyPair.publicKey);
+        const displayFingerprint = await deriveDisplayFingerprint({
+          displayOutput: canonicalOutput,
+          publicKeyPem,
+        });
 
         const registrationPayload = [
           "REGISTRATION",
           registrationSession.registrationSessionId,
           registrationSession.challengeNonce,
           slug,
-          outputName,
+          canonicalOutput,
           displayFingerprint,
           publicKeyPem,
         ].join("\n");
@@ -143,7 +184,7 @@ export default function RegisterDisplayPage(): ReactElement {
           displayName: name,
           resolutionWidth: width,
           resolutionHeight: height,
-          displayOutput: outputName,
+          displayOutput: canonicalOutput,
           displayFingerprint,
           publicKey: publicKeyPem,
           keyAlgorithm: "ed25519",
@@ -156,19 +197,22 @@ export default function RegisterDisplayPage(): ReactElement {
           keyId: registration.keyId,
           keyAlias,
           displayFingerprint,
-          displayOutput: outputName,
+          displayOutput: canonicalOutput,
           registeredAt: new Date().toISOString(),
         });
 
-        setSuccessMessage(
-          `Registration complete. Display ${registration.displaySlug} is now connected.`,
-        );
+        setStatus({
+          kind: "success",
+          message: `Registration complete. Display ${registration.displaySlug} is now connected.`,
+        });
       } catch (error) {
-        setErrorMessage(
-          error instanceof Error ? error.message : "Registration failed.",
-        );
-      } finally {
-        setIsSubmitting(false);
+        setStatus({
+          kind: "error",
+          message:
+            error instanceof Error
+              ? `${error.message} Review the inputs and try again.`
+              : "Registration failed. Review the inputs and try again.",
+        });
       }
     },
     [formState, normalizedSlug],
@@ -188,30 +232,32 @@ export default function RegisterDisplayPage(): ReactElement {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            {errorMessage ? (
-              <p
-                className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
-                role="alert"
-              >
-                {errorMessage}
-              </p>
-            ) : null}
-
-            {successMessage ? (
-              <p
-                className="rounded-lg bg-[var(--success-muted)] px-3 py-2 text-sm text-[var(--success-foreground)]"
-                role="status"
-              >
-                {successMessage} Open runtime at{" "}
-                <Link
-                  className="underline underline-offset-4 transition-colors hover:text-foreground"
-                  href={`/displays/${normalizedSlug}`}
+            <div aria-live="polite">
+              {status.kind === "error" ? (
+                <p
+                  className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                  role="alert"
                 >
-                  /displays/{normalizedSlug}
-                </Link>
-                .
-              </p>
-            ) : null}
+                  {status.message}
+                </p>
+              ) : null}
+
+              {status.kind === "success" ? (
+                <p
+                  className="rounded-lg bg-[var(--success-muted)] px-3 py-2 text-sm text-[var(--success-foreground)]"
+                  role="status"
+                >
+                  {status.message} Open runtime at{" "}
+                  <Link
+                    className="underline underline-offset-4 transition-colors hover:text-foreground"
+                    href={`/displays/${normalizedSlug}`}
+                  >
+                    /displays/{normalizedSlug}
+                  </Link>
+                  .
+                </p>
+              ) : null}
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="registration-code">Registration code</Label>
@@ -219,7 +265,7 @@ export default function RegisterDisplayPage(): ReactElement {
                 id="registration-code"
                 type="text"
                 inputMode="numeric"
-                placeholder="123456"
+                placeholder="123456…"
                 name="registrationCode"
                 value={formState.registrationCode}
                 onChange={updateField("registrationCode")}
@@ -236,7 +282,7 @@ export default function RegisterDisplayPage(): ReactElement {
               <Input
                 id="display-name"
                 type="text"
-                placeholder="Lobby Screen"
+                placeholder="Lobby Screen…"
                 name="displayName"
                 value={formState.displayName}
                 onChange={updateField("displayName")}
@@ -251,7 +297,7 @@ export default function RegisterDisplayPage(): ReactElement {
               <Input
                 id="display-slug"
                 type="text"
-                placeholder="lobby-hdmi-0"
+                placeholder="lobby-hdmi-0…"
                 name="displaySlug"
                 value={formState.displaySlug}
                 onChange={updateField("displaySlug")}
@@ -267,7 +313,7 @@ export default function RegisterDisplayPage(): ReactElement {
               <Input
                 id="display-output"
                 type="text"
-                placeholder="HDMI-0"
+                placeholder="HDMI-0…"
                 name="displayOutput"
                 value={formState.displayOutput}
                 onChange={updateField("displayOutput")}
@@ -286,7 +332,7 @@ export default function RegisterDisplayPage(): ReactElement {
                   type="number"
                   min={MIN_RESOLUTION}
                   inputMode="numeric"
-                  placeholder="1920"
+                  placeholder="1920…"
                   name="resolutionWidth"
                   value={formState.resolutionWidth}
                   onChange={updateField("resolutionWidth")}
@@ -303,7 +349,7 @@ export default function RegisterDisplayPage(): ReactElement {
                   type="number"
                   min={MIN_RESOLUTION}
                   inputMode="numeric"
-                  placeholder="1080"
+                  placeholder="1080…"
                   name="resolutionHeight"
                   value={formState.resolutionHeight}
                   onChange={updateField("resolutionHeight")}

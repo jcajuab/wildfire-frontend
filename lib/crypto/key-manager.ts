@@ -70,9 +70,26 @@ const toBase64Url = (data: ArrayBuffer): string =>
     .replaceAll("/", "_")
     .replace(/=+$/g, "");
 
+export function assertDisplayCryptoSupport(): void {
+  if (typeof window === "undefined") {
+    throw new Error("Display registration is only available in the browser.");
+  }
+  if (!window.indexedDB) {
+    throw new Error(
+      "IndexedDB is unavailable in this browser. Enable storage access and try again.",
+    );
+  }
+  if (!window.crypto?.subtle) {
+    throw new Error(
+      "WebCrypto is unavailable in this browser. Use a secure modern browser and try again.",
+    );
+  }
+}
+
 export async function getStoredDisplayKeyPair(
   alias: string,
 ): Promise<CryptoKeyPair | null> {
+  assertDisplayCryptoSupport();
   const stored = await readStoredKeyPair(alias);
   if (!stored) {
     return null;
@@ -86,16 +103,22 @@ export async function getStoredDisplayKeyPair(
 export async function getOrCreateDisplayKeyPair(
   alias: string,
 ): Promise<CryptoKeyPair> {
+  assertDisplayCryptoSupport();
   const existing = await getStoredDisplayKeyPair(alias);
   if (existing) {
     return existing;
   }
 
-  const keyPair = (await crypto.subtle.generateKey(
-    { name: "Ed25519" } as AlgorithmIdentifier,
-    false,
-    ["sign", "verify"],
-  )) as CryptoKeyPair;
+  let keyPair: CryptoKeyPair;
+  try {
+    keyPair = (await crypto.subtle.generateKey(
+      { name: "Ed25519" } as AlgorithmIdentifier,
+      true,
+      ["sign", "verify"],
+    )) as CryptoKeyPair;
+  } catch {
+    throw new Error("Failed to generate a display signing key.");
+  }
 
   await writeStoredKeyPair({
     alias,
@@ -110,7 +133,12 @@ export async function getOrCreateDisplayKeyPair(
 export async function exportPublicKeyPem(
   publicKey: CryptoKey,
 ): Promise<string> {
-  const spki = await crypto.subtle.exportKey("spki", publicKey);
+  let spki: ArrayBuffer;
+  try {
+    spki = await crypto.subtle.exportKey("spki", publicKey);
+  } catch {
+    throw new Error("Failed to export display public key.");
+  }
   const base64 = encodeBase64(spki);
   const wrapped = base64.match(/.{1,64}/g)?.join("\n") ?? base64;
   return `-----BEGIN PUBLIC KEY-----\n${wrapped}\n-----END PUBLIC KEY-----`;
@@ -120,10 +148,15 @@ export async function signText(
   privateKey: CryptoKey,
   payload: string,
 ): Promise<string> {
-  const signature = await crypto.subtle.sign(
-    { name: "Ed25519" } as AlgorithmIdentifier,
-    privateKey,
-    new TextEncoder().encode(payload),
-  );
+  let signature: ArrayBuffer;
+  try {
+    signature = await crypto.subtle.sign(
+      { name: "Ed25519" } as AlgorithmIdentifier,
+      privateKey,
+      new TextEncoder().encode(payload),
+    );
+  } catch {
+    throw new Error("Failed to sign display request payload.");
+  }
   return toBase64Url(signature);
 }

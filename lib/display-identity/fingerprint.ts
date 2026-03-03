@@ -6,14 +6,13 @@ const toHex = (bytes: Uint8Array): string =>
     .join("");
 
 export async function deriveDisplayFingerprint(input: {
-  machineId: string;
   displayOutput: string;
+  publicKeyPem: string;
 }): Promise<string> {
   const payload = [
-    input.machineId.trim(),
+    "wildfire-display-fingerprint-v1",
     input.displayOutput.trim().toLowerCase(),
-    navigator.userAgent,
-    navigator.language,
+    input.publicKeyPem.trim(),
   ].join("|");
   const digest = await crypto.subtle.digest(
     "SHA-256",
