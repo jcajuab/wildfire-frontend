@@ -3,7 +3,6 @@
 import { type ReactElement, memo } from "react";
 import {
   IconDotsVertical,
-  IconMapPin,
   IconEye,
   IconExternalLink,
   IconEdit,
@@ -51,18 +50,18 @@ function getStatusStyles(status: DisplayStatus): DisplayStatusStyles {
       };
     case "READY":
       return {
-        dotClassName: "bg-[var(--success)]",
-        pulseClassName: "bg-[var(--success)]",
+        dotClassName: "bg-green-500",
+        pulseClassName: "bg-green-500",
       };
     case "LIVE":
       return {
-        dotClassName: "bg-primary",
-        pulseClassName: "bg-primary",
+        dotClassName: "bg-red-500",
+        pulseClassName: "bg-red-500",
       };
     case "DOWN":
       return {
-        dotClassName: "bg-[var(--warning)]",
-        pulseClassName: "bg-[var(--warning)]",
+        dotClassName: "bg-slate-400",
+        pulseClassName: "bg-slate-400",
       };
     default:
       return {
@@ -113,12 +112,8 @@ export const DisplayCard = memo(function DisplayCard({
   return (
     <article className="group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors duration-200 hover:border-primary/25 motion-reduce:transition-none">
       <header className="flex items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
+        <div className="min-w-0">
           <h3 className="truncate text-lg font-semibold leading-none">{display.name}</h3>
-          <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-            <IconMapPin className="size-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">{display.location}</span>
-          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -213,19 +208,17 @@ export const DisplayCard = memo(function DisplayCard({
           Now Playing
         </p>
         <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-background p-2.5">
-          <div className="flex size-24 shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-muted/35">
-            {display.status === "LIVE" ? (
-              <IconPlayerPlay
-                className="size-8 text-primary"
-                aria-hidden="true"
-              />
-            ) : (
-              <IconPlayerPause
-                className="size-8 text-muted-foreground"
-                aria-hidden="true"
-              />
-            )}
-          </div>
+          {display.status === "LIVE" ? (
+            <IconPlayerPlay
+              className="size-8 shrink-0 text-red-500"
+              aria-hidden="true"
+            />
+          ) : (
+            <IconPlayerPause
+              className="size-8 shrink-0 text-muted-foreground"
+              aria-hidden="true"
+            />
+          )}
           <div className="min-w-0 flex-1 space-y-1">
             <p className="truncate text-base font-semibold leading-tight">
               {nowPlaying?.title ?? "N/A"}
