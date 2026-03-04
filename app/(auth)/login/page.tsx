@@ -17,7 +17,7 @@ import {
 export default function LoginPage(): ReactElement {
   const router = useRouter();
   const { login, isAuthenticated, isInitialized, isLoading, can } = useAuth();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const postLoginRedirect =
@@ -32,7 +32,7 @@ export default function LoginPage(): ReactElement {
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     setErrorMessage(null);
-    const credentials = { email, password };
+    const credentials = { username, password };
     try {
       await login(credentials);
     } catch (err) {
@@ -91,16 +91,16 @@ export default function LoginPage(): ReactElement {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="username">Username</Label>
           <Input
-            id="email"
-            type="email"
+            id="username"
+            type="text"
             placeholder="Admin"
-            name="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            name="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="h-11 rounded-lg bg-white text-sm"
-            autoComplete="email"
+            autoComplete="username"
             required
           />
         </div>

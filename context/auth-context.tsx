@@ -63,7 +63,8 @@ function readSession(): SessionData | null {
     if (
       !(
         typeof u.id === "string" &&
-        typeof u.email === "string" &&
+        typeof u.username === "string" &&
+        (typeof u.email === "string" || u.email === null) &&
         typeof u.name === "string"
       )
     )
@@ -72,7 +73,8 @@ function readSession(): SessionData | null {
     const isRoot = typeof u.isRoot === "boolean" ? u.isRoot : false;
     const normalizedUser: AuthUser = {
       id: u.id,
-      email: u.email,
+      username: u.username,
+      email: u.email ?? null,
       name: u.name,
       isRoot,
       timezone: typeof u.timezone === "string" ? u.timezone : null,
@@ -108,7 +110,7 @@ interface AuthContextValue {
   readonly isLoading: boolean;
   readonly isInitialized: boolean;
   can: (permission: PermissionType) => boolean;
-  login: (credentials: { email: string; password: string }) => Promise<void>;
+  login: (credentials: { username: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   /** Forces a backend-auth refresh to avoid stale permission UX after RBAC writes. */
   refreshSession: () => Promise<void>;
@@ -180,7 +182,7 @@ export function AuthProvider({
   }, [clearAuthState, user]);
 
   const login = useCallback(
-    async (credentials: { email: string; password: string }) => {
+    async (credentials: { username: string; password: string }) => {
       setIsLoading(true);
       try {
         const result = await loginApi(credentials);

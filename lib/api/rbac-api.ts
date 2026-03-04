@@ -25,7 +25,8 @@ export interface RbacPermission {
 
 export interface RbacUser {
   readonly id: string;
-  readonly email: string;
+  readonly username: string;
+  readonly email: string | null;
   readonly name: string;
   readonly isActive: boolean;
   readonly lastSeenAt?: string | null;
@@ -39,7 +40,7 @@ export interface RbacRoleDeletionRequest {
   readonly roleName: string;
   readonly requestedByUserId: string;
   readonly requestedByName: string;
-  readonly requestedByEmail: string;
+  readonly requestedByEmail: string | null;
   readonly requestedAt: string;
   readonly status: "pending" | "approved" | "rejected" | "cancelled";
   readonly approvedByUserId: string | null;
@@ -225,7 +226,12 @@ export const rbacApi = createApi({
     }),
     createUser: build.mutation<
       RbacUser,
-      { email: string; name: string; isActive?: boolean }
+      {
+        username: string;
+        email?: string | null;
+        name: string;
+        isActive?: boolean;
+      }
     >({
       query: (body) => ({
         url: "users",
@@ -246,7 +252,13 @@ export const rbacApi = createApi({
     }),
     updateUser: build.mutation<
       RbacUser,
-      { id: string; email?: string; name?: string; isActive?: boolean }
+      {
+        id: string;
+        username?: string;
+        email?: string | null;
+        name?: string;
+        isActive?: boolean;
+      }
     >({
       query: ({ id, ...body }) => ({
         url: `users/${id}`,

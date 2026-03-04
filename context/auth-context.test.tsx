@@ -54,6 +54,7 @@ describe("AuthProvider", () => {
       JSON.stringify({
         user: {
           id: "user-1",
+          username: "user",
           email: "user@example.com",
           name: "User",
         },
@@ -82,6 +83,7 @@ describe("AuthProvider", () => {
       JSON.stringify({
         user: {
           id: "user-1",
+          username: "user",
           email: "user@example.com",
           name: "User",
         },

@@ -177,6 +177,7 @@ export default function RolesPage(): ReactElement {
     () =>
       (usersData ?? []).map((user) => ({
         id: user.id,
+        username: user.username,
         name: user.name,
         email: user.email,
       })),

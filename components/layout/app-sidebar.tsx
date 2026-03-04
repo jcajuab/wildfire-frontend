@@ -134,7 +134,8 @@ export function AppSidebar(): ReactElement {
     [can, isInitialized],
   );
   const displayName = user?.name ?? "User";
-  const displayEmail = user?.email ?? "";
+  const displayEmail =
+    user?.email ?? (user?.username ? `@${user.username}` : "");
 
   const sidebarColors: SidebarStyleVariables = {
     "--sidebar": "var(--primary)",

@@ -193,7 +193,8 @@ function RoleForm({
     return unassignedUsers.filter((user) => {
       return (
         user.name.toLowerCase().includes(normalizedUserSearch) ||
-        user.email.toLowerCase().includes(normalizedUserSearch)
+        user.username.toLowerCase().includes(normalizedUserSearch) ||
+        (user.email?.toLowerCase().includes(normalizedUserSearch) ?? false)
       );
     });
   }, [normalizedUserSearch, unassignedUsers]);
@@ -329,7 +330,7 @@ function RoleForm({
             {/* Add user row */}
             <div className="flex flex-col gap-2">
               <Input
-                placeholder="Search users by name or email"
+                placeholder="Search users by name, username, or email"
                 value={userSearch}
                 onChange={(event) => setUserSearch(event.target.value)}
               />
@@ -384,7 +385,8 @@ function RoleForm({
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">{user.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {user.email}
+                        @{user.username}
+                        {user.email ? ` • ${user.email}` : ""}
                       </span>
                     </div>
                     <Button

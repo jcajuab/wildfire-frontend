@@ -139,6 +139,7 @@ export default function UsersPage(): ReactElement {
     () =>
       (usersData ?? []).map((user) => ({
         id: user.id,
+        username: user.username,
         email: user.email,
         name: user.name,
         isActive: user.isActive,
@@ -354,6 +355,7 @@ export default function UsersPage(): ReactElement {
       try {
         await updateUser({
           id: data.id,
+          username: data.username,
           name: data.name,
           email: data.email,
           isActive: data.isActive,
@@ -378,7 +380,8 @@ export default function UsersPage(): ReactElement {
     return users.filter(
       (user) =>
         user.name.toLowerCase().includes(searchLower) ||
-        user.email.toLowerCase().includes(searchLower),
+        user.username.toLowerCase().includes(searchLower) ||
+        (user.email?.toLowerCase().includes(searchLower) ?? false),
     );
   }, [users, search]);
 

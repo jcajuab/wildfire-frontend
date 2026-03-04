@@ -476,7 +476,9 @@ export default function SettingsPage(): ReactElement {
                 </div>
 
                 <div className="text-sm text-muted-foreground">Email</div>
-                <p className="pt-2 text-sm">{user?.email ?? "-"}</p>
+                <p className="pt-2 text-sm">
+                  {user?.email ?? (user?.username ? `@${user.username}` : "-")}
+                </p>
 
                 <div className="text-sm text-muted-foreground">Password</div>
                 <div>

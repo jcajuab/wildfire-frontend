@@ -424,6 +424,7 @@ export async function resendInvitation(
 export async function acceptInvitation(input: {
   token: string;
   password: string;
+  username: string;
   name?: string;
 }): Promise<void> {
   const baseUrl = getBaseUrl();

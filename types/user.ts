@@ -7,7 +7,8 @@ export interface UserRole {
 /** User shape aligned with backend. */
 export interface User {
   readonly id: string;
-  readonly email: string;
+  readonly username: string;
+  readonly email: string | null;
   readonly name: string;
   readonly isActive: boolean;
   /** Presigned avatar URL (when user has profile picture in MinIO). */

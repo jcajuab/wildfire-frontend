@@ -19,8 +19,9 @@ import type { User } from "@/types/user";
 
 export interface EditUserFormData {
   readonly id: string;
+  readonly username: string;
   readonly name: string;
-  readonly email: string;
+  readonly email: string | null;
   readonly isActive: boolean;
 }
 
@@ -42,7 +43,8 @@ function EditUserForm({
   onSubmit: (data: EditUserFormData) => Promise<void> | void;
 }): ReactElement {
   const [name, setName] = useState(user.name);
-  const [email, setEmail] = useState(user.email);
+  const [username, setUsername] = useState(user.username);
+  const [email, setEmail] = useState(user.email ?? "");
   const [isActive, setIsActive] = useState(user.isActive);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user: currentUser } = useAuth();
@@ -50,13 +52,14 @@ function EditUserForm({
 
   const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
-    if (!name.trim() || !email.trim() || isSubmitting) return;
+    if (!name.trim() || !username.trim() || isSubmitting) return;
     setIsSubmitting(true);
     try {
       await onSubmit({
         id: user.id,
+        username: username.trim(),
         name: name.trim(),
-        email: email.trim(),
+        email: email.trim().length > 0 ? email.trim() : null,
         isActive,
       });
     } finally {
@@ -64,7 +67,7 @@ function EditUserForm({
     }
   };
 
-  const isValid = name.trim().length > 0 && email.trim().length > 0;
+  const isValid = name.trim().length > 0 && username.trim().length > 0;
 
   return (
     <form onSubmit={handleSubmit}>
@@ -79,6 +82,16 @@ function EditUserForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Full name"
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="edit-user-username">Username</Label>
+          <Input
+            id="edit-user-username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="username"
           />
         </div>
         <div className="flex flex-col gap-2">

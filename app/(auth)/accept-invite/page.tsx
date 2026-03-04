@@ -15,6 +15,7 @@ const MIN_PASSWORD_LENGTH = 8;
 function AcceptInvitePageBody(): ReactElement {
   const searchParams = useSearchParams();
   const [token, setToken] = useState("");
+  const [username, setUsername] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -49,6 +50,10 @@ function AcceptInvitePageBody(): ReactElement {
       setErrorMessage("Invite token is required.");
       return;
     }
+    if (username.trim().length === 0) {
+      setErrorMessage("Username is required.");
+      return;
+    }
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match.");
       return;
@@ -59,6 +64,7 @@ function AcceptInvitePageBody(): ReactElement {
       await acceptInvitation({
         token: trimmedToken,
         password,
+        username: username.trim(),
         name: name.trim() || undefined,
       });
       setIsSubmitted(true);
@@ -128,6 +134,20 @@ function AcceptInvitePageBody(): ReactElement {
             onChange={(event) => setName(event.target.value)}
             className="h-11 rounded-lg bg-white text-sm"
             placeholder="Your name"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="username">Username</Label>
+          <Input
+            id="username"
+            type="text"
+            value={username}
+            name="username"
+            onChange={(event) => setUsername(event.target.value)}
+            className="h-11 rounded-lg bg-white text-sm"
+            autoComplete="username"
+            required
           />
         </div>
 

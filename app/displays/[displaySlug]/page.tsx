@@ -22,6 +22,7 @@ import { createPlayerController } from "@/lib/display-runtime/player-controller"
 import { buildRuntimeTimings } from "@/lib/display-runtime/overflow-timing";
 import { PdfRenderer } from "@/lib/display-runtime/pdf-renderer";
 import { createDisplaySseClient } from "@/lib/display-runtime/sse-client";
+import { useMounted } from "@/hooks/use-mounted";
 
 const POLL_MS = 60_000;
 const HEARTBEAT_MS = 30_000;
@@ -44,10 +45,14 @@ const createChallengePayload = (input: {
 export default function DisplayRuntimePage() {
   const params = useParams<{ displaySlug: string }>();
   const displaySlug = params.displaySlug;
-  const [registration, setRegistration] = useState<DisplayRegistrationRecord | null>(
-    null,
-  );
-  const [isRegistrationResolved, setIsRegistrationResolved] = useState(false);
+  const isMounted = useMounted();
+  const isRegistrationResolved = isMounted || !displaySlug;
+  const registration = useMemo<DisplayRegistrationRecord | null>(() => {
+    if (!isMounted || !displaySlug) {
+      return null;
+    }
+    return getDisplayRegistrationBySlug(displaySlug);
+  }, [displaySlug, isMounted]);
   const [manifest, setManifest] = useState<DisplayManifest | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [connectionState, setConnectionState] = useState<
@@ -93,20 +98,6 @@ export default function DisplayRuntimePage() {
 
   const currentTiming = timings[currentIndex] ?? null;
   const overflowExtraSeconds = currentTiming?.overflowExtraSeconds ?? 0;
-
-  useEffect(() => {
-    setIsRegistrationResolved(false);
-
-    if (!displaySlug) {
-      setRegistration(null);
-      setIsRegistrationResolved(true);
-      return;
-    }
-
-    const record = getDisplayRegistrationBySlug(displaySlug);
-    setRegistration(record);
-    setIsRegistrationResolved(true);
-  }, [displaySlug]);
 
   useEffect(() => {
     if (!registration) {

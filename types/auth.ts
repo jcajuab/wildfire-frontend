@@ -1,13 +1,14 @@
 /** Login request body (POST /auth/login). */
 export interface LoginCredentials {
-  readonly email: string;
+  readonly username: string;
   readonly password: string;
 }
 
 /** User shape returned by auth endpoints. */
 export interface AuthUser {
   readonly id: string;
-  readonly email: string;
+  readonly username: string;
+  readonly email: string | null;
   readonly name: string;
   readonly isRoot: boolean;
   readonly timezone?: string | null;

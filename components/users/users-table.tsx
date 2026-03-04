@@ -242,8 +242,11 @@ function UserRow({
             )}
           </span>
         </div>
+        <div className="text-xs text-muted-foreground">@{user.username}</div>
       </TableCell>
-      <TableCell className="text-muted-foreground">{user.email}</TableCell>
+      <TableCell className="text-muted-foreground">
+        {user.email ?? "-"}
+      </TableCell>
       <TableCell>
         <div className="flex flex-wrap gap-1">
           {userRoles.length === 0 && (

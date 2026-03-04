@@ -11,7 +11,8 @@ export interface Permission {
 export interface RoleUser {
   readonly id: string;
   readonly name: string;
-  readonly email: string;
+  readonly username: string;
+  readonly email: string | null;
 }
 
 /** Role list/detail shape aligned with backend. */
