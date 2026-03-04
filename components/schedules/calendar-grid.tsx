@@ -7,6 +7,11 @@ import { IconPhoto } from "@tabler/icons-react";
 import { EmptyState } from "@/components/common/empty-state";
 import type { CalendarView, Schedule, ScheduleDisplay } from "@/types/schedule";
 import {
+  formatLongDate,
+  formatMonthDay,
+  formatWeekdayShort,
+} from "@/lib/formatters";
+import {
   MINUTES_PER_DAY,
   assignEventLanes,
   createResourceDateKey,
@@ -50,16 +55,11 @@ function getLaneHeight(events: readonly ResourceCalendarLaneEvent[]): number {
 }
 
 function formatDayHeader(date: Date): string {
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-  });
+  return formatWeekdayShort(date);
 }
 
 function formatDaySubheader(date: Date): string {
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+  return formatMonthDay(date);
 }
 
 function formatHourLabel(hour: number): string {
@@ -169,12 +169,7 @@ function ResourceDayView({
   return (
     <div className="flex flex-col overflow-hidden rounded-md border border-border max-h-[calc(100vh-14rem)]">
       <div className="border-b border-border px-4 py-2 text-sm font-medium">
-        {day.toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        })}
+        {formatLongDate(day)}
       </div>
 
       <div className="overflow-auto">

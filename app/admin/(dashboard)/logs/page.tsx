@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { IconFileExport } from "@tabler/icons-react";
 import { toast } from "sonner";
 
-import { DashboardPage } from "@/components/layout";
+import { DashboardPage } from "@/components/layout/dashboard-page";
 import { LogsPagination } from "@/components/logs/logs-pagination";
 import { LogsTable } from "@/components/logs/logs-table";
 import { Button } from "@/components/ui/button";

@@ -22,6 +22,7 @@ import { createPlayerController } from "@/lib/display-runtime/player-controller"
 import { buildRuntimeTimings } from "@/lib/display-runtime/overflow-timing";
 import { PdfRenderer } from "@/lib/display-runtime/pdf-renderer";
 import { createDisplaySseClient } from "@/lib/display-runtime/sse-client";
+import { formatTimeOfDay } from "@/lib/formatters";
 import { useMounted } from "@/hooks/use-mounted";
 
 const POLL_MS = 60_000;
@@ -66,6 +67,7 @@ export default function DisplayRuntimePage() {
   >({});
 
   const lastPlaylistVersionRef = useRef<string | null>(null);
+  const currentIndexRef = useRef(0);
   const currentItem = manifest?.items[currentIndex] ?? null;
   const scrollPxPerSecond =
     manifest?.runtimeSettings.scrollPxPerSecond ?? DEFAULT_SCROLL_PX_PER_SECOND;
@@ -231,19 +233,27 @@ export default function DisplayRuntimePage() {
   }, [baseUrl, registration]);
 
   useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  useEffect(() => {
     if (timings.length === 0) {
       return;
     }
+
     const controller = createPlayerController({
       timings,
-      initialIndex: currentIndex,
-      onTick: ({ index }) => setCurrentIndex(index),
+      initialIndex: Math.min(currentIndexRef.current, timings.length - 1),
+      onTick: ({ index }) => {
+        currentIndexRef.current = index;
+        setCurrentIndex(index);
+      },
     });
     controller.start();
     return () => {
       controller.stop();
     };
-  }, [currentIndex, timings]);
+  }, [timings]);
 
   const scrollStyle = useMemo(() => {
     if (!currentItem) return undefined;
@@ -295,7 +305,7 @@ export default function DisplayRuntimePage() {
     <main className="relative min-h-screen bg-black text-white">
       <div className="absolute left-2 top-2 z-10 rounded bg-black/60 px-2 py-1 text-xs">
         {connectionState}
-        {lastEventAt ? ` • ${new Date(lastEventAt).toLocaleTimeString()}` : ""}
+        {lastEventAt ? ` • ${formatTimeOfDay(lastEventAt)}` : ""}
       </div>
       {staticConfigError || errorMessage ? (
         <div className="absolute right-2 top-2 z-10 rounded bg-destructive/85 px-2 py-1 text-xs text-destructive-foreground">

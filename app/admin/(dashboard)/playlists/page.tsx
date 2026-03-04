@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
-import { DashboardPage } from "@/components/layout";
+import { DashboardPage } from "@/components/layout/dashboard-page";
 import { CreatePlaylistDialog } from "@/components/playlists/create-playlist-dialog";
 import {
   EditPlaylistItemsDialog,
@@ -310,12 +310,10 @@ export default function PlaylistsPage(): ReactElement {
         <DashboardPage.Content className="pt-6">
           <PlaylistGrid
             playlists={playlists}
-            onEdit={handleEditPlaylist}
-            onManageItems={handleManageItems}
+            onEdit={canUpdatePlaylist ? handleEditPlaylist : undefined}
+            onManageItems={canUpdatePlaylist ? handleManageItems : undefined}
             onPreview={handlePreviewPlaylist}
-            onDelete={handleDeletePlaylist}
-            canUpdate={canUpdatePlaylist}
-            canDelete={canDeletePlaylist}
+            onDelete={canDeletePlaylist ? handleDeletePlaylist : undefined}
           />
         </DashboardPage.Content>
 

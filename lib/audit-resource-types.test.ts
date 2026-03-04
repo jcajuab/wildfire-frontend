@@ -23,9 +23,9 @@ describe("getResourceTypeValueFromInput", () => {
     );
   });
 
-  test("resolves legacy device aliases", () => {
-    expect(getResourceTypeValueFromInput("device")).toBe("display");
-    expect(getResourceTypeValueFromInput("device-group")).toBe("display-group");
+  test("does not resolve unknown aliases", () => {
+    expect(getResourceTypeValueFromInput("device")).toBeNull();
+    expect(getResourceTypeValueFromInput("device-group")).toBeNull();
   });
 
   test("resolves canonical input with dashes", () => {

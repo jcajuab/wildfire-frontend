@@ -20,7 +20,7 @@ import { DisplayGrid } from "@/components/displays/display-grid";
 import { DisplaysToolbar } from "@/components/displays/displays-toolbar";
 import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
 import { ViewDisplayDialog } from "@/components/displays/view-display-dialog";
-import { DashboardPage } from "@/components/layout";
+import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCan } from "@/hooks/use-can";
@@ -123,12 +123,10 @@ export default function DisplaysPage(): ReactElement {
     };
     stream.addEventListener("display_registered", refresh);
     stream.addEventListener("display_unregistered", refresh);
-    stream.addEventListener("display_status_changed", refresh);
 
     return () => {
       stream.removeEventListener("display_registered", refresh);
       stream.removeEventListener("display_unregistered", refresh);
-      stream.removeEventListener("display_status_changed", refresh);
       stream.close();
     };
   }, [canReadDisplays, refetch]);

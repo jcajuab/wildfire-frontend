@@ -1,5 +1,22 @@
 import type { ContentStatus } from "@/types/content";
 
+const APP_LOCALE = "en-US";
+
+function toDate(value: string | Date): Date {
+  return value instanceof Date ? value : new Date(value);
+}
+
+function formatWithLocale(
+  value: string | Date,
+  options: Intl.DateTimeFormatOptions,
+): string {
+  const date = toDate(value);
+  if (!Number.isFinite(date.getTime())) {
+    return typeof value === "string" ? value : "";
+  }
+  return new Intl.DateTimeFormat(APP_LOCALE, options).format(date);
+}
+
 export function formatContentStatus(status: ContentStatus): string {
   switch (status) {
     case "PROCESSING":
@@ -14,7 +31,7 @@ export function formatContentStatus(status: ContentStatus): string {
 }
 
 export function formatNumber(value: number): string {
-  return new Intl.NumberFormat("en-US").format(value);
+  return new Intl.NumberFormat(APP_LOCALE).format(value);
 }
 
 export function formatFileSize(bytes: number): string {
@@ -32,7 +49,7 @@ export function formatFileSize(bytes: number): string {
   }
 
   const decimals = value < 10 && unitIndex > 0 ? 1 : 0;
-  const formattedValue = new Intl.NumberFormat("en-US", {
+  const formattedValue = new Intl.NumberFormat(APP_LOCALE, {
     minimumFractionDigits: 0,
     maximumFractionDigits: decimals,
   }).format(value);
@@ -41,17 +58,15 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function formatDate(value: string | Date): string {
-  const date = value instanceof Date ? value : new Date(value);
-  return new Intl.DateTimeFormat("en-US", {
+  return formatWithLocale(value, {
     month: "short",
     day: "2-digit",
     year: "numeric",
-  }).format(date);
+  });
 }
 
 export function formatDateTime(value: string | Date): string {
-  const date = value instanceof Date ? value : new Date(value);
-  return new Intl.DateTimeFormat("en-US", {
+  return formatWithLocale(value, {
     month: "short",
     day: "2-digit",
     year: "numeric",
@@ -59,7 +74,36 @@ export function formatDateTime(value: string | Date): string {
     minute: "2-digit",
     second: "2-digit",
     hour12: true,
-  }).format(date);
+  });
+}
+
+export function formatTimeOfDay(value: string | Date): string {
+  return formatWithLocale(value, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+}
+
+export function formatWeekdayShort(value: string | Date): string {
+  return formatWithLocale(value, { weekday: "short" });
+}
+
+export function formatMonthDay(value: string | Date): string {
+  return formatWithLocale(value, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export function formatLongDate(value: string | Date): string {
+  return formatWithLocale(value, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 /**

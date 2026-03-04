@@ -83,6 +83,7 @@ function SortableHeader({
 
   return (
     <button
+      type="button"
       onClick={handleClick}
       className="flex items-center gap-1 hover:text-foreground"
     >
@@ -309,7 +310,16 @@ export function UsersTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-[250px]">
+          <TableHead
+            className="w-[250px]"
+            aria-sort={
+              sort.field === "name"
+                ? sort.direction === "asc"
+                  ? "ascending"
+                  : "descending"
+                : "none"
+            }
+          >
             <SortableHeader
               label="Name"
               field="name"
@@ -323,7 +333,16 @@ export function UsersTable({
           <TableHead className="w-[200px]">
             <FilterableHeader label="Roles" />
           </TableHead>
-          <TableHead className="w-[200px]">
+          <TableHead
+            className="w-[200px]"
+            aria-sort={
+              sort.field === "lastSeen"
+                ? sort.direction === "asc"
+                  ? "ascending"
+                  : "descending"
+                : "none"
+            }
+          >
             <SortableHeader
               label="Last Seen"
               field="lastSeen"

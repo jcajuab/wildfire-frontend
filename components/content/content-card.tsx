@@ -26,13 +26,10 @@ import type { Content } from "@/types/content";
 
 interface ContentCardProps {
   readonly content: Content;
-  readonly onEdit: (content: Content) => void;
+  readonly onEdit?: (content: Content) => void;
   readonly onPreview: (content: Content) => void;
-  readonly onDelete: (content: Content) => void;
-  readonly onDownload: (content: Content) => void;
-  readonly canUpdate?: boolean;
-  readonly canDelete?: boolean;
-  readonly canDownload?: boolean;
+  readonly onDelete?: (content: Content) => void;
+  readonly onDownload?: (content: Content) => void;
 }
 
 export const ContentCard = memo(function ContentCard({
@@ -41,9 +38,6 @@ export const ContentCard = memo(function ContentCard({
   onPreview,
   onDelete,
   onDownload,
-  canUpdate = true,
-  canDelete = true,
-  canDownload = true,
 }: ContentCardProps): ReactElement {
   const ThumbnailFallbackIcon =
     content.type === "PDF"
@@ -94,29 +88,29 @@ export const ContentCard = memo(function ContentCard({
               variant="ghost"
               size="icon-sm"
               aria-label={`Actions for ${content.title}`}
-              className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
+              className="shrink-0"
             >
               <IconDotsVertical className="size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
-            {canUpdate && (
+            {onEdit ? (
               <DropdownMenuItem onClick={() => onEdit(content)}>
                 <IconPencil className="size-4" />
                 Edit Content
               </DropdownMenuItem>
-            )}
+            ) : null}
             <DropdownMenuItem onClick={() => onPreview(content)}>
               <IconEye className="size-4" />
               View Details
             </DropdownMenuItem>
-            {canDownload && (
+            {onDownload ? (
               <DropdownMenuItem onClick={() => onDownload(content)}>
                 <IconDownload className="size-4" />
                 Download File
               </DropdownMenuItem>
-            )}
-            {canDelete && (
+            ) : null}
+            {onDelete ? (
               <DropdownMenuItem
                 variant="destructive"
                 onClick={() => onDelete(content)}
@@ -124,7 +118,7 @@ export const ContentCard = memo(function ContentCard({
                 <IconTrash className="size-4" />
                 Delete Content
               </DropdownMenuItem>
-            )}
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

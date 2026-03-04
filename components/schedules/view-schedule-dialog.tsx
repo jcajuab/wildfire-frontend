@@ -22,32 +22,15 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { formatClockTime, formatDate } from "@/lib/formatters";
 import type { Schedule } from "@/types/schedule";
 
 interface ViewScheduleDialogProps {
   readonly schedule: Schedule | null;
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onEdit: (schedule: Schedule) => void;
-  readonly onDelete: (schedule: Schedule) => void;
-  readonly canEdit?: boolean;
-  readonly canDelete?: boolean;
-}
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatTime(time: string): string {
-  const [hours, minutes] = time.split(":").map(Number);
-  const period = hours >= 12 ? "PM" : "AM";
-  const displayHours = hours % 12 || 12;
-  return `${displayHours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")} ${period}`;
+  readonly onEdit?: (schedule: Schedule) => void;
+  readonly onDelete?: (schedule: Schedule) => void;
 }
 
 export function ViewScheduleDialog({
@@ -56,8 +39,6 @@ export function ViewScheduleDialog({
   onOpenChange,
   onEdit,
   onDelete,
-  canEdit = true,
-  canDelete = true,
 }: ViewScheduleDialogProps): ReactElement | null {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   if (!schedule) return null;
@@ -92,8 +73,8 @@ export function ViewScheduleDialog({
             <div className="flex items-center gap-2 text-sm">
               <IconClock className="size-4" />
               <span>
-                {formatTime(schedule.startTime)} -{" "}
-                {formatTime(schedule.endTime)}
+                {formatClockTime(schedule.startTime)} -{" "}
+                {formatClockTime(schedule.endTime)}
               </span>
             </div>
 
@@ -121,7 +102,7 @@ export function ViewScheduleDialog({
           </div>
 
           <DialogFooter className="flex items-center justify-between pt-4 sm:justify-between">
-            {canDelete && (
+            {onDelete ? (
               <Button
                 variant="destructive"
                 onClick={() => setConfirmDeleteOpen(true)}
@@ -129,17 +110,17 @@ export function ViewScheduleDialog({
                 <IconTrash className="size-4" />
                 Delete
               </Button>
-            )}
+            ) : null}
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Close
               </Button>
-              {canEdit && (
+              {onEdit ? (
                 <Button onClick={() => onEdit(schedule)}>
                   <IconPencil className="size-4" />
                   Edit
                 </Button>
-              )}
+              ) : null}
             </div>
           </DialogFooter>
         </DialogContent>
@@ -157,7 +138,7 @@ export function ViewScheduleDialog({
             <Button
               variant="destructive"
               onClick={() => {
-                onDelete(schedule);
+                onDelete?.(schedule);
                 setConfirmDeleteOpen(false);
                 onOpenChange(false);
               }}

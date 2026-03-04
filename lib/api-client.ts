@@ -127,7 +127,7 @@ export async function login(
   return parseApiPayload<AuthResponse>(response);
 }
 
-/** GET /auth/session. Refreshes JWT (sliding session). Returns auth payload or throws with backend error body. */
+/** POST /auth/session/refresh. Refreshes JWT (sliding session). Returns auth payload or throws with backend error body. */
 export async function refreshToken(
   token?: string | null,
 ): Promise<AuthResponse> {
@@ -138,8 +138,8 @@ export async function refreshToken(
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
-  const response = await fetch(`${baseUrl}/auth/session`, {
-    method: "GET",
+  const response = await fetch(`${baseUrl}/auth/session/refresh`, {
+    method: "POST",
     credentials: "include",
     headers,
   });

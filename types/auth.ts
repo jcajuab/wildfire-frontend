@@ -15,7 +15,7 @@ export interface AuthUser {
   readonly avatarUrl?: string | null;
 }
 
-/** Success response from POST /auth/login and GET /auth/session. */
+/** Success response from POST /auth/login and POST /auth/session/refresh. */
 export interface AuthResponse {
   readonly type: "bearer";
   readonly token: string;

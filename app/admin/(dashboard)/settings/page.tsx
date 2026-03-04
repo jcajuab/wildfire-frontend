@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { IconPencil, IconUser } from "@tabler/icons-react";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
-import { DashboardPage } from "@/components/layout";
+import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,21 +39,6 @@ import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { useCan } from "@/hooks/use-can";
 import { toast } from "sonner";
 
-const legacyTimezoneMap: Readonly<Record<string, string>> = {
-  "Asia - Taipei": "Asia/Taipei",
-  "Asia - Tokyo": "Asia/Tokyo",
-  "Asia - Singapore": "Asia/Singapore",
-  "Asia - Hong Kong": "Asia/Hong_Kong",
-  "America - New York": "America/New_York",
-  "America - Los Angeles": "America/Los_Angeles",
-  "America - Chicago": "America/Chicago",
-  "Europe - London": "Europe/London",
-  "Europe - Paris": "Europe/Paris",
-  "Europe - Berlin": "Europe/Berlin",
-  "Australia - Sydney": "Australia/Sydney",
-  "Pacific - Auckland": "Pacific/Auckland",
-};
-
 const timezones = [
   "Asia/Taipei",
   "Asia/Tokyo",
@@ -71,14 +56,19 @@ const timezones = [
 
 const defaultTimezone = "Asia/Taipei";
 
+const isSupportedTimezone = (value: string): boolean =>
+  (timezones as readonly string[]).includes(value);
+
 const normalizeTimezone = (value?: string | null): string =>
-  value == null || value.length === 0
-    ? defaultTimezone
-    : (legacyTimezoneMap[value] ?? value);
+  typeof value === "string" && isSupportedTimezone(value)
+    ? value
+    : defaultTimezone;
 
 export default function SettingsPage(): ReactElement {
   const { user, token, logout, updateSession } = useAuth();
   const profilePictureInputRef = useRef<HTMLInputElement>(null);
+  const firstNameInputRef = useRef<HTMLInputElement>(null);
+  const lastNameInputRef = useRef<HTMLInputElement>(null);
   const [firstName, setFirstName] = useState(
     user?.name?.split(/\s+/)[0] ?? "Admin",
   );
@@ -118,6 +108,16 @@ export default function SettingsPage(): ReactElement {
   const canUpdateRuntimeSettings = useCan("settings:update");
   const avatarUrl = user?.avatarUrl ?? null;
   const sectionTitleClass = "text-base font-semibold tracking-tight";
+
+  useEffect(() => {
+    if (editingField === "firstName") {
+      firstNameInputRef.current?.focus();
+      return;
+    }
+    if (editingField === "lastName") {
+      lastNameInputRef.current?.focus();
+    }
+  }, [editingField]);
 
   useEffect(() => {
     if (!canReadRuntimeSettings) return;
@@ -403,6 +403,7 @@ export default function SettingsPage(): ReactElement {
                 <div className="w-48">
                   {editingField === "firstName" ? (
                     <Input
+                      ref={firstNameInputRef}
                       id="firstName"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
@@ -420,7 +421,6 @@ export default function SettingsPage(): ReactElement {
                           setEditingField(null);
                         }
                       }}
-                      autoFocus
                       className="w-full"
                     />
                   ) : (
@@ -441,6 +441,7 @@ export default function SettingsPage(): ReactElement {
                 <div className="w-48">
                   {editingField === "lastName" ? (
                     <Input
+                      ref={lastNameInputRef}
                       id="lastName"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
@@ -458,7 +459,6 @@ export default function SettingsPage(): ReactElement {
                           setEditingField(null);
                         }
                       }}
-                      autoFocus
                       className="w-full"
                     />
                   ) : (

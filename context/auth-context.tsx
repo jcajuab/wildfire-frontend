@@ -37,16 +37,6 @@ interface SessionData {
   readonly token: string | null;
 }
 
-/** Old sessions without permissions get [] and can still be used. */
-function getPermissionsFromSession(
-  data: Record<string, unknown>,
-): PermissionType[] {
-  if (!Array.isArray(data.permissions)) return [];
-  return data.permissions.filter(
-    (p): p is PermissionType => typeof p === "string" && p.includes(":"),
-  );
-}
-
 function readSession(): SessionData | null {
   if (typeof window === "undefined") return null;
   try {
@@ -80,7 +70,17 @@ function readSession(): SessionData | null {
       timezone: typeof u.timezone === "string" ? u.timezone : null,
       avatarUrl: typeof u.avatarUrl === "string" ? u.avatarUrl : null,
     };
-    const permissions = getPermissionsFromSession(d);
+    const rawPermissions = d.permissions;
+    if (
+      !Array.isArray(rawPermissions) ||
+      !rawPermissions.every(
+        (permission) =>
+          typeof permission === "string" && permission.includes(":"),
+      )
+    ) {
+      return null;
+    }
+    const permissions = rawPermissions as PermissionType[];
     const token = typeof d.token === "string" ? d.token : null;
 
     return {
@@ -267,10 +267,11 @@ export function AuthProvider({
       const status = customEvent.detail?.status;
       if (status === 401) {
         const url = customEvent.detail?.url ?? "";
+        const normalizedUrl = url.split("?")[0] ?? url;
         const isAuthSessionRequest =
-          url === "auth/session" ||
-          url === "/auth/session" ||
-          url.endsWith("/auth/session");
+          normalizedUrl === "auth/session/refresh" ||
+          normalizedUrl === "/auth/session/refresh" ||
+          normalizedUrl.endsWith("/auth/session/refresh");
         const isSuppressed = Date.now() < suppressAuthErrorUntilRef.current;
         if (isSuppressed && !isAuthSessionRequest) {
           return;

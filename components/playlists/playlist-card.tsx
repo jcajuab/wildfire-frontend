@@ -26,8 +26,6 @@ interface PlaylistCardProps {
   readonly onManageItems?: (playlist: Playlist) => void;
   readonly onPreview?: (playlist: Playlist) => void;
   readonly onDelete?: (playlist: Playlist) => void;
-  readonly canUpdate?: boolean;
-  readonly canDelete?: boolean;
 }
 
 function formatDuration(seconds: number): string {
@@ -51,8 +49,6 @@ export const PlaylistCard = memo(function PlaylistCard({
   onManageItems,
   onPreview,
   onDelete,
-  canUpdate = true,
-  canDelete = true,
 }: PlaylistCardProps): ReactElement {
   // Show first 4 items as thumbnails
   const visibleItems = playlist.items.slice(0, 4);
@@ -80,31 +76,33 @@ export const PlaylistCard = memo(function PlaylistCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
-            {canUpdate && (
-              <>
-                <DropdownMenuItem onClick={() => onEdit?.(playlist)}>
-                  <IconPencil className="size-4" />
-                  Edit Playlist Info
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onManageItems?.(playlist)}>
-                  <IconListDetails className="size-4" />
-                  Manage Items
-                </DropdownMenuItem>
-              </>
-            )}
-            <DropdownMenuItem onClick={() => onPreview?.(playlist)}>
-              <IconEye className="size-4" />
-              Preview Playlist
-            </DropdownMenuItem>
-            {canDelete && (
+            {onEdit ? (
+              <DropdownMenuItem onClick={() => onEdit(playlist)}>
+                <IconPencil className="size-4" />
+                Edit Playlist Info
+              </DropdownMenuItem>
+            ) : null}
+            {onManageItems ? (
+              <DropdownMenuItem onClick={() => onManageItems(playlist)}>
+                <IconListDetails className="size-4" />
+                Manage Items
+              </DropdownMenuItem>
+            ) : null}
+            {onPreview ? (
+              <DropdownMenuItem onClick={() => onPreview(playlist)}>
+                <IconEye className="size-4" />
+                Preview Playlist
+              </DropdownMenuItem>
+            ) : null}
+            {onDelete ? (
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => onDelete?.(playlist)}
+                onClick={() => onDelete(playlist)}
               >
                 <IconTrash className="size-4" />
                 Delete Playlist
               </DropdownMenuItem>
-            )}
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

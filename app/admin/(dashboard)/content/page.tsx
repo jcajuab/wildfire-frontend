@@ -18,7 +18,7 @@ import { Pagination } from "@/components/content/pagination";
 import { ContentSearchInput } from "@/components/content/content-search-input";
 import { ContentSortSelect } from "@/components/content/content-sort-select";
 import { ContentStatusTabs } from "@/components/content/content-status-tabs";
-import { DashboardPage } from "@/components/layout";
+import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -531,13 +531,10 @@ export default function ContentPage(): ReactElement {
         <DashboardPage.Content className="pt-6">
           <ContentGrid
             items={visibleContents}
-            onEdit={handleEdit}
+            onEdit={canUpdateContent ? handleEdit : undefined}
             onPreview={handlePreview}
-            onDelete={handleDelete}
-            onDownload={handleDownload}
-            canUpdate={canUpdateContent}
-            canDelete={canDeleteContent}
-            canDownload={canDownloadContent}
+            onDelete={canDeleteContent ? handleDelete : undefined}
+            onDownload={canDownloadContent ? handleDownload : undefined}
           />
         </DashboardPage.Content>
 

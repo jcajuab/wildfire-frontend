@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import { AppLayout } from "@/components/layout";
+import { AppLayout } from "@/components/layout/app-layout";
 
 interface DashboardShellLayoutProps {
   readonly children: ReactNode;

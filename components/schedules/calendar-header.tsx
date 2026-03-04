@@ -5,6 +5,7 @@ import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { formatLongDate, formatMonthDay } from "@/lib/formatters";
 import type { CalendarView } from "@/types/schedule";
 
 interface CalendarHeaderProps {
@@ -25,11 +26,7 @@ function getStartOfWeek(date: Date): Date {
 
 function formatDateRange(date: Date, view: CalendarView): string {
   if (view === "resource-day") {
-    return date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+    return formatLongDate(date);
   }
 
   if (view === "resource-week") {
@@ -37,14 +34,8 @@ function formatDateRange(date: Date, view: CalendarView): string {
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
 
-    const startStr = start.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-    const endStr = end.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
+    const startStr = formatMonthDay(start);
+    const endStr = formatMonthDay(end);
 
     if (start.getFullYear() !== end.getFullYear()) {
       return `${startStr}, ${start.getFullYear()} - ${endStr}, ${end.getFullYear()}`;

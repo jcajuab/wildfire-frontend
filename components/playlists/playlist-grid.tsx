@@ -13,8 +13,6 @@ interface PlaylistGridProps {
   readonly onManageItems?: (playlist: Playlist) => void;
   readonly onPreview?: (playlist: Playlist) => void;
   readonly onDelete?: (playlist: Playlist) => void;
-  readonly canUpdate?: boolean;
-  readonly canDelete?: boolean;
 }
 
 export function PlaylistGrid({
@@ -23,8 +21,6 @@ export function PlaylistGrid({
   onManageItems,
   onPreview,
   onDelete,
-  canUpdate = true,
-  canDelete = true,
 }: PlaylistGridProps): ReactElement {
   if (playlists.length === 0) {
     return (
@@ -46,8 +42,6 @@ export function PlaylistGrid({
           onManageItems={onManageItems}
           onPreview={onPreview}
           onDelete={onDelete}
-          canUpdate={canUpdate}
-          canDelete={canDelete}
         />
       ))}
     </div>

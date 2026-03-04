@@ -9,13 +9,10 @@ import type { Content } from "@/types/content";
 
 interface ContentGridProps {
   readonly items: readonly Content[];
-  readonly onEdit: (content: Content) => void;
+  readonly onEdit?: (content: Content) => void;
   readonly onPreview: (content: Content) => void;
-  readonly onDelete: (content: Content) => void;
-  readonly onDownload: (content: Content) => void;
-  readonly canUpdate?: boolean;
-  readonly canDelete?: boolean;
-  readonly canDownload?: boolean;
+  readonly onDelete?: (content: Content) => void;
+  readonly onDownload?: (content: Content) => void;
 }
 
 export function ContentGrid({
@@ -24,9 +21,6 @@ export function ContentGrid({
   onPreview,
   onDelete,
   onDownload,
-  canUpdate = true,
-  canDelete = true,
-  canDownload = true,
 }: ContentGridProps): ReactElement {
   if (items.length === 0) {
     return (
@@ -48,9 +42,6 @@ export function ContentGrid({
           onPreview={onPreview}
           onDelete={onDelete}
           onDownload={onDownload}
-          canUpdate={canUpdate}
-          canDelete={canDelete}
-          canDownload={canDownload}
         />
       ))}
     </div>

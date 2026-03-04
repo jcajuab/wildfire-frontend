@@ -54,15 +54,7 @@ export const RESOURCE_TYPE_LABELS: Readonly<Record<string, string>> = {
   session: "Session",
   invitation: "Invitation",
   "audit-event": "Audit Event",
-  device: "Displays",
-  "device-group": "Display Group",
 };
-
-const RESOURCE_TYPE_INPUT_ALIASES: Readonly<Record<string, ResourceTypeValue>> =
-  {
-    device: "display",
-    "device-group": "display-group",
-  };
 
 const titleCaseLabel = (value: string): string =>
   value
@@ -84,11 +76,6 @@ export function getResourceTypeValueFromInput(
   const normalizedInput = input.trim().toLowerCase();
   if (normalizedInput.length === 0) {
     return "";
-  }
-
-  const aliasedValue = RESOURCE_TYPE_INPUT_ALIASES[normalizedInput];
-  if (aliasedValue) {
-    return aliasedValue;
   }
 
   const directMatch = RESOURCE_TYPES.find((value) => value === normalizedInput);

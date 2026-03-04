@@ -96,6 +96,7 @@ function SortableItemRow({
             type="number"
             min="1"
             value={item.duration}
+            aria-label={`Duration in seconds for ${item.content.title}`}
             onChange={(e) =>
               onUpdateDuration(item.id, parseInt(e.target.value, 10) || 1)
             }

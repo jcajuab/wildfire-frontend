@@ -3,17 +3,37 @@
 import { useSyncExternalStore } from "react";
 
 /**
- * Returns true on the client after hydration, false during SSR.
- * Uses useSyncExternalStore which is the React 18+ way to safely
- * detect client-side rendering without causing hydration mismatches.
+ * Returns true only after client hydration completes.
  */
-function subscribe(): () => void {
-  // No-op subscribe - the mounted state never changes after initial render
-  return () => {};
+const listeners = new Set<() => void>();
+let mountedSnapshot = false;
+let mountSignalScheduled = false;
+
+function emitMounted(): void {
+  if (mountedSnapshot) return;
+  mountedSnapshot = true;
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+function ensureMountSignalScheduled(): void {
+  if (mountSignalScheduled || typeof window === "undefined") return;
+  mountSignalScheduled = true;
+  queueMicrotask(emitMounted);
+}
+
+function subscribe(listener: () => void): () => void {
+  ensureMountSignalScheduled();
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 function getClientSnapshot(): boolean {
-  return true;
+  ensureMountSignalScheduled();
+  return mountedSnapshot;
 }
 
 function getServerSnapshot(): boolean {

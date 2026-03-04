@@ -1,13 +1,13 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
-import { DashboardPage } from "@/components/layout";
+import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -124,6 +124,7 @@ export default function UsersPage(): ReactElement {
   );
   const [isPolicyVersionSubmitting, setIsPolicyVersionSubmitting] =
     useState(false);
+  const policyVersionInputRef = useRef<HTMLInputElement>(null);
 
   const pageSize = 10;
 
@@ -316,6 +317,11 @@ export default function UsersPage(): ReactElement {
     setPolicyVersionInput("");
     setPolicyVersionError(null);
   }, []);
+
+  useEffect(() => {
+    if (!pendingRoleUpdate) return;
+    policyVersionInputRef.current?.focus();
+  }, [pendingRoleUpdate]);
 
   const handlePolicyVersionSubmit = useCallback(async (): Promise<void> => {
     if (!pendingRoleUpdate) return;
@@ -597,6 +603,7 @@ export default function UsersPage(): ReactElement {
           <div className="space-y-2">
             <Label htmlFor="policy-version">Policy version</Label>
             <Input
+              ref={policyVersionInputRef}
               id="policy-version"
               type="number"
               min={1}
@@ -604,7 +611,6 @@ export default function UsersPage(): ReactElement {
               inputMode="numeric"
               value={policyVersionInput}
               onChange={(event) => setPolicyVersionInput(event.target.value)}
-              autoFocus
               placeholder="Enter a positive integer"
             />
             <p className="text-xs text-muted-foreground">

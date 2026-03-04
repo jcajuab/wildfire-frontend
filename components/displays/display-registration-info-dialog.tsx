@@ -20,6 +20,7 @@ import {
   useCreateRegistrationAttemptMutation,
   useRotateRegistrationAttemptMutation,
 } from "@/lib/api/displays-api";
+import { formatTimeOfDay } from "@/lib/formatters";
 import { useCan } from "@/hooks/use-can";
 
 interface DisplayRegistrationInfoDialogProps {
@@ -195,8 +196,7 @@ export function DisplayRegistrationInfoDialog({
           </p>
           {registrationCodeExpiresAt ? (
             <p className="mt-2 text-xs text-muted-foreground">
-              Expires at{" "}
-              {new Date(registrationCodeExpiresAt).toLocaleTimeString()}
+              Expires at {formatTimeOfDay(registrationCodeExpiresAt)}
             </p>
           ) : null}
           {statusText ? (

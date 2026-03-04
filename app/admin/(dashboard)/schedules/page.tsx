@@ -11,7 +11,7 @@ import { CalendarHeader } from "@/components/schedules/calendar-header";
 import { CreateScheduleDialog } from "@/components/schedules/create-schedule-dialog";
 import { EditScheduleDialog } from "@/components/schedules/edit-schedule-dialog";
 import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog";
-import { DashboardPage } from "@/components/layout";
+import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
 import { useGetDisplaysQuery } from "@/lib/api/displays-api";
 import {
@@ -229,10 +229,8 @@ export default function SchedulesPage(): ReactElement {
         schedule={selectedSchedule}
         open={viewDialogOpen}
         onOpenChange={setViewDialogOpen}
-        onEdit={handleEditFromView}
-        onDelete={handleDeleteSchedule}
-        canEdit={canEditSchedule}
-        canDelete={canDeleteSchedule}
+        onEdit={canEditSchedule ? handleEditFromView : undefined}
+        onDelete={canDeleteSchedule ? handleDeleteSchedule : undefined}
       />
 
       {/* Edit Schedule Dialog */}

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
-import { DashboardPage } from "@/components/layout";
+import { DashboardPage } from "@/components/layout/dashboard-page";
 import { RoleDialog } from "@/components/roles/role-dialog";
 import { RoleSearchInput } from "@/components/roles/role-search-input";
 import { RolesPagination } from "@/components/roles/roles-pagination";
