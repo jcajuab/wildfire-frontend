@@ -7,10 +7,6 @@ export type PermissionResource =
   | "roles"
   | "audit";
 
-export type PermissionAction =
-  | "read"
-  | "create"
-  | "update"
-  | "delete";
+export type PermissionAction = "read" | "create" | "update" | "delete";
 
 export type PermissionType = `${PermissionResource}:${PermissionAction}`;

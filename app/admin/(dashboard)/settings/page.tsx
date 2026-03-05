@@ -454,7 +454,6 @@ export default function SettingsPage(): ReactElement {
                     </SelectContent>
                   </Select>
                 </div>
-
               </div>
             </section>
 
