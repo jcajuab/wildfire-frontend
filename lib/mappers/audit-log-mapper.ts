@@ -95,7 +95,7 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
   "auth.invitation.resend": "Resent invitation",
   "auth.invitation.accept": "Accepted invitation",
   "audit.event.list": "Viewed audit logs",
-  "audit.event.download": "Downloaded audit logs",
+  "audit.event.export": "Exported audit logs",
   "authz.permission.deny": "Denied by permission policy",
 };
 
