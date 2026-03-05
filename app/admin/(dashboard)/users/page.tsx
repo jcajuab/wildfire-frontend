@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
@@ -9,16 +9,6 @@ import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { EditUserDialog } from "@/components/users/edit-user-dialog";
 import { InviteUsersDialog } from "@/components/users/invite-users-dialog";
 import { UserSearchInput } from "@/components/users/user-search-input";
@@ -60,12 +50,6 @@ import type { InvitationRecord } from "@/types/invitation";
 
 const USER_SORT_FIELDS = ["name", "lastSeen"] as const;
 const USER_SORT_DIRECTIONS = ["asc", "desc"] as const;
-const HIGH_RISK_TARGET_THRESHOLD = 20;
-
-interface PendingRoleUpdate {
-  readonly userId: string;
-  readonly roleIds: string[];
-}
 
 export default function UsersPage(): ReactElement {
   const { user: currentUser } = useAuth();
@@ -116,15 +100,6 @@ export default function UsersPage(): ReactElement {
   const [userRolesByUserId, setUserRolesByUserId] = useState<
     Readonly<Record<string, readonly UserRole[]>>
   >({});
-  const [pendingRoleUpdate, setPendingRoleUpdate] =
-    useState<PendingRoleUpdate | null>(null);
-  const [policyVersionInput, setPolicyVersionInput] = useState("");
-  const [policyVersionError, setPolicyVersionError] = useState<string | null>(
-    null,
-  );
-  const [isPolicyVersionSubmitting, setIsPolicyVersionSubmitting] =
-    useState(false);
-  const policyVersionInputRef = useRef<HTMLInputElement>(null);
 
   const pageSize = 10;
 
@@ -259,11 +234,7 @@ export default function UsersPage(): ReactElement {
   );
 
   const applyUserRoles = useCallback(
-    async (payload: {
-      userId: string;
-      roleIds: string[];
-      policyVersion?: number;
-    }): Promise<void> => {
+    async (payload: { userId: string; roleIds: string[] }): Promise<void> => {
       const roles = await setUserRoles(payload).unwrap();
       setUserRolesByUserId((prev) => ({
         ...prev,
@@ -289,15 +260,6 @@ export default function UsersPage(): ReactElement {
             return [...new Set([...newRoleIds, ...preservedSystem])];
           })();
 
-      if (roleIdsToSend.length > HIGH_RISK_TARGET_THRESHOLD) {
-        setPendingRoleUpdate({
-          userId,
-          roleIds: roleIdsToSend,
-        });
-        setPolicyVersionInput("");
-        return;
-      }
-
       void applyUserRoles({
         userId,
         roleIds: roleIdsToSend,
@@ -307,49 +269,6 @@ export default function UsersPage(): ReactElement {
     },
     [applyUserRoles, isRoot, systemRoleIds, userRolesByUserId],
   );
-
-  const parsedPolicyVersion = Number.parseInt(policyVersionInput, 10);
-  const isPolicyVersionValid =
-    Number.isInteger(parsedPolicyVersion) && parsedPolicyVersion > 0;
-
-  const clearPendingRoleUpdate = useCallback((): void => {
-    setPendingRoleUpdate(null);
-    setPolicyVersionInput("");
-    setPolicyVersionError(null);
-  }, []);
-
-  useEffect(() => {
-    if (!pendingRoleUpdate) return;
-    policyVersionInputRef.current?.focus();
-  }, [pendingRoleUpdate]);
-
-  const handlePolicyVersionSubmit = useCallback(async (): Promise<void> => {
-    if (!pendingRoleUpdate) return;
-    setPolicyVersionError(null);
-    if (!isPolicyVersionValid) {
-      setPolicyVersionError("Policy version must be a positive whole number.");
-      return;
-    }
-
-    setIsPolicyVersionSubmitting(true);
-    try {
-      await applyUserRoles({
-        ...pendingRoleUpdate,
-        policyVersion: parsedPolicyVersion,
-      });
-      clearPendingRoleUpdate();
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to update user roles"));
-    } finally {
-      setIsPolicyVersionSubmitting(false);
-    }
-  }, [
-    applyUserRoles,
-    clearPendingRoleUpdate,
-    isPolicyVersionValid,
-    pendingRoleUpdate,
-    parsedPolicyVersion,
-  ]);
 
   const handleEdit = useCallback((user: User) => {
     setSelectedUser(user);
@@ -582,64 +501,6 @@ export default function UsersPage(): ReactElement {
           }
         }}
       />
-
-      <Dialog
-        open={pendingRoleUpdate !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            clearPendingRoleUpdate();
-          }
-        }}
-      >
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Policy-gated role update</DialogTitle>
-            <DialogDescription>
-              Assigning a large number of roles requires a policy version for
-              auditability.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-2">
-            <Label htmlFor="policy-version">Policy version</Label>
-            <Input
-              ref={policyVersionInputRef}
-              id="policy-version"
-              type="number"
-              min={1}
-              step={1}
-              inputMode="numeric"
-              value={policyVersionInput}
-              onChange={(event) => setPolicyVersionInput(event.target.value)}
-              placeholder="Enter a positive integer"
-            />
-            <p className="text-xs text-muted-foreground">
-              Example: enter the current policy change number used by your
-              governance process.
-            </p>
-            {policyVersionError ? (
-              <p className="text-xs text-destructive">{policyVersionError}</p>
-            ) : null}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                clearPendingRoleUpdate();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => void handlePolicyVersionSubmit()}
-              disabled={isPolicyVersionSubmitting || !isPolicyVersionValid}
-            >
-              {isPolicyVersionSubmitting ? "Updating…" : "Apply with version"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </DashboardPage.Root>
   );
 }

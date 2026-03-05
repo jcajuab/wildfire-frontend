@@ -90,12 +90,7 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
   "rbac.rolePermission.list": "Viewed role permissions",
   "rbac.rolePermission.set": "Updated role permissions",
   "rbac.roleUser.list": "Viewed role users",
-  "rbac.policyHistory.list": "Viewed role deletion policy history",
   "rbac.permission.list": "Viewed permissions",
-  "rbac.roleDeletion.request": "Requested role deletion",
-  "rbac.roleDeletion.list": "Viewed role deletion requests",
-  "rbac.roleDeletion.approve": "Approved role deletion request",
-  "rbac.roleDeletion.reject": "Rejected role deletion request",
   "auth.invitation.create": "Created invitation",
   "auth.invitation.list": "Viewed invitations",
   "auth.invitation.resend": "Resent invitation",
@@ -167,19 +162,11 @@ export function mapAuditEventToLogEntry(
     "request id": event.requestId ?? "—",
     channel: event.actorType ?? "unknown",
   };
-  const policyVersion =
-    typeof rawMetadata.rbacPolicyVersion === "string" ||
-    typeof rawMetadata.rbacPolicyVersion === "number"
-      ? String(rawMetadata.rbacPolicyVersion)
-      : null;
   const targetCount =
     typeof rawMetadata.rbacTargetCount === "string" ||
     typeof rawMetadata.rbacTargetCount === "number"
       ? String(rawMetadata.rbacTargetCount)
       : null;
-  if (policyVersion) {
-    metadata["policy version"] = policyVersion;
-  }
   if (targetCount) {
     metadata["targets changed"] = targetCount;
   }

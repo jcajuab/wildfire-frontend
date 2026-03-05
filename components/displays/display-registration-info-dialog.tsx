@@ -37,6 +37,8 @@ interface RegistrationSucceededEvent {
   readonly occurredAt: string;
 }
 
+const MAX_TIMER_DELAY_MS = 2_147_483_647;
+
 const isRegistrationSucceededEvent = (
   value: unknown,
 ): value is RegistrationSucceededEvent => {
@@ -146,7 +148,10 @@ export function DisplayRegistrationInfoDialog({
     if (!open || !attemptId || !registrationCodeExpiresAt) return;
     const expiresAtMs = Date.parse(registrationCodeExpiresAt);
     if (!Number.isFinite(expiresAtMs)) return;
-    const timeoutMs = Math.max(0, expiresAtMs - Date.now());
+    const timeoutMs = Math.min(
+      MAX_TIMER_DELAY_MS,
+      Math.max(0, expiresAtMs - Date.now()),
+    );
     const timer = window.setTimeout(() => {
       void rotateCode(attemptId);
     }, timeoutMs);
@@ -172,8 +177,8 @@ export function DisplayRegistrationInfoDialog({
   );
 
   const statusText = useMemo(() => {
-    if (isCreatingAttempt) return "Creating registration attempt...";
-    if (isRotatingAttempt) return "Rotating code...";
+    if (isCreatingAttempt) return "Creating registration attempt…";
+    if (isRotatingAttempt) return "Rotating code…";
     return null;
   }, [isCreatingAttempt, isRotatingAttempt]);
 
@@ -200,7 +205,14 @@ export function DisplayRegistrationInfoDialog({
             </p>
           ) : null}
           {statusText ? (
-            <p className="mt-2 text-xs text-muted-foreground">{statusText}</p>
+            <p
+              className="mt-2 text-xs text-muted-foreground"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {statusText}
+            </p>
           ) : null}
         </div>
 
@@ -208,6 +220,8 @@ export function DisplayRegistrationInfoDialog({
           <p
             className="rounded-md bg-[var(--success-muted)] px-3 py-2 text-sm text-[var(--success-foreground)]"
             role="status"
+            aria-live="polite"
+            aria-atomic="true"
           >
             {successMessage}
           </p>

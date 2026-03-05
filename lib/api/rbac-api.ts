@@ -34,26 +34,10 @@ export interface RbacUser {
   readonly avatarUrl?: string | null;
 }
 
-export interface RbacRoleDeletionRequest {
-  readonly id: string;
-  readonly roleId: string;
-  readonly roleName: string;
-  readonly requestedByUserId: string;
-  readonly requestedByName: string;
-  readonly requestedByEmail: string | null;
-  readonly requestedAt: string;
-  readonly status: "pending" | "approved" | "rejected" | "cancelled";
-  readonly approvedByUserId: string | null;
-  readonly approvedByName: string | null;
-  readonly approvedByEmail: string | null;
-  readonly approvedAt: string | null;
-  readonly reason: string | null;
-}
-
 export const rbacApi = createApi({
   reducerPath: "rbacApi",
   baseQuery,
-  tagTypes: ["Role", "User", "Permission", "RoleDeletionRequest"],
+  tagTypes: ["Role", "User", "Permission"],
   endpoints: (build) => ({
     // Roles
     getRoles: build.query<RbacRole[], void>({
@@ -126,7 +110,6 @@ export const rbacApi = createApi({
         { type: "Role", id },
         { type: "Role", id: "LIST" },
         { type: "User", id: "LIST" },
-        { type: "RoleDeletionRequest", id: "LIST" },
       ],
       async onQueryStarted(_arg, { queryFulfilled }) {
         try {
@@ -151,12 +134,12 @@ export const rbacApi = createApi({
     }),
     setRolePermissions: build.mutation<
       RbacPermission[],
-      { roleId: string; permissionIds: string[]; policyVersion?: number }
+      { roleId: string; permissionIds: string[] }
     >({
-      query: ({ roleId, permissionIds, policyVersion }) => ({
+      query: ({ roleId, permissionIds }) => ({
         url: `roles/${roleId}/permissions`,
         method: "PUT",
-        body: { permissionIds, policyVersion },
+        body: { permissionIds },
       }),
       transformResponse: (response) =>
         parseApiListResponseDataSafe<RbacPermission>(
@@ -306,12 +289,12 @@ export const rbacApi = createApi({
     }),
     setUserRoles: build.mutation<
       RbacRole[],
-      { userId: string; roleIds: string[]; policyVersion?: number }
+      { userId: string; roleIds: string[] }
     >({
-      query: ({ userId, roleIds, policyVersion }) => ({
+      query: ({ userId, roleIds }) => ({
         url: `users/${userId}/roles`,
         method: "PUT",
-        body: { roleIds, policyVersion },
+        body: { roleIds },
       }),
       transformResponse: (response) =>
         parseApiListResponseDataSafe<RbacRole>(response, "setUserRoles"),
@@ -329,57 +312,6 @@ export const rbacApi = createApi({
           // Ignore failed writes.
         }
       },
-    }),
-    createRoleDeletionRequest: build.mutation<
-      void,
-      { roleId: string; reason?: string }
-    >({
-      query: ({ roleId, reason }) => ({
-        url: `roles/${roleId}/deletion-requests`,
-        method: "POST",
-        body: { reason },
-      }),
-      invalidatesTags: [{ type: "RoleDeletionRequest", id: "LIST" }],
-    }),
-    getRoleDeletionRequests: build.query<RbacRoleDeletionRequest[], void>({
-      query: () => "roles/deletion-requests",
-      transformResponse: (response) =>
-        parseApiListResponseDataSafe<RbacRoleDeletionRequest>(
-          response,
-          "getRoleDeletionRequests",
-        ),
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.map(({ id }) => ({
-                type: "RoleDeletionRequest" as const,
-                id,
-              })),
-              { type: "RoleDeletionRequest", id: "LIST" },
-            ]
-          : [{ type: "RoleDeletionRequest", id: "LIST" }],
-    }),
-    approveRoleDeletionRequest: build.mutation<void, { requestId: string }>({
-      query: ({ requestId }) => ({
-        url: `roles/deletion-requests/${requestId}/approve`,
-        method: "POST",
-      }),
-      invalidatesTags: [
-        { type: "RoleDeletionRequest", id: "LIST" },
-        { type: "Role", id: "LIST" },
-        { type: "User", id: "LIST" },
-      ],
-    }),
-    rejectRoleDeletionRequest: build.mutation<
-      void,
-      { requestId: string; reason?: string }
-    >({
-      query: ({ requestId, reason }) => ({
-        url: `roles/deletion-requests/${requestId}/reject`,
-        method: "POST",
-        body: { reason },
-      }),
-      invalidatesTags: [{ type: "RoleDeletionRequest", id: "LIST" }],
     }),
   }),
 });
@@ -402,8 +334,4 @@ export const {
   useGetUserRolesQuery,
   useLazyGetUserRolesQuery,
   useSetUserRolesMutation,
-  useCreateRoleDeletionRequestMutation,
-  useGetRoleDeletionRequestsQuery,
-  useApproveRoleDeletionRequestMutation,
-  useRejectRoleDeletionRequestMutation,
 } = rbacApi;
