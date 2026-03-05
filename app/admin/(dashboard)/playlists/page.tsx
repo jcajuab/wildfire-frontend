@@ -64,6 +64,12 @@ import type {
 
 const PLAYLIST_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
 const PLAYLIST_SORT_VALUES = ["recent", "name"] as const;
+const isPlaylistRenderableContent = (
+  content: Content,
+): content is Content & { readonly type: "IMAGE" | "VIDEO" | "PDF" } =>
+  content.type === "IMAGE" ||
+  content.type === "VIDEO" ||
+  content.type === "PDF";
 
 interface NewPlaylistPayload {
   readonly name: string;
@@ -130,8 +136,13 @@ export default function PlaylistsPage(): ReactElement {
     () => (playlistsData?.items ?? []).map(mapBackendPlaylistBase),
     [playlistsData?.items],
   );
-  const availableContent = useMemo<Content[]>(
-    () => (contentData?.items ?? []).map(mapBackendContentToContent),
+  const availableContent = useMemo<
+    Array<Content & { readonly type: "IMAGE" | "VIDEO" | "PDF" }>
+  >(
+    () =>
+      (contentData?.items ?? [])
+        .map(mapBackendContentToContent)
+        .filter(isPlaylistRenderableContent),
     [contentData?.items],
   );
 

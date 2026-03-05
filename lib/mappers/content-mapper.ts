@@ -18,6 +18,8 @@ export function mapBackendContentToContent(item: BackendContent): Content {
     width: item.width,
     height: item.height,
     duration: item.duration,
+    flashMessage: item.flashMessage ?? null,
+    flashTone: item.flashTone ?? null,
     status: item.status,
     createdAt: item.createdAt,
     createdBy: {

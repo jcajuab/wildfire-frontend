@@ -60,6 +60,7 @@ export const ContentCard = memo(function ContentCard({
   const isPdfRoot = content.type === "PDF" && content.kind === "ROOT";
   const isPdfPageItem = displayMode === "pdf-page-item";
   const canTogglePdfRoot = isPdfRoot && isPdfRootExpandable;
+  const canDownloadFile = onDownload && content.type !== "FLASH";
   const pageLabel =
     content.pageNumber !== null ? `Page ${content.pageNumber}` : null;
   const rootPageCount =
@@ -230,7 +231,7 @@ export const ContentCard = memo(function ContentCard({
               <IconEye className="size-4" />
               View Details
             </DropdownMenuItem>
-            {onDownload ? (
+            {canDownloadFile ? (
               <DropdownMenuItem onClick={() => onDownload(content)}>
                 <IconDownload className="size-4" />
                 Download File

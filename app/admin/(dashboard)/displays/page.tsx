@@ -35,6 +35,9 @@ import {
   notifyApiError,
 } from "@/lib/api/get-api-error-message";
 import {
+  useActivateDisplayEmergencyMutation,
+  useDeactivateDisplayEmergencyMutation,
+  useGetRuntimeOverridesQuery,
   useCreateDisplayGroupMutation,
   useGetDisplayGroupsQuery,
   useGetDisplaysQuery,
@@ -43,6 +46,7 @@ import {
   useUpdateDisplayMutation,
 } from "@/lib/api/displays-api";
 import { getBaseUrl } from "@/lib/api/base-query";
+import { useListContentQuery } from "@/lib/api/content-api";
 import { getNextDisplayGroupColorIndex } from "@/lib/display-group-colors";
 import {
   collapseDisplayGroupWhitespace,
@@ -79,6 +83,22 @@ export default function DisplaysPage(): ReactElement {
     refetchOnReconnect: true,
   });
   const { data: displayGroupsData } = useGetDisplayGroupsQuery();
+  const { data: runtimeOverrides } = useGetRuntimeOverridesQuery(undefined, {
+    pollingInterval: 5_000,
+    skip: !canReadDisplays,
+  });
+  const globalEmergencyActive =
+    runtimeOverrides?.globalEmergency.active ?? false;
+  const { data: emergencyAssets } = useListContentQuery(
+    {
+      page: 1,
+      pageSize: 100,
+      status: "READY",
+      sortBy: "createdAt",
+      sortDirection: "desc",
+    },
+    { skip: !canUpdateDisplay },
+  );
   const loadErrorMessage = getApiErrorMessage(
     error,
     "Failed to load displays. Check your connection and permissions.",
@@ -112,6 +132,8 @@ export default function DisplaysPage(): ReactElement {
   const [setDisplayGroups] = useSetDisplayGroupsMutation();
   const [createDisplayGroup] = useCreateDisplayGroupMutation();
   const [unregisterDisplay] = useUnregisterDisplayMutation();
+  const [activateDisplayEmergency] = useActivateDisplayEmergencyMutation();
+  const [deactivateDisplayEmergency] = useDeactivateDisplayEmergencyMutation();
   const deferredSearch = useDeferredValue(search);
 
   useEffect(() => {
@@ -180,6 +202,23 @@ export default function DisplaysPage(): ReactElement {
     }
     return [...outputNames].sort((left, right) => left.localeCompare(right));
   }, [displays]);
+
+  const emergencyContentOptions = useMemo(
+    () =>
+      (emergencyAssets?.items ?? [])
+        .filter(
+          (asset) =>
+            asset.kind === "ROOT" &&
+            (asset.type === "IMAGE" ||
+              asset.type === "VIDEO" ||
+              asset.type === "PDF"),
+        )
+        .map((asset) => ({
+          id: asset.id,
+          title: asset.title,
+        })),
+    [emergencyAssets?.items],
+  );
 
   const handleStatusFilterChange = useCallback(
     (value: DisplayStatusFilter) => {
@@ -278,6 +317,30 @@ export default function DisplaysPage(): ReactElement {
     setIsEditDialogOpen(true);
   }, []);
 
+  const handleActivateDisplayEmergency = useCallback(
+    async (display: Display) => {
+      try {
+        await activateDisplayEmergency({ displayId: display.id }).unwrap();
+        toast.success(`Emergency mode activated for "${display.name}".`);
+      } catch (error) {
+        notifyApiError(error, "Failed to activate emergency mode.");
+      }
+    },
+    [activateDisplayEmergency],
+  );
+
+  const handleDeactivateDisplayEmergency = useCallback(
+    async (display: Display) => {
+      try {
+        await deactivateDisplayEmergency({ displayId: display.id }).unwrap();
+        toast.success(`Emergency mode stopped for "${display.name}".`);
+      } catch (error) {
+        notifyApiError(error, "Failed to stop emergency mode.");
+      }
+    },
+    [deactivateDisplayEmergency],
+  );
+
   const handleSaveDisplay = useCallback(
     async (display: Display): Promise<boolean> => {
       const [screenWidthRaw, screenHeightRaw] = display.resolution.split("x");
@@ -301,6 +364,7 @@ export default function DisplaysPage(): ReactElement {
             display.displayOutput === "Not available"
               ? null
               : display.displayOutput,
+          emergencyContentId: display.emergencyContentId,
           screenWidth,
           screenHeight,
         }).unwrap();
@@ -509,6 +573,15 @@ export default function DisplaysPage(): ReactElement {
                   canDeleteDisplay ? handleUnregisterDisplay : undefined
                 }
                 onEditDisplay={canUpdateDisplay ? handleEditDisplay : undefined}
+                onActivateEmergency={
+                  canUpdateDisplay ? handleActivateDisplayEmergency : undefined
+                }
+                onDeactivateEmergency={
+                  canUpdateDisplay
+                    ? handleDeactivateDisplayEmergency
+                    : undefined
+                }
+                isGlobalEmergencyActive={globalEmergencyActive}
               />
             )}
           </div>
@@ -541,6 +614,7 @@ export default function DisplaysPage(): ReactElement {
       <EditDisplayDialog
         display={selectedDisplay}
         existingGroups={displayGroupsData?.items ?? []}
+        emergencyContentOptions={emergencyContentOptions}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSave={handleSaveDisplay}

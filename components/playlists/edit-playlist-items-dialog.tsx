@@ -44,11 +44,15 @@ import type {
   PlaylistItemContent,
 } from "@/types/playlist";
 
+type PlaylistSelectableContent = Content & {
+  readonly type: PlaylistItemContent["type"];
+};
+
 /** Local mutable copy of a playlist item used during editing. */
 interface DraftItem {
   /** Original backend item ID, or a `draft-*` prefix for newly added items. */
   readonly id: string;
-  readonly content: Content | PlaylistItemContent;
+  readonly content: PlaylistSelectableContent | PlaylistItemContent;
   duration: number;
   order: number;
 }
@@ -155,7 +159,7 @@ interface EditPlaylistItemsDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly playlist: Playlist;
-  readonly availableContent: readonly Content[];
+  readonly availableContent: readonly PlaylistSelectableContent[];
   readonly onSave: (playlistId: string, diff: PlaylistItemsDiff) => void;
   readonly isSaving?: boolean;
 }
@@ -190,7 +194,7 @@ export function EditPlaylistItemsDialog({
     }),
   );
 
-  const handleAddContent = useCallback((content: Content) => {
+  const handleAddContent = useCallback((content: PlaylistSelectableContent) => {
     const newItem: DraftItem = {
       id: `draft-${Date.now()}-${content.id}`,
       content,

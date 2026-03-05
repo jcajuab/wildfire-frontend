@@ -45,6 +45,10 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Content } from "@/types/content";
 import type { PlaylistItem } from "@/types/playlist";
 
+type PlaylistSelectableContent = Content & {
+  readonly type: PlaylistItem["content"]["type"];
+};
+
 interface NewPlaylistDraft {
   readonly name: string;
   readonly description: string | null;
@@ -56,7 +60,7 @@ interface CreatePlaylistDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onCreate: (playlist: NewPlaylistDraft) => void;
-  readonly availableContent: readonly Content[];
+  readonly availableContent: readonly PlaylistSelectableContent[];
 }
 
 interface PlaylistFormData {
@@ -66,7 +70,7 @@ interface PlaylistFormData {
 
 interface DraftPlaylistItem {
   readonly id: string;
-  readonly content: Content;
+  readonly content: PlaylistSelectableContent;
   readonly duration: number;
   readonly order: number;
 }
@@ -182,7 +186,7 @@ export function CreatePlaylistDialog({
     }),
   );
 
-  const handleAddContent = useCallback((content: Content) => {
+  const handleAddContent = useCallback((content: PlaylistSelectableContent) => {
     const newItem: DraftPlaylistItem = {
       id: `draft-${Date.now()}-${content.id}`,
       content,

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent, DragEvent, ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { IconEye, IconPlus, IconUpload } from "@tabler/icons-react";
 import { toast } from "sonner";
 
@@ -21,6 +21,13 @@ import { ContentStatusTabs } from "@/components/content/content-status-tabs";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
   Dialog,
   DialogContent,
   DialogFooter,
@@ -29,6 +36,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
@@ -37,18 +52,22 @@ import {
 } from "@/hooks/use-query-state";
 import {
   type BackendContentJob,
+  useActivateFlashContentMutation,
+  useGetActiveFlashContentQuery,
   contentApi,
   useDeleteContentMutation,
   useLazyGetContentJobQuery,
+  useLazyGetContentFileUrlQuery,
   useLazyListContentQuery,
   useListContentQuery,
   useReplaceContentFileMutation,
   useSetContentExclusionMutation,
+  useStopActiveFlashContentMutation,
   useUploadContentMutation,
   useUpdateContentMutation,
-  useLazyGetContentFileUrlQuery,
 } from "@/lib/api/content-api";
 import { getBaseUrl } from "@/lib/api/base-query";
+import { useGetDisplaysQuery } from "@/lib/api/displays-api";
 import {
   getApiErrorMessage,
   notifyApiError,
@@ -61,7 +80,7 @@ import type { StatusFilter } from "@/components/content/content-status-tabs";
 import type { Content, ContentSortField } from "@/types/content";
 
 const CONTENT_STATUS_VALUES = ["all", "PROCESSING", "READY", "FAILED"] as const;
-const CONTENT_TYPE_VALUES = ["all", "IMAGE", "VIDEO", "PDF"] as const;
+const CONTENT_TYPE_VALUES = ["all", "IMAGE", "VIDEO", "PDF", "FLASH"] as const;
 const CONTENT_SORT_VALUES = ["createdAt", "title", "fileSize", "type"] as const;
 const CONTENT_JOB_WAIT_TIMEOUT_MS = 5 * 60 * 1000;
 const CONTENT_PAGES_SHEET_PAGE_SIZE = 100;
@@ -490,6 +509,7 @@ export default function ContentPage(): ReactElement {
   const canUpdateContent = useCan("content:update");
   const canDeleteContent = useCan("content:delete");
   const canDownloadContent = useCan("content:read");
+  const canReadDisplays = useCan("displays:read");
   const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(
     "status",
     "all",
@@ -515,6 +535,14 @@ export default function ContentPage(): ReactElement {
   const [contentToEdit, setContentToEdit] = useState<Content | null>(null);
   const [contentToDelete, setContentToDelete] = useState<Content | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [flashMessage, setFlashMessage] = useState("");
+  const [flashTone, setFlashTone] = useState<"INFO" | "WARNING" | "CRITICAL">(
+    "INFO",
+  );
+  const [flashDurationSeconds, setFlashDurationSeconds] = useState("60");
+  const [flashTargetDisplayId, setFlashTargetDisplayId] = useState<
+    string | null
+  >(null);
   const pdfExpandMode: PdfExpandMode = DEFAULT_PDF_EXPAND_MODE;
   const [expandedPdfParentIds, setExpandedPdfParentIds] = useState<string[]>(
     [],
@@ -541,11 +569,53 @@ export default function ContentPage(): ReactElement {
   const [replaceContentFile] = useReplaceContentFileMutation();
   const [getContentFileUrl] = useLazyGetContentFileUrlQuery();
   const [getContentJob] = useLazyGetContentJobQuery();
+  const { data: displaysData } = useGetDisplaysQuery(undefined, {
+    skip: !canReadDisplays,
+  });
+  const { data: activeFlashData, isFetching: isLoadingActiveFlash } =
+    useGetActiveFlashContentQuery(undefined, {
+      skip: !canDownloadContent,
+      pollingInterval: 5_000,
+    });
+  const [activateFlashContent, { isLoading: isActivatingFlash }] =
+    useActivateFlashContentMutation();
+  const [stopActiveFlashContent, { isLoading: isStoppingFlash }] =
+    useStopActiveFlashContentMutation();
 
   const visibleContents = useMemo(
     () => (data?.items ?? []).map(mapBackendContentToContent),
     [data?.items],
   );
+  const flashDisplayOptions = useMemo(
+    () =>
+      (displaysData?.items ?? [])
+        .map((display) => ({
+          id: display.id,
+          name: display.name,
+        }))
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    [displaysData?.items],
+  );
+  const activeFlashDisplayName = useMemo(() => {
+    if (!activeFlashData) {
+      return null;
+    }
+    const targetId = activeFlashData.activation.targetDisplayId;
+    return (
+      flashDisplayOptions.find((display) => display.id === targetId)?.name ??
+      "Unknown display"
+    );
+  }, [activeFlashData, flashDisplayOptions]);
+
+  useEffect(() => {
+    if (flashTargetDisplayId !== null) {
+      return;
+    }
+    const firstDisplayId = flashDisplayOptions[0]?.id ?? null;
+    if (firstDisplayId) {
+      setFlashTargetDisplayId(firstDisplayId);
+    }
+  }, [flashDisplayOptions, flashTargetDisplayId]);
 
   const loadPageBatch = useCallback(
     async (input: { parentId: string; page: number; append: boolean }) => {
@@ -868,6 +938,59 @@ export default function ContentPage(): ReactElement {
     },
     [getContentFileUrl],
   );
+  const parsedFlashDuration = Number.parseInt(flashDurationSeconds, 10);
+  const isFlashDurationValid =
+    Number.isInteger(parsedFlashDuration) &&
+    parsedFlashDuration >= 5 &&
+    parsedFlashDuration <= 600;
+  const canSubmitFlash =
+    canUpdateContent &&
+    flashTargetDisplayId != null &&
+    flashMessage.trim().length > 0 &&
+    isFlashDurationValid &&
+    !isActivatingFlash;
+
+  const handleActivateFlash = useCallback(async () => {
+    if (!canSubmitFlash || flashTargetDisplayId == null) {
+      return;
+    }
+
+    try {
+      const activeId = activeFlashData?.activation.id;
+      await activateFlashContent({
+        message: flashMessage.trim(),
+        targetDisplayId: flashTargetDisplayId,
+        durationSeconds: parsedFlashDuration,
+        tone: flashTone,
+        conflictDecision: activeId ? "replace" : undefined,
+        expectedActiveActivationId: activeId,
+      }).unwrap();
+      toast.success(
+        activeId
+          ? "Flash content replaced and activated."
+          : "Flash content activated.",
+      );
+    } catch (error) {
+      notifyApiError(error, "Failed to activate flash content.");
+    }
+  }, [
+    activeFlashData?.activation.id,
+    activateFlashContent,
+    canSubmitFlash,
+    flashMessage,
+    flashTargetDisplayId,
+    parsedFlashDuration,
+    flashTone,
+  ]);
+
+  const handleStopFlash = useCallback(async () => {
+    try {
+      await stopActiveFlashContent({}).unwrap();
+      toast.success("Flash content stopped.");
+    } catch (error) {
+      notifyApiError(error, "Failed to stop flash content.");
+    }
+  }, [stopActiveFlashContent]);
 
   if (isLoading) {
     return (
@@ -920,6 +1043,166 @@ export default function ContentPage(): ReactElement {
 
       <DashboardPage.Body>
         <DashboardPage.Content>
+          <div className="shrink-0 border-b border-border bg-muted/10 px-6 py-4 sm:px-8">
+            <Card className="border-primary/20">
+              <CardHeader className="gap-1 pb-3">
+                <CardTitle className="text-base">Flash Content</CardTitle>
+                <CardDescription>
+                  Sends a marquee overlay to one display without interrupting
+                  schedule playback. Policy: triggering while active replaces
+                  the current flash item.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="flash-message">Message</Label>
+                    <Textarea
+                      id="flash-message"
+                      value={flashMessage}
+                      onChange={(event) => setFlashMessage(event.target.value)}
+                      placeholder="Type the alert text to scroll on-screen..."
+                      maxLength={240}
+                      disabled={!canUpdateContent}
+                      aria-describedby="flash-message-help"
+                    />
+                    <p
+                      id="flash-message-help"
+                      className="text-xs text-muted-foreground"
+                    >
+                      {flashMessage.length}/240 characters
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="flash-target-display">
+                        Target Display
+                      </Label>
+                      <Select
+                        value={flashTargetDisplayId ?? "__none__"}
+                        onValueChange={(value) =>
+                          setFlashTargetDisplayId(
+                            value === "__none__" ? null : value,
+                          )
+                        }
+                        disabled={!canUpdateContent}
+                      >
+                        <SelectTrigger id="flash-target-display">
+                          <SelectValue placeholder="Select display" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">
+                            Select display
+                          </SelectItem>
+                          {flashDisplayOptions.map((display) => (
+                            <SelectItem key={display.id} value={display.id}>
+                              {display.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="flash-tone">Tone</Label>
+                      <Select
+                        value={flashTone}
+                        onValueChange={(value) =>
+                          setFlashTone(value as "INFO" | "WARNING" | "CRITICAL")
+                        }
+                        disabled={!canUpdateContent}
+                      >
+                        <SelectTrigger id="flash-tone">
+                          <SelectValue placeholder="Select tone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="INFO">Info</SelectItem>
+                          <SelectItem value="WARNING">Warning</SelectItem>
+                          <SelectItem value="CRITICAL">Critical</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="flash-duration-seconds">
+                        Duration (seconds)
+                      </Label>
+                      <Input
+                        id="flash-duration-seconds"
+                        type="number"
+                        min={5}
+                        max={600}
+                        value={flashDurationSeconds}
+                        onChange={(event) =>
+                          setFlashDurationSeconds(event.target.value)
+                        }
+                        disabled={!canUpdateContent}
+                      />
+                      {!isFlashDurationValid ? (
+                        <p className="text-xs text-destructive">
+                          Duration must be between 5 and 600 seconds.
+                        </p>
+                      ) : null}
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        void handleActivateFlash();
+                      }}
+                      disabled={!canSubmitFlash}
+                    >
+                      {isActivatingFlash
+                        ? "Activating..."
+                        : activeFlashData
+                          ? "Replace Active Flash"
+                          : "Activate Flash"}
+                    </Button>
+                  </div>
+                </div>
+
+                <div
+                  className="rounded-md border border-border bg-muted/20 p-3 text-sm"
+                  aria-live="polite"
+                >
+                  {isLoadingActiveFlash ? (
+                    <p className="text-muted-foreground">
+                      Checking active flash…
+                    </p>
+                  ) : activeFlashData ? (
+                    <div className="space-y-2">
+                      <p className="font-medium text-foreground">
+                        Active: {activeFlashData.activation.tone} for{" "}
+                        {activeFlashDisplayName}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {activeFlashData.activation.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Ends at{" "}
+                        {new Date(
+                          activeFlashData.activation.endsAt,
+                        ).toLocaleString()}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          void handleStopFlash();
+                        }}
+                        disabled={isStoppingFlash || !canUpdateContent}
+                      >
+                        {isStoppingFlash ? "Stopping..." : "Stop Flash"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      No flash content is currently active.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
             <ContentStatusTabs
               value={statusFilter}

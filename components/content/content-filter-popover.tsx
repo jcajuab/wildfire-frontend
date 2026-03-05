@@ -34,6 +34,7 @@ const typeOptions: readonly {
   { value: "IMAGE", label: "Images" },
   { value: "VIDEO", label: "Videos" },
   { value: "PDF", label: "Documents" },
+  { value: "FLASH", label: "Flash Text" },
 ] as const;
 
 export function ContentFilterPopover({

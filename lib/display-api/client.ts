@@ -49,6 +49,23 @@ export interface DisplayManifest {
   readonly runtimeSettings: {
     readonly scrollPxPerSecond: number;
   };
+  readonly playback: {
+    readonly mode: "SCHEDULE" | "EMERGENCY";
+    readonly emergency: {
+      readonly source: "DISPLAY" | "DEFAULT";
+      readonly startedAt: string | null;
+      readonly isGlobal: boolean;
+      readonly content: ManifestItem["content"];
+    } | null;
+    readonly flash: {
+      readonly activationId: string;
+      readonly targetDisplayId: string;
+      readonly message: string;
+      readonly tone: "INFO" | "WARNING" | "CRITICAL";
+      readonly startedAt: string;
+      readonly endsAt: string;
+    } | null;
+  };
   readonly items: readonly ManifestItem[];
 }
 

@@ -169,6 +169,9 @@ export function AddDisplayDialog({
       macAddress: data.macAddress,
       displayOutput: data.selectedOutput,
       resolution: data.selectedResolution,
+      emergencyContentId: null,
+      localEmergencyActive: false,
+      localEmergencyStartedAt: null,
       groups,
       nowPlaying: null,
     });

@@ -13,6 +13,9 @@ interface DisplayGridProps {
   readonly onViewPage: (display: Display) => void;
   readonly onUnregisterDisplay?: (display: Display) => void;
   readonly onEditDisplay?: (display: Display) => void;
+  readonly onActivateEmergency?: (display: Display) => void;
+  readonly onDeactivateEmergency?: (display: Display) => void;
+  readonly isGlobalEmergencyActive?: boolean;
 }
 
 export function DisplayGrid({
@@ -21,6 +24,9 @@ export function DisplayGrid({
   onViewPage,
   onUnregisterDisplay,
   onEditDisplay,
+  onActivateEmergency,
+  onDeactivateEmergency,
+  isGlobalEmergencyActive = false,
 }: DisplayGridProps): ReactElement {
   if (items.length === 0) {
     return (
@@ -42,6 +48,9 @@ export function DisplayGrid({
           onViewPage={onViewPage}
           onUnregisterDisplay={onUnregisterDisplay}
           onEditDisplay={onEditDisplay}
+          onActivateEmergency={onActivateEmergency}
+          onDeactivateEmergency={onDeactivateEmergency}
+          isGlobalEmergencyActive={isGlobalEmergencyActive}
         />
       ))}
     </div>

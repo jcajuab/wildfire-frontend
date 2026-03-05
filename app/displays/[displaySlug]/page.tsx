@@ -3,7 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { getBaseUrl } from "@/lib/api/base-query";
 import {
   createAuthChallenge,
@@ -28,6 +34,24 @@ import { useMounted } from "@/hooks/use-mounted";
 const POLL_MS = 60_000;
 const HEARTBEAT_MS = 30_000;
 const DEFAULT_SCROLL_PX_PER_SECOND = 24;
+const FLASH_SPEED_CHAR_MULTIPLIER = 0.24;
+const FLASH_MIN_SECONDS = 12;
+const FLASH_MAX_SECONDS = 45;
+
+type FlashTone = "INFO" | "WARNING" | "CRITICAL";
+
+const FLASH_TONE_CLASSNAME: Record<FlashTone, string> = {
+  INFO: "border-cyan-300/70 bg-cyan-900/70 text-cyan-50",
+  WARNING: "border-amber-300/70 bg-amber-900/70 text-amber-50",
+  CRITICAL: "border-red-300/70 bg-red-900/75 text-red-50",
+};
+
+const formatRuntimeTimestamp = (timestamp: string | null): string | null => {
+  if (!timestamp) {
+    return null;
+  }
+  return formatTimeOfDay(timestamp);
+};
 
 const getViewport = () => ({
   width: window.innerWidth,
@@ -69,6 +93,10 @@ export default function DisplayRuntimePage() {
   const lastPlaylistVersionRef = useRef<string | null>(null);
   const currentIndexRef = useRef(0);
   const currentItem = manifest?.items[currentIndex] ?? null;
+  const playback = manifest?.playback ?? null;
+  const emergencyPlayback = playback?.emergency ?? null;
+  const isEmergencyModeActive = playback?.mode === "EMERGENCY";
+  const activeFlash = playback?.mode === "SCHEDULE" ? playback.flash : null;
   const scrollPxPerSecond =
     manifest?.runtimeSettings.scrollPxPerSecond ?? DEFAULT_SCROLL_PX_PER_SECOND;
   const baseUrl = getBaseUrl();
@@ -271,6 +299,30 @@ export default function DisplayRuntimePage() {
     };
   }, [currentItem, measuredHeightByItemId, overflowExtraSeconds, viewport]);
 
+  const flashMarqueeText = useMemo(() => {
+    if (!activeFlash) {
+      return null;
+    }
+    const toneLabel = activeFlash.tone.toUpperCase();
+    return `${toneLabel} • ${activeFlash.message}`;
+  }, [activeFlash]);
+
+  const flashMarqueeStyle = useMemo(() => {
+    if (!flashMarqueeText) {
+      return undefined;
+    }
+    const estimatedSeconds = Math.round(
+      flashMarqueeText.length * FLASH_SPEED_CHAR_MULTIPLIER,
+    );
+    const durationSeconds = Math.min(
+      FLASH_MAX_SECONDS,
+      Math.max(FLASH_MIN_SECONDS, estimatedSeconds),
+    );
+    return {
+      "--wildfire-flash-duration": `${durationSeconds}s`,
+    } as CSSProperties;
+  }, [flashMarqueeText]);
+
   if (!isRegistrationResolved) {
     return (
       <main className="relative min-h-screen bg-black text-white">
@@ -305,6 +357,21 @@ export default function DisplayRuntimePage() {
       {errorMessage ? (
         <div className="absolute right-2 top-2 z-10 rounded bg-destructive/85 px-2 py-1 text-xs text-destructive-foreground">
           {errorMessage}
+        </div>
+      ) : null}
+      {isEmergencyModeActive && emergencyPlayback ? (
+        <div
+          className="absolute left-1/2 top-2 z-20 -translate-x-1/2 rounded-md border border-red-300/80 bg-red-950/90 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-red-50 shadow-lg"
+          role="status"
+          aria-live="assertive"
+        >
+          Emergency Active
+          <span className="ml-2 font-normal normal-case text-red-100">
+            {emergencyPlayback.isGlobal ? "Global" : "Local"}
+            {emergencyPlayback.startedAt
+              ? ` • ${formatRuntimeTimestamp(emergencyPlayback.startedAt)}`
+              : ""}
+          </span>
         </div>
       ) : null}
 
@@ -352,6 +419,35 @@ export default function DisplayRuntimePage() {
           </div>
         </div>
       )}
+      {activeFlash && flashMarqueeText ? (
+        <div
+          className={`pointer-events-none absolute inset-x-0 bottom-0 z-20 border-t px-3 py-2 ${FLASH_TONE_CLASSNAME[activeFlash.tone]}`}
+          role="status"
+          aria-live={activeFlash.tone === "CRITICAL" ? "assertive" : "polite"}
+          aria-label={`${activeFlash.tone} flash message`}
+        >
+          <div className="relative overflow-hidden whitespace-nowrap">
+            <div
+              className="flex min-w-max items-center gap-10 pr-10 text-sm font-semibold tracking-wide [animation:flash-marquee_var(--wildfire-flash-duration)_linear_infinite] motion-reduce:[animation:none]"
+              style={flashMarqueeStyle}
+            >
+              <span>{flashMarqueeText}</span>
+              <span aria-hidden="true">{flashMarqueeText}</span>
+              <span aria-hidden="true">{flashMarqueeText}</span>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      <style jsx>{`
+        @keyframes flash-marquee {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-33.33%);
+          }
+        }
+      `}</style>
     </main>
   );
 }

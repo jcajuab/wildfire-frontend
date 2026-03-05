@@ -17,6 +17,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { DisplayGroup } from "@/lib/api/displays-api";
 import {
   dedupeDisplayGroupNames,
@@ -27,6 +34,10 @@ import type { Display } from "@/types/display";
 interface EditDisplayDialogProps {
   readonly display: Display | null;
   readonly existingGroups: readonly DisplayGroup[];
+  readonly emergencyContentOptions?: readonly {
+    readonly id: string;
+    readonly title: string;
+  }[];
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onSave: (display: Display) => Promise<boolean>;
@@ -40,6 +51,7 @@ interface EditFormData {
   readonly macAddress: string;
   readonly selectedOutput: string | null;
   readonly selectedResolution: string;
+  readonly emergencyContentId: string | null;
   readonly groups: readonly string[];
 }
 
@@ -74,6 +86,7 @@ function createInitialFormData(display: Display): EditFormData {
     selectedOutput:
       display.displayOutput === "Not available" ? null : display.displayOutput,
     selectedResolution: display.resolution,
+    emergencyContentId: display.emergencyContentId,
     groups: display.groups.map((group) => group.name),
   };
 }
@@ -81,6 +94,10 @@ function createInitialFormData(display: Display): EditFormData {
 interface EditDisplayFormProps {
   readonly display: Display;
   readonly existingGroups: readonly DisplayGroup[];
+  readonly emergencyContentOptions?: readonly {
+    readonly id: string;
+    readonly title: string;
+  }[];
   readonly onClose: () => void;
   readonly onSave: (display: Display) => Promise<boolean>;
   readonly canManageGroups: boolean;
@@ -94,6 +111,7 @@ interface EditDisplayFormProps {
 function EditDisplayForm({
   display,
   existingGroups,
+  emergencyContentOptions = [],
   onClose,
   onSave,
   canManageGroups,
@@ -143,6 +161,7 @@ function EditDisplayForm({
       macAddress: formData.macAddress,
       displayOutput: formData.selectedOutput ?? "Not available",
       resolution: resolutionForSave,
+      emergencyContentId: formData.emergencyContentId,
       groups,
     };
 
@@ -334,6 +353,35 @@ function EditDisplayForm({
         </div>
 
         <div className="flex flex-col gap-1.5">
+          <Label htmlFor="edit-emergency-content">Emergency Content</Label>
+          <Select
+            value={formData.emergencyContentId ?? "__none__"}
+            onValueChange={(value) =>
+              setFormData((prev) => ({
+                ...prev,
+                emergencyContentId: value === "__none__" ? null : value,
+              }))
+            }
+            disabled={isSaving}
+          >
+            <SelectTrigger id="edit-emergency-content">
+              <SelectValue placeholder="Select emergency content" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">None</SelectItem>
+              {emergencyContentOptions.map((asset) => (
+                <SelectItem key={asset.id} value={asset.id}>
+                  {asset.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Assign a READY image, video, or PDF for emergency override mode.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="edit-resolution">Resolution</Label>
           <Input
             id="edit-resolution"
@@ -439,6 +487,7 @@ function EditDisplayForm({
 export function EditDisplayDialog({
   display,
   existingGroups,
+  emergencyContentOptions = [],
   open,
   onOpenChange,
   onSave,
@@ -457,6 +506,7 @@ export function EditDisplayDialog({
           key={display.id}
           display={display}
           existingGroups={existingGroups}
+          emergencyContentOptions={emergencyContentOptions}
           onClose={handleClose}
           onSave={onSave}
           canManageGroups={canManageGroups}

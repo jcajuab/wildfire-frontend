@@ -20,6 +20,9 @@ export interface Display {
   readonly screenHeight: number | null;
   readonly outputType: string | null;
   readonly orientation: "LANDSCAPE" | "PORTRAIT" | null;
+  readonly emergencyContentId?: string | null;
+  readonly localEmergencyActive?: boolean;
+  readonly localEmergencyStartedAt?: string | null;
   readonly lastSeenAt: string | null;
   readonly status: "PROCESSING" | "READY" | "LIVE" | "DOWN";
   readonly nowPlaying?: {
@@ -49,6 +52,7 @@ export interface UpdateDisplayRequest {
   readonly screenHeight?: number | null;
   readonly outputType?: string | null;
   readonly orientation?: "LANDSCAPE" | "PORTRAIT" | null;
+  readonly emergencyContentId?: string | null;
 }
 
 export interface DisplayGroup {
@@ -79,6 +83,24 @@ export interface DisplayRegistrationAttemptRotateResponse {
   readonly expiresAt: string;
 }
 
+export interface DisplayRuntimeFlashOverride {
+  readonly active: boolean;
+  readonly activationId: string;
+  readonly targetDisplayId: string;
+  readonly message: string;
+  readonly tone: "INFO" | "WARNING" | "CRITICAL";
+  readonly startedAt: string;
+  readonly endsAt: string;
+}
+
+export interface DisplayRuntimeOverrides {
+  readonly globalEmergency: {
+    readonly active: boolean;
+    readonly startedAt: string | null;
+  };
+  readonly flash: DisplayRuntimeFlashOverride | null;
+}
+
 const PAGE_SIZE = 100;
 const MAX_PAGES = 100;
 
@@ -95,7 +117,7 @@ const buildResponseParseError = (scope: string, error: unknown) => ({
 export const displaysApi = createApi({
   reducerPath: "displaysApi",
   baseQuery,
-  tagTypes: ["Display", "DisplayGroup"],
+  tagTypes: ["Display", "DisplayGroup", "RuntimeOverrides"],
   endpoints: (build) => ({
     getDisplays: build.query<DisplaysListResponse, void>({
       async queryFn(_arg, _api, _extraOptions, baseQueryFn) {
@@ -182,6 +204,69 @@ export const displaysApi = createApi({
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Display", id: "LIST" },
         { type: "Display", id },
+      ],
+    }),
+    getRuntimeOverrides: build.query<DisplayRuntimeOverrides, void>({
+      query: () => "displays/runtime-overrides",
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<DisplayRuntimeOverrides>(
+          response,
+          "getRuntimeOverrides",
+        ),
+      providesTags: [{ type: "RuntimeOverrides", id: "GLOBAL" }],
+    }),
+    activateGlobalEmergency: build.mutation<void, { reason?: string } | void>({
+      query: (body) => ({
+        url: "displays/runtime-overrides/emergency/activate",
+        method: "POST",
+        body: body ?? {},
+      }),
+      invalidatesTags: [
+        { type: "RuntimeOverrides", id: "GLOBAL" },
+        { type: "Display", id: "LIST" },
+      ],
+    }),
+    deactivateGlobalEmergency: build.mutation<void, { reason?: string } | void>(
+      {
+        query: (body) => ({
+          url: "displays/runtime-overrides/emergency/deactivate",
+          method: "POST",
+          body: body ?? {},
+        }),
+        invalidatesTags: [
+          { type: "RuntimeOverrides", id: "GLOBAL" },
+          { type: "Display", id: "LIST" },
+        ],
+      },
+    ),
+    activateDisplayEmergency: build.mutation<
+      void,
+      { displayId: string; reason?: string }
+    >({
+      query: ({ displayId, reason }) => ({
+        url: `displays/${displayId}/emergency/activate`,
+        method: "POST",
+        body: { reason },
+      }),
+      invalidatesTags: (_result, _error, { displayId }) => [
+        { type: "RuntimeOverrides", id: "GLOBAL" },
+        { type: "Display", id: "LIST" },
+        { type: "Display", id: displayId },
+      ],
+    }),
+    deactivateDisplayEmergency: build.mutation<
+      void,
+      { displayId: string; reason?: string }
+    >({
+      query: ({ displayId, reason }) => ({
+        url: `displays/${displayId}/emergency/deactivate`,
+        method: "POST",
+        body: { reason },
+      }),
+      invalidatesTags: (_result, _error, { displayId }) => [
+        { type: "RuntimeOverrides", id: "GLOBAL" },
+        { type: "Display", id: "LIST" },
+        { type: "Display", id: displayId },
       ],
     }),
     getDisplayGroups: build.query<DisplayGroupsListResponse, void>({
@@ -317,6 +402,11 @@ export const {
   useGetDisplayQuery,
   useLazyGetDisplayQuery,
   useUpdateDisplayMutation,
+  useGetRuntimeOverridesQuery,
+  useActivateGlobalEmergencyMutation,
+  useDeactivateGlobalEmergencyMutation,
+  useActivateDisplayEmergencyMutation,
+  useDeactivateDisplayEmergencyMutation,
   useGetDisplayGroupsQuery,
   useCreateDisplayGroupMutation,
   useUpdateDisplayGroupMutation,

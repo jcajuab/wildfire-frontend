@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  IconAlertTriangle,
   IconCalendarEvent,
   IconDeviceTv,
   IconDotsVertical,
@@ -18,6 +19,7 @@ import {
 import Image from "next/image";
 import type { CSSProperties, ComponentType, ReactElement } from "react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import {
   Sidebar,
@@ -31,6 +33,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +42,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useMounted } from "@/hooks/use-mounted";
 import { useAuth } from "@/context/auth-context";
+import {
+  useActivateGlobalEmergencyMutation,
+  useDeactivateGlobalEmergencyMutation,
+  useGetRuntimeOverridesQuery,
+} from "@/lib/api/displays-api";
 import {
   getRoutesBySection,
   isPathMatch,
@@ -115,6 +123,19 @@ export function AppSidebar(): ReactElement {
   const { user, logout, can, isInitialized } = useAuth();
   const mounted = useMounted();
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
+  const canReadDisplays = isInitialized && can("displays:read");
+  const canUpdateDisplays = isInitialized && can("displays:update");
+  const { data: runtimeOverrides } = useGetRuntimeOverridesQuery(undefined, {
+    pollingInterval: 5_000,
+    skip: !canReadDisplays,
+  });
+  const [activateGlobalEmergency, { isLoading: isActivatingEmergency }] =
+    useActivateGlobalEmergencyMutation();
+  const [deactivateGlobalEmergency, { isLoading: isDeactivatingEmergency }] =
+    useDeactivateGlobalEmergencyMutation();
+  const isGlobalEmergencyActive =
+    runtimeOverrides?.globalEmergency.active ?? false;
+  const isEmergencyBusy = isActivatingEmergency || isDeactivatingEmergency;
 
   const coreNavItems = useMemo(() => {
     return isInitialized
@@ -152,6 +173,27 @@ export function AppSidebar(): ReactElement {
     "--sidebar-ring": "var(--primary-foreground)",
   };
 
+  const handleGlobalEmergencyAction = async () => {
+    if (!canUpdateDisplays || isEmergencyBusy) {
+      return;
+    }
+    try {
+      if (isGlobalEmergencyActive) {
+        await deactivateGlobalEmergency({}).unwrap();
+        toast.success("Global emergency mode stopped.");
+      } else {
+        await activateGlobalEmergency({}).unwrap();
+        toast.success("Global emergency mode activated.");
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update global emergency mode.",
+      );
+    }
+  };
+
   return (
     <Sidebar
       variant="floating"
@@ -169,6 +211,55 @@ export function AppSidebar(): ReactElement {
       </SidebarHeader>
 
       <SidebarContent>
+        {canReadDisplays ? (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-primary-foreground/70">
+              CONTROL
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <div className="space-y-2 rounded-md border border-primary-foreground/20 bg-primary-foreground/8 p-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-primary-foreground">
+                      Global Emergency
+                    </p>
+                    <p className="text-xs text-primary-foreground/80">
+                      {isGlobalEmergencyActive
+                        ? "Active on all displays"
+                        : "Inactive"}
+                    </p>
+                  </div>
+                  <IconAlertTriangle
+                    className={`size-4 shrink-0 ${
+                      isGlobalEmergencyActive
+                        ? "text-amber-200"
+                        : "text-primary-foreground/70"
+                    }`}
+                    aria-hidden="true"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={isGlobalEmergencyActive ? "secondary" : "outline"}
+                  className="h-8 w-full text-xs"
+                  onClick={() => {
+                    void handleGlobalEmergencyAction();
+                  }}
+                  disabled={!canUpdateDisplays || isEmergencyBusy}
+                  aria-pressed={isGlobalEmergencyActive}
+                >
+                  {isEmergencyBusy
+                    ? "Updating..."
+                    : isGlobalEmergencyActive
+                      ? "Stop Emergency"
+                      : "Start Emergency"}
+                </Button>
+              </div>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
+
         {isReadyNavigationSectionVisible(coreNavItems) ? (
           <SidebarGroup>
             <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-primary-foreground/70">

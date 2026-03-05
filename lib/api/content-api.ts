@@ -4,11 +4,12 @@ import {
   parseApiResponseDataSafe,
 } from "@/lib/api/contracts";
 import { baseQuery } from "@/lib/api/base-query";
+import type { FlashTone } from "@/types/content";
 
 export interface BackendContent {
   readonly id: string;
   readonly title: string;
-  readonly type: "IMAGE" | "VIDEO" | "PDF";
+  readonly type: "IMAGE" | "VIDEO" | "PDF" | "FLASH";
   readonly kind: "ROOT" | "PAGE";
   readonly status: "PROCESSING" | "READY" | "FAILED";
   readonly thumbnailUrl?: string;
@@ -22,6 +23,8 @@ export interface BackendContent {
   readonly width: number | null;
   readonly height: number | null;
   readonly duration: number | null;
+  readonly flashMessage: string | null;
+  readonly flashTone: FlashTone | null;
   readonly createdAt: string;
   readonly createdBy: {
     readonly id: string;
@@ -59,7 +62,7 @@ export interface ContentListQuery {
   readonly pageSize?: number;
   readonly parentId?: string;
   readonly status?: "PROCESSING" | "READY" | "FAILED";
-  readonly type?: "IMAGE" | "VIDEO" | "PDF";
+  readonly type?: "IMAGE" | "VIDEO" | "PDF" | "FLASH";
   readonly search?: string;
   readonly sortBy?: "createdAt" | "title" | "fileSize" | "type" | "pageNumber";
   readonly sortDirection?: "asc" | "desc";
@@ -76,10 +79,46 @@ export interface ReplaceContentFileRequest {
   readonly title?: string;
 }
 
+export interface BackendFlashActivation {
+  readonly id: string;
+  readonly contentId: string;
+  readonly targetDisplayId: string;
+  readonly message: string;
+  readonly tone: FlashTone;
+  readonly status: "ACTIVE" | "STOPPED" | "EXPIRED";
+  readonly startedAt: string;
+  readonly endsAt: string;
+  readonly stoppedAt: string | null;
+  readonly stoppedReason: string | null;
+  readonly createdById: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly replacementCount: number;
+}
+
+export interface BackendFlashActivationResponse {
+  readonly content: BackendContent;
+  readonly activation: BackendFlashActivation;
+  readonly replacedActivation?: BackendFlashActivation | null;
+}
+
+export interface ActivateFlashContentRequest {
+  readonly message: string;
+  readonly targetDisplayId: string;
+  readonly durationSeconds: number;
+  readonly tone: FlashTone;
+  readonly conflictDecision?: "prompt" | "replace" | "keep";
+  readonly expectedActiveActivationId?: string;
+}
+
+export interface StopFlashContentRequest {
+  readonly reason?: string;
+}
+
 export const contentApi = createApi({
   reducerPath: "contentApi",
   baseQuery,
-  tagTypes: ["Content", "ContentJob"],
+  tagTypes: ["Content", "ContentJob", "Flash"],
   endpoints: (build) => ({
     listContent: build.query<
       BackendContentListResponse,
@@ -134,6 +173,53 @@ export const contentApi = createApi({
       providesTags: (_result, _error, id) => [
         { type: "ContentJob" as const, id },
       ],
+    }),
+    getActiveFlashContent: build.query<
+      BackendFlashActivationResponse | null,
+      void
+    >({
+      query: () => "content/flash/active",
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendFlashActivationResponse | null>(
+          response,
+          "getActiveFlashContent",
+        ),
+      providesTags: [{ type: "Flash", id: "ACTIVE" }],
+    }),
+    activateFlashContent: build.mutation<
+      BackendFlashActivationResponse,
+      ActivateFlashContentRequest
+    >({
+      query: (body) => ({
+        url: "content/flash/activate",
+        method: "POST",
+        body,
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendFlashActivationResponse>(
+          response,
+          "activateFlashContent",
+        ),
+      invalidatesTags: [
+        { type: "Flash", id: "ACTIVE" },
+        { type: "Content", id: "LIST" },
+      ],
+    }),
+    stopActiveFlashContent: build.mutation<
+      BackendFlashActivation,
+      StopFlashContentRequest | void
+    >({
+      query: (body) => ({
+        url: "content/flash/active/stop",
+        method: "POST",
+        body: body ?? {},
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendFlashActivation>(
+          response,
+          "stopActiveFlashContent",
+        ),
+      invalidatesTags: [{ type: "Flash", id: "ACTIVE" }],
     }),
     uploadContent: build.mutation<
       ContentIngestionAcceptedResponse,
@@ -264,6 +350,9 @@ export const {
   useLazyListContentQuery,
   useGetContentQuery,
   useGetContentJobQuery,
+  useGetActiveFlashContentQuery,
+  useActivateFlashContentMutation,
+  useStopActiveFlashContentMutation,
   useUploadContentMutation,
   useDeleteContentMutation,
   useUpdateContentMutation,
