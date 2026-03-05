@@ -30,13 +30,10 @@ import { useAuth } from "@/context/auth-context";
 import {
   changePassword,
   deleteCurrentUser,
-  getDisplayRuntimeSettings,
   updateCurrentUserProfile,
-  updateDisplayRuntimeSettings,
   uploadAvatar,
 } from "@/lib/api-client";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
-import { useCan } from "@/hooks/use-can";
 import { toast } from "sonner";
 
 const timezones = [
@@ -93,19 +90,10 @@ export default function SettingsPage(): ReactElement {
   const [profilePictureError, setProfilePictureError] = useState<string | null>(
     null,
   );
-  const [runtimeSettingsError, setRuntimeSettingsError] = useState<
-    string | null
-  >(null);
   const [editingField, setEditingField] = useState<
     "firstName" | "lastName" | null
   >(null);
-  const [scrollPxPerSecond, setScrollPxPerSecond] = useState("24");
   const [isSavingTimezone, setIsSavingTimezone] = useState(false);
-  const [isLoadingRuntimeSettings, setIsLoadingRuntimeSettings] =
-    useState(false);
-  const [isSavingRuntimeSettings, setIsSavingRuntimeSettings] = useState(false);
-  const canReadRuntimeSettings = useCan("settings:read");
-  const canUpdateRuntimeSettings = useCan("settings:update");
   const avatarUrl = user?.avatarUrl ?? null;
   const sectionTitleClass = "text-base font-semibold tracking-tight";
 
@@ -118,32 +106,6 @@ export default function SettingsPage(): ReactElement {
       lastNameInputRef.current?.focus();
     }
   }, [editingField]);
-
-  useEffect(() => {
-    if (!canReadRuntimeSettings) return;
-    let cancelled = false;
-    setIsLoadingRuntimeSettings(true);
-    void getDisplayRuntimeSettings()
-      .then((result) => {
-        if (cancelled) return;
-        setScrollPxPerSecond(String(result.scrollPxPerSecond));
-      })
-      .catch((error) => {
-        if (cancelled) return;
-        const message = getApiErrorMessage(
-          error,
-          "Failed to load display runtime settings.",
-        );
-        toast.error(message);
-      })
-      .finally(() => {
-        if (cancelled) return;
-        setIsLoadingRuntimeSettings(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [canReadRuntimeSettings]);
 
   const handleChangeProfilePicture = (): void => {
     setProfilePictureError(null);
@@ -308,34 +270,6 @@ export default function SettingsPage(): ReactElement {
     } catch (err) {
       const message = getApiErrorMessage(err, "Failed to delete account.");
       toast.error(message);
-    }
-  };
-
-  const handleSaveRuntimeSettings = async (): Promise<void> => {
-    if (!canUpdateRuntimeSettings) return;
-    setRuntimeSettingsError(null);
-    const parsed = Number.parseInt(scrollPxPerSecond, 10);
-    if (!Number.isInteger(parsed) || parsed < 1 || parsed > 200) {
-      setRuntimeSettingsError(
-        "Auto-scroll speed must be an integer between 1 and 200.",
-      );
-      return;
-    }
-    setIsSavingRuntimeSettings(true);
-    try {
-      const result = await updateDisplayRuntimeSettings({
-        scrollPxPerSecond: parsed,
-      });
-      setScrollPxPerSecond(String(result.scrollPxPerSecond));
-      toast.success("Runtime auto-scroll setting updated.");
-    } catch (error) {
-      const message = getApiErrorMessage(
-        error,
-        "Failed to update runtime auto-scroll setting.",
-      );
-      toast.error(message);
-    } finally {
-      setIsSavingRuntimeSettings(false);
     }
   };
 
@@ -521,43 +455,6 @@ export default function SettingsPage(): ReactElement {
                   </Select>
                 </div>
 
-                {canReadRuntimeSettings ? (
-                  <>
-                    <div className="text-sm text-muted-foreground">
-                      Auto Scroll
-                    </div>
-                    <div className="w-full">
-                      <Input
-                        id="runtime-scroll-speed"
-                        type="number"
-                        min={1}
-                        max={200}
-                        value={scrollPxPerSecond}
-                        onChange={(e) => setScrollPxPerSecond(e.target.value)}
-                        disabled={
-                          isLoadingRuntimeSettings ||
-                          isSavingRuntimeSettings ||
-                          !canUpdateRuntimeSettings
-                        }
-                        className="w-fit min-w-48"
-                        onBlur={() => {
-                          void handleSaveRuntimeSettings();
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            void handleSaveRuntimeSettings();
-                          }
-                        }}
-                      />
-                      {runtimeSettingsError ? (
-                        <p className="text-xs text-destructive">
-                          {runtimeSettingsError}
-                        </p>
-                      ) : null}
-                    </div>
-                  </>
-                ) : null}
               </div>
             </section>
 

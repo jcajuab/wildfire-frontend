@@ -5,7 +5,7 @@ export type SidebarSection = "core" | "manage";
 
 export interface DashboardRouteReadPermissionEntry {
   readonly path: string;
-  readonly permission: PermissionType;
+  readonly permission?: PermissionType;
   readonly title: string;
   readonly match: RouteMatchMode;
   readonly section: SidebarSection;
@@ -82,7 +82,6 @@ const MANAGE_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
     },
     {
       path: "/admin/settings",
-      permission: "settings:read",
       title: "Settings",
       match: "exact",
       section: "manage",
@@ -164,7 +163,7 @@ export const getFirstPermittedAdminRoute = (
   hasPermission: AdminRoutePermissionPredicate,
 ): string | null => {
   const first = DASHBOARD_ROUTE_READ_ENTRIES.find((entry) =>
-    hasPermission(entry.permission),
+    entry.permission == null ? true : hasPermission(entry.permission),
   );
   return first?.path ?? null;
 };

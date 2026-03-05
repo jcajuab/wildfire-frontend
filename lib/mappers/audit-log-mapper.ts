@@ -73,8 +73,7 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
   "displays.group.delete": "Deleted display group",
   "displays.group.set": "Updated display groups",
   "displays.registration-code.create": "Created display registration code",
-  "settings.displayRuntime.read": "Viewed display runtime settings",
-  "settings.displayRuntime.update": "Updated display runtime settings",
+
   "rbac.user.create": "Created user",
   "rbac.user.update": "Updated user",
   "rbac.user.delete": "Deleted user",

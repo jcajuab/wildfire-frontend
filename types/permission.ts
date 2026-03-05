@@ -5,8 +5,7 @@ export type PermissionResource =
   | "displays"
   | "users"
   | "roles"
-  | "audit"
-  | "settings";
+  | "audit";
 
 export type PermissionAction =
   | "read"

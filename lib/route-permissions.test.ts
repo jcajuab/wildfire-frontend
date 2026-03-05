@@ -17,16 +17,14 @@ describe("getFirstPermittedAdminRoute", () => {
     expect(actual).toBe("/admin/logs");
   });
 
-  test("returns the single permitted route", () => {
-    const actual = getFirstPermittedAdminRoute(
-      (permission) => permission === "settings:read",
-    );
-    expect(actual).toBe("/admin/settings");
+  test("returns the first route when all permissions are allowed", () => {
+    const actual = getFirstPermittedAdminRoute(() => true);
+    expect(actual).toBe("/admin/displays");
   });
 
-  test("returns null when no route is permitted", () => {
+  test("falls back to account settings when no read permissions are allowed", () => {
     const actual = getFirstPermittedAdminRoute(() => false);
-    expect(actual).toBeNull();
+    expect(actual).toBe("/admin/settings");
   });
 
   test("returns first route for root-style permission logic", () => {

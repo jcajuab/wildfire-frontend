@@ -330,40 +330,6 @@ export interface CreateInvitationResponse {
   readonly inviteUrl?: string;
 }
 
-export interface DisplayRuntimeSettingsResponse {
-  readonly scrollPxPerSecond: number;
-}
-
-/** GET /settings/display-runtime. Requires settings:read permission. */
-export async function getDisplayRuntimeSettings(): Promise<DisplayRuntimeSettingsResponse> {
-  const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/settings/display-runtime`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      ...getDevOnlyRequestHeaders(),
-    },
-  });
-  return parseApiPayload<DisplayRuntimeSettingsResponse>(response);
-}
-
-/** PATCH /settings/display-runtime. Requires settings:update permission. */
-export async function updateDisplayRuntimeSettings(payload: {
-  scrollPxPerSecond: number;
-}): Promise<DisplayRuntimeSettingsResponse> {
-  const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/settings/display-runtime`, {
-    method: "PATCH",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...getDevOnlyRequestHeaders(),
-    },
-    body: JSON.stringify(payload),
-  });
-  return parseApiPayload<DisplayRuntimeSettingsResponse>(response);
-}
-
 /** POST /auth/invitations. Requires users:create permission. */
 export async function createInvitation(input: {
   email: string;

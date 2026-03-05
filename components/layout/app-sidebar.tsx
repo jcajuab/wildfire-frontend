@@ -52,7 +52,7 @@ interface NavItem {
   readonly title: string;
   readonly href: string;
   readonly icon: ComponentType<{ className?: string }>;
-  readonly permission: PermissionType;
+  readonly permission: PermissionType | undefined;
   readonly match: DashboardRouteReadPermissionEntry["match"];
 }
 
@@ -82,7 +82,9 @@ function resolveNavItems(
   can: (permission: PermissionType) => boolean,
 ): readonly NavItem[] {
   return entries
-    .filter((entry) => can(entry.permission))
+    .filter((entry) =>
+      entry.permission == null ? true : can(entry.permission),
+    )
     .map((entry) => ({
       title: entry.title,
       href: entry.path,
@@ -125,7 +127,7 @@ export function AppSidebar(): ReactElement {
       ? resolveNavItems(getRoutesBySection("manage"), can)
       : [];
   }, [can, isInitialized]);
-  const canAccessSettings = isInitialized && can("settings:read");
+  const canAccessSettings = isInitialized;
   const homeRoute = useMemo(
     () =>
       isInitialized
