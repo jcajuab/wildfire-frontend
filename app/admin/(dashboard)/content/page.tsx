@@ -29,13 +29,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
@@ -43,18 +36,25 @@ import {
   useQueryStringState,
 } from "@/hooks/use-query-state";
 import {
+  type BackendContentJob,
+  contentApi,
   useDeleteContentMutation,
+  useLazyGetContentJobQuery,
+  useLazyListContentQuery,
   useListContentQuery,
   useReplaceContentFileMutation,
+  useSetContentExclusionMutation,
   useUploadContentMutation,
   useUpdateContentMutation,
   useLazyGetContentFileUrlQuery,
 } from "@/lib/api/content-api";
+import { getBaseUrl } from "@/lib/api/base-query";
 import {
   getApiErrorMessage,
   notifyApiError,
 } from "@/lib/api/get-api-error-message";
 import { formatContentStatus, formatFileSize } from "@/lib/formatters";
+import { useAppDispatch } from "@/lib/hooks";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import type { TypeFilter } from "@/components/content/content-filter-popover";
 import type { StatusFilter } from "@/components/content/content-status-tabs";
@@ -63,6 +63,178 @@ import type { Content, ContentSortField } from "@/types/content";
 const CONTENT_STATUS_VALUES = ["all", "PROCESSING", "READY", "FAILED"] as const;
 const CONTENT_TYPE_VALUES = ["all", "IMAGE", "VIDEO", "PDF"] as const;
 const CONTENT_SORT_VALUES = ["createdAt", "title", "fileSize", "type"] as const;
+const CONTENT_JOB_WAIT_TIMEOUT_MS = 5 * 60 * 1000;
+const CONTENT_PAGES_SHEET_PAGE_SIZE = 100;
+const DEFAULT_PDF_EXPAND_MODE = "single" as const;
+type PdfExpandMode = "single" | "multi";
+
+interface PageCollectionState {
+  readonly items: readonly Content[];
+  readonly total: number;
+  readonly page: number;
+  readonly isLoading: boolean;
+  readonly isLoadingMore: boolean;
+  readonly errorMessage: string | null;
+}
+
+const EMPTY_PAGE_COLLECTION: PageCollectionState = {
+  items: [],
+  total: 0,
+  page: 0,
+  isLoading: false,
+  isLoadingMore: false,
+  errorMessage: null,
+};
+
+const mergePageItems = (
+  existingItems: readonly Content[],
+  incomingItems: readonly Content[],
+): readonly Content[] => {
+  const merged = [...existingItems];
+  for (const item of incomingItems) {
+    const index = merged.findIndex((existing) => existing.id === item.id);
+    if (index === -1) {
+      merged.push(item);
+      continue;
+    }
+    merged[index] = item;
+  }
+  return merged.sort((left, right) => {
+    const leftPage = left.pageNumber ?? 0;
+    const rightPage = right.pageNumber ?? 0;
+    if (leftPage !== rightPage) {
+      return leftPage - rightPage;
+    }
+    return left.createdAt.localeCompare(right.createdAt);
+  });
+};
+
+const buildContentJobStreamUrl = (jobId: string): string => {
+  const baseUrl = getBaseUrl();
+  if (baseUrl === "") {
+    return `/api/v1/content-jobs/${encodeURIComponent(jobId)}/events`;
+  }
+  return `${baseUrl}/content-jobs/${encodeURIComponent(jobId)}/events`;
+};
+
+const waitForContentJob = async (input: {
+  jobId: string;
+  fetchJob: (jobId: string) => Promise<BackendContentJob>;
+}): Promise<BackendContentJob> => {
+  return new Promise<BackendContentJob>((resolve, reject) => {
+    const streamUrl = buildContentJobStreamUrl(input.jobId);
+    const source = new EventSource(streamUrl, { withCredentials: true });
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    let settled = false;
+
+    const cleanup = () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+      source.close();
+    };
+    const settleFromTerminalJob = (job: BackendContentJob): boolean => {
+      if (job.status !== "SUCCEEDED" && job.status !== "FAILED") {
+        return false;
+      }
+      if (settled) {
+        return true;
+      }
+      settled = true;
+      cleanup();
+      if (job.status === "FAILED") {
+        reject(new Error(job.errorMessage ?? "Content ingestion failed"));
+        return true;
+      }
+      resolve(job);
+      return true;
+    };
+    const rejectError = (error: unknown) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      reject(error);
+    };
+
+    const handleJobPayload = (payload: unknown) => {
+      if (payload == null || typeof payload !== "object") {
+        return;
+      }
+      const maybeJob = payload as Partial<BackendContentJob>;
+      const maybeJobId =
+        typeof maybeJob.id === "string"
+          ? maybeJob.id
+          : typeof (payload as { jobId?: unknown }).jobId === "string"
+            ? String((payload as { jobId?: unknown }).jobId)
+            : null;
+      if (
+        typeof maybeJob.status !== "string" ||
+        maybeJobId === null ||
+        typeof maybeJob.contentId !== "string"
+      ) {
+        return;
+      }
+      settleFromTerminalJob({
+        id: maybeJobId,
+        contentId: maybeJob.contentId,
+        operation: maybeJob.operation ?? "UPLOAD",
+        status: maybeJob.status as BackendContentJob["status"],
+        errorMessage: maybeJob.errorMessage ?? null,
+        createdById: maybeJob.createdById ?? "",
+        createdAt: maybeJob.createdAt ?? "",
+        updatedAt: maybeJob.updatedAt ?? "",
+        startedAt: maybeJob.startedAt ?? null,
+        completedAt: maybeJob.completedAt ?? null,
+      });
+    };
+
+    timeout = setTimeout(() => {
+      rejectError(new Error("Timed out waiting for content ingestion"));
+    }, CONTENT_JOB_WAIT_TIMEOUT_MS);
+
+    source.addEventListener("snapshot", (event) => {
+      try {
+        handleJobPayload(JSON.parse(event.data));
+      } catch {
+        // Ignore malformed events; terminal fallback is timeout polling.
+      }
+    });
+    source.addEventListener("succeeded", (event) => {
+      try {
+        handleJobPayload(JSON.parse(event.data));
+      } catch {
+        void input
+          .fetchJob(input.jobId)
+          .then((job) => {
+            settleFromTerminalJob(job);
+          })
+          .catch((error) => rejectError(error));
+      }
+    });
+    source.addEventListener("failed", (event) => {
+      try {
+        handleJobPayload(JSON.parse(event.data));
+      } catch {
+        void input
+          .fetchJob(input.jobId)
+          .then((job) => {
+            settleFromTerminalJob(job);
+          })
+          .catch((error) => rejectError(error));
+      }
+    });
+    source.onerror = () => {
+      void input
+        .fetchJob(input.jobId)
+        .then((job) => {
+          settleFromTerminalJob(job);
+        })
+        .catch((error) => rejectError(error));
+    };
+  });
+};
 
 interface EditContentDialogProps {
   readonly content: Content | null;
@@ -71,7 +243,6 @@ interface EditContentDialogProps {
   readonly onSave: (input: {
     contentId: string;
     title: string;
-    status: "PROCESSING" | "READY" | "FAILED";
     file: File | null;
   }) => Promise<void>;
 }
@@ -104,7 +275,6 @@ interface EditContentDialogFormProps {
   readonly onSave: (input: {
     contentId: string;
     title: string;
-    status: "PROCESSING" | "READY" | "FAILED";
     file: File | null;
   }) => Promise<void>;
 }
@@ -115,13 +285,11 @@ function EditContentDialogForm({
   onSave,
 }: EditContentDialogFormProps): ReactElement {
   const [title, setTitle] = useState(content.title);
-  const [status, setStatus] = useState<"PROCESSING" | "READY" | "FAILED">(
-    content.status,
-  );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const canReplaceFile = content.status !== "PROCESSING";
+  const canReplaceFile =
+    content.kind === "ROOT" && content.status !== "PROCESSING";
 
   const handleFileSelect = useCallback((file: File) => {
     setSelectedFile(file);
@@ -177,24 +345,6 @@ function EditContentDialogForm({
           />
         </div>
         <div className="space-y-2">
-          <Label>Status</Label>
-          <Select
-            value={status}
-            onValueChange={(value) =>
-              setStatus(value as "PROCESSING" | "READY" | "FAILED")
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="PROCESSING">Processing</SelectItem>
-              <SelectItem value="READY">Ready</SelectItem>
-              <SelectItem value="FAILED">Failed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
           <Label>Replace File</Label>
           <p className="text-xs text-muted-foreground">
             Current file type: {content.type} ({content.mimeType || "Unknown"})
@@ -247,7 +397,9 @@ function EditContentDialogForm({
             </>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Processing content cannot be replaced right now.
+              {content.kind === "PAGE"
+                ? "Page items can be renamed but cannot replace files directly."
+                : "Processing content cannot be replaced right now."}
             </p>
           )}
         </div>
@@ -267,7 +419,6 @@ function EditContentDialogForm({
               await onSave({
                 contentId: content.id,
                 title: title.trim(),
-                status,
                 file: selectedFile,
               });
               onOpenChange(false);
@@ -338,6 +489,7 @@ function PreviewContentDialog({
 }
 
 export default function ContentPage(): ReactElement {
+  const dispatch = useAppDispatch();
   const canUpdateContent = useCan("content:update");
   const canDeleteContent = useCan("content:delete");
   const canDownloadContent = useCan("content:read");
@@ -366,6 +518,14 @@ export default function ContentPage(): ReactElement {
   const [contentToEdit, setContentToEdit] = useState<Content | null>(null);
   const [contentToDelete, setContentToDelete] = useState<Content | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const pdfExpandMode: PdfExpandMode = DEFAULT_PDF_EXPAND_MODE;
+  const [expandedPdfParentIds, setExpandedPdfParentIds] = useState<string[]>(
+    [],
+  );
+  const [pageCollectionsByParentId, setPageCollectionsByParentId] = useState<
+    Record<string, PageCollectionState>
+  >({});
+  const [updatingPageId, setUpdatingPageId] = useState<string | null>(null);
   const pageSize = 20;
   const { data, isLoading, isError, error } = useListContentQuery({
     page,
@@ -376,15 +536,80 @@ export default function ContentPage(): ReactElement {
     sortBy,
     sortDirection: "desc",
   });
+  const [triggerListContent] = useLazyListContentQuery();
   const [uploadContent] = useUploadContentMutation();
   const [deleteContent] = useDeleteContentMutation();
   const [updateContent] = useUpdateContentMutation();
+  const [setContentExclusion] = useSetContentExclusionMutation();
   const [replaceContentFile] = useReplaceContentFileMutation();
   const [getContentFileUrl] = useLazyGetContentFileUrlQuery();
+  const [getContentJob] = useLazyGetContentJobQuery();
 
   const visibleContents = useMemo(
     () => (data?.items ?? []).map(mapBackendContentToContent),
     [data?.items],
+  );
+
+  const loadPageBatch = useCallback(
+    async (input: { parentId: string; page: number; append: boolean }) => {
+      setPageCollectionsByParentId((previous) => {
+        const current = previous[input.parentId] ?? EMPTY_PAGE_COLLECTION;
+        return {
+          ...previous,
+          [input.parentId]: {
+            ...current,
+            isLoading: !input.append,
+            isLoadingMore: input.append,
+            errorMessage: null,
+          },
+        };
+      });
+
+      try {
+        const response = await triggerListContent({
+          page: input.page,
+          pageSize: CONTENT_PAGES_SHEET_PAGE_SIZE,
+          parentId: input.parentId,
+          sortBy: "pageNumber",
+          sortDirection: "asc",
+        }).unwrap();
+        const incomingItems = response.items.map(mapBackendContentToContent);
+        setPageCollectionsByParentId((previous) => {
+          const current = previous[input.parentId] ?? EMPTY_PAGE_COLLECTION;
+          return {
+            ...previous,
+            [input.parentId]: {
+              ...current,
+              items: input.append
+                ? mergePageItems(current.items, incomingItems)
+                : mergePageItems([], incomingItems),
+              total: response.total,
+              page: response.page,
+              isLoading: false,
+              isLoadingMore: false,
+              errorMessage: null,
+            },
+          };
+        });
+      } catch (error) {
+        setPageCollectionsByParentId((previous) => {
+          const current = previous[input.parentId] ?? EMPTY_PAGE_COLLECTION;
+          return {
+            ...previous,
+            [input.parentId]: {
+              ...current,
+              isLoading: false,
+              isLoadingMore: false,
+              errorMessage: getApiErrorMessage(
+                error,
+                "Failed to load PDF pages.",
+              ),
+            },
+          };
+        });
+      }
+    },
+    [triggerListContent],
   );
 
   const handleStatusFilterChange = useCallback(
@@ -422,13 +647,29 @@ export default function ContentPage(): ReactElement {
   const handleUploadFile = useCallback(
     async (name: string, file: File) => {
       try {
-        await uploadContent({ title: name, file }).unwrap();
-        toast.success("Content uploaded.");
+        const accepted = await uploadContent({ title: name, file }).unwrap();
+        toast.message("Content upload queued.");
+        void waitForContentJob({
+          jobId: accepted.job.id,
+          fetchJob: (jobId) => getContentJob(jobId).unwrap(),
+        })
+          .then(() => {
+            dispatch(
+              contentApi.util.invalidateTags([
+                { type: "Content", id: "LIST" },
+                { type: "Content", id: accepted.content.id },
+              ]),
+            );
+            toast.success("Content uploaded.");
+          })
+          .catch((error) => {
+            notifyApiError(error, "Content ingestion failed.");
+          });
       } catch (err) {
         notifyApiError(err, "Failed to upload content.");
       }
     },
-    [uploadContent],
+    [dispatch, getContentJob, uploadContent],
   );
 
   const handleEdit = useCallback((content: Content) => {
@@ -443,6 +684,175 @@ export default function ContentPage(): ReactElement {
     setContentToDelete(content);
     setIsDeleteDialogOpen(true);
   }, []);
+
+  const handleTogglePdfExpand = useCallback(
+    (content: Content) => {
+      if (
+        content.type !== "PDF" ||
+        content.kind !== "ROOT" ||
+        content.status !== "READY"
+      ) {
+        return;
+      }
+
+      const isExpanded = expandedPdfParentIds.includes(content.id);
+      if (isExpanded) {
+        setExpandedPdfParentIds((previous) =>
+          previous.filter((id) => id !== content.id),
+        );
+        return;
+      }
+
+      setExpandedPdfParentIds((previous) => {
+        if (pdfExpandMode === "single") {
+          return [content.id];
+        }
+        return [...previous, content.id];
+      });
+
+      const currentCollection = pageCollectionsByParentId[content.id];
+      const shouldLoadInitialPages =
+        !currentCollection ||
+        (currentCollection.items.length === 0 &&
+          !currentCollection.isLoading &&
+          !currentCollection.isLoadingMore) ||
+        currentCollection.errorMessage !== null;
+
+      if (shouldLoadInitialPages) {
+        void loadPageBatch({ parentId: content.id, page: 1, append: false });
+      }
+    },
+    [
+      expandedPdfParentIds,
+      loadPageBatch,
+      pageCollectionsByParentId,
+      pdfExpandMode,
+    ],
+  );
+
+  const handleLoadMorePages = useCallback(
+    async (parentId: string) => {
+      const currentCollection = pageCollectionsByParentId[parentId];
+      if (!currentCollection) {
+        await loadPageBatch({ parentId, page: 1, append: false });
+        return;
+      }
+      if (
+        currentCollection.isLoading ||
+        currentCollection.isLoadingMore ||
+        currentCollection.items.length >= currentCollection.total
+      ) {
+        return;
+      }
+      await loadPageBatch({
+        parentId,
+        page: currentCollection.page + 1,
+        append: true,
+      });
+    },
+    [loadPageBatch, pageCollectionsByParentId],
+  );
+
+  const handleRetryLoadPages = useCallback(
+    async (parentId: string) => {
+      await loadPageBatch({ parentId, page: 1, append: false });
+    },
+    [loadPageBatch],
+  );
+
+  const handleTogglePageExclusion = useCallback(
+    async (pageContent: Content, isExcluded: boolean) => {
+      const parentContentId = pageContent.parentContentId;
+      if (!parentContentId) {
+        return;
+      }
+      const previousIsExcluded = pageContent.isExcluded;
+      const previousCollection = pageCollectionsByParentId[parentContentId];
+      setUpdatingPageId(pageContent.id);
+      setPageCollectionsByParentId((previous) => {
+        const current = previous[parentContentId];
+        if (!current) {
+          return previous;
+        }
+        return {
+          ...previous,
+          [parentContentId]: {
+            ...current,
+            items: current.items.map((item) =>
+              item.id === pageContent.id ? { ...item, isExcluded } : item,
+            ),
+          },
+        };
+      });
+      try {
+        const updatedPage = mapBackendContentToContent(
+          await setContentExclusion({
+            id: pageContent.id,
+            isExcluded,
+          }).unwrap(),
+        );
+        setPageCollectionsByParentId((previous) => {
+          const current = previous[parentContentId];
+          if (!current) {
+            return previous;
+          }
+          return {
+            ...previous,
+            [parentContentId]: {
+              ...current,
+              items: current.items.map((item) =>
+                item.id === updatedPage.id ? updatedPage : item,
+              ),
+            },
+          };
+        });
+        const tags = [
+          { type: "Content" as const, id: "LIST" },
+          { type: "Content" as const, id: pageContent.id },
+        ];
+        if (parentContentId) {
+          tags.push({
+            type: "Content" as const,
+            id: parentContentId,
+          });
+        }
+        dispatch(contentApi.util.invalidateTags(tags));
+        toast.success(
+          isExcluded
+            ? "Page excluded from playback."
+            : "Page included in playback.",
+        );
+      } catch (err) {
+        setPageCollectionsByParentId((previous) => {
+          const current = previous[parentContentId];
+          if (!current) {
+            return previous;
+          }
+          if (previousCollection === undefined) {
+            return {
+              ...previous,
+              [parentContentId]: {
+                ...current,
+                items: current.items.map((item) =>
+                  item.id === pageContent.id
+                    ? { ...item, isExcluded: previousIsExcluded }
+                    : item,
+                ),
+              },
+            };
+          }
+          return {
+            ...previous,
+            [parentContentId]: previousCollection,
+          };
+        });
+        notifyApiError(err, "Failed to update page exclusion.");
+      } finally {
+        setUpdatingPageId(null);
+      }
+    },
+    [dispatch, pageCollectionsByParentId, setContentExclusion],
+  );
 
   const handleDownload = useCallback(
     async (content: Content) => {
@@ -534,6 +944,15 @@ export default function ContentPage(): ReactElement {
         <DashboardPage.Content className="pt-6">
           <ContentGrid
             items={visibleContents}
+            expandedPdfParentIds={expandedPdfParentIds}
+            pageCollectionsByParentId={pageCollectionsByParentId}
+            updatingPageId={updatingPageId}
+            onTogglePdfExpand={handleTogglePdfExpand}
+            onLoadMorePages={handleLoadMorePages}
+            onRetryLoadPages={handleRetryLoadPages}
+            onTogglePageExclusion={
+              canUpdateContent ? handleTogglePageExclusion : undefined
+            }
             onEdit={canUpdateContent ? handleEdit : undefined}
             onPreview={handlePreview}
             onDelete={canDeleteContent ? handleDelete : undefined}
@@ -563,22 +982,108 @@ export default function ContentPage(): ReactElement {
         onOpenChange={(open) => {
           if (!open) setContentToEdit(null);
         }}
-        onSave={async ({ contentId, title, status, file }) => {
+        onSave={async ({ contentId, title, file }) => {
+          const editedContent = contentToEdit;
+          const parentContentIdForRollback =
+            editedContent?.id === contentId
+              ? editedContent.parentContentId
+              : null;
+          const previousCollection = parentContentIdForRollback
+            ? pageCollectionsByParentId[parentContentIdForRollback]
+            : undefined;
+
           try {
             if (file) {
-              await replaceContentFile({
+              const accepted = await replaceContentFile({
                 id: contentId,
                 file,
                 title,
-                status,
               }).unwrap();
-              toast.success("Content file replaced.");
+              toast.message("Content replacement queued.");
+              void waitForContentJob({
+                jobId: accepted.job.id,
+                fetchJob: (jobId) => getContentJob(jobId).unwrap(),
+              })
+                .then(() => {
+                  dispatch(
+                    contentApi.util.invalidateTags([
+                      { type: "Content", id: "LIST" },
+                      { type: "Content", id: accepted.content.id },
+                    ]),
+                  );
+                  toast.success("Content file replaced.");
+                })
+                .catch((error) => {
+                  notifyApiError(
+                    error,
+                    "Content replacement ingestion failed.",
+                  );
+                });
               return;
             }
+            const parentContentId = parentContentIdForRollback;
 
-            await updateContent({ id: contentId, title, status }).unwrap();
+            if (parentContentId !== null && previousCollection) {
+              setPageCollectionsByParentId((previous) => {
+                const current = previous[parentContentId];
+                if (!current) {
+                  return previous;
+                }
+                return {
+                  ...previous,
+                  [parentContentId]: {
+                    ...current,
+                    items: current.items.map((item) =>
+                      item.id === contentId ? { ...item, title } : item,
+                    ),
+                  },
+                };
+              });
+            }
+
+            const updated = mapBackendContentToContent(
+              await updateContent({ id: contentId, title }).unwrap(),
+            );
+            const updatedParentContentId = updated.parentContentId;
+            if (updatedParentContentId) {
+              setPageCollectionsByParentId((previous) => {
+                const current = previous[updatedParentContentId];
+                if (!current) {
+                  return previous;
+                }
+                return {
+                  ...previous,
+                  [updatedParentContentId]: {
+                    ...current,
+                    items: current.items.map((item) =>
+                      item.id === updated.id ? updated : item,
+                    ),
+                  },
+                };
+              });
+            }
+            dispatch(
+              contentApi.util.invalidateTags([
+                { type: "Content", id: "LIST" },
+                { type: "Content", id: updated.id },
+                ...(updatedParentContentId !== null
+                  ? [{ type: "Content" as const, id: updatedParentContentId }]
+                  : []),
+              ]),
+            );
             toast.success("Content updated.");
           } catch (err) {
+            if (contentToEdit?.id === contentId) {
+              const parentContentId = contentToEdit.parentContentId;
+              if (parentContentId) {
+                if (previousCollection) {
+                  setPageCollectionsByParentId((previous) => ({
+                    ...previous,
+                    [parentContentId]: previousCollection,
+                  }));
+                }
+              }
+            }
             notifyApiError(
               err,
               file

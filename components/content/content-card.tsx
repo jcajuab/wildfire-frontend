@@ -1,6 +1,11 @@
 "use client";
 
-import { type ReactElement, memo } from "react";
+import {
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactElement,
+  memo,
+} from "react";
 import Image from "next/image";
 import {
   IconDotsVertical,
@@ -15,17 +20,29 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatContentStatus } from "@/lib/formatters";
+import { formatContentStatus, formatDate } from "@/lib/formatters";
 import type { Content } from "@/types/content";
+
+export type ContentCardDisplayMode = "default" | "pdf-page-item";
 
 interface ContentCardProps {
   readonly content: Content;
+  readonly displayMode?: ContentCardDisplayMode;
+  readonly isPdfRootExpandable?: boolean;
+  readonly isPdfRootExpanded?: boolean;
+  readonly onTogglePdfRootExpand?: (content: Content) => void;
+  readonly isExclusionToggleDisabled?: boolean;
+  readonly onToggleExclusion?: (
+    content: Content,
+    nextIsExcluded: boolean,
+  ) => Promise<void>;
   readonly onEdit?: (content: Content) => void;
   readonly onPreview: (content: Content) => void;
   readonly onDelete?: (content: Content) => void;
@@ -34,11 +51,30 @@ interface ContentCardProps {
 
 export const ContentCard = memo(function ContentCard({
   content,
+  displayMode = "default",
+  isPdfRootExpandable = false,
+  isPdfRootExpanded = false,
+  onTogglePdfRootExpand,
+  isExclusionToggleDisabled = false,
+  onToggleExclusion,
   onEdit,
   onPreview,
   onDelete,
   onDownload,
 }: ContentCardProps): ReactElement {
+  const isPdfRoot = content.type === "PDF" && content.kind === "ROOT";
+  const isPdfPageItem = displayMode === "pdf-page-item";
+  const canTogglePdfRoot = isPdfRoot && isPdfRootExpandable;
+  const pageLabel =
+    content.pageNumber !== null ? `Page ${content.pageNumber}` : null;
+  const rootPageCount =
+    content.pageCount === null
+      ? "Page count unknown"
+      : content.pageCount === 1
+        ? "1 page"
+        : `${content.pageCount} pages`;
+  const rootLastUpdated = formatDate(content.createdAt);
+
   const ThumbnailFallbackIcon =
     content.type === "PDF"
       ? IconFileTypePdf
@@ -46,40 +82,168 @@ export const ContentCard = memo(function ContentCard({
         ? IconVideo
         : IconPhoto;
 
+  const handleRootToggle = () => {
+    if (!canTogglePdfRoot || !onTogglePdfRootExpand) {
+      return;
+    }
+    onTogglePdfRootExpand(content);
+  };
+
+  const shouldIgnoreCardToggle = (target: EventTarget | null): boolean => {
+    if (!(target instanceof HTMLElement)) {
+      return false;
+    }
+    return Boolean(
+      target.closest(
+        "button,a,input,label,[role='menuitem'],[data-prevent-card-toggle='true']",
+      ),
+    );
+  };
+
+  const handleCardClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (!canTogglePdfRoot) {
+      return;
+    }
+    if (shouldIgnoreCardToggle(event.target)) {
+      return;
+    }
+    handleRootToggle();
+  };
+
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!canTogglePdfRoot) {
+      return;
+    }
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+    event.preventDefault();
+    handleRootToggle();
+  };
+
+  const cardClassName = [
+    "group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-220 ease-out shadow-sm",
+    canTogglePdfRoot ? "cursor-pointer focus-visible:outline-none" : "",
+    canTogglePdfRoot
+      ? "focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2"
+      : "",
+    canTogglePdfRoot && isPdfRootExpanded ? "ring-1 ring-primary/30" : "",
+    isPdfRoot ? "shadow-[0_6px_18px_-14px_rgba(15,23,42,0.55)]" : "",
+  ]
+    .filter((value) => value.length > 0)
+    .join(" ");
+
   return (
-    <div className="group flex flex-col overflow-hidden rounded-md border border-border bg-card focus-within:ring-2 focus-within:ring-ring/40 focus-within:ring-offset-2">
+    <div
+      className={cardClassName}
+      role={canTogglePdfRoot ? "button" : undefined}
+      tabIndex={canTogglePdfRoot ? 0 : undefined}
+      aria-expanded={canTogglePdfRoot ? isPdfRootExpanded : undefined}
+      aria-controls={canTogglePdfRoot ? `pdf-pages-${content.id}` : undefined}
+      aria-label={
+        canTogglePdfRoot
+          ? isPdfRootExpanded
+            ? `Collapse pages for ${content.title}`
+            : `Expand pages for ${content.title}`
+          : undefined
+      }
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+    >
       {/* Thumbnail area */}
-      <div className="flex aspect-4/3 items-center justify-center bg-muted/50">
-        {content.thumbnailUrl ? (
-          <Image
-            src={content.thumbnailUrl}
-            alt={`${content.title} preview`}
-            width={400}
-            height={300}
-            unoptimized
-            className="h-full w-full object-cover"
-          />
+      <div className="relative flex aspect-4/3 items-center justify-center bg-muted/50">
+        {isPdfRoot ? (
+          <div className="relative h-full w-full p-3">
+            <div className="absolute inset-x-8 top-4 bottom-3 rotate-6 rounded-md border border-border bg-card/80 shadow-sm" />
+            <div className="absolute inset-x-7 top-3 bottom-4 -rotate-3 rounded-md border border-border bg-card/90 shadow-sm" />
+            <div className="absolute inset-x-6 top-2 bottom-5 rounded-md border border-border bg-card shadow-sm">
+              {content.thumbnailUrl ? (
+                <Image
+                  src={content.thumbnailUrl}
+                  alt={`${content.title} preview`}
+                  width={400}
+                  height={300}
+                  unoptimized
+                  className="h-full w-full rounded-md object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <ThumbnailFallbackIcon
+                    className="size-7 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         ) : (
-          <ThumbnailFallbackIcon
-            className="size-7 text-muted-foreground"
-            aria-hidden="true"
-          />
+          <>
+            {content.thumbnailUrl ? (
+              <Image
+                src={content.thumbnailUrl}
+                alt={`${content.title} preview`}
+                width={400}
+                height={300}
+                unoptimized
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <ThumbnailFallbackIcon
+                className="size-7 text-muted-foreground"
+                aria-hidden="true"
+              />
+            )}
+          </>
         )}
       </div>
 
       {/* Content info */}
       <div className="flex items-start justify-between gap-2 p-3">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h3 className="truncate text-sm font-medium">{content.title}</h3>
-          <p className="text-xs text-muted-foreground">
-            by {content.createdBy.name}
-          </p>
+          <h3 className="truncate text-sm font-medium">
+            {isPdfPageItem && pageLabel ? pageLabel : content.title}
+          </h3>
+          {isPdfPageItem && pageLabel ? (
+            <p className="truncate text-xs text-muted-foreground">
+              {content.title}
+            </p>
+          ) : isPdfRoot ? (
+            <div className="flex min-w-0 flex-col gap-0.5 text-xs text-muted-foreground">
+              <span className="truncate">{rootPageCount}</span>
+              <span className="truncate">Updated {rootLastUpdated}</span>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              by {content.createdBy.name}
+            </p>
+          )}
           <div className="pt-1">
             <Badge variant="outline">
               {formatContentStatus(content.status)}
             </Badge>
           </div>
         </div>
+
+        {isPdfPageItem && onToggleExclusion ? (
+          <div
+            className="flex flex-col items-end gap-1"
+            data-prevent-card-toggle="true"
+          >
+            <span className="text-xs text-muted-foreground">Exclude</span>
+            <Switch
+              checked={content.isExcluded}
+              disabled={isExclusionToggleDisabled}
+              aria-label={`Exclude ${pageLabel ?? content.title} from playback`}
+              data-prevent-card-toggle="true"
+              onCheckedChange={(checked) => {
+                void onToggleExclusion(content, checked);
+              }}
+            />
+          </div>
+        ) : null}
 
         {/* Actions menu */}
         <DropdownMenu>
@@ -89,6 +253,7 @@ export const ContentCard = memo(function ContentCard({
               size="icon-sm"
               aria-label={`Actions for ${content.title}`}
               className="shrink-0"
+              data-prevent-card-toggle="true"
             >
               <IconDotsVertical className="size-4" />
             </Button>
@@ -110,7 +275,7 @@ export const ContentCard = memo(function ContentCard({
                 Download File
               </DropdownMenuItem>
             ) : null}
-            {onDelete ? (
+            {onDelete && !isPdfPageItem ? (
               <DropdownMenuItem
                 variant="destructive"
                 onClick={() => onDelete(content)}

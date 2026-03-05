@@ -3,6 +3,7 @@ import type { SortDirection } from "@/types/common";
 export type { SortDirection };
 
 export type ContentType = "IMAGE" | "VIDEO" | "PDF";
+export type ContentKind = "ROOT" | "PAGE";
 
 export type ContentStatus = "PROCESSING" | "READY" | "FAILED";
 
@@ -15,10 +16,15 @@ export interface Content {
   readonly id: string;
   readonly title: string;
   readonly type: ContentType;
+  readonly kind: ContentKind;
   readonly thumbnailUrl?: string;
   readonly mimeType: string;
   readonly fileSize: number;
   readonly checksum: string;
+  readonly parentContentId: string | null;
+  readonly pageNumber: number | null;
+  readonly pageCount: number | null;
+  readonly isExcluded: boolean;
   readonly width: number | null;
   readonly height: number | null;
   readonly duration: number | null;
@@ -34,7 +40,12 @@ export interface ContentListResponse {
   readonly total: number;
 }
 
-export type ContentSortField = "createdAt" | "title" | "fileSize" | "type";
+export type ContentSortField =
+  | "createdAt"
+  | "title"
+  | "fileSize"
+  | "type"
+  | "pageNumber";
 
 export interface ContentFilter {
   readonly status?: ContentStatus;

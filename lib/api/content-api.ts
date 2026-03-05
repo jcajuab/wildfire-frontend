@@ -9,11 +9,16 @@ export interface BackendContent {
   readonly id: string;
   readonly title: string;
   readonly type: "IMAGE" | "VIDEO" | "PDF";
+  readonly kind: "ROOT" | "PAGE";
   readonly status: "PROCESSING" | "READY" | "FAILED";
   readonly thumbnailUrl?: string;
   readonly mimeType: string;
   readonly fileSize: number;
   readonly checksum: string;
+  readonly parentContentId: string | null;
+  readonly pageNumber: number | null;
+  readonly pageCount: number | null;
+  readonly isExcluded: boolean;
   readonly width: number | null;
   readonly height: number | null;
   readonly duration: number | null;
@@ -22,6 +27,24 @@ export interface BackendContent {
     readonly id: string;
     readonly name: string | null;
   };
+}
+
+export interface BackendContentJob {
+  readonly id: string;
+  readonly contentId: string;
+  readonly operation: "UPLOAD" | "REPLACE";
+  readonly status: "QUEUED" | "PROCESSING" | "SUCCEEDED" | "FAILED";
+  readonly errorMessage: string | null;
+  readonly createdById: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly startedAt: string | null;
+  readonly completedAt: string | null;
+}
+
+export interface ContentIngestionAcceptedResponse {
+  readonly content: BackendContent;
+  readonly job: BackendContentJob;
 }
 
 export interface BackendContentListResponse {
@@ -34,10 +57,11 @@ export interface BackendContentListResponse {
 export interface ContentListQuery {
   readonly page?: number;
   readonly pageSize?: number;
+  readonly parentId?: string;
   readonly status?: "PROCESSING" | "READY" | "FAILED";
   readonly type?: "IMAGE" | "VIDEO" | "PDF";
   readonly search?: string;
-  readonly sortBy?: "createdAt" | "title" | "fileSize" | "type";
+  readonly sortBy?: "createdAt" | "title" | "fileSize" | "type" | "pageNumber";
   readonly sortDirection?: "asc" | "desc";
 }
 
@@ -50,13 +74,12 @@ export interface ReplaceContentFileRequest {
   readonly id: string;
   readonly file: File;
   readonly title?: string;
-  readonly status?: "PROCESSING" | "READY" | "FAILED";
 }
 
 export const contentApi = createApi({
   reducerPath: "contentApi",
   baseQuery,
-  tagTypes: ["Content"],
+  tagTypes: ["Content", "ContentJob"],
   endpoints: (build) => ({
     listContent: build.query<
       BackendContentListResponse,
@@ -67,6 +90,7 @@ export const contentApi = createApi({
         params: {
           page: query?.page ?? 1,
           pageSize: query?.pageSize ?? 20,
+          parentId: query?.parentId,
           status: query?.status,
           type: query?.type,
           search: query?.search,
@@ -101,9 +125,20 @@ export const contentApi = createApi({
       query: (id) => `content/${id}`,
       transformResponse: (response) =>
         parseApiResponseDataSafe<BackendContent>(response, "getContent"),
-      providesTags: (_result, _error, id) => [{ type: "Content", id }],
+      providesTags: (_result, _error, id) => [{ type: "Content" as const, id }],
     }),
-    uploadContent: build.mutation<BackendContent, UploadContentRequest>({
+    getContentJob: build.query<BackendContentJob, string>({
+      query: (id) => `content-jobs/${id}`,
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendContentJob>(response, "getContentJob"),
+      providesTags: (_result, _error, id) => [
+        { type: "ContentJob" as const, id },
+      ],
+    }),
+    uploadContent: build.mutation<
+      ContentIngestionAcceptedResponse,
+      UploadContentRequest
+    >({
       query: ({ title, file }) => {
         const formData = new FormData();
         formData.append("title", title);
@@ -115,8 +150,18 @@ export const contentApi = createApi({
         };
       },
       transformResponse: (response) =>
-        parseApiResponseDataSafe<BackendContent>(response, "uploadContent"),
-      invalidatesTags: [{ type: "Content", id: "LIST" }],
+        parseApiResponseDataSafe<ContentIngestionAcceptedResponse>(
+          response,
+          "uploadContent",
+        ),
+      invalidatesTags: (result) =>
+        result
+          ? [
+              { type: "Content", id: "LIST" },
+              { type: "Content", id: result.content.id },
+              { type: "ContentJob" as const, id: result.job.id },
+            ]
+          : [{ type: "Content", id: "LIST" }],
     }),
     deleteContent: build.mutation<void, string>({
       query: (id) => ({
@@ -132,8 +177,7 @@ export const contentApi = createApi({
       BackendContent,
       {
         readonly id: string;
-        readonly title?: string;
-        readonly status?: "PROCESSING" | "READY" | "FAILED";
+        readonly title: string;
       }
     >({
       query: ({ id, ...body }) => ({
@@ -148,18 +192,37 @@ export const contentApi = createApi({
         { type: "Content", id },
       ],
     }),
-    replaceContentFile: build.mutation<
+    setContentExclusion: build.mutation<
       BackendContent,
+      {
+        readonly id: string;
+        readonly isExcluded: boolean;
+      }
+    >({
+      query: ({ id, isExcluded }) => ({
+        url: `content/${id}/exclusion`,
+        method: "PATCH",
+        body: { isExcluded },
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendContent>(
+          response,
+          "setContentExclusion",
+        ),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Content", id: "LIST" },
+        { type: "Content", id },
+      ],
+    }),
+    replaceContentFile: build.mutation<
+      ContentIngestionAcceptedResponse,
       ReplaceContentFileRequest
     >({
-      query: ({ id, file, title, status }) => {
+      query: ({ id, file, title }) => {
         const formData = new FormData();
         formData.append("file", file);
         if (title !== undefined) {
           formData.append("title", title);
-        }
-        if (status !== undefined) {
-          formData.append("status", status);
         }
         return {
           url: `content/${id}/file`,
@@ -168,14 +231,22 @@ export const contentApi = createApi({
         };
       },
       transformResponse: (response) =>
-        parseApiResponseDataSafe<BackendContent>(
+        parseApiResponseDataSafe<ContentIngestionAcceptedResponse>(
           response,
           "replaceContentFile",
         ),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Content", id: "LIST" },
-        { type: "Content", id },
-      ],
+      invalidatesTags: (result, _error, { id }) =>
+        result
+          ? [
+              { type: "Content", id: "LIST" },
+              { type: "Content", id },
+              { type: "Content", id: result.content.id },
+              { type: "ContentJob" as const, id: result.job.id },
+            ]
+          : [
+              { type: "Content", id: "LIST" },
+              { type: "Content", id },
+            ],
     }),
     getContentFileUrl: build.query<{ downloadUrl: string }, string>({
       query: (id) => `content/${id}/file`,
@@ -190,10 +261,14 @@ export const contentApi = createApi({
 
 export const {
   useListContentQuery,
+  useLazyListContentQuery,
   useGetContentQuery,
+  useGetContentJobQuery,
   useUploadContentMutation,
   useDeleteContentMutation,
   useUpdateContentMutation,
+  useSetContentExclusionMutation,
   useReplaceContentFileMutation,
   useLazyGetContentFileUrlQuery,
+  useLazyGetContentJobQuery,
 } = contentApi;
