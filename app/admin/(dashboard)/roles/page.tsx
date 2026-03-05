@@ -13,7 +13,7 @@ import { RoleSearchInput } from "@/components/roles/role-search-input";
 import { RolesPagination } from "@/components/roles/roles-pagination";
 import { RolesTable } from "@/components/roles/roles-table";
 import { Button } from "@/components/ui/button";
-import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import { notifyApiError } from "@/lib/api/get-api-error-message";
 import { useCan } from "@/hooks/use-can";
 import {
   useQueryEnumState,
@@ -255,7 +255,7 @@ export default function RolesPage(): ReactElement {
           setDialogOpen(false);
         }
       } catch (err) {
-        toast.error(getApiErrorMessage(err, "Something went wrong"));
+        notifyApiError(err, "Something went wrong");
       }
     },
     [
@@ -414,21 +414,17 @@ export default function RolesPage(): ReactElement {
             : undefined
         }
         confirmLabel="Delete role"
+        errorFallback="Failed to delete role."
         onConfirm={async () => {
           if (!roleToDelete) return;
-          try {
-            await deleteRole(roleToDelete.id).unwrap();
-            const removedUsers = roleToDelete.usersCount ?? 0;
-            toast.success(
-              removedUsers > 0
-                ? `Deleted "${roleToDelete.name}" and removed ${removedUsers} assignment(s).`
-                : `Deleted "${roleToDelete.name}".`,
-            );
-            setRoleToDelete(null);
-          } catch (err) {
-            toast.error(getApiErrorMessage(err, "Failed to delete role"));
-            throw err;
-          }
+          await deleteRole(roleToDelete.id).unwrap();
+          const removedUsers = roleToDelete.usersCount ?? 0;
+          toast.success(
+            removedUsers > 0
+              ? `Deleted "${roleToDelete.name}" and removed ${removedUsers} assignment(s).`
+              : `Deleted "${roleToDelete.name}".`,
+          );
+          setRoleToDelete(null);
         }}
       />
     </DashboardPage.Root>

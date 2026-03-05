@@ -36,7 +36,7 @@ import {
   useQueryStringState,
 } from "@/hooks/use-query-state";
 import { useListContentQuery } from "@/lib/api/content-api";
-import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   type PlaylistListQuery,
   useAddPlaylistItemMutation,
@@ -180,7 +180,7 @@ export default function PlaylistsPage(): ReactElement {
         );
         toast.success("Playlist created.");
       } catch (err) {
-        toast.error(getApiErrorMessage(err, "Failed to create playlist."));
+        notifyApiError(err, "Failed to create playlist.");
       }
     },
     [addPlaylistItem, createPlaylist],
@@ -198,7 +198,7 @@ export default function PlaylistsPage(): ReactElement {
         const detailed = await loadPlaylist(playlist.id, true).unwrap();
         setManageItemsPlaylist(mapBackendPlaylistWithItems(detailed));
       } catch (err) {
-        toast.error(getApiErrorMessage(err, "Failed to load playlist items."));
+        notifyApiError(err, "Failed to load playlist items.");
       }
     },
     [loadPlaylist],
@@ -243,9 +243,7 @@ export default function PlaylistsPage(): ReactElement {
         toast.success("Playlist items updated.");
         setManageItemsPlaylist(null);
       } catch (err) {
-        toast.error(
-          getApiErrorMessage(err, "Failed to update playlist items."),
-        );
+        notifyApiError(err, "Failed to update playlist items.");
       }
     },
     [
@@ -392,9 +390,7 @@ export default function PlaylistsPage(): ReactElement {
                   setEditPlaylist(null);
                   toast.success("Playlist updated.");
                 } catch (err) {
-                  toast.error(
-                    getApiErrorMessage(err, "Failed to update playlist."),
-                  );
+                  notifyApiError(err, "Failed to update playlist.");
                 }
               }}
               disabled={editName.trim().length === 0}
@@ -459,16 +455,12 @@ export default function PlaylistsPage(): ReactElement {
             : undefined
         }
         confirmLabel="Delete playlist"
+        errorFallback="Failed to delete playlist."
         onConfirm={async () => {
           if (!playlistToDelete) return;
-          try {
-            await deletePlaylistMutation(playlistToDelete.id).unwrap();
-            setPlaylistToDelete(null);
-            toast.success("Playlist deleted.");
-          } catch (err) {
-            toast.error(getApiErrorMessage(err, "Failed to delete playlist."));
-            throw err;
-          }
+          await deletePlaylistMutation(playlistToDelete.id).unwrap();
+          setPlaylistToDelete(null);
+          toast.success("Playlist deleted.");
         }}
       />
     </DashboardPage.Root>

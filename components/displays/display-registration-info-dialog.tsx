@@ -2,7 +2,6 @@
 
 import type { ReactElement } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import {
   Dialog,
@@ -14,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { getBaseUrl } from "@/lib/api/base-query";
-import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   useCloseRegistrationAttemptMutation,
   useCreateRegistrationAttemptMutation,
@@ -100,9 +99,7 @@ export function DisplayRegistrationInfoDialog({
         setRegistrationCodeExpiresAt(created.expiresAt);
       } catch (err) {
         if (isCancelled) return;
-        toast.error(
-          getApiErrorMessage(err, "Failed to create registration attempt."),
-        );
+        notifyApiError(err, "Failed to create registration attempt.");
       }
     })();
 

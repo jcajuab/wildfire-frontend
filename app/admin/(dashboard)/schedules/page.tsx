@@ -22,7 +22,10 @@ import {
 } from "@/lib/api/schedules-api";
 import { useListPlaylistsQuery } from "@/lib/api/playlists-api";
 import { useCan } from "@/hooks/use-can";
-import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import {
+  getApiErrorMessage,
+  notifyApiError,
+} from "@/lib/api/get-api-error-message";
 import {
   mapBackendSchedulesToSchedules,
   mapCreateFormToScheduleRequest,
@@ -133,14 +136,14 @@ export default function SchedulesPage(): ReactElement {
         toast.success("Schedule created.");
       } catch (err) {
         if (isConflictError(err)) {
-          toast.error(SCHEDULE_CONFLICT_MESSAGE);
+          notifyApiError(err, SCHEDULE_CONFLICT_MESSAGE);
           throw err;
         }
         const message = getApiErrorMessage(
           err,
           SCHEDULE_CREATE_FALLBACK_MESSAGE,
         );
-        toast.error(message);
+        notifyApiError(err, message);
         throw err;
       }
     },
@@ -153,7 +156,7 @@ export default function SchedulesPage(): ReactElement {
         await deleteSchedule(schedule.id).unwrap();
         toast.success("Schedule deleted.");
       } catch (err) {
-        toast.error(getApiErrorMessage(err, "Failed to delete schedule."));
+        notifyApiError(err, "Failed to delete schedule.");
       }
     },
     [deleteSchedule],
@@ -168,7 +171,7 @@ export default function SchedulesPage(): ReactElement {
         toast.success("Schedule updated.");
       } catch (err) {
         const message = getApiErrorMessage(err, "Failed to update schedule.");
-        toast.error(message);
+        notifyApiError(err, message);
         throw err;
       }
     },

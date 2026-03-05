@@ -30,7 +30,10 @@ import {
   useQueryNumberState,
   useQueryStringState,
 } from "@/hooks/use-query-state";
-import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import {
+  getApiErrorMessage,
+  notifyApiError,
+} from "@/lib/api/get-api-error-message";
 import {
   useCreateDisplayGroupMutation,
   useGetDisplayGroupsQuery,
@@ -261,13 +264,8 @@ export default function DisplaysPage(): ReactElement {
     if (!displayToUnregister) {
       return;
     }
-    try {
-      await unregisterDisplay({ displayId: displayToUnregister.id }).unwrap();
-      toast.success(`"${displayToUnregister.name}" was unregistered.`);
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to unregister display."));
-      throw err;
-    }
+    await unregisterDisplay({ displayId: displayToUnregister.id }).unwrap();
+    toast.success(`"${displayToUnregister.name}" was unregistered.`);
   }, [displayToUnregister, unregisterDisplay]);
 
   const handleEditDisplay = useCallback((display: Display) => {
@@ -308,12 +306,7 @@ export default function DisplaysPage(): ReactElement {
           screenHeight,
         }).unwrap();
       } catch (updateError) {
-        toast.error(
-          `Failed to save display details: ${getApiErrorMessage(
-            updateError,
-            "Group assignments were not changed.",
-          )}`,
-        );
+        notifyApiError(updateError, "Failed to save display details.");
         return false;
       }
 
@@ -359,11 +352,9 @@ export default function DisplaysPage(): ReactElement {
           groupIds: [...nextGroupIds],
         }).unwrap();
       } catch (groupsError) {
-        toast.error(
-          `Display details were saved, but display-group assignment failed: ${getApiErrorMessage(
-            groupsError,
-            "Display details were saved, but display-group assignment failed.",
-          )}`,
+        notifyApiError(
+          groupsError,
+          "Display details were saved, but display-group assignment failed.",
         );
         return false;
       }
@@ -571,6 +562,7 @@ export default function DisplaysPage(): ReactElement {
             : "This will disconnect the display and revoke its runtime authentication key."
         }
         confirmLabel="Unregister Display"
+        errorFallback="Failed to unregister display."
         onConfirm={handleConfirmUnregisterDisplay}
       />
     </DashboardPage.Root>

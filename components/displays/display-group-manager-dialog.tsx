@@ -22,7 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   type DisplayGroup,
   useCreateDisplayGroupMutation,
@@ -119,7 +119,7 @@ export function DisplayGroupManagerDialog({
       setCreateName("");
       toast.success(`Created \"${nextName}\".`);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to create group."));
+      notifyApiError(error, "Failed to create group.");
     }
   }, [createName, createDisplayGroup, groups]);
 
@@ -161,7 +161,7 @@ export function DisplayGroupManagerDialog({
         cancelRename();
         toast.success(`Renamed group to \"${updated.name}\".`);
       } catch (error) {
-        toast.error(getApiErrorMessage(error, "Failed to rename group."));
+        notifyApiError(error, "Failed to rename group.");
       }
     },
     [cancelRename, groups, onGroupRenamed, renameName, updateDisplayGroup],
@@ -178,7 +178,7 @@ export function DisplayGroupManagerDialog({
       toast.success(`Deleted \"${deleteCandidate.name}\".`);
       setDeleteCandidate(null);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to delete group."));
+      notifyApiError(error, "Failed to delete group.");
       throw error;
     }
   }, [deleteCandidate, deleteDisplayGroup, onGroupDeleted]);

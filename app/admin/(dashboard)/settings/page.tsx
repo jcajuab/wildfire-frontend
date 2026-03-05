@@ -33,7 +33,10 @@ import {
   updateCurrentUserProfile,
   uploadAvatar,
 } from "@/lib/api-client";
-import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import {
+  getApiErrorMessage,
+  notifyApiError,
+} from "@/lib/api/get-api-error-message";
 import { toast } from "sonner";
 
 const timezones = [
@@ -144,11 +147,7 @@ export default function SettingsPage(): ReactElement {
       updateSession(response);
       toast.success("Profile picture updated.");
     } catch (err) {
-      const message = getApiErrorMessage(
-        err,
-        "Failed to upload profile picture.",
-      );
-      toast.error(message);
+      notifyApiError(err, "Failed to upload profile picture.");
     } finally {
       setIsAvatarUploading(false);
     }
@@ -185,8 +184,7 @@ export default function SettingsPage(): ReactElement {
       setSavedFirstName(nextFirstName);
       setSavedLastName(nextLastName);
     } catch (err) {
-      const message = getApiErrorMessage(err, "Failed to update profile.");
-      toast.error(message);
+      notifyApiError(err, "Failed to update profile.");
     }
   };
 
@@ -201,8 +199,7 @@ export default function SettingsPage(): ReactElement {
       updateSession(response);
     } catch (err) {
       setTimezone(previousTimezone);
-      const message = getApiErrorMessage(err, "Failed to update time zone.");
-      toast.error(message);
+      notifyApiError(err, "Failed to update time zone.");
     } finally {
       setIsSavingTimezone(false);
     }
@@ -268,8 +265,7 @@ export default function SettingsPage(): ReactElement {
       await deleteCurrentUser(token);
       await logout();
     } catch (err) {
-      const message = getApiErrorMessage(err, "Failed to delete account.");
-      toast.error(message);
+      notifyApiError(err, "Failed to delete account.");
     }
   };
 
@@ -569,6 +565,7 @@ export default function SettingsPage(): ReactElement {
         title="Delete account?"
         description={`This will permanently remove ${accountNameForDialog}. You can log out instead if you only want to end this session.`}
         confirmLabel="Delete account"
+        errorFallback="Failed to delete account."
         onConfirm={handleDeleteAccountConfirm}
       />
     </DashboardPage.Root>

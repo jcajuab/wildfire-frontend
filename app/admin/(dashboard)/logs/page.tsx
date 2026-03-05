@@ -38,7 +38,10 @@ import {
 } from "@/lib/api/audit-api";
 import { useGetDisplaysQuery } from "@/lib/api/displays-api";
 import { useGetUsersQuery } from "@/lib/api/rbac-api";
-import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import {
+  getApiErrorMessage,
+  notifyApiError,
+} from "@/lib/api/get-api-error-message";
 import {
   getResourceTypeLabel,
   getResourceTypeValueFromInput,
@@ -311,11 +314,12 @@ export default function LogsPage(): ReactElement {
     } catch (err) {
       const message = getApiErrorMessage(err, "Failed to export audit logs.");
       if (message.includes("Export limit exceeded")) {
-        toast.error(
+        notifyApiError(
+          err,
           "Export is too large for one file. Narrow your filters or date range.",
         );
       } else {
-        toast.error(message);
+        notifyApiError(err, message);
       }
     } finally {
       setIsExporting(false);

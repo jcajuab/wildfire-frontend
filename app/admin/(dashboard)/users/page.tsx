@@ -24,7 +24,7 @@ import {
   getInvitations,
   resendInvitation,
 } from "@/lib/api-client";
-import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   useQueryEnumState,
   useQueryNumberState,
@@ -184,10 +184,13 @@ export default function UsersPage(): ReactElement {
       setInvitations(latestInvitations);
     } catch (err) {
       if (err instanceof AuthApiError && err.status === 429) {
-        toast.error("Too many invite requests. Please wait and try again.");
+        notifyApiError(
+          err,
+          "Too many invite requests. Please wait and try again.",
+        );
         return;
       }
-      toast.error(getApiErrorMessage(err, "Failed to invite user(s)"));
+      notifyApiError(err, "Failed to invite user(s)");
     }
   }, []);
 
@@ -202,7 +205,7 @@ export default function UsersPage(): ReactElement {
       const list = await getInvitations();
       setInvitations(list);
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to load invitations"));
+      notifyApiError(err, "Failed to load invitations");
     } finally {
       setIsInvitationsLoading(false);
     }
@@ -222,7 +225,7 @@ export default function UsersPage(): ReactElement {
       const latestInvitations = await getInvitations();
       setInvitations(latestInvitations);
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to resend invite"));
+      notifyApiError(err, "Failed to resend invite");
     } finally {
       setResendingInvitationId(null);
     }
@@ -264,7 +267,7 @@ export default function UsersPage(): ReactElement {
         userId,
         roleIds: roleIdsToSend,
       }).catch((err) => {
-        toast.error(getApiErrorMessage(err, "Failed to update user roles"));
+        notifyApiError(err, "Failed to update user roles");
       });
     },
     [applyUserRoles, isRoot, systemRoleIds, userRolesByUserId],
@@ -288,7 +291,7 @@ export default function UsersPage(): ReactElement {
         setIsEditDialogOpen(false);
         setSelectedUser(null);
       } catch (err) {
-        toast.error(getApiErrorMessage(err, "Failed to update user"));
+        notifyApiError(err, "Failed to update user");
       }
     },
     [updateUser],
@@ -490,15 +493,11 @@ export default function UsersPage(): ReactElement {
             : undefined
         }
         confirmLabel="Remove user"
+        errorFallback="Failed to remove user"
         onConfirm={async () => {
           if (!userToRemove) return;
-          try {
-            await deleteUser(userToRemove.id).unwrap();
-            setUserToRemove(null);
-          } catch (err) {
-            toast.error(getApiErrorMessage(err, "Failed to remove user"));
-            throw err;
-          }
+          await deleteUser(userToRemove.id).unwrap();
+          setUserToRemove(null);
         }}
       />
     </DashboardPage.Root>

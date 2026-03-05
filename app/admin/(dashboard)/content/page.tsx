@@ -50,7 +50,10 @@ import {
   useUpdateContentMutation,
   useLazyGetContentFileUrlQuery,
 } from "@/lib/api/content-api";
-import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import {
+  getApiErrorMessage,
+  notifyApiError,
+} from "@/lib/api/get-api-error-message";
 import { formatContentStatus, formatFileSize } from "@/lib/formatters";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import type { TypeFilter } from "@/components/content/content-filter-popover";
@@ -422,7 +425,7 @@ export default function ContentPage(): ReactElement {
         await uploadContent({ title: name, file }).unwrap();
         toast.success("Content uploaded.");
       } catch (err) {
-        toast.error(getApiErrorMessage(err, "Failed to upload content."));
+        notifyApiError(err, "Failed to upload content.");
       }
     },
     [uploadContent],
@@ -453,7 +456,7 @@ export default function ContentPage(): ReactElement {
         link.click();
         link.remove();
       } catch (err) {
-        toast.error(getApiErrorMessage(err, "Failed to get download URL."));
+        notifyApiError(err, "Failed to get download URL.");
       }
     },
     [getContentFileUrl],
@@ -576,13 +579,11 @@ export default function ContentPage(): ReactElement {
             await updateContent({ id: contentId, title, status }).unwrap();
             toast.success("Content updated.");
           } catch (err) {
-            toast.error(
-              getApiErrorMessage(
-                err,
-                file
-                  ? "Failed to replace content file."
-                  : "Failed to update content.",
-              ),
+            notifyApiError(
+              err,
+              file
+                ? "Failed to replace content file."
+                : "Failed to update content.",
             );
             throw err;
           }
@@ -607,16 +608,12 @@ export default function ContentPage(): ReactElement {
             : undefined
         }
         confirmLabel="Delete content"
+        errorFallback="Failed to delete content."
         onConfirm={async () => {
           if (!contentToDelete) return;
-          try {
-            await deleteContent(contentToDelete.id).unwrap();
-            toast.success("Content deleted.");
-            setContentToDelete(null);
-          } catch (err) {
-            toast.error(getApiErrorMessage(err, "Failed to delete content."));
-            throw err;
-          }
+          await deleteContent(contentToDelete.id).unwrap();
+          toast.success("Content deleted.");
+          setContentToDelete(null);
         }}
       />
     </DashboardPage.Root>
