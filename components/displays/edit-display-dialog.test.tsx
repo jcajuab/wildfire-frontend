@@ -146,6 +146,37 @@ describe("EditDisplayDialog", () => {
     });
   });
 
+  test("supports arrow-key navigation for display output radios", () => {
+    render(
+      <EditDisplayDialog
+        display={makeDisplay()}
+        existingGroups={[]}
+        open={true}
+        onOpenChange={vi.fn()}
+        onSave={vi.fn(async () => true)}
+      />,
+    );
+
+    const group = screen.getByRole("radiogroup", { name: "Display output" });
+    fireEvent.keyDown(group, { key: "ArrowDown" });
+    expect(screen.getByRole("radio", { name: /HDMI-0/i })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+
+    fireEvent.keyDown(group, { key: "End" });
+    expect(screen.getByRole("radio", { name: /HDMI-1/i })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+
+    fireEvent.keyDown(group, { key: "Home" });
+    expect(screen.getByRole("radio", { name: /None/i })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+  });
+
   test("hides manage groups action without write permission", () => {
     render(
       <EditDisplayDialog

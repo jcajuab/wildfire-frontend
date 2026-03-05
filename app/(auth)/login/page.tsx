@@ -99,7 +99,7 @@ export default function LoginPage(): ReactElement {
             name="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="h-11 rounded-lg bg-white text-sm"
+            className="h-11 rounded-lg text-sm"
             autoComplete="username"
             required
           />
@@ -122,7 +122,7 @@ export default function LoginPage(): ReactElement {
             name="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="h-11 rounded-lg bg-white text-sm"
+            className="h-11 rounded-lg text-sm"
             autoComplete="current-password"
             required
           />

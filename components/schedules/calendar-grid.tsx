@@ -77,7 +77,7 @@ function ResourceWeekView({
   onScheduleClick,
 }: ResourceGridSharedProps): ReactElement {
   return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-border max-h-[calc(100vh-14rem)]">
+    <div className="flex max-h-[min(70dvh,calc(100dvh-14rem))] flex-col overflow-hidden rounded-md border border-border">
       <div className="overflow-auto">
         <div className="w-full min-w-0">
           <div
@@ -134,7 +134,7 @@ function ResourceWeekView({
                           key={event.id}
                           type="button"
                           onClick={() => onScheduleClick(schedule)}
-                          className="mb-1 block w-full overflow-hidden rounded border-l-4 border-primary bg-primary/12 px-1.5 py-1 text-left transition-colors hover:bg-primary/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                          className="mb-1 block w-full overflow-hidden rounded border-l-4 border-primary bg-primary/12 px-1.5 py-1 text-left transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           aria-label={`View schedule ${schedule.name} on ${resource.name}, ${event.timeLabel}`}
                         >
                           <span className="block truncate text-xs font-medium text-primary">
@@ -167,13 +167,13 @@ function ResourceDayView({
   const day = days[0];
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-border max-h-[calc(100vh-14rem)]">
+    <div className="flex max-h-[min(70dvh,calc(100dvh-14rem))] flex-col overflow-hidden rounded-md border border-border">
       <div className="border-b border-border px-4 py-2 text-sm font-medium">
         {formatLongDate(day)}
       </div>
 
       <div className="overflow-auto">
-        <div className="min-w-[1100px]">
+        <div className="min-w-[920px] lg:min-w-[1100px]">
           <div
             className="sticky top-0 z-30 grid border-b border-border bg-muted/30 backdrop-blur-sm"
             style={{ gridTemplateColumns: DAY_GRID_TEMPLATE }}
@@ -243,7 +243,7 @@ function ResourceDayView({
                         key={event.id}
                         type="button"
                         onClick={() => onScheduleClick(schedule)}
-                        className="absolute z-10 overflow-hidden rounded border-l-4 border-primary bg-primary/12 px-1.5 py-1 text-left transition-colors hover:bg-primary/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                        className="absolute z-10 overflow-hidden rounded border-l-4 border-primary bg-primary/12 px-1.5 py-1 text-left transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         style={{
                           left: `${startPercent}%`,
                           width: `${widthPercent}%`,

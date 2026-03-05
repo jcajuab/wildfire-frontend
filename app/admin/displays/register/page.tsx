@@ -219,8 +219,8 @@ export default function RegisterDisplayPage(): ReactElement {
   );
 
   return (
-    <main className="min-h-screen bg-white">
-      <section className="mx-auto flex min-h-screen w-full max-w-lg items-center justify-center px-6 py-10 sm:px-10">
+    <main className="min-h-svh bg-background">
+      <section className="mx-auto flex min-h-svh w-full max-w-lg items-center justify-center px-6 py-10 sm:px-10">
         <div className="w-full">
           <div className="flex flex-col items-start gap-2">
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">
@@ -271,7 +271,7 @@ export default function RegisterDisplayPage(): ReactElement {
                 onChange={updateField("registrationCode")}
                 autoComplete="off"
                 spellCheck={false}
-                className="h-11 rounded-lg bg-white text-sm"
+                className="h-11 rounded-lg text-sm"
                 required
                 maxLength={6}
               />
@@ -287,7 +287,7 @@ export default function RegisterDisplayPage(): ReactElement {
                 value={formState.displayName}
                 onChange={updateField("displayName")}
                 autoComplete="off"
-                className="h-11 rounded-lg bg-white text-sm"
+                className="h-11 rounded-lg text-sm"
                 required
               />
             </div>
@@ -303,7 +303,7 @@ export default function RegisterDisplayPage(): ReactElement {
                 onChange={updateField("displaySlug")}
                 autoComplete="off"
                 spellCheck={false}
-                className="h-11 rounded-lg bg-white text-sm"
+                className="h-11 rounded-lg text-sm"
                 required
               />
             </div>
@@ -319,7 +319,7 @@ export default function RegisterDisplayPage(): ReactElement {
                 onChange={updateField("displayOutput")}
                 autoComplete="off"
                 spellCheck={false}
-                className="h-11 rounded-lg bg-white text-sm"
+                className="h-11 rounded-lg text-sm"
                 required
               />
             </div>
@@ -337,7 +337,7 @@ export default function RegisterDisplayPage(): ReactElement {
                   value={formState.resolutionWidth}
                   onChange={updateField("resolutionWidth")}
                   autoComplete="off"
-                  className="h-11 rounded-lg bg-white text-sm"
+                  className="h-11 rounded-lg text-sm"
                   required
                 />
               </div>
@@ -354,7 +354,7 @@ export default function RegisterDisplayPage(): ReactElement {
                   value={formState.resolutionHeight}
                   onChange={updateField("resolutionHeight")}
                   autoComplete="off"
-                  className="h-11 rounded-lg bg-white text-sm"
+                  className="h-11 rounded-lg text-sm"
                   required
                 />
               </div>

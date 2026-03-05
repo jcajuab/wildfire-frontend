@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import type { KeyboardEvent, ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { IconSettings } from "@tabler/icons-react";
 
@@ -104,6 +104,14 @@ function EditDisplayForm({
   const [isSaving, setIsSaving] = useState(false);
   const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
 
+  const selectOutput = useCallback((value: string | null): void => {
+    setFormData((prev) => ({
+      ...prev,
+      selectedOutput:
+        value !== null && prev.selectedOutput === value ? null : value,
+    }));
+  }, []);
+
   const groupColorByKey = useMemo(() => {
     const map = new Map<string, number>();
     for (const group of existingGroups) {
@@ -167,6 +175,51 @@ function EditDisplayForm({
   const hasValidResolution = isUnknownResolution || hasNumericResolution;
   const canSave =
     formData.displayName.trim().length > 0 && hasValidResolution && !isSaving;
+
+  const handleOutputGroupKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>): void => {
+      if (isSaving) return;
+      const options = outputOptions;
+      if (options.length === 0) return;
+
+      const currentIndex = options.findIndex(
+        (option) => option.value === formData.selectedOutput,
+      );
+      const firstIndex = 0;
+      const lastIndex = options.length - 1;
+
+      let targetIndex: number | null = null;
+      switch (event.key) {
+        case "ArrowRight":
+        case "ArrowDown":
+          targetIndex =
+            currentIndex < 0
+              ? firstIndex
+              : Math.min(currentIndex + 1, lastIndex);
+          break;
+        case "ArrowLeft":
+        case "ArrowUp":
+          targetIndex =
+            currentIndex < 0
+              ? firstIndex
+              : Math.max(currentIndex - 1, firstIndex);
+          break;
+        case "Home":
+          targetIndex = firstIndex;
+          break;
+        case "End":
+          targetIndex = lastIndex;
+          break;
+        default:
+          return;
+      }
+
+      event.preventDefault();
+      const nextValue = options[targetIndex]?.value ?? null;
+      selectOutput(nextValue);
+    },
+    [formData.selectedOutput, isSaving, selectOutput],
+  );
 
   return (
     <>
@@ -237,23 +290,20 @@ function EditDisplayForm({
 
         <div className="flex flex-col gap-1.5">
           <Label>Display Output</Label>
-          <div className="flex flex-col gap-2">
+          <div
+            className="flex flex-col gap-2"
+            role="radiogroup"
+            aria-label="Display output"
+            onKeyDown={handleOutputGroupKeyDown}
+          >
             {outputOptions.map((option) => (
               <button
                 key={option.value ?? "none"}
                 type="button"
                 role="radio"
+                tabIndex={formData.selectedOutput === option.value ? 0 : -1}
                 aria-checked={formData.selectedOutput === option.value}
-                onClick={() =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    selectedOutput:
-                      option.value !== null &&
-                      prev.selectedOutput === option.value
-                        ? null
-                        : option.value,
-                  }))
-                }
+                onClick={() => selectOutput(option.value)}
                 disabled={isSaving}
                 className={`flex items-center justify-between rounded-md border border-border p-3 text-left transition-colors ${
                   formData.selectedOutput === option.value
@@ -275,7 +325,7 @@ function EditDisplayForm({
                   }`}
                 >
                   {formData.selectedOutput === option.value ? (
-                    <div className="size-2 rounded-full bg-white" />
+                    <div className="size-2 rounded-full bg-primary-foreground" />
                   ) : null}
                 </div>
               </button>

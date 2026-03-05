@@ -286,33 +286,35 @@ export default function PlaylistsPage(): ReactElement {
       />
 
       <DashboardPage.Body>
-        <DashboardPage.Toolbar>
-          <PlaylistStatusTabs
-            value={statusFilter}
-            onValueChange={handleStatusFilterChange}
-          />
-
-          <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto">
-            <PlaylistSortSelect
-              value={sortBy}
-              onValueChange={handleSortChange}
+        <DashboardPage.Content>
+          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
+            <PlaylistStatusTabs
+              value={statusFilter}
+              onValueChange={handleStatusFilterChange}
             />
-            <PlaylistSearchInput
-              value={search}
-              onChange={handleSearchChange}
-              className="w-full max-w-none md:w-72"
+
+            <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto">
+              <PlaylistSortSelect
+                value={sortBy}
+                onValueChange={handleSortChange}
+              />
+              <PlaylistSearchInput
+                value={search}
+                onChange={handleSearchChange}
+                className="w-full max-w-none md:w-72"
+              />
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
+            <PlaylistGrid
+              playlists={playlists}
+              onEdit={canUpdatePlaylist ? handleEditPlaylist : undefined}
+              onManageItems={canUpdatePlaylist ? handleManageItems : undefined}
+              onPreview={handlePreviewPlaylist}
+              onDelete={canDeletePlaylist ? handleDeletePlaylist : undefined}
             />
           </div>
-        </DashboardPage.Toolbar>
-
-        <DashboardPage.Content className="pt-6">
-          <PlaylistGrid
-            playlists={playlists}
-            onEdit={canUpdatePlaylist ? handleEditPlaylist : undefined}
-            onManageItems={canUpdatePlaylist ? handleManageItems : undefined}
-            onPreview={handlePreviewPlaylist}
-            onDelete={canDeletePlaylist ? handleDeletePlaylist : undefined}
-          />
         </DashboardPage.Content>
 
         <DashboardPage.Footer>

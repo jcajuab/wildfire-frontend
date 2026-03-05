@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import type { KeyboardEvent, ReactElement } from "react";
 import { useState, useCallback } from "react";
 import {
   IconCheck,
@@ -175,6 +175,59 @@ export function AddDisplayDialog({
     handleClose();
   }, [data, existingGroups, onRegister, handleClose]);
 
+  const selectOutput = useCallback((output: DisplayOutput): void => {
+    setData((prev) => ({
+      ...prev,
+      selectedOutput: output.name,
+      selectedResolution: output.resolution,
+    }));
+  }, []);
+
+  const handleOutputGroupKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>): void => {
+      const options = availableDisplayOutputs;
+      if (options.length === 0) return;
+      const currentIndex = options.findIndex(
+        (output) => output.name === data.selectedOutput,
+      );
+      const firstIndex = 0;
+      const lastIndex = options.length - 1;
+
+      let targetIndex: number | null = null;
+      switch (event.key) {
+        case "ArrowRight":
+        case "ArrowDown":
+          targetIndex =
+            currentIndex < 0
+              ? firstIndex
+              : Math.min(currentIndex + 1, lastIndex);
+          break;
+        case "ArrowLeft":
+        case "ArrowUp":
+          targetIndex =
+            currentIndex < 0
+              ? firstIndex
+              : Math.max(currentIndex - 1, firstIndex);
+          break;
+        case "Home":
+          targetIndex = firstIndex;
+          break;
+        case "End":
+          targetIndex = lastIndex;
+          break;
+        default:
+          return;
+      }
+
+      event.preventDefault();
+      const output = options[targetIndex];
+      if (output) {
+        selectOutput(output);
+      }
+    },
+    [data.selectedOutput, selectOutput],
+  );
+
   const canProceed = (): boolean => {
     switch (step) {
       case 1:
@@ -286,20 +339,16 @@ export function AddDisplayDialog({
                 className="flex flex-col gap-2"
                 role="radiogroup"
                 aria-label="Display output"
+                onKeyDown={handleOutputGroupKeyDown}
               >
                 {availableDisplayOutputs.map((output) => (
                   <button
                     key={output.name}
                     type="button"
                     role="radio"
+                    tabIndex={data.selectedOutput === output.name ? 0 : -1}
                     aria-checked={data.selectedOutput === output.name}
-                    onClick={() =>
-                      setData((prev) => ({
-                        ...prev,
-                        selectedOutput: output.name,
-                        selectedResolution: output.resolution,
-                      }))
-                    }
+                    onClick={() => selectOutput(output)}
                     className={`flex items-center justify-between rounded-md border border-border p-3 text-left transition-colors ${
                       data.selectedOutput === output.name
                         ? "border-primary bg-primary/5"
@@ -321,7 +370,7 @@ export function AddDisplayDialog({
                       }`}
                     >
                       {data.selectedOutput === output.name && (
-                        <div className="size-2 rounded-full bg-white" />
+                        <div className="size-2 rounded-full bg-primary-foreground" />
                       )}
                     </div>
                   </button>

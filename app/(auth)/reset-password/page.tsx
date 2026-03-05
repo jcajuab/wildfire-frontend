@@ -97,7 +97,7 @@ function ResetPasswordPageBody(): ReactElement {
             value={newPassword}
             name="newPassword"
             onChange={(event) => setNewPassword(event.target.value)}
-            className="h-11 rounded-lg bg-white text-sm"
+            className="h-11 rounded-lg text-sm"
             autoComplete="new-password"
             required
           />
@@ -111,7 +111,7 @@ function ResetPasswordPageBody(): ReactElement {
             value={confirmPassword}
             name="confirmPassword"
             onChange={(event) => setConfirmPassword(event.target.value)}
-            className="h-11 rounded-lg bg-white text-sm"
+            className="h-11 rounded-lg text-sm"
             autoComplete="new-password"
             required
           />

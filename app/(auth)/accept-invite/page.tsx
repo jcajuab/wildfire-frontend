@@ -119,7 +119,7 @@ function AcceptInvitePageBody(): ReactElement {
             value={token}
             name="token"
             onChange={(event) => setToken(event.target.value)}
-            className="h-11 rounded-lg bg-white text-sm"
+            className="h-11 rounded-lg text-sm"
             required
           />
         </div>
@@ -132,7 +132,7 @@ function AcceptInvitePageBody(): ReactElement {
             value={name}
             name="name"
             onChange={(event) => setName(event.target.value)}
-            className="h-11 rounded-lg bg-white text-sm"
+            className="h-11 rounded-lg text-sm"
             placeholder="Your name"
           />
         </div>
@@ -145,7 +145,7 @@ function AcceptInvitePageBody(): ReactElement {
             value={username}
             name="username"
             onChange={(event) => setUsername(event.target.value)}
-            className="h-11 rounded-lg bg-white text-sm"
+            className="h-11 rounded-lg text-sm"
             autoComplete="username"
             required
           />
@@ -159,7 +159,7 @@ function AcceptInvitePageBody(): ReactElement {
             value={password}
             name="password"
             onChange={(event) => setPassword(event.target.value)}
-            className="h-11 rounded-lg bg-white text-sm"
+            className="h-11 rounded-lg text-sm"
             autoComplete="new-password"
             required
           />
@@ -173,7 +173,7 @@ function AcceptInvitePageBody(): ReactElement {
             value={confirmPassword}
             name="confirmPassword"
             onChange={(event) => setConfirmPassword(event.target.value)}
-            className="h-11 rounded-lg bg-white text-sm"
+            className="h-11 rounded-lg text-sm"
             autoComplete="new-password"
             required
           />

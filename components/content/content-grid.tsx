@@ -93,7 +93,7 @@ export function ContentGrid({
       <div
         id={`pdf-pages-${content.id}`}
         className={cn(
-          "absolute left-full top-0 z-10 mt-0 w-[min(32rem,calc(100vw-1.5rem))] rounded-xl border border-border bg-card/95 p-3 shadow-lg shadow-black/5 transition-[opacity,transform] duration-220 ease-out",
+          "absolute left-full top-0 z-10 mt-0 w-[min(32rem,calc(100vw-1.5rem))] rounded-xl border border-border bg-card/95 p-3 ring-1 ring-border/30 transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none",
           "pointer-events-none opacity-0",
           isExpanded
             ? "pointer-events-auto opacity-100 translate-x-2"

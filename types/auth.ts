@@ -9,6 +9,7 @@ export interface AuthUser {
   readonly id: string;
   readonly username: string;
   readonly email: string | null;
+  readonly pendingEmail?: string | null;
   readonly name: string;
   readonly isRoot: boolean;
   readonly timezone?: string | null;

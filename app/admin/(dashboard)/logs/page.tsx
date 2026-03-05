@@ -408,154 +408,156 @@ export default function LogsPage(): ReactElement {
       />
 
       <DashboardPage.Body>
-        <DashboardPage.Content className="flex-none border-b px-4 py-3">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="logs-filter-from">From</Label>
-              <Input
-                id="logs-filter-from"
-                type="date"
-                value={from}
-                onChange={(e) => handleFromChange(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="logs-filter-to">To</Label>
-              <Input
-                id="logs-filter-to"
-                type="date"
-                value={to}
-                onChange={(e) => handleToChange(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="logs-filter-action">Action</Label>
-              <Input
-                id="logs-filter-action"
-                value={action}
-                onChange={(e) => handleActionChange(e.target.value)}
-                placeholder="e.g. auth.session or rbac.user.update"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="logs-filter-request-id">Request ID</Label>
-              <Input
-                id="logs-filter-request-id"
-                value={requestId}
-                onChange={(e) => handleRequestIdChange(e.target.value)}
-                placeholder="e.g. 2be5fd5a or full UUID"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Actor Type</Label>
-              <Select
-                value={actorType}
-                onValueChange={(value) => {
-                  if (ACTOR_TYPE_FILTERS.includes(value as ActorTypeFilter)) {
-                    handleActorTypeChange(value as ActorTypeFilter);
-                  }
-                }}
-              >
-                <SelectTrigger className="w-full justify-between">
-                  <SelectValue placeholder="All actor types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="display">Display</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="logs-filter-resource-type">Resource Type</Label>
-              <Combobox
-                value={selectedResourceTypeValue}
-                inputValue={resourceTypeInput}
-                onValueChange={(nextValue) => {
-                  if (nextValue === RESOURCE_TYPE_SELECT_ALL_VALUE) {
-                    handleResourceTypeChange("");
-                  } else if (
-                    nextValue != null &&
-                    RESOURCE_TYPE_FILTER_OPTIONS.includes(
-                      nextValue as ResourceTypeFilter,
-                    )
-                  ) {
-                    handleResourceTypeChange(nextValue as ResourceTypeFilter);
-                  }
-                }}
-                onInputValueChange={(nextInputValue) =>
-                  handleResourceTypeInputChange(nextInputValue ?? "")
-                }
-              >
-                <ComboboxInput
-                  id="logs-filter-resource-type"
-                  placeholder="Choose or type to filter resource type"
-                  showClear
+        <DashboardPage.Content>
+          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="logs-filter-from">From</Label>
+                <Input
+                  id="logs-filter-from"
+                  type="date"
+                  value={from}
+                  onChange={(e) => handleFromChange(e.target.value)}
                 />
-                <ComboboxContent>
-                  <ComboboxEmpty>No matching resource type.</ComboboxEmpty>
-                  <ComboboxList>
-                    <ComboboxItem value={RESOURCE_TYPE_SELECT_ALL_VALUE}>
-                      All
-                    </ComboboxItem>
-                    {RESOURCE_TYPE_FILTER_OPTIONS.filter(
-                      (v): v is NonNullable<ResourceTypeFilter> => v !== "",
-                    ).map((v) => (
-                      <ComboboxItem key={v} value={v}>
-                        {getResourceTypeLabel(v)}
-                      </ComboboxItem>
-                    ))}
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="logs-filter-status">Status</Label>
-              <Combobox
-                value={selectedStatusValue}
-                inputValue={statusRaw}
-                onValueChange={(nextValue) =>
-                  handleStatusChange(nextValue ?? "")
-                }
-                onInputValueChange={(nextInputValue) =>
-                  handleStatusChange(nextInputValue)
-                }
-              >
-                <ComboboxInput
-                  id="logs-filter-status"
-                  inputMode="numeric"
-                  placeholder="Type 100-599 or choose common code"
-                  showClear
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="logs-filter-to">To</Label>
+                <Input
+                  id="logs-filter-to"
+                  type="date"
+                  value={to}
+                  onChange={(e) => handleToChange(e.target.value)}
                 />
-                <ComboboxContent>
-                  <ComboboxEmpty>No matching status code.</ComboboxEmpty>
-                  <ComboboxList>
-                    {COMMON_STATUS_CODES.map((code) => (
-                      <ComboboxItem key={code} value={code}>
-                        {STATUS_CODE_LABELS[code]}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="logs-filter-action">Action</Label>
+                <Input
+                  id="logs-filter-action"
+                  value={action}
+                  onChange={(e) => handleActionChange(e.target.value)}
+                  placeholder="e.g. auth.session or rbac.user.update"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="logs-filter-request-id">Request ID</Label>
+                <Input
+                  id="logs-filter-request-id"
+                  value={requestId}
+                  onChange={(e) => handleRequestIdChange(e.target.value)}
+                  placeholder="e.g. 2be5fd5a or full UUID"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Actor Type</Label>
+                <Select
+                  value={actorType}
+                  onValueChange={(value) => {
+                    if (ACTOR_TYPE_FILTERS.includes(value as ActorTypeFilter)) {
+                      handleActorTypeChange(value as ActorTypeFilter);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full justify-between">
+                    <SelectValue placeholder="All actor types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="display">Display</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="logs-filter-resource-type">Resource Type</Label>
+                <Combobox
+                  value={selectedResourceTypeValue}
+                  inputValue={resourceTypeInput}
+                  onValueChange={(nextValue) => {
+                    if (nextValue === RESOURCE_TYPE_SELECT_ALL_VALUE) {
+                      handleResourceTypeChange("");
+                    } else if (
+                      nextValue != null &&
+                      RESOURCE_TYPE_FILTER_OPTIONS.includes(
+                        nextValue as ResourceTypeFilter,
+                      )
+                    ) {
+                      handleResourceTypeChange(nextValue as ResourceTypeFilter);
+                    }
+                  }}
+                  onInputValueChange={(nextInputValue) =>
+                    handleResourceTypeInputChange(nextInputValue ?? "")
+                  }
+                >
+                  <ComboboxInput
+                    id="logs-filter-resource-type"
+                    placeholder="Choose or type to filter resource type"
+                    showClear
+                  />
+                  <ComboboxContent>
+                    <ComboboxEmpty>No matching resource type.</ComboboxEmpty>
+                    <ComboboxList>
+                      <ComboboxItem value={RESOURCE_TYPE_SELECT_ALL_VALUE}>
+                        All
                       </ComboboxItem>
-                    ))}
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="logs-reset-filters">Reset Filters</Label>
-              <Button
-                id="logs-reset-filters"
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={handleResetFilters}
-              >
-                Reset Filters
-              </Button>
+                      {RESOURCE_TYPE_FILTER_OPTIONS.filter(
+                        (v): v is NonNullable<ResourceTypeFilter> => v !== "",
+                      ).map((v) => (
+                        <ComboboxItem key={v} value={v}>
+                          {getResourceTypeLabel(v)}
+                        </ComboboxItem>
+                      ))}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="logs-filter-status">Status</Label>
+                <Combobox
+                  value={selectedStatusValue}
+                  inputValue={statusRaw}
+                  onValueChange={(nextValue) =>
+                    handleStatusChange(nextValue ?? "")
+                  }
+                  onInputValueChange={(nextInputValue) =>
+                    handleStatusChange(nextInputValue)
+                  }
+                >
+                  <ComboboxInput
+                    id="logs-filter-status"
+                    inputMode="numeric"
+                    placeholder="Type 100-599 or choose common code"
+                    showClear
+                  />
+                  <ComboboxContent>
+                    <ComboboxEmpty>No matching status code.</ComboboxEmpty>
+                    <ComboboxList>
+                      {COMMON_STATUS_CODES.map((code) => (
+                        <ComboboxItem key={code} value={code}>
+                          {STATUS_CODE_LABELS[code]}
+                        </ComboboxItem>
+                      ))}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="logs-reset-filters">Reset Filters</Label>
+                <Button
+                  id="logs-reset-filters"
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleResetFilters}
+                >
+                  Reset Filters
+                </Button>
+              </div>
             </div>
           </div>
-        </DashboardPage.Content>
-        <DashboardPage.Content className="pt-4">
-          <div className="overflow-hidden rounded-md border border-border">
-            <LogsTable logs={logs} />
+          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+            <div className="overflow-hidden rounded-md border border-border">
+              <LogsTable logs={logs} />
+            </div>
           </div>
         </DashboardPage.Content>
 

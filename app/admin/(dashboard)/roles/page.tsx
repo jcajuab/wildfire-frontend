@@ -307,8 +307,10 @@ export default function RolesPage(): ReactElement {
       <DashboardPage.Root>
         <DashboardPage.Header title="Roles" />
         <DashboardPage.Body>
-          <DashboardPage.Content className="flex items-center justify-center">
-            <p className="text-muted-foreground">Loading roles…</p>
+          <DashboardPage.Content>
+            <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
+              <p className="text-muted-foreground">Loading roles…</p>
+            </div>
           </DashboardPage.Content>
         </DashboardPage.Body>
       </DashboardPage.Root>
@@ -320,10 +322,12 @@ export default function RolesPage(): ReactElement {
       <DashboardPage.Root>
         <DashboardPage.Header title="Roles" />
         <DashboardPage.Body>
-          <DashboardPage.Content className="flex items-center justify-center">
-            <p className="text-destructive">
-              Failed to load roles. Check the API and try again.
-            </p>
+          <DashboardPage.Content>
+            <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
+              <p className="text-destructive">
+                Failed to load roles. Check the API and try again.
+              </p>
+            </div>
           </DashboardPage.Content>
         </DashboardPage.Body>
       </DashboardPage.Root>
@@ -344,26 +348,28 @@ export default function RolesPage(): ReactElement {
         }
       />
       <DashboardPage.Body>
-        <DashboardPage.Toolbar>
-          <h2 className="text-base font-semibold">Search Results</h2>
-          <RoleSearchInput
-            value={search}
-            onChange={handleSearchChange}
-            className="w-full max-w-none md:w-72"
-          />
-        </DashboardPage.Toolbar>
-
-        <DashboardPage.Content className="pt-6">
-          <div className="overflow-hidden rounded-md border border-border">
-            <RolesTable
-              roles={paginatedRoles}
-              sort={sort}
-              onSortChange={handleSortChange}
-              onEdit={handleEdit}
-              onDelete={handleDeleteRole}
-              canEdit={canUpdateRole}
-              canDelete={canDeleteRole}
+        <DashboardPage.Content>
+          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
+            <h2 className="text-base font-semibold">Search Results</h2>
+            <RoleSearchInput
+              value={search}
+              onChange={handleSearchChange}
+              className="w-full max-w-none md:w-72"
             />
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
+            <div className="overflow-hidden rounded-md border border-border">
+              <RolesTable
+                roles={paginatedRoles}
+                sort={sort}
+                onSortChange={handleSortChange}
+                onEdit={handleEdit}
+                onDelete={handleDeleteRole}
+                canEdit={canUpdateRole}
+                canDelete={canDeleteRole}
+              />
+            </div>
           </div>
         </DashboardPage.Content>
 

@@ -874,8 +874,10 @@ export default function ContentPage(): ReactElement {
       <DashboardPage.Root>
         <DashboardPage.Header title="Content" />
         <DashboardPage.Body>
-          <DashboardPage.Content className="flex items-center justify-center">
-            <p className="text-muted-foreground">Loading content...</p>
+          <DashboardPage.Content>
+            <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
+              <p className="text-muted-foreground">Loading content...</p>
+            </div>
           </DashboardPage.Content>
         </DashboardPage.Body>
       </DashboardPage.Root>
@@ -887,13 +889,15 @@ export default function ContentPage(): ReactElement {
       <DashboardPage.Root>
         <DashboardPage.Header title="Content" />
         <DashboardPage.Body>
-          <DashboardPage.Content className="flex items-center justify-center">
-            <p className="text-destructive">
-              {getApiErrorMessage(
-                error,
-                "Failed to load content. Check the API and try again.",
-              )}
-            </p>
+          <DashboardPage.Content>
+            <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
+              <p className="text-destructive">
+                {getApiErrorMessage(
+                  error,
+                  "Failed to load content. Check the API and try again.",
+                )}
+              </p>
+            </div>
           </DashboardPage.Content>
         </DashboardPage.Body>
       </DashboardPage.Root>
@@ -915,46 +919,48 @@ export default function ContentPage(): ReactElement {
       />
 
       <DashboardPage.Body>
-        <DashboardPage.Toolbar>
-          <ContentStatusTabs
-            value={statusFilter}
-            onValueChange={handleStatusFilterChange}
-          />
+        <DashboardPage.Content>
+          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
+            <ContentStatusTabs
+              value={statusFilter}
+              onValueChange={handleStatusFilterChange}
+            />
 
-          <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto">
-            <ContentFilterPopover
-              typeFilter={typeFilter}
-              onTypeFilterChange={handleTypeFilterChange}
-            />
-            <ContentSortSelect
-              value={sortBy}
-              onValueChange={handleSortChange}
-            />
-            <ContentSearchInput
-              value={search}
-              onChange={handleSearchChange}
-              className="w-full max-w-none md:w-72"
+            <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto">
+              <ContentFilterPopover
+                typeFilter={typeFilter}
+                onTypeFilterChange={handleTypeFilterChange}
+              />
+              <ContentSortSelect
+                value={sortBy}
+                onValueChange={handleSortChange}
+              />
+              <ContentSearchInput
+                value={search}
+                onChange={handleSearchChange}
+                className="w-full max-w-none md:w-72"
+              />
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
+            <ContentGrid
+              items={visibleContents}
+              expandedPdfParentIds={expandedPdfParentIds}
+              pageCollectionsByParentId={pageCollectionsByParentId}
+              updatingPageId={updatingPageId}
+              onTogglePdfExpand={handleTogglePdfExpand}
+              onLoadMorePages={handleLoadMorePages}
+              onRetryLoadPages={handleRetryLoadPages}
+              onTogglePageExclusion={
+                canUpdateContent ? handleTogglePageExclusion : undefined
+              }
+              onEdit={canUpdateContent ? handleEdit : undefined}
+              onPreview={handlePreview}
+              onDelete={canDeleteContent ? handleDelete : undefined}
+              onDownload={canDownloadContent ? handleDownload : undefined}
             />
           </div>
-        </DashboardPage.Toolbar>
-
-        <DashboardPage.Content className="pt-6">
-          <ContentGrid
-            items={visibleContents}
-            expandedPdfParentIds={expandedPdfParentIds}
-            pageCollectionsByParentId={pageCollectionsByParentId}
-            updatingPageId={updatingPageId}
-            onTogglePdfExpand={handleTogglePdfExpand}
-            onLoadMorePages={handleLoadMorePages}
-            onRetryLoadPages={handleRetryLoadPages}
-            onTogglePageExclusion={
-              canUpdateContent ? handleTogglePageExclusion : undefined
-            }
-            onEdit={canUpdateContent ? handleEdit : undefined}
-            onPreview={handlePreview}
-            onDelete={canDeleteContent ? handleDelete : undefined}
-            onDownload={canDownloadContent ? handleDownload : undefined}
-          />
         </DashboardPage.Content>
 
         <DashboardPage.Footer>

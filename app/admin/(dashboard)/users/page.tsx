@@ -376,8 +376,10 @@ export default function UsersPage(): ReactElement {
       <DashboardPage.Root>
         <DashboardPage.Header title="Users" />
         <DashboardPage.Body>
-          <DashboardPage.Content className="flex items-center justify-center">
-            <p className="text-muted-foreground">Loading users…</p>
+          <DashboardPage.Content>
+            <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
+              <p className="text-muted-foreground">Loading users…</p>
+            </div>
           </DashboardPage.Content>
         </DashboardPage.Body>
       </DashboardPage.Root>
@@ -389,10 +391,12 @@ export default function UsersPage(): ReactElement {
       <DashboardPage.Root>
         <DashboardPage.Header title="Users" />
         <DashboardPage.Body>
-          <DashboardPage.Content className="flex items-center justify-center">
-            <p className="text-destructive">
-              Failed to load users. Check the API and try again.
-            </p>
+          <DashboardPage.Content>
+            <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
+              <p className="text-destructive">
+                Failed to load users. Check the API and try again.
+              </p>
+            </div>
           </DashboardPage.Content>
         </DashboardPage.Body>
       </DashboardPage.Root>
@@ -414,50 +418,52 @@ export default function UsersPage(): ReactElement {
       />
 
       <DashboardPage.Body>
-        <DashboardPage.Toolbar>
-          <h2 className="text-base font-semibold">Search Results</h2>
-          <UserSearchInput
-            value={search}
-            onChange={handleSearchChange}
-            className="w-full max-w-none md:w-72"
-          />
-        </DashboardPage.Toolbar>
-
-        <DashboardPage.Content className="pt-6">
-          <div className="overflow-hidden rounded-md border border-border">
-            <UsersTable
-              users={paginatedUsers}
-              availableRoles={availableRoles}
-              userRolesByUserId={userRolesByUserId}
-              sort={sort}
-              onSortChange={handleSortChange}
-              onEdit={handleEdit}
-              onRoleToggle={handleRoleToggle}
-              onRemoveUser={handleRequestRemoveUser}
-              canUpdate={canUpdateUser}
-              canDelete={canDeleteUser}
-              isSuperAdmin={isRoot}
-              systemRoleIds={systemRoleIds}
-              currentUserId={currentUser?.id}
+        <DashboardPage.Content>
+          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
+            <h2 className="text-base font-semibold">Search Results</h2>
+            <UserSearchInput
+              value={search}
+              onChange={handleSearchChange}
+              className="w-full max-w-none md:w-72"
             />
           </div>
 
-          <Can permission="users:create">
-            <section className="mt-6 overflow-hidden rounded-md border border-border">
-              <div className="border-b border-border px-4 py-3">
-                <h3 className="text-sm font-semibold">Invitations</h3>
-                <p className="text-xs text-muted-foreground">
-                  Recent invitation status and expiration timestamps.
-                </p>
-              </div>
-              <PendingInvitationsTable
-                invitations={invitations}
-                isLoading={isInvitationsLoading}
-                resendingInvitationId={resendingInvitationId}
-                onResend={handleResendInvitation}
+          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
+            <div className="overflow-hidden rounded-md border border-border">
+              <UsersTable
+                users={paginatedUsers}
+                availableRoles={availableRoles}
+                userRolesByUserId={userRolesByUserId}
+                sort={sort}
+                onSortChange={handleSortChange}
+                onEdit={handleEdit}
+                onRoleToggle={handleRoleToggle}
+                onRemoveUser={handleRequestRemoveUser}
+                canUpdate={canUpdateUser}
+                canDelete={canDeleteUser}
+                isSuperAdmin={isRoot}
+                systemRoleIds={systemRoleIds}
+                currentUserId={currentUser?.id}
               />
-            </section>
-          </Can>
+            </div>
+
+            <Can permission="users:create">
+              <section className="mt-6 overflow-hidden rounded-md border border-border">
+                <div className="border-b border-border px-4 py-3">
+                  <h3 className="text-sm font-semibold">Invitations</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Recent invitation status and expiration timestamps.
+                  </p>
+                </div>
+                <PendingInvitationsTable
+                  invitations={invitations}
+                  isLoading={isInvitationsLoading}
+                  resendingInvitationId={resendingInvitationId}
+                  onResend={handleResendInvitation}
+                />
+              </section>
+            </Can>
+          </div>
         </DashboardPage.Content>
 
         <DashboardPage.Footer>

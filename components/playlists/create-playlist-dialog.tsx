@@ -128,7 +128,7 @@ function SortablePlaylistItem({
             onChange={(e) =>
               onUpdateDuration(item.id, parseInt(e.target.value, 10) || 1)
             }
-            className="w-12 rounded border border-border bg-transparent px-1 text-center"
+            className="focus-visible:ring-ring w-12 rounded border border-border bg-transparent px-1 text-center focus-visible:outline-none focus-visible:ring-2"
             onPointerDown={(e) => e.stopPropagation()} // Prevent drag when interacting with input
             onKeyDown={(e) => e.stopPropagation()}
           />
@@ -150,7 +150,7 @@ function SortablePlaylistItem({
         {...attributes}
         {...listeners}
         aria-label={`Drag to reorder ${item.content.title}`}
-        className="cursor-grab text-muted-foreground active:cursor-grabbing"
+        className="focus-visible:ring-ring cursor-grab rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 active:cursor-grabbing"
       >
         <IconGripVertical className="size-4" />
       </button>
@@ -419,7 +419,7 @@ export function CreatePlaylistDialog({
                     key={content.id}
                     type="button"
                     onClick={() => handleAddContent(content)}
-                    className="flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted/50"
+                    className="focus-visible:ring-ring flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2"
                   >
                     <div className="flex size-10 items-center justify-center rounded bg-muted">
                       {/* Placeholder for thumbnail */}

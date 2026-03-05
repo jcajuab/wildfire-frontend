@@ -146,7 +146,7 @@ function InviteUsersDialogContent({
         <button
           type="button"
           onClick={handleAddEmail}
-          className="flex items-center gap-1 text-sm text-primary hover:underline"
+          className="focus-visible:ring-ring inline-flex w-fit items-center gap-1 rounded-sm px-1 py-0.5 text-sm text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2"
         >
           <IconPlus className="size-4" />
           Add another email

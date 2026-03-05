@@ -69,7 +69,7 @@ export default function ForgotPasswordPage(): ReactElement {
             name="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="h-11 rounded-lg bg-white text-sm"
+            className="h-11 rounded-lg text-sm"
             autoComplete="email"
             required
           />

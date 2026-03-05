@@ -191,6 +191,48 @@ export async function updateCurrentUserProfile(
   return parseApiPayload<AuthResponse>(response);
 }
 
+/** POST /auth/profile/email-change/request. Starts verified email change flow and returns refreshed auth payload. */
+export async function requestEmailChange(
+  token: string | null | undefined,
+  payload: { email: string },
+): Promise<AuthResponse> {
+  const baseUrl = getBaseUrl();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...getDevOnlyRequestHeaders(),
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const response = await fetch(`${baseUrl}/auth/profile/email-change/request`, {
+    method: "POST",
+    credentials: "include",
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  return parseApiPayload<AuthResponse>(response);
+}
+
+/** POST /auth/profile/email-change/verify. Verifies a pending email change token. */
+export async function verifyEmailChangeToken(token: string): Promise<void> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/profile/email-change/verify`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...getDevOnlyRequestHeaders(),
+    },
+    body: JSON.stringify({ token }),
+  });
+
+  if (response.status === 204) return;
+
+  const payload = await readJsonPayload(response);
+  throw createAuthApiError(response, payload);
+}
+
 /** POST /auth/password/change. Change current user password. Returns 204 on success; 401 if current password wrong. */
 export async function changePassword(
   token: string | null | undefined,

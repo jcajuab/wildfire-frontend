@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  type KeyboardEvent,
-  type MouseEvent,
-  type ReactElement,
-  memo,
-} from "react";
+import { type ReactElement, memo } from "react";
 import Image from "next/image";
 import {
   IconDotsVertical,
@@ -89,77 +84,24 @@ export const ContentCard = memo(function ContentCard({
     onTogglePdfRootExpand(content);
   };
 
-  const shouldIgnoreCardToggle = (target: EventTarget | null): boolean => {
-    if (!(target instanceof HTMLElement)) {
-      return false;
-    }
-    return Boolean(
-      target.closest(
-        "button,a,input,label,[role='menuitem'],[data-prevent-card-toggle='true']",
-      ),
-    );
-  };
-
-  const handleCardClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (!canTogglePdfRoot) {
-      return;
-    }
-    if (shouldIgnoreCardToggle(event.target)) {
-      return;
-    }
-    handleRootToggle();
-  };
-
-  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!canTogglePdfRoot) {
-      return;
-    }
-    if (event.target !== event.currentTarget) {
-      return;
-    }
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-    event.preventDefault();
-    handleRootToggle();
-  };
-
   const cardClassName = [
-    "group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-220 ease-out shadow-sm",
-    canTogglePdfRoot ? "cursor-pointer focus-visible:outline-none" : "",
-    canTogglePdfRoot
-      ? "focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2"
+    "group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors duration-150",
+    canTogglePdfRoot && isPdfRootExpanded
+      ? "border-primary/60 bg-primary/5"
       : "",
-    canTogglePdfRoot && isPdfRootExpanded ? "ring-1 ring-primary/30" : "",
-    isPdfRoot ? "shadow-[0_6px_18px_-14px_rgba(15,23,42,0.55)]" : "",
   ]
     .filter((value) => value.length > 0)
     .join(" ");
 
   return (
-    <div
-      className={cardClassName}
-      role={canTogglePdfRoot ? "button" : undefined}
-      tabIndex={canTogglePdfRoot ? 0 : undefined}
-      aria-expanded={canTogglePdfRoot ? isPdfRootExpanded : undefined}
-      aria-controls={canTogglePdfRoot ? `pdf-pages-${content.id}` : undefined}
-      aria-label={
-        canTogglePdfRoot
-          ? isPdfRootExpanded
-            ? `Collapse pages for ${content.title}`
-            : `Expand pages for ${content.title}`
-          : undefined
-      }
-      onClick={handleCardClick}
-      onKeyDown={handleCardKeyDown}
-    >
+    <div className={cardClassName}>
       {/* Thumbnail area */}
       <div className="relative flex aspect-4/3 items-center justify-center bg-muted/50">
         {isPdfRoot ? (
           <div className="relative h-full w-full p-3">
-            <div className="absolute inset-x-8 top-4 bottom-3 rotate-6 rounded-md border border-border bg-card/80 shadow-sm" />
-            <div className="absolute inset-x-7 top-3 bottom-4 -rotate-3 rounded-md border border-border bg-card/90 shadow-sm" />
-            <div className="absolute inset-x-6 top-2 bottom-5 rounded-md border border-border bg-card shadow-sm">
+            <div className="absolute inset-x-8 top-4 bottom-3 rotate-6 rounded-md border border-border/80 bg-card/80" />
+            <div className="absolute inset-x-7 top-3 bottom-4 -rotate-3 rounded-md border border-border/80 bg-card/90" />
+            <div className="absolute inset-x-6 top-2 bottom-5 rounded-md border border-border bg-card">
               {content.thumbnailUrl ? (
                 <Image
                   src={content.thumbnailUrl}
@@ -203,7 +145,7 @@ export const ContentCard = memo(function ContentCard({
       {/* Content info */}
       <div className="flex items-start justify-between gap-2 p-3">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h3 className="truncate text-sm font-medium">
+          <h3 className="truncate text-sm font-semibold">
             {isPdfPageItem && pageLabel ? pageLabel : content.title}
           </h3>
           {isPdfPageItem && pageLabel ? (
@@ -225,6 +167,25 @@ export const ContentCard = memo(function ContentCard({
               {formatContentStatus(content.status)}
             </Badge>
           </div>
+          {canTogglePdfRoot ? (
+            <div className="pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                onClick={handleRootToggle}
+                aria-expanded={isPdfRootExpanded}
+                aria-controls={`pdf-pages-${content.id}`}
+                aria-label={
+                  isPdfRootExpanded
+                    ? `Collapse pages for ${content.title}`
+                    : `Expand pages for ${content.title}`
+                }
+              >
+                {isPdfRootExpanded ? "Collapse pages" : "Expand pages"}
+              </Button>
+            </div>
+          ) : null}
         </div>
 
         {isPdfPageItem && onToggleExclusion ? (

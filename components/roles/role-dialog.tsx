@@ -265,7 +265,7 @@ function RoleForm({
                           <button
                             type="button"
                             aria-label={`Permission id for ${formatPermissionReadableLabel(perm)}`}
-                            className="inline-flex cursor-help text-muted-foreground"
+                            className="focus-visible:ring-ring inline-flex cursor-help rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2"
                           >
                             <IconInfoCircle className="size-4" />
                           </button>

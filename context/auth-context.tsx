@@ -65,6 +65,10 @@ function readSession(): SessionData | null {
       id: u.id,
       username: u.username,
       email: u.email ?? null,
+      pendingEmail:
+        typeof u.pendingEmail === "string" || u.pendingEmail === null
+          ? u.pendingEmail
+          : null,
       name: u.name,
       isRoot,
       timezone: typeof u.timezone === "string" ? u.timezone : null,

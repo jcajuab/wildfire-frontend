@@ -70,7 +70,7 @@ function SortableHeader({
     <button
       type="button"
       onClick={handleClick}
-      className="flex items-center gap-1 hover:text-foreground"
+      className="focus-visible:ring-ring inline-flex items-center gap-1 rounded-sm px-0.5 py-0.5 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2"
     >
       {label}
       {isActive ? (
