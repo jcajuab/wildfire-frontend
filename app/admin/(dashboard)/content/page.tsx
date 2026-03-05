@@ -337,7 +337,7 @@ function PreviewContentDialog({
 export default function ContentPage(): ReactElement {
   const canUpdateContent = useCan("content:update");
   const canDeleteContent = useCan("content:delete");
-  const canDownloadContent = useCan("content:download");
+  const canDownloadContent = useCan("content:read");
   const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(
     "status",
     "all",

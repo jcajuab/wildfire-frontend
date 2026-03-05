@@ -10,10 +10,8 @@ export type PermissionResource =
 
 export type PermissionAction =
   | "read"
-  | "register"
   | "create"
   | "update"
-  | "delete"
-  | "download";
+  | "delete";
 
 export type PermissionType = `${PermissionResource}:${PermissionAction}`;

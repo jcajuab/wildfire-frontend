@@ -56,7 +56,7 @@ export function DisplayRegistrationInfoDialog({
   onOpenChange,
   onRegistrationSucceeded,
 }: DisplayRegistrationInfoDialogProps): ReactElement {
-  const canIssueRegistrationCode = useCan("displays:register");
+  const canIssueRegistrationCode = useCan("displays:create");
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [registrationCode, setRegistrationCode] = useState<string | null>(null);
   const [registrationCodeExpiresAt, setRegistrationCodeExpiresAt] = useState<

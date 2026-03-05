@@ -97,7 +97,7 @@ function getActorAvatarUrl(
 }
 
 export default function LogsPage(): ReactElement {
-  const canExport = useCan("audit:download");
+  const canExport = useCan("audit:read");
   const [page, setPage] = useQueryNumberState("page", 1);
   const [from, setFrom] = useQueryStringState("from", "");
   const [to, setTo] = useQueryStringState("to", "");

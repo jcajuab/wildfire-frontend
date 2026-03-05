@@ -37,10 +37,6 @@ export function formatPermissionReadableLabel(permission: {
   switch (action) {
     case "read":
       return `View ${resource}`;
-    case "register":
-      return `Register ${resource}`;
-    case "download":
-      return `Download ${resource}`;
     case "create":
       return `Create ${resource}`;
     case "update":
@@ -82,10 +78,6 @@ export function formatPermissionTooltipDescription(permission: {
   switch (action) {
     case "read":
       return `Allows users with this role to view ${resource}.`;
-    case "register":
-      return `Allows users with this role to register ${resource}.`;
-    case "download":
-      return `Allows users with this role to download ${resource}.`;
     case "create":
       return `Allows users with this role to create ${resource}.`;
     case "update":

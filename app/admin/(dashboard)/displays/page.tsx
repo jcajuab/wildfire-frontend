@@ -64,6 +64,7 @@ const PAGE_SIZE = 20;
 export default function DisplaysPage(): ReactElement {
   const canReadDisplays = useCan("displays:read");
   const canUpdateDisplay = useCan("displays:update");
+  const canDeleteDisplay = useCan("displays:delete");
   const {
     data: displaysData,
     isLoading,
@@ -456,7 +457,7 @@ export default function DisplaysPage(): ReactElement {
         title="Displays"
         actions={
           <>
-            <Can permission="displays:register">
+            <Can permission="displays:create">
               <Button onClick={() => setIsAddInfoDialogOpen(true)}>
                 <IconPlus className="size-4" aria-hidden="true" />
                 Add Display
@@ -514,7 +515,7 @@ export default function DisplaysPage(): ReactElement {
               onViewDetails={handleViewDetails}
               onViewPage={handleViewPage}
               onUnregisterDisplay={
-                canUpdateDisplay ? handleUnregisterDisplay : undefined
+                canDeleteDisplay ? handleUnregisterDisplay : undefined
               }
               onEditDisplay={canUpdateDisplay ? handleEditDisplay : undefined}
             />
