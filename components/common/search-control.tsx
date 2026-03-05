@@ -1,11 +1,12 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconSearch } from "@tabler/icons-react";
+import { IconSearch, IconX } from "@tabler/icons-react";
 
 import {
   InputGroup,
   InputGroupAddon,
+  InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { cn } from "@/lib/utils";
@@ -35,11 +36,29 @@ export function SearchControl({
         name="search"
         autoComplete="off"
         spellCheck={false}
+        enterKeyHint="search"
         placeholder={placeholder}
         aria-label={ariaLabel}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && value !== "") {
+            onChange("");
+          }
+        }}
       />
+      {value !== "" ? (
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            size="icon-xs"
+            variant="ghost"
+            onClick={() => onChange("")}
+            aria-label="Clear search"
+          >
+            <IconX className="size-3.5" aria-hidden="true" />
+          </InputGroupButton>
+        </InputGroupAddon>
+      ) : null}
     </InputGroup>
   );
 }

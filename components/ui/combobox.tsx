@@ -24,9 +24,15 @@ function ComboboxTrigger({
   children,
   ...props
 }: ComboboxPrimitive.Trigger.Props) {
+  const accessibleLabel =
+    typeof props["aria-label"] === "string" && props["aria-label"].trim() !== ""
+      ? props["aria-label"]
+      : "Toggle options";
+
   return (
     <ComboboxPrimitive.Trigger
       data-slot="combobox-trigger"
+      aria-label={accessibleLabel}
       className={cn("[&_svg:not([class*='size-'])]:size-3.5", className)}
       {...props}
     >
@@ -41,6 +47,7 @@ function ComboboxClear({ className, ...props }: ComboboxPrimitive.Clear.Props) {
     <ComboboxPrimitive.Clear
       data-slot="combobox-clear"
       render={<InputGroupButton variant="ghost" size="icon-xs" />}
+      aria-label="Clear selection"
       className={cn(className)}
       {...props}
     >
@@ -256,6 +263,7 @@ function ComboboxChip({
         <ComboboxPrimitive.ChipRemove
           render={<Button variant="ghost" size="icon-xs" />}
           className="-ml-1 opacity-50 hover:opacity-100"
+          aria-label="Remove item"
           data-slot="combobox-chip-remove"
         >
           <IconX className="pointer-events-none" />

@@ -117,7 +117,6 @@ export default function DisplaysPage(): ReactElement {
   useEffect(() => {
     if (!canReadDisplays) return;
     const baseUrl = getBaseUrl();
-    if (!baseUrl) return;
 
     const stream = new EventSource(`${baseUrl}/displays/events`, {
       withCredentials: true,

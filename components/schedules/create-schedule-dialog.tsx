@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -39,6 +40,9 @@ export function CreateScheduleDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create New Schedule</DialogTitle>
+          <DialogDescription>
+            Configure schedule timing, target display, and playlist assignment.
+          </DialogDescription>
         </DialogHeader>
 
         <CreateScheduleForm

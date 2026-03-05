@@ -82,7 +82,12 @@ export function ConfirmActionDialog({
             <AlertDialogDescription>{description}</AlertDialogDescription>
           ) : null}
           {actionError ? (
-            <p className="mt-2 text-xs text-destructive" role="alert">
+            <p
+              className="mt-2 text-xs text-destructive"
+              role="alert"
+              aria-live="assertive"
+              aria-atomic="true"
+            >
               <span className="inline-flex items-center gap-1">
                 <IconAlertCircle className="size-3" />
                 <span>{actionError}</span>

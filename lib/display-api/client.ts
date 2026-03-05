@@ -65,11 +65,7 @@ const parseErrorMessage = async (response: Response): Promise<string> => {
 };
 
 const getRequiredBaseUrl = (): string => {
-  const baseUrl = getBaseUrl();
-  if (!baseUrl) {
-    throw new Error("NEXT_PUBLIC_API_URL is not configured.");
-  }
-  return baseUrl;
+  return getBaseUrl();
 };
 
 export async function createRegistrationSession(

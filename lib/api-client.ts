@@ -15,9 +15,7 @@ import type {
 import type { InvitationRecord } from "@/types/invitation";
 
 function getBaseUrl(): string {
-  const url = getApiBaseUrl();
-  if (!url) throw new Error("NEXT_PUBLIC_API_URL is not set");
-  return url;
+  return getApiBaseUrl();
 }
 
 interface JsonParseFailurePayload {

@@ -55,7 +55,7 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
 
   return (
     <>
-      <Table>
+      <Table density="comfortable">
         <TableHeader>
           <TableRow>
             <TableHead className="w-[220px]">Timestamp</TableHead>
@@ -75,7 +75,7 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
                   {log.authorAvatarUrl ? (
                     <Image
                       src={log.authorAvatarUrl}
-                      alt="Author"
+                      alt={`${log.authorName} avatar`}
                       width={28}
                       height={28}
                       className="size-7 rounded-full object-cover"

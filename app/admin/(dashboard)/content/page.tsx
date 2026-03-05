@@ -111,9 +111,6 @@ const mergePageItems = (
 
 const buildContentJobStreamUrl = (jobId: string): string => {
   const baseUrl = getBaseUrl();
-  if (baseUrl === "") {
-    return `/api/v1/content-jobs/${encodeURIComponent(jobId)}/events`;
-  }
   return `${baseUrl}/content-jobs/${encodeURIComponent(jobId)}/events`;
 };
 

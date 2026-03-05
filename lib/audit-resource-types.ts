@@ -14,7 +14,6 @@ const RESOURCE_TYPES = [
   "role",
   "schedule",
   "session",
-  "display-runtime",
   "user",
 ] as const;
 
@@ -46,7 +45,6 @@ export const RESOURCE_TYPE_LABELS: Readonly<Record<string, string>> = {
   schedule: "Schedule",
   display: "Displays",
   "display-group": "Display Group",
-  "display-runtime": "Display Runtime",
   session: "Session",
   invitation: "Invitation",
   "audit-event": "Audit Event",

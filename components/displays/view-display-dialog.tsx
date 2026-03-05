@@ -6,6 +6,7 @@ import { IconPhoto, IconMapPin, IconPencil } from "@tabler/icons-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -37,6 +38,10 @@ export function ViewDisplayDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>More Details</DialogTitle>
+          <DialogDescription>
+            View network, output, and group configuration details for this
+            display.
+          </DialogDescription>
         </DialogHeader>
         <div className="mt-4 flex flex-col gap-4">
           <div className="flex items-start gap-2">

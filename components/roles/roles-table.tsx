@@ -109,9 +109,12 @@ function RoleActionsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Actions for ${role.name}`}
+        >
           <IconDotsVertical className="size-4" />
-          <span className="sr-only">Actions</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -169,7 +172,7 @@ export function RolesTable({
   }
 
   return (
-    <Table>
+    <Table density="comfortable">
       <TableHeader>
         <TableRow>
           <TableHead
@@ -206,7 +209,9 @@ export function RolesTable({
               onSortChange={onSortChange}
             />
           </TableHead>
-          <TableHead className="w-[50px]" />
+          <TableHead className="w-[50px]">
+            <span className="sr-only">Actions</span>
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

@@ -72,7 +72,6 @@ export default function DisplayRuntimePage() {
   const scrollPxPerSecond =
     manifest?.runtimeSettings.scrollPxPerSecond ?? DEFAULT_SCROLL_PX_PER_SECOND;
   const baseUrl = getBaseUrl();
-  const staticConfigError = baseUrl ? null : "API URL is not configured.";
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -103,10 +102,6 @@ export default function DisplayRuntimePage() {
 
   useEffect(() => {
     if (!registration) {
-      return;
-    }
-
-    if (!baseUrl) {
       return;
     }
 
@@ -307,9 +302,9 @@ export default function DisplayRuntimePage() {
         {connectionState}
         {lastEventAt ? ` • ${formatTimeOfDay(lastEventAt)}` : ""}
       </div>
-      {staticConfigError || errorMessage ? (
+      {errorMessage ? (
         <div className="absolute right-2 top-2 z-10 rounded bg-destructive/85 px-2 py-1 text-xs text-destructive-foreground">
-          {staticConfigError ?? errorMessage}
+          {errorMessage}
         </div>
       ) : null}
 

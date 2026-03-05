@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -69,6 +70,9 @@ export function EditScheduleDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit Schedule</DialogTitle>
+          <DialogDescription>
+            Update schedule timing, display assignment, and playlist selection.
+          </DialogDescription>
         </DialogHeader>
 
         <EditScheduleForm

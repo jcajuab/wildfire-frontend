@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -204,6 +205,9 @@ function RoleForm({
     <form onSubmit={handleSubmit}>
       <DialogHeader>
         <DialogTitle>{isCreate ? "Create New Role" : "Edit Role"}</DialogTitle>
+        <DialogDescription>
+          Configure role details, permissions, and assigned users.
+        </DialogDescription>
       </DialogHeader>
 
       <Tabs defaultValue="display" className="mt-4">
@@ -450,6 +454,9 @@ export function RoleDialog({
           ) : (
             <>
               <DialogTitle className="sr-only">Edit role</DialogTitle>
+              <DialogDescription className="sr-only">
+                Loading role permissions and assigned users.
+              </DialogDescription>
               <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                 <p className="text-sm">Loading permissions…</p>
               </div>

@@ -4,16 +4,23 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+function Table({
+  className,
+  density = "comfortable",
+  ...tableProps
+}: React.ComponentProps<"table"> & {
+  density?: "comfortable" | "compact";
+}) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      data-density={density}
+      className="group/table relative w-full overflow-x-auto touch-pan-x"
     >
       <table
         data-slot="table"
         className={cn("w-full caption-bottom text-xs", className)}
-        {...props}
+        {...tableProps}
       />
     </div>
   );
@@ -70,7 +77,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+        "text-foreground h-11 px-3 text-left align-middle font-medium whitespace-normal break-words sm:whitespace-nowrap group-data-[density=compact]/table:h-9 group-data-[density=compact]/table:px-2 [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}
@@ -83,7 +90,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+        "px-3 py-2.5 align-middle whitespace-normal break-words sm:whitespace-nowrap group-data-[density=compact]/table:px-2 group-data-[density=compact]/table:py-1.5 [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}

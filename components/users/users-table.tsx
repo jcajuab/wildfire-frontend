@@ -139,9 +139,12 @@ function UserActionsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Actions for ${user.name}`}
+        >
           <IconDotsVertical className="size-4" />
-          <span className="sr-only">Actions</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -227,7 +230,7 @@ function UserRow({
           {user?.avatarUrl ? (
             <Image
               src={user.avatarUrl}
-              alt="User Avatar"
+              alt={`${user.name} avatar`}
               width={48}
               height={48}
               className="size-7 rounded-full object-cover"
@@ -307,7 +310,7 @@ export function UsersTable({
   }
 
   return (
-    <Table>
+    <Table density="comfortable">
       <TableHeader>
         <TableRow>
           <TableHead
@@ -350,7 +353,9 @@ export function UsersTable({
               onSortChange={onSortChange}
             />
           </TableHead>
-          <TableHead className="w-[50px]" />
+          <TableHead className="w-[50px]">
+            <span className="sr-only">Actions</span>
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

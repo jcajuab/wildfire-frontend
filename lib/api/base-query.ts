@@ -11,20 +11,21 @@ import {
 
 /**
  * Backend API base URL with versioned API path suffix (e.g. /api/v1).
- * Empty string if NEXT_PUBLIC_API_URL is not set.
+ * Falls back to same-origin path if NEXT_PUBLIC_API_URL is not set.
  */
 export function getBaseUrl(): string {
-  const url = process.env.NEXT_PUBLIC_API_URL;
-  if (typeof url !== "string" || url === "") {
-    return "";
-  }
-  const trimmedUrl = url.replace(/\/$/, "");
   const rawVersion = process.env.NEXT_PUBLIC_API_VERSION;
   const apiVersion =
     typeof rawVersion === "string" && rawVersion.trim() !== ""
       ? rawVersion.trim().replace(/^\//, "")
       : "v1";
-  return `${trimmedUrl}/api/${apiVersion}`;
+  const apiPath = `/api/${apiVersion}`;
+  const rawUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (typeof rawUrl !== "string" || rawUrl === "") {
+    return apiPath;
+  }
+  const trimmedUrl = rawUrl.replace(/\/$/, "");
+  return `${trimmedUrl}${apiPath}`;
 }
 
 /**

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -73,6 +74,9 @@ function EditUserForm({
     <form onSubmit={handleSubmit}>
       <DialogHeader>
         <DialogTitle>Edit User</DialogTitle>
+        <DialogDescription>
+          Update user identity details and account activation status.
+        </DialogDescription>
       </DialogHeader>
       <div className="mt-4 flex flex-col gap-4">
         <div className="flex flex-col gap-2">

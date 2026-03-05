@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -105,6 +106,9 @@ function InviteUsersDialogContent({
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">
       <DialogHeader>
         <DialogTitle>Invite New Users</DialogTitle>
+        <DialogDescription>
+          Invite teammates by email individually or by uploading a CSV file.
+        </DialogDescription>
       </DialogHeader>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 py-4">
