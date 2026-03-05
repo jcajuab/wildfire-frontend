@@ -469,80 +469,108 @@ export default function SettingsPage(): ReactElement {
         <DashboardPage.Content key={user?.id ?? "anonymous"}>
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
             <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
-            <motion.section
-              aria-labelledby="account-information-heading"
-              className="border-b border-border pb-8"
-              {...sectionMotionProps}
-            >
-              <header className="mb-4">
-                <h2
-                  id="account-information-heading"
-                  className="text-base font-semibold tracking-tight"
-                >
-                  Account Information
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Profile and sign-in details.
-                </p>
-              </header>
+              <motion.section
+                aria-labelledby="account-information-heading"
+                className="border-b border-border pb-8"
+                {...sectionMotionProps}
+              >
+                <header className="mb-4">
+                  <h2
+                    id="account-information-heading"
+                    className="text-base font-semibold tracking-tight"
+                  >
+                    Account Information
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Profile and sign-in details.
+                  </p>
+                </header>
 
-              <dl className="space-y-4">
-                <SettingsField label="Profile picture">
-                  <div className="flex items-center">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon-sm"
-                      onClick={handleChangeProfilePicture}
-                      disabled={isAvatarUploading}
-                      className="group relative size-14 overflow-hidden rounded-full border border-border bg-muted p-0 hover:bg-muted/70"
-                      aria-label="Change profile picture"
-                      aria-busy={isAvatarUploading}
-                    >
-                      {avatarUrl && failedAvatarUrl !== avatarUrl ? (
-                        <Image
-                          src={avatarUrl}
-                          alt="Profile picture"
-                          width={56}
-                          height={56}
-                          className="size-14 object-cover"
-                          unoptimized
-                          onError={() => setFailedAvatarUrl(avatarUrl)}
-                        />
-                      ) : (
-                        <IconUser className="size-6 text-muted-foreground" />
-                      )}
-                      <span className="absolute inset-0 flex items-center justify-center bg-black/35 text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
-                        <IconPencil className="size-3.5" />
-                      </span>
-                    </Button>
-                  </div>
-                  <input
-                    ref={profilePictureInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    onChange={handleProfilePictureSelected}
-                    className="hidden"
-                  />
-                  {profilePictureError ? (
-                    <p role="alert" className="text-xs text-destructive">
-                      {profilePictureError}
-                    </p>
-                  ) : null}
-                </SettingsField>
+                <dl className="space-y-4">
+                  <SettingsField label="Profile picture">
+                    <div className="flex items-center">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={handleChangeProfilePicture}
+                        disabled={isAvatarUploading}
+                        className="group relative size-14 overflow-hidden rounded-full border border-border bg-muted p-0 hover:bg-muted/70"
+                        aria-label="Change profile picture"
+                        aria-busy={isAvatarUploading}
+                      >
+                        {avatarUrl && failedAvatarUrl !== avatarUrl ? (
+                          <Image
+                            src={avatarUrl}
+                            alt="Profile picture"
+                            width={56}
+                            height={56}
+                            className="size-14 object-cover"
+                            unoptimized
+                            onError={() => setFailedAvatarUrl(avatarUrl)}
+                          />
+                        ) : (
+                          <IconUser className="size-6 text-muted-foreground" />
+                        )}
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/35 text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
+                          <IconPencil className="size-3.5" />
+                        </span>
+                      </Button>
+                    </div>
+                    <input
+                      ref={profilePictureInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handleProfilePictureSelected}
+                      className="hidden"
+                    />
+                    {profilePictureError ? (
+                      <p role="alert" className="text-xs text-destructive">
+                        {profilePictureError}
+                      </p>
+                    ) : null}
+                  </SettingsField>
 
-                <SettingsField label="First name">
-                  <div className={controlContainerClass}>
-                    {editingField === "firstName" ? (
-                      <div className="flex items-start gap-2">
-                        <Input
-                          ref={firstNameInputRef}
-                          id="firstName"
-                          value={firstName}
-                          onChange={(event) => setFirstName(event.target.value)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                              event.preventDefault();
+                  <SettingsField label="First name">
+                    <div className={controlContainerClass}>
+                      {editingField === "firstName" ? (
+                        <div className="flex items-start gap-2">
+                          <Input
+                            ref={firstNameInputRef}
+                            id="firstName"
+                            value={firstName}
+                            onChange={(event) =>
+                              setFirstName(event.target.value)
+                            }
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                void (async () => {
+                                  const didSave = await saveProfileName(
+                                    firstName,
+                                    lastName,
+                                  );
+                                  if (didSave) {
+                                    setEditingField(null);
+                                  }
+                                })();
+                              }
+                              if (event.key === "Escape") {
+                                event.preventDefault();
+                                setFirstName(savedFirstName);
+                                setProfileNameError(null);
+                                setEditingField(null);
+                              }
+                            }}
+                            aria-label="First name"
+                            className={`${controlClass} flex-1`}
+                          />
+                          <DirtyFieldActions
+                            canConfirm={isFirstNameDirty}
+                            confirmLabel="Save first name"
+                            cancelLabel="Cancel first name changes"
+                            isSubmitting={isSavingProfileName}
+                            onConfirm={() => {
                               void (async () => {
                                 const didSave = await saveProfileName(
                                   firstName,
@@ -552,79 +580,81 @@ export default function SettingsPage(): ReactElement {
                                   setEditingField(null);
                                 }
                               })();
-                            }
-                            if (event.key === "Escape") {
-                              event.preventDefault();
+                            }}
+                            onCancel={() => {
                               setFirstName(savedFirstName);
                               setProfileNameError(null);
                               setEditingField(null);
-                            }
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setProfileNameError(null);
+                            setEditingField("firstName");
                           }}
-                          aria-label="First name"
-                          className={`${controlClass} flex-1`}
-                        />
-                        <DirtyFieldActions
-                          canConfirm={isFirstNameDirty}
-                          confirmLabel="Save first name"
-                          cancelLabel="Cancel first name changes"
-                          isSubmitting={isSavingProfileName}
-                          onConfirm={() => {
-                            void (async () => {
-                              const didSave = await saveProfileName(
-                                firstName,
-                                lastName,
-                              );
-                              if (didSave) {
+                          disabled={isSavingProfileName}
+                          className={`${controlClass} justify-between gap-2 pr-2`}
+                          aria-label="Edit first name"
+                        >
+                          <span>{firstName || "Set first name"}</span>
+                          <IconPencil
+                            className="size-3.5 text-muted-foreground/80"
+                            aria-hidden="true"
+                          />
+                        </Button>
+                      )}
+                    </div>
+                    {editingField === "firstName" && profileNameError ? (
+                      <p role="alert" className="text-xs text-destructive">
+                        {profileNameError}
+                      </p>
+                    ) : null}
+                  </SettingsField>
+
+                  <SettingsField label="Last name">
+                    <div className={controlContainerClass}>
+                      {editingField === "lastName" ? (
+                        <div className="flex items-start gap-2">
+                          <Input
+                            ref={lastNameInputRef}
+                            id="lastName"
+                            value={lastName}
+                            onChange={(event) =>
+                              setLastName(event.target.value)
+                            }
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                void (async () => {
+                                  const didSave = await saveProfileName(
+                                    firstName,
+                                    lastName,
+                                  );
+                                  if (didSave) {
+                                    setEditingField(null);
+                                  }
+                                })();
+                              }
+                              if (event.key === "Escape") {
+                                event.preventDefault();
+                                setLastName(savedLastName);
+                                setProfileNameError(null);
                                 setEditingField(null);
                               }
-                            })();
-                          }}
-                          onCancel={() => {
-                            setFirstName(savedFirstName);
-                            setProfileNameError(null);
-                            setEditingField(null);
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setProfileNameError(null);
-                          setEditingField("firstName");
-                        }}
-                        disabled={isSavingProfileName}
-                        className={`${controlClass} justify-between gap-2 pr-2`}
-                        aria-label="Edit first name"
-                      >
-                        <span>{firstName || "Set first name"}</span>
-                        <IconPencil
-                          className="size-3.5 text-muted-foreground/80"
-                          aria-hidden="true"
-                        />
-                      </Button>
-                    )}
-                  </div>
-                  {editingField === "firstName" && profileNameError ? (
-                    <p role="alert" className="text-xs text-destructive">
-                      {profileNameError}
-                    </p>
-                  ) : null}
-                </SettingsField>
-
-                <SettingsField label="Last name">
-                  <div className={controlContainerClass}>
-                    {editingField === "lastName" ? (
-                      <div className="flex items-start gap-2">
-                        <Input
-                          ref={lastNameInputRef}
-                          id="lastName"
-                          value={lastName}
-                          onChange={(event) => setLastName(event.target.value)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                              event.preventDefault();
+                            }}
+                            aria-label="Last name"
+                            className={`${controlClass} flex-1`}
+                          />
+                          <DirtyFieldActions
+                            canConfirm={isLastNameDirty}
+                            confirmLabel="Save last name"
+                            cancelLabel="Cancel last name changes"
+                            isSubmitting={isSavingProfileName}
+                            onConfirm={() => {
                               void (async () => {
                                 const didSave = await saveProfileName(
                                   firstName,
@@ -634,92 +664,90 @@ export default function SettingsPage(): ReactElement {
                                   setEditingField(null);
                                 }
                               })();
-                            }
-                            if (event.key === "Escape") {
-                              event.preventDefault();
+                            }}
+                            onCancel={() => {
                               setLastName(savedLastName);
                               setProfileNameError(null);
                               setEditingField(null);
-                            }
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setProfileNameError(null);
+                            setEditingField("lastName");
                           }}
-                          aria-label="Last name"
-                          className={`${controlClass} flex-1`}
-                        />
-                        <DirtyFieldActions
-                          canConfirm={isLastNameDirty}
-                          confirmLabel="Save last name"
-                          cancelLabel="Cancel last name changes"
-                          isSubmitting={isSavingProfileName}
-                          onConfirm={() => {
-                            void (async () => {
-                              const didSave = await saveProfileName(
-                                firstName,
-                                lastName,
-                              );
-                              if (didSave) {
+                          disabled={isSavingProfileName}
+                          className={`${controlClass} justify-between gap-2 pr-2`}
+                          aria-label="Edit last name"
+                        >
+                          <span>{lastName || "Set last name"}</span>
+                          <IconPencil
+                            className="size-3.5 text-muted-foreground/80"
+                            aria-hidden="true"
+                          />
+                        </Button>
+                      )}
+                    </div>
+                    {editingField === "lastName" && profileNameError ? (
+                      <p role="alert" className="text-xs text-destructive">
+                        {profileNameError}
+                      </p>
+                    ) : null}
+                  </SettingsField>
+
+                  <SettingsField label="Username">
+                    <div className={controlContainerClass}>
+                      <Input
+                        disabled
+                        value={user?.username ?? "-"}
+                        className={`${controlClass} disabled:border-border disabled:bg-muted/60 disabled:text-foreground/80 disabled:opacity-100`}
+                      />
+                    </div>
+                  </SettingsField>
+
+                  <SettingsField label="Email">
+                    <div className={controlContainerClass}>
+                      {editingField === "email" ? (
+                        <div className="flex items-start gap-2">
+                          <Input
+                            ref={emailInputRef}
+                            id="email"
+                            type="email"
+                            value={emailDraft}
+                            onChange={(event) =>
+                              setEmailDraft(event.target.value)
+                            }
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                void (async () => {
+                                  const didRequest =
+                                    await requestEmailVerification();
+                                  if (didRequest) {
+                                    setEditingField(null);
+                                  }
+                                })();
+                              }
+                              if (event.key === "Escape") {
+                                event.preventDefault();
+                                setEmailDraft(displayedEmail);
+                                setEmailError(null);
                                 setEditingField(null);
                               }
-                            })();
-                          }}
-                          onCancel={() => {
-                            setLastName(savedLastName);
-                            setProfileNameError(null);
-                            setEditingField(null);
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setProfileNameError(null);
-                          setEditingField("lastName");
-                        }}
-                        disabled={isSavingProfileName}
-                        className={`${controlClass} justify-between gap-2 pr-2`}
-                        aria-label="Edit last name"
-                      >
-                        <span>{lastName || "Set last name"}</span>
-                        <IconPencil
-                          className="size-3.5 text-muted-foreground/80"
-                          aria-hidden="true"
-                        />
-                      </Button>
-                    )}
-                  </div>
-                  {editingField === "lastName" && profileNameError ? (
-                    <p role="alert" className="text-xs text-destructive">
-                      {profileNameError}
-                    </p>
-                  ) : null}
-                </SettingsField>
-
-                <SettingsField label="Username">
-                  <div className={controlContainerClass}>
-                    <Input
-                      disabled
-                      value={user?.username ?? "-"}
-                      className={`${controlClass} disabled:border-border disabled:bg-muted/60 disabled:text-foreground/80 disabled:opacity-100`}
-                    />
-                  </div>
-                </SettingsField>
-
-                <SettingsField label="Email">
-                  <div className={controlContainerClass}>
-                    {editingField === "email" ? (
-                      <div className="flex items-start gap-2">
-                        <Input
-                          ref={emailInputRef}
-                          id="email"
-                          type="email"
-                          value={emailDraft}
-                          onChange={(event) =>
-                            setEmailDraft(event.target.value)
-                          }
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                              event.preventDefault();
+                            }}
+                            aria-label="Email"
+                            className={`${controlClass} flex-1`}
+                          />
+                          <DirtyFieldActions
+                            canConfirm={isEmailDirty}
+                            confirmLabel="Request email verification"
+                            cancelLabel="Cancel email changes"
+                            isSubmitting={isRequestingEmailChange}
+                            onConfirm={() => {
                               void (async () => {
                                 const didRequest =
                                   await requestEmailVerification();
@@ -727,220 +755,196 @@ export default function SettingsPage(): ReactElement {
                                   setEditingField(null);
                                 }
                               })();
-                            }
-                            if (event.key === "Escape") {
-                              event.preventDefault();
+                            }}
+                            onCancel={() => {
                               setEmailDraft(displayedEmail);
                               setEmailError(null);
                               setEditingField(null);
-                            }
-                          }}
-                          aria-label="Email"
-                          className={`${controlClass} flex-1`}
-                        />
-                        <DirtyFieldActions
-                          canConfirm={isEmailDirty}
-                          confirmLabel="Request email verification"
-                          cancelLabel="Cancel email changes"
-                          isSubmitting={isRequestingEmailChange}
-                          onConfirm={() => {
-                            void (async () => {
-                              const didRequest =
-                                await requestEmailVerification();
-                              if (didRequest) {
-                                setEditingField(null);
-                              }
-                            })();
-                          }}
-                          onCancel={() => {
-                            setEmailDraft(displayedEmail);
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={`${controlClass} justify-between gap-2 pr-2`}
+                          onClick={() => {
                             setEmailError(null);
-                            setEditingField(null);
+                            setEmailDraft(displayedEmail);
+                            setEditingField("email");
                           }}
-                        />
-                      </div>
-                    ) : (
+                          aria-label="Edit email"
+                        >
+                          <span>{displayedEmail || "Set email address"}</span>
+                          <IconPencil
+                            className="size-3.5 text-muted-foreground/80"
+                            aria-hidden="true"
+                          />
+                        </Button>
+                      )}
+                    </div>
+                    {pendingEmail ? (
+                      <p className="text-xs text-primary" aria-live="polite">
+                        Pending verification: {pendingEmail}
+                      </p>
+                    ) : null}
+                    {emailError ? (
+                      <p role="alert" className="text-xs text-destructive">
+                        {emailError}
+                      </p>
+                    ) : null}
+                  </SettingsField>
+
+                  <SettingsField label="Password">
+                    <div className={controlContainerClass}>
                       <Button
                         type="button"
                         variant="outline"
-                        className={`${controlClass} justify-between gap-2 pr-2`}
-                        onClick={() => {
-                          setEmailError(null);
-                          setEmailDraft(displayedEmail);
-                          setEditingField("email");
-                        }}
-                        aria-label="Edit email"
+                        onClick={handleChangePassword}
+                        className={controlClass}
                       >
-                        <span>{displayedEmail || "Set email address"}</span>
-                        <IconPencil
-                          className="size-3.5 text-muted-foreground/80"
-                          aria-hidden="true"
-                        />
+                        Change Password
                       </Button>
-                    )}
-                  </div>
-                  {pendingEmail ? (
-                    <p className="text-xs text-primary" aria-live="polite">
-                      Pending verification: {pendingEmail}
-                    </p>
-                  ) : null}
-                  {emailError ? (
-                    <p role="alert" className="text-xs text-destructive">
-                      {emailError}
-                    </p>
-                  ) : null}
-                </SettingsField>
-
-                <SettingsField label="Password">
-                  <div className={controlContainerClass}>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleChangePassword}
-                      className={controlClass}
-                    >
-                      Change Password
-                    </Button>
-                  </div>
-                </SettingsField>
-              </dl>
-            </motion.section>
-
-            <motion.section
-              aria-labelledby="system-settings-heading"
-              className="border-b border-border pb-8"
-              {...sectionMotionProps}
-            >
-              <header className="mb-4">
-                <h2
-                  id="system-settings-heading"
-                  className="text-base font-semibold tracking-tight"
-                >
-                  System Settings
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Display and region preferences.
-                </p>
-              </header>
-
-              <dl className="space-y-4">
-                <SettingsField label="Time zone">
-                  <div className={controlContainerClass}>
-                    <Select
-                      value={timezone}
-                      onValueChange={handleTimezoneChange}
-                    >
-                      <SelectTrigger
-                        className={controlClass}
-                        disabled={isSavingTimezone}
-                        aria-label="Select time zone"
-                      >
-                        <SelectValue placeholder="Select timezone" />
-                      </SelectTrigger>
-                      <SelectContent
-                        className="max-h-56"
-                        position="popper"
-                        align="start"
-                        sideOffset={6}
-                      >
-                        {timezones.map((tz) => (
-                          <SelectItem key={tz} value={tz}>
-                            {tz}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </SettingsField>
-
-                <SettingsField label="Theme">
-                  <div className={controlContainerClass}>
-                    <Select
-                      value={theme ?? "light"}
-                      onValueChange={(nextTheme) => setTheme(nextTheme)}
-                    >
-                      <SelectTrigger
-                        className={controlClass}
-                        aria-label="Select theme"
-                      >
-                        <SelectValue placeholder="Select theme" />
-                      </SelectTrigger>
-                      <SelectContent
-                        position="popper"
-                        align="start"
-                        sideOffset={6}
-                      >
-                        <SelectItem value="system">System</SelectItem>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </SettingsField>
-              </dl>
-            </motion.section>
-
-            <motion.section
-              aria-labelledby="danger-zone-heading"
-              className="space-y-4"
-              {...sectionMotionProps}
-            >
-              <header>
-                <h2
-                  id="danger-zone-heading"
-                  className="text-base font-semibold tracking-tight text-destructive"
-                >
-                  Danger Zone
-                </h2>
-                <p className="mt-1 text-sm text-destructive/80">
-                  Warning: these actions can impact your access immediately.
-                </p>
-              </header>
-              <div className="rounded-md border border-destructive/35 bg-destructive/5">
-                <div className="divide-y divide-destructive/20">
-                  <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
-                    <div className="max-w-2xl">
-                      <p className="text-sm font-semibold">
-                        Log out this session
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Ends your current session on this device.
-                      </p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-10 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      onClick={handleLogOut}
-                      disabled={isLoggingOut}
-                      aria-busy={isLoggingOut}
-                    >
-                      {isLoggingOut ? "Logging out..." : "Log Out"}
-                    </Button>
-                  </div>
+                  </SettingsField>
+                </dl>
+              </motion.section>
 
-                  <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
-                    <div className="max-w-2xl">
-                      <p className="text-sm font-semibold">
-                        Delete this account
-                      </p>
-                      <p className="text-sm text-destructive/80">
-                        Permanently removes your account and cannot be undone.
-                      </p>
+              <motion.section
+                aria-labelledby="system-settings-heading"
+                className="border-b border-border pb-8"
+                {...sectionMotionProps}
+              >
+                <header className="mb-4">
+                  <h2
+                    id="system-settings-heading"
+                    className="text-base font-semibold tracking-tight"
+                  >
+                    System Settings
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Display and region preferences.
+                  </p>
+                </header>
+
+                <dl className="space-y-4">
+                  <SettingsField label="Time zone">
+                    <div className={controlContainerClass}>
+                      <Select
+                        value={timezone}
+                        onValueChange={handleTimezoneChange}
+                      >
+                        <SelectTrigger
+                          className={controlClass}
+                          disabled={isSavingTimezone}
+                          aria-label="Select time zone"
+                        >
+                          <SelectValue placeholder="Select timezone" />
+                        </SelectTrigger>
+                        <SelectContent
+                          className="max-h-56"
+                          position="popper"
+                          align="start"
+                          sideOffset={6}
+                        >
+                          {timezones.map((tz) => (
+                            <SelectItem key={tz} value={tz}>
+                              {tz}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      onClick={handleDeleteAccount}
-                      className="h-10 w-full sm:w-auto"
-                      disabled={isLoggingOut}
-                    >
-                      Delete Account
-                    </Button>
+                  </SettingsField>
+
+                  <SettingsField label="Theme">
+                    <div className={controlContainerClass}>
+                      <Select
+                        value={theme ?? "light"}
+                        onValueChange={(nextTheme) => setTheme(nextTheme)}
+                      >
+                        <SelectTrigger
+                          className={controlClass}
+                          aria-label="Select theme"
+                        >
+                          <SelectValue placeholder="Select theme" />
+                        </SelectTrigger>
+                        <SelectContent
+                          position="popper"
+                          align="start"
+                          sideOffset={6}
+                        >
+                          <SelectItem value="system">System</SelectItem>
+                          <SelectItem value="light">Light</SelectItem>
+                          <SelectItem value="dark">Dark</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </SettingsField>
+                </dl>
+              </motion.section>
+
+              <motion.section
+                aria-labelledby="danger-zone-heading"
+                className="space-y-4"
+                {...sectionMotionProps}
+              >
+                <header>
+                  <h2
+                    id="danger-zone-heading"
+                    className="text-base font-semibold tracking-tight text-destructive"
+                  >
+                    Danger Zone
+                  </h2>
+                  <p className="mt-1 text-sm text-destructive/80">
+                    Warning: these actions can impact your access immediately.
+                  </p>
+                </header>
+                <div className="rounded-md border border-destructive/35 bg-destructive/5">
+                  <div className="divide-y divide-destructive/20">
+                    <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
+                      <div className="max-w-2xl">
+                        <p className="text-sm font-semibold">
+                          Log out this session
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Ends your current session on this device.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={handleLogOut}
+                        disabled={isLoggingOut}
+                        aria-busy={isLoggingOut}
+                      >
+                        {isLoggingOut ? "Logging out..." : "Log Out"}
+                      </Button>
+                    </div>
+
+                    <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
+                      <div className="max-w-2xl">
+                        <p className="text-sm font-semibold">
+                          Delete this account
+                        </p>
+                        <p className="text-sm text-destructive/80">
+                          Permanently removes your account and cannot be undone.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={handleDeleteAccount}
+                        className="h-10 w-full sm:w-auto"
+                        disabled={isLoggingOut}
+                      >
+                        Delete Account
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.section>
+              </motion.section>
             </div>
           </div>
         </DashboardPage.Content>
