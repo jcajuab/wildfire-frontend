@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
@@ -41,7 +41,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { type Display } from "@/lib/api/displays-api";
+import { useEstimatePlaylistDurationMutation } from "@/lib/api/playlists-api";
 import type { Content } from "@/types/content";
 import type { PlaylistItem } from "@/types/playlist";
 
@@ -61,6 +70,7 @@ interface CreatePlaylistDialogProps {
   readonly onOpenChange: (open: boolean) => void;
   readonly onCreate: (playlist: NewPlaylistDraft) => void;
   readonly availableContent: readonly PlaylistSelectableContent[];
+  readonly availableDisplays: readonly Display[];
 }
 
 interface PlaylistFormData {
@@ -167,6 +177,7 @@ export function CreatePlaylistDialog({
   onOpenChange,
   onCreate,
   availableContent,
+  availableDisplays,
 }: CreatePlaylistDialogProps): ReactElement {
   const [formData, setFormData] = useState<PlaylistFormData>({
     name: "",
@@ -174,6 +185,14 @@ export function CreatePlaylistDialog({
   });
   const [playlistItems, setPlaylistItems] = useState<DraftPlaylistItem[]>([]);
   const [contentSearch, setContentSearch] = useState("");
+  const [selectedDisplayId, setSelectedDisplayId] = useState<string>("");
+  const [estimate, setEstimate] = useState<{
+    baseDurationSeconds: number;
+    scrollExtraSeconds: number;
+    effectiveDurationSeconds: number;
+  } | null>(null);
+  const [estimatePlaylistDuration, { isLoading: isEstimatingDuration }] =
+    useEstimatePlaylistDurationMutation();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -243,10 +262,79 @@ export function CreatePlaylistDialog({
     return playlistItems.reduce((sum, item) => sum + item.duration, 0);
   }, [playlistItems]);
 
+  const selectableDisplays = useMemo(
+    () =>
+      availableDisplays.filter(
+        (display) =>
+          typeof display.screenWidth === "number" &&
+          display.screenWidth > 0 &&
+          typeof display.screenHeight === "number" &&
+          display.screenHeight > 0,
+      ),
+    [availableDisplays],
+  );
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    if (selectedDisplayId.length === 0) {
+      return;
+    }
+    if (playlistItems.length === 0) {
+      return;
+    }
+
+    let disposed = false;
+    void estimatePlaylistDuration({
+      displayId: selectedDisplayId,
+      items: playlistItems.map((item, index) => ({
+        contentId: item.content.id,
+        duration: item.duration,
+        sequence: index + 1,
+      })),
+    })
+      .unwrap()
+      .then((result) => {
+        if (!disposed) {
+          setEstimate({
+            baseDurationSeconds: result.baseDurationSeconds,
+            scrollExtraSeconds: result.scrollExtraSeconds,
+            effectiveDurationSeconds: result.effectiveDurationSeconds,
+          });
+        }
+      })
+      .catch(() => {
+        if (!disposed) {
+          setEstimate(null);
+        }
+      });
+
+    return () => {
+      disposed = true;
+    };
+  }, [estimatePlaylistDuration, open, playlistItems, selectedDisplayId]);
+
+  const resolvedEstimate = useMemo(() => {
+    if (selectedDisplayId.length === 0) {
+      return null;
+    }
+    if (playlistItems.length === 0) {
+      return {
+        baseDurationSeconds: 0,
+        scrollExtraSeconds: 0,
+        effectiveDurationSeconds: 0,
+      };
+    }
+    return estimate;
+  }, [estimate, playlistItems.length, selectedDisplayId]);
+
   const handleClose = useCallback(() => {
     setFormData({ name: "", description: "" });
     setPlaylistItems([]);
     setContentSearch("");
+    setSelectedDisplayId("");
+    setEstimate(null);
     onOpenChange(false);
   }, [onOpenChange]);
 
@@ -270,7 +358,8 @@ export function CreatePlaylistDialog({
     handleClose();
   }, [formData, playlistItems, totalDuration, onCreate, handleClose]);
 
-  const canCreate = formData.name.trim().length > 0;
+  const canCreate =
+    formData.name.trim().length > 0 && selectedDisplayId.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -328,6 +417,27 @@ export function CreatePlaylistDialog({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="playlist-display-target">
+                    Display Target
+                  </Label>
+                  <Select
+                    value={selectedDisplayId}
+                    onValueChange={setSelectedDisplayId}
+                  >
+                    <SelectTrigger id="playlist-display-target">
+                      <SelectValue placeholder="Select a display" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectableDisplays.map((display) => (
+                        <SelectItem key={display.id} value={display.id}>
+                          {display.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
                   <Label htmlFor="playlist-description">
                     Description (Optional)
                   </Label>
@@ -346,7 +456,14 @@ export function CreatePlaylistDialog({
                 </div>
 
                 <p className="text-sm text-muted-foreground">
-                  Total Duration: {formatDuration(totalDuration)}
+                  Base Duration: {formatDuration(totalDuration)}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Effective Duration:{" "}
+                  {formatDuration(
+                    resolvedEstimate?.effectiveDurationSeconds ?? totalDuration,
+                  )}
+                  {isEstimatingDuration ? " (calculating…)" : ""}
                 </p>
               </div>
             </div>

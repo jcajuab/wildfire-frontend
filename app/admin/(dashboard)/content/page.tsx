@@ -252,6 +252,7 @@ interface EditContentDialogProps {
     file: File | null;
     flashMessage: string | null;
     flashTone: "INFO" | "WARNING" | "CRITICAL" | null;
+    scrollPxPerSecond: number | null;
   }) => Promise<void>;
 }
 
@@ -286,6 +287,7 @@ interface EditContentDialogFormProps {
     file: File | null;
     flashMessage: string | null;
     flashTone: "INFO" | "WARNING" | "CRITICAL" | null;
+    scrollPxPerSecond: number | null;
   }) => Promise<void>;
 }
 
@@ -299,12 +301,17 @@ function EditContentDialogForm({
   const [flashTone, setFlashTone] = useState<"INFO" | "WARNING" | "CRITICAL">(
     content.flashTone ?? "INFO",
   );
+  const [scrollPxPerSecond, setScrollPxPerSecond] = useState(
+    content.scrollPxPerSecond?.toString() ?? "",
+  );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const canReplaceFile =
     content.kind === "ROOT" && content.status !== "PROCESSING";
   const isFlashContent = content.type === "FLASH";
+  const supportsScrollSpeed =
+    content.type === "IMAGE" || content.type === "PDF";
 
   const handleFileSelect = useCallback((file: File) => {
     setSelectedFile(file);
@@ -391,6 +398,21 @@ function EditContentDialogForm({
           </>
         ) : (
           <div className="space-y-2">
+            {supportsScrollSpeed ? (
+              <div className="space-y-2">
+                <Label htmlFor="edit-content-scroll-speed">
+                  Scroll Speed (px/s)
+                </Label>
+                <Input
+                  id="edit-content-scroll-speed"
+                  type="number"
+                  min={1}
+                  value={scrollPxPerSecond}
+                  onChange={(event) => setScrollPxPerSecond(event.target.value)}
+                  placeholder="Leave empty to use default"
+                />
+              </div>
+            ) : null}
             <Label>Replace File</Label>
             <p className="text-xs text-muted-foreground">
               Current file type: {content.type} ({content.mimeType || "Unknown"}
@@ -470,6 +492,18 @@ function EditContentDialogForm({
                 file: selectedFile,
                 flashMessage: isFlashContent ? flashMessage.trim() : null,
                 flashTone: isFlashContent ? flashTone : null,
+                scrollPxPerSecond: supportsScrollSpeed
+                  ? (() => {
+                      if (scrollPxPerSecond.trim().length === 0) {
+                        return null;
+                      }
+                      const raw = Number(scrollPxPerSecond);
+                      if (!Number.isFinite(raw) || raw <= 0) {
+                        return null;
+                      }
+                      return Math.trunc(raw);
+                    })()
+                  : null,
               });
               onOpenChange(false);
             } finally {
@@ -699,9 +733,13 @@ export default function ContentPage(): ReactElement {
   );
 
   const handleUploadFile = useCallback(
-    async (name: string, file: File) => {
+    async (name: string, file: File, scrollPxPerSecond?: number) => {
       try {
-        const accepted = await uploadContent({ title: name, file }).unwrap();
+        const accepted = await uploadContent({
+          title: name,
+          file,
+          scrollPxPerSecond,
+        }).unwrap();
         toast.message("Content upload queued.");
         void waitForContentJob({
           jobId: accepted.job.id,
@@ -1058,7 +1096,14 @@ export default function ContentPage(): ReactElement {
         onOpenChange={(open) => {
           if (!open) setContentToEdit(null);
         }}
-        onSave={async ({ contentId, title, file, flashMessage, flashTone }) => {
+        onSave={async ({
+          contentId,
+          title,
+          file,
+          flashMessage,
+          flashTone,
+          scrollPxPerSecond,
+        }) => {
           const editedContent = contentToEdit;
           const parentContentIdForRollback =
             editedContent?.id === contentId
@@ -1126,7 +1171,12 @@ export default function ContentPage(): ReactElement {
                       flashMessage: flashMessage ?? "",
                       flashTone: flashTone ?? "INFO",
                     }
-                  : {}),
+                  : editedContent?.type === "IMAGE" ||
+                      editedContent?.type === "PDF"
+                    ? {
+                        scrollPxPerSecond,
+                      }
+                    : {}),
               }).unwrap(),
             );
             const updatedParentContentId = updated.parentContentId;

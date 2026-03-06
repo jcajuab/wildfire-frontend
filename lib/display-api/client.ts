@@ -41,6 +41,7 @@ export interface ManifestItem {
     readonly width: number | null;
     readonly height: number | null;
     readonly duration: number | null;
+    readonly scrollPxPerSecond: number | null;
   };
 }
 
@@ -236,6 +237,10 @@ const parseManifestItemContent = (
     width: readNullableInteger(root.width, `${path}.width`),
     height: readNullableInteger(root.height, `${path}.height`),
     duration: readNullableInteger(root.duration, `${path}.duration`),
+    scrollPxPerSecond: readNullableInteger(
+      root.scrollPxPerSecond,
+      `${path}.scrollPxPerSecond`,
+    ),
   };
 };
 

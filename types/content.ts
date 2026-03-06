@@ -29,6 +29,7 @@ export interface Content {
   readonly width: number | null;
   readonly height: number | null;
   readonly duration: number | null;
+  readonly scrollPxPerSecond: number | null;
   readonly flashMessage: string | null;
   readonly flashTone: FlashTone | null;
   readonly status: ContentStatus;

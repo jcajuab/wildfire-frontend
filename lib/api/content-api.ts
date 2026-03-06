@@ -23,6 +23,7 @@ export interface BackendContent {
   readonly width: number | null;
   readonly height: number | null;
   readonly duration: number | null;
+  readonly scrollPxPerSecond: number | null;
   readonly flashMessage: string | null;
   readonly flashTone: FlashTone | null;
   readonly createdAt: string;
@@ -71,6 +72,7 @@ export interface ContentListQuery {
 export interface UploadContentRequest {
   readonly title: string;
   readonly file: File;
+  readonly scrollPxPerSecond?: number;
 }
 
 export interface ReplaceContentFileRequest {
@@ -164,9 +166,12 @@ export const contentApi = createApi({
       ContentIngestionAcceptedResponse,
       UploadContentRequest
     >({
-      query: ({ title, file }) => {
+      query: ({ title, file, scrollPxPerSecond }) => {
         const formData = new FormData();
         formData.append("title", title);
+        if (scrollPxPerSecond !== undefined) {
+          formData.append("scrollPxPerSecond", String(scrollPxPerSecond));
+        }
         formData.append("file", file);
         return {
           url: "content",
@@ -205,6 +210,7 @@ export const contentApi = createApi({
         readonly title?: string;
         readonly flashMessage?: string;
         readonly flashTone?: FlashTone;
+        readonly scrollPxPerSecond?: number | null;
       }
     >({
       query: ({ id, ...body }) => ({

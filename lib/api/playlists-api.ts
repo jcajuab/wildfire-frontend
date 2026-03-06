@@ -87,6 +87,27 @@ export interface ReorderPlaylistItemsRequest {
   readonly orderedItemIds: readonly string[];
 }
 
+export interface EstimatePlaylistDurationRequest {
+  readonly displayId: string;
+  readonly items: readonly {
+    contentId: string;
+    duration: number;
+    sequence: number;
+  }[];
+}
+
+export interface PlaylistDurationEstimate {
+  readonly baseDurationSeconds: number;
+  readonly scrollExtraSeconds: number;
+  readonly effectiveDurationSeconds: number;
+  readonly items: readonly {
+    contentId: string;
+    baseDurationSeconds: number;
+    scrollExtraSeconds: number;
+    effectiveDurationSeconds: number;
+  }[];
+}
+
 export const playlistsApi = createApi({
   reducerPath: "playlistsApi",
   baseQuery,
@@ -224,6 +245,21 @@ export const playlistsApi = createApi({
         { type: "Playlist", id: "LIST" },
       ],
     }),
+    estimatePlaylistDuration: build.mutation<
+      PlaylistDurationEstimate,
+      EstimatePlaylistDurationRequest
+    >({
+      query: (body) => ({
+        url: "playlists/duration-estimate",
+        method: "POST",
+        body,
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<PlaylistDurationEstimate>(
+          response,
+          "estimatePlaylistDuration",
+        ),
+    }),
   }),
 });
 
@@ -238,4 +274,5 @@ export const {
   useUpdatePlaylistItemMutation,
   useDeletePlaylistItemMutation,
   useReorderPlaylistItemsMutation,
+  useEstimatePlaylistDurationMutation,
 } = playlistsApi;

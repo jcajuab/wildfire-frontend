@@ -36,6 +36,7 @@ import {
   useQueryStringState,
 } from "@/hooks/use-query-state";
 import { useListContentQuery } from "@/lib/api/content-api";
+import { useGetDisplaysQuery } from "@/lib/api/displays-api";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   type PlaylistListQuery,
@@ -122,6 +123,7 @@ export default function PlaylistsPage(): ReactElement {
     [page, pageSize, search, sortBy, statusFilter],
   );
   const { data: playlistsData } = useListPlaylistsQuery(playlistQuery);
+  const { data: displaysData } = useGetDisplaysQuery();
   const { data: contentData } = useListContentQuery(
     { page: 1, pageSize: 100 },
     { skip: !canReadContent },
@@ -355,6 +357,7 @@ export default function PlaylistsPage(): ReactElement {
         onOpenChange={setCreateDialogOpen}
         onCreate={handleCreatePlaylist}
         availableContent={availableContent}
+        availableDisplays={displaysData?.items ?? []}
       />
 
       {manageItemsPlaylist && (
@@ -366,6 +369,7 @@ export default function PlaylistsPage(): ReactElement {
           }}
           playlist={manageItemsPlaylist}
           availableContent={availableContent}
+          availableDisplays={displaysData?.items ?? []}
           onSave={handleSaveItems}
           isSaving={isSavingPlaylistItems}
         />

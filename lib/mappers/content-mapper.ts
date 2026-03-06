@@ -18,6 +18,7 @@ export function mapBackendContentToContent(item: BackendContent): Content {
     width: item.width,
     height: item.height,
     duration: item.duration,
+    scrollPxPerSecond: item.scrollPxPerSecond,
     flashMessage: item.flashMessage ?? null,
     flashTone: item.flashTone ?? null,
     status: item.status,

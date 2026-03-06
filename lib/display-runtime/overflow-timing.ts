@@ -2,6 +2,7 @@ export interface RuntimeContent {
   readonly type: "IMAGE" | "VIDEO" | "PDF";
   readonly width: number | null;
   readonly height: number | null;
+  readonly scrollPxPerSecond?: number | null;
 }
 
 export interface RuntimeManifestItem {
@@ -55,7 +56,10 @@ export const computeOverflowExtraSeconds = (input: {
       ? input.measuredContentHeight
       : (viewport.width / item.content.width) * item.content.height;
   const verticalOverflow = Math.max(0, scaledHeight - viewport.height);
-  const speed = toPositive(config.scrollPixelsPerSecond, 24);
+  const speed = toPositive(
+    item.content.scrollPxPerSecond ?? config.scrollPixelsPerSecond,
+    24,
+  );
   if (verticalOverflow <= 0) {
     return 0;
   }

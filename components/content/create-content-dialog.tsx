@@ -32,7 +32,11 @@ import type { FlashTone } from "@/types/content";
 interface CreateContentDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onUploadFile: (name: string, file: File) => void;
+  readonly onUploadFile: (
+    name: string,
+    file: File,
+    scrollPxPerSecond?: number,
+  ) => void;
   readonly onCreateFlash: (input: {
     title: string;
     message: string;
@@ -49,6 +53,7 @@ export function CreateContentDialog({
   const [mode, setMode] = useState<"upload" | "flash">("upload");
   const [title, setTitle] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [scrollPxPerSecond, setScrollPxPerSecond] = useState("");
   const [flashMessage, setFlashMessage] = useState("");
   const [flashTone, setFlashTone] = useState<FlashTone>("INFO");
   const [isDragging, setIsDragging] = useState(false);
@@ -57,6 +62,7 @@ export function CreateContentDialog({
     setMode("upload");
     setTitle("");
     setSelectedFile(null);
+    setScrollPxPerSecond("");
     setFlashMessage("");
     setFlashTone("INFO");
     setIsDragging(false);
@@ -79,7 +85,14 @@ export function CreateContentDialog({
     if (!canSubmit) return;
 
     if (isUploadMode && selectedFile) {
-      onUploadFile(title.trim(), selectedFile);
+      const rawScrollPxPerSecond = Number(scrollPxPerSecond);
+      const parsedScrollPxPerSecond =
+        scrollPxPerSecond.trim().length > 0
+          ? Number.isFinite(rawScrollPxPerSecond) && rawScrollPxPerSecond > 0
+            ? Math.trunc(rawScrollPxPerSecond)
+            : undefined
+          : undefined;
+      onUploadFile(title.trim(), selectedFile, parsedScrollPxPerSecond);
     } else if (!isUploadMode) {
       onCreateFlash({
         title: title.trim(),
@@ -98,6 +111,7 @@ export function CreateContentDialog({
     onCreateFlash,
     onUploadFile,
     selectedFile,
+    scrollPxPerSecond,
     title,
   ]);
 
@@ -141,6 +155,16 @@ export function CreateContentDialog({
     [handleFileSelect],
   );
 
+  const supportsScrollSpeed = useMemo(() => {
+    if (!selectedFile) {
+      return false;
+    }
+    return (
+      selectedFile.type.startsWith("image/") ||
+      selectedFile.type === "application/pdf"
+    );
+  }, [selectedFile]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -176,44 +200,64 @@ export function CreateContentDialog({
           </div>
 
           {isUploadMode ? (
-            <div
-              className={`flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-8 transition-colors ${
-                isDragging
-                  ? "border-primary bg-primary/5"
-                  : "border-muted-foreground/25"
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <div className="flex size-12 items-center justify-center rounded-md bg-muted">
-                <IconUpload className="size-6 text-muted-foreground" />
+            <div className="space-y-4">
+              <div
+                className={`flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-8 transition-colors ${
+                  isDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-muted-foreground/25"
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <div className="flex size-12 items-center justify-center rounded-md bg-muted">
+                  <IconUpload className="size-6 text-muted-foreground" />
+                </div>
+                <div className="space-y-1 text-center">
+                  <p className="text-sm">
+                    <label
+                      htmlFor="file-upload"
+                      className="cursor-pointer font-medium text-primary hover:underline"
+                    >
+                      Choose a file
+                    </label>{" "}
+                    or drag it here.
+                  </p>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    className="sr-only"
+                    accept={SUPPORTED_CONTENT_FILE_MIME_TYPES}
+                    onChange={handleFileInputChange}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {SUPPORTED_CONTENT_FILE_LABELS}
+                  </p>
+                </div>
+                {selectedFile ? (
+                  <p className="text-xs font-medium text-primary">
+                    Selected: {selectedFile.name}
+                  </p>
+                ) : null}
               </div>
-              <div className="space-y-1 text-center">
-                <p className="text-sm">
-                  <label
-                    htmlFor="file-upload"
-                    className="cursor-pointer font-medium text-primary hover:underline"
-                  >
-                    Choose a file
-                  </label>{" "}
-                  or drag it here.
-                </p>
-                <input
-                  id="file-upload"
-                  type="file"
-                  className="sr-only"
-                  accept={SUPPORTED_CONTENT_FILE_MIME_TYPES}
-                  onChange={handleFileInputChange}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {SUPPORTED_CONTENT_FILE_LABELS}
-                </p>
-              </div>
-              {selectedFile ? (
-                <p className="text-xs font-medium text-primary">
-                  Selected: {selectedFile.name}
-                </p>
+
+              {supportsScrollSpeed ? (
+                <div className="space-y-2">
+                  <Label htmlFor="content-scroll-speed">
+                    Scroll Speed (px/s)
+                  </Label>
+                  <Input
+                    id="content-scroll-speed"
+                    type="number"
+                    min={1}
+                    value={scrollPxPerSecond}
+                    onChange={(event) =>
+                      setScrollPxPerSecond(event.target.value)
+                    }
+                    placeholder="Leave empty to use default"
+                  />
+                </div>
               ) : null}
             </div>
           ) : (

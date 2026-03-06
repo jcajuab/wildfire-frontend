@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -37,6 +37,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { type Display } from "@/lib/api/displays-api";
+import { useEstimatePlaylistDurationMutation } from "@/lib/api/playlists-api";
 import type { Content } from "@/types/content";
 import type {
   Playlist,
@@ -160,6 +169,7 @@ interface EditPlaylistItemsDialogProps {
   readonly onOpenChange: (open: boolean) => void;
   readonly playlist: Playlist;
   readonly availableContent: readonly PlaylistSelectableContent[];
+  readonly availableDisplays: readonly Display[];
   readonly onSave: (playlistId: string, diff: PlaylistItemsDiff) => void;
   readonly isSaving?: boolean;
 }
@@ -179,6 +189,7 @@ export function EditPlaylistItemsDialog({
   onOpenChange,
   playlist,
   availableContent,
+  availableDisplays,
   onSave,
   isSaving = false,
 }: EditPlaylistItemsDialogProps): ReactElement {
@@ -186,6 +197,14 @@ export function EditPlaylistItemsDialog({
     toDrafts(playlist.items),
   );
   const [contentSearch, setContentSearch] = useState("");
+  const [selectedDisplayId, setSelectedDisplayId] = useState("");
+  const [estimate, setEstimate] = useState<{
+    baseDurationSeconds: number;
+    scrollExtraSeconds: number;
+    effectiveDurationSeconds: number;
+  } | null>(null);
+  const [estimatePlaylistDuration, { isLoading: isEstimatingDuration }] =
+    useEstimatePlaylistDurationMutation();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -245,6 +264,73 @@ export function EditPlaylistItemsDialog({
     () => drafts.reduce((sum, d) => sum + d.duration, 0),
     [drafts],
   );
+
+  const selectableDisplays = useMemo(
+    () =>
+      availableDisplays.filter(
+        (display) =>
+          typeof display.screenWidth === "number" &&
+          display.screenWidth > 0 &&
+          typeof display.screenHeight === "number" &&
+          display.screenHeight > 0,
+      ),
+    [availableDisplays],
+  );
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    if (selectedDisplayId.length === 0) {
+      return;
+    }
+    if (drafts.length === 0) {
+      return;
+    }
+
+    let disposed = false;
+    void estimatePlaylistDuration({
+      displayId: selectedDisplayId,
+      items: drafts.map((draft, index) => ({
+        contentId: draft.content.id,
+        duration: draft.duration,
+        sequence: index + 1,
+      })),
+    })
+      .unwrap()
+      .then((result) => {
+        if (!disposed) {
+          setEstimate({
+            baseDurationSeconds: result.baseDurationSeconds,
+            scrollExtraSeconds: result.scrollExtraSeconds,
+            effectiveDurationSeconds: result.effectiveDurationSeconds,
+          });
+        }
+      })
+      .catch(() => {
+        if (!disposed) {
+          setEstimate(null);
+        }
+      });
+
+    return () => {
+      disposed = true;
+    };
+  }, [drafts, estimatePlaylistDuration, open, selectedDisplayId]);
+
+  const resolvedEstimate = useMemo(() => {
+    if (selectedDisplayId.length === 0) {
+      return null;
+    }
+    if (drafts.length === 0) {
+      return {
+        baseDurationSeconds: 0,
+        scrollExtraSeconds: 0,
+        effectiveDurationSeconds: 0,
+      };
+    }
+    return estimate;
+  }, [drafts.length, estimate, selectedDisplayId]);
 
   const handleSave = useCallback(() => {
     const originalIds = new Set(playlist.items.map((i) => i.id));
@@ -315,7 +401,10 @@ export function EditPlaylistItemsDialog({
             <Button variant="outline" onClick={handleClose} disabled={isSaving}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || selectedDisplayId.length === 0}
+            >
               {isSaving ? "Saving…" : "Save Changes"}
             </Button>
           </div>
@@ -332,8 +421,43 @@ export function EditPlaylistItemsDialog({
                   <span className="text-sm font-semibold">Playlist Items</span>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {drafts.length} items &middot; {formatDuration(totalDuration)}
+                  {drafts.length} items &middot;{" "}
+                  {formatDuration(
+                    resolvedEstimate?.effectiveDurationSeconds ?? totalDuration,
+                  )}
+                  {isEstimatingDuration ? " (calculating…)" : ""}
                 </span>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">
+                    Display target
+                  </span>
+                  <Select
+                    value={selectedDisplayId}
+                    onValueChange={setSelectedDisplayId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a display" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectableDisplays.map((display) => (
+                        <SelectItem key={display.id} value={display.id}>
+                          {display.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">
+                    Base duration
+                  </span>
+                  <div className="rounded-md border border-border px-2.5 py-2 text-sm">
+                    {formatDuration(totalDuration)}
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
