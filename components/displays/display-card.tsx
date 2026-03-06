@@ -7,8 +7,6 @@ import {
   IconExternalLink,
   IconEdit,
   IconTrash,
-  IconPlayerPlay,
-  IconPlayerPause,
 } from "@tabler/icons-react";
 
 import { getGroupBadgeStyles } from "@/lib/display-group-colors";
@@ -88,13 +86,6 @@ function getStatusLabel(status: DisplayStatus): string {
   }
 }
 
-function formatDuration(totalSeconds: number): string {
-  const roundedSeconds = Math.max(0, Math.floor(totalSeconds));
-  const mins = Math.floor(roundedSeconds / 60);
-  const secs = roundedSeconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
 export const DisplayCard = memo(function DisplayCard({
   display,
   onViewDetails,
@@ -104,13 +95,8 @@ export const DisplayCard = memo(function DisplayCard({
   isGlobalEmergencyActive = false,
 }: DisplayCardProps): ReactElement {
   const statusStyles = getStatusStyles(display.status);
-  const nowPlaying = display.nowPlaying;
   const shouldPulse = display.status === "LIVE" || display.status === "READY";
   const statusLabel = getStatusLabel(display.status);
-  const durationLabel =
-    nowPlaying != null && nowPlaying.duration > 0
-      ? formatDuration(nowPlaying.duration)
-      : "N/A";
 
   return (
     <article className="group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors duration-200 hover:border-primary/25 motion-reduce:transition-none">
@@ -223,30 +209,6 @@ export const DisplayCard = memo(function DisplayCard({
         <div className="space-y-2">
           <div className="overflow-hidden rounded-xl border border-border/70 bg-background aspect-video">
             <DisplayPreview displayId={display.id} displayName={display.name} />
-          </div>
-          <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-background p-2.5">
-            {display.status === "LIVE" ? (
-              <IconPlayerPlay
-                className="size-8 shrink-0 text-primary"
-                aria-hidden="true"
-              />
-            ) : (
-              <IconPlayerPause
-                className="size-8 shrink-0 text-muted-foreground"
-                aria-hidden="true"
-              />
-            )}
-            <div className="min-w-0 flex-1 space-y-1">
-              <p className="truncate text-base font-semibold leading-tight">
-                {nowPlaying?.title ?? "N/A"}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                Duration: {durationLabel}
-              </p>
-              <p className="truncate text-sm text-muted-foreground">
-                Playlist: {nowPlaying?.playlist ?? "N/A"}
-              </p>
-            </div>
           </div>
         </div>
       </section>
