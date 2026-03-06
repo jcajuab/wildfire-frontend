@@ -61,6 +61,7 @@ import {
 import type { LogEntry } from "@/types/log";
 
 const PAGE_SIZE = 20;
+const LOG_FILTER_DEBOUNCE_MS = 250;
 const ACTOR_TYPE_FILTERS = ["all", "user", "display"] as const;
 type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
 const COMMON_STATUS_CODES = ["200", "401", "403", "404", "500"] as const;
@@ -105,7 +106,9 @@ export default function LogsPage(): ReactElement {
   const [from, setFrom] = useQueryStringState("from", "");
   const [to, setTo] = useQueryStringState("to", "");
   const [action, setAction] = useQueryStringState("action", "");
+  const [actionDraft, setActionDraft] = useState(action);
   const [requestId, setRequestId] = useQueryStringState("requestId", "");
+  const [requestIdDraft, setRequestIdDraft] = useState(requestId);
   const [resourceType, setResourceType] = useQueryEnumState<ResourceTypeFilter>(
     "resourceType",
     "",
@@ -126,6 +129,46 @@ export default function LogsPage(): ReactElement {
       resourceType === "" ? "" : getResourceTypeLabel(resourceType),
     );
   }, [resourceType]);
+
+  useEffect(() => {
+    setActionDraft(action);
+  }, [action]);
+
+  useEffect(() => {
+    setRequestIdDraft(requestId);
+  }, [requestId]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      if (actionDraft === action) {
+        return;
+      }
+      setAction(actionDraft);
+      if (page !== 1) {
+        setPage(1);
+      }
+    }, LOG_FILTER_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [action, actionDraft, page, setAction, setPage]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      if (requestIdDraft === requestId) {
+        return;
+      }
+      setRequestId(requestIdDraft);
+      if (page !== 1) {
+        setPage(1);
+      }
+    }, LOG_FILTER_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [page, requestId, requestIdDraft, setPage, setRequestId]);
 
   const parsedStatus = useMemo<number | undefined>(() => {
     const parsed = Number.parseInt(statusRaw, 10);
@@ -205,13 +248,9 @@ export default function LogsPage(): ReactElement {
     [resetToFirstPage, setTo],
   );
 
-  const handleActionChange = useCallback(
-    (nextValue: string): void => {
-      setAction(nextValue);
-      resetToFirstPage();
-    },
-    [resetToFirstPage, setAction],
-  );
+  const handleActionChange = useCallback((nextValue: string): void => {
+    setActionDraft(nextValue);
+  }, []);
 
   const handleActorTypeChange = useCallback(
     (nextValue: ActorTypeFilter): void => {
@@ -277,25 +316,28 @@ export default function LogsPage(): ReactElement {
       : null;
   }, [statusRaw]);
 
-  const handleRequestIdChange = useCallback(
-    (nextValue: string): void => {
-      setRequestId(nextValue);
-      resetToFirstPage();
-    },
-    [resetToFirstPage, setRequestId],
-  );
+  const handleRequestIdChange = useCallback((nextValue: string): void => {
+    setRequestIdDraft(nextValue);
+  }, []);
 
   const handleExportSubmit = useCallback(async (): Promise<void> => {
+    if (actionDraft !== action) {
+      setAction(actionDraft);
+    }
+    if (requestIdDraft !== requestId) {
+      setRequestId(requestIdDraft);
+    }
+
     setIsExporting(true);
     try {
       const query: AuditExportQuery = {
         from: dateToISOStart(from),
         to: dateToISOEnd(to),
-        action: action || undefined,
+        action: actionDraft || undefined,
         actorType: actorType === "all" ? undefined : actorType,
         resourceType: resourceType || undefined,
         status: parsedStatus,
-        requestId: requestId || undefined,
+        requestId: requestIdDraft || undefined,
       };
       const blob = await exportAuditEventsCsv(query);
       const url = URL.createObjectURL(blob);
@@ -319,17 +361,31 @@ export default function LogsPage(): ReactElement {
     } finally {
       setIsExporting(false);
     }
-  }, [action, actorType, from, to, parsedStatus, requestId, resourceType]);
+  }, [
+    action,
+    actionDraft,
+    actorType,
+    from,
+    parsedStatus,
+    requestId,
+    requestIdDraft,
+    resourceType,
+    setAction,
+    setRequestId,
+    to,
+  ]);
 
   const handleResetFilters = useCallback((): void => {
     setFrom("");
     setTo("");
     setAction("");
+    setActionDraft("");
     setActorType("all");
     setResourceType("");
     setResourceTypeInput("");
     setStatusRaw("");
     setRequestId("");
+    setRequestIdDraft("");
     setPage(1);
   }, [
     setAction,
@@ -433,7 +489,7 @@ export default function LogsPage(): ReactElement {
                 <Label htmlFor="logs-filter-action">Action</Label>
                 <Input
                   id="logs-filter-action"
-                  value={action}
+                  value={actionDraft}
                   onChange={(e) => handleActionChange(e.target.value)}
                   placeholder="e.g. auth.session or rbac.user.update"
                 />
@@ -442,7 +498,7 @@ export default function LogsPage(): ReactElement {
                 <Label htmlFor="logs-filter-request-id">Request ID</Label>
                 <Input
                   id="logs-filter-request-id"
-                  value={requestId}
+                  value={requestIdDraft}
                   onChange={(e) => handleRequestIdChange(e.target.value)}
                   placeholder="e.g. 2be5fd5a or full UUID"
                 />
