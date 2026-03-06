@@ -34,9 +34,6 @@ import { useMounted } from "@/hooks/use-mounted";
 const POLL_MS = 60_000;
 const HEARTBEAT_MS = 30_000;
 const DEFAULT_SCROLL_PX_PER_SECOND = 24;
-const FLASH_SPEED_CHAR_MULTIPLIER = 0.24;
-const FLASH_MIN_SECONDS = 12;
-const FLASH_MAX_SECONDS = 45;
 
 type FlashTone = "INFO" | "WARNING" | "CRITICAL";
 
@@ -308,20 +305,22 @@ export default function DisplayRuntimePage() {
   }, [activeFlash]);
 
   const flashMarqueeStyle = useMemo(() => {
-    if (!flashMarqueeText) {
+    if (!flashMarqueeText || !activeFlash) {
       return undefined;
     }
-    const estimatedSeconds = Math.round(
-      flashMarqueeText.length * FLASH_SPEED_CHAR_MULTIPLIER,
+    const estimatedTrackWidthPx = Math.max(
+      viewport.width * 2,
+      flashMarqueeText.length * 22,
     );
-    const durationSeconds = Math.min(
-      FLASH_MAX_SECONDS,
-      Math.max(FLASH_MIN_SECONDS, estimatedSeconds),
+    const durationSeconds = Math.max(
+      8,
+      Math.round(estimatedTrackWidthPx / activeFlash.speedPxPerSecond),
     );
     return {
       "--wildfire-flash-duration": `${durationSeconds}s`,
+      height: `${activeFlash.heightPx}px`,
     } as CSSProperties;
-  }, [flashMarqueeText]);
+  }, [activeFlash, flashMarqueeText, viewport.width]);
 
   if (!isRegistrationResolved) {
     return (
@@ -376,9 +375,7 @@ export default function DisplayRuntimePage() {
       ) : null}
 
       {!currentItem ? (
-        <div className="flex min-h-screen items-center justify-center text-sm text-white/70">
-          No active schedule
-        </div>
+        <div className="h-screen w-screen bg-black" aria-hidden="true" />
       ) : currentItem.content.type === "VIDEO" ? (
         <video
           key={currentItem.id}
@@ -421,16 +418,14 @@ export default function DisplayRuntimePage() {
       )}
       {activeFlash && flashMarqueeText ? (
         <div
-          className={`pointer-events-none absolute inset-x-0 bottom-0 z-20 border-t px-3 py-2 ${FLASH_TONE_CLASSNAME[activeFlash.tone]}`}
+          className={`pointer-events-none absolute inset-x-0 top-0 z-20 border-b px-3 ${FLASH_TONE_CLASSNAME[activeFlash.tone]}`}
           role="status"
           aria-live={activeFlash.tone === "CRITICAL" ? "assertive" : "polite"}
           aria-label={`${activeFlash.tone} flash message`}
+          style={flashMarqueeStyle}
         >
-          <div className="relative overflow-hidden whitespace-nowrap">
-            <div
-              className="flex min-w-max items-center gap-10 pr-10 text-sm font-semibold tracking-wide [animation:flash-marquee_var(--wildfire-flash-duration)_linear_infinite] motion-reduce:[animation:none]"
-              style={flashMarqueeStyle}
-            >
+          <div className="relative flex h-full items-center overflow-hidden whitespace-nowrap">
+            <div className="flex min-w-max items-center gap-10 pr-10 text-sm font-semibold tracking-wide [animation:flash-marquee_var(--wildfire-flash-duration)_linear_infinite] motion-reduce:[animation:none]">
               <span>{flashMarqueeText}</span>
               <span aria-hidden="true">{flashMarqueeText}</span>
               <span aria-hidden="true">{flashMarqueeText}</span>

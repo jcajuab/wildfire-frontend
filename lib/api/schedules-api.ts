@@ -8,7 +8,9 @@ import { baseQuery } from "@/lib/api/base-query";
 export interface BackendSchedule {
   readonly id: string;
   readonly name: string;
-  readonly playlistId: string;
+  readonly kind: "PLAYLIST" | "FLASH";
+  readonly playlistId: string | null;
+  readonly contentId: string | null;
   readonly displayId: string;
   readonly startDate: string;
   readonly endDate: string;
@@ -21,7 +23,14 @@ export interface BackendSchedule {
   readonly playlist: {
     readonly id: string;
     readonly name: string | null;
-  };
+  } | null;
+  readonly content: {
+    readonly id: string;
+    readonly title: string | null;
+    readonly type: "FLASH";
+    readonly flashMessage: string | null;
+    readonly flashTone: "INFO" | "WARNING" | "CRITICAL" | null;
+  } | null;
   readonly display: {
     readonly id: string;
     readonly name: string | null;
@@ -37,7 +46,9 @@ export interface BackendScheduleListResponse {
 
 export interface CreateScheduleRequest {
   readonly name: string;
-  readonly playlistId: string;
+  readonly kind: "PLAYLIST" | "FLASH";
+  readonly playlistId: string | null;
+  readonly contentId: string | null;
   readonly displayId: string;
   readonly startDate: string;
   readonly endDate: string;
@@ -50,7 +61,9 @@ export interface CreateScheduleRequest {
 export interface UpdateScheduleRequest {
   readonly id: string;
   readonly name?: string;
-  readonly playlistId?: string;
+  readonly kind?: "PLAYLIST" | "FLASH";
+  readonly playlistId?: string | null;
+  readonly contentId?: string | null;
   readonly displayId?: string;
   readonly startDate?: string;
   readonly endDate?: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent, DragEvent, ReactElement } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { IconEye, IconPlus, IconUpload } from "@tabler/icons-react";
 import { toast } from "sonner";
 
@@ -20,13 +20,6 @@ import { ContentSortSelect } from "@/components/content/content-sort-select";
 import { ContentStatusTabs } from "@/components/content/content-status-tabs";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -52,9 +45,8 @@ import {
 } from "@/hooks/use-query-state";
 import {
   type BackendContentJob,
-  useActivateFlashContentMutation,
-  useGetActiveFlashContentQuery,
   contentApi,
+  useCreateFlashContentMutation,
   useDeleteContentMutation,
   useLazyGetContentJobQuery,
   useLazyGetContentFileUrlQuery,
@@ -62,12 +54,10 @@ import {
   useListContentQuery,
   useReplaceContentFileMutation,
   useSetContentExclusionMutation,
-  useStopActiveFlashContentMutation,
   useUploadContentMutation,
   useUpdateContentMutation,
 } from "@/lib/api/content-api";
 import { getBaseUrl } from "@/lib/api/base-query";
-import { useGetDisplaysQuery } from "@/lib/api/displays-api";
 import {
   getApiErrorMessage,
   notifyApiError,
@@ -260,6 +250,8 @@ interface EditContentDialogProps {
     contentId: string;
     title: string;
     file: File | null;
+    flashMessage: string | null;
+    flashTone: "INFO" | "WARNING" | "CRITICAL" | null;
   }) => Promise<void>;
 }
 
@@ -292,6 +284,8 @@ interface EditContentDialogFormProps {
     contentId: string;
     title: string;
     file: File | null;
+    flashMessage: string | null;
+    flashTone: "INFO" | "WARNING" | "CRITICAL" | null;
   }) => Promise<void>;
 }
 
@@ -301,11 +295,16 @@ function EditContentDialogForm({
   onSave,
 }: EditContentDialogFormProps): ReactElement {
   const [title, setTitle] = useState(content.title);
+  const [flashMessage, setFlashMessage] = useState(content.flashMessage ?? "");
+  const [flashTone, setFlashTone] = useState<"INFO" | "WARNING" | "CRITICAL">(
+    content.flashTone ?? "INFO",
+  );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const canReplaceFile =
     content.kind === "ROOT" && content.status !== "PROCESSING";
+  const isFlashContent = content.type === "FLASH";
 
   const handleFileSelect = useCallback((file: File) => {
     setSelectedFile(file);
@@ -360,65 +359,98 @@ function EditContentDialogForm({
             onChange={(event) => setTitle(event.target.value)}
           />
         </div>
-        <div className="space-y-2">
-          <Label>Replace File</Label>
-          <p className="text-xs text-muted-foreground">
-            Current file type: {content.type} ({content.mimeType || "Unknown"})
-          </p>
-          {canReplaceFile ? (
-            <>
-              <p className="text-xs text-muted-foreground">
-                Optional: choose a new file to replace it.
-              </p>
-              <div
-                className={`flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-4 transition-colors ${
-                  isDragging
-                    ? "border-primary bg-primary/5"
-                    : "border-muted-foreground/25"
-                }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
+        {isFlashContent ? (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="edit-flash-message">Ticker Message</Label>
+              <Textarea
+                id="edit-flash-message"
+                value={flashMessage}
+                onChange={(event) => setFlashMessage(event.target.value)}
+                maxLength={240}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-flash-tone">Tone</Label>
+              <Select
+                value={flashTone}
+                onValueChange={(value) =>
+                  setFlashTone(value as "INFO" | "WARNING" | "CRITICAL")
+                }
               >
-                <div className="flex size-10 items-center justify-center rounded-md bg-muted">
-                  <IconUpload className="size-5 text-muted-foreground" />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm">
-                    <label
-                      htmlFor={`edit-content-file-${content.id}`}
-                      className="cursor-pointer font-medium text-primary hover:underline"
-                    >
-                      Choose a file
-                    </label>{" "}
-                    or drag it here.
-                  </p>
-                  <input
-                    id={`edit-content-file-${content.id}`}
-                    type="file"
-                    className="sr-only"
-                    accept={SUPPORTED_CONTENT_FILE_MIME_TYPES}
-                    onChange={handleFileInputChange}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Supported files: {SUPPORTED_CONTENT_FILE_LABELS}
-                  </p>
-                </div>
-                {selectedFile && (
-                  <p className="text-xs font-medium text-primary">
-                    Selected: {selectedFile.name}
-                  </p>
-                )}
-              </div>
-            </>
-          ) : (
+                <SelectTrigger id="edit-flash-tone">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="INFO">Info</SelectItem>
+                  <SelectItem value="WARNING">Warning</SelectItem>
+                  <SelectItem value="CRITICAL">Critical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        ) : (
+          <div className="space-y-2">
+            <Label>Replace File</Label>
             <p className="text-xs text-muted-foreground">
-              {content.kind === "PAGE"
-                ? "Page items can be renamed but cannot replace files directly."
-                : "Processing content cannot be replaced right now."}
+              Current file type: {content.type} ({content.mimeType || "Unknown"}
+              )
             </p>
-          )}
-        </div>
+            {canReplaceFile ? (
+              <>
+                <p className="text-xs text-muted-foreground">
+                  Optional: choose a new file to replace it.
+                </p>
+                <div
+                  className={`flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-4 transition-colors ${
+                    isDragging
+                      ? "border-primary bg-primary/5"
+                      : "border-muted-foreground/25"
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <div className="flex size-10 items-center justify-center rounded-md bg-muted">
+                    <IconUpload className="size-5 text-muted-foreground" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm">
+                      <label
+                        htmlFor={`edit-content-file-${content.id}`}
+                        className="cursor-pointer font-medium text-primary hover:underline"
+                      >
+                        Choose a file
+                      </label>{" "}
+                      or drag it here.
+                    </p>
+                    <input
+                      id={`edit-content-file-${content.id}`}
+                      type="file"
+                      className="sr-only"
+                      accept={SUPPORTED_CONTENT_FILE_MIME_TYPES}
+                      onChange={handleFileInputChange}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Supported files: {SUPPORTED_CONTENT_FILE_LABELS}
+                    </p>
+                  </div>
+                  {selectedFile && (
+                    <p className="text-xs font-medium text-primary">
+                      Selected: {selectedFile.name}
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {content.kind === "PAGE"
+                  ? "Page items can be renamed but cannot replace files directly."
+                  : "Processing content cannot be replaced right now."}
+              </p>
+            )}
+          </div>
+        )}
       </div>
       <DialogFooter>
         <Button
@@ -436,13 +468,19 @@ function EditContentDialogForm({
                 contentId: content.id,
                 title: title.trim(),
                 file: selectedFile,
+                flashMessage: isFlashContent ? flashMessage.trim() : null,
+                flashTone: isFlashContent ? flashTone : null,
               });
               onOpenChange(false);
             } finally {
               setIsSaving(false);
             }
           }}
-          disabled={title.trim().length === 0 || isSaving}
+          disabled={
+            title.trim().length === 0 ||
+            (isFlashContent && flashMessage.trim().length === 0) ||
+            isSaving
+          }
         >
           Save
         </Button>
@@ -509,7 +547,6 @@ export default function ContentPage(): ReactElement {
   const canUpdateContent = useCan("content:update");
   const canDeleteContent = useCan("content:delete");
   const canDownloadContent = useCan("content:read");
-  const canReadDisplays = useCan("displays:read");
   const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(
     "status",
     "all",
@@ -535,14 +572,6 @@ export default function ContentPage(): ReactElement {
   const [contentToEdit, setContentToEdit] = useState<Content | null>(null);
   const [contentToDelete, setContentToDelete] = useState<Content | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [flashMessage, setFlashMessage] = useState("");
-  const [flashTone, setFlashTone] = useState<"INFO" | "WARNING" | "CRITICAL">(
-    "INFO",
-  );
-  const [flashDurationSeconds, setFlashDurationSeconds] = useState("60");
-  const [flashTargetDisplayId, setFlashTargetDisplayId] = useState<
-    string | null
-  >(null);
   const pdfExpandMode: PdfExpandMode = DEFAULT_PDF_EXPAND_MODE;
   const [expandedPdfParentIds, setExpandedPdfParentIds] = useState<string[]>(
     [],
@@ -563,59 +592,17 @@ export default function ContentPage(): ReactElement {
   });
   const [triggerListContent] = useLazyListContentQuery();
   const [uploadContent] = useUploadContentMutation();
+  const [createFlashContent] = useCreateFlashContentMutation();
   const [deleteContent] = useDeleteContentMutation();
   const [updateContent] = useUpdateContentMutation();
   const [setContentExclusion] = useSetContentExclusionMutation();
   const [replaceContentFile] = useReplaceContentFileMutation();
   const [getContentFileUrl] = useLazyGetContentFileUrlQuery();
   const [getContentJob] = useLazyGetContentJobQuery();
-  const { data: displaysData } = useGetDisplaysQuery(undefined, {
-    skip: !canReadDisplays,
-  });
-  const { data: activeFlashData, isFetching: isLoadingActiveFlash } =
-    useGetActiveFlashContentQuery(undefined, {
-      skip: !canDownloadContent,
-      pollingInterval: 5_000,
-    });
-  const [activateFlashContent, { isLoading: isActivatingFlash }] =
-    useActivateFlashContentMutation();
-  const [stopActiveFlashContent, { isLoading: isStoppingFlash }] =
-    useStopActiveFlashContentMutation();
-
   const visibleContents = useMemo(
     () => (data?.items ?? []).map(mapBackendContentToContent),
     [data?.items],
   );
-  const flashDisplayOptions = useMemo(
-    () =>
-      (displaysData?.items ?? [])
-        .map((display) => ({
-          id: display.id,
-          name: display.name,
-        }))
-        .sort((left, right) => left.name.localeCompare(right.name)),
-    [displaysData?.items],
-  );
-  const activeFlashDisplayName = useMemo(() => {
-    if (!activeFlashData) {
-      return null;
-    }
-    const targetId = activeFlashData.activation.targetDisplayId;
-    return (
-      flashDisplayOptions.find((display) => display.id === targetId)?.name ??
-      "Unknown display"
-    );
-  }, [activeFlashData, flashDisplayOptions]);
-
-  useEffect(() => {
-    if (flashTargetDisplayId !== null) {
-      return;
-    }
-    const firstDisplayId = flashDisplayOptions[0]?.id ?? null;
-    if (firstDisplayId) {
-      setFlashTargetDisplayId(firstDisplayId);
-    }
-  }, [flashDisplayOptions, flashTargetDisplayId]);
 
   const loadPageBatch = useCallback(
     async (input: { parentId: string; page: number; append: boolean }) => {
@@ -737,6 +724,22 @@ export default function ContentPage(): ReactElement {
       }
     },
     [dispatch, getContentJob, uploadContent],
+  );
+
+  const handleCreateFlash = useCallback(
+    async (input: {
+      title: string;
+      message: string;
+      tone: "INFO" | "WARNING" | "CRITICAL";
+    }) => {
+      try {
+        await createFlashContent(input).unwrap();
+        toast.success("Flash content created.");
+      } catch (error) {
+        notifyApiError(error, "Failed to create flash content.");
+      }
+    },
+    [createFlashContent],
   );
 
   const handleEdit = useCallback((content: Content) => {
@@ -938,60 +941,6 @@ export default function ContentPage(): ReactElement {
     },
     [getContentFileUrl],
   );
-  const parsedFlashDuration = Number.parseInt(flashDurationSeconds, 10);
-  const isFlashDurationValid =
-    Number.isInteger(parsedFlashDuration) &&
-    parsedFlashDuration >= 5 &&
-    parsedFlashDuration <= 600;
-  const canSubmitFlash =
-    canUpdateContent &&
-    flashTargetDisplayId != null &&
-    flashMessage.trim().length > 0 &&
-    isFlashDurationValid &&
-    !isActivatingFlash;
-
-  const handleActivateFlash = useCallback(async () => {
-    if (!canSubmitFlash || flashTargetDisplayId == null) {
-      return;
-    }
-
-    try {
-      const activeId = activeFlashData?.activation.id;
-      await activateFlashContent({
-        message: flashMessage.trim(),
-        targetDisplayId: flashTargetDisplayId,
-        durationSeconds: parsedFlashDuration,
-        tone: flashTone,
-        conflictDecision: activeId ? "replace" : undefined,
-        expectedActiveActivationId: activeId,
-      }).unwrap();
-      toast.success(
-        activeId
-          ? "Flash content replaced and activated."
-          : "Flash content activated.",
-      );
-    } catch (error) {
-      notifyApiError(error, "Failed to activate flash content.");
-    }
-  }, [
-    activeFlashData?.activation.id,
-    activateFlashContent,
-    canSubmitFlash,
-    flashMessage,
-    flashTargetDisplayId,
-    parsedFlashDuration,
-    flashTone,
-  ]);
-
-  const handleStopFlash = useCallback(async () => {
-    try {
-      await stopActiveFlashContent({}).unwrap();
-      toast.success("Flash content stopped.");
-    } catch (error) {
-      notifyApiError(error, "Failed to stop flash content.");
-    }
-  }, [stopActiveFlashContent]);
-
   if (isLoading) {
     return (
       <DashboardPage.Root>
@@ -1043,166 +992,6 @@ export default function ContentPage(): ReactElement {
 
       <DashboardPage.Body>
         <DashboardPage.Content>
-          <div className="shrink-0 border-b border-border bg-muted/10 px-6 py-4 sm:px-8">
-            <Card className="border-primary/20">
-              <CardHeader className="gap-1 pb-3">
-                <CardTitle className="text-base">Flash Content</CardTitle>
-                <CardDescription>
-                  Sends a marquee overlay to one display without interrupting
-                  schedule playback. Policy: triggering while active replaces
-                  the current flash item.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="flash-message">Message</Label>
-                    <Textarea
-                      id="flash-message"
-                      value={flashMessage}
-                      onChange={(event) => setFlashMessage(event.target.value)}
-                      placeholder="Type the alert text to scroll on-screen..."
-                      maxLength={240}
-                      disabled={!canUpdateContent}
-                      aria-describedby="flash-message-help"
-                    />
-                    <p
-                      id="flash-message-help"
-                      className="text-xs text-muted-foreground"
-                    >
-                      {flashMessage.length}/240 characters
-                    </p>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="flash-target-display">
-                        Target Display
-                      </Label>
-                      <Select
-                        value={flashTargetDisplayId ?? "__none__"}
-                        onValueChange={(value) =>
-                          setFlashTargetDisplayId(
-                            value === "__none__" ? null : value,
-                          )
-                        }
-                        disabled={!canUpdateContent}
-                      >
-                        <SelectTrigger id="flash-target-display">
-                          <SelectValue placeholder="Select display" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none__">
-                            Select display
-                          </SelectItem>
-                          {flashDisplayOptions.map((display) => (
-                            <SelectItem key={display.id} value={display.id}>
-                              {display.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="flash-tone">Tone</Label>
-                      <Select
-                        value={flashTone}
-                        onValueChange={(value) =>
-                          setFlashTone(value as "INFO" | "WARNING" | "CRITICAL")
-                        }
-                        disabled={!canUpdateContent}
-                      >
-                        <SelectTrigger id="flash-tone">
-                          <SelectValue placeholder="Select tone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="INFO">Info</SelectItem>
-                          <SelectItem value="WARNING">Warning</SelectItem>
-                          <SelectItem value="CRITICAL">Critical</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="flash-duration-seconds">
-                        Duration (seconds)
-                      </Label>
-                      <Input
-                        id="flash-duration-seconds"
-                        type="number"
-                        min={5}
-                        max={600}
-                        value={flashDurationSeconds}
-                        onChange={(event) =>
-                          setFlashDurationSeconds(event.target.value)
-                        }
-                        disabled={!canUpdateContent}
-                      />
-                      {!isFlashDurationValid ? (
-                        <p className="text-xs text-destructive">
-                          Duration must be between 5 and 600 seconds.
-                        </p>
-                      ) : null}
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        void handleActivateFlash();
-                      }}
-                      disabled={!canSubmitFlash}
-                    >
-                      {isActivatingFlash
-                        ? "Activating..."
-                        : activeFlashData
-                          ? "Replace Active Flash"
-                          : "Activate Flash"}
-                    </Button>
-                  </div>
-                </div>
-
-                <div
-                  className="rounded-md border border-border bg-muted/20 p-3 text-sm"
-                  aria-live="polite"
-                >
-                  {isLoadingActiveFlash ? (
-                    <p className="text-muted-foreground">
-                      Checking active flash…
-                    </p>
-                  ) : activeFlashData ? (
-                    <div className="space-y-2">
-                      <p className="font-medium text-foreground">
-                        Active: {activeFlashData.activation.tone} for{" "}
-                        {activeFlashDisplayName}
-                      </p>
-                      <p className="text-muted-foreground">
-                        {activeFlashData.activation.message}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Ends at{" "}
-                        {new Date(
-                          activeFlashData.activation.endsAt,
-                        ).toLocaleString()}
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          void handleStopFlash();
-                        }}
-                        disabled={isStoppingFlash || !canUpdateContent}
-                      >
-                        {isStoppingFlash ? "Stopping..." : "Stop Flash"}
-                      </Button>
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground">
-                      No flash content is currently active.
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
           <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
             <ContentStatusTabs
               value={statusFilter}
@@ -1260,6 +1049,7 @@ export default function ContentPage(): ReactElement {
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         onUploadFile={handleUploadFile}
+        onCreateFlash={handleCreateFlash}
       />
 
       <EditContentDialog
@@ -1268,7 +1058,7 @@ export default function ContentPage(): ReactElement {
         onOpenChange={(open) => {
           if (!open) setContentToEdit(null);
         }}
-        onSave={async ({ contentId, title, file }) => {
+        onSave={async ({ contentId, title, file, flashMessage, flashTone }) => {
           const editedContent = contentToEdit;
           const parentContentIdForRollback =
             editedContent?.id === contentId
@@ -1328,7 +1118,16 @@ export default function ContentPage(): ReactElement {
             }
 
             const updated = mapBackendContentToContent(
-              await updateContent({ id: contentId, title }).unwrap(),
+              await updateContent({
+                id: contentId,
+                title,
+                ...(editedContent?.type === "FLASH"
+                  ? {
+                      flashMessage: flashMessage ?? "",
+                      flashTone: flashTone ?? "INFO",
+                    }
+                  : {}),
+              }).unwrap(),
             );
             const updatedParentContentId = updated.parentContentId;
             if (updatedParentContentId) {

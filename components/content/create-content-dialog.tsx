@@ -1,13 +1,13 @@
 "use client";
 
 import type { ChangeEvent, ReactElement } from "react";
-import { useState, useCallback } from "react";
-import { IconUpload } from "@tabler/icons-react";
-
+import { useCallback, useMemo, useState } from "react";
+import { IconBolt, IconUpload } from "@tabler/icons-react";
 import {
   SUPPORTED_CONTENT_FILE_LABELS,
   SUPPORTED_CONTENT_FILE_MIME_TYPES,
 } from "@/components/content/content-file-types";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -16,73 +16,126 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import type { FlashTone } from "@/types/content";
 
 interface CreateContentDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onUploadFile: (name: string, file: File) => void;
+  readonly onCreateFlash: (input: {
+    title: string;
+    message: string;
+    tone: FlashTone;
+  }) => void;
 }
 
 export function CreateContentDialog({
   open,
   onOpenChange,
   onUploadFile,
+  onCreateFlash,
 }: CreateContentDialogProps): ReactElement {
-  const [name, setName] = useState("");
-  const [isDragging, setIsDragging] = useState(false);
+  const [mode, setMode] = useState<"upload" | "flash">("upload");
+  const [title, setTitle] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [flashMessage, setFlashMessage] = useState("");
+  const [flashTone, setFlashTone] = useState<FlashTone>("INFO");
+  const [isDragging, setIsDragging] = useState(false);
+
+  const resetState = useCallback(() => {
+    setMode("upload");
+    setTitle("");
+    setSelectedFile(null);
+    setFlashMessage("");
+    setFlashTone("INFO");
+    setIsDragging(false);
+  }, []);
 
   const handleClose = useCallback(() => {
-    setName("");
-    setSelectedFile(null);
-    setIsDragging(false);
+    resetState();
     onOpenChange(false);
-  }, [onOpenChange]);
+  }, [onOpenChange, resetState]);
 
-  const handleUpload = useCallback(() => {
-    if (!name.trim() || !selectedFile) return;
-    onUploadFile(name.trim(), selectedFile);
+  const isUploadMode = mode === "upload";
+  const canSubmit = useMemo(() => {
+    if (isUploadMode) {
+      return title.trim().length > 0 && selectedFile !== null;
+    }
+    return title.trim().length > 0 && flashMessage.trim().length > 0;
+  }, [flashMessage, isUploadMode, selectedFile, title]);
+
+  const handleSubmit = useCallback(() => {
+    if (!canSubmit) return;
+
+    if (isUploadMode && selectedFile) {
+      onUploadFile(title.trim(), selectedFile);
+    } else if (!isUploadMode) {
+      onCreateFlash({
+        title: title.trim(),
+        message: flashMessage.trim(),
+        tone: flashTone,
+      });
+    }
+
     handleClose();
-  }, [name, selectedFile, onUploadFile, handleClose]);
+  }, [
+    canSubmit,
+    flashMessage,
+    flashTone,
+    handleClose,
+    isUploadMode,
+    onCreateFlash,
+    onUploadFile,
+    selectedFile,
+    title,
+  ]);
 
   const handleFileSelect = useCallback((file: File) => {
     setSelectedFile(file);
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     setIsDragging(true);
   }, []);
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDragLeave = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     setIsDragging(false);
   }, []);
 
   const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
       setIsDragging(false);
 
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        handleFileSelect(files[0]);
+      const file = event.dataTransfer.files[0];
+      if (file) {
+        handleFileSelect(file);
       }
     },
     [handleFileSelect],
   );
 
   const handleFileInputChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (files && files.length > 0) {
-        handleFileSelect(files[0]);
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        handleFileSelect(file);
       }
     },
     [handleFileSelect],
@@ -90,70 +143,121 @@ export function CreateContentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-lg">Create New Content</DialogTitle>
+          <DialogTitle>Create Content</DialogTitle>
           <DialogDescription>
-            Upload a supported media file to add it to the content library.
+            Upload media for playlist playback or generate a flash ticker item
+            for scheduling as an overlay.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4">
-          {/* Name input */}
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="content-name">Name</Label>
+        <div className="space-y-4">
+          <Tabs
+            value={mode}
+            onValueChange={(value) => setMode(value as "upload" | "flash")}
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload">Upload Content</TabsTrigger>
+              <TabsTrigger value="flash">Generate Flash Content</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <div className="space-y-2">
+            <Label htmlFor="content-title">
+              {isUploadMode ? "Content Name" : "Flash Title"}
+            </Label>
             <Input
-              id="content-name"
-              placeholder="Enter content name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              id="content-title"
+              placeholder={isUploadMode ? "Lobby PDF" : "Ticker: hello world"}
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
             />
           </div>
 
-          {/* File upload area */}
-          <div
-            className={`flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-8 transition-colors ${
-              isDragging
-                ? "border-primary bg-primary/5"
-                : "border-muted-foreground/25"
-            }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <div className="flex size-12 items-center justify-center rounded-md bg-muted">
-              <IconUpload className="size-6 text-muted-foreground" />
+          {isUploadMode ? (
+            <div
+              className={`flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-8 transition-colors ${
+                isDragging
+                  ? "border-primary bg-primary/5"
+                  : "border-muted-foreground/25"
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <div className="flex size-12 items-center justify-center rounded-md bg-muted">
+                <IconUpload className="size-6 text-muted-foreground" />
+              </div>
+              <div className="space-y-1 text-center">
+                <p className="text-sm">
+                  <label
+                    htmlFor="file-upload"
+                    className="cursor-pointer font-medium text-primary hover:underline"
+                  >
+                    Choose a file
+                  </label>{" "}
+                  or drag it here.
+                </p>
+                <input
+                  id="file-upload"
+                  type="file"
+                  className="sr-only"
+                  accept={SUPPORTED_CONTENT_FILE_MIME_TYPES}
+                  onChange={handleFileInputChange}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {SUPPORTED_CONTENT_FILE_LABELS}
+                </p>
+              </div>
+              {selectedFile ? (
+                <p className="text-xs font-medium text-primary">
+                  Selected: {selectedFile.name}
+                </p>
+              ) : null}
             </div>
-            <div className="flex flex-col items-center gap-1 text-center">
-              <p className="text-sm">
-                <label
-                  htmlFor="file-upload"
-                  className="cursor-pointer font-medium text-primary hover:underline"
+          ) : (
+            <div className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
+              <div className="space-y-2">
+                <Label htmlFor="flash-message">Ticker Message</Label>
+                <Textarea
+                  id="flash-message"
+                  value={flashMessage}
+                  onChange={(event) => setFlashMessage(event.target.value)}
+                  placeholder="HELLO WORLD"
+                  maxLength={240}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {flashMessage.length}/240 characters
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="flash-tone">Tone</Label>
+                <Select
+                  value={flashTone}
+                  onValueChange={(value) => setFlashTone(value as FlashTone)}
                 >
-                  Choose a file
-                </label>{" "}
-                or drag it here.
-              </p>
-              <input
-                id="file-upload"
-                type="file"
-                className="sr-only"
-                accept={SUPPORTED_CONTENT_FILE_MIME_TYPES}
-                onChange={handleFileInputChange}
-              />
-              <p className="text-xs text-muted-foreground">
-                Supported files types:
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {SUPPORTED_CONTENT_FILE_LABELS}
-              </p>
+                  <SelectTrigger id="flash-tone">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="INFO">Info</SelectItem>
+                    <SelectItem value="WARNING">Warning</SelectItem>
+                    <SelectItem value="CRITICAL">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="overflow-hidden rounded-md border border-border bg-background">
+                <div className="flex h-12 items-center gap-3 whitespace-nowrap bg-foreground px-4 text-sm font-medium text-background">
+                  <IconBolt className="size-4 shrink-0" />
+                  <div className="animate-[marquee_14s_linear_infinite] pr-8 motion-reduce:animate-none">
+                    {(flashMessage.trim() || "Ticker preview") + "   "}
+                    .repeat(4)
+                  </div>
+                </div>
+              </div>
             </div>
-            {selectedFile && (
-              <p className="text-xs font-medium text-primary">
-                Selected: {selectedFile.name}
-              </p>
-            )}
-          </div>
+          )}
         </div>
 
         <DialogFooter className="sm:justify-between">
@@ -161,12 +265,21 @@ export function CreateContentDialog({
             Cancel
           </Button>
           <Button
-            onClick={handleUpload}
-            disabled={!name.trim() || selectedFile === null}
+            onClick={handleSubmit}
+            disabled={!canSubmit}
             className="flex-1"
           >
-            <IconUpload className="size-4" />
-            Upload file
+            {isUploadMode ? (
+              <>
+                <IconUpload className="size-4" />
+                Upload file
+              </>
+            ) : (
+              <>
+                <IconBolt className="size-4" />
+                Create flash
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

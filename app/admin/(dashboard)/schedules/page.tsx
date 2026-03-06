@@ -13,6 +13,7 @@ import { EditScheduleDialog } from "@/components/schedules/edit-schedule-dialog"
 import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
+import { useListContentQuery } from "@/lib/api/content-api";
 import { useGetDisplaysQuery } from "@/lib/api/displays-api";
 import {
   useCreateScheduleMutation,
@@ -53,6 +54,7 @@ export default function SchedulesPage(): ReactElement {
   const canDeleteSchedule = useCan("schedules:delete");
   const canReadDisplays = useCan("displays:read");
   const canReadPlaylists = useCan("playlists:read");
+  const canReadContent = useCan("content:read");
   const { data: displaysData } = useGetDisplaysQuery(undefined, {
     skip: !canReadDisplays,
   });
@@ -60,6 +62,10 @@ export default function SchedulesPage(): ReactElement {
   const { data: playlistsData } = useListPlaylistsQuery(undefined, {
     skip: !canReadPlaylists,
   });
+  const { data: flashContentData } = useListContentQuery(
+    { page: 1, pageSize: 100, type: "FLASH", status: "READY" },
+    { skip: !canReadContent },
+  );
   const [createSchedule] = useCreateScheduleMutation();
   const [updateSchedule] = useUpdateScheduleMutation();
   const [deleteSchedule] = useDeleteScheduleMutation();
@@ -76,6 +82,15 @@ export default function SchedulesPage(): ReactElement {
     () => displaysData?.items?.map((d) => ({ id: d.id, name: d.name })) ?? [],
     [displaysData?.items],
   );
+  const availableFlashContents: readonly { id: string; title: string }[] =
+    useMemo(
+      () =>
+        (flashContentData?.items ?? []).map((content) => ({
+          id: content.id,
+          title: content.title,
+        })),
+      [flashContentData?.items],
+    );
 
   // Calendar state
   const [currentDate, setCurrentDate] = useState(() => new Date());
@@ -226,6 +241,7 @@ export default function SchedulesPage(): ReactElement {
         onOpenChange={setCreateDialogOpen}
         onCreate={handleCreateSchedule}
         availablePlaylists={availablePlaylists}
+        availableFlashContents={availableFlashContents}
         availableDisplays={availableDisplays}
       />
 
@@ -245,6 +261,7 @@ export default function SchedulesPage(): ReactElement {
         onOpenChange={setEditDialogOpen}
         onSave={handleSaveSchedule}
         availablePlaylists={availablePlaylists}
+        availableFlashContents={availableFlashContents}
         availableDisplays={availableDisplays}
       />
     </DashboardPage.Root>

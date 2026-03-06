@@ -83,22 +83,11 @@ export interface DisplayRegistrationAttemptRotateResponse {
   readonly expiresAt: string;
 }
 
-export interface DisplayRuntimeFlashOverride {
-  readonly active: boolean;
-  readonly activationId: string;
-  readonly targetDisplayId: string;
-  readonly message: string;
-  readonly tone: "INFO" | "WARNING" | "CRITICAL";
-  readonly startedAt: string;
-  readonly endsAt: string;
-}
-
 export interface DisplayRuntimeOverrides {
   readonly globalEmergency: {
     readonly active: boolean;
     readonly startedAt: string | null;
   };
-  readonly flash: DisplayRuntimeFlashOverride | null;
 }
 
 const PAGE_SIZE = 100;

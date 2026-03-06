@@ -21,17 +21,20 @@ interface EditScheduleDialogProps {
     data: ScheduleFormData,
   ) => Promise<void> | void;
   readonly availablePlaylists: readonly { id: string; name: string }[];
+  readonly availableFlashContents: readonly { id: string; title: string }[];
   readonly availableDisplays: readonly { id: string; name: string }[];
 }
 
 function toFormData(schedule: Schedule): ScheduleFormData {
   return {
     name: schedule.name,
+    kind: schedule.kind,
     startDate: schedule.startDate,
     endDate: schedule.endDate,
     startTime: schedule.startTime,
     endTime: schedule.endTime,
-    playlistId: schedule.playlist.id,
+    playlistId: schedule.playlist?.id ?? null,
+    contentId: schedule.content?.id ?? null,
     targetDisplayId: schedule.targetDisplay.id,
     priority: schedule.priority,
     isActive: schedule.isActive,
@@ -44,6 +47,7 @@ export function EditScheduleDialog({
   onOpenChange,
   onSave,
   availablePlaylists,
+  availableFlashContents,
   availableDisplays,
 }: EditScheduleDialogProps): ReactElement | null {
   const [isSaving, setIsSaving] = useState(false);
@@ -79,6 +83,7 @@ export function EditScheduleDialog({
           key={scheduleId}
           initialData={toFormData(currentSchedule)}
           availablePlaylists={availablePlaylists}
+          availableFlashContents={availableFlashContents}
           availableDisplays={availableDisplays}
           onSubmit={handleSubmit}
           onCancel={() => onOpenChange(false)}

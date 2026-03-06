@@ -9,14 +9,26 @@ export function mapBackendScheduleToSchedule(item: BackendSchedule): Schedule {
   return {
     id: item.id,
     name: item.name,
+    kind: item.kind,
     startDate: item.startDate,
     endDate: item.endDate,
     startTime: item.startTime,
     endTime: item.endTime,
-    playlist: {
-      id: item.playlist.id,
-      name: item.playlist.name ?? "Untitled playlist",
-    },
+    playlist: item.playlist
+      ? {
+          id: item.playlist.id,
+          name: item.playlist.name ?? "Untitled playlist",
+        }
+      : null,
+    content: item.content
+      ? {
+          id: item.content.id,
+          title: item.content.title ?? "Untitled flash",
+          type: "FLASH",
+          flashMessage: item.content.flashMessage,
+          flashTone: item.content.flashTone,
+        }
+      : null,
     targetDisplay: {
       id: item.display.id,
       name: item.display.name ?? "Unnamed display",
@@ -39,7 +51,9 @@ export function mapCreateFormToScheduleRequest(
 ): CreateScheduleRequest {
   return {
     name: data.name.trim(),
-    playlistId: data.playlistId,
+    kind: data.kind,
+    playlistId: data.kind === "PLAYLIST" ? data.playlistId : null,
+    contentId: data.kind === "FLASH" ? data.contentId : null,
     displayId: data.targetDisplayId,
     startDate: data.startDate,
     endDate: data.endDate,
@@ -57,7 +71,9 @@ export function mapUpdateFormToScheduleRequest(
   return {
     id,
     name: data.name.trim(),
-    playlistId: data.playlistId,
+    kind: data.kind,
+    playlistId: data.kind === "PLAYLIST" ? data.playlistId : null,
+    contentId: data.kind === "FLASH" ? data.contentId : null,
     displayId: data.targetDisplayId,
     startDate: data.startDate,
     endDate: data.endDate,

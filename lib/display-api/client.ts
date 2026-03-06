@@ -58,12 +58,13 @@ export interface DisplayManifest {
       readonly content: ManifestItem["content"];
     } | null;
     readonly flash: {
-      readonly activationId: string;
-      readonly targetDisplayId: string;
+      readonly scheduleId: string;
+      readonly contentId: string;
       readonly message: string;
       readonly tone: "INFO" | "WARNING" | "CRITICAL";
-      readonly startedAt: string;
-      readonly endsAt: string;
+      readonly region: "TOP_TICKER";
+      readonly heightPx: number;
+      readonly speedPxPerSecond: number;
     } | null;
   };
   readonly items: readonly ManifestItem[];

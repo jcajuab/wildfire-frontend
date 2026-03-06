@@ -79,46 +79,16 @@ export interface ReplaceContentFileRequest {
   readonly title?: string;
 }
 
-export interface BackendFlashActivation {
-  readonly id: string;
-  readonly contentId: string;
-  readonly targetDisplayId: string;
+export interface CreateFlashContentRequest {
+  readonly title: string;
   readonly message: string;
   readonly tone: FlashTone;
-  readonly status: "ACTIVE" | "STOPPED" | "EXPIRED";
-  readonly startedAt: string;
-  readonly endsAt: string;
-  readonly stoppedAt: string | null;
-  readonly stoppedReason: string | null;
-  readonly createdById: string;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-  readonly replacementCount: number;
-}
-
-export interface BackendFlashActivationResponse {
-  readonly content: BackendContent;
-  readonly activation: BackendFlashActivation;
-  readonly replacedActivation?: BackendFlashActivation | null;
-}
-
-export interface ActivateFlashContentRequest {
-  readonly message: string;
-  readonly targetDisplayId: string;
-  readonly durationSeconds: number;
-  readonly tone: FlashTone;
-  readonly conflictDecision?: "prompt" | "replace" | "keep";
-  readonly expectedActiveActivationId?: string;
-}
-
-export interface StopFlashContentRequest {
-  readonly reason?: string;
 }
 
 export const contentApi = createApi({
   reducerPath: "contentApi",
   baseQuery,
-  tagTypes: ["Content", "ContentJob", "Flash"],
+  tagTypes: ["Content", "ContentJob"],
   endpoints: (build) => ({
     listContent: build.query<
       BackendContentListResponse,
@@ -174,52 +144,21 @@ export const contentApi = createApi({
         { type: "ContentJob" as const, id },
       ],
     }),
-    getActiveFlashContent: build.query<
-      BackendFlashActivationResponse | null,
-      void
-    >({
-      query: () => "content/flash/active",
-      transformResponse: (response) =>
-        parseApiResponseDataSafe<BackendFlashActivationResponse | null>(
-          response,
-          "getActiveFlashContent",
-        ),
-      providesTags: [{ type: "Flash", id: "ACTIVE" }],
-    }),
-    activateFlashContent: build.mutation<
-      BackendFlashActivationResponse,
-      ActivateFlashContentRequest
+    createFlashContent: build.mutation<
+      BackendContent,
+      CreateFlashContentRequest
     >({
       query: (body) => ({
-        url: "content/flash/activate",
+        url: "content/flash",
         method: "POST",
         body,
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<BackendFlashActivationResponse>(
+        parseApiResponseDataSafe<BackendContent>(
           response,
-          "activateFlashContent",
+          "createFlashContent",
         ),
-      invalidatesTags: [
-        { type: "Flash", id: "ACTIVE" },
-        { type: "Content", id: "LIST" },
-      ],
-    }),
-    stopActiveFlashContent: build.mutation<
-      BackendFlashActivation,
-      StopFlashContentRequest | void
-    >({
-      query: (body) => ({
-        url: "content/flash/active/stop",
-        method: "POST",
-        body: body ?? {},
-      }),
-      transformResponse: (response) =>
-        parseApiResponseDataSafe<BackendFlashActivation>(
-          response,
-          "stopActiveFlashContent",
-        ),
-      invalidatesTags: [{ type: "Flash", id: "ACTIVE" }],
+      invalidatesTags: [{ type: "Content", id: "LIST" }],
     }),
     uploadContent: build.mutation<
       ContentIngestionAcceptedResponse,
@@ -263,7 +202,9 @@ export const contentApi = createApi({
       BackendContent,
       {
         readonly id: string;
-        readonly title: string;
+        readonly title?: string;
+        readonly flashMessage?: string;
+        readonly flashTone?: FlashTone;
       }
     >({
       query: ({ id, ...body }) => ({
@@ -350,9 +291,7 @@ export const {
   useLazyListContentQuery,
   useGetContentQuery,
   useGetContentJobQuery,
-  useGetActiveFlashContentQuery,
-  useActivateFlashContentMutation,
-  useStopActiveFlashContentMutation,
+  useCreateFlashContentMutation,
   useUploadContentMutation,
   useDeleteContentMutation,
   useUpdateContentMutation,

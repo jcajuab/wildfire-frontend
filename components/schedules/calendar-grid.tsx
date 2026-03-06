@@ -134,13 +134,17 @@ function ResourceWeekView({
                           key={event.id}
                           type="button"
                           onClick={() => onScheduleClick(schedule)}
-                          className="mb-1 block w-full overflow-hidden rounded border-l-4 border-primary bg-primary/12 px-1.5 py-1 text-left transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className={`mb-1 block w-full overflow-hidden rounded border-l-4 px-1.5 py-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                            schedule.kind === "FLASH"
+                              ? "border-amber-500 bg-amber-500/12 hover:bg-amber-500/20"
+                              : "border-primary bg-primary/12 hover:bg-primary/20"
+                          }`}
                           aria-label={`View schedule ${schedule.name} on ${resource.name}, ${event.timeLabel}`}
                         >
-                          <span className="block truncate text-xs font-medium text-primary">
+                          <span className="block truncate text-xs font-medium">
                             {schedule.name}
                           </span>
-                          <span className="block truncate text-xs text-primary/80">
+                          <span className="block truncate text-xs text-muted-foreground">
                             {event.timeLabel}
                           </span>
                         </button>
@@ -243,7 +247,11 @@ function ResourceDayView({
                         key={event.id}
                         type="button"
                         onClick={() => onScheduleClick(schedule)}
-                        className="absolute z-10 overflow-hidden rounded border-l-4 border-primary bg-primary/12 px-1.5 py-1 text-left transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className={`absolute z-10 overflow-hidden rounded border-l-4 px-1.5 py-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                          schedule.kind === "FLASH"
+                            ? "border-amber-500 bg-amber-500/12 hover:bg-amber-500/20"
+                            : "border-primary bg-primary/12 hover:bg-primary/20"
+                        }`}
                         style={{
                           left: `${startPercent}%`,
                           width: `${widthPercent}%`,
@@ -251,10 +259,10 @@ function ResourceDayView({
                         }}
                         aria-label={`View schedule ${schedule.name} on ${resource.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`}
                       >
-                        <span className="block truncate text-xs font-medium text-primary">
+                        <span className="block truncate text-xs font-medium">
                           {schedule.name}
                         </span>
-                        <span className="block truncate text-xs text-primary/80">
+                        <span className="block truncate text-xs text-muted-foreground">
                           {event.timeLabel}
                         </span>
                       </button>

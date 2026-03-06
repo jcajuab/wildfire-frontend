@@ -16,6 +16,7 @@ interface CreateScheduleDialogProps {
   readonly onOpenChange: (open: boolean) => void;
   readonly onCreate: (data: ScheduleFormData) => Promise<void> | void;
   readonly availablePlaylists: readonly { id: string; name: string }[];
+  readonly availableFlashContents: readonly { id: string; title: string }[];
   readonly availableDisplays: readonly { id: string; name: string }[];
 }
 
@@ -24,6 +25,7 @@ export function CreateScheduleDialog({
   onOpenChange,
   onCreate,
   availablePlaylists,
+  availableFlashContents,
   availableDisplays,
 }: CreateScheduleDialogProps): ReactElement {
   async function handleCreate(data: ScheduleFormData): Promise<void> {
@@ -47,6 +49,7 @@ export function CreateScheduleDialog({
 
         <CreateScheduleForm
           availablePlaylists={availablePlaylists}
+          availableFlashContents={availableFlashContents}
           availableDisplays={availableDisplays}
           onSubmit={handleCreate}
           onCancel={() => onOpenChange(false)}

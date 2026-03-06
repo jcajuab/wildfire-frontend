@@ -10,6 +10,7 @@ import {
   IconPencil,
   IconTrash,
   IconFlag,
+  IconBolt,
 } from "@tabler/icons-react";
 
 import {
@@ -84,11 +85,36 @@ export function ViewScheduleDialog({
             </div>
 
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Playlist:</span>
-              <span className="flex items-center gap-1 text-foreground">
-                {schedule.playlist.name}
+              <span className="text-muted-foreground">Mode:</span>
+              <span className="text-foreground">
+                {schedule.kind === "PLAYLIST"
+                  ? "Base playlist"
+                  : "Flash overlay"}
               </span>
             </div>
+
+            {schedule.playlist ? (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Playlist:</span>
+                <span className="text-foreground">
+                  {schedule.playlist.name}
+                </span>
+              </div>
+            ) : null}
+
+            {schedule.content ? (
+              <div className="space-y-2 rounded-md border border-border bg-background/70 p-3 text-sm">
+                <div className="flex items-center gap-2 font-medium">
+                  <IconBolt className="size-4" />
+                  {schedule.content.title}
+                </div>
+                {schedule.content.flashMessage ? (
+                  <p className="text-muted-foreground">
+                    {schedule.content.flashMessage}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Target Display:</span>

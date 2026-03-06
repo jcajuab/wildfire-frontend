@@ -8,11 +8,13 @@ import type { ScheduleFormData } from "@/types/schedule";
 
 const makeFormData = (): ScheduleFormData => ({
   name: "January Campaign",
+  kind: "PLAYLIST",
   startDate: "2026-01-05",
   endDate: "2026-02-05",
   startTime: "08:00",
   endTime: "17:00",
   playlistId: "playlist-1",
+  contentId: null,
   targetDisplayId: "display-1",
   priority: 10,
   isActive: true,
@@ -24,7 +26,9 @@ describe("schedule-mapper", () => {
       {
         id: "schedule-1",
         name: "Week 1",
+        kind: "PLAYLIST",
         playlistId: "playlist-1",
+        contentId: null,
         displayId: "display-1",
         startDate: "2026-01-01",
         endDate: "2026-01-31",
@@ -42,7 +46,7 @@ describe("schedule-mapper", () => {
     expect(schedules).toHaveLength(1);
     expect(schedules[0]?.id).toBe("schedule-1");
     expect(schedules[0]?.targetDisplay.id).toBe("display-1");
-    expect(schedules[0]?.playlist.name).toBe("Morning");
+    expect(schedules[0]?.playlist?.name).toBe("Morning");
   });
 
   test("maps create and update payloads without recurrence fields", () => {
@@ -52,7 +56,9 @@ describe("schedule-mapper", () => {
 
     expect(createPayload).toMatchObject({
       name: "January Campaign",
+      kind: "PLAYLIST",
       playlistId: "playlist-1",
+      contentId: null,
       displayId: "display-1",
       startTime: "08:00",
       endTime: "17:00",
