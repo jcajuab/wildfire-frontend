@@ -45,13 +45,22 @@ interface ResourceGridSharedProps {
 const WEEK_GRID_TEMPLATE = "14rem repeat(7, minmax(0, 1fr))";
 const DAY_GRID_TEMPLATE = "16rem minmax(0, 1fr)";
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
+const DAY_EVENT_TOP_PADDING_PX = 6;
+const DAY_EVENT_BOTTOM_PADDING_PX = 6;
+const DAY_EVENT_HEIGHT_PX = 40;
+const DAY_EVENT_LANE_GAP_PX = 4;
 
 function getLaneHeight(events: readonly ResourceCalendarLaneEvent[]): number {
   const laneCount = events.reduce(
     (maxLaneCount, event) => Math.max(maxLaneCount, event.laneCount),
     1,
   );
-  return Math.max(72, 14 + laneCount * 24);
+  const stackedHeight =
+    DAY_EVENT_TOP_PADDING_PX +
+    DAY_EVENT_BOTTOM_PADDING_PX +
+    laneCount * DAY_EVENT_HEIGHT_PX +
+    Math.max(0, laneCount - 1) * DAY_EVENT_LANE_GAP_PX;
+  return Math.max(72, stackedHeight);
 }
 
 function formatDayHeader(date: Date): string {
@@ -255,7 +264,8 @@ function ResourceDayView({
                         style={{
                           left: `${startPercent}%`,
                           width: `${widthPercent}%`,
-                          top: `${6 + event.lane * 22}px`,
+                          top: `${DAY_EVENT_TOP_PADDING_PX + event.lane * (DAY_EVENT_HEIGHT_PX + DAY_EVENT_LANE_GAP_PX)}px`,
+                          height: `${DAY_EVENT_HEIGHT_PX}px`,
                         }}
                         aria-label={`View schedule ${schedule.name} on ${resource.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`}
                       >
