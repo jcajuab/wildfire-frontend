@@ -92,12 +92,14 @@ describe("display-api client contract validation", () => {
     );
   });
 
-  test("createAuthChallenge parses raw runtime payloads", async () => {
+  test("createAuthChallenge parses envelope challenge payloads", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
-          challengeToken: "challenge-token",
-          expiresAt: "2026-01-01T00:00:00.000Z",
+          data: {
+            challengeToken: "challenge-token",
+            expiresAt: "2026-01-01T00:00:00.000Z",
+          },
         }),
         {
           status: 201,
@@ -116,5 +118,30 @@ describe("display-api client contract validation", () => {
       challengeToken: "challenge-token",
       expiresAt: "2026-01-01T00:00:00.000Z",
     });
+  });
+
+  test("createAuthChallenge rejects non-string challengeToken payloads", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            challengeToken: 123,
+            expiresAt: "2026-01-01T00:00:00.000Z",
+          },
+        }),
+        {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(
+      createAuthChallenge({
+        slug: "lobby-display",
+        keyId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      }),
+    ).rejects.toThrow("challenge.challengeToken must be a string");
   });
 });

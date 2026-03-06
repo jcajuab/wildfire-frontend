@@ -211,13 +211,10 @@ const parseRegisterDisplayResponse = (
 const parseAuthChallengeResponse = (
   payload: unknown,
 ): AuthChallengeResponse => {
-  const root = readRecord(payload, "authChallenge");
+  const root = readRecord(payload, "challenge");
   return {
-    challengeToken: readString(
-      root.challengeToken,
-      "authChallenge.challengeToken",
-    ),
-    expiresAt: readString(root.expiresAt, "authChallenge.expiresAt"),
+    challengeToken: readString(root.challengeToken, "challenge.challengeToken"),
+    expiresAt: readString(root.expiresAt, "challenge.expiresAt"),
   };
 };
 
@@ -449,7 +446,9 @@ export async function createAuthChallenge(input: {
     throw new Error(await parseErrorMessage(response));
   }
 
-  return parseAuthChallengeResponse((await response.json()) as unknown);
+  return parseAuthChallengeResponse(
+    parseApiResponseData<unknown>(await response.json()),
+  );
 }
 
 export async function verifyAuthChallenge(input: {
