@@ -215,6 +215,41 @@ export const DisplayCard = memo(function DisplayCard({
           </Badge>
         )}
       </div>
+
+      <section className="space-y-2 rounded-lg border border-border/80 bg-muted/15 p-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/90">
+          Live Preview
+        </p>
+        <div className="space-y-2">
+          <div className="overflow-hidden rounded-xl border border-border/70 bg-background aspect-video">
+            <DisplayPreview displayId={display.id} displayName={display.name} />
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-background p-2.5">
+            {display.status === "LIVE" ? (
+              <IconPlayerPlay
+                className="size-8 shrink-0 text-primary"
+                aria-hidden="true"
+              />
+            ) : (
+              <IconPlayerPause
+                className="size-8 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+            )}
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="truncate text-base font-semibold leading-tight">
+                {nowPlaying?.title ?? "N/A"}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                Duration: {durationLabel}
+              </p>
+              <p className="truncate text-sm text-muted-foreground">
+                Playlist: {nowPlaying?.playlist ?? "N/A"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </article>
   );
 });
