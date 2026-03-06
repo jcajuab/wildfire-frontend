@@ -100,14 +100,11 @@ export const DisplayCard = memo(function DisplayCard({
 
   return (
     <article className="group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors duration-200 hover:border-primary/25 motion-reduce:transition-none">
-      <header className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+      <header className="flex justify-between items-center gap-3">
+        <div className="min-w-0 flex gap-3 items-center">
           <h3 className="truncate text-lg font-semibold leading-none">
             {display.name}
           </h3>
-        </div>
-
-        <div className="flex items-center gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <span
@@ -127,7 +124,9 @@ export const DisplayCard = memo(function DisplayCard({
             </TooltipTrigger>
             <TooltipContent>{statusLabel}</TooltipContent>
           </Tooltip>
+        </div>
 
+        <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -170,7 +169,7 @@ export const DisplayCard = memo(function DisplayCard({
         </div>
       </header>
 
-      <div className="flex min-h-6 flex-wrap gap-1.5">
+      <div className="flex min-h-6 flex-wrap gap-1.5 items-center">
         {isGlobalEmergencyActive ? (
           <Badge
             variant="outline"
@@ -202,16 +201,11 @@ export const DisplayCard = memo(function DisplayCard({
         )}
       </div>
 
-      <section className="space-y-2 rounded-lg border border-border/80 bg-muted/15 p-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/90">
-          Live Preview
-        </p>
-        <div className="space-y-2">
-          <div className="overflow-hidden rounded-xl border border-border/70 bg-background aspect-video">
-            <DisplayPreview displayId={display.id} displayName={display.name} />
-          </div>
+      <div className="space-y-2">
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-background aspect-video">
+          <DisplayPreview displayId={display.id} displayName={display.name} />
         </div>
-      </section>
+      </div>
     </article>
   );
 });
