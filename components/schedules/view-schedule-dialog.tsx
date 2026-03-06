@@ -9,7 +9,6 @@ import {
   IconPhoto,
   IconPencil,
   IconTrash,
-  IconFlag,
   IconBolt,
 } from "@tabler/icons-react";
 
@@ -77,11 +76,6 @@ export function ViewScheduleDialog({
                 {formatClockTime(schedule.startTime)} -{" "}
                 {formatClockTime(schedule.endTime)}
               </span>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm">
-              <IconFlag className="size-4" />
-              <span>Priority: {schedule.priority}</span>
             </div>
 
             <div className="flex items-center justify-between text-sm">

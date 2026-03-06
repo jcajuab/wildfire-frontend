@@ -92,7 +92,6 @@ describe("paginated aggregate query guards", () => {
               endDate: "2025-12-31",
               startTime: "00:00",
               endTime: "23:59",
-              priority: 1,
               isActive: true,
               createdAt: "2025-01-01T00:00:00.000Z",
               updatedAt: "2025-01-01T00:00:00.000Z",

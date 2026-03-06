@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { IconPlus, IconPresentation } from "@tabler/icons-react";
 import { toast } from "sonner";
 
@@ -108,6 +108,8 @@ export default function PlaylistsPage(): ReactElement {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [isSavingPlaylistItems, setIsSavingPlaylistItems] = useState(false);
+  const isSavingPlaylistItemsRef = useRef(false);
   const playlistQuery = useMemo<PlaylistListQuery>(
     () => ({
       page,
@@ -217,6 +219,13 @@ export default function PlaylistsPage(): ReactElement {
 
   const handleSaveItems = useCallback(
     async (playlistId: string, diff: PlaylistItemsDiff) => {
+      if (isSavingPlaylistItemsRef.current) {
+        return;
+      }
+
+      isSavingPlaylistItemsRef.current = true;
+      setIsSavingPlaylistItems(true);
+
       try {
         for (const itemId of diff.deleted) {
           await deletePlaylistItem({ playlistId, itemId }).unwrap();
@@ -255,6 +264,9 @@ export default function PlaylistsPage(): ReactElement {
         setManageItemsPlaylist(null);
       } catch (err) {
         notifyApiError(err, "Failed to update playlist items.");
+      } finally {
+        isSavingPlaylistItemsRef.current = false;
+        setIsSavingPlaylistItems(false);
       }
     },
     [
@@ -355,6 +367,7 @@ export default function PlaylistsPage(): ReactElement {
           playlist={manageItemsPlaylist}
           availableContent={availableContent}
           onSave={handleSaveItems}
+          isSaving={isSavingPlaylistItems}
         />
       )}
 

@@ -93,37 +93,16 @@ function ScheduleFormFrame({
           </Tabs>
         </div>
 
-        <div className="grid grid-cols-[1fr_120px] gap-3">
-          <div className="space-y-2">
-            <Label htmlFor="schedule-name">Name</Label>
-            <Input
-              id="schedule-name"
-              placeholder="Lobby daytime"
-              value={formData.name}
-              onChange={(event) =>
-                setFormData((prev) => ({ ...prev, name: event.target.value }))
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="schedule-priority">Priority</Label>
-            <Input
-              id="schedule-priority"
-              type="number"
-              min={1}
-              max={100}
-              value={formData.priority}
-              onChange={(event) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  priority: Math.max(
-                    1,
-                    Math.min(100, Number.parseInt(event.target.value) || 1),
-                  ),
-                }))
-              }
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="schedule-name">Name</Label>
+          <Input
+            id="schedule-name"
+            placeholder="Lobby daytime"
+            value={formData.name}
+            onChange={(event) =>
+              setFormData((prev) => ({ ...prev, name: event.target.value }))
+            }
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -325,7 +304,6 @@ export function CreateScheduleForm(
         playlistId: null,
         contentId: null,
         targetDisplayId: "",
-        priority: 1,
         isActive: true,
       }}
       submitLabel="Create"

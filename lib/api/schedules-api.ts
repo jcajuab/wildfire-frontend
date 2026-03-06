@@ -16,7 +16,6 @@ export interface BackendSchedule {
   readonly endDate: string;
   readonly startTime: string;
   readonly endTime: string;
-  readonly priority: number;
   readonly isActive: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -54,7 +53,6 @@ export interface CreateScheduleRequest {
   readonly endDate: string;
   readonly startTime: string;
   readonly endTime: string;
-  readonly priority: number;
   readonly isActive?: boolean;
 }
 
@@ -69,7 +67,6 @@ export interface UpdateScheduleRequest {
   readonly endDate?: string;
   readonly startTime?: string;
   readonly endTime?: string;
-  readonly priority?: number;
   readonly isActive?: boolean;
 }
 
