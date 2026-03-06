@@ -444,6 +444,7 @@ export function AddDisplayDialog({
                   setData((prev) => ({ ...prev, groups: names }))
                 }
                 existingGroups={existingGroups}
+                aboveModal={true}
               />
             </>
           )}

@@ -431,6 +431,7 @@ function EditDisplayForm({
             existingGroups={existingGroups}
             showLabel={false}
             disabled={isSaving}
+            aboveModal={true}
           />
         </div>
       </div>

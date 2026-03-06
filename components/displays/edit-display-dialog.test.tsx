@@ -163,14 +163,10 @@ describe("EditDisplayDialog", () => {
       />,
     );
 
-    const groupInput = screen.getByLabelText("Search or add display groups");
-    await user.click(groupInput);
-    fireEvent.click(screen.getByRole("option", { name: "Lobby" }));
-    const lobbyMatches = screen.getAllByText("Lobby");
-    const hasSelectedChip = lobbyMatches.some(
-      (node) => node.closest('[data-slot="combobox-chip"]') !== null,
-    );
-    expect(hasSelectedChip).toBe(true);
+    const trigger = screen.getByRole("combobox", { name: "Display groups" });
+    await user.click(trigger);
+    await user.click(screen.getByRole("option", { name: "Lobby" }));
+    expect(screen.getByRole("combobox", { name: "Display groups" })).toHaveTextContent("Lobby");
     expect(onSave).not.toHaveBeenCalled();
   });
 });
