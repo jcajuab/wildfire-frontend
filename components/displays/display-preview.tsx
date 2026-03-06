@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { type ReactElement, useEffect, useMemo, useState } from "react";
 import { getBaseUrl } from "@/lib/api/base-query";
 
@@ -83,9 +84,12 @@ export function DisplayPreview({
 
   if (imageUrl) {
     return (
-      <img
+      <Image
         src={imageUrl}
         alt={`${displayName} live preview`}
+        unoptimized={true}
+        width={1280}
+        height={720}
         className="h-full w-full object-cover"
       />
     );

@@ -36,6 +36,7 @@ import {
 } from "@/lib/api/get-api-error-message";
 import {
   useGetRuntimeOverridesQuery,
+  useLazyGetDisplayQuery,
   useCreateDisplayGroupMutation,
   useGetDisplayGroupsQuery,
   useGetDisplaysQuery,
@@ -130,6 +131,7 @@ export default function DisplaysPage(): ReactElement {
   const [setDisplayGroups] = useSetDisplayGroupsMutation();
   const [createDisplayGroup] = useCreateDisplayGroupMutation();
   const [unregisterDisplay] = useUnregisterDisplayMutation();
+  const [getDisplayById] = useLazyGetDisplayQuery();
   const deferredSearch = useDeferredValue(search);
 
   useEffect(() => {
@@ -262,10 +264,30 @@ export default function DisplaysPage(): ReactElement {
     setPage(1);
   }, [setGroupFilters, setOutputFilter, setPage]);
 
-  const handleViewDetails = useCallback((display: Display) => {
-    setSelectedDisplay(display);
-    setIsViewDialogOpen(true);
-  }, []);
+  const refreshSelectedDisplay = useCallback(
+    async (display: Display): Promise<void> => {
+      try {
+        const freshDisplay = await getDisplayById(display.id, true).unwrap();
+        setSelectedDisplay(
+          withDisplayGroups(mapDisplayApiToDisplay(freshDisplay), [
+            ...display.groups,
+          ]),
+        );
+      } catch {
+        // Keep current row data when hydration fails.
+      }
+    },
+    [getDisplayById],
+  );
+
+  const handleViewDetails = useCallback(
+    (display: Display) => {
+      setSelectedDisplay(display);
+      setIsViewDialogOpen(true);
+      void refreshSelectedDisplay(display);
+    },
+    [refreshSelectedDisplay],
+  );
 
   const handleViewPage = useCallback((display: Display) => {
     const slug = display.slug.trim();
@@ -302,16 +324,24 @@ export default function DisplaysPage(): ReactElement {
     toast.success(`"${displayToUnregister.name}" was unregistered.`);
   }, [displayToUnregister, unregisterDisplay]);
 
-  const handleEditDisplay = useCallback((display: Display) => {
-    setSelectedDisplay(display);
-    setIsEditDialogOpen(true);
-  }, []);
+  const handleEditDisplay = useCallback(
+    (display: Display) => {
+      setSelectedDisplay(display);
+      setIsEditDialogOpen(true);
+      void refreshSelectedDisplay(display);
+    },
+    [refreshSelectedDisplay],
+  );
 
-  const handleEditFromView = useCallback((display: Display) => {
-    setSelectedDisplay(display);
-    setIsViewDialogOpen(false);
-    setIsEditDialogOpen(true);
-  }, []);
+  const handleEditFromView = useCallback(
+    (display: Display) => {
+      setSelectedDisplay(display);
+      setIsViewDialogOpen(false);
+      setIsEditDialogOpen(true);
+      void refreshSelectedDisplay(display);
+    },
+    [refreshSelectedDisplay],
+  );
 
   const handleSaveDisplay = useCallback(
     async (display: Display): Promise<boolean> => {

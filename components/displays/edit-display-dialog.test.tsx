@@ -12,16 +12,17 @@ const makeDisplay = (overrides?: Partial<Display>): Display => ({
   location: "Main Hall",
   ipAddress: "10.0.0.2",
   macAddress: "AA:BB:CC:DD:EE:FF",
-  output: "Not available",
+  output: "hdmi-0",
   resolution: "1920x1080",
   groups: [],
   nowPlaying: null,
+  emergencyContentId: null,
   createdAt: "2025-01-01T00:00:00.000Z",
   ...overrides,
 });
 
 describe("EditDisplayDialog", () => {
-  test("keeps resolution unchanged when selecting display output", async () => {
+  test("keeps resolution unchanged when changing display output", async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
     const onSave = vi.fn(async () => true);
@@ -36,49 +37,23 @@ describe("EditDisplayDialog", () => {
       />,
     );
 
-    await user.click(screen.getByRole("radio", { name: /HDMI-0/i }));
-
-    const resolutionInput = screen.getByLabelText(
-      "Resolution",
+    const outputIndexInput = screen.getByLabelText(
+      "Display Output Index",
     ) as HTMLInputElement;
-    expect(resolutionInput.value).toBe("1920x1080");
+    await user.clear(outputIndexInput);
+    await user.type(outputIndexInput, "2");
 
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
-        output: "HDMI-0",
+        output: "hdmi-2",
         resolution: "1920x1080",
       }),
     );
   });
 
-  test("allows clearing output using explicit None option", async () => {
-    const user = userEvent.setup();
-    const onOpenChange = vi.fn();
-    const onSave = vi.fn(async () => true);
-
-    render(
-      <EditDisplayDialog
-        display={makeDisplay({ output: "HDMI-0" })}
-        existingGroups={[]}
-        open={true}
-        onOpenChange={onOpenChange}
-        onSave={onSave}
-      />,
-    );
-
-    await user.click(screen.getByRole("radio", { name: /None/i }));
-    await user.click(screen.getByRole("button", { name: "Save" }));
-
-    expect(onSave).toHaveBeenCalledWith(
-      expect.objectContaining({
-        output: "Not available",
-      }),
-    );
-  });
-
-  test("disables save when resolution is invalid", async () => {
+  test("disables save when output index is invalid", async () => {
     const user = userEvent.setup();
 
     render(
@@ -91,14 +66,16 @@ describe("EditDisplayDialog", () => {
       />,
     );
 
-    const resolutionInput = screen.getByLabelText("Resolution");
-    await user.clear(resolutionInput);
-    await user.type(resolutionInput, "Auto-detect");
+    const outputIndexInput = screen.getByLabelText(
+      "Display Output Index",
+    ) as HTMLInputElement;
+    await user.clear(outputIndexInput);
+    await user.type(outputIndexInput, "-1");
 
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   });
 
-  test("allows saving when resolution is not available", async () => {
+  test("allows saving when resolution is intentionally empty", async () => {
     const user = userEvent.setup();
     const onSave = vi.fn(async () => true);
 
@@ -114,8 +91,8 @@ describe("EditDisplayDialog", () => {
 
     const saveButton = screen.getByRole("button", { name: "Save" });
     expect(saveButton).toBeEnabled();
-
     await user.click(saveButton);
+
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
         resolution: "Not available",
@@ -144,37 +121,6 @@ describe("EditDisplayDialog", () => {
     await waitFor(() => {
       expect(onOpenChange).not.toHaveBeenCalledWith(false);
     });
-  });
-
-  test("supports arrow-key navigation for display output radios", () => {
-    render(
-      <EditDisplayDialog
-        display={makeDisplay()}
-        existingGroups={[]}
-        open={true}
-        onOpenChange={vi.fn()}
-        onSave={vi.fn(async () => true)}
-      />,
-    );
-
-    const group = screen.getByRole("radiogroup", { name: "Display output" });
-    fireEvent.keyDown(group, { key: "ArrowDown" });
-    expect(screen.getByRole("radio", { name: /HDMI-0/i })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
-
-    fireEvent.keyDown(group, { key: "End" });
-    expect(screen.getByRole("radio", { name: /HDMI-1/i })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
-
-    fireEvent.keyDown(group, { key: "Home" });
-    expect(screen.getByRole("radio", { name: /None/i })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
   });
 
   test("hides manage groups action without write permission", () => {
