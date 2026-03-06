@@ -196,7 +196,7 @@ export default function DisplaysPage(): ReactElement {
   const availableOutputFilters = useMemo(() => {
     const outputNames = new Set<string>();
     for (const display of displays) {
-      const outputName = display.displayOutput.trim();
+      const outputName = display.output.trim();
       if (outputName.length === 0) continue;
       outputNames.add(outputName);
     }
@@ -272,7 +272,7 @@ export default function DisplaysPage(): ReactElement {
   }, []);
 
   const handleViewPage = useCallback((display: Display) => {
-    const slug = display.displaySlug?.trim();
+    const slug = display.slug.trim();
     if (!slug) {
       toast.error(
         "Display page is unavailable because display slug is missing.",
@@ -360,10 +360,7 @@ export default function DisplaysPage(): ReactElement {
           location: display.location,
           ipAddress: display.ipAddress === "" ? null : display.ipAddress,
           macAddress: display.macAddress === "" ? null : display.macAddress,
-          outputType:
-            display.displayOutput === "Not available"
-              ? null
-              : display.displayOutput,
+          output: display.output === "Not available" ? null : display.output,
           emergencyContentId: display.emergencyContentId,
           screenWidth,
           screenHeight,
@@ -449,10 +446,10 @@ export default function DisplaysPage(): ReactElement {
         const matchesLocation = display.location
           .toLowerCase()
           .includes(normalizedSearch);
-        const matchesIdentifier = display.identifier
-          ?.toLowerCase()
+        const matchesSlug = display.slug
+          .toLowerCase()
           .includes(normalizedSearch);
-        if (!matchesName && !matchesLocation && !matchesIdentifier) {
+        if (!matchesName && !matchesLocation && !matchesSlug) {
           return false;
         }
       }
@@ -468,7 +465,7 @@ export default function DisplaysPage(): ReactElement {
 
       if (
         normalizedOutputFilter !== "all" &&
-        display.displayOutput !== normalizedOutputFilter
+        display.output !== normalizedOutputFilter
       ) {
         return false;
       }

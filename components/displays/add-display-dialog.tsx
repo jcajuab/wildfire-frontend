@@ -161,13 +161,24 @@ export function AddDisplayDialog({
       name,
       colorIndex: existingGroups.find((g) => g.name === name)?.colorIndex ?? 0,
     }));
+    const normalizedSlug = data.displayName
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    const slug =
+      normalizedSlug.length > 0
+        ? normalizedSlug
+        : `display-${crypto.randomUUID().slice(0, 8)}`;
+
     onRegister({
+      slug,
       name: data.displayName,
       status: "READY",
       location: data.location,
       ipAddress: data.ipAddress,
       macAddress: data.macAddress,
-      displayOutput: data.selectedOutput,
+      output: data.selectedOutput,
       resolution: data.selectedResolution,
       emergencyContentId: null,
       localEmergencyActive: false,

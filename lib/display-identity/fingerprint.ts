@@ -6,12 +6,12 @@ const toHex = (bytes: Uint8Array): string =>
     .join("");
 
 export async function deriveDisplayFingerprint(input: {
-  displayOutput: string;
+  output: string;
   publicKeyPem: string;
 }): Promise<string> {
   const payload = [
     "wildfire-display-fingerprint-v1",
-    input.displayOutput.trim().toLowerCase(),
+    input.output.trim().toLowerCase(),
     input.publicKeyPem.trim(),
   ].join("|");
   const digest = await crypto.subtle.digest(

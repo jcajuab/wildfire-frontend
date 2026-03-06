@@ -19,15 +19,13 @@ export interface DisplayGroup {
 
 export interface Display {
   readonly id: string;
-  readonly displaySlug?: string;
-  /** Backend display identifier (for registration/debugging). */
-  readonly identifier?: string;
+  readonly slug: string;
   readonly name: string;
   readonly status: DisplayStatus;
   readonly location: string;
   readonly ipAddress: string;
   readonly macAddress: string;
-  readonly displayOutput: string;
+  readonly output: string;
   readonly resolution: string;
   readonly emergencyContentId: string | null;
   readonly localEmergencyActive: boolean;

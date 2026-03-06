@@ -26,8 +26,8 @@ const MIN_RESOLUTION = 1;
 interface RegisterFormState {
   readonly registrationCode: string;
   readonly displayName: string;
-  readonly displaySlug: string;
-  readonly displayOutput: string;
+  readonly slug: string;
+  readonly output: string;
   readonly resolutionWidth: string;
   readonly resolutionHeight: string;
 }
@@ -35,8 +35,8 @@ interface RegisterFormState {
 type RegisterField =
   | "registrationCode"
   | "displayName"
-  | "displaySlug"
-  | "displayOutput"
+  | "slug"
+  | "output"
   | "resolutionWidth"
   | "resolutionHeight";
 
@@ -49,8 +49,8 @@ type RegisterStatus =
 const INITIAL_REGISTER_FORM: RegisterFormState = {
   registrationCode: "",
   displayName: "",
-  displaySlug: "",
-  displayOutput: "",
+  slug: "",
+  output: "",
   resolutionWidth: "",
   resolutionHeight: "",
 };
@@ -82,7 +82,7 @@ export default function RegisterDisplayPage(): ReactElement {
   );
   const [status, setStatus] = useState<RegisterStatus>(INITIAL_STATUS);
 
-  const normalizedSlug = formState.displaySlug.trim().toLowerCase();
+  const normalizedSlug = formState.slug.trim().toLowerCase();
   const isSubmitting = status.kind === "submitting";
 
   const updateField = useCallback(
@@ -103,7 +103,7 @@ export default function RegisterDisplayPage(): ReactElement {
       const code = formState.registrationCode.trim();
       const name = formState.displayName.trim();
       const slug = normalizedSlug;
-      const outputName = formState.displayOutput.trim();
+      const outputName = formState.output.trim();
       const width = toPositiveInteger(formState.resolutionWidth);
       const height = toPositiveInteger(formState.resolutionHeight);
 
@@ -126,12 +126,12 @@ export default function RegisterDisplayPage(): ReactElement {
           message:
             "Display slug must be lowercase kebab-case with letters, numbers, and hyphens.",
         });
-        focusField(form, "displaySlug");
+        focusField(form, "slug");
         return;
       }
       if (!outputName) {
         setStatus({ kind: "error", message: "Display output is required." });
-        focusField(form, "displayOutput");
+        focusField(form, "output");
         return;
       }
       if (width === null || height === null) {
@@ -159,8 +159,8 @@ export default function RegisterDisplayPage(): ReactElement {
           keyPairPromise,
         ]);
         const publicKeyPem = await exportPublicKeyPem(keyPair.publicKey);
-        const displayFingerprint = await deriveDisplayFingerprint({
-          displayOutput: canonicalOutput,
+        const fingerprint = await deriveDisplayFingerprint({
+          output: canonicalOutput,
           publicKeyPem,
         });
 
@@ -170,7 +170,7 @@ export default function RegisterDisplayPage(): ReactElement {
           registrationSession.challengeNonce,
           slug,
           canonicalOutput,
-          displayFingerprint,
+          fingerprint,
           publicKeyPem,
         ].join("\n");
         const registrationSignature = await signText(
@@ -180,12 +180,12 @@ export default function RegisterDisplayPage(): ReactElement {
 
         const registration = await registerDisplay({
           registrationSessionId: registrationSession.registrationSessionId,
-          displaySlug: slug,
+          slug,
           displayName: name,
           resolutionWidth: width,
           resolutionHeight: height,
-          displayOutput: canonicalOutput,
-          displayFingerprint,
+          output: canonicalOutput,
+          fingerprint,
           publicKey: publicKeyPem,
           keyAlgorithm: "ed25519",
           registrationSignature,
@@ -193,17 +193,17 @@ export default function RegisterDisplayPage(): ReactElement {
 
         saveDisplayRegistration({
           displayId: registration.displayId,
-          displaySlug: registration.displaySlug,
+          slug: registration.slug,
           keyId: registration.keyId,
           keyAlias,
-          displayFingerprint,
-          displayOutput: canonicalOutput,
+          fingerprint,
+          output: canonicalOutput,
           registeredAt: new Date().toISOString(),
         });
 
         setStatus({
           kind: "success",
-          message: `Registration complete. Display ${registration.displaySlug} is now connected.`,
+          message: `Registration complete. Display ${registration.slug} is now connected.`,
         });
       } catch (error) {
         setStatus({
@@ -298,9 +298,9 @@ export default function RegisterDisplayPage(): ReactElement {
                 id="display-slug"
                 type="text"
                 placeholder="lobby-hdmi-0…"
-                name="displaySlug"
-                value={formState.displaySlug}
-                onChange={updateField("displaySlug")}
+                name="slug"
+                value={formState.slug}
+                onChange={updateField("slug")}
                 autoComplete="off"
                 spellCheck={false}
                 className="h-11 rounded-lg text-sm"
@@ -314,9 +314,9 @@ export default function RegisterDisplayPage(): ReactElement {
                 id="display-output"
                 type="text"
                 placeholder="HDMI-0…"
-                name="displayOutput"
-                value={formState.displayOutput}
-                onChange={updateField("displayOutput")}
+                name="output"
+                value={formState.output}
+                onChange={updateField("output")}
                 autoComplete="off"
                 spellCheck={false}
                 className="h-11 rounded-lg text-sm"

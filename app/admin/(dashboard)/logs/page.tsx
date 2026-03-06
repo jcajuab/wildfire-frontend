@@ -166,7 +166,7 @@ export default function LogsPage(): ReactElement {
       users.map((u) => [u.id, u.avatarUrl ?? null]),
     );
     const displayMap = new Map(
-      (displaysData?.items ?? []).map((d) => [d.id, d.name || d.identifier]),
+      (displaysData?.items ?? []).map((d) => [d.id, d.name || d.slug]),
     );
     const getActorName = formatActorDisplay(userMap, displayMap);
     const getActorAvatarUrlFn = getActorAvatarUrl(avatarUrlByUserId);

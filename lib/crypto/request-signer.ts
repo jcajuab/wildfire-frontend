@@ -36,7 +36,7 @@ const signPayload = async (
 export async function createSignedHeaders(input: {
   method: string;
   url: string;
-  displaySlug: string;
+  slug: string;
   keyId: string;
   privateKey: CryptoKey;
   body?: string;
@@ -51,7 +51,7 @@ export async function createSignedHeaders(input: {
   const payload = [
     input.method.toUpperCase(),
     pathWithQuery,
-    input.displaySlug,
+    input.slug,
     input.keyId,
     timestamp,
     nonce,
@@ -62,7 +62,7 @@ export async function createSignedHeaders(input: {
 
   return {
     ...getDevOnlyRequestHeaders(),
-    "x-display-slug": input.displaySlug,
+    "x-display-slug": input.slug,
     "x-display-key-id": input.keyId,
     "x-display-timestamp": timestamp,
     "x-display-nonce": nonce,

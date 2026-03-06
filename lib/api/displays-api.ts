@@ -9,16 +9,15 @@ import {
 /** Backend display shape (matches GET /displays and GET /displays/:id). */
 export interface Display {
   readonly id: string;
-  readonly displaySlug?: string;
-  readonly identifier: string;
-  readonly displayFingerprint?: string | null;
+  readonly slug: string;
+  readonly fingerprint?: string | null;
   readonly name: string;
   readonly location: string | null;
   readonly ipAddress: string | null;
   readonly macAddress: string | null;
   readonly screenWidth: number | null;
   readonly screenHeight: number | null;
-  readonly outputType: string | null;
+  readonly output: string | null;
   readonly orientation: "LANDSCAPE" | "PORTRAIT" | null;
   readonly emergencyContentId?: string | null;
   readonly localEmergencyActive?: boolean;
@@ -50,7 +49,7 @@ export interface UpdateDisplayRequest {
   readonly macAddress?: string | null;
   readonly screenWidth?: number | null;
   readonly screenHeight?: number | null;
-  readonly outputType?: string | null;
+  readonly output?: string | null;
   readonly orientation?: "LANDSCAPE" | "PORTRAIT" | null;
   readonly emergencyContentId?: string | null;
 }

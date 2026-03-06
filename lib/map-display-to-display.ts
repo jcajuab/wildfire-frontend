@@ -8,15 +8,14 @@ export function mapDisplayApiToDisplay(display: DisplayApi): Display {
       : "Not available";
   return {
     id: display.id,
-    displaySlug: display.displaySlug,
-    identifier: display.identifier,
+    slug: display.slug,
     name: display.name,
     location: display.location ?? "",
     createdAt: display.createdAt,
     status: display.status,
     ipAddress: display.ipAddress ?? "",
     macAddress: display.macAddress ?? "",
-    displayOutput: display.outputType ?? "Not available",
+    output: display.output ?? "Not available",
     resolution,
     emergencyContentId: display.emergencyContentId ?? null,
     localEmergencyActive: display.localEmergencyActive ?? false,

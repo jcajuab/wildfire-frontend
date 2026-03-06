@@ -8,7 +8,7 @@ export interface RegistrationSessionResponse {
   readonly expiresAt: string;
   readonly challengeNonce: string;
   readonly constraints: {
-    readonly displaySlugPattern: string;
+    readonly slugPattern: string;
     readonly minSlugLength: number;
     readonly maxSlugLength: number;
   };
@@ -16,7 +16,7 @@ export interface RegistrationSessionResponse {
 
 export interface RegisterDisplayResponse {
   readonly displayId: string;
-  readonly displaySlug: string;
+  readonly slug: string;
   readonly state: "registered";
   readonly keyId: string;
 }
@@ -111,12 +111,12 @@ export async function createRegistrationSession(
 
 export async function registerDisplay(input: {
   registrationSessionId: string;
-  displaySlug: string;
+  slug: string;
   displayName: string;
   resolutionWidth: number;
   resolutionHeight: number;
-  displayOutput: string;
-  displayFingerprint: string;
+  output: string;
+  fingerprint: string;
   publicKey: string;
   keyAlgorithm: "ed25519";
   registrationSignature: string;
@@ -140,7 +140,7 @@ export async function registerDisplay(input: {
 }
 
 export async function createAuthChallenge(input: {
-  displaySlug: string;
+  slug: string;
   keyId: string;
 }): Promise<AuthChallengeResponse> {
   const baseUrl = getRequiredBaseUrl();
@@ -162,7 +162,7 @@ export async function createAuthChallenge(input: {
 
 export async function verifyAuthChallenge(input: {
   challengeToken: string;
-  displaySlug: string;
+  slug: string;
   keyId: string;
   signature: string;
 }): Promise<void> {
@@ -176,7 +176,7 @@ export async function verifyAuthChallenge(input: {
         ...getDevOnlyRequestHeaders(),
       },
       body: JSON.stringify({
-        displaySlug: input.displaySlug,
+        slug: input.slug,
         keyId: input.keyId,
         signature: input.signature,
       }),
@@ -193,11 +193,11 @@ export async function fetchSignedManifest(input: {
   privateKey: CryptoKey;
 }): Promise<DisplayManifest> {
   const baseUrl = getRequiredBaseUrl();
-  const url = `${baseUrl}/display-runtime/${encodeURIComponent(input.registration.displaySlug)}/manifest`;
+  const url = `${baseUrl}/display-runtime/${encodeURIComponent(input.registration.slug)}/manifest`;
   const signedHeaders = await createSignedHeaders({
     method: "GET",
     url,
-    displaySlug: input.registration.displaySlug,
+    slug: input.registration.slug,
     keyId: input.registration.keyId,
     privateKey: input.privateKey,
     body: "",
@@ -218,11 +218,11 @@ export async function postSignedHeartbeat(input: {
   privateKey: CryptoKey;
 }): Promise<void> {
   const baseUrl = getRequiredBaseUrl();
-  const url = `${baseUrl}/display-runtime/${encodeURIComponent(input.registration.displaySlug)}/heartbeat`;
+  const url = `${baseUrl}/display-runtime/${encodeURIComponent(input.registration.slug)}/heartbeat`;
   const signedHeaders = await createSignedHeaders({
     method: "POST",
     url,
-    displaySlug: input.registration.displaySlug,
+    slug: input.registration.slug,
     keyId: input.registration.keyId,
     privateKey: input.privateKey,
     body: "",

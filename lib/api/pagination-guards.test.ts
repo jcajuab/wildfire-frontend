@@ -27,14 +27,14 @@ describe("paginated aggregate query guards", () => {
           data: [
             {
               id: crypto.randomUUID(),
-              identifier: "id",
+              slug: "display-1",
               name: "name",
               location: null,
               ipAddress: null,
               macAddress: null,
               screenWidth: null,
               screenHeight: null,
-              outputType: null,
+              output: null,
               orientation: null,
               lastSeenAt: "2025-01-01T00:00:00.000Z",
               status: "LIVE",

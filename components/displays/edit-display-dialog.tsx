@@ -83,8 +83,7 @@ function createInitialFormData(display: Display): EditFormData {
     location: display.location,
     ipAddress: display.ipAddress,
     macAddress: display.macAddress,
-    selectedOutput:
-      display.displayOutput === "Not available" ? null : display.displayOutput,
+    selectedOutput: display.output === "Not available" ? null : display.output,
     selectedResolution: display.resolution,
     emergencyContentId: display.emergencyContentId,
     groups: display.groups.map((group) => group.name),
@@ -159,7 +158,7 @@ function EditDisplayForm({
       location: formData.location,
       ipAddress: formData.ipAddress,
       macAddress: formData.macAddress,
-      displayOutput: formData.selectedOutput ?? "Not available",
+      output: formData.selectedOutput ?? "Not available",
       resolution: resolutionForSave,
       emergencyContentId: formData.emergencyContentId,
       groups,

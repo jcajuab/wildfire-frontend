@@ -6,13 +6,13 @@ import type { Display } from "@/types/display";
 
 const makeDisplay = (overrides?: Partial<Display>): Display => ({
   id: "display-1",
-  identifier: "AA:BB:CC:DD:EE:FF",
+  slug: "lobby-display",
   name: "Lobby Display",
   status: "READY",
   location: "Main Hall",
   ipAddress: "10.0.0.2",
   macAddress: "AA:BB:CC:DD:EE:FF",
-  displayOutput: "Not available",
+  output: "Not available",
   resolution: "1920x1080",
   groups: [],
   nowPlaying: null,
@@ -47,7 +47,7 @@ describe("EditDisplayDialog", () => {
 
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
-        displayOutput: "HDMI-0",
+        output: "HDMI-0",
         resolution: "1920x1080",
       }),
     );
@@ -60,7 +60,7 @@ describe("EditDisplayDialog", () => {
 
     render(
       <EditDisplayDialog
-        display={makeDisplay({ displayOutput: "HDMI-0" })}
+        display={makeDisplay({ output: "HDMI-0" })}
         existingGroups={[]}
         open={true}
         onOpenChange={onOpenChange}
@@ -73,7 +73,7 @@ describe("EditDisplayDialog", () => {
 
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
-        displayOutput: "Not available",
+        output: "Not available",
       }),
     );
   });

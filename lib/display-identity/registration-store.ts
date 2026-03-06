@@ -1,10 +1,10 @@
 export interface DisplayRegistrationRecord {
   readonly displayId: string;
-  readonly displaySlug: string;
+  readonly slug: string;
   readonly keyId: string;
   readonly keyAlias: string;
-  readonly displayFingerprint: string;
-  readonly displayOutput: string;
+  readonly fingerprint: string;
+  readonly output: string;
   readonly registeredAt: string;
 }
 
@@ -38,20 +38,17 @@ export function saveDisplayRegistration(
   record: DisplayRegistrationRecord,
 ): void {
   const all = readAll();
-  const next = [
-    ...all.filter((item) => item.displaySlug !== record.displaySlug),
-    record,
-  ];
+  const next = [...all.filter((item) => item.slug !== record.slug), record];
   writeAll(next);
 }
 
 export function getDisplayRegistrationBySlug(
-  displaySlug: string,
+  slug: string,
 ): DisplayRegistrationRecord | null {
-  return readAll().find((item) => item.displaySlug === displaySlug) ?? null;
+  return readAll().find((item) => item.slug === slug) ?? null;
 }
 
-export function removeDisplayRegistration(displaySlug: string): void {
-  const next = readAll().filter((item) => item.displaySlug !== displaySlug);
+export function removeDisplayRegistration(slug: string): void {
+  const next = readAll().filter((item) => item.slug !== slug);
   writeAll(next);
 }

@@ -56,10 +56,10 @@ export function ViewDisplayDialog({
           </div>
 
           <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-            {display.identifier != null && display.identifier !== "" ? (
+            {display.slug.trim() !== "" ? (
               <>
-                <span className="text-muted-foreground">Identifier:</span>
-                <span className="font-mono text-xs">{display.identifier}</span>
+                <span className="text-muted-foreground">Slug:</span>
+                <span className="font-mono text-xs">{display.slug}</span>
               </>
             ) : null}
             <span className="text-muted-foreground">IP Address:</span>
@@ -69,7 +69,7 @@ export function ViewDisplayDialog({
             <span>{display.macAddress || "—"}</span>
 
             <span className="text-muted-foreground">Display Output:</span>
-            <span>{display.displayOutput}</span>
+            <span>{display.output}</span>
 
             <span className="text-muted-foreground">Resolution:</span>
             <span>{display.resolution}</span>

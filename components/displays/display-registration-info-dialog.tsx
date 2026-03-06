@@ -32,7 +32,7 @@ interface RegistrationSucceededEvent {
   readonly type: "registration_succeeded";
   readonly attemptId: string;
   readonly displayId: string;
-  readonly displaySlug: string;
+  readonly slug: string;
   readonly occurredAt: string;
 }
 
@@ -45,7 +45,7 @@ const isRegistrationSucceededEvent = (
   const event = value as Partial<RegistrationSucceededEvent>;
   return (
     event.type === "registration_succeeded" &&
-    typeof event.displaySlug === "string" &&
+    typeof event.slug === "string" &&
     typeof event.attemptId === "string"
   );
 };
@@ -124,7 +124,7 @@ export function DisplayRegistrationInfoDialog({
         const payload = JSON.parse(String(event.data)) as unknown;
         if (!isRegistrationSucceededEvent(payload)) return;
         setSuccessMessage(
-          `Device "${payload.displaySlug}" has been registered successfully.`,
+          `Device "${payload.slug}" has been registered successfully.`,
         );
         onRegistrationSucceeded?.();
         void rotateCode(attemptId);

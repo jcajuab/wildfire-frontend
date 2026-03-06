@@ -57,12 +57,10 @@ const getViewport = () => ({
 
 const createChallengePayload = (input: {
   challengeToken: string;
-  displaySlug: string;
+  slug: string;
   keyId: string;
 }): string =>
-  ["CHALLENGE", input.challengeToken, input.displaySlug, input.keyId].join(
-    "\n",
-  );
+  ["CHALLENGE", input.challengeToken, input.slug, input.keyId].join("\n");
 
 export default function DisplayRuntimePage() {
   const params = useParams<{ displaySlug: string }>();
@@ -157,12 +155,12 @@ export default function DisplayRuntimePage() {
       }
 
       const challenge = await createAuthChallenge({
-        displaySlug: registration.displaySlug,
+        slug: registration.slug,
         keyId: registration.keyId,
       });
       const challengePayload = createChallengePayload({
         challengeToken: challenge.challengeToken,
-        displaySlug: registration.displaySlug,
+        slug: registration.slug,
         keyId: registration.keyId,
       });
       const challengeSignature = await signText(
@@ -171,7 +169,7 @@ export default function DisplayRuntimePage() {
       );
       await verifyAuthChallenge({
         challengeToken: challenge.challengeToken,
-        displaySlug: registration.displaySlug,
+        slug: registration.slug,
         keyId: registration.keyId,
         signature: challengeSignature,
       });
@@ -179,7 +177,7 @@ export default function DisplayRuntimePage() {
       await refreshManifest(keyPair.privateKey);
 
       const streamUrl = `${baseUrl}/display-runtime/${encodeURIComponent(
-        registration.displaySlug,
+        registration.slug,
       )}/stream`;
 
       const sse = createDisplaySseClient({
@@ -188,7 +186,7 @@ export default function DisplayRuntimePage() {
           createSignedHeaders({
             method: "GET",
             url: streamUrl,
-            displaySlug: registration.displaySlug,
+            slug: registration.slug,
             keyId: registration.keyId,
             privateKey: keyPair.privateKey,
             body: "",
