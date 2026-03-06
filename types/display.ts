@@ -28,8 +28,6 @@ export interface Display {
   readonly output: string;
   readonly resolution: string;
   readonly emergencyContentId: string | null;
-  readonly localEmergencyActive: boolean;
-  readonly localEmergencyStartedAt: string | null;
   /** Group names with optional color index for badge styling. */
   readonly groups: readonly DisplayGroup[];
   readonly nowPlaying: NowPlaying | null;

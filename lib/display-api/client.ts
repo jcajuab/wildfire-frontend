@@ -211,10 +211,10 @@ const parseRegisterDisplayResponse = (
 const parseAuthChallengeResponse = (
   payload: unknown,
 ): AuthChallengeResponse => {
-  const root = readRecord(payload, "challenge");
+  const root = readRecord(payload, "authChallenge");
   return {
-    challengeToken: readString(root.challengeToken, "challenge.challengeToken"),
-    expiresAt: readString(root.expiresAt, "challenge.expiresAt"),
+    challengeToken: readString(root.challengeToken, "challengeToken"),
+    expiresAt: readString(root.expiresAt, "expiresAt"),
   };
 };
 

@@ -35,8 +35,6 @@ import {
   notifyApiError,
 } from "@/lib/api/get-api-error-message";
 import {
-  useActivateDisplayEmergencyMutation,
-  useDeactivateDisplayEmergencyMutation,
   useGetRuntimeOverridesQuery,
   useCreateDisplayGroupMutation,
   useGetDisplayGroupsQuery,
@@ -132,8 +130,6 @@ export default function DisplaysPage(): ReactElement {
   const [setDisplayGroups] = useSetDisplayGroupsMutation();
   const [createDisplayGroup] = useCreateDisplayGroupMutation();
   const [unregisterDisplay] = useUnregisterDisplayMutation();
-  const [activateDisplayEmergency] = useActivateDisplayEmergencyMutation();
-  const [deactivateDisplayEmergency] = useDeactivateDisplayEmergencyMutation();
   const deferredSearch = useDeferredValue(search);
 
   useEffect(() => {
@@ -316,30 +312,6 @@ export default function DisplaysPage(): ReactElement {
     setIsViewDialogOpen(false);
     setIsEditDialogOpen(true);
   }, []);
-
-  const handleActivateDisplayEmergency = useCallback(
-    async (display: Display) => {
-      try {
-        await activateDisplayEmergency({ displayId: display.id }).unwrap();
-        toast.success(`Emergency mode activated for "${display.name}".`);
-      } catch (error) {
-        notifyApiError(error, "Failed to activate emergency mode.");
-      }
-    },
-    [activateDisplayEmergency],
-  );
-
-  const handleDeactivateDisplayEmergency = useCallback(
-    async (display: Display) => {
-      try {
-        await deactivateDisplayEmergency({ displayId: display.id }).unwrap();
-        toast.success(`Emergency mode stopped for "${display.name}".`);
-      } catch (error) {
-        notifyApiError(error, "Failed to stop emergency mode.");
-      }
-    },
-    [deactivateDisplayEmergency],
-  );
 
   const handleSaveDisplay = useCallback(
     async (display: Display): Promise<boolean> => {
@@ -570,14 +542,6 @@ export default function DisplaysPage(): ReactElement {
                   canDeleteDisplay ? handleUnregisterDisplay : undefined
                 }
                 onEditDisplay={canUpdateDisplay ? handleEditDisplay : undefined}
-                onActivateEmergency={
-                  canUpdateDisplay ? handleActivateDisplayEmergency : undefined
-                }
-                onDeactivateEmergency={
-                  canUpdateDisplay
-                    ? handleDeactivateDisplayEmergency
-                    : undefined
-                }
                 isGlobalEmergencyActive={globalEmergencyActive}
               />
             )}

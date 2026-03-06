@@ -142,6 +142,6 @@ describe("display-api client contract validation", () => {
         slug: "lobby-display",
         keyId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
       }),
-    ).rejects.toThrow("challenge.challengeToken must be a string");
+    ).rejects.toThrow("challengeToken must be a string");
   });
 });

@@ -2,7 +2,6 @@
 
 import { type ReactElement, memo } from "react";
 import {
-  IconAlertTriangle,
   IconDotsVertical,
   IconEye,
   IconExternalLink,
@@ -35,8 +34,6 @@ interface DisplayCardProps {
   readonly onViewPage: (display: Display) => void;
   readonly onUnregisterDisplay?: (display: Display) => void;
   readonly onEditDisplay?: (display: Display) => void;
-  readonly onActivateEmergency?: (display: Display) => void;
-  readonly onDeactivateEmergency?: (display: Display) => void;
   readonly isGlobalEmergencyActive?: boolean;
 }
 
@@ -103,16 +100,12 @@ export const DisplayCard = memo(function DisplayCard({
   onViewPage,
   onUnregisterDisplay,
   onEditDisplay,
-  onActivateEmergency,
-  onDeactivateEmergency,
   isGlobalEmergencyActive = false,
 }: DisplayCardProps): ReactElement {
   const statusStyles = getStatusStyles(display.status);
   const nowPlaying = display.nowPlaying;
   const shouldPulse = display.status === "LIVE" || display.status === "READY";
   const statusLabel = getStatusLabel(display.status);
-  const isEmergencyActive =
-    isGlobalEmergencyActive || display.localEmergencyActive;
   const durationLabel =
     nowPlaying != null && nowPlaying.duration > 0
       ? formatDuration(nowPlaying.duration)
@@ -173,32 +166,6 @@ export const DisplayCard = memo(function DisplayCard({
                   Edit Display
                 </DropdownMenuItem>
               ) : null}
-              {onActivateEmergency || onDeactivateEmergency ? (
-                <>
-                  <DropdownMenuSeparator />
-                  {isEmergencyActive ? (
-                    <DropdownMenuItem
-                      onClick={() => onDeactivateEmergency?.(display)}
-                    >
-                      <IconAlertTriangle
-                        className="size-4"
-                        aria-hidden="true"
-                      />
-                      Stop Emergency
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem
-                      onClick={() => onActivateEmergency?.(display)}
-                    >
-                      <IconAlertTriangle
-                        className="size-4"
-                        aria-hidden="true"
-                      />
-                      Start Emergency
-                    </DropdownMenuItem>
-                  )}
-                </>
-              ) : null}
               {onUnregisterDisplay ? (
                 <>
                   <DropdownMenuSeparator />
@@ -217,7 +184,7 @@ export const DisplayCard = memo(function DisplayCard({
       </header>
 
       <div className="flex min-h-6 flex-wrap gap-1.5">
-        {isEmergencyActive ? (
+        {isGlobalEmergencyActive ? (
           <Badge
             variant="outline"
             className="border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200"

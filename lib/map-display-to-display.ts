@@ -18,8 +18,6 @@ export function mapDisplayApiToDisplay(display: DisplayApi): Display {
     output: display.output ?? "Not available",
     resolution,
     emergencyContentId: display.emergencyContentId ?? null,
-    localEmergencyActive: display.localEmergencyActive ?? false,
-    localEmergencyStartedAt: display.localEmergencyStartedAt ?? null,
     groups: [],
     nowPlaying: display.nowPlaying
       ? {

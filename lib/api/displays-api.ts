@@ -20,8 +20,6 @@ export interface Display {
   readonly output: string | null;
   readonly orientation: "LANDSCAPE" | "PORTRAIT" | null;
   readonly emergencyContentId?: string | null;
-  readonly localEmergencyActive?: boolean;
-  readonly localEmergencyStartedAt?: string | null;
   readonly lastSeenAt: string | null;
   readonly status: "PROCESSING" | "READY" | "LIVE" | "DOWN";
   readonly nowPlaying?: {
@@ -227,36 +225,6 @@ export const displaysApi = createApi({
         ],
       },
     ),
-    activateDisplayEmergency: build.mutation<
-      void,
-      { displayId: string; reason?: string }
-    >({
-      query: ({ displayId, reason }) => ({
-        url: `displays/${displayId}/emergency/activate`,
-        method: "POST",
-        body: { reason },
-      }),
-      invalidatesTags: (_result, _error, { displayId }) => [
-        { type: "RuntimeOverrides", id: "GLOBAL" },
-        { type: "Display", id: "LIST" },
-        { type: "Display", id: displayId },
-      ],
-    }),
-    deactivateDisplayEmergency: build.mutation<
-      void,
-      { displayId: string; reason?: string }
-    >({
-      query: ({ displayId, reason }) => ({
-        url: `displays/${displayId}/emergency/deactivate`,
-        method: "POST",
-        body: { reason },
-      }),
-      invalidatesTags: (_result, _error, { displayId }) => [
-        { type: "RuntimeOverrides", id: "GLOBAL" },
-        { type: "Display", id: "LIST" },
-        { type: "Display", id: displayId },
-      ],
-    }),
     getDisplayGroups: build.query<DisplayGroupsListResponse, void>({
       query: () => "displays/groups",
       transformResponse: (response) => {
@@ -393,8 +361,6 @@ export const {
   useGetRuntimeOverridesQuery,
   useActivateGlobalEmergencyMutation,
   useDeactivateGlobalEmergencyMutation,
-  useActivateDisplayEmergencyMutation,
-  useDeactivateDisplayEmergencyMutation,
   useGetDisplayGroupsQuery,
   useCreateDisplayGroupMutation,
   useUpdateDisplayGroupMutation,

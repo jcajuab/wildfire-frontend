@@ -79,9 +79,6 @@ export function ViewDisplayDialog({
               {display.emergencyContentId ?? "Not assigned"}
             </span>
 
-            <span className="text-muted-foreground">Local Emergency:</span>
-            <span>{display.localEmergencyActive ? "Active" : "Inactive"}</span>
-
             <span className="text-muted-foreground">Display Groups:</span>
             <div className="flex flex-wrap gap-1">
               {display.groups.length > 0 ? (
