@@ -11,7 +11,7 @@ import { DashboardPage } from "@/components/layout/dashboard-page";
 import { CreatePlaylistDialog } from "@/components/playlists/create-playlist-dialog";
 import {
   EditPlaylistItemsDialog,
-  type PlaylistItemsDiff,
+  type PlaylistItemsAtomicSnapshot,
 } from "@/components/playlists/edit-playlist-items-dialog";
 import { Pagination } from "@/components/playlists/pagination";
 import { PlaylistGrid } from "@/components/playlists/playlist-grid";
@@ -45,10 +45,8 @@ import {
   useDeletePlaylistMutation,
   useLazyGetPlaylistQuery,
   useListPlaylistsQuery,
-  useReorderPlaylistItemsMutation,
+  useSavePlaylistItemsAtomicMutation,
   useUpdatePlaylistMutation,
-  useUpdatePlaylistItemMutation,
-  useDeletePlaylistItemMutation,
 } from "@/lib/api/playlists-api";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import {
@@ -133,9 +131,7 @@ export default function PlaylistsPage(): ReactElement {
   const [addPlaylistItem] = useAddPlaylistItemMutation();
   const [updatePlaylist] = useUpdatePlaylistMutation();
   const [deletePlaylistMutation] = useDeletePlaylistMutation();
-  const [updatePlaylistItem] = useUpdatePlaylistItemMutation();
-  const [deletePlaylistItem] = useDeletePlaylistItemMutation();
-  const [reorderPlaylistItems] = useReorderPlaylistItemsMutation();
+  const [savePlaylistItemsAtomic] = useSavePlaylistItemsAtomicMutation();
   const playlists = useMemo(
     () => (playlistsData?.items ?? []).map(mapBackendPlaylistBase),
     [playlistsData?.items],
@@ -220,7 +216,7 @@ export default function PlaylistsPage(): ReactElement {
   );
 
   const handleSaveItems = useCallback(
-    async (playlistId: string, diff: PlaylistItemsDiff) => {
+    async (playlistId: string, items: PlaylistItemsAtomicSnapshot) => {
       if (isSavingPlaylistItemsRef.current) {
         return;
       }
@@ -229,39 +225,10 @@ export default function PlaylistsPage(): ReactElement {
       setIsSavingPlaylistItems(true);
 
       try {
-        for (const itemId of diff.deleted) {
-          await deletePlaylistItem({ playlistId, itemId }).unwrap();
-        }
-
-        for (const item of diff.updated) {
-          await updatePlaylistItem({
-            playlistId,
-            itemId: item.itemId,
-            duration: item.duration,
-          }).unwrap();
-        }
-
-        const persistedIdByLocalId = new Map<string, string>();
-        for (const item of diff.added) {
-          const created = await addPlaylistItem({
-            playlistId,
-            contentId: item.contentId,
-            // Temporary sequence; canonical order is set by atomic reorder.
-            sequence: 10_000 + persistedIdByLocalId.size + 1,
-            duration: item.duration,
-          }).unwrap();
-          persistedIdByLocalId.set(item.localId, created.id);
-        }
-
-        const orderedItemIds = diff.orderedItemIds.map(
-          (id) => persistedIdByLocalId.get(id) ?? id,
-        );
-        if (orderedItemIds.length > 0) {
-          await reorderPlaylistItems({
-            playlistId,
-            orderedItemIds,
-          }).unwrap();
-        }
+        await savePlaylistItemsAtomic({
+          playlistId,
+          items,
+        }).unwrap();
         toast.success("Playlist items updated.");
         setManageItemsPlaylist(null);
       } catch (err) {
@@ -271,12 +238,7 @@ export default function PlaylistsPage(): ReactElement {
         setIsSavingPlaylistItems(false);
       }
     },
-    [
-      addPlaylistItem,
-      deletePlaylistItem,
-      reorderPlaylistItems,
-      updatePlaylistItem,
-    ],
+    [savePlaylistItemsAtomic],
   );
 
   const handlePreviewPlaylist = useCallback(

@@ -87,6 +87,22 @@ export interface ReorderPlaylistItemsRequest {
   readonly orderedItemIds: readonly string[];
 }
 
+export interface SavePlaylistItemsAtomicRequest {
+  readonly playlistId: string;
+  readonly items: readonly (
+    | {
+        kind: "existing";
+        itemId: string;
+        duration: number;
+      }
+    | {
+        kind: "new";
+        contentId: string;
+        duration: number;
+      }
+  )[];
+}
+
 export interface EstimatePlaylistDurationRequest {
   readonly displayId: string;
   readonly items: readonly {
@@ -245,6 +261,25 @@ export const playlistsApi = createApi({
         { type: "Playlist", id: "LIST" },
       ],
     }),
+    savePlaylistItemsAtomic: build.mutation<
+      readonly BackendPlaylistItem[],
+      SavePlaylistItemsAtomicRequest
+    >({
+      query: ({ playlistId, items }) => ({
+        url: `playlists/${playlistId}/items`,
+        method: "PUT",
+        body: { items },
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<readonly BackendPlaylistItem[]>(
+          response,
+          "savePlaylistItemsAtomic",
+        ),
+      invalidatesTags: (_result, _error, { playlistId }) => [
+        { type: "Playlist", id: playlistId },
+        { type: "Playlist", id: "LIST" },
+      ],
+    }),
     estimatePlaylistDuration: build.mutation<
       PlaylistDurationEstimate,
       EstimatePlaylistDurationRequest
@@ -274,5 +309,6 @@ export const {
   useUpdatePlaylistItemMutation,
   useDeletePlaylistItemMutation,
   useReorderPlaylistItemsMutation,
+  useSavePlaylistItemsAtomicMutation,
   useEstimatePlaylistDurationMutation,
 } = playlistsApi;

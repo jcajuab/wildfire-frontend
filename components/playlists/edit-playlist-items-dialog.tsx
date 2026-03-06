@@ -148,21 +148,18 @@ function formatDuration(seconds: number): string {
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")} sec`;
 }
 
-export interface PlaylistItemsDiff {
-  readonly added: readonly {
-    readonly localId: string;
-    readonly contentId: string;
-    readonly sequence: number;
-    readonly duration: number;
-  }[];
-  readonly updated: readonly {
-    readonly itemId: string;
-    readonly sequence: number;
-    readonly duration: number;
-  }[];
-  readonly deleted: readonly string[];
-  readonly orderedItemIds: readonly string[];
-}
+export type PlaylistItemsAtomicSnapshot = readonly (
+  | {
+      kind: "existing";
+      itemId: string;
+      duration: number;
+    }
+  | {
+      kind: "new";
+      contentId: string;
+      duration: number;
+    }
+)[];
 
 interface EditPlaylistItemsDialogProps {
   readonly open: boolean;
@@ -170,7 +167,10 @@ interface EditPlaylistItemsDialogProps {
   readonly playlist: Playlist;
   readonly availableContent: readonly PlaylistSelectableContent[];
   readonly availableDisplays: readonly Display[];
-  readonly onSave: (playlistId: string, diff: PlaylistItemsDiff) => void;
+  readonly onSave: (
+    playlistId: string,
+    items: PlaylistItemsAtomicSnapshot,
+  ) => void;
   readonly isSaving?: boolean;
 }
 
@@ -333,48 +333,21 @@ export function EditPlaylistItemsDialog({
   }, [drafts.length, estimate, selectedDisplayId]);
 
   const handleSave = useCallback(() => {
-    const originalIds = new Set(playlist.items.map((i) => i.id));
-    const originalById = new Map(playlist.items.map((i) => [i.id, i]));
-    const sequenceById = new Map(
-      drafts.map((draft, index) => [draft.id, index + 1] as const),
+    const snapshot: PlaylistItemsAtomicSnapshot = drafts.map((draft) =>
+      draft.id.startsWith("draft-")
+        ? {
+            kind: "new",
+            contentId: draft.content.id,
+            duration: draft.duration,
+          }
+        : {
+            kind: "existing",
+            itemId: draft.id,
+            duration: draft.duration,
+          },
     );
-
-    const deleted = playlist.items
-      .filter((orig) => !drafts.some((d) => d.id === orig.id))
-      .map((orig) => orig.id);
-
-    const updated = drafts
-      .filter((d) => {
-        if (!originalIds.has(d.id)) return false;
-        const orig = originalById.get(d.id);
-        if (!orig) return false;
-        const newSeq = sequenceById.get(d.id);
-        if (newSeq === undefined) return false;
-        return orig.duration !== d.duration || orig.order !== newSeq;
-      })
-      .map((d) => ({
-        itemId: d.id,
-        sequence: sequenceById.get(d.id) ?? 1,
-        duration: d.duration,
-      }));
-
-    // Recompute added sequences using indexOf position in final drafts array.
-    const addedFinal = drafts
-      .filter((d) => d.id.startsWith("draft-"))
-      .map((d) => ({
-        localId: d.id,
-        contentId: d.content.id,
-        sequence: sequenceById.get(d.id) ?? 1,
-        duration: d.duration,
-      }));
-
-    onSave(playlist.id, {
-      added: addedFinal,
-      updated,
-      deleted,
-      orderedItemIds: drafts.map((d) => d.id),
-    });
-  }, [drafts, playlist, onSave]);
+    onSave(playlist.id, snapshot);
+  }, [drafts, onSave, playlist.id]);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
