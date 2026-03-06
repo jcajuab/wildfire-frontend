@@ -534,3 +534,37 @@ export async function postSignedHeartbeat(input: {
     throw new Error(await parseErrorMessage(response));
   }
 }
+
+export async function postSignedSnapshot(input: {
+  registration: DisplayRegistrationRecord;
+  privateKey: CryptoKey;
+  imageDataUrl: string;
+  capturedAt?: string;
+}): Promise<void> {
+  const baseUrl = getRequiredBaseUrl();
+  const url = `${baseUrl}/display-runtime/${encodeURIComponent(input.registration.slug)}/snapshot`;
+  const body = JSON.stringify({
+    imageDataUrl: input.imageDataUrl,
+    ...(input.capturedAt ? { capturedAt: input.capturedAt } : {}),
+  });
+  const signedHeaders = await createSignedHeaders({
+    method: "POST",
+    url,
+    slug: input.registration.slug,
+    keyId: input.registration.keyId,
+    privateKey: input.privateKey,
+    body,
+  });
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...signedHeaders,
+    },
+    body,
+  });
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response));
+  }
+}

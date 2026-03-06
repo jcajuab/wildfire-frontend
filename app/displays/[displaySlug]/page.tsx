@@ -14,6 +14,7 @@ import { getBaseUrl } from "@/lib/api/base-query";
 import {
   createAuthChallenge,
   fetchSignedManifest,
+  postSignedSnapshot,
   postSignedHeartbeat,
   verifyAuthChallenge,
   type DisplayManifest,
@@ -33,6 +34,7 @@ import { useMounted } from "@/hooks/use-mounted";
 
 const POLL_MS = 60_000;
 const HEARTBEAT_MS = 30_000;
+const SNAPSHOT_UPLOAD_MS = 10_000;
 const DEFAULT_SCROLL_PX_PER_SECOND = 24;
 
 type FlashTone = "INFO" | "WARNING" | "CRITICAL";
@@ -62,6 +64,22 @@ const createChallengePayload = (input: {
 }): string =>
   ["CHALLENGE", input.challengeToken, input.slug, input.keyId].join("\n");
 
+const blobToDataUrl = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+      reject(new Error("Failed to read snapshot blob"));
+    };
+    reader.onerror = () => {
+      reject(new Error("Failed to read snapshot blob"));
+    };
+    reader.readAsDataURL(blob);
+  });
+
 export default function DisplayRuntimePage() {
   const params = useParams<{ displaySlug: string }>();
   const displaySlug = params.displaySlug;
@@ -86,7 +104,9 @@ export default function DisplayRuntimePage() {
   >({});
 
   const lastPlaylistVersionRef = useRef<string | null>(null);
+  const manifestRef = useRef<DisplayManifest | null>(null);
   const currentIndexRef = useRef(0);
+  const snapshotUploadingRef = useRef(false);
   const currentItem = manifest?.items[currentIndex] ?? null;
   const playback = manifest?.playback ?? null;
   const emergencyPlayback = playback?.emergency ?? null;
@@ -138,6 +158,7 @@ export default function DisplayRuntimePage() {
       const hasMaterialChange =
         payload.playlistVersion !== lastPlaylistVersionRef.current;
       setManifest(payload);
+      manifestRef.current = payload;
       setErrorMessage(null);
       if (hasMaterialChange) {
         setCurrentIndex(0);
@@ -221,9 +242,55 @@ export default function DisplayRuntimePage() {
         });
       }, HEARTBEAT_MS);
 
+      const uploadSnapshot = async (): Promise<void> => {
+        if (snapshotUploadingRef.current) {
+          return;
+        }
+        const currentManifest = manifestRef.current;
+        if (!currentManifest) {
+          return;
+        }
+        const activeItem =
+          currentManifest.items[currentIndexRef.current] ?? null;
+        if (!activeItem || activeItem.content.type !== "IMAGE") {
+          return;
+        }
+
+        snapshotUploadingRef.current = true;
+        try {
+          const response = await fetch(activeItem.content.downloadUrl, {
+            method: "GET",
+            cache: "no-store",
+          });
+          if (!response.ok) {
+            return;
+          }
+          const blob = await response.blob();
+          if (!blob.type.startsWith("image/")) {
+            return;
+          }
+          const imageDataUrl = await blobToDataUrl(blob);
+          await postSignedSnapshot({
+            registration,
+            privateKey: keyPair.privateKey,
+            imageDataUrl,
+          });
+        } catch {
+          // Snapshot failures are non-fatal; runtime playback should continue.
+        } finally {
+          snapshotUploadingRef.current = false;
+        }
+      };
+
+      const snapshotTimer = setInterval(() => {
+        void uploadSnapshot();
+      }, SNAPSHOT_UPLOAD_MS);
+      void uploadSnapshot();
+
       return () => {
         clearInterval(pollTimer);
         clearInterval(heartbeatTimer);
+        clearInterval(snapshotTimer);
         sse.close();
       };
     };
