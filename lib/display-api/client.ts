@@ -7,11 +7,13 @@ export interface RegistrationSessionResponse {
   readonly registrationSessionId: string;
   readonly expiresAt: string;
   readonly challengeNonce: string;
-  readonly constraints: {
-    readonly slugPattern: string;
-    readonly minSlugLength: number;
-    readonly maxSlugLength: number;
-  };
+  readonly constraints: DisplayRegistrationConstraints;
+}
+
+export interface DisplayRegistrationConstraints {
+  readonly slugPattern: string;
+  readonly minSlugLength: number;
+  readonly maxSlugLength: number;
 }
 
 export interface RegisterDisplayResponse {
@@ -70,6 +72,275 @@ export interface DisplayManifest {
   readonly items: readonly ManifestItem[];
 }
 
+type UnknownRecord = Record<string, unknown>;
+
+const isRecord = (value: unknown): value is UnknownRecord =>
+  value != null && typeof value === "object" && !Array.isArray(value);
+
+const isInteger = (value: unknown): value is number =>
+  typeof value === "number" &&
+  Number.isFinite(value) &&
+  Number.isInteger(value);
+
+const readRecord = (value: unknown, path: string): UnknownRecord => {
+  if (!isRecord(value)) {
+    throw new Error(`${path} must be an object`);
+  }
+  return value;
+};
+
+const readString = (value: unknown, path: string): string => {
+  if (typeof value !== "string") {
+    throw new Error(`${path} must be a string`);
+  }
+  return value;
+};
+
+const readNullableString = (value: unknown, path: string): string | null => {
+  if (value === null) {
+    return null;
+  }
+  return readString(value, path);
+};
+
+const readInteger = (value: unknown, path: string): number => {
+  if (!isInteger(value)) {
+    throw new Error(`${path} must be an integer`);
+  }
+  return value;
+};
+
+const readNullableInteger = (value: unknown, path: string): number | null => {
+  if (value === null) {
+    return null;
+  }
+  return readInteger(value, path);
+};
+
+const readBoolean = (value: unknown, path: string): boolean => {
+  if (typeof value !== "boolean") {
+    throw new Error(`${path} must be a boolean`);
+  }
+  return value;
+};
+
+const readEnum = <T extends readonly string[]>(
+  value: unknown,
+  allowed: T,
+  path: string,
+): T[number] => {
+  if (typeof value !== "string" || !allowed.includes(value)) {
+    throw new Error(`${path} must be one of: ${allowed.join(", ")}`);
+  }
+  return value as T[number];
+};
+
+const readUrl = (value: unknown, path: string): string => {
+  const parsed = readString(value, path);
+  try {
+    // Ensure contract consistency for URL fields before runtime rendering.
+    new URL(parsed);
+    return parsed;
+  } catch {
+    throw new Error(`${path} must be a valid absolute URL`);
+  }
+};
+
+const parseDisplayRegistrationConstraints = (
+  payload: unknown,
+): DisplayRegistrationConstraints => {
+  const root = readRecord(payload, "constraints");
+  const slugPattern = readString(root.slugPattern, "constraints.slugPattern");
+  const minSlugLength = readInteger(
+    root.minSlugLength,
+    "constraints.minSlugLength",
+  );
+  const maxSlugLength = readInteger(
+    root.maxSlugLength,
+    "constraints.maxSlugLength",
+  );
+  if (minSlugLength < 1) {
+    throw new Error("constraints.minSlugLength must be positive");
+  }
+  if (maxSlugLength < minSlugLength) {
+    throw new Error(
+      "constraints.maxSlugLength must be greater than or equal to minSlugLength",
+    );
+  }
+  return {
+    slugPattern,
+    minSlugLength,
+    maxSlugLength,
+  };
+};
+
+const parseRegistrationSessionResponse = (
+  payload: unknown,
+): RegistrationSessionResponse => {
+  const root = readRecord(payload, "registrationSession");
+  return {
+    registrationSessionId: readString(
+      root.registrationSessionId,
+      "registrationSession.registrationSessionId",
+    ),
+    expiresAt: readString(root.expiresAt, "registrationSession.expiresAt"),
+    challengeNonce: readString(
+      root.challengeNonce,
+      "registrationSession.challengeNonce",
+    ),
+    constraints: parseDisplayRegistrationConstraints(root.constraints),
+  };
+};
+
+const parseRegisterDisplayResponse = (
+  payload: unknown,
+): RegisterDisplayResponse => {
+  const root = readRecord(payload, "registerDisplay");
+  return {
+    displayId: readString(root.displayId, "registerDisplay.displayId"),
+    slug: readString(root.slug, "registerDisplay.slug"),
+    keyId: readString(root.keyId, "registerDisplay.keyId"),
+    state: readEnum(
+      root.state,
+      ["registered"] as const,
+      "registerDisplay.state",
+    ),
+  };
+};
+
+const parseAuthChallengeResponse = (
+  payload: unknown,
+): AuthChallengeResponse => {
+  const root = readRecord(payload, "authChallenge");
+  return {
+    challengeToken: readString(
+      root.challengeToken,
+      "authChallenge.challengeToken",
+    ),
+    expiresAt: readString(root.expiresAt, "authChallenge.expiresAt"),
+  };
+};
+
+const parseManifestItemContent = (
+  payload: unknown,
+  path: string,
+): ManifestItem["content"] => {
+  const root = readRecord(payload, path);
+  return {
+    id: readString(root.id, `${path}.id`),
+    type: readEnum(
+      root.type,
+      ["IMAGE", "VIDEO", "PDF"] as const,
+      `${path}.type`,
+    ),
+    checksum: readString(root.checksum, `${path}.checksum`),
+    downloadUrl: readUrl(root.downloadUrl, `${path}.downloadUrl`),
+    mimeType: readString(root.mimeType, `${path}.mimeType`),
+    width: readNullableInteger(root.width, `${path}.width`),
+    height: readNullableInteger(root.height, `${path}.height`),
+    duration: readNullableInteger(root.duration, `${path}.duration`),
+  };
+};
+
+const parseManifestItem = (payload: unknown, path: string): ManifestItem => {
+  const root = readRecord(payload, path);
+  return {
+    id: readString(root.id, `${path}.id`),
+    sequence: readInteger(root.sequence, `${path}.sequence`),
+    duration: readInteger(root.duration, `${path}.duration`),
+    content: parseManifestItemContent(root.content, `${path}.content`),
+  };
+};
+
+const parseEmergencyPlayback = (
+  payload: unknown,
+  path: string,
+): DisplayManifest["playback"]["emergency"] => {
+  if (payload === null) {
+    return null;
+  }
+  const root = readRecord(payload, path);
+  return {
+    source: readEnum(
+      root.source,
+      ["DISPLAY", "DEFAULT"] as const,
+      `${path}.source`,
+    ),
+    startedAt: readNullableString(root.startedAt, `${path}.startedAt`),
+    isGlobal: readBoolean(root.isGlobal, `${path}.isGlobal`),
+    content: parseManifestItemContent(root.content, `${path}.content`),
+  };
+};
+
+const parseFlashPlayback = (
+  payload: unknown,
+  path: string,
+): DisplayManifest["playback"]["flash"] => {
+  if (payload === null) {
+    return null;
+  }
+  const root = readRecord(payload, path);
+  return {
+    scheduleId: readString(root.scheduleId, `${path}.scheduleId`),
+    contentId: readString(root.contentId, `${path}.contentId`),
+    message: readString(root.message, `${path}.message`),
+    tone: readEnum(
+      root.tone,
+      ["INFO", "WARNING", "CRITICAL"] as const,
+      `${path}.tone`,
+    ),
+    region: readEnum(root.region, ["TOP_TICKER"] as const, `${path}.region`),
+    heightPx: readInteger(root.heightPx, `${path}.heightPx`),
+    speedPxPerSecond: readInteger(
+      root.speedPxPerSecond,
+      `${path}.speedPxPerSecond`,
+    ),
+  };
+};
+
+const parseDisplayManifest = (payload: unknown): DisplayManifest => {
+  const root = readRecord(payload, "manifest");
+  const runtimeSettings = readRecord(
+    root.runtimeSettings,
+    "manifest.runtimeSettings",
+  );
+  const playback = readRecord(root.playback, "manifest.playback");
+  const rawItems = root.items;
+  if (!Array.isArray(rawItems)) {
+    throw new Error("manifest.items must be an array");
+  }
+
+  return {
+    playlistId: readNullableString(root.playlistId, "manifest.playlistId"),
+    playlistVersion: readString(
+      root.playlistVersion,
+      "manifest.playlistVersion",
+    ),
+    generatedAt: readString(root.generatedAt, "manifest.generatedAt"),
+    runtimeSettings: {
+      scrollPxPerSecond: readInteger(
+        runtimeSettings.scrollPxPerSecond,
+        "manifest.runtimeSettings.scrollPxPerSecond",
+      ),
+    },
+    playback: {
+      mode: readEnum(
+        playback.mode,
+        ["SCHEDULE", "EMERGENCY"] as const,
+        "manifest.playback.mode",
+      ),
+      emergency: parseEmergencyPlayback(
+        playback.emergency,
+        "manifest.playback.emergency",
+      ),
+      flash: parseFlashPlayback(playback.flash, "manifest.playback.flash"),
+    },
+    items: rawItems.map((item, index) =>
+      parseManifestItem(item, `manifest.items[${index}]`),
+    ),
+  };
+};
+
 const parseErrorMessage = async (response: Response): Promise<string> => {
   try {
     const payload = (await response.json()) as unknown;
@@ -104,8 +375,27 @@ export async function createRegistrationSession(
     throw new Error(await parseErrorMessage(response));
   }
 
-  return parseApiResponseData<RegistrationSessionResponse>(
-    await response.json(),
+  return parseRegistrationSessionResponse(
+    parseApiResponseData<unknown>(await response.json()),
+  );
+}
+
+export async function fetchDisplayRegistrationConstraints(): Promise<DisplayRegistrationConstraints> {
+  const baseUrl = getRequiredBaseUrl();
+  const response = await fetch(`${baseUrl}/displays/registration-constraints`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      ...getDevOnlyRequestHeaders(),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response));
+  }
+
+  return parseDisplayRegistrationConstraints(
+    parseApiResponseData<unknown>(await response.json()),
   );
 }
 
@@ -136,7 +426,9 @@ export async function registerDisplay(input: {
     throw new Error(await parseErrorMessage(response));
   }
 
-  return parseApiResponseData<RegisterDisplayResponse>(await response.json());
+  return parseRegisterDisplayResponse(
+    parseApiResponseData<unknown>(await response.json()),
+  );
 }
 
 export async function createAuthChallenge(input: {
@@ -157,7 +449,7 @@ export async function createAuthChallenge(input: {
     throw new Error(await parseErrorMessage(response));
   }
 
-  return parseApiResponseData<AuthChallengeResponse>(await response.json());
+  return parseAuthChallengeResponse((await response.json()) as unknown);
 }
 
 export async function verifyAuthChallenge(input: {
@@ -210,7 +502,7 @@ export async function fetchSignedManifest(input: {
   if (!response.ok) {
     throw new Error(await parseErrorMessage(response));
   }
-  return parseApiResponseData<DisplayManifest>(await response.json());
+  return parseDisplayManifest((await response.json()) as unknown);
 }
 
 export async function postSignedHeartbeat(input: {

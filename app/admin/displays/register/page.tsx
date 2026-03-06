@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   createRegistrationSession,
+  fetchDisplayRegistrationConstraints,
   registerDisplay,
+  type DisplayRegistrationConstraints,
 } from "@/lib/display-api/client";
 import {
   assertDisplayCryptoSupport,
@@ -20,7 +22,7 @@ import { deriveDisplayFingerprint } from "@/lib/display-identity/fingerprint";
 import { saveDisplayRegistration } from "@/lib/display-identity/registration-store";
 
 const PAIRING_CODE_PATTERN = /^\d{6}$/;
-const DISPLAY_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const FALLBACK_DISPLAY_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MIN_RESOLUTION = 1;
 
 interface RegisterFormState {
@@ -76,6 +78,30 @@ const focusField = (form: HTMLFormElement, fieldName: RegisterField): void => {
   }
 };
 
+const buildSlugPattern = (slugPattern: string): RegExp => {
+  try {
+    return new RegExp(slugPattern);
+  } catch {
+    return FALLBACK_DISPLAY_SLUG_PATTERN;
+  }
+};
+
+const getSlugValidationMessage = (
+  slug: string,
+  constraints: DisplayRegistrationConstraints,
+): string | null => {
+  if (slug.length < constraints.minSlugLength) {
+    return `Display slug must be at least ${constraints.minSlugLength} characters.`;
+  }
+  if (slug.length > constraints.maxSlugLength) {
+    return `Display slug must be at most ${constraints.maxSlugLength} characters.`;
+  }
+  if (!buildSlugPattern(constraints.slugPattern).test(slug)) {
+    return "Display slug must match the backend slug rules.";
+  }
+  return null;
+};
+
 export default function RegisterDisplayPage(): ReactElement {
   const [formState, setFormState] = useState<RegisterFormState>(
     INITIAL_REGISTER_FORM,
@@ -120,15 +146,6 @@ export default function RegisterDisplayPage(): ReactElement {
         focusField(form, "displayName");
         return;
       }
-      if (!DISPLAY_SLUG_PATTERN.test(slug)) {
-        setStatus({
-          kind: "error",
-          message:
-            "Display slug must be lowercase kebab-case with letters, numbers, and hyphens.",
-        });
-        focusField(form, "slug");
-        return;
-      }
       if (!outputName) {
         setStatus({ kind: "error", message: "Display output is required." });
         focusField(form, "output");
@@ -149,6 +166,20 @@ export default function RegisterDisplayPage(): ReactElement {
       setStatus({ kind: "submitting" });
       try {
         assertDisplayCryptoSupport();
+        const registrationConstraints =
+          await fetchDisplayRegistrationConstraints();
+        const slugValidationMessage = getSlugValidationMessage(
+          slug,
+          registrationConstraints,
+        );
+        if (slugValidationMessage) {
+          setStatus({
+            kind: "error",
+            message: slugValidationMessage,
+          });
+          focusField(form, "slug");
+          return;
+        }
 
         const canonicalOutput = outputName.toLowerCase();
         const keyAlias = `display-output:${canonicalOutput}`;
@@ -158,6 +189,18 @@ export default function RegisterDisplayPage(): ReactElement {
           registrationSessionPromise,
           keyPairPromise,
         ]);
+        const sessionSlugValidationMessage = getSlugValidationMessage(
+          slug,
+          registrationSession.constraints,
+        );
+        if (sessionSlugValidationMessage) {
+          setStatus({
+            kind: "error",
+            message: sessionSlugValidationMessage,
+          });
+          focusField(form, "slug");
+          return;
+        }
         const publicKeyPem = await exportPublicKeyPem(keyPair.publicKey);
         const fingerprint = await deriveDisplayFingerprint({
           output: canonicalOutput,
