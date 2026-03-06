@@ -501,7 +501,9 @@ export async function fetchSignedManifest(input: {
   if (!response.ok) {
     throw new Error(await parseErrorMessage(response));
   }
-  return parseDisplayManifest((await response.json()) as unknown);
+  return parseDisplayManifest(
+    parseApiResponseData<unknown>(await response.json()),
+  );
 }
 
 export async function postSignedHeartbeat(input: {

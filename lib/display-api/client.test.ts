@@ -1,9 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { createSignedHeaders } from "@/lib/crypto/request-signer";
 import {
   createAuthChallenge,
   createRegistrationSession,
   fetchDisplayRegistrationConstraints,
+  fetchSignedManifest,
 } from "@/lib/display-api/client";
+
+vi.mock("@/lib/crypto/request-signer", () => ({
+  createSignedHeaders: vi.fn(),
+}));
 
 describe("display-api client contract validation", () => {
   const originalFetch = global.fetch;
@@ -143,5 +149,145 @@ describe("display-api client contract validation", () => {
         keyId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
       }),
     ).rejects.toThrow("challengeToken must be a string");
+  });
+
+  test("fetchSignedManifest parses envelope payloads", async () => {
+    vi.mocked(createSignedHeaders).mockResolvedValue({
+      "x-display-key-id": "key-id",
+      "x-display-slug": "lobby-display",
+      "x-display-timestamp": "2026-01-01T00:00:00.000Z",
+      "x-display-nonce": "nonce",
+      "x-display-body-sha256": "hash",
+      "x-display-signature": "signature",
+    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            playlistId: null,
+            playlistVersion: "v1",
+            generatedAt: "2026-01-01T00:00:00.000Z",
+            runtimeSettings: { scrollPxPerSecond: 24 },
+            playback: {
+              mode: "SCHEDULE",
+              emergency: null,
+              flash: null,
+            },
+            items: [],
+          },
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await fetchSignedManifest({
+      registration: {
+        displayId: "display-id",
+        slug: "lobby-display",
+        keyId: "key-id",
+        keyAlias: "key-alias",
+        fingerprint: "fp",
+        output: "HDMI-1",
+        registeredAt: "2026-01-01T00:00:00.000Z",
+      },
+      privateKey: {} as CryptoKey,
+    });
+
+    expect(result.runtimeSettings.scrollPxPerSecond).toBe(24);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://example.test/api/v1/display-runtime/lobby-display/manifest",
+      expect.objectContaining({
+        method: "GET",
+      }),
+    );
+  });
+
+  test("fetchSignedManifest rejects missing envelope data", async () => {
+    vi.mocked(createSignedHeaders).mockResolvedValue({
+      "x-display-key-id": "key-id",
+      "x-display-slug": "lobby-display",
+      "x-display-timestamp": "2026-01-01T00:00:00.000Z",
+      "x-display-nonce": "nonce",
+      "x-display-body-sha256": "hash",
+      "x-display-signature": "signature",
+    });
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          playlistId: null,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    ) as unknown as typeof fetch;
+
+    await expect(
+      fetchSignedManifest({
+        registration: {
+          displayId: "display-id",
+          slug: "lobby-display",
+          keyId: "key-id",
+          keyAlias: "key-alias",
+          fingerprint: "fp",
+          output: "HDMI-1",
+          registeredAt: "2026-01-01T00:00:00.000Z",
+        },
+        privateKey: {} as CryptoKey,
+      }),
+    ).rejects.toThrow("missing envelope data field");
+  });
+
+  test("fetchSignedManifest rejects non-object runtimeSettings", async () => {
+    vi.mocked(createSignedHeaders).mockResolvedValue({
+      "x-display-key-id": "key-id",
+      "x-display-slug": "lobby-display",
+      "x-display-timestamp": "2026-01-01T00:00:00.000Z",
+      "x-display-nonce": "nonce",
+      "x-display-body-sha256": "hash",
+      "x-display-signature": "signature",
+    });
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            playlistId: null,
+            playlistVersion: "v1",
+            generatedAt: "2026-01-01T00:00:00.000Z",
+            runtimeSettings: "invalid",
+            playback: {
+              mode: "SCHEDULE",
+              emergency: null,
+              flash: null,
+            },
+            items: [],
+          },
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    ) as unknown as typeof fetch;
+
+    await expect(
+      fetchSignedManifest({
+        registration: {
+          displayId: "display-id",
+          slug: "lobby-display",
+          keyId: "key-id",
+          keyAlias: "key-alias",
+          fingerprint: "fp",
+          output: "HDMI-1",
+          registeredAt: "2026-01-01T00:00:00.000Z",
+        },
+        privateKey: {} as CryptoKey,
+      }),
+    ).rejects.toThrow("manifest.runtimeSettings must be an object");
   });
 });
