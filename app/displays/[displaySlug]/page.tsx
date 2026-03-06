@@ -252,13 +252,20 @@ export default function DisplayRuntimePage() {
         }
         const activeItem =
           currentManifest.items[currentIndexRef.current] ?? null;
-        if (!activeItem || activeItem.content.type !== "IMAGE") {
+        if (!activeItem) {
+          return;
+        }
+        const snapshotSourceUrl =
+          activeItem.content.type === "IMAGE"
+            ? activeItem.content.downloadUrl
+            : activeItem.content.thumbnailUrl;
+        if (!snapshotSourceUrl) {
           return;
         }
 
         snapshotUploadingRef.current = true;
         try {
-          const response = await fetch(activeItem.content.downloadUrl, {
+          const response = await fetch(snapshotSourceUrl, {
             method: "GET",
             cache: "no-store",
           });

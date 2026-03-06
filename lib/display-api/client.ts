@@ -37,6 +37,7 @@ export interface ManifestItem {
     readonly type: "IMAGE" | "VIDEO" | "PDF";
     readonly checksum: string;
     readonly downloadUrl: string;
+    readonly thumbnailUrl: string | null;
     readonly mimeType: string;
     readonly width: number | null;
     readonly height: number | null;
@@ -147,6 +148,16 @@ const readUrl = (value: unknown, path: string): string => {
   }
 };
 
+const readOptionalNullableUrl = (
+  value: unknown,
+  path: string,
+): string | null => {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  return readUrl(value, path);
+};
+
 const parseDisplayRegistrationConstraints = (
   payload: unknown,
 ): DisplayRegistrationConstraints => {
@@ -233,6 +244,10 @@ const parseManifestItemContent = (
     ),
     checksum: readString(root.checksum, `${path}.checksum`),
     downloadUrl: readUrl(root.downloadUrl, `${path}.downloadUrl`),
+    thumbnailUrl: readOptionalNullableUrl(
+      root.thumbnailUrl,
+      `${path}.thumbnailUrl`,
+    ),
     mimeType: readString(root.mimeType, `${path}.mimeType`),
     width: readNullableInteger(root.width, `${path}.width`),
     height: readNullableInteger(root.height, `${path}.height`),

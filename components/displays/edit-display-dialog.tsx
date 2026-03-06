@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent, ReactElement } from "react";
+import type { ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { IconSettings } from "@tabler/icons-react";
 
@@ -26,6 +26,12 @@ import {
 } from "@/components/ui/select";
 import type { DisplayGroup } from "@/lib/api/displays-api";
 import {
+  DISPLAY_OUTPUT_TYPES,
+  parseDisplayOutput,
+  toCanonicalDisplayOutput,
+  type DisplayOutputType,
+} from "@/lib/display-output";
+import {
   dedupeDisplayGroupNames,
   toDisplayGroupKey,
 } from "@/lib/display-group-normalization";
@@ -46,45 +52,40 @@ interface EditDisplayDialogProps {
 
 interface EditFormData {
   readonly displayName: string;
+  readonly slug: string;
   readonly location: string;
   readonly ipAddress: string;
   readonly macAddress: string;
-  readonly selectedOutput: string | null;
-  readonly selectedResolution: string;
+  readonly outputType: DisplayOutputType;
+  readonly outputIndex: string;
+  readonly resolutionWidth: string;
+  readonly resolutionHeight: string;
   readonly emergencyContentId: string | null;
   readonly groups: readonly string[];
 }
 
-const outputOptions: ReadonlyArray<{
-  readonly value: string | null;
-  readonly label: string;
-  readonly description: string;
-}> = [
-  {
-    value: null,
-    label: "None",
-    description: "No fixed output selected",
-  },
-  {
-    value: "HDMI-0",
-    label: "HDMI-0",
-    description: "Primary HDMI output",
-  },
-  {
-    value: "HDMI-1",
-    label: "HDMI-1",
-    description: "Secondary HDMI output",
-  },
-];
-
 function createInitialFormData(display: Display): EditFormData {
+  const parsedOutput = parseDisplayOutput(
+    display.output === "Not available" ? null : display.output,
+  );
+
+  const [rawWidth, rawHeight] = display.resolution
+    .split("x")
+    .map((value) => value.trim());
+  const width = rawWidth && Number.isFinite(Number(rawWidth)) ? rawWidth : "";
+  const height =
+    rawHeight && Number.isFinite(Number(rawHeight)) ? rawHeight : "";
+
   return {
     displayName: display.name,
+    slug: display.slug,
     location: display.location,
     ipAddress: display.ipAddress,
     macAddress: display.macAddress,
-    selectedOutput: display.output === "Not available" ? null : display.output,
-    selectedResolution: display.resolution,
+    outputType: parsedOutput?.type ?? "HDMI",
+    outputIndex: String(parsedOutput?.index ?? 0),
+    resolutionWidth: width,
+    resolutionHeight: height,
     emergencyContentId: display.emergencyContentId,
     groups: display.groups.map((group) => group.name),
   };
@@ -102,11 +103,6 @@ interface EditDisplayFormProps {
   readonly canManageGroups: boolean;
 }
 
-/**
- * Inner form component that initializes state from props on mount.
- * Using a key prop on this component forces remount when display changes,
- * avoiding the need for useEffect to sync state with props.
- */
 function EditDisplayForm({
   display,
   existingGroups,
@@ -121,14 +117,6 @@ function EditDisplayForm({
   const [isSaving, setIsSaving] = useState(false);
   const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
 
-  const selectOutput = useCallback((value: string | null): void => {
-    setFormData((prev) => ({
-      ...prev,
-      selectedOutput:
-        value !== null && prev.selectedOutput === value ? null : value,
-    }));
-  }, []);
-
   const groupColorByKey = useMemo(() => {
     const map = new Map<string, number>();
     for (const group of existingGroups) {
@@ -137,20 +125,46 @@ function EditDisplayForm({
     return map;
   }, [existingGroups]);
 
-  const handleSave = useCallback(async () => {
-    if (isSaving) return;
+  const outputIndexNumber = Number.parseInt(formData.outputIndex, 10);
+  const hasValidOutputIndex =
+    Number.isInteger(outputIndexNumber) && outputIndexNumber >= 0;
+  const widthNumber = Number.parseInt(formData.resolutionWidth, 10);
+  const heightNumber = Number.parseInt(formData.resolutionHeight, 10);
+  const hasResolutionWidth = formData.resolutionWidth.trim().length > 0;
+  const hasResolutionHeight = formData.resolutionHeight.trim().length > 0;
+  const isResolutionPairProvided = hasResolutionWidth && hasResolutionHeight;
+  const isResolutionPairEmpty = !hasResolutionWidth && !hasResolutionHeight;
+  const hasValidResolution =
+    isResolutionPairEmpty ||
+    (isResolutionPairProvided &&
+      Number.isInteger(widthNumber) &&
+      widthNumber > 0 &&
+      Number.isInteger(heightNumber) &&
+      heightNumber > 0);
 
-    const normalizedResolution = formData.selectedResolution.trim();
-    const resolutionForSave =
-      normalizedResolution.length === 0 ||
-      normalizedResolution.toLowerCase() === "not available"
-        ? "Not available"
-        : normalizedResolution;
+  const canSave =
+    formData.displayName.trim().length > 0 &&
+    formData.slug.trim().length > 0 &&
+    hasValidOutputIndex &&
+    hasValidResolution &&
+    !isSaving;
+
+  const handleSave = useCallback(async () => {
+    if (!canSave || isSaving) return;
 
     const groups = dedupeDisplayGroupNames(formData.groups).map((name) => ({
       name,
       colorIndex: groupColorByKey.get(toDisplayGroupKey(name)) ?? 0,
     }));
+
+    const output = toCanonicalDisplayOutput({
+      type: formData.outputType,
+      index: outputIndexNumber,
+    });
+
+    const resolution = isResolutionPairProvided
+      ? `${String(widthNumber)}x${String(heightNumber)}`
+      : "Not available";
 
     const updatedDisplay: Display = {
       ...display,
@@ -158,8 +172,8 @@ function EditDisplayForm({
       location: formData.location,
       ipAddress: formData.ipAddress,
       macAddress: formData.macAddress,
-      output: formData.selectedOutput ?? "Not available",
-      resolution: resolutionForSave,
+      output,
+      resolution,
       emergencyContentId: formData.emergencyContentId,
       groups,
     };
@@ -173,78 +187,26 @@ function EditDisplayForm({
     } finally {
       setIsSaving(false);
     }
-  }, [display, formData, groupColorByKey, isSaving, onClose, onSave]);
-
-  const normalizedResolution = formData.selectedResolution.trim();
-  const isUnknownResolution =
-    normalizedResolution.length === 0 ||
-    normalizedResolution.toLowerCase() === "not available";
-  const [screenWidthRaw, screenHeightRaw, ...extraParts] = normalizedResolution
-    .split("x")
-    .map((value) => value.trim());
-  const hasNumericResolution =
-    extraParts.length === 0 &&
-    screenWidthRaw !== undefined &&
-    screenHeightRaw !== undefined &&
-    Number.isInteger(Number(screenWidthRaw)) &&
-    Number(screenWidthRaw) > 0 &&
-    Number.isInteger(Number(screenHeightRaw)) &&
-    Number(screenHeightRaw) > 0;
-  const hasValidResolution = isUnknownResolution || hasNumericResolution;
-  const canSave =
-    formData.displayName.trim().length > 0 && hasValidResolution && !isSaving;
-
-  const handleOutputGroupKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLDivElement>): void => {
-      if (isSaving) return;
-      const options = outputOptions;
-      if (options.length === 0) return;
-
-      const currentIndex = options.findIndex(
-        (option) => option.value === formData.selectedOutput,
-      );
-      const firstIndex = 0;
-      const lastIndex = options.length - 1;
-
-      let targetIndex: number | null = null;
-      switch (event.key) {
-        case "ArrowRight":
-        case "ArrowDown":
-          targetIndex =
-            currentIndex < 0
-              ? firstIndex
-              : Math.min(currentIndex + 1, lastIndex);
-          break;
-        case "ArrowLeft":
-        case "ArrowUp":
-          targetIndex =
-            currentIndex < 0
-              ? firstIndex
-              : Math.max(currentIndex - 1, firstIndex);
-          break;
-        case "Home":
-          targetIndex = firstIndex;
-          break;
-        case "End":
-          targetIndex = lastIndex;
-          break;
-        default:
-          return;
-      }
-
-      event.preventDefault();
-      const nextValue = options[targetIndex]?.value ?? null;
-      selectOutput(nextValue);
-    },
-    [formData.selectedOutput, isSaving, selectOutput],
-  );
+  }, [
+    canSave,
+    display,
+    formData,
+    groupColorByKey,
+    heightNumber,
+    isResolutionPairProvided,
+    isSaving,
+    onClose,
+    onSave,
+    outputIndexNumber,
+    widthNumber,
+  ]);
 
   return (
     <>
       <DialogHeader>
         <DialogTitle>Edit Details</DialogTitle>
         <DialogDescription className="sr-only">
-          Update display identity, network metadata, output, and grouping.
+          Update display details and grouping.
         </DialogDescription>
       </DialogHeader>
 
@@ -262,6 +224,20 @@ function EditDisplayForm({
             }
             disabled={isSaving}
           />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="edit-display-slug">Display Slug</Label>
+          <Input
+            id="edit-display-slug"
+            value={formData.slug}
+            disabled={true}
+            readOnly={true}
+          />
+          <p className="text-xs text-muted-foreground">
+            Slug is fixed after registration and used by display runtime
+            identity.
+          </p>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -306,50 +282,100 @@ function EditDisplayForm({
           />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label>Display Output</Label>
-          <div
-            className="flex flex-col gap-2"
-            role="radiogroup"
-            aria-label="Display output"
-            onKeyDown={handleOutputGroupKeyDown}
-          >
-            {outputOptions.map((option) => (
-              <button
-                key={option.value ?? "none"}
-                type="button"
-                role="radio"
-                tabIndex={formData.selectedOutput === option.value ? 0 : -1}
-                aria-checked={formData.selectedOutput === option.value}
-                onClick={() => selectOutput(option.value)}
-                disabled={isSaving}
-                className={`flex items-center justify-between rounded-md border border-border p-3 text-left transition-colors ${
-                  formData.selectedOutput === option.value
-                    ? "border-primary bg-primary/5"
-                    : "hover:bg-muted/50"
-                }`}
-              >
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium">{option.label}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {option.description}
-                  </span>
-                </div>
-                <div
-                  className={`flex size-5 items-center justify-center rounded-full border-2 ${
-                    formData.selectedOutput === option.value
-                      ? "border-primary bg-primary"
-                      : "border-muted-foreground/30"
-                  }`}
-                >
-                  {formData.selectedOutput === option.value ? (
-                    <div className="size-2 rounded-full bg-primary-foreground" />
-                  ) : null}
-                </div>
-              </button>
-            ))}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-output-type">Display Output Type</Label>
+            <Select
+              value={formData.outputType}
+              onValueChange={(value) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  outputType: value as DisplayOutputType,
+                }))
+              }
+              disabled={isSaving}
+            >
+              <SelectTrigger id="edit-output-type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DISPLAY_OUTPUT_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-output-index">Display Output Index</Label>
+            <Input
+              id="edit-output-index"
+              type="number"
+              min={0}
+              inputMode="numeric"
+              value={formData.outputIndex}
+              onChange={(event) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  outputIndex: event.target.value,
+                }))
+              }
+              aria-invalid={!hasValidOutputIndex}
+              disabled={isSaving}
+            />
+            {!hasValidOutputIndex ? (
+              <p className="text-xs text-destructive">
+                Output index must be a non-negative integer.
+              </p>
+            ) : null}
           </div>
         </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-resolution-width">Resolution Width</Label>
+            <Input
+              id="edit-resolution-width"
+              type="number"
+              min={1}
+              inputMode="numeric"
+              value={formData.resolutionWidth}
+              onChange={(event) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  resolutionWidth: event.target.value,
+                }))
+              }
+              aria-invalid={!hasValidResolution}
+              disabled={isSaving}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-resolution-height">Resolution Height</Label>
+            <Input
+              id="edit-resolution-height"
+              type="number"
+              min={1}
+              inputMode="numeric"
+              value={formData.resolutionHeight}
+              onChange={(event) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  resolutionHeight: event.target.value,
+                }))
+              }
+              aria-invalid={!hasValidResolution}
+              disabled={isSaving}
+            />
+          </div>
+        </div>
+        {!hasValidResolution ? (
+          <p className="text-xs text-destructive">
+            Resolution requires positive width and height, or leave both fields
+            empty.
+          </p>
+        ) : null}
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="edit-emergency-content">Emergency Content</Label>
@@ -378,30 +404,6 @@ function EditDisplayForm({
           <p className="text-xs text-muted-foreground">
             Assign a READY image, video, or PDF for emergency override mode.
           </p>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-resolution">Resolution</Label>
-          <Input
-            id="edit-resolution"
-            placeholder="e.g. 1920x1080"
-            value={formData.selectedResolution}
-            onChange={(event) =>
-              setFormData((prev) => ({
-                ...prev,
-                selectedResolution: event.target.value,
-              }))
-            }
-            disabled={isSaving}
-          />
-          <p className="text-xs text-muted-foreground">
-            Required format: width x height (e.g. 1366x768)
-          </p>
-          {!hasValidResolution ? (
-            <p className="text-xs text-destructive">
-              Resolution must be numeric width x height (for example 1920x1080).
-            </p>
-          ) : null}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -513,7 +515,7 @@ export function EditDisplayDialog({
         onFocusOutside={(e) => e.preventDefault()}
       >
         <EditDisplayForm
-          key={display.id}
+          key={`${display.id}:${open ? "open" : "closed"}`}
           display={display}
           existingGroups={existingGroups}
           emergencyContentOptions={emergencyContentOptions}

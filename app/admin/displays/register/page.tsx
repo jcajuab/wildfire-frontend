@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   createRegistrationSession,
   fetchDisplayRegistrationConstraints,
   registerDisplay,
@@ -20,6 +27,11 @@ import {
 } from "@/lib/crypto/key-manager";
 import { deriveDisplayFingerprint } from "@/lib/display-identity/fingerprint";
 import { saveDisplayRegistration } from "@/lib/display-identity/registration-store";
+import {
+  DISPLAY_OUTPUT_TYPES,
+  toCanonicalDisplayOutput,
+  type DisplayOutputType,
+} from "@/lib/display-output";
 
 const PAIRING_CODE_PATTERN = /^\d{6}$/;
 const FALLBACK_DISPLAY_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -29,7 +41,8 @@ interface RegisterFormState {
   readonly registrationCode: string;
   readonly displayName: string;
   readonly slug: string;
-  readonly output: string;
+  readonly outputType: DisplayOutputType;
+  readonly outputIndex: string;
   readonly resolutionWidth: string;
   readonly resolutionHeight: string;
 }
@@ -38,7 +51,7 @@ type RegisterField =
   | "registrationCode"
   | "displayName"
   | "slug"
-  | "output"
+  | "outputIndex"
   | "resolutionWidth"
   | "resolutionHeight";
 
@@ -52,7 +65,8 @@ const INITIAL_REGISTER_FORM: RegisterFormState = {
   registrationCode: "",
   displayName: "",
   slug: "",
-  output: "",
+  outputType: "HDMI",
+  outputIndex: "0",
   resolutionWidth: "",
   resolutionHeight: "",
 };
@@ -129,7 +143,7 @@ export default function RegisterDisplayPage(): ReactElement {
       const code = formState.registrationCode.trim();
       const name = formState.displayName.trim();
       const slug = normalizedSlug;
-      const outputName = formState.output.trim();
+      const outputIndex = Number.parseInt(formState.outputIndex, 10);
       const width = toPositiveInteger(formState.resolutionWidth);
       const height = toPositiveInteger(formState.resolutionHeight);
 
@@ -146,9 +160,12 @@ export default function RegisterDisplayPage(): ReactElement {
         focusField(form, "displayName");
         return;
       }
-      if (!outputName) {
-        setStatus({ kind: "error", message: "Display output is required." });
-        focusField(form, "output");
+      if (!Number.isInteger(outputIndex) || outputIndex < 0) {
+        setStatus({
+          kind: "error",
+          message: "Display output index must be a non-negative integer.",
+        });
+        focusField(form, "outputIndex");
         return;
       }
       if (width === null || height === null) {
@@ -181,7 +198,10 @@ export default function RegisterDisplayPage(): ReactElement {
           return;
         }
 
-        const canonicalOutput = outputName.toLowerCase();
+        const canonicalOutput = toCanonicalDisplayOutput({
+          type: formState.outputType,
+          index: outputIndex,
+        });
         const keyAlias = `display-output:${canonicalOutput}`;
         const registrationSessionPromise = createRegistrationSession(code);
         const keyPairPromise = getOrCreateDisplayKeyPair(keyAlias);
@@ -351,20 +371,52 @@ export default function RegisterDisplayPage(): ReactElement {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="display-output">Display output</Label>
-              <Input
-                id="display-output"
-                type="text"
-                placeholder="HDMI-0…"
-                name="output"
-                value={formState.output}
-                onChange={updateField("output")}
-                autoComplete="off"
-                spellCheck={false}
-                className="h-11 rounded-lg text-sm"
-                required
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="display-output-type">Display Output Type</Label>
+                <Select
+                  value={formState.outputType}
+                  onValueChange={(value) =>
+                    setFormState((previous) => ({
+                      ...previous,
+                      outputType: value as DisplayOutputType,
+                    }))
+                  }
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger
+                    id="display-output-type"
+                    className="h-11 rounded-lg text-sm"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DISPLAY_OUTPUT_TYPES.map((outputType) => (
+                      <SelectItem key={outputType} value={outputType}>
+                        {outputType}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="display-output-index">
+                  Display Output Index
+                </Label>
+                <Input
+                  id="display-output-index"
+                  type="number"
+                  min={0}
+                  inputMode="numeric"
+                  placeholder="0"
+                  name="outputIndex"
+                  value={formState.outputIndex}
+                  onChange={updateField("outputIndex")}
+                  autoComplete="off"
+                  className="h-11 rounded-lg text-sm"
+                  required
+                />
+              </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
