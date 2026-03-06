@@ -41,32 +41,8 @@ import {
 } from "@/lib/api/get-api-error-message";
 import { toast } from "sonner";
 
-const timezones = [
-  "Asia/Taipei",
-  "Asia/Tokyo",
-  "Asia/Singapore",
-  "Asia/Hong_Kong",
-  "America/New_York",
-  "America/Los_Angeles",
-  "America/Chicago",
-  "Europe/London",
-  "Europe/Paris",
-  "Europe/Berlin",
-  "Australia/Sydney",
-  "Pacific/Auckland",
-] as const;
-
-const defaultTimezone = "Asia/Taipei";
 const controlContainerClass = "w-full max-w-md";
 const controlClass = "h-10 w-full";
-
-const isSupportedTimezone = (value: string): boolean =>
-  (timezones as readonly string[]).includes(value);
-
-const normalizeTimezone = (value?: string | null): string =>
-  typeof value === "string" && isSupportedTimezone(value)
-    ? value
-    : defaultTimezone;
 
 const splitName = (
   fullName: string | undefined,
@@ -159,8 +135,6 @@ export default function SettingsPage(): ReactElement {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [isRequestingEmailChange, setIsRequestingEmailChange] = useState(false);
 
-  const [timezone, setTimezone] = useState(normalizeTimezone(user?.timezone));
-  const [isSavingTimezone, setIsSavingTimezone] = useState(false);
   const [isSavingProfileName, setIsSavingProfileName] = useState(false);
   const [profileNameError, setProfileNameError] = useState<string | null>(null);
 
@@ -210,10 +184,6 @@ export default function SettingsPage(): ReactElement {
       setEmailDraft(nextEmail);
     }
   }, [editingField, user?.email]);
-
-  useEffect(() => {
-    setTimezone(normalizeTimezone(user?.timezone));
-  }, [user?.timezone]);
 
   useEffect(() => {
     if (editingField === "firstName") {
@@ -354,23 +324,6 @@ export default function SettingsPage(): ReactElement {
       return false;
     } finally {
       setIsRequestingEmailChange(false);
-    }
-  };
-
-  const handleTimezoneChange = async (nextTimezone: string): Promise<void> => {
-    const previousTimezone = timezone;
-    setTimezone(nextTimezone);
-    setIsSavingTimezone(true);
-    try {
-      const response = await updateCurrentUserProfile(token, {
-        timezone: nextTimezone || null,
-      });
-      updateSession(response);
-    } catch (err) {
-      setTimezone(previousTimezone);
-      notifyApiError(err, "Failed to update time zone.");
-    } finally {
-      setIsSavingTimezone(false);
     }
   };
 
@@ -823,40 +776,11 @@ export default function SettingsPage(): ReactElement {
                     System Settings
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Display and region preferences.
+                    Display preferences.
                   </p>
                 </header>
 
                 <dl className="space-y-4">
-                  <SettingsField label="Time zone">
-                    <div className={controlContainerClass}>
-                      <Select
-                        value={timezone}
-                        onValueChange={handleTimezoneChange}
-                      >
-                        <SelectTrigger
-                          className={controlClass}
-                          disabled={isSavingTimezone}
-                          aria-label="Select time zone"
-                        >
-                          <SelectValue placeholder="Select timezone" />
-                        </SelectTrigger>
-                        <SelectContent
-                          className="max-h-56"
-                          position="popper"
-                          align="start"
-                          sideOffset={6}
-                        >
-                          {timezones.map((tz) => (
-                            <SelectItem key={tz} value={tz}>
-                              {tz}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </SettingsField>
-
                   <SettingsField label="Theme">
                     <div className={controlContainerClass}>
                       <Select
