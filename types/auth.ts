@@ -31,6 +31,8 @@ export interface ApiErrorResponse {
   readonly error: {
     readonly code: string;
     readonly message: string;
+    readonly requestId: string;
+    readonly details?: unknown;
   };
 }
 import type { PermissionType } from "@/types/permission";

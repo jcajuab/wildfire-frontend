@@ -97,6 +97,7 @@ const buildResponseParseError = (scope: string, error: unknown) => ({
       error instanceof Error
         ? `${scope}: ${error.message}`
         : "Response payload does not match API contract.",
+    requestId: "frontend-contract-parser",
   },
 });
 
@@ -236,7 +237,7 @@ export const displaysApi = createApi({
           items: parsed.data,
           total: parsed.meta.total,
           page: parsed.meta.page,
-          pageSize: parsed.meta.per_page,
+          pageSize: parsed.meta.pageSize,
         };
       },
       providesTags: (result) =>

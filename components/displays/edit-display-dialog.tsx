@@ -506,9 +506,8 @@ export function EditDisplayDialog({
       <DialogContent
         className="sm:max-w-md"
         onPointerDownOutside={(e) => {
-          const target = (e.detail?.originalEvent as PointerEvent)?.target as
-            | HTMLElement
-            | null;
+          const target = (e.detail?.originalEvent as PointerEvent)
+            ?.target as HTMLElement | null;
           if (target?.closest('[data-slot="combobox-content"]')) {
             e.preventDefault();
           }

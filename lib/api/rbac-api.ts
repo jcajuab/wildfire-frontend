@@ -49,6 +49,7 @@ const buildResponseParseError = (scope: string, error: unknown) => ({
       error instanceof Error
         ? `${scope}: ${error.message}`
         : "Response payload does not match API contract.",
+    requestId: "frontend-contract-parser",
   },
 });
 

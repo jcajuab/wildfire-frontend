@@ -46,8 +46,8 @@ describe("rbac api pagination aggregation", () => {
               meta: {
                 total: 2,
                 page: 1,
-                per_page: 100,
-                total_pages: 1,
+                pageSize: 100,
+                totalPages: 1,
               },
             }
           : {
@@ -63,8 +63,8 @@ describe("rbac api pagination aggregation", () => {
               meta: {
                 total: 2,
                 page: 2,
-                per_page: 100,
-                total_pages: 1,
+                pageSize: 100,
+                totalPages: 1,
               },
             };
 
@@ -107,8 +107,8 @@ describe("rbac api pagination aggregation", () => {
           meta: {
             total: 9999,
             page: 1,
-            per_page: 100,
-            total_pages: 100,
+            pageSize: 100,
+            totalPages: 100,
           },
         }),
         {

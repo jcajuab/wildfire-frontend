@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
 import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
@@ -166,7 +166,9 @@ describe("EditDisplayDialog", () => {
     const trigger = screen.getByRole("combobox", { name: "Display groups" });
     await user.click(trigger);
     await user.click(screen.getByRole("option", { name: "Lobby" }));
-    expect(screen.getByRole("combobox", { name: "Display groups" })).toHaveTextContent("Lobby");
+    expect(
+      screen.getByRole("combobox", { name: "Display groups" }),
+    ).toHaveTextContent("Lobby");
     expect(onSave).not.toHaveBeenCalled();
   });
 });

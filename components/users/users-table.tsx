@@ -83,19 +83,19 @@ function SortableHeader({
 
   return (
     <button
-      type='button'
+      type="button"
       onClick={handleClick}
-      className='focus-visible:ring-ring inline-flex items-center gap-1 rounded-sm px-0.5 py-0.5 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2'
+      className="focus-visible:ring-ring inline-flex items-center gap-1 rounded-sm px-0.5 py-0.5 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2"
     >
       {label}
       {isActive ? (
         isAsc ? (
-          <IconSortAscending className='size-4' />
+          <IconSortAscending className="size-4" />
         ) : (
-          <IconSortDescending className='size-4' />
+          <IconSortDescending className="size-4" />
         )
       ) : (
-        <IconArrowsSort className='size-4 opacity-50' />
+        <IconArrowsSort className="size-4 opacity-50" />
       )}
     </button>
   );
@@ -107,9 +107,9 @@ interface FilterableHeaderProps {
 
 function FilterableHeader({ label }: FilterableHeaderProps): ReactElement {
   return (
-    <div className='flex items-center gap-1'>
+    <div className="flex items-center gap-1">
       {label}
-      <IconAdjustmentsHorizontal className='size-4 opacity-50' />
+      <IconAdjustmentsHorizontal className="size-4 opacity-50" />
     </div>
   );
 }
@@ -140,23 +140,23 @@ function UserActionsMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant='ghost'
-          size='icon-sm'
+          variant="ghost"
+          size="icon-sm"
           aria-label={`Actions for ${user.name}`}
         >
-          <IconDotsVertical className='size-4' />
+          <IconDotsVertical className="size-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align='end'>
+      <DropdownMenuContent align="end">
         {canUpdate && (
           <>
             <DropdownMenuItem onClick={() => onEdit(user)}>
-              <IconEdit className='size-4' />
+              <IconEdit className="size-4" />
               Edit User
             </DropdownMenuItem>
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
-                <IconCircle className='size-4' />
+                <IconCircle className="size-4" />
                 Roles
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
@@ -172,10 +172,10 @@ function UserActionsMenu({
                           : [...userRoleIds, role.id];
                         onRoleToggle(user.id, newRoleIds);
                       }}
-                      className='flex items-center justify-between gap-2'
+                      className="flex items-center justify-between gap-2"
                     >
                       <span>{role.name}</span>
-                      {isChecked && <IconCheck className='size-4' />}
+                      {isChecked && <IconCheck className="size-4" />}
                     </DropdownMenuItem>
                   );
                 })}
@@ -185,10 +185,10 @@ function UserActionsMenu({
         )}
         {canDelete && (
           <DropdownMenuItem
-            variant='destructive'
+            variant="destructive"
             onClick={() => onRemoveUser(user)}
           >
-            <IconTrash className='size-4' />
+            <IconTrash className="size-4" />
             Remove User
           </DropdownMenuItem>
         )}
@@ -226,51 +226,51 @@ function UserRow({
   return (
     <TableRow>
       <TableCell>
-        <div className='flex items-center gap-2'>
+        <div className="flex items-center gap-2">
           {user?.avatarUrl ? (
             <Image
               src={user.avatarUrl}
               alt={`${user.name} avatar`}
               width={48}
               height={48}
-              className='size-7 rounded-full object-cover'
+              className="size-7 rounded-full object-cover"
               unoptimized
             />
           ) : (
-            <IconUser className='size-6 text-muted-foreground' />
+            <IconUser className="size-6 text-muted-foreground" />
           )}
           <div>
-            <span className='font-medium'>
+            <span className="font-medium">
               {user.name}
               {isCurrentUser && (
-                <span className='text-muted-foreground font-normal'>
+                <span className="text-muted-foreground font-normal">
                   {" "}
                   (You)
                 </span>
               )}
             </span>
-            <div className='text-xs text-muted-foreground'>
+            <div className="text-xs text-muted-foreground">
               @{user.username}
             </div>
           </div>
         </div>
       </TableCell>
-      <TableCell className='text-muted-foreground'>
+      <TableCell className="text-muted-foreground">
         {user.email ?? "No email available"}
       </TableCell>
       <TableCell>
-        <div className='flex flex-wrap gap-1'>
+        <div className="flex flex-wrap gap-1">
           {userRoles.length === 0 && (
-            <span className='text-muted-foreground'>No roles assigned yet</span>
+            <span className="text-muted-foreground">No roles assigned yet</span>
           )}
           {userRoles.map((role) => (
-            <Badge key={role.id} variant='default' className='text-xs'>
+            <Badge key={role.id} variant="default" className="text-xs">
               {role.name}
             </Badge>
           ))}
         </div>
       </TableCell>
-      <TableCell className='text-muted-foreground'>
+      <TableCell className="text-muted-foreground">
         {user.lastSeenAt ? formatDateTime(user.lastSeenAt) : "Never"}
       </TableCell>
       <TableCell>
@@ -306,22 +306,22 @@ export function UsersTable({
 }: UsersTableProps): ReactElement {
   if (users.length === 0) {
     return (
-      <div className='py-8'>
+      <div className="py-8">
         <EmptyState
-          title='No users found'
-          description='Invite teammates to collaborate on content, playlists, and display operations.'
-          icon={<IconUser className='size-7' aria-hidden='true' />}
+          title="No users found"
+          description="Invite teammates to collaborate on content, playlists, and display operations."
+          icon={<IconUser className="size-7" aria-hidden="true" />}
         />
       </div>
     );
   }
 
   return (
-    <Table density='comfortable'>
+    <Table density="comfortable">
       <TableHeader>
         <TableRow>
           <TableHead
-            className='w-[250px]'
+            className="w-[250px]"
             aria-sort={
               sort.field === "name"
                 ? sort.direction === "asc"
@@ -331,20 +331,20 @@ export function UsersTable({
             }
           >
             <SortableHeader
-              label='Name'
-              field='name'
+              label="Name"
+              field="name"
               currentSort={sort}
               onSortChange={onSortChange}
             />
           </TableHead>
-          <TableHead className='w-[250px]'>
-            <FilterableHeader label='Email' />
+          <TableHead className="w-[250px]">
+            <FilterableHeader label="Email" />
           </TableHead>
-          <TableHead className='w-[200px]'>
-            <FilterableHeader label='Roles' />
+          <TableHead className="w-[200px]">
+            <FilterableHeader label="Roles" />
           </TableHead>
           <TableHead
-            className='w-[200px]'
+            className="w-[200px]"
             aria-sort={
               sort.field === "lastSeen"
                 ? sort.direction === "asc"
@@ -354,14 +354,14 @@ export function UsersTable({
             }
           >
             <SortableHeader
-              label='Last Seen'
-              field='lastSeen'
+              label="Last Seen"
+              field="lastSeen"
               currentSort={sort}
               onSortChange={onSortChange}
             />
           </TableHead>
-          <TableHead className='w-[50px]'>
-            <span className='sr-only'>Actions</span>
+          <TableHead className="w-[50px]">
+            <span className="sr-only">Actions</span>
           </TableHead>
         </TableRow>
       </TableHeader>

@@ -44,7 +44,7 @@ import {
   useUnregisterDisplayMutation,
   useUpdateDisplayMutation,
 } from "@/lib/api/displays-api";
-import { getBaseUrl } from "@/lib/api/base-query";
+import { subscribeToDisplayLifecycleEvents } from "@/lib/api/display-events";
 import { useListContentQuery } from "@/lib/api/content-api";
 import { getNextDisplayGroupColorIndex } from "@/lib/display-group-colors";
 import {
@@ -136,21 +136,14 @@ export default function DisplaysPage(): ReactElement {
 
   useEffect(() => {
     if (!canReadDisplays) return;
-    const baseUrl = getBaseUrl();
-
-    const stream = new EventSource(`${baseUrl}/displays/events`, {
-      withCredentials: true,
+    const subscription = subscribeToDisplayLifecycleEvents({
+      onEvent: () => {
+        void refetch();
+      },
     });
-    const refresh = () => {
-      void refetch();
-    };
-    stream.addEventListener("display_registered", refresh);
-    stream.addEventListener("display_unregistered", refresh);
 
     return () => {
-      stream.removeEventListener("display_registered", refresh);
-      stream.removeEventListener("display_unregistered", refresh);
-      stream.close();
+      subscription.close();
     };
   }, [canReadDisplays, refetch]);
 

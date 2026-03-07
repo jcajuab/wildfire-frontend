@@ -146,7 +146,7 @@ export const playlistsApi = createApi({
           items: parsed.data,
           total: parsed.meta.total,
           page: parsed.meta.page,
-          pageSize: parsed.meta.per_page,
+          pageSize: parsed.meta.pageSize,
         };
       },
       providesTags: (result) =>

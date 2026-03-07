@@ -45,8 +45,8 @@ describe("paginated aggregate query guards", () => {
           meta: {
             total: 9999,
             page: 1,
-            per_page: 100,
-            total_pages: 100,
+            pageSize: 100,
+            totalPages: 100,
           },
         }),
         {
@@ -102,8 +102,8 @@ describe("paginated aggregate query guards", () => {
           meta: {
             total: 9999,
             page: 1,
-            per_page: 100,
-            total_pages: 100,
+            pageSize: 100,
+            totalPages: 100,
           },
         }),
         {

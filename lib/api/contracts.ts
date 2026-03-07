@@ -9,8 +9,8 @@ export interface ApiLinks {
 export interface ApiMeta {
   readonly total: number;
   readonly page: number;
-  readonly per_page: number;
-  readonly total_pages: number;
+  readonly pageSize: number;
+  readonly totalPages: number;
 }
 
 export interface ApiResponse<T> {
@@ -26,6 +26,8 @@ export interface ApiErrorResponse {
   readonly error: {
     readonly code: string;
     readonly message: string;
+    readonly requestId: string;
+    readonly details?: unknown;
   };
 }
 
@@ -120,11 +122,23 @@ const parseApiErrorResponse = (value: unknown): ApiErrorResponse => {
 
   const code = value.error.code;
   const message = value.error.message;
-  if (!isString(code) || !isString(message)) {
+  const requestId = value.error.requestId;
+  if (!isString(code) || !isString(message) || !isString(requestId)) {
     throw new Error("Invalid API error payload shape.");
   }
 
-  return { error: { code, message } };
+  const details = Object.hasOwn(value.error, "details")
+    ? value.error.details
+    : undefined;
+
+  return {
+    error: {
+      code,
+      message,
+      requestId,
+      ...(details !== undefined ? { details } : {}),
+    },
+  };
 };
 
 export function extractApiError(payload: unknown): ApiErrorResponse | null {
@@ -212,12 +226,13 @@ export function parseApiListResponse<T>(payload: unknown): ApiListResponse<T> {
   const meta = payload.meta;
   const total = toNonNegativeInteger(meta.total);
   const page = toPositiveInteger(meta.page);
-  const perPage = toPositiveInteger(meta.per_page);
-  const totalPages = toNonNegativeInteger(meta.total_pages);
+  const pageSize = toPositiveInteger(meta.pageSize);
+  const totalPages = toNonNegativeInteger(meta.totalPages);
 
   const totalValue = isInteger(total) && total >= 0 ? total : undefined;
   const pageValue = isInteger(page) && page >= 1 ? page : undefined;
-  const perPageValue = isInteger(perPage) && perPage >= 1 ? perPage : undefined;
+  const pageSizeValue =
+    isInteger(pageSize) && pageSize >= 1 ? pageSize : undefined;
   const totalPagesValue =
     isInteger(totalPages) && totalPages >= 0 ? totalPages : undefined;
 
@@ -227,11 +242,11 @@ export function parseApiListResponse<T>(payload: unknown): ApiListResponse<T> {
   if (pageValue === undefined) {
     throw new Error("API payload list response has invalid meta.page.");
   }
-  if (perPageValue === undefined) {
-    throw new Error("API payload list response has invalid meta.per_page.");
+  if (pageSizeValue === undefined) {
+    throw new Error("API payload list response has invalid meta.pageSize.");
   }
   if (totalPagesValue === undefined) {
-    throw new Error("API payload list response has invalid meta.total_pages.");
+    throw new Error("API payload list response has invalid meta.totalPages.");
   }
 
   return {
@@ -240,8 +255,8 @@ export function parseApiListResponse<T>(payload: unknown): ApiListResponse<T> {
     meta: {
       total: totalValue,
       page: pageValue,
-      per_page: perPageValue,
-      total_pages: totalPagesValue,
+      pageSize: pageSizeValue,
+      totalPages: totalPagesValue,
     },
   };
 }

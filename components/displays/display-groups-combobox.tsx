@@ -104,26 +104,24 @@ export function DisplayGroupsCombobox({
             )}
           >
             <span className="flex min-w-0 flex-wrap items-center gap-1 truncate">
-              {value.length > 0 ? (
-                value.map((name) => {
-                  const colorIndex =
-                    nameToColorIndex.get(toDisplayGroupKey(name)) ?? 0;
-                  const styles = getGroupBadgeStyles(colorIndex);
-                  return (
-                    <span
-                      key={name}
-                      className={cn(
-                        "inline-flex rounded border px-1.5 py-0.5 text-xs font-medium",
-                        styles.fill,
-                      )}
-                    >
-                      {name}
-                    </span>
-                  );
-                })
-              ) : (
-                triggerLabel
-              )}
+              {value.length > 0
+                ? value.map((name) => {
+                    const colorIndex =
+                      nameToColorIndex.get(toDisplayGroupKey(name)) ?? 0;
+                    const styles = getGroupBadgeStyles(colorIndex);
+                    return (
+                      <span
+                        key={name}
+                        className={cn(
+                          "inline-flex rounded border px-1.5 py-0.5 text-xs font-medium",
+                          styles.fill,
+                        )}
+                      >
+                        {name}
+                      </span>
+                    );
+                  })
+                : triggerLabel}
             </span>
             <IconSelector className="text-muted-foreground size-4 shrink-0" />
           </Button>

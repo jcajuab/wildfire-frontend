@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  extractApiError,
   parseApiListResponse,
   parseApiResponse,
   parseApiResponseData,
@@ -12,8 +13,8 @@ describe("parseApiListResponse", () => {
       meta: {
         total: 1,
         page: 2,
-        per_page: 25,
-        total_pages: 3,
+        pageSize: 25,
+        totalPages: 3,
       },
     };
 
@@ -56,5 +57,18 @@ describe("parseApiResponse", () => {
         url: "/api/v1/schedules",
       }),
     ).toThrow("Response body is not valid JSON");
+  });
+
+  test("extractApiError preserves requestId and details", () => {
+    const payload = {
+      error: {
+        code: "validation_error",
+        message: "Validation failed",
+        requestId: "req_123",
+        details: [{ field: "email", message: "Invalid email" }],
+      },
+    };
+
+    expect(extractApiError(payload)).toEqual(payload);
   });
 });
