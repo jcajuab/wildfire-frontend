@@ -8,7 +8,7 @@ export type FlashTone = "INFO" | "WARNING" | "CRITICAL";
 
 export type ContentStatus = "PROCESSING" | "READY" | "FAILED";
 
-export interface ContentCreator {
+export interface ContentOwner {
   readonly id: string;
   readonly name: string;
 }
@@ -34,7 +34,7 @@ export interface Content {
   readonly flashTone: FlashTone | null;
   readonly status: ContentStatus;
   readonly createdAt: string;
-  readonly createdBy: ContentCreator;
+  readonly owner: ContentOwner;
 }
 
 export interface ContentListResponse {

@@ -3,7 +3,7 @@ export type { SortDirection };
 
 export type PlaylistStatus = "DRAFT" | "IN_USE";
 
-export interface PlaylistCreator {
+export interface PlaylistOwner {
   readonly id: string;
   readonly name: string;
 }
@@ -32,7 +32,7 @@ export interface Playlist {
   readonly totalDuration: number; // Total duration in seconds
   readonly createdAt: string;
   readonly updatedAt: string;
-  readonly createdBy: PlaylistCreator;
+  readonly owner: PlaylistOwner;
 }
 
 export interface PlaylistListResponse {

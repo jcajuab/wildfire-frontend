@@ -14,7 +14,7 @@ export interface BackendPlaylist {
   readonly totalDuration: number;
   readonly createdAt: string;
   readonly updatedAt: string;
-  readonly createdBy: {
+  readonly owner: {
     readonly id: string;
     readonly name: string | null;
   };

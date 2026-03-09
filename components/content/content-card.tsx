@@ -160,7 +160,7 @@ export const ContentCard = memo(function ContentCard({
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">
-              by {content.createdBy.name}
+              by {content.owner.name}
             </p>
           )}
           <div className="pt-1">

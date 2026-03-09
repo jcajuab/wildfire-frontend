@@ -188,7 +188,7 @@ const waitForContentJob = async (input: {
         operation: maybeJob.operation ?? "UPLOAD",
         status: maybeJob.status as BackendContentJob["status"],
         errorMessage: maybeJob.errorMessage ?? null,
-        createdById: maybeJob.createdById ?? "",
+        ownerId: maybeJob.ownerId ?? "",
         createdAt: maybeJob.createdAt ?? "",
         updatedAt: maybeJob.updatedAt ?? "",
         startedAt: maybeJob.startedAt ?? null,

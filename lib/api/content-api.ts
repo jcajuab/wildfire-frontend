@@ -27,7 +27,7 @@ export interface BackendContent {
   readonly flashMessage: string | null;
   readonly flashTone: FlashTone | null;
   readonly createdAt: string;
-  readonly createdBy: {
+  readonly owner: {
     readonly id: string;
     readonly name: string | null;
   };
@@ -39,7 +39,7 @@ export interface BackendContentJob {
   readonly operation: "UPLOAD" | "REPLACE";
   readonly status: "QUEUED" | "PROCESSING" | "SUCCEEDED" | "FAILED";
   readonly errorMessage: string | null;
-  readonly createdById: string;
+  readonly ownerId: string;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly startedAt: string | null;

@@ -23,9 +23,9 @@ export function mapBackendContentToContent(item: BackendContent): Content {
     flashTone: item.flashTone ?? null,
     status: item.status,
     createdAt: item.createdAt,
-    createdBy: {
-      id: item.createdBy.id,
-      name: item.createdBy.name ?? "Unknown",
+    owner: {
+      id: item.owner.id,
+      name: item.owner.name ?? "Unknown",
     },
   };
 }

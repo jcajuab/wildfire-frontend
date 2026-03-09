@@ -24,7 +24,7 @@ const baseContent: Content = {
   flashTone: null,
   status: "READY",
   createdAt: "2024-01-01T00:00:00.000Z",
-  createdBy: {
+  owner: {
     id: "user-1",
     name: "Demo User",
   },

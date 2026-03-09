@@ -38,9 +38,9 @@ export function mapBackendPlaylistBase(item: BackendPlaylist): Playlist {
     totalDuration: item.totalDuration,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
-    createdBy: {
-      id: item.createdBy.id,
-      name: item.createdBy.name ?? "Unknown",
+    owner: {
+      id: item.owner.id,
+      name: item.owner.name ?? "Unknown",
     },
   };
 }

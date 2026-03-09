@@ -62,7 +62,7 @@ export const PlaylistCard = memo(function PlaylistCard({
             {playlist.name}
           </h3>
           <p className="text-xs text-muted-foreground">
-            by {playlist.createdBy.name}
+            by {playlist.owner.name}
           </p>
         </div>
         <DropdownMenu>
