@@ -102,6 +102,7 @@ export default function DisplayRuntimePage() {
   const [measuredHeightByItemId, setMeasuredHeightByItemId] = useState<
     Record<string, number>
   >({});
+  const [isScrollAnimationActive, setIsScrollAnimationActive] = useState(false);
 
   const lastPlaylistVersionRef = useRef<string | null>(null);
   const manifestRef = useRef<DisplayManifest | null>(null);
@@ -142,6 +143,34 @@ export default function DisplayRuntimePage() {
 
   const currentTiming = timings[currentIndex] ?? null;
   const overflowExtraSeconds = currentTiming?.overflowExtraSeconds ?? 0;
+
+  const currentOverflow = useMemo(() => {
+    if (!currentItem) {
+      return 0;
+    }
+    const measuredHeight = measuredHeightByItemId[currentItem.id];
+    const scaledHeight =
+      typeof measuredHeight === "number" && measuredHeight > 0
+        ? measuredHeight
+        : currentItem.content.width && currentItem.content.height
+          ? (viewport.width / currentItem.content.width) *
+            currentItem.content.height
+          : 0;
+    return Math.max(0, scaledHeight - viewport.height);
+  }, [currentItem, measuredHeightByItemId, viewport]);
+
+  useEffect(() => {
+    setIsScrollAnimationActive(false);
+    if (!currentItem || currentOverflow <= 0 || overflowExtraSeconds <= 0) {
+      return;
+    }
+    const frameId = window.requestAnimationFrame(() => {
+      setIsScrollAnimationActive(true);
+    });
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [currentItem, currentOverflow, overflowExtraSeconds]);
 
   useEffect(() => {
     if (!registration) {
@@ -349,24 +378,29 @@ export default function DisplayRuntimePage() {
 
   const scrollStyle = useMemo(() => {
     if (!currentItem) return undefined;
-    const measuredHeight = measuredHeightByItemId[currentItem.id];
-    const scaledHeight =
-      typeof measuredHeight === "number" && measuredHeight > 0
-        ? measuredHeight
-        : currentItem.content.width && currentItem.content.height
-          ? (viewport.width / currentItem.content.width) *
-            currentItem.content.height
-          : 0;
-    const overflow = Math.max(0, scaledHeight - viewport.height);
-    if (overflow <= 0 || overflowExtraSeconds <= 0) {
+    if (currentOverflow <= 0 || overflowExtraSeconds <= 0) {
       return undefined;
     }
+
+    if (!isScrollAnimationActive) {
+      return {
+        transform: "translateY(0px)",
+        transition: "none",
+        willChange: "transform",
+      };
+    }
+
     return {
-      transform: `translateY(-${overflow}px)`,
+      transform: `translateY(-${currentOverflow}px)`,
       transition: `transform ${overflowExtraSeconds}s linear`,
       willChange: "transform",
     };
-  }, [currentItem, measuredHeightByItemId, overflowExtraSeconds, viewport]);
+  }, [
+    currentItem,
+    currentOverflow,
+    overflowExtraSeconds,
+    isScrollAnimationActive,
+  ]);
 
   const flashMarqueeText = useMemo(() => {
     if (!activeFlash) {
