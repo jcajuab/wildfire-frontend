@@ -60,7 +60,7 @@ const rawBaseQuery = fetchBaseQuery({
 });
 
 /**
- * Shared baseQuery wrapper that emits global auth events for 401/429.
+ * Shared baseQuery wrapper that emits global auth events for 401.
  * AuthContext listens to this event for deterministic auth/session behavior.
  */
 export const baseQuery: BaseQueryFn<
@@ -70,7 +70,7 @@ export const baseQuery: BaseQueryFn<
 > = async (args, api, extraOptions) => {
   const result = await rawBaseQuery(args, api, extraOptions);
   const status = result.error?.status;
-  if (typeof window !== "undefined" && (status === 401 || status === 429)) {
+  if (typeof window !== "undefined" && status === 401) {
     const detail: AuthApiErrorEventDetail = {
       status,
       url:

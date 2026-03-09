@@ -46,6 +46,12 @@ export interface BackendContentJob {
   readonly completedAt: string | null;
 }
 
+export interface ContentOption {
+  readonly id: string;
+  readonly title: string;
+  readonly type: "IMAGE" | "VIDEO" | "PDF" | "FLASH";
+}
+
 export interface ContentIngestionAcceptedResponse {
   readonly content: BackendContent;
   readonly job: BackendContentJob;
@@ -92,6 +98,28 @@ export const contentApi = createApi({
   baseQuery,
   tagTypes: ["Content", "ContentJob"],
   endpoints: (build) => ({
+    getContentOptions: build.query<
+      ContentOption[],
+      {
+        readonly q?: string;
+        readonly status?: "PROCESSING" | "READY" | "FAILED";
+        readonly type?: "IMAGE" | "VIDEO" | "PDF" | "FLASH";
+      } | void
+    >({
+      query: (query) => ({
+        url: "content/options",
+        params: {
+          q: query?.q,
+          status: query?.status,
+          type: query?.type,
+        },
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<ContentOption[]>(
+          response,
+          "getContentOptions",
+        ),
+    }),
     listContent: build.query<
       BackendContentListResponse,
       ContentListQuery | void
@@ -293,6 +321,7 @@ export const contentApi = createApi({
 });
 
 export const {
+  useGetContentOptionsQuery,
   useListContentQuery,
   useLazyListContentQuery,
   useGetContentQuery,

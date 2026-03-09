@@ -31,9 +31,8 @@ import {
   useQueryStringState,
 } from "@/hooks/use-query-state";
 import {
-  useLazyGetUserRolesQuery,
   useGetUsersQuery,
-  useGetRolesQuery,
+  useGetRoleOptionsQuery,
   useUpdateUserMutation,
   useDeleteUserMutation,
   useSetUserRolesMutation,
@@ -58,19 +57,7 @@ export default function UsersPage(): ReactElement {
   const canCreateUser = useCan("users:create");
   const canReadRoles = useCan("roles:read");
   const isRoot = currentUser?.isRoot === true;
-  const {
-    data: usersData,
-    isLoading: usersLoading,
-    isError: usersError,
-  } = useGetUsersQuery();
-  const { data: rolesData } = useGetRolesQuery(undefined, {
-    skip: !canReadRoles,
-  });
-  const [updateUser] = useUpdateUserMutation();
-  const [deleteUser] = useDeleteUserMutation();
-  const [setUserRoles] = useSetUserRolesMutation();
-  const [getUserRolesTrigger] = useLazyGetUserRolesQuery();
-
+  const pageSize = 10;
   const [search, setSearch] = useQueryStringState("q", "");
   const [sortField, setSortField] = useQueryEnumState<UserSortField>(
     "sortField",
@@ -84,6 +71,23 @@ export default function UsersPage(): ReactElement {
       USER_SORT_DIRECTIONS,
     );
   const [page, setPage] = useQueryNumberState("page", 1);
+  const {
+    data: usersData,
+    isLoading: usersLoading,
+    isError: usersError,
+  } = useGetUsersQuery({
+    page,
+    pageSize,
+    q: search || undefined,
+    sortBy: sortField === "lastSeen" ? "lastSeenAt" : "name",
+    sortDirection,
+  });
+  const { data: rolesData } = useGetRoleOptionsQuery(undefined, {
+    skip: !canReadRoles,
+  });
+  const [updateUser] = useUpdateUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
+  const [setUserRoles] = useSetUserRolesMutation();
 
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -97,11 +101,6 @@ export default function UsersPage(): ReactElement {
   const [resendingInvitationId, setResendingInvitationId] = useState<
     string | null
   >(null);
-  const [userRolesByUserId, setUserRolesByUserId] = useState<
-    Readonly<Record<string, readonly UserRole[]>>
-  >({});
-
-  const pageSize = 10;
 
   const sort = useMemo<UserSort>(
     () => ({
@@ -113,7 +112,7 @@ export default function UsersPage(): ReactElement {
 
   const users: User[] = useMemo(
     () =>
-      (usersData ?? []).map((user) => ({
+      (usersData?.items ?? []).map((user) => ({
         id: user.id,
         username: user.username,
         email: user.email,
@@ -121,8 +120,9 @@ export default function UsersPage(): ReactElement {
         isActive: user.isActive,
         lastSeenAt: user.lastSeenAt ?? null,
         avatarUrl: user.avatarUrl ?? null,
+        roles: user.roles,
       })),
-    [usersData],
+    [usersData?.items],
   );
   const availableRoles = useMemo(() => {
     const roles = rolesData ?? [];
@@ -232,20 +232,21 @@ export default function UsersPage(): ReactElement {
   }, []);
 
   const systemRoleIds = useMemo(
-    () => (rolesData ?? []).filter((r) => r.isSystem).map((r) => r.id),
+    () => (rolesData ?? []).filter((role) => role.isSystem).map((role) => role.id),
     [rolesData],
+  );
+
+  const userRolesByUserId = useMemo<Readonly<Record<string, readonly UserRole[]>>>(
+    () =>
+      Object.fromEntries(
+        users.map((user) => [user.id, user.roles ?? []]),
+      ) as Readonly<Record<string, readonly UserRole[]>>,
+    [users],
   );
 
   const applyUserRoles = useCallback(
     async (payload: { userId: string; roleIds: string[] }): Promise<void> => {
-      const roles = await setUserRoles(payload).unwrap();
-      setUserRolesByUserId((prev) => ({
-        ...prev,
-        [payload.userId]: roles.map((role) => ({
-          id: role.id,
-          name: role.name,
-        })),
-      }));
+      await setUserRoles(payload).unwrap();
     },
     [setUserRoles],
   );
@@ -302,70 +303,7 @@ export default function UsersPage(): ReactElement {
     setIsRemoveDialogOpen(true);
   }, []);
 
-  const filteredUsers = useMemo(() => {
-    if (!search) return users;
-    const searchLower = search.toLowerCase();
-    return users.filter(
-      (user) =>
-        user.name.toLowerCase().includes(searchLower) ||
-        user.username.toLowerCase().includes(searchLower) ||
-        (user.email?.toLowerCase().includes(searchLower) ?? false),
-    );
-  }, [users, search]);
-
-  const sortedUsers = useMemo(() => {
-    return [...filteredUsers].sort((a, b) => {
-      const direction = sort.direction === "asc" ? 1 : -1;
-      switch (sort.field) {
-        case "name":
-          return a.name.localeCompare(b.name) * direction;
-        case "lastSeen":
-          const aDate = a.lastSeenAt ? new Date(a.lastSeenAt).getTime() : 0;
-          const bDate = b.lastSeenAt ? new Date(b.lastSeenAt).getTime() : 0;
-          return (aDate - bDate) * direction;
-        default:
-          return 0;
-      }
-    });
-  }, [filteredUsers, sort]);
-
-  const paginatedUsers = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return sortedUsers.slice(start, start + pageSize);
-  }, [sortedUsers, page]);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (paginatedUsers.length === 0) return () => undefined;
-
-    async function loadVisibleUserRoles(): Promise<void> {
-      const entries = await Promise.all(
-        paginatedUsers.map(async (user) => {
-          try {
-            const roles = await getUserRolesTrigger(user.id, true).unwrap();
-            return [
-              user.id,
-              roles.map((role) => ({ id: role.id, name: role.name })),
-            ] as const;
-          } catch {
-            return [user.id, []] as const;
-          }
-        }),
-      );
-
-      if (cancelled) return;
-      setUserRolesByUserId((prev) => ({
-        ...prev,
-        ...Object.fromEntries(entries),
-      }));
-    }
-
-    void loadVisibleUserRoles();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [getUserRolesTrigger, paginatedUsers]);
+  const paginatedUsers = users;
 
   useEffect(() => {
     void loadInvitations();
@@ -470,7 +408,7 @@ export default function UsersPage(): ReactElement {
           <UsersPagination
             page={page}
             pageSize={pageSize}
-            total={sortedUsers.length}
+            total={usersData?.total ?? 0}
             onPageChange={setPage}
           />
         </DashboardPage.Footer>

@@ -196,12 +196,13 @@ export default function LogsPage(): ReactElement {
   const { data } = useListAuditEventsQuery(listQuery);
   const canReadUsers = useCan("users:read");
   const canReadDisplays = useCan("displays:read");
-  const { data: users = [] } = useGetUsersQuery(undefined, {
+  const { data: usersData } = useGetUsersQuery({ page: 1, pageSize: 100 }, {
     skip: !canReadUsers,
   });
-  const { data: displaysData } = useGetDisplaysQuery(undefined, {
+  const { data: displaysData } = useGetDisplaysQuery({ page: 1, pageSize: 100 }, {
     skip: !canReadDisplays,
   });
+  const users = usersData?.items ?? [];
 
   const logs = useMemo<LogEntry[]>(() => {
     const userMap = new Map(users.map((u) => [u.id, u.name]));

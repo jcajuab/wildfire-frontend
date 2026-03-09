@@ -38,6 +38,7 @@ import {
   useGetRuntimeOverridesQuery,
   useLazyGetDisplayQuery,
   useCreateDisplayGroupMutation,
+  useGetDisplayOutputOptionsQuery,
   useGetDisplayGroupsQuery,
   useGetDisplaysQuery,
   useSetDisplayGroupsMutation,
@@ -71,17 +72,63 @@ export default function DisplaysPage(): ReactElement {
   const canReadDisplays = useCan("displays:read");
   const canUpdateDisplay = useCan("displays:update");
   const canDeleteDisplay = useCan("displays:delete");
+  const [statusFilter, setStatusFilter] =
+    useQueryEnumState<DisplayStatusFilter>(
+      "status",
+      "all",
+      DISPLAY_STATUS_VALUES,
+    );
+  const [sortBy, setSortBy] = useQueryEnumState<DisplaySortField>(
+    "sort",
+    "alphabetical",
+    DISPLAY_SORT_VALUES,
+  );
+  const [search, setSearch] = useQueryStringState("q", "");
+  const [page, setPage] = useQueryNumberState("page", 1);
+  const [groupFilters, setGroupFilters] = useQueryListState("groups", []);
+  const [outputFilter, setOutputFilter] = useQueryStringState("output", "all");
+  const deferredSearch = useDeferredValue(search);
+  const {
+    data: displayGroupsData = [],
+  } = useGetDisplayGroupsQuery();
+  const { data: displayOutputOptions = [] } = useGetDisplayOutputOptionsQuery();
+  const selectedGroupIds = useMemo(
+    () =>
+      displayGroupsData
+        .filter((group) => groupFilters.includes(group.name))
+        .map((group) => group.id),
+    [displayGroupsData, groupFilters],
+  );
+  const normalizedOutputFilter: DisplayOutputFilter =
+    outputFilter.length > 0 ? outputFilter : "all";
   const {
     data: displaysData,
     isLoading,
     isError,
     error,
     refetch,
-  } = useGetDisplaysQuery(undefined, {
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-  });
-  const { data: displayGroupsData } = useGetDisplayGroupsQuery();
+  } = useGetDisplaysQuery(
+    {
+      page,
+      pageSize: PAGE_SIZE,
+      q: deferredSearch || undefined,
+      status: statusFilter === "all" ? undefined : statusFilter,
+      groupIds: selectedGroupIds.length > 0 ? selectedGroupIds : undefined,
+      output:
+        normalizedOutputFilter === "all" ? undefined : normalizedOutputFilter,
+      sortBy:
+        sortBy === "alphabetical"
+          ? "name"
+          : sortBy === "location"
+            ? "location"
+            : "status",
+      sortDirection: "asc",
+    },
+    {
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    },
+  );
   const { data: runtimeOverrides } = useGetRuntimeOverridesQuery(undefined, {
     pollingInterval: 5_000,
     skip: !canReadDisplays,
@@ -103,22 +150,6 @@ export default function DisplaysPage(): ReactElement {
     "Failed to load displays. Check your connection and permissions.",
   );
 
-  const [statusFilter, setStatusFilter] =
-    useQueryEnumState<DisplayStatusFilter>(
-      "status",
-      "all",
-      DISPLAY_STATUS_VALUES,
-    );
-  const [sortBy, setSortBy] = useQueryEnumState<DisplaySortField>(
-    "sort",
-    "alphabetical",
-    DISPLAY_SORT_VALUES,
-  );
-  const [search, setSearch] = useQueryStringState("q", "");
-  const [page, setPage] = useQueryNumberState("page", 1);
-  const [groupFilters, setGroupFilters] = useQueryListState("groups", []);
-  const [outputFilter, setOutputFilter] = useQueryStringState("output", "all");
-
   const [isAddInfoDialogOpen, setIsAddInfoDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -132,7 +163,6 @@ export default function DisplaysPage(): ReactElement {
   const [createDisplayGroup] = useCreateDisplayGroupMutation();
   const [unregisterDisplay] = useUnregisterDisplayMutation();
   const [getDisplayById] = useLazyGetDisplayQuery();
-  const deferredSearch = useDeferredValue(search);
 
   useEffect(() => {
     if (!canReadDisplays) return;
@@ -153,10 +183,10 @@ export default function DisplaysPage(): ReactElement {
       Array<{ name: string; colorIndex: number }>
     >();
 
-    for (const group of displayGroupsData?.items ?? []) {
+    for (const group of displayGroupsData) {
       const displayGroup = {
         name: group.name,
-        colorIndex: group.colorIndex ?? 0,
+        colorIndex: group.colorIndex,
       };
       for (const displayId of group.displayIds) {
         const existingGroups = groupsByDisplayId.get(displayId) ?? [];
@@ -171,28 +201,17 @@ export default function DisplaysPage(): ReactElement {
         groupsByDisplayId.get(display.id) ?? [],
       ),
     );
-  }, [displaysData?.items, displayGroupsData?.items]);
-
-  const normalizedOutputFilter: DisplayOutputFilter =
-    outputFilter.length > 0 ? outputFilter : "all";
+  }, [displaysData?.items, displayGroupsData]);
 
   const availableGroupFilters = useMemo(
     () =>
       dedupeDisplayGroupNames(
-        (displayGroupsData?.items ?? []).map((g) => g.name),
+        displayGroupsData.map((g) => g.name),
       ),
-    [displayGroupsData?.items],
+    [displayGroupsData],
   );
 
-  const availableOutputFilters = useMemo(() => {
-    const outputNames = new Set<string>();
-    for (const display of displays) {
-      const outputName = display.output.trim();
-      if (outputName.length === 0) continue;
-      outputNames.add(outputName);
-    }
-    return [...outputNames].sort((left, right) => left.localeCompare(right));
-  }, [displays]);
+  const availableOutputFilters = displayOutputOptions;
 
   const emergencyContentOptions = useMemo(
     () =>
@@ -366,7 +385,7 @@ export default function DisplaysPage(): ReactElement {
       }
 
       try {
-        const workingGroups = [...(displayGroupsData?.items ?? [])];
+        const workingGroups = [...displayGroupsData];
         let nextColorIndex = getNextDisplayGroupColorIndex(workingGroups);
         const existingByKey = new Map<string, string>();
         for (const group of workingGroups) {
@@ -419,83 +438,7 @@ export default function DisplaysPage(): ReactElement {
     },
     [updateDisplay, displayGroupsData, createDisplayGroup, setDisplayGroups],
   );
-
-  const groupFilterKeys = useMemo(
-    () =>
-      new Set(groupFilters.map((groupName) => toDisplayGroupKey(groupName))),
-    [groupFilters],
-  );
-
-  const filteredDisplays = useMemo(() => {
-    const normalizedSearch = deferredSearch.trim().toLowerCase();
-
-    return displays.filter((display) => {
-      if (statusFilter !== "all" && display.status !== statusFilter) {
-        return false;
-      }
-
-      if (normalizedSearch.length > 0) {
-        const matchesName = display.name
-          .toLowerCase()
-          .includes(normalizedSearch);
-        const matchesLocation = display.location
-          .toLowerCase()
-          .includes(normalizedSearch);
-        const matchesSlug = display.slug
-          .toLowerCase()
-          .includes(normalizedSearch);
-        if (!matchesName && !matchesLocation && !matchesSlug) {
-          return false;
-        }
-      }
-
-      if (groupFilterKeys.size > 0) {
-        const hasMatchingGroup = display.groups.some((group) =>
-          groupFilterKeys.has(toDisplayGroupKey(group.name)),
-        );
-        if (!hasMatchingGroup) {
-          return false;
-        }
-      }
-
-      if (
-        normalizedOutputFilter !== "all" &&
-        display.output !== normalizedOutputFilter
-      ) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [
-    displays,
-    statusFilter,
-    deferredSearch,
-    groupFilterKeys,
-    normalizedOutputFilter,
-  ]);
-
-  const sortedDisplays = useMemo(
-    () =>
-      [...filteredDisplays].sort((leftDisplay, rightDisplay) => {
-        switch (sortBy) {
-          case "alphabetical":
-            return leftDisplay.name.localeCompare(rightDisplay.name);
-          case "status":
-            return leftDisplay.status.localeCompare(rightDisplay.status);
-          case "location":
-            return leftDisplay.location.localeCompare(rightDisplay.location);
-          default:
-            return 0;
-        }
-      }),
-    [filteredDisplays, sortBy],
-  );
-
-  const paginatedDisplays = useMemo(
-    () => sortedDisplays.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [sortedDisplays, page],
-  );
+  const paginatedDisplays = displays;
 
   return (
     <DashboardPage.Root>
@@ -575,7 +518,7 @@ export default function DisplaysPage(): ReactElement {
           <Pagination
             page={page}
             pageSize={PAGE_SIZE}
-            total={sortedDisplays.length}
+            total={displaysData?.total ?? 0}
             onPageChange={setPage}
           />
         </DashboardPage.Footer>
@@ -597,7 +540,7 @@ export default function DisplaysPage(): ReactElement {
 
       <EditDisplayDialog
         display={selectedDisplay}
-        existingGroups={displayGroupsData?.items ?? []}
+        existingGroups={displayGroupsData}
         emergencyContentOptions={emergencyContentOptions}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
@@ -608,7 +551,7 @@ export default function DisplaysPage(): ReactElement {
       <DisplayGroupManagerDialog
         open={isGroupManagerOpen}
         onOpenChange={setIsGroupManagerOpen}
-        groups={displayGroupsData?.items ?? []}
+        groups={displayGroupsData}
       />
 
       <ConfirmActionDialog

@@ -43,6 +43,11 @@ export interface BackendPlaylistListResponse {
   readonly pageSize: number;
 }
 
+export interface PlaylistOption {
+  readonly id: string;
+  readonly name: string;
+}
+
 export interface PlaylistListQuery {
   readonly page?: number;
   readonly pageSize?: number;
@@ -129,6 +134,23 @@ export const playlistsApi = createApi({
   baseQuery,
   tagTypes: ["Playlist"],
   endpoints: (build) => ({
+    getPlaylistOptions: build.query<
+      PlaylistOption[],
+      { q?: string; status?: "DRAFT" | "IN_USE" } | void
+    >({
+      query: (params) => ({
+        url: "playlists/options",
+        params: {
+          q: params?.q,
+          status: params?.status,
+        },
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<PlaylistOption[]>(
+          response,
+          "getPlaylistOptions",
+        ),
+    }),
     listPlaylists: build.query<
       BackendPlaylistListResponse,
       PlaylistListQuery | void
@@ -299,6 +321,7 @@ export const playlistsApi = createApi({
 });
 
 export const {
+  useGetPlaylistOptionsQuery,
   useListPlaylistsQuery,
   useGetPlaylistQuery,
   useLazyGetPlaylistQuery,

@@ -3,7 +3,6 @@ import { baseQuery } from "@/lib/api/base-query";
 import {
   parseApiListResponseSafe,
   parseApiResponseDataSafe,
-  parseApiListResponse,
 } from "@/lib/api/contracts";
 
 /** Backend display shape (matches GET /displays and GET /displays/:id). */
@@ -39,6 +38,24 @@ export interface DisplaysListResponse {
   readonly pageSize: number;
 }
 
+export interface DisplaysListQuery {
+  readonly page?: number;
+  readonly pageSize?: number;
+  readonly q?: string;
+  readonly status?: "PROCESSING" | "READY" | "LIVE" | "DOWN";
+  readonly groupIds?: readonly string[];
+  readonly output?: string;
+  readonly sortBy?: "name" | "status" | "location";
+  readonly sortDirection?: "asc" | "desc";
+}
+
+export interface DisplayOption {
+  readonly id: string;
+  readonly name: string;
+}
+
+export type DisplayOutputOption = string;
+
 export interface UpdateDisplayRequest {
   readonly id: string;
   readonly name?: string;
@@ -55,18 +72,10 @@ export interface UpdateDisplayRequest {
 export interface DisplayGroup {
   readonly id: string;
   readonly name: string;
-  /** Optional: backend may not send; use 0 for badge styling when missing. */
-  readonly colorIndex?: number;
+  readonly colorIndex: number;
   readonly displayIds: readonly string[];
   readonly createdAt: string;
   readonly updatedAt: string;
-}
-
-export interface DisplayGroupsListResponse {
-  readonly items: readonly DisplayGroup[];
-  readonly total: number;
-  readonly page: number;
-  readonly pageSize: number;
 }
 
 export interface DisplayRegistrationAttemptResponse {
@@ -87,80 +96,49 @@ export interface DisplayRuntimeOverrides {
   };
 }
 
-const PAGE_SIZE = 100;
-const MAX_PAGES = 100;
+const buildDisplaysListUrl = (query: DisplaysListQuery | void): string => {
+  const params = new URLSearchParams();
+  params.set("page", String(query?.page ?? 1));
+  params.set("pageSize", String(query?.pageSize ?? 20));
 
-const buildResponseParseError = (scope: string, error: unknown) => ({
-  error: {
-    code: "INVALID_API_RESPONSE",
-    message:
-      error instanceof Error
-        ? `${scope}: ${error.message}`
-        : "Response payload does not match API contract.",
-    requestId: "frontend-contract-parser",
-  },
-});
+  if (query?.q) {
+    params.set("q", query.q);
+  }
+  if (query?.status) {
+    params.set("status", query.status);
+  }
+  if (query?.output) {
+    params.set("output", query.output);
+  }
+  if (query?.sortBy) {
+    params.set("sortBy", query.sortBy);
+  }
+  if (query?.sortDirection) {
+    params.set("sortDirection", query.sortDirection);
+  }
+  if (query?.groupIds) {
+    for (const groupId of query.groupIds) {
+      params.append("groupIds", groupId);
+    }
+  }
+
+  return `displays?${params.toString()}`;
+};
 
 export const displaysApi = createApi({
   reducerPath: "displaysApi",
   baseQuery,
   tagTypes: ["Display", "DisplayGroup", "RuntimeOverrides"],
   endpoints: (build) => ({
-    getDisplays: build.query<DisplaysListResponse, void>({
-      async queryFn(_arg, _api, _extraOptions, baseQueryFn) {
-        const pageSize = PAGE_SIZE;
-        let page = 1;
-        let total = 0;
-        const allItems: Display[] = [];
-
-        while (true) {
-          if (page > MAX_PAGES) {
-            return {
-              error: {
-                status: 500,
-                data: "Failed to load displays: pagination limit reached.",
-              },
-            };
-          }
-          const result = await baseQueryFn({
-            url: "displays",
-            params: { page, pageSize },
-          });
-          if (result.error) {
-            return { error: result.error };
-          }
-
-          let response: ReturnType<typeof parseApiListResponse<Display>>;
-          try {
-            response = parseApiListResponseSafe<Display>(
-              result.data,
-              "getDisplays",
-            );
-          } catch (error) {
-            return {
-              error: {
-                status: 502,
-                data: buildResponseParseError("getDisplays", error),
-              },
-            };
-          }
-          const pageData = response.data;
-          total = response.meta.total;
-          allItems.push(...pageData);
-
-          if (allItems.length >= total || pageData.length === 0) {
-            break;
-          }
-          page += 1;
-        }
-
+    getDisplays: build.query<DisplaysListResponse, DisplaysListQuery | void>({
+      query: (query) => buildDisplaysListUrl(query),
+      transformResponse: (response) => {
+        const parsed = parseApiListResponseSafe<Display>(response, "getDisplays");
         return {
-          data: {
-            items: allItems,
-            total,
-            page: 1,
-            pageSize: PAGE_SIZE,
-          },
+          items: parsed.data,
+          total: parsed.meta.total,
+          page: parsed.meta.page,
+          pageSize: parsed.meta.pageSize,
         };
       },
       providesTags: (result) =>
@@ -173,6 +151,28 @@ export const displaysApi = createApi({
               { type: "Display", id: "LIST" },
             ]
           : [{ type: "Display", id: "LIST" }],
+    }),
+    getDisplayOptions: build.query<
+      DisplayOption[],
+      { q?: string; limit?: number } | void
+    >({
+      query: (query) => ({
+        url: "displays/options",
+        params: {
+          q: query?.q,
+          limit: query?.limit ?? 100,
+        },
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<DisplayOption[]>(response, "getDisplayOptions"),
+    }),
+    getDisplayOutputOptions: build.query<DisplayOutputOption[], void>({
+      query: () => "displays/options/outputs",
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<DisplayOutputOption[]>(
+          response,
+          "getDisplayOutputOptions",
+        ),
     }),
     getDisplay: build.query<Display, string>({
       query: (id) => `displays/${id}`,
@@ -226,24 +226,14 @@ export const displaysApi = createApi({
         ],
       },
     ),
-    getDisplayGroups: build.query<DisplayGroupsListResponse, void>({
+    getDisplayGroups: build.query<DisplayGroup[], void>({
       query: () => "displays/groups",
-      transformResponse: (response) => {
-        const parsed = parseApiListResponseSafe<DisplayGroup>(
-          response,
-          "getDisplayGroups",
-        );
-        return {
-          items: parsed.data,
-          total: parsed.meta.total,
-          page: parsed.meta.page,
-          pageSize: parsed.meta.pageSize,
-        };
-      },
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<DisplayGroup[]>(response, "getDisplayGroups"),
       providesTags: (result) =>
         result
           ? [
-              ...result.items.map(({ id }) => ({
+              ...result.map(({ id }) => ({
                 type: "DisplayGroup" as const,
                 id,
               })),
@@ -356,6 +346,8 @@ export const displaysApi = createApi({
 
 export const {
   useGetDisplaysQuery,
+  useGetDisplayOptionsQuery,
+  useGetDisplayOutputOptionsQuery,
   useGetDisplayQuery,
   useLazyGetDisplayQuery,
   useUpdateDisplayMutation,

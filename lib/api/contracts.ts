@@ -92,28 +92,10 @@ const getParseFailureMessage = (payload: unknown): string | undefined => {
 };
 
 const toNonNegativeInteger = (value: unknown): number | undefined =>
-  isInteger(value) && value >= 0
-    ? value
-    : typeof value === "string"
-      ? (() => {
-          const normalized = value.trim();
-          if (!/^-?\d+$/.test(normalized)) return undefined;
-          const parsed = Number.parseInt(normalized, 10);
-          return parsed >= 0 ? parsed : undefined;
-        })()
-      : undefined;
+  isInteger(value) && value >= 0 ? value : undefined;
 
 const toPositiveInteger = (value: unknown): number | undefined =>
-  isInteger(value) && value > 0
-    ? value
-    : typeof value === "string"
-      ? (() => {
-          const normalized = value.trim();
-          if (!/^-?\d+$/.test(normalized)) return undefined;
-          const parsed = Number.parseInt(normalized, 10);
-          return parsed > 0 ? parsed : undefined;
-        })()
-      : undefined;
+  isInteger(value) && value > 0 ? value : undefined;
 
 const parseApiErrorResponse = (value: unknown): ApiErrorResponse => {
   if (!isObject(value) || !isObject(value.error)) {
@@ -156,15 +138,19 @@ function parseApiEnvelope<T>(value: UnknownObject): ApiResponse<T> {
     throw new Error("API payload is missing envelope data field.");
   }
   const data = value.data;
-  const links = isObject(value.links)
-    ? ({
-        self: isString(value.links.self) ? value.links.self : "unknown",
-        first: isString(value.links.first) ? value.links.first : undefined,
-        prev: isString(value.links.prev) ? value.links.prev : undefined,
-        next: isString(value.links.next) ? value.links.next : undefined,
-        last: isString(value.links.last) ? value.links.last : undefined,
-      } satisfies ApiLinks)
-    : undefined;
+  let links: ApiLinks | undefined;
+  if (value.links !== undefined) {
+    if (!isObject(value.links) || !isString(value.links.self)) {
+      throw new Error("API payload has invalid links.self.");
+    }
+    links = {
+      self: value.links.self,
+      first: isString(value.links.first) ? value.links.first : undefined,
+      prev: isString(value.links.prev) ? value.links.prev : undefined,
+      next: isString(value.links.next) ? value.links.next : undefined,
+      last: isString(value.links.last) ? value.links.last : undefined,
+    };
+  }
 
   return { data: data as T, links };
 }

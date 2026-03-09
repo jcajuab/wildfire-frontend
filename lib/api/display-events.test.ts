@@ -37,7 +37,7 @@ class MockEventSource {
 
     const event = {
       data: JSON.stringify(payload),
-    } as Event;
+    } as unknown as Event;
 
     for (const listener of listeners) {
       listener(event);

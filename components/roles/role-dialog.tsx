@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent, ReactElement } from "react";
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { IconUserPlus, IconInfoCircle, IconX } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ import {
   mergeDesignPermissionsWithApi,
   type DesignPermissionWithId,
 } from "@/lib/design-permissions";
+import { useGetUserOptionsQuery } from "@/lib/api/rbac-api";
 import {
   formatPermissionId,
   formatPermissionReadableLabel,
@@ -43,7 +44,6 @@ import {
 } from "@/lib/format-permission";
 import type { Role, Permission, RoleUser, RoleFormData } from "@/types/role";
 
-const MAX_VISIBLE_UNASSIGNED_USERS = 100;
 const INITIAL_ASSIGNED_VISIBLE_COUNT = 25;
 const ASSIGNED_VISIBLE_COUNT_STEP = 25;
 
@@ -55,11 +55,10 @@ interface RoleDialogProps {
   /** When true (or create mode), form is shown; when false in edit mode, loading state is shown. */
   readonly editDataReady?: boolean;
   readonly permissions: readonly Permission[];
-  readonly availableUsers: readonly RoleUser[];
+  readonly initialUsers?: readonly RoleUser[];
+  readonly canReadUsers: boolean;
   /** Initial permission IDs when editing (from API or context). */
   readonly initialPermissionIds?: readonly string[];
-  /** Initial user IDs assigned to role when editing (from API or context). */
-  readonly initialUserIds?: readonly string[];
   readonly onSubmit: (data: RoleFormData) => Promise<void> | void;
 }
 
@@ -67,9 +66,9 @@ interface RoleFormProps {
   readonly mode: "create" | "edit";
   readonly initialRole?: Role | null;
   readonly permissions: readonly Permission[];
-  readonly availableUsers: readonly RoleUser[];
+  readonly initialUsers: readonly RoleUser[];
+  readonly canReadUsers: boolean;
   readonly initialPermissionIds: readonly string[];
-  readonly initialUserIds: readonly string[];
   readonly onSubmit: (data: RoleFormData) => Promise<void> | void;
   readonly onOpenChange: (open: boolean) => void;
 }
@@ -78,9 +77,9 @@ function RoleForm({
   mode,
   initialRole,
   permissions,
-  availableUsers,
+  initialUsers,
+  canReadUsers,
   initialPermissionIds,
-  initialUserIds,
   onSubmit,
   onOpenChange,
 }: RoleFormProps): ReactElement {
@@ -94,16 +93,24 @@ function RoleForm({
       : [],
   );
   const [assignedUsers, setAssignedUsers] = useState<RoleUser[]>(() =>
-    mode === "edit" && Array.isArray(initialUserIds)
-      ? availableUsers.filter((u) => initialUserIds.includes(u.id))
-      : [],
+    mode === "edit" ? [...initialUsers] : [],
   );
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [userSearch, setUserSearch] = useState("");
+  const deferredUserSearch = useDeferredValue(userSearch.trim());
   const [visibleAssignedCount, setVisibleAssignedCount] = useState(
     INITIAL_ASSIGNED_VISIBLE_COUNT,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: searchedUsers = [] } = useGetUserOptionsQuery(
+    {
+      q: deferredUserSearch.length > 0 ? deferredUserSearch : undefined,
+    },
+    {
+      refetchOnMountOrArgChange: true,
+      skip: !canReadUsers,
+    },
+  );
 
   const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
@@ -141,6 +148,17 @@ function RoleForm({
     [permissions],
   );
 
+  const availableUsers = useMemo<readonly RoleUser[]>(
+    () =>
+      searchedUsers.map((user) => ({
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        email: user.email,
+      })),
+    [searchedUsers],
+  );
+
   const availableUsersById = useMemo(
     () => new Map(availableUsers.map((user) => [user.id, user])),
     [availableUsers],
@@ -172,7 +190,7 @@ function RoleForm({
   }, [normalizedUserSearch, unassignedUsers]);
 
   const visibleUnassignedUsers = useMemo(
-    () => filteredUnassignedUsers.slice(0, MAX_VISIBLE_UNASSIGNED_USERS),
+    () => filteredUnassignedUsers,
     [filteredUnassignedUsers],
   );
 
@@ -299,54 +317,52 @@ function RoleForm({
         {/* Manage Users Tab */}
         <TabsContent value="users" className="mt-4">
           <div className="flex flex-col gap-4">
-            {/* Add user row */}
-            <div className="flex flex-col gap-2">
-              <Input
-                placeholder="Search users by name, username, or email"
-                value={userSearch}
-                onChange={(event) => setUserSearch(event.target.value)}
-              />
-              <div className="flex items-center gap-2">
-                <Select
-                  value={selectedUserId}
-                  onValueChange={setSelectedUserId}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select user" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {visibleUnassignedUsers.length > 0 ? (
-                      visibleUnassignedUsers.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                        No matching users.
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddUser}
-                  disabled={!selectedUserId}
-                >
-                  <IconUserPlus className="size-4" />
-                  Add User
-                </Button>
+            {canReadUsers ? (
+              <div className="flex flex-col gap-2">
+                <Input
+                  placeholder="Search users by name, username, or email"
+                  value={userSearch}
+                  onChange={(event) => setUserSearch(event.target.value)}
+                />
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={selectedUserId}
+                    onValueChange={setSelectedUserId}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select user" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {visibleUnassignedUsers.length > 0 ? (
+                        visibleUnassignedUsers.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                          No matching users.
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddUser}
+                    disabled={!selectedUserId}
+                  >
+                    <IconUserPlus className="size-4" />
+                    Add User
+                  </Button>
+                </div>
               </div>
-              {filteredUnassignedUsers.length > MAX_VISIBLE_UNASSIGNED_USERS ? (
-                <p className="text-xs text-muted-foreground">
-                  Showing first {MAX_VISIBLE_UNASSIGNED_USERS} results. Keep
-                  typing to narrow the list.
-                </p>
-              ) : null}
-            </div>
+            ) : (
+              <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+                User assignment is unavailable without `users:read`.
+              </div>
+            )}
 
-            {/* Assigned users list */}
             {assignedUsers.length > 0 && (
               <div className="flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
                 {visibleAssignedUsers.map((user) => (
@@ -366,6 +382,7 @@ function RoleForm({
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => handleRemoveUser(user.id)}
+                      disabled={!canReadUsers}
                       aria-label={`Remove ${user.name} from role`}
                     >
                       <IconX className="size-4" />
@@ -428,9 +445,9 @@ export function RoleDialog({
   onOpenChange,
   editDataReady = true,
   permissions,
-  availableUsers,
+  initialUsers = [],
+  canReadUsers,
   initialPermissionIds = [],
-  initialUserIds = [],
   onSubmit,
 }: RoleDialogProps): ReactElement {
   const showForm = mode === "create" || editDataReady;
@@ -445,9 +462,9 @@ export function RoleDialog({
               mode={mode}
               initialRole={role}
               permissions={permissions}
-              availableUsers={availableUsers}
+              initialUsers={initialUsers}
+              canReadUsers={canReadUsers}
               initialPermissionIds={initialPermissionIds}
-              initialUserIds={initialUserIds}
               onSubmit={onSubmit}
               onOpenChange={onOpenChange}
             />

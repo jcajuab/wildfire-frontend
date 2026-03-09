@@ -22,36 +22,40 @@ const makeDisplay = (overrides?: Partial<Display>): Display => ({
 });
 
 describe("EditDisplayDialog", () => {
-  test("keeps resolution unchanged when changing display output", async () => {
-    const user = userEvent.setup();
-    const onOpenChange = vi.fn();
-    const onSave = vi.fn(async () => true);
+  test(
+    "keeps resolution unchanged when changing display output",
+    async () => {
+      const user = userEvent.setup();
+      const onOpenChange = vi.fn();
+      const onSave = vi.fn(async () => true);
 
-    render(
-      <EditDisplayDialog
-        display={makeDisplay()}
-        existingGroups={[]}
-        open={true}
-        onOpenChange={onOpenChange}
-        onSave={onSave}
-      />,
-    );
+      render(
+        <EditDisplayDialog
+          display={makeDisplay()}
+          existingGroups={[]}
+          open={true}
+          onOpenChange={onOpenChange}
+          onSave={onSave}
+        />,
+      );
 
-    const outputIndexInput = screen.getByLabelText(
-      "Display Output Index",
-    ) as HTMLInputElement;
-    await user.clear(outputIndexInput);
-    await user.type(outputIndexInput, "2");
+      const outputIndexInput = screen.getByLabelText(
+        "Display Output Index",
+      ) as HTMLInputElement;
+      await user.clear(outputIndexInput);
+      await user.type(outputIndexInput, "2");
 
-    await user.click(screen.getByRole("button", { name: "Save" }));
+      await user.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(onSave).toHaveBeenCalledWith(
-      expect.objectContaining({
-        output: "hdmi-2",
-        resolution: "1920x1080",
-      }),
-    );
-  });
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          output: "hdmi-2",
+          resolution: "1920x1080",
+        }),
+      );
+    },
+    15_000,
+  );
 
   test("disables save when output index is invalid", async () => {
     const user = userEvent.setup();

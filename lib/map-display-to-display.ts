@@ -31,8 +31,7 @@ export function mapDisplayApiToDisplay(display: DisplayApi): Display {
 }
 
 /**
- * Attaches display groups with optional colorIndex for badge styling.
- * Pass group metadata (e.g. from display groups API) to get colorIndex per name.
+ * Attaches display groups with backend-provided colorIndex for badge styling.
  */
 export function withDisplayGroups(
   display: Display,

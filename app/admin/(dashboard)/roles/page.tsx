@@ -23,7 +23,6 @@ import {
 import {
   useGetRolesQuery,
   useGetPermissionsQuery,
-  useGetUsersQuery,
   useGetRolePermissionsQuery,
   useGetRoleUsersQuery,
   useCreateRoleMutation,
@@ -48,23 +47,6 @@ export default function RolesPage(): ReactElement {
   const canUpdateRole = useCan("roles:update");
   const canDeleteRole = useCan("roles:delete");
   const canReadUsers = useCan("users:read");
-  const {
-    data: rolesData,
-    isLoading: rolesLoading,
-    isError: rolesError,
-  } = useGetRolesQuery();
-  const { data: permissionsData } = useGetPermissionsQuery();
-  const { data: usersData } = useGetUsersQuery(undefined, {
-    skip: !canReadUsers,
-  });
-
-  const [createRole] = useCreateRoleMutation();
-  const [updateRole] = useUpdateRoleMutation();
-  const [deleteRole] = useDeleteRoleMutation();
-  const [setRolePermissions] = useSetRolePermissionsMutation();
-  const [setUserRoles] = useSetUserRolesMutation();
-  const [getUserRolesTrigger] = useLazyGetUserRolesQuery();
-
   const [search, setSearch] = useQueryStringState("q", "");
   const [sortField, setSortField] = useQueryEnumState<RoleSortField>(
     "sortField",
@@ -78,6 +60,27 @@ export default function RolesPage(): ReactElement {
       ROLE_SORT_DIRECTIONS,
     );
   const [page, setPage] = useQueryNumberState("page", 1);
+  const pageSize = 10;
+  const {
+    data: rolesData,
+    isLoading: rolesLoading,
+    isError: rolesError,
+  } = useGetRolesQuery({
+    page,
+    pageSize,
+    q: search || undefined,
+    sortBy: sortField,
+    sortDirection,
+  });
+  const { data: permissionsData } = useGetPermissionsQuery();
+
+  const [createRole] = useCreateRoleMutation();
+  const [updateRole] = useUpdateRoleMutation();
+  const [deleteRole] = useDeleteRoleMutation();
+  const [setRolePermissions] = useSetRolePermissionsMutation();
+  const [setUserRoles] = useSetUserRolesMutation();
+  const [getUserRolesTrigger] = useLazyGetUserRolesQuery();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
@@ -107,15 +110,14 @@ export default function RolesPage(): ReactElement {
     dialogMode === "create" ||
     (dialogMode === "edit" &&
       !rolePermissionsLoading &&
-      !roleUsersLoading &&
       !rolePermissionsFetching &&
-      !roleUsersFetching &&
       rolePermissionsSuccess &&
-      roleUsersSuccess &&
       rolePermissionsData !== undefined &&
-      roleUsersData !== undefined);
-
-  const pageSize = 10;
+      (!canReadUsers ||
+        (!roleUsersLoading &&
+          !roleUsersFetching &&
+          roleUsersSuccess &&
+          roleUsersData !== undefined)));
 
   const sort = useMemo<RoleSort>(
     () => ({
@@ -127,25 +129,25 @@ export default function RolesPage(): ReactElement {
 
   const roles: Role[] = useMemo(
     () =>
-      (rolesData ?? []).map((role) => ({
+      (rolesData?.items ?? []).map((role) => ({
         id: role.id,
         name: role.name,
         description: role.description,
         isSystem: role.isSystem,
         usersCount: role.usersCount,
       })),
-    [rolesData],
+    [rolesData?.items],
   );
   const permissions = useMemo(() => permissionsData ?? [], [permissionsData]);
-  const availableUsers = useMemo(
+  const initialUsers = useMemo(
     () =>
-      (usersData ?? []).map((user) => ({
+      (roleUsersData ?? []).map((user) => ({
         id: user.id,
         username: user.username,
         name: user.name,
         email: user.email,
       })),
-    [usersData],
+    [roleUsersData],
   );
 
   const handleSearchChange = useCallback(
@@ -275,32 +277,7 @@ export default function RolesPage(): ReactElement {
     setIsDeleteDialogOpen(true);
   }, []);
 
-  const filteredRoles = useMemo(() => {
-    if (!search) return roles;
-    const searchLower = search.toLowerCase();
-    return roles.filter((role) =>
-      role.name.toLowerCase().includes(searchLower),
-    );
-  }, [roles, search]);
-
-  const sortedRoles = useMemo(() => {
-    return [...filteredRoles].sort((a, b) => {
-      const direction = sort.direction === "asc" ? 1 : -1;
-      switch (sort.field) {
-        case "name":
-          return a.name.localeCompare(b.name) * direction;
-        case "usersCount":
-          return ((a.usersCount ?? 0) - (b.usersCount ?? 0)) * direction;
-        default:
-          return 0;
-      }
-    });
-  }, [filteredRoles, sort]);
-
-  const paginatedRoles = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return sortedRoles.slice(start, start + pageSize);
-  }, [sortedRoles, page]);
+  const paginatedRoles = roles;
 
   if (rolesLoading) {
     return (
@@ -377,7 +354,7 @@ export default function RolesPage(): ReactElement {
           <RolesPagination
             page={page}
             pageSize={pageSize}
-            total={sortedRoles.length}
+            total={rolesData?.total ?? 0}
             onPageChange={setPage}
           />
         </DashboardPage.Footer>
@@ -393,11 +370,11 @@ export default function RolesPage(): ReactElement {
         }}
         editDataReady={editDataReady}
         permissions={permissions}
-        availableUsers={availableUsers}
+        initialUsers={initialUsers}
+        canReadUsers={canReadUsers}
         initialPermissionIds={rolePermissionsData?.map(
           (permission) => permission.id,
         )}
-        initialUserIds={roleUsersData?.map((user) => user.id)}
         onSubmit={handleSubmit}
       />
 

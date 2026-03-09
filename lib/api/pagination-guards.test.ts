@@ -1,7 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-describe("paginated aggregate query guards", () => {
+describe("server-driven list query contracts", () => {
   const originalFetch = global.fetch;
   const originalApiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -18,10 +18,29 @@ describe("paginated aggregate query guards", () => {
     }
   });
 
-  test("displays query stops at guard limit and returns error", async () => {
+  test("displays query forwards server-driven filters and pagination", async () => {
     process.env.NEXT_PUBLIC_API_URL = "http://example.test";
     const { displaysApi } = await import("@/lib/api/displays-api");
-    global.fetch = vi.fn(async () => {
+    const selectedGroupIds = [
+      crypto.randomUUID(),
+      crypto.randomUUID(),
+    ] as const;
+    global.fetch = vi.fn(async (input) => {
+      const requestUrl =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
+      const url = new URL(requestUrl);
+      expect(url.searchParams.get("page")).toBe("2");
+      expect(url.searchParams.get("pageSize")).toBe("20");
+      expect(url.searchParams.get("q")).toBe("lobby");
+      expect(url.searchParams.get("status")).toBe("READY");
+      expect(url.searchParams.get("output")).toBe("HDMI");
+      expect(url.searchParams.get("sortBy")).toBe("status");
+      expect(url.searchParams.get("sortDirection")).toBe("desc");
+      expect(url.searchParams.getAll("groupIds")).toEqual([...selectedGroupIds]);
       return new Response(
         JSON.stringify({
           data: [
@@ -43,10 +62,10 @@ describe("paginated aggregate query guards", () => {
             },
           ],
           meta: {
-            total: 9999,
-            page: 1,
-            pageSize: 100,
-            totalPages: 100,
+            total: 1,
+            page: 2,
+            pageSize: 20,
+            totalPages: 1,
           },
         }),
         {
@@ -65,21 +84,39 @@ describe("paginated aggregate query guards", () => {
     });
 
     const result = await store.dispatch(
-      displaysApi.endpoints.getDisplays.initiate(),
+      displaysApi.endpoints.getDisplays.initiate({
+        page: 2,
+        pageSize: 20,
+        q: "lobby",
+        status: "READY",
+        output: "HDMI",
+        sortBy: "status",
+        sortDirection: "desc",
+        groupIds: selectedGroupIds,
+      }),
     );
-    expect("error" in result).toBe(true);
-    if ("error" in result) {
-      expect(result.error).toMatchObject({
-        status: 500,
-        data: "Failed to load displays: pagination limit reached.",
-      });
+    const data = "data" in result ? result.data : undefined;
+    if (!data) {
+      throw new Error("Expected paged display data");
     }
+    expect(data.items).toHaveLength(1);
+    expect(data.page).toBe(2);
   });
 
-  test("schedules query stops at guard limit and returns error", async () => {
+  test("schedules query calls the window endpoint", async () => {
     process.env.NEXT_PUBLIC_API_URL = "http://example.test";
     const { schedulesApi } = await import("@/lib/api/schedules-api");
-    global.fetch = vi.fn(async () => {
+    global.fetch = vi.fn(async (input) => {
+      const requestUrl =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
+      const url = new URL(requestUrl);
+      expect(url.pathname.endsWith("/schedules/window")).toBe(true);
+      expect(url.searchParams.get("from")).toBe("2025-01-01");
+      expect(url.searchParams.get("to")).toBe("2025-01-07");
       return new Response(
         JSON.stringify({
           data: [
@@ -96,15 +133,10 @@ describe("paginated aggregate query guards", () => {
               createdAt: "2025-01-01T00:00:00.000Z",
               updatedAt: "2025-01-01T00:00:00.000Z",
               playlist: { id: crypto.randomUUID(), name: "Playlist" },
+              content: null,
               display: { id: crypto.randomUUID(), name: "Display" },
             },
           ],
-          meta: {
-            total: 9999,
-            page: 1,
-            pageSize: 100,
-            totalPages: 100,
-          },
         }),
         {
           status: 200,
@@ -122,14 +154,15 @@ describe("paginated aggregate query guards", () => {
     });
 
     const result = await store.dispatch(
-      schedulesApi.endpoints.listSchedules.initiate(),
+      schedulesApi.endpoints.listSchedules.initiate({
+        from: "2025-01-01",
+        to: "2025-01-07",
+      }),
     );
-    expect("error" in result).toBe(true);
-    if ("error" in result) {
-      expect(result.error).toMatchObject({
-        status: 500,
-        data: "Failed to load schedules: pagination limit reached.",
-      });
+    const data = "data" in result ? result.data : undefined;
+    if (!data) {
+      throw new Error("Expected schedule window data");
     }
+    expect(data).toHaveLength(1);
   });
 });

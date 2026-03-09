@@ -1,8 +1,5 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import {
-  parseApiListResponseSafe,
-  parseApiResponseDataSafe,
-} from "@/lib/api/contracts";
+import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { baseQuery } from "@/lib/api/base-query";
 
 export interface BackendSchedule {
@@ -36,11 +33,10 @@ export interface BackendSchedule {
   };
 }
 
-export interface BackendScheduleListResponse {
-  readonly items: readonly BackendSchedule[];
-  readonly total: number;
-  readonly page: number;
-  readonly pageSize: number;
+export interface ScheduleWindowQuery {
+  readonly from: string;
+  readonly to: string;
+  readonly displayIds?: readonly string[];
 }
 
 export interface CreateScheduleRequest {
@@ -70,64 +66,26 @@ export interface UpdateScheduleRequest {
   readonly isActive?: boolean;
 }
 
-const PAGE_SIZE = 100;
-const MAX_PAGES = 100;
-
 export const schedulesApi = createApi({
   reducerPath: "schedulesApi",
   baseQuery,
   tagTypes: ["Schedule"],
   endpoints: (build) => ({
-    listSchedules: build.query<BackendScheduleListResponse, void>({
-      async queryFn(_arg, _api, _extraOptions, baseQueryFn) {
-        const pageSize = PAGE_SIZE;
-        let page = 1;
-        let total = 0;
-        const allItems: BackendSchedule[] = [];
-
-        while (true) {
-          if (page > MAX_PAGES) {
-            return {
-              error: {
-                status: 500,
-                data: "Failed to load schedules: pagination limit reached.",
-              },
-            };
-          }
-          const result = await baseQueryFn({
-            url: "schedules",
-            params: { page, pageSize },
-          });
-          if (result.error) {
-            return { error: result.error };
-          }
-
-          const response = parseApiListResponseSafe<BackendSchedule>(
-            result.data,
-            "listSchedules",
-          );
-          total = response.meta.total;
-          allItems.push(...response.data);
-
-          if (allItems.length >= total || response.data.length === 0) {
-            break;
-          }
-          page += 1;
-        }
-
-        return {
-          data: {
-            items: allItems,
-            total,
-            page: 1,
-            pageSize: PAGE_SIZE,
-          },
-        };
-      },
+    listSchedules: build.query<readonly BackendSchedule[], ScheduleWindowQuery>({
+      query: (query) => ({
+        url: "schedules/window",
+        params: {
+          from: query.from,
+          to: query.to,
+          displayIds: query.displayIds,
+        },
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<BackendSchedule[]>(response, "listSchedules"),
       providesTags: (result) =>
         result
           ? [
-              ...result.items.map(({ id }) => ({
+              ...result.map(({ id }) => ({
                 type: "Schedule" as const,
                 id,
               })),

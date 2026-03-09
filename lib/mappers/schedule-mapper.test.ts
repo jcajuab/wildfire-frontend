@@ -37,6 +37,7 @@ describe("schedule-mapper", () => {
         createdAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-01-01T00:00:00.000Z",
         playlist: { id: "playlist-1", name: "Morning" },
+        content: null,
         display: { id: "display-1", name: "Lobby" },
       },
     ]);

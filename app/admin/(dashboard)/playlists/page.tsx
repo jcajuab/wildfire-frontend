@@ -121,7 +121,7 @@ export default function PlaylistsPage(): ReactElement {
     [page, pageSize, search, sortBy, statusFilter],
   );
   const { data: playlistsData } = useListPlaylistsQuery(playlistQuery);
-  const { data: displaysData } = useGetDisplaysQuery();
+  const { data: displaysData } = useGetDisplaysQuery({ page: 1, pageSize: 100 });
   const { data: contentData } = useListContentQuery(
     { page: 1, pageSize: 100 },
     { skip: !canReadContent },

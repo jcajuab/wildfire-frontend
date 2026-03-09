@@ -13,15 +13,15 @@ import { EditScheduleDialog } from "@/components/schedules/edit-schedule-dialog"
 import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
-import { useListContentQuery } from "@/lib/api/content-api";
-import { useGetDisplaysQuery } from "@/lib/api/displays-api";
+import { useGetContentOptionsQuery } from "@/lib/api/content-api";
+import { useGetDisplayOptionsQuery } from "@/lib/api/displays-api";
 import {
   useCreateScheduleMutation,
   useDeleteScheduleMutation,
   useListSchedulesQuery,
   useUpdateScheduleMutation,
 } from "@/lib/api/schedules-api";
-import { useListPlaylistsQuery } from "@/lib/api/playlists-api";
+import { useGetPlaylistOptionsQuery } from "@/lib/api/playlists-api";
 import { useCan } from "@/hooks/use-can";
 import {
   getApiErrorMessage,
@@ -42,6 +42,33 @@ const SCHEDULE_CREATE_FALLBACK_MESSAGE = "Failed to create schedule.";
 const SCHEDULE_CONFLICT_MESSAGE =
   "Schedule overlaps with an existing schedule on the selected display.";
 
+function toIsoDate(date: Date): string {
+  const year = String(date.getFullYear());
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getScheduleWindow(currentDate: Date, view: CalendarView): {
+  from: string;
+  to: string;
+} {
+  const start = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    currentDate.getDate(),
+  );
+
+  if (view === "resource-week") {
+    start.setDate(start.getDate() - start.getDay());
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return { from: toIsoDate(start), to: toIsoDate(end) };
+  }
+
+  return { from: toIsoDate(start), to: toIsoDate(start) };
+}
+
 function isConflictError(err: unknown): boolean {
   if (typeof err !== "object" || err == null || !("status" in err)) {
     return false;
@@ -55,15 +82,22 @@ export default function SchedulesPage(): ReactElement {
   const canReadDisplays = useCan("displays:read");
   const canReadPlaylists = useCan("playlists:read");
   const canReadContent = useCan("content:read");
-  const { data: displaysData } = useGetDisplaysQuery(undefined, {
-    skip: !canReadDisplays,
-  });
-  const { data: schedulesData } = useListSchedulesQuery();
-  const { data: playlistsData } = useListPlaylistsQuery(undefined, {
+  const [currentDate, setCurrentDate] = useState(() => new Date());
+  const [view, setView] = useState<CalendarView>("resource-week");
+  const scheduleWindow = useMemo(
+    () => getScheduleWindow(currentDate, view),
+    [currentDate, view],
+  );
+  const { data: displaysData } = useGetDisplayOptionsQuery(
+    undefined,
+    { skip: !canReadDisplays },
+  );
+  const { data: schedulesData } = useListSchedulesQuery(scheduleWindow);
+  const { data: playlistsData } = useGetPlaylistOptionsQuery(undefined, {
     skip: !canReadPlaylists,
   });
-  const { data: flashContentData } = useListContentQuery(
-    { page: 1, pageSize: 100, type: "FLASH", status: "READY" },
+  const { data: flashContentData } = useGetContentOptionsQuery(
+    { type: "FLASH", status: "READY" },
     { skip: !canReadContent },
   );
   const [createSchedule] = useCreateScheduleMutation();
@@ -71,34 +105,26 @@ export default function SchedulesPage(): ReactElement {
   const [deleteSchedule] = useDeleteScheduleMutation();
 
   const availablePlaylists: readonly { id: string; name: string }[] = useMemo(
-    () =>
-      (playlistsData?.items ?? []).map((playlist) => ({
-        id: playlist.id,
-        name: playlist.name,
-      })),
-    [playlistsData?.items],
+    () => playlistsData?.map((playlist) => ({ id: playlist.id, name: playlist.name })) ?? [],
+    [playlistsData],
   );
   const availableDisplays: readonly { id: string; name: string }[] = useMemo(
-    () => displaysData?.items?.map((d) => ({ id: d.id, name: d.name })) ?? [],
-    [displaysData?.items],
+    () => displaysData?.map((d) => ({ id: d.id, name: d.name })) ?? [],
+    [displaysData],
   );
   const availableFlashContents: readonly { id: string; title: string }[] =
     useMemo(
       () =>
-        (flashContentData?.items ?? []).map((content) => ({
+        (flashContentData ?? []).map((content) => ({
           id: content.id,
           title: content.title,
         })),
-      [flashContentData?.items],
+      [flashContentData],
     );
 
-  // Calendar state
-  const [currentDate, setCurrentDate] = useState(() => new Date());
-  const [view, setView] = useState<CalendarView>("resource-week");
-
   const schedules: Schedule[] = useMemo(
-    () => mapBackendSchedulesToSchedules(schedulesData?.items ?? []),
-    [schedulesData?.items],
+    () => mapBackendSchedulesToSchedules(schedulesData ?? []),
+    [schedulesData],
   );
 
   // Dialog states
