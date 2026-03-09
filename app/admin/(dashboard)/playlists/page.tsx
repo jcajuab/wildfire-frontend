@@ -40,7 +40,6 @@ import { useGetDisplaysQuery } from "@/lib/api/displays-api";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   type PlaylistListQuery,
-  useAddPlaylistItemMutation,
   useCreatePlaylistMutation,
   useDeletePlaylistMutation,
   useLazyGetPlaylistQuery,
@@ -128,7 +127,6 @@ export default function PlaylistsPage(): ReactElement {
   );
   const [loadPlaylist] = useLazyGetPlaylistQuery();
   const [createPlaylist] = useCreatePlaylistMutation();
-  const [addPlaylistItem] = useAddPlaylistItemMutation();
   const [updatePlaylist] = useUpdatePlaylistMutation();
   const [deletePlaylistMutation] = useDeletePlaylistMutation();
   const [savePlaylistItemsAtomic] = useSavePlaylistItemsAtomicMutation();
@@ -179,22 +177,22 @@ export default function PlaylistsPage(): ReactElement {
           name: data.name,
           description: data.description,
         }).unwrap();
-        await Promise.all(
-          data.items.map((item, index) =>
-            addPlaylistItem({
-              playlistId: created.id,
+        if (data.items.length > 0) {
+          await savePlaylistItemsAtomic({
+            playlistId: created.id,
+            items: data.items.map((item) => ({
+              kind: "new" as const,
               contentId: item.content.id,
-              sequence: index + 1,
               duration: item.duration,
-            }).unwrap(),
-          ),
-        );
+            })),
+          }).unwrap();
+        }
         toast.success("Playlist created.");
       } catch (err) {
         notifyApiError(err, "Failed to create playlist.");
       }
     },
-    [addPlaylistItem, createPlaylist],
+    [createPlaylist, savePlaylistItemsAtomic],
   );
 
   const handleEditPlaylist = useCallback((playlist: Playlist) => {

@@ -57,6 +57,9 @@ export function CreateContentDialog({
   const [flashMessage, setFlashMessage] = useState("");
   const [flashTone, setFlashTone] = useState<FlashTone>("INFO");
   const [isDragging, setIsDragging] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  const VIDEO_MAX_BYTES = 10 * 1024 * 1024;
 
   const resetState = useCallback(() => {
     setMode("upload");
@@ -66,6 +69,7 @@ export function CreateContentDialog({
     setFlashMessage("");
     setFlashTone("INFO");
     setIsDragging(false);
+    setFileError(null);
   }, []);
 
   const handleClose = useCallback(() => {
@@ -115,9 +119,18 @@ export function CreateContentDialog({
     title,
   ]);
 
-  const handleFileSelect = useCallback((file: File) => {
-    setSelectedFile(file);
-  }, []);
+  const handleFileSelect = useCallback(
+    (file: File) => {
+      if (file.type === "video/mp4" && file.size > VIDEO_MAX_BYTES) {
+        setFileError("Video files cannot exceed 10 MB.");
+        setSelectedFile(null);
+        return;
+      }
+      setFileError(null);
+      setSelectedFile(file);
+    },
+    [VIDEO_MAX_BYTES],
+  );
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -234,7 +247,15 @@ export function CreateContentDialog({
                   <p className="text-xs text-muted-foreground">
                     {SUPPORTED_CONTENT_FILE_LABELS}
                   </p>
+                  <p className="text-xs text-muted-foreground">
+                    Videos: max 10 MB · Images/PDFs: max 100 MB
+                  </p>
                 </div>
+                {fileError ? (
+                  <p className="text-xs font-medium text-destructive">
+                    {fileError}
+                  </p>
+                ) : null}
                 {selectedFile ? (
                   <p className="text-xs font-medium text-primary">
                     Selected: {selectedFile.name}

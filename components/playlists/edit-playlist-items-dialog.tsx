@@ -86,6 +86,12 @@ function SortableItemRow({
     isDragging,
   } = useSortable({ id: item.id });
 
+  const [rawValue, setRawValue] = useState(String(item.duration));
+
+  useEffect(() => {
+    setRawValue(String(item.duration));
+  }, [item.duration]);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -108,11 +114,21 @@ function SortableItemRow({
           <input
             type="number"
             min="1"
-            value={item.duration}
+            value={rawValue}
             aria-label={`Duration in seconds for ${item.content.title}`}
-            onChange={(e) =>
-              onUpdateDuration(item.id, parseInt(e.target.value, 10) || 1)
-            }
+            onChange={(e) => {
+              setRawValue(e.target.value);
+              const parsed = parseInt(e.target.value, 10);
+              if (Number.isFinite(parsed) && parsed > 0) {
+                onUpdateDuration(item.id, parsed);
+              }
+            }}
+            onBlur={() => {
+              const parsed = parseInt(rawValue, 10);
+              const clamped = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+              setRawValue(String(clamped));
+              onUpdateDuration(item.id, clamped);
+            }}
             className="focus-visible:ring-ring w-12 rounded border border-border bg-transparent px-1 text-center focus-visible:outline-none focus-visible:ring-2"
             onPointerDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
@@ -141,6 +157,8 @@ function SortableItemRow({
     </div>
   );
 }
+
+const MAX_BASE_DURATION_SECONDS = 60;
 
 function formatDuration(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
@@ -265,6 +283,8 @@ export function EditPlaylistItemsDialog({
     [drafts],
   );
 
+  const isOverDurationLimit = totalDuration > MAX_BASE_DURATION_SECONDS;
+
   const selectableDisplays = useMemo(
     () =>
       availableDisplays.filter(
@@ -376,7 +396,7 @@ export function EditPlaylistItemsDialog({
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isSaving || selectedDisplayId.length === 0}
+              disabled={isSaving || selectedDisplayId.length === 0 || isOverDurationLimit}
             >
               {isSaving ? "Saving…" : "Save Changes"}
             </Button>
@@ -427,8 +447,15 @@ export function EditPlaylistItemsDialog({
                   <span className="text-xs text-muted-foreground">
                     Base duration
                   </span>
-                  <div className="rounded-md border border-border px-2.5 py-2 text-sm">
-                    {formatDuration(totalDuration)}
+                  <div
+                    className={`rounded-md border px-2.5 py-2 text-sm ${
+                      isOverDurationLimit
+                        ? "border-destructive text-destructive"
+                        : "border-border"
+                    }`}
+                  >
+                    {totalDuration}s / {MAX_BASE_DURATION_SECONDS}s max
+                    {isOverDurationLimit ? " — over limit" : ""}
                   </div>
                 </div>
               </div>
@@ -489,7 +516,8 @@ export function EditPlaylistItemsDialog({
                     key={content.id}
                     type="button"
                     onClick={() => handleAddContent(content)}
-                    className="focus-visible:ring-ring flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2"
+                    disabled={isOverDurationLimit}
+                    className="focus-visible:ring-ring flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <div className="flex size-10 items-center justify-center rounded bg-muted" />
                     <span className="flex-1 truncate text-sm">

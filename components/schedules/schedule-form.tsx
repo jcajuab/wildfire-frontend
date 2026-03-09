@@ -25,6 +25,7 @@ interface ScheduleFormProps {
   readonly onSubmit: (data: ScheduleFormData) => Promise<void> | void;
   readonly onCancel: () => void;
   readonly submitLabel: string;
+  readonly isCreate?: boolean;
 }
 
 function ScheduleFormFrame({
@@ -35,6 +36,7 @@ function ScheduleFormFrame({
   onSubmit,
   onCancel,
   submitLabel,
+  isCreate = false,
 }: ScheduleFormProps): ReactElement {
   const [formData, setFormData] = useState<ScheduleFormData>(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,11 +45,17 @@ function ScheduleFormFrame({
     if (!formData.name.trim() || !formData.targetDisplayId) {
       return false;
     }
+    if (isCreate && formData.startDate && formData.startTime) {
+      const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
+      if (startDateTime < new Date()) {
+        return false;
+      }
+    }
     if (formData.kind === "PLAYLIST") {
       return Boolean(formData.playlistId);
     }
     return Boolean(formData.contentId);
-  }, [formData]);
+  }, [formData, isCreate]);
 
   async function handleSubmit(): Promise<void> {
     if (!canSubmit || isSubmitting) return;
@@ -114,6 +122,7 @@ function ScheduleFormFrame({
                 id="schedule-start-date"
                 type="date"
                 value={formData.startDate}
+                min={isCreate ? getTodayDateString() : undefined}
                 onChange={(event) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -153,6 +162,11 @@ function ScheduleFormFrame({
                 id="schedule-start-time"
                 type="time"
                 value={formData.startTime}
+                min={
+                  isCreate && formData.startDate === getTodayDateString()
+                    ? getCurrentTimeString()
+                    : undefined
+                }
                 onChange={(event) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -274,7 +288,7 @@ function ScheduleFormFrame({
 
 type CreateScheduleFormProps = Omit<
   ScheduleFormProps,
-  "initialData" | "submitLabel"
+  "initialData" | "submitLabel" | "isCreate"
 >;
 
 interface EditScheduleFormProps extends Omit<ScheduleFormProps, "submitLabel"> {
@@ -289,6 +303,22 @@ function getTodayDateString(): string {
   return `${year}-${month}-${day}`;
 }
 
+function getCurrentTimeString(): string {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function getCurrentTimeRoundedUp5Min(): string {
+  const now = new Date();
+  const totalMinutes = now.getHours() * 60 + now.getMinutes();
+  const roundedMinutes = Math.ceil(totalMinutes / 5) * 5;
+  const hours = Math.floor(roundedMinutes / 60) % 24;
+  const minutes = roundedMinutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
 export function CreateScheduleForm(
   props: CreateScheduleFormProps,
 ): ReactElement {
@@ -299,7 +329,7 @@ export function CreateScheduleForm(
         kind: "PLAYLIST",
         startDate: getTodayDateString(),
         endDate: getTodayDateString(),
-        startTime: "08:00",
+        startTime: getCurrentTimeRoundedUp5Min(),
         endTime: "17:00",
         playlistId: null,
         contentId: null,
@@ -307,6 +337,7 @@ export function CreateScheduleForm(
         isActive: true,
       }}
       submitLabel="Create"
+      isCreate={true}
       {...props}
     />
   );
