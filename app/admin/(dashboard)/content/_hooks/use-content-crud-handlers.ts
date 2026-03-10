@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   contentApi,
   useCreateFlashContentMutation,
+  useCreateTextContentMutation,
   useDeleteContentMutation,
   useLazyGetContentFileUrlQuery,
   useReplaceContentFileMutation,
@@ -28,6 +29,11 @@ export interface ContentCrudHandlers {
     title: string;
     message: string;
     tone: "INFO" | "WARNING" | "CRITICAL";
+  }) => Promise<void>;
+  readonly handleCreateText: (input: {
+    title: string;
+    jsonContent: string;
+    htmlContent: string;
   }) => Promise<void>;
   readonly handleDownload: (content: Content) => Promise<void>;
   readonly handleSaveContent: (
@@ -66,6 +72,7 @@ export function useContentCrudHandlers(
   const dispatch = useAppDispatch();
   const [uploadContent] = useUploadContentMutation();
   const [createFlashContent] = useCreateFlashContentMutation();
+  const [createTextContent] = useCreateTextContentMutation();
   const [deleteContent] = useDeleteContentMutation();
   const [updateContent] = useUpdateContentMutation();
   const [replaceContentFile] = useReplaceContentFileMutation();
@@ -109,6 +116,22 @@ export function useContentCrudHandlers(
     [createFlashContent],
   );
 
+  const handleCreateText = useCallback(
+    async (textInput: {
+      title: string;
+      jsonContent: string;
+      htmlContent: string;
+    }) => {
+      try {
+        await createTextContent(textInput).unwrap();
+        toast.success("Text content created.");
+      } catch (error) {
+        notifyApiError(error, "Failed to create text content.");
+      }
+    },
+    [createTextContent],
+  );
+
   const handleDownload = useCallback(
     async (content: Content) => {
       try {
@@ -135,6 +158,8 @@ export function useContentCrudHandlers(
       flashMessage,
       flashTone,
       scrollPxPerSecond,
+      textJsonContent,
+      textHtmlContent,
     }: EditContentDialogSaveInput) => {
       const editedContent = input.contentToEdit;
       const parentContentIdForRollback =
@@ -178,11 +203,17 @@ export function useContentCrudHandlers(
                   flashMessage: flashMessage ?? "",
                   flashTone: flashTone ?? "INFO",
                 }
-              : editedContent?.type === "IMAGE" || editedContent?.type === "PDF"
+              : editedContent?.type === "TEXT"
                 ? {
-                    scrollPxPerSecond,
+                    textJsonContent: textJsonContent ?? "",
+                    textHtmlContent: textHtmlContent ?? "",
                   }
-                : {}),
+                : editedContent?.type === "IMAGE" ||
+                    editedContent?.type === "PDF"
+                  ? {
+                      scrollPxPerSecond,
+                    }
+                  : {}),
           }).unwrap(),
         );
         const updatedParentContentId = updated.parentContentId;
@@ -234,6 +265,7 @@ export function useContentCrudHandlers(
   return {
     handleUploadFile,
     handleCreateFlash,
+    handleCreateText,
     handleDownload,
     handleSaveContent,
     handleConfirmDelete,

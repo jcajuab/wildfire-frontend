@@ -9,7 +9,7 @@ import type { FlashTone } from "@/types/content";
 export interface BackendContent {
   readonly id: string;
   readonly title: string;
-  readonly type: "IMAGE" | "VIDEO" | "PDF" | "FLASH";
+  readonly type: "IMAGE" | "VIDEO" | "PDF" | "FLASH" | "TEXT";
   readonly kind: "ROOT" | "PAGE";
   readonly status: "PROCESSING" | "READY" | "FAILED";
   readonly thumbnailUrl?: string;
@@ -26,6 +26,8 @@ export interface BackendContent {
   readonly scrollPxPerSecond: number | null;
   readonly flashMessage: string | null;
   readonly flashTone: FlashTone | null;
+  readonly textJsonContent: string | null;
+  readonly textHtmlContent: string | null;
   readonly createdAt: string;
   readonly owner: {
     readonly id: string;
@@ -49,7 +51,7 @@ export interface BackendContentJob {
 export interface ContentOption {
   readonly id: string;
   readonly title: string;
-  readonly type: "IMAGE" | "VIDEO" | "PDF" | "FLASH";
+  readonly type: "IMAGE" | "VIDEO" | "PDF" | "FLASH" | "TEXT";
 }
 
 export interface ContentIngestionAcceptedResponse {
@@ -69,7 +71,7 @@ export interface ContentListQuery {
   readonly pageSize?: number;
   readonly parentId?: string;
   readonly status?: "PROCESSING" | "READY" | "FAILED";
-  readonly type?: "IMAGE" | "VIDEO" | "PDF" | "FLASH";
+  readonly type?: "IMAGE" | "VIDEO" | "PDF" | "FLASH" | "TEXT";
   readonly search?: string;
   readonly sortBy?: "createdAt" | "title" | "fileSize" | "type" | "pageNumber";
   readonly sortDirection?: "asc" | "desc";
@@ -93,6 +95,12 @@ export interface CreateFlashContentRequest {
   readonly tone: FlashTone;
 }
 
+export interface CreateTextContentRequest {
+  readonly title: string;
+  readonly jsonContent: string;
+  readonly htmlContent: string;
+}
+
 export const contentApi = createApi({
   reducerPath: "contentApi",
   baseQuery,
@@ -103,7 +111,7 @@ export const contentApi = createApi({
       {
         readonly q?: string;
         readonly status?: "PROCESSING" | "READY" | "FAILED";
-        readonly type?: "IMAGE" | "VIDEO" | "PDF" | "FLASH";
+        readonly type?: "IMAGE" | "VIDEO" | "PDF" | "FLASH" | "TEXT";
       } | void
     >({
       query: (query) => ({
@@ -190,6 +198,21 @@ export const contentApi = createApi({
         ),
       invalidatesTags: [{ type: "Content", id: "LIST" }],
     }),
+    createTextContent: build.mutation<BackendContent, CreateTextContentRequest>(
+      {
+        query: (body) => ({
+          url: "content/text",
+          method: "POST",
+          body,
+        }),
+        transformResponse: (response) =>
+          parseApiResponseDataSafe<BackendContent>(
+            response,
+            "createTextContent",
+          ),
+        invalidatesTags: [{ type: "Content", id: "LIST" }],
+      },
+    ),
     uploadContent: build.mutation<
       ContentIngestionAcceptedResponse,
       UploadContentRequest
@@ -239,6 +262,8 @@ export const contentApi = createApi({
         readonly flashMessage?: string;
         readonly flashTone?: FlashTone;
         readonly scrollPxPerSecond?: number | null;
+        readonly textJsonContent?: string;
+        readonly textHtmlContent?: string;
       }
     >({
       query: ({ id, ...body }) => ({
@@ -327,6 +352,7 @@ export const {
   useGetContentQuery,
   useGetContentJobQuery,
   useCreateFlashContentMutation,
+  useCreateTextContentMutation,
   useUploadContentMutation,
   useDeleteContentMutation,
   useUpdateContentMutation,

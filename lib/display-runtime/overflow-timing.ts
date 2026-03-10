@@ -1,5 +1,5 @@
 export interface RuntimeContent {
-  readonly type: "IMAGE" | "VIDEO" | "PDF";
+  readonly type: "IMAGE" | "VIDEO" | "PDF" | "TEXT";
   readonly width: number | null;
   readonly height: number | null;
   readonly scrollPxPerSecond?: number | null;

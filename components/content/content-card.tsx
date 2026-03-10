@@ -5,9 +5,10 @@ import Image from "next/image";
 import {
   IconDotsVertical,
   IconDownload,
+  IconFileText,
+  IconFileTypePdf,
   IconPencil,
   IconEye,
-  IconFileTypePdf,
   IconPhoto,
   IconTrash,
   IconVideo,
@@ -60,7 +61,8 @@ export const ContentCard = memo(function ContentCard({
   const isPdfRoot = content.type === "PDF" && content.kind === "ROOT";
   const isPdfPageItem = displayMode === "pdf-page-item";
   const canTogglePdfRoot = isPdfRoot && isPdfRootExpandable;
-  const canDownloadFile = onDownload && content.type !== "FLASH";
+  const canDownloadFile =
+    onDownload && content.type !== "FLASH" && content.type !== "TEXT";
   const pageLabel =
     content.pageNumber !== null ? `Page ${content.pageNumber}` : null;
   const rootPageCount =
@@ -76,7 +78,9 @@ export const ContentCard = memo(function ContentCard({
       ? IconFileTypePdf
       : content.type === "VIDEO"
         ? IconVideo
-        : IconPhoto;
+        : content.type === "TEXT"
+          ? IconFileText
+          : IconPhoto;
 
   const handleRootToggle = () => {
     if (!canTogglePdfRoot || !onTogglePdfRootExpand) {

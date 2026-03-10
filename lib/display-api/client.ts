@@ -34,7 +34,7 @@ export interface ManifestItem {
   readonly duration: number;
   readonly content: {
     readonly id: string;
-    readonly type: "IMAGE" | "VIDEO" | "PDF";
+    readonly type: "IMAGE" | "VIDEO" | "PDF" | "TEXT";
     readonly checksum: string;
     readonly downloadUrl: string;
     readonly thumbnailUrl: string | null;
@@ -43,6 +43,7 @@ export interface ManifestItem {
     readonly height: number | null;
     readonly duration: number | null;
     readonly scrollPxPerSecond: number | null;
+    readonly textHtmlContent: string | null;
   };
 }
 
@@ -235,15 +236,19 @@ const parseManifestItemContent = (
   path: string,
 ): ManifestItem["content"] => {
   const root = readRecord(payload, path);
+  const contentType = readEnum(
+    root.type,
+    ["IMAGE", "VIDEO", "PDF", "TEXT"] as const,
+    `${path}.type`,
+  );
   return {
     id: readString(root.id, `${path}.id`),
-    type: readEnum(
-      root.type,
-      ["IMAGE", "VIDEO", "PDF"] as const,
-      `${path}.type`,
-    ),
+    type: contentType,
     checksum: readString(root.checksum, `${path}.checksum`),
-    downloadUrl: readUrl(root.downloadUrl, `${path}.downloadUrl`),
+    downloadUrl:
+      contentType === "TEXT"
+        ? ""
+        : readUrl(root.downloadUrl, `${path}.downloadUrl`),
     thumbnailUrl: readOptionalNullableUrl(
       root.thumbnailUrl,
       `${path}.thumbnailUrl`,
@@ -255,6 +260,10 @@ const parseManifestItemContent = (
     scrollPxPerSecond: readNullableInteger(
       root.scrollPxPerSecond,
       `${path}.scrollPxPerSecond`,
+    ),
+    textHtmlContent: readNullableString(
+      root.textHtmlContent,
+      `${path}.textHtmlContent`,
     ),
   };
 };

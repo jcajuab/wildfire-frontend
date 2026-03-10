@@ -21,6 +21,8 @@ export function mapBackendContentToContent(item: BackendContent): Content {
     scrollPxPerSecond: item.scrollPxPerSecond,
     flashMessage: item.flashMessage ?? null,
     flashTone: item.flashTone ?? null,
+    textJsonContent: item.textJsonContent ?? null,
+    textHtmlContent: item.textHtmlContent ?? null,
     status: item.status,
     createdAt: item.createdAt,
     owner: {

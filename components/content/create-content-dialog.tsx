@@ -2,11 +2,12 @@
 
 import type { ChangeEvent, ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
-import { IconBolt, IconUpload } from "@tabler/icons-react";
+import { IconBolt, IconFileText, IconUpload } from "@tabler/icons-react";
 import {
   SUPPORTED_CONTENT_FILE_LABELS,
   SUPPORTED_CONTENT_FILE_MIME_TYPES,
 } from "@/components/content/content-file-types";
+import { TiptapEditor } from "@/components/content/tiptap-editor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,6 +43,11 @@ interface CreateContentDialogProps {
     message: string;
     tone: FlashTone;
   }) => void;
+  readonly onCreateText: (input: {
+    title: string;
+    jsonContent: string;
+    htmlContent: string;
+  }) => void;
 }
 
 export function CreateContentDialog({
@@ -49,13 +55,16 @@ export function CreateContentDialog({
   onOpenChange,
   onUploadFile,
   onCreateFlash,
+  onCreateText,
 }: CreateContentDialogProps): ReactElement {
-  const [mode, setMode] = useState<"upload" | "flash">("upload");
+  const [mode, setMode] = useState<"upload" | "flash" | "text">("upload");
   const [title, setTitle] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [scrollPxPerSecond, setScrollPxPerSecond] = useState("");
   const [flashMessage, setFlashMessage] = useState("");
   const [flashTone, setFlashTone] = useState<FlashTone>("INFO");
+  const [textJsonContent, setTextJsonContent] = useState("");
+  const [textHtmlContent, setTextHtmlContent] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
 
@@ -68,6 +77,8 @@ export function CreateContentDialog({
     setScrollPxPerSecond("");
     setFlashMessage("");
     setFlashTone("INFO");
+    setTextJsonContent("");
+    setTextHtmlContent("");
     setIsDragging(false);
     setFileError(null);
   }, []);
@@ -78,12 +89,30 @@ export function CreateContentDialog({
   }, [onOpenChange, resetState]);
 
   const isUploadMode = mode === "upload";
+  const isFlashMode = mode === "flash";
+  const isTextMode = mode === "text";
   const canSubmit = useMemo(() => {
+    if (title.trim().length === 0) return false;
     if (isUploadMode) {
-      return title.trim().length > 0 && selectedFile !== null;
+      return selectedFile !== null;
     }
-    return title.trim().length > 0 && flashMessage.trim().length > 0;
-  }, [flashMessage, isUploadMode, selectedFile, title]);
+    if (isFlashMode) {
+      return flashMessage.trim().length > 0;
+    }
+    if (isTextMode) {
+      return textJsonContent.length > 0 && textHtmlContent.length > 0;
+    }
+    return false;
+  }, [
+    flashMessage,
+    isFlashMode,
+    isTextMode,
+    isUploadMode,
+    selectedFile,
+    textHtmlContent,
+    textJsonContent,
+    title,
+  ]);
 
   const handleSubmit = useCallback(() => {
     if (!canSubmit) return;
@@ -97,11 +126,17 @@ export function CreateContentDialog({
             : undefined
           : undefined;
       onUploadFile(title.trim(), selectedFile, parsedScrollPxPerSecond);
-    } else if (!isUploadMode) {
+    } else if (isFlashMode) {
       onCreateFlash({
         title: title.trim(),
         message: flashMessage.trim(),
         tone: flashTone,
+      });
+    } else if (isTextMode) {
+      onCreateText({
+        title: title.trim(),
+        jsonContent: textJsonContent,
+        htmlContent: textHtmlContent,
       });
     }
 
@@ -111,11 +146,16 @@ export function CreateContentDialog({
     flashMessage,
     flashTone,
     handleClose,
+    isFlashMode,
+    isTextMode,
     isUploadMode,
     onCreateFlash,
+    onCreateText,
     onUploadFile,
     selectedFile,
     scrollPxPerSecond,
+    textHtmlContent,
+    textJsonContent,
     title,
   ]);
 
@@ -180,33 +220,46 @@ export function CreateContentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className={isTextMode ? "sm:max-w-2xl" : "sm:max-w-lg"}>
         <DialogHeader>
           <DialogTitle>Create Content</DialogTitle>
           <DialogDescription>
-            Upload media for playlist playback or generate a flash ticker item
-            for scheduling as an overlay.
+            Upload media, create rich text content, or generate a flash ticker
+            item for scheduling.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <Tabs
             value={mode}
-            onValueChange={(value) => setMode(value as "upload" | "flash")}
+            onValueChange={(value) =>
+              setMode(value as "upload" | "flash" | "text")
+            }
           >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="upload">Upload Content</TabsTrigger>
-              <TabsTrigger value="flash">Generate Flash Content</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="upload">Upload</TabsTrigger>
+              <TabsTrigger value="flash">Flash</TabsTrigger>
+              <TabsTrigger value="text">Text</TabsTrigger>
             </TabsList>
           </Tabs>
 
           <div className="space-y-2">
             <Label htmlFor="content-title">
-              {isUploadMode ? "Content Name" : "Flash Title"}
+              {isUploadMode
+                ? "Content Name"
+                : isFlashMode
+                  ? "Flash Title"
+                  : "Text Content Title"}
             </Label>
             <Input
               id="content-title"
-              placeholder={isUploadMode ? "Lobby PDF" : "Ticker: hello world"}
+              placeholder={
+                isUploadMode
+                  ? "Lobby PDF"
+                  : isFlashMode
+                    ? "Ticker: hello world"
+                    : "Announcement"
+              }
               value={title}
               onChange={(event) => setTitle(event.target.value)}
             />
@@ -281,7 +334,7 @@ export function CreateContentDialog({
                 </div>
               ) : null}
             </div>
-          ) : (
+          ) : isFlashMode ? (
             <div className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
               <div className="space-y-2">
                 <Label htmlFor="flash-message">Ticker Message</Label>
@@ -322,6 +375,17 @@ export function CreateContentDialog({
                 </div>
               </div>
             </div>
+          ) : (
+            <div className="space-y-2">
+              <Label>Content</Label>
+              <TiptapEditor
+                onChange={(json, html) => {
+                  setTextJsonContent(json);
+                  setTextHtmlContent(html);
+                }}
+                placeholder="Write your rich text content here..."
+              />
+            </div>
           )}
         </div>
 
@@ -339,10 +403,15 @@ export function CreateContentDialog({
                 <IconUpload className="size-4" />
                 Upload file
               </>
-            ) : (
+            ) : isFlashMode ? (
               <>
                 <IconBolt className="size-4" />
                 Create flash
+              </>
+            ) : (
+              <>
+                <IconFileText className="size-4" />
+                Create text
               </>
             )}
           </Button>

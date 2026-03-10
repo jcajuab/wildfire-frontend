@@ -484,16 +484,18 @@ export default function DisplayRuntimePage() {
       {!currentItem ? (
         <BouncingLogoScreensaver />
       ) : currentItem.content.type === "VIDEO" ? (
-        <video
-          key={currentItem.id}
-          src={currentItem.content.downloadUrl}
-          className="h-screen w-screen object-contain"
-          autoPlay
-          muted
-          playsInline
-        />
+        <div className="flex h-screen w-screen items-center justify-center bg-black">
+          <video
+            key={currentItem.id}
+            src={currentItem.content.downloadUrl}
+            className="max-h-full max-w-full object-contain"
+            autoPlay
+            muted
+            playsInline
+          />
+        </div>
       ) : currentItem.content.type === "IMAGE" ? (
-        <div className="pointer-events-none h-screen w-screen overflow-hidden select-none">
+        <div className="pointer-events-none flex h-screen w-screen items-center justify-center overflow-hidden bg-black select-none">
           <Image
             key={currentItem.id}
             src={currentItem.content.downloadUrl}
@@ -505,8 +507,18 @@ export default function DisplayRuntimePage() {
             unoptimized
           />
         </div>
+      ) : currentItem.content.type === "TEXT" ? (
+        <div className="flex h-screen w-screen items-center justify-center overflow-hidden bg-white p-8">
+          <div
+            key={currentItem.id}
+            className="text-center text-4xl leading-relaxed text-black"
+            dangerouslySetInnerHTML={{
+              __html: currentItem.content.textHtmlContent ?? "",
+            }}
+          />
+        </div>
       ) : (
-        <div className="h-screen w-screen overflow-hidden bg-white">
+        <div className="flex h-screen w-screen items-center justify-center overflow-hidden bg-white">
           <div style={scrollStyle}>
             <PdfRenderer
               key={currentItem.id}

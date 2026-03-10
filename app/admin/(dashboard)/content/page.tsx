@@ -140,6 +140,7 @@ export default function ContentPage(): ReactElement {
         onOpenChange={controller.setIsCreateDialogOpen}
         onUploadFile={controller.handleUploadFile}
         onCreateFlash={controller.handleCreateFlash}
+        onCreateText={controller.handleCreateText}
       />
 
       <EditContentDialog

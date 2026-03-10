@@ -7,6 +7,7 @@ import {
   SUPPORTED_CONTENT_FILE_LABELS,
   SUPPORTED_CONTENT_FILE_MIME_TYPES,
 } from "@/components/content/content-file-types";
+import { TiptapEditor } from "@/components/content/tiptap-editor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,6 +36,8 @@ export interface EditContentDialogSaveInput {
   readonly flashMessage: string | null;
   readonly flashTone: FlashTone | null;
   readonly scrollPxPerSecond: number | null;
+  readonly textJsonContent: string | null;
+  readonly textHtmlContent: string | null;
 }
 
 interface EditContentDialogProps {
@@ -54,9 +57,11 @@ export function EditContentDialog({
     return null;
   }
 
+  const dialogWidth = content.type === "TEXT" ? "sm:max-w-2xl" : "sm:max-w-md";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={dialogWidth}>
         <EditContentDialogForm
           key={content.id}
           content={content}
@@ -87,12 +92,19 @@ function EditContentDialogForm({
   const [scrollPxPerSecond, setScrollPxPerSecond] = useState(
     content.scrollPxPerSecond?.toString() ?? "",
   );
+  const [textJsonContent, setTextJsonContent] = useState(
+    content.textJsonContent ?? "",
+  );
+  const [textHtmlContent, setTextHtmlContent] = useState(
+    content.textHtmlContent ?? "",
+  );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const canReplaceFile =
     content.kind === "ROOT" && content.status !== "PROCESSING";
   const isFlashContent = content.type === "FLASH";
+  const isTextContent = content.type === "TEXT";
   const supportsScrollSpeed =
     content.type === "IMAGE" || content.type === "PDF";
 
@@ -177,6 +189,17 @@ function EditContentDialogForm({
               </Select>
             </div>
           </>
+        ) : isTextContent ? (
+          <div className="space-y-2">
+            <Label>Rich Text Content</Label>
+            <TiptapEditor
+              content={textJsonContent}
+              onChange={(json, html) => {
+                setTextJsonContent(json);
+                setTextHtmlContent(html);
+              }}
+            />
+          </div>
         ) : (
           <div className="space-y-2">
             {supportsScrollSpeed ? (
@@ -285,6 +308,8 @@ function EditContentDialogForm({
                       return Math.trunc(raw);
                     })()
                   : null,
+                textJsonContent: isTextContent ? textJsonContent : null,
+                textHtmlContent: isTextContent ? textHtmlContent : null,
               });
               onOpenChange(false);
             } finally {

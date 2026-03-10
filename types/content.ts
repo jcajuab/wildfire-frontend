@@ -2,7 +2,7 @@ import type { SortDirection } from "@/types/common";
 
 export type { SortDirection };
 
-export type ContentType = "IMAGE" | "VIDEO" | "PDF" | "FLASH";
+export type ContentType = "IMAGE" | "VIDEO" | "PDF" | "FLASH" | "TEXT";
 export type ContentKind = "ROOT" | "PAGE";
 export type FlashTone = "INFO" | "WARNING" | "CRITICAL";
 
@@ -32,6 +32,8 @@ export interface Content {
   readonly scrollPxPerSecond: number | null;
   readonly flashMessage: string | null;
   readonly flashTone: FlashTone | null;
+  readonly textJsonContent: string | null;
+  readonly textHtmlContent: string | null;
   readonly status: ContentStatus;
   readonly createdAt: string;
   readonly owner: ContentOwner;

@@ -82,6 +82,7 @@ export function useContentPageController() {
     setIsDeleteDialogOpen: dialogState.setIsDeleteDialogOpen,
     handleUploadFile: crudHandlers.handleUploadFile,
     handleCreateFlash: crudHandlers.handleCreateFlash,
+    handleCreateText: crudHandlers.handleCreateText,
     handleEdit: dialogState.handleEdit,
     handlePreview: dialogState.handlePreview,
     handleDelete: dialogState.handleDelete,
