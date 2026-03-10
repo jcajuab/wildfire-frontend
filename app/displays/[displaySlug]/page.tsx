@@ -31,6 +31,7 @@ import { PdfRenderer } from "@/lib/display-runtime/pdf-renderer";
 import { createDisplaySseClient } from "@/lib/display-runtime/sse-client";
 import { formatTimeOfDay } from "@/lib/formatters";
 import { useMounted } from "@/hooks/use-mounted";
+import { BouncingLogoScreensaver } from "@/components/displays/bouncing-logo-screensaver";
 
 const POLL_MS = 60_000;
 const HEARTBEAT_MS = 30_000;
@@ -481,7 +482,7 @@ export default function DisplayRuntimePage() {
       ) : null}
 
       {!currentItem ? (
-        <div className="h-screen w-screen bg-black" aria-hidden="true" />
+        <BouncingLogoScreensaver />
       ) : currentItem.content.type === "VIDEO" ? (
         <video
           key={currentItem.id}
