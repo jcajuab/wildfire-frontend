@@ -58,42 +58,35 @@ describe("DisplayGroupManagerDialog", () => {
     ]);
   });
 
-  test(
-    "creates a new group from normalized input",
-    async () => {
-      const user = userEvent.setup();
-      const unwrapCreate = vi
-        .fn()
-        .mockResolvedValue(makeGroup({ name: "Main Hall" }));
-      const createDisplayGroup = vi.fn(() => ({ unwrap: unwrapCreate }));
-      useCreateDisplayGroupMutationMock.mockReturnValue([
-        createDisplayGroup,
-        { isLoading: false },
-      ]);
+  test("creates a new group from normalized input", async () => {
+    const user = userEvent.setup();
+    const unwrapCreate = vi
+      .fn()
+      .mockResolvedValue(makeGroup({ name: "Main Hall" }));
+    const createDisplayGroup = vi.fn(() => ({ unwrap: unwrapCreate }));
+    useCreateDisplayGroupMutationMock.mockReturnValue([
+      createDisplayGroup,
+      { isLoading: false },
+    ]);
 
-      render(
-        <DisplayGroupManagerDialog
-          open={true}
-          onOpenChange={vi.fn()}
-          groups={[]}
-        />,
-      );
+    render(
+      <DisplayGroupManagerDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        groups={[]}
+      />,
+    );
 
-      await user.type(
-        screen.getByLabelText("New group name"),
-        "  Main   Hall  ",
-      );
-      await user.click(screen.getByRole("button", { name: "Add" }));
+    await user.type(screen.getByLabelText("New group name"), "  Main   Hall  ");
+    await user.click(screen.getByRole("button", { name: "Add" }));
 
-      await waitFor(() => {
-        expect(createDisplayGroup).toHaveBeenCalledWith({
-          name: "Main Hall",
-          colorIndex: 0,
-        });
+    await waitFor(() => {
+      expect(createDisplayGroup).toHaveBeenCalledWith({
+        name: "Main Hall",
+        colorIndex: 0,
       });
-    },
-    15_000,
-  );
+    });
+  }, 15_000);
 
   test("renames an existing group and emits reconciliation callback", async () => {
     const user = userEvent.setup();
@@ -160,7 +153,9 @@ describe("DisplayGroupManagerDialog", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Delete Lobby" }));
-    await user.click(await screen.findByRole("button", { name: "Delete group" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Delete group" }),
+    );
 
     await waitFor(() => {
       expect(deleteDisplayGroup).toHaveBeenCalledWith({ groupId: "group-1" });

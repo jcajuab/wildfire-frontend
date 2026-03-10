@@ -120,7 +120,10 @@ export default function PlaylistsPage(): ReactElement {
     [page, pageSize, search, sortBy, statusFilter],
   );
   const { data: playlistsData } = useListPlaylistsQuery(playlistQuery);
-  const { data: displaysData } = useGetDisplaysQuery({ page: 1, pageSize: 100 });
+  const { data: displaysData } = useGetDisplaysQuery({
+    page: 1,
+    pageSize: 100,
+  });
   const { data: contentData } = useListContentQuery(
     { page: 1, pageSize: 100 },
     { skip: !canReadContent },
@@ -170,13 +173,26 @@ export default function PlaylistsPage(): ReactElement {
 
   const totalPlaylists = playlistsData?.total ?? 0;
 
+  const handleCreateDialogOpenChange = useCallback((open: boolean) => {
+    setCreateDialogOpen(open);
+  }, []);
+
+  const handleManageItemsDialogOpenChange = useCallback((open: boolean) => {
+    if (!open) {
+      setManageItemsPlaylist(null);
+    }
+  }, []);
+
   const handleCreatePlaylist = useCallback(
     async (data: NewPlaylistPayload) => {
+      let createdPlaylistId: string | null = null;
+
       try {
         const created = await createPlaylist({
           name: data.name,
           description: data.description,
         }).unwrap();
+        createdPlaylistId = created.id;
         if (data.items.length > 0) {
           await savePlaylistItemsAtomic({
             playlistId: created.id,
@@ -188,11 +204,23 @@ export default function PlaylistsPage(): ReactElement {
           }).unwrap();
         }
         toast.success("Playlist created.");
+        return true;
       } catch (err) {
+        if (createdPlaylistId) {
+          try {
+            await deletePlaylistMutation(createdPlaylistId).unwrap();
+          } catch (rollbackError) {
+            console.error(
+              "Failed to roll back playlist creation after item-save failure.",
+              rollbackError,
+            );
+          }
+        }
         notifyApiError(err, "Failed to create playlist.");
+        return false;
       }
     },
-    [createPlaylist, savePlaylistItemsAtomic],
+    [createPlaylist, deletePlaylistMutation, savePlaylistItemsAtomic],
   );
 
   const handleEditPlaylist = useCallback((playlist: Playlist) => {
@@ -228,7 +256,7 @@ export default function PlaylistsPage(): ReactElement {
           items,
         }).unwrap();
         toast.success("Playlist items updated.");
-        setManageItemsPlaylist(null);
+        handleManageItemsDialogOpenChange(false);
       } catch (err) {
         notifyApiError(err, "Failed to update playlist items.");
       } finally {
@@ -236,7 +264,7 @@ export default function PlaylistsPage(): ReactElement {
         setIsSavingPlaylistItems(false);
       }
     },
-    [savePlaylistItemsAtomic],
+    [handleManageItemsDialogOpenChange, savePlaylistItemsAtomic],
   );
 
   const handlePreviewPlaylist = useCallback(
@@ -262,7 +290,7 @@ export default function PlaylistsPage(): ReactElement {
         title="Playlists"
         actions={
           <Can permission="playlists:create">
-            <Button onClick={() => setCreateDialogOpen(true)}>
+            <Button onClick={() => handleCreateDialogOpenChange(true)}>
               <IconPlus className="size-4" />
               Create Playlist
             </Button>
@@ -314,7 +342,7 @@ export default function PlaylistsPage(): ReactElement {
 
       <CreatePlaylistDialog
         open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
+        onOpenChange={handleCreateDialogOpenChange}
         onCreate={handleCreatePlaylist}
         availableContent={availableContent}
         availableDisplays={displaysData?.items ?? []}
@@ -322,11 +350,8 @@ export default function PlaylistsPage(): ReactElement {
 
       {manageItemsPlaylist && (
         <EditPlaylistItemsDialog
-          key={manageItemsPlaylist.id}
           open={manageItemsPlaylist !== null}
-          onOpenChange={(open) => {
-            if (!open) setManageItemsPlaylist(null);
-          }}
+          onOpenChange={handleManageItemsDialogOpenChange}
           playlist={manageItemsPlaylist}
           availableContent={availableContent}
           availableDisplays={displaysData?.items ?? []}

@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { useState, type ReactElement } from "react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
 import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
@@ -21,41 +22,74 @@ const makeDisplay = (overrides?: Partial<Display>): Display => ({
   ...overrides,
 });
 
-describe("EditDisplayDialog", () => {
-  test(
-    "keeps resolution unchanged when changing display output",
-    async () => {
-      const user = userEvent.setup();
-      const onOpenChange = vi.fn();
-      const onSave = vi.fn(async () => true);
+function EditDisplayDialogHarness(): ReactElement {
+  const [open, setOpen] = useState(true);
 
-      render(
-        <EditDisplayDialog
-          display={makeDisplay()}
-          existingGroups={[]}
-          open={true}
-          onOpenChange={onOpenChange}
-          onSave={onSave}
-        />,
-      );
-
-      const outputIndexInput = screen.getByLabelText(
-        "Display Output Index",
-      ) as HTMLInputElement;
-      await user.clear(outputIndexInput);
-      await user.type(outputIndexInput, "2");
-
-      await user.click(screen.getByRole("button", { name: "Save" }));
-
-      expect(onSave).toHaveBeenCalledWith(
-        expect.objectContaining({
-          output: "hdmi-2",
-          resolution: "1920x1080",
-        }),
-      );
-    },
-    15_000,
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        Reopen
+      </button>
+      <EditDisplayDialog
+        display={makeDisplay()}
+        existingGroups={[]}
+        open={open}
+        onOpenChange={setOpen}
+        onSave={vi.fn(async () => true)}
+      />
+    </>
   );
+}
+
+async function dismissDialog(
+  mode: "overlay" | "escape",
+  user: ReturnType<typeof userEvent.setup>,
+) {
+  if (mode === "escape") {
+    await user.keyboard("{Escape}");
+  } else {
+    const overlay = document.querySelector('[data-slot="dialog-overlay"]');
+    expect(overlay).toBeTruthy();
+    fireEvent.pointerDown(overlay as Element);
+    fireEvent.click(overlay as Element);
+  }
+
+  await waitFor(() => {
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+}
+
+describe("EditDisplayDialog", () => {
+  test("keeps resolution unchanged when changing display output", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    const onSave = vi.fn(async () => true);
+
+    render(
+      <EditDisplayDialog
+        display={makeDisplay()}
+        existingGroups={[]}
+        open={true}
+        onOpenChange={onOpenChange}
+        onSave={onSave}
+      />,
+    );
+
+    const outputIndexInput = screen.getByLabelText(
+      "Display Output Index",
+    ) as HTMLInputElement;
+    await user.clear(outputIndexInput);
+    await user.type(outputIndexInput, "2");
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        output: "hdmi-2",
+        resolution: "1920x1080",
+      }),
+    );
+  }, 15_000);
 
   test("disables save when output index is invalid", async () => {
     const user = userEvent.setup();
@@ -175,4 +209,27 @@ describe("EditDisplayDialog", () => {
     ).toHaveTextContent("Lobby");
     expect(onSave).not.toHaveBeenCalled();
   });
+
+  test.each(["overlay", "escape"] as const)(
+    "resets edited values when dismissed via %s",
+    async (mode) => {
+      const user = userEvent.setup();
+
+      render(<EditDisplayDialogHarness />);
+
+      const locationInput = screen.getByLabelText(
+        "Physical Location",
+      ) as HTMLInputElement;
+      await user.clear(locationInput);
+      await user.type(locationInput, "Temporary Location");
+
+      await dismissDialog(mode, user);
+
+      await user.click(screen.getByRole("button", { name: "Reopen" }));
+
+      expect(screen.getByLabelText("Physical Location")).toHaveValue(
+        "Main Hall",
+      );
+    },
+  );
 });

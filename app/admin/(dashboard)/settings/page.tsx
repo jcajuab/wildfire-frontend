@@ -1,25 +1,14 @@
 "use client";
 
-import type { ChangeEvent, FormEvent, ReactElement, ReactNode } from "react";
-import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import { IconCheck, IconPencil, IconUser, IconX } from "@tabler/icons-react";
+import type { ReactElement } from "react";
+import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useTheme } from "next-themes";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -28,176 +17,38 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/context/auth-context";
-import {
-  changePassword,
-  deleteCurrentUser,
-  requestEmailChange,
-  updateCurrentUserProfile,
-  uploadAvatar,
-} from "@/lib/api-client";
-import {
-  getApiErrorMessage,
-  notifyApiError,
-} from "@/lib/api/get-api-error-message";
+import { changePassword, deleteCurrentUser } from "@/lib/api-client";
+import { notifyApiError } from "@/lib/api/get-api-error-message";
 import { toast } from "sonner";
+import { SettingsField } from "./SettingsField";
+import { ProfileNameEditor } from "./ProfileNameEditor";
+import { EmailEditor } from "./EmailEditor";
+import { AvatarUploader } from "./AvatarUploader";
+import { ChangePasswordDialog } from "./ChangePasswordDialog";
+import { useProfileEditor } from "./useProfileEditor";
 
 const controlContainerClass = "w-full max-w-md";
 const controlClass = "h-10 w-full";
-
-const splitName = (
-  fullName: string | undefined,
-): { first: string; last: string } => {
-  const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
-  const first = parts[0] ?? "Admin";
-  const last = parts.slice(1).join(" ");
-  return { first, last };
-};
-
-interface SettingsFieldProps {
-  readonly label: string;
-  readonly children: ReactNode;
-}
-
-function SettingsField({ label, children }: SettingsFieldProps): ReactElement {
-  return (
-    <div className="grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] md:items-start">
-      <dt className="pt-2 text-sm font-medium text-foreground">{label}</dt>
-      <dd className="flex min-w-0 flex-col gap-2">{children}</dd>
-    </div>
-  );
-}
-
-interface DirtyFieldActionsProps {
-  readonly canConfirm: boolean;
-  readonly confirmLabel: string;
-  readonly cancelLabel: string;
-  readonly isSubmitting?: boolean;
-  readonly onConfirm: () => void;
-  readonly onCancel: () => void;
-}
-
-function DirtyFieldActions({
-  canConfirm,
-  confirmLabel,
-  cancelLabel,
-  isSubmitting = false,
-  onConfirm,
-  onCancel,
-}: DirtyFieldActionsProps): ReactElement {
-  if (!canConfirm) {
-    return <></>;
-  }
-
-  return (
-    <div className="flex shrink-0 items-center gap-2">
-      <Button
-        type="button"
-        variant="outline"
-        className="size-10"
-        disabled={isSubmitting}
-        onClick={onConfirm}
-        aria-label={confirmLabel}
-      >
-        <IconCheck className="size-4" aria-hidden="true" />
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        className="size-10"
-        disabled={isSubmitting}
-        onClick={onCancel}
-        aria-label={cancelLabel}
-      >
-        <IconX className="size-4" aria-hidden="true" />
-      </Button>
-    </div>
-  );
-}
 
 export default function SettingsPage(): ReactElement {
   const { user, token, logout, updateSession } = useAuth();
   const { theme, setTheme } = useTheme();
   const prefersReducedMotion = useReducedMotion();
 
-  const profilePictureInputRef = useRef<HTMLInputElement>(null);
-  const firstNameInputRef = useRef<HTMLInputElement>(null);
-  const lastNameInputRef = useRef<HTMLInputElement>(null);
-  const emailInputRef = useRef<HTMLInputElement>(null);
-
-  const initialName = splitName(user?.name);
-  const [firstName, setFirstName] = useState(initialName.first);
-  const [lastName, setLastName] = useState(initialName.last);
-  const [savedFirstName, setSavedFirstName] = useState(initialName.first);
-  const [savedLastName, setSavedLastName] = useState(initialName.last);
-
-  const [emailDraft, setEmailDraft] = useState(user?.email ?? "");
-  const [savedEmail, setSavedEmail] = useState(user?.email ?? "");
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [isRequestingEmailChange, setIsRequestingEmailChange] = useState(false);
-
-  const [isSavingProfileName, setIsSavingProfileName] = useState(false);
-  const [profileNameError, setProfileNameError] = useState<string | null>(null);
-
-  const [editingField, setEditingField] = useState<
-    "firstName" | "lastName" | "email" | null
-  >(null);
+  const profileEditor = useProfileEditor({
+    userName: user?.name,
+    userEmail: user?.email,
+    token,
+    updateSession,
+  });
 
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
-
-  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
-  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
-  const [profilePictureError, setProfilePictureError] = useState<string | null>(
-    null,
-  );
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const avatarUrl = user?.avatarUrl ?? null;
   const pendingEmail = user?.pendingEmail ?? null;
-  const displayedEmail = pendingEmail ?? savedEmail;
-  const isFirstNameDirty = firstName.trim() !== savedFirstName.trim();
-  const isLastNameDirty = lastName.trim() !== savedLastName.trim();
-  const isEmailDirty =
-    emailDraft.trim().toLowerCase() !== displayedEmail.trim().toLowerCase();
-
-  useEffect(() => {
-    const nextName = splitName(user?.name);
-    setSavedFirstName(nextName.first);
-    setSavedLastName(nextName.last);
-    if (editingField !== "firstName") {
-      setFirstName(nextName.first);
-    }
-    if (editingField !== "lastName") {
-      setLastName(nextName.last);
-    }
-  }, [editingField, user?.name]);
-
-  useEffect(() => {
-    const nextEmail = user?.email ?? "";
-    setSavedEmail(nextEmail);
-    if (editingField !== "email") {
-      setEmailDraft(nextEmail);
-    }
-  }, [editingField, user?.email]);
-
-  useEffect(() => {
-    if (editingField === "firstName") {
-      firstNameInputRef.current?.focus();
-      return;
-    }
-    if (editingField === "lastName") {
-      lastNameInputRef.current?.focus();
-      return;
-    }
-    if (editingField === "email") {
-      emailInputRef.current?.focus();
-    }
-  }, [editingField]);
+  const displayedEmail = pendingEmail ?? profileEditor.savedEmail;
 
   const sectionMotionProps = prefersReducedMotion
     ? {}
@@ -207,181 +58,18 @@ export default function SettingsPage(): ReactElement {
         transition: { duration: 0.16, ease: "easeOut" as const },
       };
 
-  const handleChangeProfilePicture = (): void => {
-    setProfilePictureError(null);
-    profilePictureInputRef.current?.click();
-  };
-
-  const handleProfilePictureSelected = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ): Promise<void> => {
-    const file = event.target.files?.[0];
-    setProfilePictureError(null);
-    event.target.value = "";
-    if (!file) return;
-
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/gif",
-    ] as const;
-    const maxBytes = 2 * 1024 * 1024;
-    if (!allowedTypes.includes(file.type as (typeof allowedTypes)[number])) {
-      setProfilePictureError(
-        "Use a JPEG, PNG, WebP or GIF image. Some image types from your display are not supported.",
-      );
-      return;
-    }
-    if (file.size > maxBytes) {
-      setProfilePictureError("Image must be 2 MB or smaller.");
-      return;
-    }
-
-    setIsAvatarUploading(true);
-    try {
-      const response = await uploadAvatar(token, file);
-      updateSession(response);
-      toast.success("Profile picture updated.");
-    } catch (err) {
-      notifyApiError(err, "Failed to upload profile picture.");
-    } finally {
-      setIsAvatarUploading(false);
-    }
-  };
-
-  const saveProfileName = async (
-    nextFirstName: string,
-    nextLastName: string,
-  ): Promise<boolean> => {
-    const normalizedFirstName = nextFirstName.trim();
-    const normalizedLastName = nextLastName.trim();
-    const normalizedSavedFirstName = savedFirstName.trim();
-    const normalizedSavedLastName = savedLastName.trim();
-
-    setFirstName(normalizedFirstName);
-    setLastName(normalizedLastName);
-
-    if (
-      normalizedFirstName === normalizedSavedFirstName &&
-      normalizedLastName === normalizedSavedLastName
-    ) {
-      setProfileNameError(null);
-      return true;
-    }
-
-    const name = [normalizedFirstName, normalizedLastName]
-      .filter((part) => part.length > 0)
-      .join(" ");
-    setIsSavingProfileName(true);
-    setProfileNameError(null);
-    try {
-      const response = await updateCurrentUserProfile(token, { name });
-      updateSession(response);
-      setSavedFirstName(normalizedFirstName);
-      setSavedLastName(normalizedLastName);
-      return true;
-    } catch (err) {
-      setProfileNameError(getApiErrorMessage(err, "Failed to update profile."));
-      notifyApiError(err, "Failed to update profile.");
-      return false;
-    } finally {
-      setIsSavingProfileName(false);
-    }
-  };
-
-  const requestEmailVerification = async (): Promise<boolean> => {
-    const normalizedEmail = emailDraft.trim().toLowerCase();
-    if (normalizedEmail.length === 0) {
-      setEmailError("Email is required.");
-      return false;
-    }
-    if (normalizedEmail === displayedEmail.trim().toLowerCase()) {
-      setEditingField(null);
-      setEmailError(null);
-      return true;
-    }
-
-    setIsRequestingEmailChange(true);
-    setEmailError(null);
-    try {
-      const response = await requestEmailChange(token, {
-        email: normalizedEmail,
-      });
-      updateSession(response);
-      setEditingField(null);
-      setEmailDraft(response.user.pendingEmail ?? response.user.email ?? "");
-      setSavedEmail(response.user.email ?? "");
-      toast.success("Verification link sent to your new email.");
-      return true;
-    } catch (err) {
-      const message = getApiErrorMessage(
-        err,
-        "Failed to request email verification.",
-      );
-      setEmailError(message);
-      notifyApiError(err, "Failed to request email verification.");
-      return false;
-    } finally {
-      setIsRequestingEmailChange(false);
-    }
-  };
-
   const handleChangePassword = (): void => {
-    setPasswordError(null);
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
     setIsPasswordDialogOpen(true);
   };
 
-  const handlePasswordSubmit = async (
-    event: FormEvent<HTMLFormElement>,
-  ): Promise<void> => {
-    event.preventDefault();
-    setPasswordError(null);
-
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      setPasswordError("Please fill in all password fields.");
-      return;
-    }
-    if (newPassword.length < 8) {
-      setPasswordError("New password must be at least 8 characters.");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordError("New password and confirmation do not match.");
-      return;
-    }
-
-    setIsPasswordSubmitting(true);
-    try {
-      await changePassword(token, {
-        currentPassword,
-        newPassword,
-      });
-      toast.success("Password updated.");
-      setIsPasswordDialogOpen(false);
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (err) {
-      const message = getApiErrorMessage(err, "Failed to update password.");
-      setPasswordError(
-        message.toLowerCase().includes("current")
-          ? "Current password is incorrect."
-          : message,
-      );
-    } finally {
-      setIsPasswordSubmitting(false);
-    }
+  const handlePasswordSubmit = async (data: {
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<void> => {
+    await changePassword(token, data);
+    toast.success("Password updated.");
+    setIsPasswordDialogOpen(false);
   };
-
-  const canSubmitPassword =
-    currentPassword.length > 0 &&
-    newPassword.length > 0 &&
-    confirmPassword.length > 0 &&
-    !isPasswordSubmitting;
 
   const handleLogOut = async (): Promise<void> => {
     if (isLoggingOut) return;
@@ -397,7 +85,10 @@ export default function SettingsPage(): ReactElement {
     setIsDeleteDialogOpen(true);
   };
 
-  const accountDisplayName = [firstName.trim(), lastName.trim()]
+  const accountDisplayName = [
+    profileEditor.firstName.trim(),
+    profileEditor.lastName.trim(),
+  ]
     .filter((part) => part.length > 0)
     .join(" ");
   const accountNameForDialog =
@@ -441,216 +132,44 @@ export default function SettingsPage(): ReactElement {
 
                 <dl className="space-y-4">
                   <SettingsField label="Profile picture">
-                    <div className="flex items-center">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-sm"
-                        onClick={handleChangeProfilePicture}
-                        disabled={isAvatarUploading}
-                        className="group relative size-14 overflow-hidden rounded-full border border-border bg-muted p-0 hover:bg-muted/70"
-                        aria-label="Change profile picture"
-                        aria-busy={isAvatarUploading}
-                      >
-                        {avatarUrl && failedAvatarUrl !== avatarUrl ? (
-                          <Image
-                            src={avatarUrl}
-                            alt="Profile picture"
-                            width={56}
-                            height={56}
-                            className="size-14 object-cover"
-                            unoptimized
-                            onError={() => setFailedAvatarUrl(avatarUrl)}
-                          />
-                        ) : (
-                          <IconUser className="size-6 text-muted-foreground" />
-                        )}
-                        <span className="absolute inset-0 flex items-center justify-center bg-black/35 text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
-                          <IconPencil className="size-3.5" />
-                        </span>
-                      </Button>
-                    </div>
-                    <input
-                      ref={profilePictureInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      onChange={handleProfilePictureSelected}
-                      className="hidden"
+                    <AvatarUploader
+                      avatarUrl={avatarUrl}
+                      isUploading={profileEditor.isAvatarUploading}
+                      error={profileEditor.profilePictureError}
+                      onUpload={profileEditor.handleAvatarUpload}
+                      onClearError={() =>
+                        profileEditor.setProfilePictureError(null)
+                      }
+                      onError={(message) =>
+                        profileEditor.setProfilePictureError(message)
+                      }
                     />
-                    {profilePictureError ? (
-                      <p role="alert" className="text-xs text-destructive">
-                        {profilePictureError}
-                      </p>
-                    ) : null}
                   </SettingsField>
 
-                  <SettingsField label="First name">
-                    <div className={controlContainerClass}>
-                      {editingField === "firstName" ? (
-                        <div className="flex items-start gap-2">
-                          <Input
-                            ref={firstNameInputRef}
-                            id="firstName"
-                            value={firstName}
-                            onChange={(event) =>
-                              setFirstName(event.target.value)
-                            }
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter") {
-                                event.preventDefault();
-                                void (async () => {
-                                  const didSave = await saveProfileName(
-                                    firstName,
-                                    lastName,
-                                  );
-                                  if (didSave) {
-                                    setEditingField(null);
-                                  }
-                                })();
-                              }
-                              if (event.key === "Escape") {
-                                event.preventDefault();
-                                setFirstName(savedFirstName);
-                                setProfileNameError(null);
-                                setEditingField(null);
-                              }
-                            }}
-                            aria-label="First name"
-                            className={`${controlClass} flex-1`}
-                          />
-                          <DirtyFieldActions
-                            canConfirm={isFirstNameDirty}
-                            confirmLabel="Save first name"
-                            cancelLabel="Cancel first name changes"
-                            isSubmitting={isSavingProfileName}
-                            onConfirm={() => {
-                              void (async () => {
-                                const didSave = await saveProfileName(
-                                  firstName,
-                                  lastName,
-                                );
-                                if (didSave) {
-                                  setEditingField(null);
-                                }
-                              })();
-                            }}
-                            onCancel={() => {
-                              setFirstName(savedFirstName);
-                              setProfileNameError(null);
-                              setEditingField(null);
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            setProfileNameError(null);
-                            setEditingField("firstName");
-                          }}
-                          disabled={isSavingProfileName}
-                          className={`${controlClass} justify-between gap-2 pr-2`}
-                          aria-label="Edit first name"
-                        >
-                          <span>{firstName || "Set first name"}</span>
-                          <IconPencil
-                            className="size-3.5 text-muted-foreground/80"
-                            aria-hidden="true"
-                          />
-                        </Button>
-                      )}
-                    </div>
-                    {editingField === "firstName" && profileNameError ? (
-                      <p role="alert" className="text-xs text-destructive">
-                        {profileNameError}
-                      </p>
-                    ) : null}
-                  </SettingsField>
-
-                  <SettingsField label="Last name">
-                    <div className={controlContainerClass}>
-                      {editingField === "lastName" ? (
-                        <div className="flex items-start gap-2">
-                          <Input
-                            ref={lastNameInputRef}
-                            id="lastName"
-                            value={lastName}
-                            onChange={(event) =>
-                              setLastName(event.target.value)
-                            }
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter") {
-                                event.preventDefault();
-                                void (async () => {
-                                  const didSave = await saveProfileName(
-                                    firstName,
-                                    lastName,
-                                  );
-                                  if (didSave) {
-                                    setEditingField(null);
-                                  }
-                                })();
-                              }
-                              if (event.key === "Escape") {
-                                event.preventDefault();
-                                setLastName(savedLastName);
-                                setProfileNameError(null);
-                                setEditingField(null);
-                              }
-                            }}
-                            aria-label="Last name"
-                            className={`${controlClass} flex-1`}
-                          />
-                          <DirtyFieldActions
-                            canConfirm={isLastNameDirty}
-                            confirmLabel="Save last name"
-                            cancelLabel="Cancel last name changes"
-                            isSubmitting={isSavingProfileName}
-                            onConfirm={() => {
-                              void (async () => {
-                                const didSave = await saveProfileName(
-                                  firstName,
-                                  lastName,
-                                );
-                                if (didSave) {
-                                  setEditingField(null);
-                                }
-                              })();
-                            }}
-                            onCancel={() => {
-                              setLastName(savedLastName);
-                              setProfileNameError(null);
-                              setEditingField(null);
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            setProfileNameError(null);
-                            setEditingField("lastName");
-                          }}
-                          disabled={isSavingProfileName}
-                          className={`${controlClass} justify-between gap-2 pr-2`}
-                          aria-label="Edit last name"
-                        >
-                          <span>{lastName || "Set last name"}</span>
-                          <IconPencil
-                            className="size-3.5 text-muted-foreground/80"
-                            aria-hidden="true"
-                          />
-                        </Button>
-                      )}
-                    </div>
-                    {editingField === "lastName" && profileNameError ? (
-                      <p role="alert" className="text-xs text-destructive">
-                        {profileNameError}
-                      </p>
-                    ) : null}
-                  </SettingsField>
+                  <ProfileNameEditor
+                    firstName={profileEditor.firstName}
+                    lastName={profileEditor.lastName}
+                    savedFirstName={profileEditor.savedFirstName}
+                    savedLastName={profileEditor.savedLastName}
+                    editingField={profileEditor.editingField}
+                    isSavingProfileName={profileEditor.isSavingProfileName}
+                    profileNameError={profileEditor.profileNameError}
+                    onFirstNameChange={profileEditor.setFirstName}
+                    onLastNameChange={profileEditor.setLastName}
+                    onEditFieldChange={(field) => {
+                      if (field) {
+                        profileEditor.setProfileNameError(null);
+                      }
+                      profileEditor.setEditingField(field);
+                    }}
+                    onSaveProfileName={profileEditor.saveProfileName}
+                    onCancelEdit={() => {
+                      profileEditor.setFirstName(profileEditor.savedFirstName);
+                      profileEditor.setLastName(profileEditor.savedLastName);
+                      profileEditor.setProfileNameError(null);
+                      profileEditor.setEditingField(null);
+                    }}
+                  />
 
                   <SettingsField label="Username">
                     <div className={controlContainerClass}>
@@ -663,89 +182,32 @@ export default function SettingsPage(): ReactElement {
                   </SettingsField>
 
                   <SettingsField label="Email">
-                    <div className={controlContainerClass}>
-                      {editingField === "email" ? (
-                        <div className="flex items-start gap-2">
-                          <Input
-                            ref={emailInputRef}
-                            id="email"
-                            type="email"
-                            value={emailDraft}
-                            onChange={(event) =>
-                              setEmailDraft(event.target.value)
-                            }
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter") {
-                                event.preventDefault();
-                                void (async () => {
-                                  const didRequest =
-                                    await requestEmailVerification();
-                                  if (didRequest) {
-                                    setEditingField(null);
-                                  }
-                                })();
-                              }
-                              if (event.key === "Escape") {
-                                event.preventDefault();
-                                setEmailDraft(displayedEmail);
-                                setEmailError(null);
-                                setEditingField(null);
-                              }
-                            }}
-                            aria-label="Email"
-                            className={`${controlClass} flex-1`}
-                          />
-                          <DirtyFieldActions
-                            canConfirm={isEmailDirty}
-                            confirmLabel="Request email verification"
-                            cancelLabel="Cancel email changes"
-                            isSubmitting={isRequestingEmailChange}
-                            onConfirm={() => {
-                              void (async () => {
-                                const didRequest =
-                                  await requestEmailVerification();
-                                if (didRequest) {
-                                  setEditingField(null);
-                                }
-                              })();
-                            }}
-                            onCancel={() => {
-                              setEmailDraft(displayedEmail);
-                              setEmailError(null);
-                              setEditingField(null);
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className={`${controlClass} justify-between gap-2 pr-2`}
-                          onClick={() => {
-                            setEmailError(null);
-                            setEmailDraft(displayedEmail);
-                            setEditingField("email");
-                          }}
-                          aria-label="Edit email"
-                        >
-                          <span>{displayedEmail || "Set email address"}</span>
-                          <IconPencil
-                            className="size-3.5 text-muted-foreground/80"
-                            aria-hidden="true"
-                          />
-                        </Button>
-                      )}
-                    </div>
-                    {pendingEmail ? (
-                      <p className="text-xs text-primary" aria-live="polite">
-                        Pending verification: {pendingEmail}
-                      </p>
-                    ) : null}
-                    {emailError ? (
-                      <p role="alert" className="text-xs text-destructive">
-                        {emailError}
-                      </p>
-                    ) : null}
+                    <EmailEditor
+                      emailDraft={profileEditor.emailDraft}
+                      displayedEmail={displayedEmail}
+                      pendingEmail={pendingEmail}
+                      editingField={profileEditor.editingField}
+                      isRequestingEmailChange={
+                        profileEditor.isRequestingEmailChange
+                      }
+                      emailError={profileEditor.emailError}
+                      onEmailDraftChange={profileEditor.setEmailDraft}
+                      onEditFieldChange={(field) => {
+                        if (field) {
+                          profileEditor.setEmailError(null);
+                          profileEditor.setEmailDraft(displayedEmail);
+                        }
+                        profileEditor.setEditingField(field);
+                      }}
+                      onRequestEmailVerification={() =>
+                        profileEditor.requestEmailVerification(displayedEmail)
+                      }
+                      onCancelEdit={() => {
+                        profileEditor.setEmailDraft(displayedEmail);
+                        profileEditor.setEmailError(null);
+                        profileEditor.setEditingField(null);
+                      }}
+                    />
                   </SettingsField>
 
                   <SettingsField label="Password">
@@ -874,78 +336,11 @@ export default function SettingsPage(): ReactElement {
         </DashboardPage.Content>
       </DashboardPage.Body>
 
-      <Dialog
+      <ChangePasswordDialog
         open={isPasswordDialogOpen}
-        onOpenChange={(open) => {
-          setIsPasswordDialogOpen(open);
-          if (!open) {
-            setPasswordError(null);
-            setIsPasswordSubmitting(false);
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <form onSubmit={handlePasswordSubmit}>
-            <DialogHeader>
-              <DialogTitle>Change Password</DialogTitle>
-              <DialogDescription>
-                Enter your current password and choose a new one (at least 8
-                characters).
-              </DialogDescription>
-            </DialogHeader>
-            <div className="mt-4 flex flex-col gap-3">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="current-password">Current password</Label>
-                <Input
-                  id="current-password"
-                  type="password"
-                  value={currentPassword}
-                  onChange={(event) => setCurrentPassword(event.target.value)}
-                  className={controlClass}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="new-password">New password</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(event) => setNewPassword(event.target.value)}
-                  className={controlClass}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="confirm-password">Confirm new password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                  className={controlClass}
-                />
-              </div>
-              {passwordError ? (
-                <p role="alert" className="text-sm text-destructive">
-                  {passwordError}
-                </p>
-              ) : null}
-            </div>
-            <DialogFooter className="mt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsPasswordDialogOpen(false)}
-                disabled={isPasswordSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={!canSubmitPassword}>
-                {isPasswordSubmitting ? "Updating..." : "Update Password"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setIsPasswordDialogOpen}
+        onSubmit={handlePasswordSubmit}
+      />
 
       <ConfirmActionDialog
         open={isDeleteDialogOpen}

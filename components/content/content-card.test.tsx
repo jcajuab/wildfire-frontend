@@ -31,20 +31,16 @@ const baseContent: Content = {
 };
 
 describe("ContentCard", () => {
-  test(
-    "does not show manage pages action for root PDFs",
-    async () => {
-      const user = userEvent.setup();
-      render(<ContentCard content={baseContent} onPreview={vi.fn()} />);
+  test("does not show manage pages action for root PDFs", async () => {
+    const user = userEvent.setup();
+    render(<ContentCard content={baseContent} onPreview={vi.fn()} />);
 
-      await user.click(screen.getByRole("button", { name: /actions for/i }));
+    await user.click(screen.getByRole("button", { name: /actions for/i }));
 
-      expect(
-        screen.queryByRole("menuitem", { name: "Manage Pages" }),
-      ).not.toBeInTheDocument();
-    },
-    15_000,
-  );
+    expect(
+      screen.queryByRole("menuitem", { name: "Manage Pages" }),
+    ).not.toBeInTheDocument();
+  }, 15_000);
 
   test("toggles pdf root expansion from card interaction", async () => {
     const user = userEvent.setup();

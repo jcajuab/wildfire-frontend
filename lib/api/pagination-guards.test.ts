@@ -40,7 +40,9 @@ describe("server-driven list query contracts", () => {
       expect(url.searchParams.get("output")).toBe("HDMI");
       expect(url.searchParams.get("sortBy")).toBe("status");
       expect(url.searchParams.get("sortDirection")).toBe("desc");
-      expect(url.searchParams.getAll("groupIds")).toEqual([...selectedGroupIds]);
+      expect(url.searchParams.getAll("groupIds")).toEqual([
+        ...selectedGroupIds,
+      ]);
       return new Response(
         JSON.stringify({
           data: [

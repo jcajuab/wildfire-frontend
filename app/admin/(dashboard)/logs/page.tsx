@@ -1,9 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { IconFileExport } from "@tabler/icons-react";
-import { toast } from "sonner";
+import { useCallback, useMemo } from "react";
 
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { LogsPagination } from "@/components/logs/logs-pagination";
@@ -19,29 +17,10 @@ import {
 } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  useQueryEnumState,
-  useQueryNumberState,
-  useQueryStringState,
-} from "@/hooks/use-query-state";
 import { useCan } from "@/hooks/use-can";
-import {
-  type AuditExportQuery,
-  type AuditListQuery,
-  exportAuditEventsCsv,
-  useListAuditEventsQuery,
-} from "@/lib/api/audit-api";
+import { useListAuditEventsQuery } from "@/lib/api/audit-api";
 import { useGetDisplaysQuery } from "@/lib/api/displays-api";
 import { useGetUsersQuery } from "@/lib/api/rbac-api";
-import {
-  getApiErrorMessage,
-  notifyApiError,
-} from "@/lib/api/get-api-error-message";
 import {
   getResourceTypeLabel,
   getResourceTypeValueFromInput,
@@ -49,7 +28,6 @@ import {
   RESOURCE_TYPE_SELECT_ALL_VALUE,
   type ResourceTypeFilter,
 } from "@/lib/audit-resource-types";
-import { dateToISOEnd, dateToISOStart } from "@/lib/formatters";
 import { mapAuditEventToLogEntry } from "@/lib/mappers/audit-log-mapper";
 import {
   Select,
@@ -59,9 +37,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { LogEntry } from "@/types/log";
+import { useAuditLogFilters } from "./useAuditLogFilters";
+import { useActorResolver } from "./useActorResolver";
+import { AuditExportPopover } from "./AuditExportPopover";
 
 const PAGE_SIZE = 20;
-const LOG_FILTER_DEBOUNCE_MS = 250;
 const ACTOR_TYPE_FILTERS = ["all", "user", "display"] as const;
 type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
 const COMMON_STATUS_CODES = ["200", "401", "403", "404", "500"] as const;
@@ -74,202 +54,87 @@ const STATUS_CODE_LABELS: Record<(typeof COMMON_STATUS_CODES)[number], string> =
     "500": "500 (Internal Server Error)",
   };
 
-function formatActorDisplay(
-  userMap: Map<string, string>,
-  displayMap: Map<string, string>,
-): (actorId: string, actorType: string | null) => string {
-  return (actorId: string, actorType: string | null) => {
-    if (actorType === "user") {
-      return userMap.get(actorId) ?? "Unknown user";
-    }
-    if (actorType === "display") {
-      return displayMap.get(actorId) ?? "Display";
-    }
-    return actorType ?? "Unknown";
-  };
-}
-
-function getActorAvatarUrl(
-  avatarUrlByUserId: Map<string, string | null>,
-): (actorId: string, actorType: string | null) => string | null {
-  return (actorId: string, actorType: string | null) => {
-    if (actorType === "user") {
-      return avatarUrlByUserId.get(actorId) ?? null;
-    }
-    return null;
-  };
-}
-
 export default function LogsPage(): ReactElement {
   const canExport = useCan("audit:read");
-  const [page, setPage] = useQueryNumberState("page", 1);
-  const [from, setFrom] = useQueryStringState("from", "");
-  const [to, setTo] = useQueryStringState("to", "");
-  const [action, setAction] = useQueryStringState("action", "");
-  const [actionDraft, setActionDraft] = useState(action);
-  const [requestId, setRequestId] = useQueryStringState("requestId", "");
-  const [requestIdDraft, setRequestIdDraft] = useState(requestId);
-  const [resourceType, setResourceType] = useQueryEnumState<ResourceTypeFilter>(
-    "resourceType",
-    "",
-    RESOURCE_TYPE_FILTER_OPTIONS,
-  );
-  const [resourceTypeInput, setResourceTypeInput] = useState<string>("");
-  const [statusRaw, setStatusRaw] = useQueryStringState("status", "");
-  const [actorType, setActorType] = useQueryEnumState<ActorTypeFilter>(
-    "actorType",
-    "all",
-    ACTOR_TYPE_FILTERS,
-  );
-  const [exportPopoverOpen, setExportPopoverOpen] = useState<boolean>(false);
-  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const filters = useAuditLogFilters(PAGE_SIZE);
 
-  useEffect(() => {
-    setResourceTypeInput(
-      resourceType === "" ? "" : getResourceTypeLabel(resourceType),
-    );
-  }, [resourceType]);
-
-  useEffect(() => {
-    setActionDraft(action);
-  }, [action]);
-
-  useEffect(() => {
-    setRequestIdDraft(requestId);
-  }, [requestId]);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      if (actionDraft === action) {
-        return;
-      }
-      setAction(actionDraft);
-      if (page !== 1) {
-        setPage(1);
-      }
-    }, LOG_FILTER_DEBOUNCE_MS);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [action, actionDraft, page, setAction, setPage]);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      if (requestIdDraft === requestId) {
-        return;
-      }
-      setRequestId(requestIdDraft);
-      if (page !== 1) {
-        setPage(1);
-      }
-    }, LOG_FILTER_DEBOUNCE_MS);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [page, requestId, requestIdDraft, setPage, setRequestId]);
-
-  const parsedStatus = useMemo<number | undefined>(() => {
-    const parsed = Number.parseInt(statusRaw, 10);
-    if (!Number.isFinite(parsed) || parsed < 100 || parsed > 599) {
-      return undefined;
-    }
-    return parsed;
-  }, [statusRaw]);
-
-  const listQuery = useMemo<AuditListQuery>(
-    () => ({
-      page,
-      pageSize: PAGE_SIZE,
-      from: from ? dateToISOStart(from) : undefined,
-      to: to ? dateToISOEnd(to) : undefined,
-      action: action || undefined,
-      actorType: actorType === "all" ? undefined : actorType,
-      resourceType: resourceType || undefined,
-      status: parsedStatus,
-      requestId: requestId || undefined,
-    }),
-    [action, actorType, from, page, parsedStatus, requestId, resourceType, to],
-  );
-
-  const { data } = useListAuditEventsQuery(listQuery);
+  const { data } = useListAuditEventsQuery(filters.listQuery);
   const canReadUsers = useCan("users:read");
   const canReadDisplays = useCan("displays:read");
-  const { data: usersData } = useGetUsersQuery({ page: 1, pageSize: 100 }, {
-    skip: !canReadUsers,
-  });
-  const { data: displaysData } = useGetDisplaysQuery({ page: 1, pageSize: 100 }, {
-    skip: !canReadDisplays,
-  });
+  const { data: usersData } = useGetUsersQuery(
+    { page: 1, pageSize: 100 },
+    {
+      skip: !canReadUsers,
+    },
+  );
+  const { data: displaysData } = useGetDisplaysQuery(
+    { page: 1, pageSize: 100 },
+    {
+      skip: !canReadDisplays,
+    },
+  );
   const users = usersData?.items ?? [];
+  const displays = displaysData?.items ?? [];
+
+  const actorResolver = useActorResolver({ users, displays });
 
   const logs = useMemo<LogEntry[]>(() => {
-    const userMap = new Map(users.map((u) => [u.id, u.name]));
-    const avatarUrlByUserId = new Map(
-      users.map((u) => [u.id, u.avatarUrl ?? null]),
-    );
-    const displayMap = new Map(
-      (displaysData?.items ?? []).map((d) => [d.id, d.name || d.slug]),
-    );
-    const getActorName = formatActorDisplay(userMap, displayMap);
-    const getActorAvatarUrlFn = getActorAvatarUrl(avatarUrlByUserId);
     return (data?.items ?? []).map((event) =>
       mapAuditEventToLogEntry(event, {
-        getActorName,
-        getActorAvatarUrl: getActorAvatarUrlFn,
+        getActorName: actorResolver.getActorName,
+        getActorAvatarUrl: actorResolver.getActorAvatarUrl,
       }),
     );
-  }, [data?.items, users, displaysData?.items]);
+  }, [data?.items, actorResolver]);
 
   const total = data?.total ?? 0;
 
-  const exportRangeValid = from.trim() !== "" && to.trim() !== "" && from <= to;
-  const canDownload = exportRangeValid;
-
   const resetToFirstPage = useCallback((): void => {
-    if (page !== 1) {
-      setPage(1);
+    if (filters.page !== 1) {
+      filters.setPage(1);
     }
-  }, [page, setPage]);
+  }, [filters]);
 
   const handleFromChange = useCallback(
     (nextValue: string): void => {
-      setFrom(nextValue);
+      filters.setFrom(nextValue);
       resetToFirstPage();
     },
-    [resetToFirstPage, setFrom],
+    [resetToFirstPage, filters],
   );
 
   const handleToChange = useCallback(
     (nextValue: string): void => {
-      setTo(nextValue);
+      filters.setTo(nextValue);
       resetToFirstPage();
     },
-    [resetToFirstPage, setTo],
+    [resetToFirstPage, filters],
   );
 
-  const handleActionChange = useCallback((nextValue: string): void => {
-    setActionDraft(nextValue);
-  }, []);
+  const handleActionChange = useCallback(
+    (nextValue: string): void => {
+      filters.setActionDraft(nextValue);
+    },
+    [filters],
+  );
 
   const handleActorTypeChange = useCallback(
     (nextValue: ActorTypeFilter): void => {
-      setActorType(nextValue);
+      filters.setActorType(nextValue);
       resetToFirstPage();
     },
-    [resetToFirstPage, setActorType],
+    [resetToFirstPage, filters],
   );
 
   const handleResourceTypeChange = useCallback(
     (nextValue: ResourceTypeFilter): void => {
-      setResourceType(nextValue);
-      setResourceTypeInput(
+      filters.setResourceType(nextValue);
+      filters.setResourceTypeInput(
         nextValue === "" ? "" : getResourceTypeLabel(nextValue),
       );
       resetToFirstPage();
     },
-    [resetToFirstPage, setResourceType],
+    [resetToFirstPage, filters],
   );
 
   const handleResourceTypeInputChange = useCallback(
@@ -277,127 +142,57 @@ export default function LogsPage(): ReactElement {
       const resolvedValue = getResourceTypeValueFromInput(nextInputValue);
 
       if (resolvedValue !== null && resolvedValue !== "") {
-        setResourceType(resolvedValue);
-        setResourceTypeInput(getResourceTypeLabel(resolvedValue));
+        filters.setResourceType(resolvedValue);
+        filters.setResourceTypeInput(getResourceTypeLabel(resolvedValue));
         resetToFirstPage();
         return;
       }
 
-      setResourceTypeInput(nextInputValue);
+      filters.setResourceTypeInput(nextInputValue);
       if (nextInputValue === "") {
-        setResourceType("");
+        filters.setResourceType("");
         resetToFirstPage();
       }
     },
-    [resetToFirstPage, setResourceType],
+    [resetToFirstPage, filters],
   );
 
   const handleStatusChange = useCallback(
     (nextValue: string): void => {
-      setStatusRaw(nextValue);
+      filters.setStatusRaw(nextValue);
       resetToFirstPage();
     },
-    [resetToFirstPage, setStatusRaw],
+    [resetToFirstPage, filters],
   );
-
-  const selectedResourceTypeValue = useMemo<string | null>(() => {
-    if (resourceTypeInput === "") return RESOURCE_TYPE_SELECT_ALL_VALUE;
-    const resolvedValue = getResourceTypeValueFromInput(resourceTypeInput);
-    if (resolvedValue !== null && resolvedValue !== "") {
-      return resolvedValue;
-    }
-    return resourceType || RESOURCE_TYPE_SELECT_ALL_VALUE;
-  }, [resourceTypeInput, resourceType]);
 
   const selectedStatusValue = useMemo<string | null>(() => {
     return COMMON_STATUS_CODES.includes(
-      statusRaw as (typeof COMMON_STATUS_CODES)[number],
+      filters.statusRaw as (typeof COMMON_STATUS_CODES)[number],
     )
-      ? statusRaw
+      ? filters.statusRaw
       : null;
-  }, [statusRaw]);
+  }, [filters.statusRaw]);
 
-  const handleRequestIdChange = useCallback((nextValue: string): void => {
-    setRequestIdDraft(nextValue);
-  }, []);
-
-  const handleExportSubmit = useCallback(async (): Promise<void> => {
-    if (actionDraft !== action) {
-      setAction(actionDraft);
-    }
-    if (requestIdDraft !== requestId) {
-      setRequestId(requestIdDraft);
-    }
-
-    setIsExporting(true);
-    try {
-      const query: AuditExportQuery = {
-        from: dateToISOStart(from),
-        to: dateToISOEnd(to),
-        action: actionDraft || undefined,
-        actorType: actorType === "all" ? undefined : actorType,
-        resourceType: resourceType || undefined,
-        status: parsedStatus,
-        requestId: requestIdDraft || undefined,
-      };
-      const blob = await exportAuditEventsCsv(query);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "wildfire-audit-events.csv";
-      link.click();
-      URL.revokeObjectURL(url);
-      setExportPopoverOpen(false);
-      toast.success("Logs exported.");
-    } catch (err) {
-      const message = getApiErrorMessage(err, "Failed to export audit logs.");
-      if (message.includes("Export limit exceeded")) {
-        notifyApiError(
-          err,
-          "Export is too large for one file. Narrow your filters or date range.",
-        );
-      } else {
-        notifyApiError(err, message);
-      }
-    } finally {
-      setIsExporting(false);
-    }
-  }, [
-    action,
-    actionDraft,
-    actorType,
-    from,
-    parsedStatus,
-    requestId,
-    requestIdDraft,
-    resourceType,
-    setAction,
-    setRequestId,
-    to,
-  ]);
+  const handleRequestIdChange = useCallback(
+    (nextValue: string): void => {
+      filters.setRequestIdDraft(nextValue);
+    },
+    [filters],
+  );
 
   const handleResetFilters = useCallback((): void => {
-    setFrom("");
-    setTo("");
-    setAction("");
-    setActionDraft("");
-    setActorType("all");
-    setResourceType("");
-    setResourceTypeInput("");
-    setStatusRaw("");
-    setRequestId("");
-    setRequestIdDraft("");
-    setPage(1);
-  }, [
-    setAction,
-    setActorType,
-    setFrom,
-    setPage,
-    setRequestId,
-    setResourceType,
-    setStatusRaw,
-    setTo,
-  ]);
+    filters.setFrom("");
+    filters.setTo("");
+    filters.setAction("");
+    filters.setActionDraft("");
+    filters.setActorType("all");
+    filters.setResourceType("");
+    filters.setResourceTypeInput("");
+    filters.setStatusRaw("");
+    filters.setRequestId("");
+    filters.setRequestIdDraft("");
+    filters.setPage(1);
+  }, [filters]);
 
   return (
     <DashboardPage.Root>
@@ -405,61 +200,24 @@ export default function LogsPage(): ReactElement {
         title="Logs"
         actions={
           canExport ? (
-            <Popover
-              open={exportPopoverOpen}
-              onOpenChange={setExportPopoverOpen}
-            >
-              <PopoverTrigger asChild>
-                <Button>
-                  <IconFileExport className="size-4" />
-                  Export Logs
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80" align="end">
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
-                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                      <Label htmlFor="export-from">From</Label>
-                      <Input
-                        id="export-from"
-                        type="date"
-                        value={from}
-                        onChange={(e) => handleFromChange(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                      <Label htmlFor="export-to">To</Label>
-                      <Input
-                        id="export-to"
-                        type="date"
-                        value={to}
-                        onChange={(e) => handleToChange(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Export applies your active table filters.
-                  </p>
-                  {total > 100000 && (
-                    <p className="text-xs text-muted-foreground">
-                      Current result set may exceed backend export limits.
-                    </p>
-                  )}
-                  {!exportRangeValid && from !== "" && to !== "" && (
-                    <p className="text-destructive text-xs">
-                      From date must be before or equal to To date.
-                    </p>
-                  )}
-                  <Button
-                    onClick={handleExportSubmit}
-                    disabled={!canDownload || isExporting}
-                    className="w-full"
-                  >
-                    {isExporting ? "Exporting..." : "Download CSV"}
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
+            <AuditExportPopover
+              from={filters.from}
+              to={filters.to}
+              action={filters.action}
+              actionDraft={filters.actionDraft}
+              actorType={filters.actorType}
+              resourceType={filters.resourceType}
+              parsedStatus={filters.parsedStatus}
+              requestId={filters.requestId}
+              requestIdDraft={filters.requestIdDraft}
+              total={total}
+              onFromChange={handleFromChange}
+              onToChange={handleToChange}
+              onActionSync={() => filters.setAction(filters.actionDraft)}
+              onRequestIdSync={() =>
+                filters.setRequestId(filters.requestIdDraft)
+              }
+            />
           ) : null
         }
       />
@@ -473,7 +231,7 @@ export default function LogsPage(): ReactElement {
                 <Input
                   id="logs-filter-from"
                   type="date"
-                  value={from}
+                  value={filters.from}
                   onChange={(e) => handleFromChange(e.target.value)}
                 />
               </div>
@@ -482,7 +240,7 @@ export default function LogsPage(): ReactElement {
                 <Input
                   id="logs-filter-to"
                   type="date"
-                  value={to}
+                  value={filters.to}
                   onChange={(e) => handleToChange(e.target.value)}
                 />
               </div>
@@ -490,7 +248,7 @@ export default function LogsPage(): ReactElement {
                 <Label htmlFor="logs-filter-action">Action</Label>
                 <Input
                   id="logs-filter-action"
-                  value={actionDraft}
+                  value={filters.actionDraft}
                   onChange={(e) => handleActionChange(e.target.value)}
                   placeholder="e.g. auth.session or rbac.user.update"
                 />
@@ -499,7 +257,7 @@ export default function LogsPage(): ReactElement {
                 <Label htmlFor="logs-filter-request-id">Request ID</Label>
                 <Input
                   id="logs-filter-request-id"
-                  value={requestIdDraft}
+                  value={filters.requestIdDraft}
                   onChange={(e) => handleRequestIdChange(e.target.value)}
                   placeholder="e.g. 2be5fd5a or full UUID"
                 />
@@ -507,7 +265,7 @@ export default function LogsPage(): ReactElement {
               <div className="space-y-1.5">
                 <Label>Actor Type</Label>
                 <Select
-                  value={actorType}
+                  value={filters.actorType}
                   onValueChange={(value) => {
                     if (ACTOR_TYPE_FILTERS.includes(value as ActorTypeFilter)) {
                       handleActorTypeChange(value as ActorTypeFilter);
@@ -527,8 +285,8 @@ export default function LogsPage(): ReactElement {
               <div className="space-y-1.5">
                 <Label htmlFor="logs-filter-resource-type">Resource Type</Label>
                 <Combobox
-                  value={selectedResourceTypeValue}
-                  inputValue={resourceTypeInput}
+                  value={filters.selectedResourceTypeValue}
+                  inputValue={filters.resourceTypeInput}
                   onValueChange={(nextValue) => {
                     if (nextValue === RESOURCE_TYPE_SELECT_ALL_VALUE) {
                       handleResourceTypeChange("");
@@ -571,7 +329,7 @@ export default function LogsPage(): ReactElement {
                 <Label htmlFor="logs-filter-status">Status</Label>
                 <Combobox
                   value={selectedStatusValue}
-                  inputValue={statusRaw}
+                  inputValue={filters.statusRaw}
                   onValueChange={(nextValue) =>
                     handleStatusChange(nextValue ?? "")
                   }
@@ -620,10 +378,10 @@ export default function LogsPage(): ReactElement {
 
         <DashboardPage.Footer>
           <LogsPagination
-            page={page}
+            page={filters.page}
             pageSize={PAGE_SIZE}
             total={total}
-            onPageChange={setPage}
+            onPageChange={filters.setPage}
           />
         </DashboardPage.Footer>
       </DashboardPage.Body>

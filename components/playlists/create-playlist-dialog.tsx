@@ -68,7 +68,9 @@ interface NewPlaylistDraft {
 interface CreatePlaylistDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onCreate: (playlist: NewPlaylistDraft) => void;
+  readonly onCreate: (
+    playlist: NewPlaylistDraft,
+  ) => Promise<boolean | void> | boolean | void;
   readonly availableContent: readonly PlaylistSelectableContent[];
   readonly availableDisplays: readonly Display[];
 }
@@ -86,6 +88,13 @@ interface DraftPlaylistItem {
 }
 
 const MAX_BASE_DURATION_SECONDS = 60;
+
+function createInitialFormData(): PlaylistFormData {
+  return {
+    name: "",
+    description: "",
+  };
+}
 
 function formatDuration(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
@@ -117,6 +126,7 @@ function SortablePlaylistItem({
 
   // Keep in sync when parent updates the item (e.g. on mount)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- valid sync pattern for controlled input
     setRawValue(String(item.duration));
   }, [item.duration]);
 
@@ -157,7 +167,8 @@ function SortablePlaylistItem({
             }}
             onBlur={() => {
               const parsed = parseInt(rawValue, 10);
-              const clamped = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+              const clamped =
+                Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
               setRawValue(String(clamped));
               onUpdateDuration(item.id, clamped);
             }}
@@ -198,13 +209,13 @@ export function CreatePlaylistDialog({
   availableContent,
   availableDisplays,
 }: CreatePlaylistDialogProps): ReactElement {
-  const [formData, setFormData] = useState<PlaylistFormData>({
-    name: "",
-    description: "",
-  });
+  const [formData, setFormData] = useState<PlaylistFormData>(
+    createInitialFormData,
+  );
   const [playlistItems, setPlaylistItems] = useState<DraftPlaylistItem[]>([]);
   const [contentSearch, setContentSearch] = useState("");
   const [selectedDisplayId, setSelectedDisplayId] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [estimate, setEstimate] = useState<{
     baseDurationSeconds: number;
     scrollExtraSeconds: number;
@@ -350,16 +361,42 @@ export function CreatePlaylistDialog({
     return estimate;
   }, [estimate, playlistItems.length, selectedDisplayId]);
 
-  const handleClose = useCallback(() => {
-    setFormData({ name: "", description: "" });
+  const resetDraftState = useCallback(() => {
+    setFormData(createInitialFormData());
     setPlaylistItems([]);
     setContentSearch("");
     setSelectedDisplayId("");
+    setIsSubmitting(false);
     setEstimate(null);
-    onOpenChange(false);
-  }, [onOpenChange]);
+  }, []);
 
-  const handleCreate = useCallback(() => {
+  useEffect(() => {
+    if (!open) {
+      resetDraftState();
+    }
+  }, [open, resetDraftState]);
+
+  const handleDismiss = useCallback(() => {
+    if (isSubmitting) {
+      return;
+    }
+    resetDraftState();
+    onOpenChange(false);
+  }, [isSubmitting, onOpenChange, resetDraftState]);
+
+  const handleDialogOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen) {
+        onOpenChange(true);
+        return;
+      }
+
+      handleDismiss();
+    },
+    [handleDismiss, onOpenChange],
+  );
+
+  const handleCreate = useCallback(async () => {
     if (!formData.name.trim()) return;
 
     const items: PlaylistItem[] = playlistItems.map((item, index) => ({
@@ -369,21 +406,29 @@ export function CreatePlaylistDialog({
       order: index,
     }));
 
-    onCreate({
-      name: formData.name.trim(),
-      description: formData.description.trim() || null,
-      items,
-      totalDuration,
-    });
+    setIsSubmitting(true);
+    try {
+      const didCreate = await onCreate({
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
+        items,
+        totalDuration,
+      });
 
-    handleClose();
-  }, [formData, playlistItems, totalDuration, onCreate, handleClose]);
+      if (didCreate === false) {
+        return;
+      }
 
-  const canCreate =
-    formData.name.trim().length > 0 && selectedDisplayId.length > 0 && !isOverDurationLimit;
+      handleDismiss();
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [formData, handleDismiss, onCreate, playlistItems, totalDuration]);
+
+  const canCreate = formData.name.trim().length > 0 && !isOverDurationLimit;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent
         className="!flex h-[90vh] max-h-[800px] w-[95vw] !max-w-5xl !flex-col !gap-0 !p-0"
         showCloseButton={false}
@@ -399,11 +444,29 @@ export function CreatePlaylistDialog({
             </DialogDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handleClose}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleDismiss}
+              aria-label="Close"
+              disabled={isSubmitting}
+            >
+              <IconX className="size-4" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleDismiss}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
-            <Button onClick={handleCreate} disabled={!canCreate}>
-              Create
+            <Button
+              onClick={() => {
+                void handleCreate();
+              }}
+              disabled={!canCreate || isSubmitting}
+            >
+              {isSubmitting ? "Creating…" : "Create"}
             </Button>
           </div>
         </DialogHeader>
@@ -439,7 +502,7 @@ export function CreatePlaylistDialog({
 
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="playlist-display-target">
-                    Display Target
+                    Display Target (Optional)
                   </Label>
                   <Select
                     value={selectedDisplayId}
@@ -476,8 +539,11 @@ export function CreatePlaylistDialog({
                   />
                 </div>
 
-                <p className={`text-sm ${isOverDurationLimit ? "text-destructive" : "text-muted-foreground"}`}>
-                  Base Duration: {totalDuration}s / {MAX_BASE_DURATION_SECONDS}s max
+                <p
+                  className={`text-sm ${isOverDurationLimit ? "text-destructive" : "text-muted-foreground"}`}
+                >
+                  Base Duration: {totalDuration}s / {MAX_BASE_DURATION_SECONDS}s
+                  max
                   {isOverDurationLimit ? " — over limit" : ""}
                 </p>
                 <p className="text-sm text-muted-foreground">

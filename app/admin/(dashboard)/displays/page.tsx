@@ -88,9 +88,7 @@ export default function DisplaysPage(): ReactElement {
   const [groupFilters, setGroupFilters] = useQueryListState("groups", []);
   const [outputFilter, setOutputFilter] = useQueryStringState("output", "all");
   const deferredSearch = useDeferredValue(search);
-  const {
-    data: displayGroupsData = [],
-  } = useGetDisplayGroupsQuery();
+  const { data: displayGroupsData = [] } = useGetDisplayGroupsQuery();
   const { data: displayOutputOptions = [] } = useGetDisplayOutputOptionsQuery();
   const selectedGroupIds = useMemo(
     () =>
@@ -204,10 +202,7 @@ export default function DisplaysPage(): ReactElement {
   }, [displaysData?.items, displayGroupsData]);
 
   const availableGroupFilters = useMemo(
-    () =>
-      dedupeDisplayGroupNames(
-        displayGroupsData.map((g) => g.name),
-      ),
+    () => dedupeDisplayGroupNames(displayGroupsData.map((g) => g.name)),
     [displayGroupsData],
   );
 
@@ -438,6 +433,12 @@ export default function DisplaysPage(): ReactElement {
     },
     [updateDisplay, displayGroupsData, createDisplayGroup, setDisplayGroups],
   );
+  const handleEditDialogOpenChange = useCallback((open: boolean) => {
+    setIsEditDialogOpen(open);
+    if (!open) {
+      setSelectedDisplay(null);
+    }
+  }, []);
   const paginatedDisplays = displays;
 
   return (
@@ -543,7 +544,7 @@ export default function DisplaysPage(): ReactElement {
         existingGroups={displayGroupsData}
         emergencyContentOptions={emergencyContentOptions}
         open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
+        onOpenChange={handleEditDialogOpenChange}
         onSave={handleSaveDisplay}
         canManageGroups={canUpdateDisplay}
       />

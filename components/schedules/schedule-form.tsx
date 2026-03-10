@@ -46,7 +46,9 @@ function ScheduleFormFrame({
       return false;
     }
     if (isCreate && formData.startDate && formData.startTime) {
-      const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
+      const startDateTime = new Date(
+        `${formData.startDate}T${formData.startTime}`,
+      );
       if (startDateTime < new Date()) {
         return false;
       }

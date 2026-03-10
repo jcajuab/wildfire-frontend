@@ -39,23 +39,16 @@ describe("DisplayRegistrationInfoDialog", () => {
     });
   });
 
-  test(
-    "creates and displays one-time registration code on open",
-    async () => {
-      const onOpenChange = vi.fn();
-      render(
-        <DisplayRegistrationInfoDialog
-          open={true}
-          onOpenChange={onOpenChange}
-        />,
-      );
+  test("creates and displays one-time registration code on open", async () => {
+    const onOpenChange = vi.fn();
+    render(
+      <DisplayRegistrationInfoDialog open={true} onOpenChange={onOpenChange} />,
+    );
 
-      await waitFor(() => {
-        expect(createRegistrationAttemptMock).toHaveBeenCalledTimes(1);
-      });
-      expect(await screen.findByText("123456")).toBeInTheDocument();
-      expect(screen.getByText(/Expires at/i)).toBeInTheDocument();
-    },
-    15_000,
-  );
+    await waitFor(() => {
+      expect(createRegistrationAttemptMock).toHaveBeenCalledTimes(1);
+    });
+    expect(await screen.findByText("123456")).toBeInTheDocument();
+    expect(screen.getByText(/Expires at/i)).toBeInTheDocument();
+  }, 15_000);
 });

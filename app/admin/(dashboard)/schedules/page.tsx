@@ -49,7 +49,10 @@ function toIsoDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function getScheduleWindow(currentDate: Date, view: CalendarView): {
+function getScheduleWindow(
+  currentDate: Date,
+  view: CalendarView,
+): {
   from: string;
   to: string;
 } {
@@ -88,10 +91,9 @@ export default function SchedulesPage(): ReactElement {
     () => getScheduleWindow(currentDate, view),
     [currentDate, view],
   );
-  const { data: displaysData } = useGetDisplayOptionsQuery(
-    undefined,
-    { skip: !canReadDisplays },
-  );
+  const { data: displaysData } = useGetDisplayOptionsQuery(undefined, {
+    skip: !canReadDisplays,
+  });
   const { data: schedulesData } = useListSchedulesQuery(scheduleWindow);
   const { data: playlistsData } = useGetPlaylistOptionsQuery(undefined, {
     skip: !canReadPlaylists,
@@ -105,7 +107,11 @@ export default function SchedulesPage(): ReactElement {
   const [deleteSchedule] = useDeleteScheduleMutation();
 
   const availablePlaylists: readonly { id: string; name: string }[] = useMemo(
-    () => playlistsData?.map((playlist) => ({ id: playlist.id, name: playlist.name })) ?? [],
+    () =>
+      playlistsData?.map((playlist) => ({
+        id: playlist.id,
+        name: playlist.name,
+      })) ?? [],
     [playlistsData],
   );
   const availableDisplays: readonly { id: string; name: string }[] = useMemo(

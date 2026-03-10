@@ -133,7 +133,10 @@ export const displaysApi = createApi({
     getDisplays: build.query<DisplaysListResponse, DisplaysListQuery | void>({
       query: (query) => buildDisplaysListUrl(query),
       transformResponse: (response) => {
-        const parsed = parseApiListResponseSafe<Display>(response, "getDisplays");
+        const parsed = parseApiListResponseSafe<Display>(
+          response,
+          "getDisplays",
+        );
         return {
           items: parsed.data,
           total: parsed.meta.total,
@@ -164,7 +167,10 @@ export const displaysApi = createApi({
         },
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<DisplayOption[]>(response, "getDisplayOptions"),
+        parseApiResponseDataSafe<DisplayOption[]>(
+          response,
+          "getDisplayOptions",
+        ),
     }),
     getDisplayOutputOptions: build.query<DisplayOutputOption[], void>({
       query: () => "displays/options/outputs",

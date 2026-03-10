@@ -7,25 +7,29 @@ import { playlistsApi } from "@/lib/api/playlists-api";
 import { rbacApi } from "@/lib/api/rbac-api";
 import { schedulesApi } from "@/lib/api/schedules-api";
 
+export const adminApiReducers = {
+  [auditApi.reducerPath]: auditApi.reducer,
+  [contentApi.reducerPath]: contentApi.reducer,
+  [rbacApi.reducerPath]: rbacApi.reducer,
+  [displaysApi.reducerPath]: displaysApi.reducer,
+  [playlistsApi.reducerPath]: playlistsApi.reducer,
+  [schedulesApi.reducerPath]: schedulesApi.reducer,
+};
+
+export const adminApiMiddleware = [
+  auditApi.middleware,
+  contentApi.middleware,
+  rbacApi.middleware,
+  displaysApi.middleware,
+  playlistsApi.middleware,
+  schedulesApi.middleware,
+] as const;
+
 export const makeStore = () => {
   const store = configureStore({
-    reducer: {
-      [auditApi.reducerPath]: auditApi.reducer,
-      [contentApi.reducerPath]: contentApi.reducer,
-      [rbacApi.reducerPath]: rbacApi.reducer,
-      [displaysApi.reducerPath]: displaysApi.reducer,
-      [playlistsApi.reducerPath]: playlistsApi.reducer,
-      [schedulesApi.reducerPath]: schedulesApi.reducer,
-    },
+    reducer: adminApiReducers,
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(
-        auditApi.middleware,
-        contentApi.middleware,
-        rbacApi.middleware,
-        displaysApi.middleware,
-        playlistsApi.middleware,
-        schedulesApi.middleware,
-      ),
+      getDefaultMiddleware().concat(...adminApiMiddleware),
   });
   setupListeners(store.dispatch);
   return store;

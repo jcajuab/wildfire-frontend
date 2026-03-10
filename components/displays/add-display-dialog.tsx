@@ -131,11 +131,27 @@ export function AddDisplayDialog({
   const [step, setStep] = useState<WizardStep>(1);
   const [data, setData] = useState<WizardData>(initialWizardData);
 
-  const handleClose = useCallback(() => {
+  const resetWizard = useCallback(() => {
     setStep(1);
     setData(initialWizardData);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    resetWizard();
     onOpenChange(false);
-  }, [onOpenChange]);
+  }, [onOpenChange, resetWizard]);
+
+  const handleDialogOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen) {
+        onOpenChange(true);
+        return;
+      }
+
+      handleClose();
+    },
+    [handleClose, onOpenChange],
+  );
 
   const handleNext = useCallback(() => {
     if (step < 4) {
@@ -260,7 +276,7 @@ export function AddDisplayDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent
         className="sm:max-w-md"
         onPointerDownOutside={(e) => {

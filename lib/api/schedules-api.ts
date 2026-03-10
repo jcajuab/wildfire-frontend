@@ -71,28 +71,33 @@ export const schedulesApi = createApi({
   baseQuery,
   tagTypes: ["Schedule"],
   endpoints: (build) => ({
-    listSchedules: build.query<readonly BackendSchedule[], ScheduleWindowQuery>({
-      query: (query) => ({
-        url: "schedules/window",
-        params: {
-          from: query.from,
-          to: query.to,
-          displayIds: query.displayIds,
-        },
-      }),
-      transformResponse: (response) =>
-        parseApiResponseDataSafe<BackendSchedule[]>(response, "listSchedules"),
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.map(({ id }) => ({
-                type: "Schedule" as const,
-                id,
-              })),
-              { type: "Schedule", id: "LIST" },
-            ]
-          : [{ type: "Schedule", id: "LIST" }],
-    }),
+    listSchedules: build.query<readonly BackendSchedule[], ScheduleWindowQuery>(
+      {
+        query: (query) => ({
+          url: "schedules/window",
+          params: {
+            from: query.from,
+            to: query.to,
+            displayIds: query.displayIds,
+          },
+        }),
+        transformResponse: (response) =>
+          parseApiResponseDataSafe<BackendSchedule[]>(
+            response,
+            "listSchedules",
+          ),
+        providesTags: (result) =>
+          result
+            ? [
+                ...result.map(({ id }) => ({
+                  type: "Schedule" as const,
+                  id,
+                })),
+                { type: "Schedule", id: "LIST" },
+              ]
+            : [{ type: "Schedule", id: "LIST" }],
+      },
+    ),
     getSchedule: build.query<BackendSchedule, string>({
       query: (id) => `schedules/${id}`,
       transformResponse: (response) =>

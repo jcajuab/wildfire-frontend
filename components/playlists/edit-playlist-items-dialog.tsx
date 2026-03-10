@@ -89,6 +89,7 @@ function SortableItemRow({
   const [rawValue, setRawValue] = useState(String(item.duration));
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- valid sync pattern for controlled input
     setRawValue(String(item.duration));
   }, [item.duration]);
 
@@ -125,7 +126,8 @@ function SortableItemRow({
             }}
             onBlur={() => {
               const parsed = parseInt(rawValue, 10);
-              const clamped = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+              const clamped =
+                Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
               setRawValue(String(clamped));
               onUpdateDuration(item.id, clamped);
             }}
@@ -164,6 +166,24 @@ function formatDuration(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")} sec`;
+}
+
+function createInitialDraftState(playlist: Playlist): {
+  drafts: DraftItem[];
+  contentSearch: string;
+  selectedDisplayId: string;
+  estimate: {
+    baseDurationSeconds: number;
+    scrollExtraSeconds: number;
+    effectiveDurationSeconds: number;
+  } | null;
+} {
+  return {
+    drafts: toDrafts(playlist.items),
+    contentSearch: "",
+    selectedDisplayId: "",
+    estimate: null,
+  };
 }
 
 export type PlaylistItemsAtomicSnapshot = readonly (
@@ -211,8 +231,8 @@ export function EditPlaylistItemsDialog({
   onSave,
   isSaving = false,
 }: EditPlaylistItemsDialogProps): ReactElement {
-  const [drafts, setDrafts] = useState<DraftItem[]>(() =>
-    toDrafts(playlist.items),
+  const [drafts, setDrafts] = useState<DraftItem[]>(
+    () => createInitialDraftState(playlist).drafts,
   );
   const [contentSearch, setContentSearch] = useState("");
   const [selectedDisplayId, setSelectedDisplayId] = useState("");
@@ -352,6 +372,19 @@ export function EditPlaylistItemsDialog({
     return estimate;
   }, [drafts.length, estimate, selectedDisplayId]);
 
+  const resetDraftState = useCallback((nextPlaylist: Playlist) => {
+    const nextState = createInitialDraftState(nextPlaylist);
+    setDrafts(nextState.drafts);
+    setContentSearch(nextState.contentSearch);
+    setSelectedDisplayId(nextState.selectedDisplayId);
+    setEstimate(nextState.estimate);
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- valid sync pattern for dialog state reset
+    resetDraftState(playlist);
+  }, [open, playlist, resetDraftState]);
+
   const handleSave = useCallback(() => {
     const snapshot: PlaylistItemsAtomicSnapshot = drafts.map((draft) =>
       draft.id.startsWith("draft-")
@@ -369,12 +402,29 @@ export function EditPlaylistItemsDialog({
     onSave(playlist.id, snapshot);
   }, [drafts, onSave, playlist.id]);
 
-  const handleClose = useCallback(() => {
+  const handleDismiss = useCallback(() => {
+    if (isSaving) {
+      return;
+    }
+
+    resetDraftState(playlist);
     onOpenChange(false);
-  }, [onOpenChange]);
+  }, [isSaving, onOpenChange, playlist, resetDraftState]);
+
+  const handleDialogOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen) {
+        onOpenChange(true);
+        return;
+      }
+
+      handleDismiss();
+    },
+    [handleDismiss, onOpenChange],
+  );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent
         className="flex! h-[90vh] max-h-[800px] w-[95vw] max-w-5xl! flex-col! gap-0! p-0!"
         showCloseButton={false}
@@ -391,12 +441,25 @@ export function EditPlaylistItemsDialog({
             </DialogDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handleClose} disabled={isSaving}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleDismiss}
+              aria-label="Close"
+              disabled={isSaving}
+            >
+              <IconX className="size-4" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleDismiss}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isSaving || selectedDisplayId.length === 0 || isOverDurationLimit}
+              disabled={isSaving || isOverDurationLimit}
             >
               {isSaving ? "Saving…" : "Save Changes"}
             </Button>
@@ -425,7 +488,7 @@ export function EditPlaylistItemsDialog({
               <div className="grid gap-2 sm:grid-cols-2">
                 <div className="space-y-1">
                   <span className="text-xs text-muted-foreground">
-                    Display target
+                    Display target (optional)
                   </span>
                   <Select
                     value={selectedDisplayId}

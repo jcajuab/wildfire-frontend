@@ -1,11 +1,10 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { emitAuthRefreshRequested } from "@/lib/auth-events";
-import {
-  parseApiListResponseSafe,
-  parseApiResponseDataSafe,
-} from "@/lib/api/contracts";
+import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { baseQuery } from "@/lib/api/base-query";
 import type { PermissionAction, PermissionResource } from "@/types/permission";
+import { createPaginatedQueryFn } from "@/lib/api/paginated-query-factory";
+import { refreshAuthAfterMutation } from "@/lib/api/auth-refresh.helpers";
+import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 
 export interface RbacRoleSummary {
   readonly id: string;
@@ -54,6 +53,10 @@ export interface RbacUsersListResponse {
   readonly pageSize: number;
 }
 
+// Note: These response types maintain backward compatibility but can be
+// replaced with PaginatedListResponse<T> from response-transformers.ts
+// in future refactoring.
+
 export interface RbacRoleListQuery {
   readonly page?: number;
   readonly pageSize?: number;
@@ -70,24 +73,8 @@ export interface RbacUserListQuery {
   readonly sortDirection?: "asc" | "desc";
 }
 
-const PAGE_SIZE = 100;
-const MAX_PAGES = 100;
-
-const paginationLimitError = (scope: string) => ({
-  status: 500 as const,
-  data: `Failed to load ${scope}: pagination limit reached.`,
-});
-
-const buildResponseParseError = (scope: string, error: unknown) => ({
-  error: {
-    code: "INVALID_API_RESPONSE",
-    message:
-      error instanceof Error
-        ? `${scope}: ${error.message}`
-        : "Response payload does not match API contract.",
-    requestId: "frontend-contract-parser",
-  },
-});
+// All pagination, auth refresh, and response transformation utilities
+// have been extracted to shared modules for reuse across API files.
 
 export const rbacApi = createApi({
   reducerPath: "rbacApi",
@@ -105,18 +92,8 @@ export const rbacApi = createApi({
           sortDirection: query?.sortDirection ?? "asc",
         },
       }),
-      transformResponse: (response) => {
-        const parsed = parseApiListResponseSafe<RbacRoleListItem>(
-          response,
-          "getRoles",
-        );
-        return {
-          items: parsed.data,
-          total: parsed.meta.total,
-          page: parsed.meta.page,
-          pageSize: parsed.meta.pageSize,
-        };
-      },
+      transformResponse: (response) =>
+        transformPaginatedListResponse<RbacRoleListItem>(response, "getRoles"),
       providesTags: (result) =>
         result
           ? [
@@ -157,14 +134,7 @@ export const rbacApi = createApi({
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacRoleSummary>(response, "createRole"),
       invalidatesTags: [{ type: "Role", id: "LIST" }],
-      async onQueryStarted(_arg, { queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          emitAuthRefreshRequested();
-        } catch {
-          // Ignore failed writes.
-        }
-      },
+      onQueryStarted: refreshAuthAfterMutation,
     }),
     updateRole: build.mutation<
       RbacRoleSummary,
@@ -182,14 +152,7 @@ export const rbacApi = createApi({
         { type: "Role", id: "LIST" },
         { type: "User", id: "LIST" },
       ],
-      async onQueryStarted(_arg, { queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          emitAuthRefreshRequested();
-        } catch {
-          // Ignore failed writes.
-        }
-      },
+      onQueryStarted: refreshAuthAfterMutation,
     }),
     deleteRole: build.mutation<void, string>({
       query: (id) => ({ url: `roles/${id}`, method: "DELETE" }),
@@ -198,63 +161,14 @@ export const rbacApi = createApi({
         { type: "Role", id: "LIST" },
         { type: "User", id: "LIST" },
       ],
-      async onQueryStarted(_arg, { queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          emitAuthRefreshRequested();
-        } catch {
-          // Ignore failed writes.
-        }
-      },
+      onQueryStarted: refreshAuthAfterMutation,
     }),
     getRolePermissions: build.query<RbacPermission[], string>({
-      async queryFn(roleId, _api, _extraOptions, baseQueryFn) {
-        let page = 1;
-        let total = 0;
-        const allItems: RbacPermission[] = [];
-
-        while (true) {
-          if (page > MAX_PAGES) {
-            return {
-              error: paginationLimitError("role permissions"),
-            };
-          }
-
-          const result = await baseQueryFn({
-            url: `roles/${roleId}/permissions`,
-            params: { page, pageSize: PAGE_SIZE },
-          });
-          if (result.error) {
-            return { error: result.error };
-          }
-
-          let parsed: ReturnType<
-            typeof parseApiListResponseSafe<RbacPermission>
-          >;
-          try {
-            parsed = parseApiListResponseSafe<RbacPermission>(
-              result.data,
-              "getRolePermissions",
-            );
-          } catch (error) {
-            return {
-              error: {
-                status: 502,
-                data: buildResponseParseError("getRolePermissions", error),
-              },
-            };
-          }
-
-          total = parsed.meta.total;
-          allItems.push(...parsed.data);
-          if (allItems.length >= total || parsed.data.length === 0) {
-            break;
-          }
-          page += 1;
-        }
-
-        return { data: allItems };
-      },
+      queryFn: createPaginatedQueryFn<RbacPermission>({
+        scope: "role permissions",
+        parseScope: "getRolePermissions",
+        getUrl: (roleId) => `roles/${roleId}/permissions`,
+      }),
       providesTags: (_result, _error, roleId) => [
         { type: "Role", id: roleId },
         { type: "Permission", id: "LIST" },
@@ -280,61 +194,14 @@ export const rbacApi = createApi({
         { type: "Permission", id: "LIST" },
         { type: "User", id: "LIST" },
       ],
-      async onQueryStarted(_arg, { queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          emitAuthRefreshRequested();
-        } catch {
-          // Ignore failed writes.
-        }
-      },
+      onQueryStarted: refreshAuthAfterMutation,
     }),
     getRoleUsers: build.query<RbacUser[], string>({
-      async queryFn(roleId, _api, _extraOptions, baseQueryFn) {
-        let page = 1;
-        let total = 0;
-        const allItems: RbacUser[] = [];
-
-        while (true) {
-          if (page > MAX_PAGES) {
-            return {
-              error: paginationLimitError("role users"),
-            };
-          }
-
-          const result = await baseQueryFn({
-            url: `roles/${roleId}/users`,
-            params: { page, pageSize: PAGE_SIZE },
-          });
-          if (result.error) {
-            return { error: result.error };
-          }
-
-          let parsed: ReturnType<typeof parseApiListResponseSafe<RbacUser>>;
-          try {
-            parsed = parseApiListResponseSafe<RbacUser>(
-              result.data,
-              "getRoleUsers",
-            );
-          } catch (error) {
-            return {
-              error: {
-                status: 502,
-                data: buildResponseParseError("getRoleUsers", error),
-              },
-            };
-          }
-
-          total = parsed.meta.total;
-          allItems.push(...parsed.data);
-          if (allItems.length >= total || parsed.data.length === 0) {
-            break;
-          }
-          page += 1;
-        }
-
-        return { data: allItems };
-      },
+      queryFn: createPaginatedQueryFn<RbacUser>({
+        scope: "role users",
+        parseScope: "getRoleUsers",
+        getUrl: (roleId) => `roles/${roleId}/users`,
+      }),
       providesTags: (_result, _error, roleId) => [
         { type: "Role", id: roleId },
         { type: "User", id: "LIST" },
@@ -363,15 +230,8 @@ export const rbacApi = createApi({
           sortDirection: query?.sortDirection ?? "asc",
         },
       }),
-      transformResponse: (response) => {
-        const parsed = parseApiListResponseSafe<RbacUser>(response, "getUsers");
-        return {
-          items: parsed.data,
-          total: parsed.meta.total,
-          page: parsed.meta.page,
-          pageSize: parsed.meta.pageSize,
-        };
-      },
+      transformResponse: (response) =>
+        transformPaginatedListResponse<RbacUser>(response, "getUsers"),
       providesTags: (result) =>
         result
           ? [
@@ -417,14 +277,7 @@ export const rbacApi = createApi({
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacUser>(response, "createUser"),
       invalidatesTags: [{ type: "User", id: "LIST" }],
-      async onQueryStarted(_arg, { queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          emitAuthRefreshRequested();
-        } catch {
-          // Ignore failed writes.
-        }
-      },
+      onQueryStarted: refreshAuthAfterMutation,
     }),
     updateUser: build.mutation<
       RbacUser,
@@ -447,14 +300,7 @@ export const rbacApi = createApi({
         { type: "User", id },
         { type: "User", id: "LIST" },
       ],
-      async onQueryStarted(_arg, { queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          emitAuthRefreshRequested();
-        } catch {
-          // Ignore failed writes.
-        }
-      },
+      onQueryStarted: refreshAuthAfterMutation,
     }),
     deleteUser: build.mutation<void, string>({
       query: (id) => ({ url: `users/${id}`, method: "DELETE" }),
@@ -462,61 +308,14 @@ export const rbacApi = createApi({
         { type: "User", id },
         { type: "User", id: "LIST" },
       ],
-      async onQueryStarted(_arg, { queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          emitAuthRefreshRequested();
-        } catch {
-          // Ignore failed writes.
-        }
-      },
+      onQueryStarted: refreshAuthAfterMutation,
     }),
     getUserRoles: build.query<RbacRoleSummary[], string>({
-      async queryFn(userId, _api, _extraOptions, baseQueryFn) {
-        let page = 1;
-        let total = 0;
-        const allItems: RbacRoleSummary[] = [];
-
-        while (true) {
-          if (page > MAX_PAGES) {
-            return {
-              error: paginationLimitError("user roles"),
-            };
-          }
-
-          const result = await baseQueryFn({
-            url: `users/${userId}/roles`,
-            params: { page, pageSize: PAGE_SIZE },
-          });
-          if (result.error) {
-            return { error: result.error };
-          }
-
-          let parsed: ReturnType<typeof parseApiListResponseSafe<RbacRoleSummary>>;
-          try {
-            parsed = parseApiListResponseSafe<RbacRoleSummary>(
-              result.data,
-              "getUserRoles",
-            );
-          } catch (error) {
-            return {
-              error: {
-                status: 502,
-                data: buildResponseParseError("getUserRoles", error),
-              },
-            };
-          }
-
-          total = parsed.meta.total;
-          allItems.push(...parsed.data);
-          if (allItems.length >= total || parsed.data.length === 0) {
-            break;
-          }
-          page += 1;
-        }
-
-        return { data: allItems };
-      },
+      queryFn: createPaginatedQueryFn<RbacRoleSummary>({
+        scope: "user roles",
+        parseScope: "getUserRoles",
+        getUrl: (userId) => `users/${userId}/roles`,
+      }),
       providesTags: (_result, _error, userId) => [
         { type: "User", id: userId },
         { type: "Role", id: "LIST" },
@@ -539,14 +338,7 @@ export const rbacApi = createApi({
         { type: "Role", id: "LIST" },
         { type: "Permission", id: "LIST" },
       ],
-      async onQueryStarted(_arg, { queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          emitAuthRefreshRequested();
-        } catch {
-          // Ignore failed writes.
-        }
-      },
+      onQueryStarted: refreshAuthAfterMutation,
     }),
   }),
 });

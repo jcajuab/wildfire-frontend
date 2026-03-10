@@ -499,10 +499,22 @@ export function EditDisplayDialog({
     onOpenChange(false);
   }, [onOpenChange]);
 
+  const handleDialogOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen) {
+        onOpenChange(true);
+        return;
+      }
+
+      handleClose();
+    },
+    [handleClose, onOpenChange],
+  );
+
   if (!display) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent
         className="sm:max-w-md"
         onPointerDownOutside={(e) => {

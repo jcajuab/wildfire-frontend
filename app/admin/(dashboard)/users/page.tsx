@@ -232,11 +232,14 @@ export default function UsersPage(): ReactElement {
   }, []);
 
   const systemRoleIds = useMemo(
-    () => (rolesData ?? []).filter((role) => role.isSystem).map((role) => role.id),
+    () =>
+      (rolesData ?? []).filter((role) => role.isSystem).map((role) => role.id),
     [rolesData],
   );
 
-  const userRolesByUserId = useMemo<Readonly<Record<string, readonly UserRole[]>>>(
+  const userRolesByUserId = useMemo<
+    Readonly<Record<string, readonly UserRole[]>>
+  >(
     () =>
       Object.fromEntries(
         users.map((user) => [user.id, user.roles ?? []]),
