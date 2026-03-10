@@ -133,7 +133,6 @@ export default function SchedulesPage(): ReactElement {
     [schedulesData],
   );
 
-  // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -141,7 +140,6 @@ export default function SchedulesPage(): ReactElement {
     null,
   );
 
-  // Calendar navigation
   const handlePrev = useCallback(() => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
@@ -164,7 +162,6 @@ export default function SchedulesPage(): ReactElement {
     setCurrentDate(new Date());
   }, []);
 
-  // Schedule actions
   const handleScheduleClick = useCallback((schedule: Schedule) => {
     setSelectedSchedule(schedule);
     setViewDialogOpen(true);

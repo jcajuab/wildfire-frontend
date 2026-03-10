@@ -23,10 +23,10 @@ export interface Schedule {
   readonly id: string;
   readonly name: string;
   readonly kind: ScheduleKind;
-  readonly startDate: string; // ISO date string
-  readonly endDate: string; // ISO date string
-  readonly startTime: string; // HH:mm format
-  readonly endTime: string; // HH:mm format
+  readonly startDate: string;
+  readonly endDate: string;
+  readonly startTime: string;
+  readonly endTime: string;
   readonly playlist: SchedulePlaylist | null;
   readonly content: ScheduleContent | null;
   readonly targetDisplay: ScheduleDisplay;
@@ -38,8 +38,8 @@ export interface Schedule {
 export interface ScheduleFormData {
   name: string;
   kind: ScheduleKind;
-  startDate: string; // YYYY-MM-DD
-  endDate: string; // YYYY-MM-DD
+  startDate: string;
+  endDate: string;
   startTime: string;
   endTime: string;
   playlistId: string | null;

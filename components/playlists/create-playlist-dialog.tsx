@@ -124,9 +124,8 @@ function SortablePlaylistItem({
 
   const [rawValue, setRawValue] = useState(String(item.duration));
 
-  // Keep in sync when parent updates the item (e.g. on mount)
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- valid sync pattern for controlled input
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync controlled input with prop
     setRawValue(String(item.duration));
   }, [item.duration]);
 
@@ -239,8 +238,8 @@ export function CreatePlaylistDialog({
     const newItem: DraftPlaylistItem = {
       id: `draft-${Date.now()}-${content.id}`,
       content,
-      duration: content.duration ?? 5, // Default 5 seconds for images/PDFs
-      order: 0, // Will be recalculated
+      duration: content.duration ?? 5,
+      order: 0,
     };
     setPlaylistItems((prev) => [...prev, newItem]);
   }, []);
@@ -275,7 +274,6 @@ export function CreatePlaylistDialog({
     }
   }, []);
 
-  // Filter available content - exclude already added items
   const filteredContent = useMemo(() => {
     const addedIds = new Set(playlistItems.map((item) => item.content.id));
     return availableContent.filter((content) => {
@@ -287,7 +285,6 @@ export function CreatePlaylistDialog({
     });
   }, [availableContent, playlistItems, contentSearch]);
 
-  // Calculate total duration
   const totalDuration = useMemo(() => {
     return playlistItems.reduce((sum, item) => sum + item.duration, 0);
   }, [playlistItems]);

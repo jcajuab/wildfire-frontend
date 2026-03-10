@@ -18,7 +18,7 @@ export interface PlaylistItemContent {
 export interface PlaylistItem {
   readonly id: string;
   readonly content: PlaylistItemContent;
-  readonly duration: number; // Duration in seconds to display this content
+  readonly duration: number;
   readonly order: number;
 }
 
@@ -29,7 +29,7 @@ export interface Playlist {
   readonly status: PlaylistStatus;
   readonly itemsCount: number;
   readonly items: readonly PlaylistItem[];
-  readonly totalDuration: number; // Total duration in seconds
+  readonly totalDuration: number;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly owner: PlaylistOwner;
