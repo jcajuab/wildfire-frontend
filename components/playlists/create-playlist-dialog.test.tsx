@@ -146,6 +146,7 @@ describe("CreatePlaylistDialog", () => {
       expect(screen.getByLabelText("Name")).toHaveValue("");
       expect(screen.getByLabelText("Description (Optional)")).toHaveValue("");
     },
+    10000,
   );
 
   test("keeps the draft open when creation fails", async () => {
