@@ -11,7 +11,7 @@ export interface AuthUser {
   readonly email: string | null;
   readonly pendingEmail?: string | null;
   readonly name: string;
-  readonly isRoot: boolean;
+  readonly isAdmin: boolean;
   readonly timezone?: string | null;
   readonly avatarUrl?: string | null;
 }

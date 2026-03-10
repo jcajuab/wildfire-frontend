@@ -60,7 +60,7 @@ function readSession(): SessionData | null {
     )
       return null;
 
-    const isRoot = typeof u.isRoot === "boolean" ? u.isRoot : false;
+    const isAdmin = typeof u.isAdmin === "boolean" ? u.isAdmin : false;
     const normalizedUser: AuthUser = {
       id: u.id,
       username: u.username,
@@ -70,7 +70,7 @@ function readSession(): SessionData | null {
           ? u.pendingEmail
           : null,
       name: u.name,
-      isRoot,
+      isAdmin,
       timezone: typeof u.timezone === "string" ? u.timezone : null,
       avatarUrl: typeof u.avatarUrl === "string" ? u.avatarUrl : null,
     };
@@ -315,8 +315,8 @@ export function AuthProvider({
 
   const can = useCallback(
     (permission: PermissionType) =>
-      canPermission(permission, permissions, user?.isRoot === true),
-    [permissions, user?.isRoot],
+      canPermission(permission, permissions, user?.isAdmin === true),
+    [permissions, user?.isAdmin],
   );
 
   const value = useMemo<AuthContextValue>(

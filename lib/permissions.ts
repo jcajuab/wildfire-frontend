@@ -2,14 +2,14 @@ import type { PermissionType } from "@/types/permission";
 
 /**
  * Permission check mirroring backend authorization behavior.
- * Root users bypass all checks; non-root users require exact resource/action match.
+ * Admin users bypass all checks; non-admin users require exact resource/action match.
  */
 export function can(
   requiredPermission: PermissionType,
   userPermissions: PermissionType[],
-  isRoot = false,
+  isAdmin = false,
 ): boolean {
-  if (isRoot) return true;
+  if (isAdmin) return true;
   const [requiredResource, requiredAction] = requiredPermission.split(":");
   if (!requiredResource || !requiredAction) return false;
 

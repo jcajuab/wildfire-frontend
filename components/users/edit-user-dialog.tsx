@@ -49,7 +49,7 @@ function EditUserForm({
   const [isActive, setIsActive] = useState(user.isActive);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user: currentUser } = useAuth();
-  const isRoot = currentUser?.isRoot === true;
+  const isAdmin = currentUser?.isAdmin === true;
 
   const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
@@ -119,7 +119,7 @@ function EditUserForm({
             id="edit-user-active"
             checked={isActive}
             onCheckedChange={setIsActive}
-            disabled={!isRoot}
+            disabled={!isAdmin}
           />
         </div>
       </div>

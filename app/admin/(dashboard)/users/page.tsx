@@ -56,7 +56,7 @@ export default function UsersPage(): ReactElement {
   const canDeleteUser = useCan("users:delete");
   const canCreateUser = useCan("users:create");
   const canReadRoles = useCan("roles:read");
-  const isRoot = currentUser?.isRoot === true;
+  const isAdmin = currentUser?.isAdmin === true;
   const pageSize = 10;
   const [search, setSearch] = useQueryStringState("q", "");
   const [sortField, setSortField] = useQueryEnumState<UserSortField>(
@@ -126,9 +126,9 @@ export default function UsersPage(): ReactElement {
   );
   const availableRoles = useMemo(() => {
     const roles = rolesData ?? [];
-    const filtered = isRoot ? roles : roles.filter((role) => !role.isSystem);
+    const filtered = isAdmin ? roles : roles.filter((role) => !role.isSystem);
     return filtered.map((role) => ({ id: role.id, name: role.name }));
-  }, [rolesData, isRoot]);
+  }, [rolesData, isAdmin]);
 
   const handleSearchChange = useCallback(
     (value: string) => {
@@ -256,7 +256,7 @@ export default function UsersPage(): ReactElement {
 
   const handleRoleToggle = useCallback(
     (userId: string, newRoleIds: string[]) => {
-      const roleIdsToSend = isRoot
+      const roleIdsToSend = isAdmin
         ? newRoleIds
         : (() => {
             const currentIds =
@@ -274,7 +274,7 @@ export default function UsersPage(): ReactElement {
         notifyApiError(err, "Failed to update user roles");
       });
     },
-    [applyUserRoles, isRoot, systemRoleIds, userRolesByUserId],
+    [applyUserRoles, isAdmin, systemRoleIds, userRolesByUserId],
   );
 
   const handleEdit = useCallback((user: User) => {
@@ -382,7 +382,7 @@ export default function UsersPage(): ReactElement {
                 onRemoveUser={handleRequestRemoveUser}
                 canUpdate={canUpdateUser}
                 canDelete={canDeleteUser}
-                isSuperAdmin={isRoot}
+                isSuperAdmin={isAdmin}
                 systemRoleIds={systemRoleIds}
                 currentUserId={currentUser?.id}
               />
