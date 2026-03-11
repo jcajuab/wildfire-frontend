@@ -26,6 +26,7 @@ import { EmailEditor } from "./EmailEditor";
 import { AvatarUploader } from "./AvatarUploader";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
 import { useProfileEditor } from "./useProfileEditor";
+import { AICredentialsSection } from "./AICredentialsSection";
 
 const controlContainerClass = "w-full max-w-md";
 const controlClass = "h-10 w-full";
@@ -269,6 +270,11 @@ export default function SettingsPage(): ReactElement {
                   </SettingsField>
                 </dl>
               </motion.section>
+
+              <AICredentialsSection
+                sectionMotionProps={sectionMotionProps}
+                token={token}
+              />
 
               <motion.section
                 aria-labelledby="danger-zone-heading"

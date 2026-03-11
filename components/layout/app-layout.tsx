@@ -4,6 +4,7 @@ import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AIChatBubble } from "@/components/ai/ai-chat-bubble";
 
 interface AppLayoutProps {
   readonly children: ReactNode;
@@ -28,6 +29,7 @@ export function AppLayout({ children }: AppLayoutProps): ReactElement {
         >
           {children}
         </main>
+        <AIChatBubble />
       </SidebarProvider>
     </TooltipProvider>
   );
