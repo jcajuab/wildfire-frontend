@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import {
   DndContext,
   closestCenter,
@@ -18,7 +19,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
-  IconEye,
   IconInfoCircle,
   IconPhoto,
   IconPlaylist,
@@ -55,6 +55,12 @@ export interface CreatePlaylistFormProps {
   readonly description?: string;
   readonly showHeader?: boolean;
   readonly surface?: "card" | "page";
+  readonly onStateChange?: (state: {
+    canCreate: boolean;
+    isSubmitting: boolean;
+    handleCancel: () => void;
+    handleCreate: () => Promise<void>;
+  }) => void;
 }
 
 interface PlaylistFormData {
@@ -87,6 +93,7 @@ export function CreatePlaylistForm({
   description = "Add and organize contents to form a playlist",
   showHeader = true,
   surface = "card",
+  onStateChange,
 }: CreatePlaylistFormProps): ReactElement {
   const [formData, setFormData] = useState<PlaylistFormData>(
     createInitialFormData,
@@ -181,7 +188,7 @@ export function CreatePlaylistForm({
   }, [isSubmitting, onCancel, resetDraftState]);
 
   const handleCreate = useCallback(async () => {
-    if (!formData.name.trim()) {
+    if (!formData.name.trim() || isSubmitting || isOverDurationLimit) {
       return;
     }
 
@@ -211,10 +218,28 @@ export function CreatePlaylistForm({
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, onCreate, onSuccess, playlistItems, resetDraftState, totalDuration]);
+  }, [
+    formData,
+    isOverDurationLimit,
+    isSubmitting,
+    onCreate,
+    onSuccess,
+    playlistItems,
+    resetDraftState,
+    totalDuration,
+  ]);
 
   const canCreate = formData.name.trim().length > 0 && !isOverDurationLimit;
   const isPageSurface = surface === "page";
+
+  useEffect(() => {
+    onStateChange?.({
+      canCreate,
+      isSubmitting,
+      handleCancel,
+      handleCreate,
+    });
+  }, [canCreate, handleCancel, handleCreate, isSubmitting, onStateChange]);
 
   return (
     <div
@@ -291,25 +316,13 @@ export function CreatePlaylistForm({
                 />
               </div>
 
-              <p
-                className={`text-sm ${isOverDurationLimit ? "text-destructive" : "text-muted-foreground"}`}
-              >
-                Base Duration: {totalDuration}s / {MAX_BASE_DURATION_SECONDS}s max
-                {isOverDurationLimit ? " - over limit" : ""}
-              </p>
             </div>
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-md border border-border p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2">
-                <IconPlaylist className="size-4" />
-                <span className="text-sm font-semibold">Playlist Items</span>
-              </div>
-              <Button variant="outline" size="sm">
-                <IconEye className="size-4" />
-                Preview
-              </Button>
+            <div className="flex items-center gap-2">
+              <IconPlaylist className="size-4" />
+              <span className="text-sm font-semibold">Playlist Items</span>
             </div>
 
             <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
@@ -370,7 +383,25 @@ export function CreatePlaylistForm({
                   disabled={isOverDurationLimit}
                   className={`focus-visible:ring-ring flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 ${isOverDurationLimit ? "cursor-not-allowed opacity-50" : ""}`}
                 >
-                  <div className="flex size-10 items-center justify-center rounded bg-muted" />
+                  <div
+                    data-testid={`content-library-thumbnail-${content.id}`}
+                    className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded bg-muted"
+                  >
+                    {content.thumbnailUrl ? (
+                      <Image
+                        src={content.thumbnailUrl}
+                        alt={`${content.title} thumbnail`}
+                        fill
+                        unoptimized
+                        className="object-cover"
+                      />
+                    ) : (
+                      <IconPhoto
+                        className="size-4 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </div>
                   <span className="flex-1 truncate text-sm">{content.title}</span>
                   <IconPlus className="size-4 text-muted-foreground" />
                 </button>
@@ -380,25 +411,6 @@ export function CreatePlaylistForm({
         </div>
       </div>
 
-      {!showHeader ? (
-        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              void handleCreate();
-            }}
-            disabled={!canCreate || isSubmitting}
-          >
-            {isSubmitting ? "Creating..." : "Create"}
-          </Button>
-        </div>
-      ) : null}
     </div>
   );
 }
