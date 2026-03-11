@@ -24,9 +24,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { DisplayGroupsCombobox } from "@/components/displays/display-groups-combobox";
-import { getGroupBadgeStyles } from "@/lib/display-group-colors";
+import { GroupBadge } from "@/components/displays/group-badge";
 import type { DisplayGroup } from "@/lib/api/displays-api";
 import type { Display, DisplayOutput } from "@/types/display";
 
@@ -450,15 +449,12 @@ export function AddDisplayDialog({
                         const colorIndex =
                           existingGroups.find((g) => g.name === name)
                             ?.colorIndex ?? 0;
-                        const styles = getGroupBadgeStyles(colorIndex);
                         return (
-                          <Badge
+                          <GroupBadge
                             key={name}
-                            variant="secondary"
-                            className={`text-xs border ${styles.fill}`}
-                          >
-                            {name}
-                          </Badge>
+                            name={name}
+                            colorIndex={colorIndex}
+                          />
                         );
                       })
                     ) : (

@@ -9,7 +9,6 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 
-import { getGroupBadgeStyles } from "@/lib/display-group-colors";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,6 +24,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { DisplayPreview } from "./display-preview";
+import { GroupBadge } from "./group-badge";
 import type { Display, DisplayStatus } from "@/types/display";
 
 interface DisplayCardProps {
@@ -156,8 +156,8 @@ export const DisplayCard = memo(function DisplayCard({
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
+                    variant="destructive"
                     onClick={() => onUnregisterDisplay(display)}
-                    className="text-destructive focus:text-destructive"
                   >
                     <IconTrash className="size-4" aria-hidden="true" />
                     Unregister Display
@@ -171,33 +171,18 @@ export const DisplayCard = memo(function DisplayCard({
 
       <div className="flex min-h-6 flex-wrap gap-1.5 items-center">
         {isGlobalEmergencyActive ? (
-          <Badge
-            variant="outline"
-            className="border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200"
-          >
-            Emergency Active
-          </Badge>
+          <Badge variant="destructive">Emergency Active</Badge>
         ) : null}
         {display.groups.length > 0 ? (
-          display.groups.map((group) => {
-            const styles = getGroupBadgeStyles(group.colorIndex ?? 0);
-            return (
-              <Badge
-                key={group.name}
-                variant="secondary"
-                className={`max-w-full truncate border text-[11px] font-medium ${styles.fill}`}
-              >
-                {group.name}
-              </Badge>
-            );
-          })
+          display.groups.map((group) => (
+            <GroupBadge
+              key={group.name}
+              name={group.name}
+              colorIndex={group.colorIndex ?? 0}
+            />
+          ))
         ) : (
-          <Badge
-            variant="secondary"
-            className="border border-border/70 bg-muted/40 text-[11px] font-medium text-muted-foreground"
-          >
-            Ungrouped
-          </Badge>
+          <Badge variant="secondary">Ungrouped</Badge>
         )}
       </div>
 
