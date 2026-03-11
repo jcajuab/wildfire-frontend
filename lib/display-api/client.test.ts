@@ -173,7 +173,31 @@ describe("display-api client contract validation", () => {
               emergency: null,
               flash: null,
             },
-            items: [],
+            items: [
+              {
+                id: "item-1",
+                sequence: 1,
+                duration: 10,
+                content: {
+                  id: "content-1",
+                  type: "IMAGE",
+                  checksum: "checksum-1",
+                  downloadUrl: "https://example.test/image.jpg",
+                  thumbnailUrl: null,
+                  mimeType: "image/jpeg",
+                  width: 1000,
+                  height: 3000,
+                  duration: null,
+                  scrollPxPerSecond: null,
+                  textHtmlContent: null,
+                  cropY: 1080,
+                  cropHeight: 1080,
+                  scaledHeight: 3240,
+                  sliceIndex: 1,
+                  sliceCount: 3,
+                },
+              },
+            ],
           },
         }),
         {
@@ -198,6 +222,8 @@ describe("display-api client contract validation", () => {
     });
 
     expect(result.runtimeSettings.scrollPxPerSecond).toBe(24);
+    expect(result.items[0]?.content.cropY).toBe(1080);
+    expect(result.items[0]?.content.sliceCount).toBe(3);
     expect(fetchMock).toHaveBeenCalledWith(
       "http://example.test/api/v1/display-runtime/lobby-display/manifest",
       expect.objectContaining({

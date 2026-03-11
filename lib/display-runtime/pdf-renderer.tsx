@@ -14,13 +14,15 @@ GlobalWorkerOptions.workerSrc = new URL(
 interface PdfRendererProps {
   readonly src: string;
   readonly viewportWidth: number;
-  readonly onMeasuredHeight: (height: number) => void;
+  readonly viewportHeight: number;
+  readonly cropY?: number | null;
 }
 
 export function PdfRenderer({
   src,
   viewportWidth,
-  onMeasuredHeight,
+  viewportHeight,
+  cropY,
 }: PdfRendererProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -35,60 +37,50 @@ export function PdfRenderer({
       container.replaceChildren();
       const loadingTask = getDocument(src);
       const pdfDocument = await loadingTask.promise;
-      let totalHeight = 0;
-
-      for (
-        let pageNumber = 1;
-        pageNumber <= pdfDocument.numPages;
-        pageNumber += 1
-      ) {
-        const page = await pdfDocument.getPage(pageNumber);
-        const initialViewport = page.getViewport({ scale: 1 });
-        const scale = viewportWidth / initialViewport.width;
-        const viewport = page.getViewport({ scale });
-        const canvas = window.document.createElement("canvas");
-        const context = canvas.getContext("2d");
-        if (!context) {
-          continue;
-        }
-        canvas.width = Math.floor(viewport.width);
-        canvas.height = Math.floor(viewport.height);
-        canvas.style.width = `${viewport.width}px`;
-        canvas.style.height = `${viewport.height}px`;
-        canvas.style.display = "block";
-        canvas.style.pointerEvents = "none";
-        await page.render({
-          canvas,
-          canvasContext: context,
-          viewport,
-        }).promise;
-        if (cancelled) {
-          return;
-        }
-        totalHeight += viewport.height;
-        container.append(canvas);
+      const page = await pdfDocument.getPage(1);
+      const initialViewport = page.getViewport({ scale: 1 });
+      const scale = viewportWidth / initialViewport.width;
+      const viewport = page.getViewport({ scale });
+      const canvas = window.document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      if (!context) {
+        return;
       }
+      canvas.width = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+      canvas.style.width = `${viewport.width}px`;
+      canvas.style.height = `${viewport.height}px`;
+      canvas.style.display = "block";
+      canvas.style.pointerEvents = "none";
+      canvas.style.transform = `translateY(-${Math.max(0, Math.trunc(cropY ?? 0))}px)`;
 
-      if (!cancelled) {
-        onMeasuredHeight(Math.ceil(totalHeight));
+      await page.render({
+        canvas,
+        canvasContext: context,
+        viewport,
+      }).promise;
+      if (cancelled) {
+        return;
       }
+      container.append(canvas);
     };
 
     void render().catch(() => {
-      if (!cancelled) {
-        onMeasuredHeight(0);
+      if (cancelled) {
+        return;
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [onMeasuredHeight, src, viewportWidth]);
+  }, [cropY, src, viewportWidth]);
 
   return (
     <div
       ref={containerRef}
-      className="w-full pointer-events-none select-none"
+      className="pointer-events-none w-full select-none overflow-hidden"
+      style={{ height: `${viewportHeight}px` }}
     />
   );
 }

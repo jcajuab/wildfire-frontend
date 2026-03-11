@@ -5,7 +5,7 @@ import {
 } from "@/lib/display-runtime/overflow-timing";
 
 describe("overflow timing", () => {
-  test("adds extra duration for overflowing image content", () => {
+  test("keeps zero extra duration for overflowing image content", () => {
     const extra = computeOverflowExtraSeconds({
       item: {
         id: "item-1",
@@ -19,7 +19,7 @@ describe("overflow timing", () => {
       viewport: { width: 500, height: 400 },
       config: { scrollPixelsPerSecond: 20 },
     });
-    expect(extra).toBeGreaterThan(0);
+    expect(extra).toBe(0);
   });
 
   test("keeps base duration for non-overflowing video", () => {

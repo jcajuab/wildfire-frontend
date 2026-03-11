@@ -36,34 +36,8 @@ export const computeOverflowExtraSeconds = (input: {
   config: OverflowTimingConfig;
   measuredContentHeight?: number;
 }): number => {
-  const { item, viewport, config } = input;
-  if (item.content.type !== "IMAGE" && item.content.type !== "PDF") {
-    return 0;
-  }
-  if (
-    item.content.width === null ||
-    item.content.height === null ||
-    item.content.width <= 0 ||
-    item.content.height <= 0
-  ) {
-    return 0;
-  }
-
-  const scaledHeight =
-    typeof input.measuredContentHeight === "number" &&
-    Number.isFinite(input.measuredContentHeight) &&
-    input.measuredContentHeight > 0
-      ? input.measuredContentHeight
-      : (viewport.width / item.content.width) * item.content.height;
-  const verticalOverflow = Math.max(0, scaledHeight - viewport.height);
-  const speed = toPositive(
-    item.content.scrollPxPerSecond ?? config.scrollPixelsPerSecond,
-    24,
-  );
-  if (verticalOverflow <= 0) {
-    return 0;
-  }
-  return Math.ceil(verticalOverflow / speed);
+  const _unused = input;
+  return 0;
 };
 
 export const buildRuntimeTimings = (input: {

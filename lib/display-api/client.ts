@@ -44,6 +44,11 @@ export interface ManifestItem {
     readonly duration: number | null;
     readonly scrollPxPerSecond: number | null;
     readonly textHtmlContent: string | null;
+    readonly cropY?: number | null;
+    readonly cropHeight?: number | null;
+    readonly scaledHeight?: number | null;
+    readonly sliceIndex?: number | null;
+    readonly sliceCount?: number | null;
   };
 }
 
@@ -118,6 +123,16 @@ const readNullableInteger = (value: unknown, path: string): number | null => {
     return null;
   }
   return readInteger(value, path);
+};
+
+const readOptionalNullableInteger = (
+  value: unknown,
+  path: string,
+): number | null | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+  return readNullableInteger(value, path);
 };
 
 const readBoolean = (value: unknown, path: string): boolean => {
@@ -264,6 +279,23 @@ const parseManifestItemContent = (
     textHtmlContent: readNullableString(
       root.textHtmlContent,
       `${path}.textHtmlContent`,
+    ),
+    cropY: readOptionalNullableInteger(root.cropY, `${path}.cropY`),
+    cropHeight: readOptionalNullableInteger(
+      root.cropHeight,
+      `${path}.cropHeight`,
+    ),
+    scaledHeight: readOptionalNullableInteger(
+      root.scaledHeight,
+      `${path}.scaledHeight`,
+    ),
+    sliceIndex: readOptionalNullableInteger(
+      root.sliceIndex,
+      `${path}.sliceIndex`,
+    ),
+    sliceCount: readOptionalNullableInteger(
+      root.sliceCount,
+      `${path}.sliceCount`,
     ),
   };
 };

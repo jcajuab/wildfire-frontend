@@ -100,10 +100,6 @@ export default function DisplayRuntimePage() {
   const [lastEventAt, setLastEventAt] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [viewport, setViewport] = useState({ width: 1920, height: 1080 });
-  const [measuredHeightByItemId, setMeasuredHeightByItemId] = useState<
-    Record<string, number>
-  >({});
-  const [isScrollAnimationActive, setIsScrollAnimationActive] = useState(false);
 
   const lastPlaylistVersionRef = useRef<string | null>(null);
   const manifestRef = useRef<DisplayManifest | null>(null);
@@ -138,40 +134,8 @@ export default function DisplayRuntimePage() {
       items: manifest.items,
       viewport,
       config: { scrollPixelsPerSecond: scrollPxPerSecond },
-      measuredHeightByItemId,
     });
-  }, [manifest, measuredHeightByItemId, scrollPxPerSecond, viewport]);
-
-  const currentTiming = timings[currentIndex] ?? null;
-  const overflowExtraSeconds = currentTiming?.overflowExtraSeconds ?? 0;
-
-  const currentOverflow = useMemo(() => {
-    if (!currentItem) {
-      return 0;
-    }
-    const measuredHeight = measuredHeightByItemId[currentItem.id];
-    const scaledHeight =
-      typeof measuredHeight === "number" && measuredHeight > 0
-        ? measuredHeight
-        : currentItem.content.width && currentItem.content.height
-          ? (viewport.width / currentItem.content.width) *
-            currentItem.content.height
-          : 0;
-    return Math.max(0, scaledHeight - viewport.height);
-  }, [currentItem, measuredHeightByItemId, viewport]);
-
-  useEffect(() => {
-    setIsScrollAnimationActive(false);
-    if (!currentItem || currentOverflow <= 0 || overflowExtraSeconds <= 0) {
-      return;
-    }
-    const frameId = window.requestAnimationFrame(() => {
-      setIsScrollAnimationActive(true);
-    });
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
-  }, [currentItem, currentOverflow, overflowExtraSeconds]);
+  }, [manifest, scrollPxPerSecond, viewport]);
 
   useEffect(() => {
     if (!registration) {
@@ -192,7 +156,6 @@ export default function DisplayRuntimePage() {
       setErrorMessage(null);
       if (hasMaterialChange) {
         setCurrentIndex(0);
-        setMeasuredHeightByItemId({});
       }
       lastPlaylistVersionRef.current = payload.playlistVersion;
     };
@@ -377,31 +340,9 @@ export default function DisplayRuntimePage() {
     };
   }, [timings]);
 
-  const scrollStyle = useMemo(() => {
-    if (!currentItem) return undefined;
-    if (currentOverflow <= 0 || overflowExtraSeconds <= 0) {
-      return undefined;
-    }
-
-    if (!isScrollAnimationActive) {
-      return {
-        transform: "translateY(0px)",
-        transition: "none",
-        willChange: "transform",
-      };
-    }
-
-    return {
-      transform: `translateY(-${currentOverflow}px)`,
-      transition: `transform ${overflowExtraSeconds}s linear`,
-      willChange: "transform",
-    };
-  }, [
-    currentItem,
-    currentOverflow,
-    overflowExtraSeconds,
-    isScrollAnimationActive,
-  ]);
+  const currentCropY = Math.max(0, currentItem?.content.cropY ?? 0);
+  const currentScaledHeight =
+    currentItem?.content.scaledHeight ?? viewport.height;
 
   const flashMarqueeText = useMemo(() => {
     if (!activeFlash) {
@@ -503,7 +444,11 @@ export default function DisplayRuntimePage() {
             width={currentItem.content.width ?? viewport.width}
             height={currentItem.content.height ?? viewport.height}
             className="h-auto w-full"
-            style={scrollStyle}
+            style={{
+              transform: `translateY(-${currentCropY}px)`,
+              height: `${Math.max(viewport.height, currentScaledHeight)}px`,
+              width: `${viewport.width}px`,
+            }}
             unoptimized
           />
         </div>
@@ -519,20 +464,13 @@ export default function DisplayRuntimePage() {
         </div>
       ) : (
         <div className="flex h-screen w-screen items-center justify-center overflow-hidden bg-white">
-          <div style={scrollStyle}>
-            <PdfRenderer
-              key={currentItem.id}
-              src={currentItem.content.downloadUrl}
-              viewportWidth={viewport.width}
-              onMeasuredHeight={(height) =>
-                setMeasuredHeightByItemId((prev) =>
-                  prev[currentItem.id] === height
-                    ? prev
-                    : { ...prev, [currentItem.id]: height },
-                )
-              }
-            />
-          </div>
+          <PdfRenderer
+            key={currentItem.id}
+            src={currentItem.content.downloadUrl}
+            viewportWidth={viewport.width}
+            viewportHeight={viewport.height}
+            cropY={currentCropY}
+          />
         </div>
       )}
       {activeFlash && flashMarqueeText ? (
