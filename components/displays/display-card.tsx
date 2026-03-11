@@ -2,7 +2,8 @@
 
 import { type ReactElement, memo } from "react";
 import {
-  IconDotsVertical,
+  IconAlertTriangle,
+  IconDots,
   IconEye,
   IconExternalLink,
   IconEdit,
@@ -97,6 +98,11 @@ export const DisplayCard = memo(function DisplayCard({
   const statusStyles = getStatusStyles(display.status);
   const shouldPulse = display.status === "LIVE" || display.status === "READY";
   const statusLabel = getStatusLabel(display.status);
+  const outputLabel = display.output.trim() || "Not available";
+  const resolutionLabel = display.resolution.trim();
+  const showResolution =
+    resolutionLabel !== "" && resolutionLabel.toLowerCase() !== "not available";
+  const isEmergencyContentMissing = display.emergencyContentId === null;
 
   return (
     <article className="group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors duration-200 hover:border-primary/25 motion-reduce:transition-none">
@@ -105,25 +111,40 @@ export const DisplayCard = memo(function DisplayCard({
           <h3 className="truncate text-lg font-semibold leading-none">
             {display.name}
           </h3>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                className="relative inline-flex size-4 shrink-0 cursor-default items-center justify-center"
-                aria-label={statusLabel}
-              >
-                {shouldPulse ? (
-                  <span
-                    className={`absolute inline-flex h-full w-full animate-ping rounded-full ${statusStyles.pulseClassName} opacity-55 motion-reduce:animate-none`}
-                  />
-                ) : null}
+          <div className="flex items-center gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <span
-                  className={`relative inline-flex size-2.5 rounded-full ${statusStyles.dotClassName}`}
-                  aria-hidden="true"
-                />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>{statusLabel}</TooltipContent>
-          </Tooltip>
+                  className="relative inline-flex size-4 shrink-0 cursor-default items-center justify-center"
+                  aria-label={statusLabel}
+                >
+                  {shouldPulse ? (
+                    <span
+                      className={`absolute inline-flex h-full w-full animate-ping rounded-full ${statusStyles.pulseClassName} opacity-55 motion-reduce:animate-none`}
+                    />
+                  ) : null}
+                  <span
+                    className={`relative inline-flex size-2.5 rounded-full ${statusStyles.dotClassName}`}
+                    aria-hidden="true"
+                  />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{statusLabel}</TooltipContent>
+            </Tooltip>
+            {isEmergencyContentMissing ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="inline-flex size-5 items-center justify-center rounded-full text-amber-700"
+                    aria-label="Emergency not set"
+                  >
+                    <IconAlertTriangle className="size-3.5" aria-hidden="true" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>Emergency not set</TooltipContent>
+              </Tooltip>
+            ) : null}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -134,7 +155,7 @@ export const DisplayCard = memo(function DisplayCard({
                 size="icon-sm"
                 aria-label={`Actions for ${display.name}`}
               >
-                <IconDotsVertical className="size-4" aria-hidden="true" />
+                <IconDots className="size-4" aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-44">
@@ -170,6 +191,11 @@ export const DisplayCard = memo(function DisplayCard({
       </header>
 
       <div className="flex min-h-6 flex-wrap gap-1.5 items-center">
+        <Badge variant="outline" className="bg-background text-foreground">
+          {outputLabel}
+        </Badge>
+        {showResolution ? <Badge variant="secondary">{resolutionLabel}</Badge> : null}
+        <span className="text-muted-foreground">|</span>
         {isGlobalEmergencyActive ? (
           <Badge variant="destructive">Emergency Active</Badge>
         ) : null}
@@ -186,8 +212,10 @@ export const DisplayCard = memo(function DisplayCard({
         )}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border/70 bg-background aspect-video">
-        <DisplayPreview displayId={display.id} displayName={display.name} />
+      <div className="relative overflow-hidden rounded-xl border border-border/70 bg-background aspect-[16/8.5]">
+        <div className="h-full w-full">
+          <DisplayPreview displayId={display.id} displayName={display.name} />
+        </div>
       </div>
     </article>
   );
