@@ -5,6 +5,7 @@ import type { PermissionAction, PermissionResource } from "@/types/permission";
 import { createPaginatedQueryFn } from "@/lib/api/paginated-query-factory";
 import { refreshAuthAfterMutation } from "@/lib/api/auth-refresh.helpers";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
+import { createProvidesTags } from "@/lib/api/provide-tags";
 
 export interface RbacRoleSummary {
   readonly id: string;
@@ -94,13 +95,7 @@ export const rbacApi = createApi({
       }),
       transformResponse: (response) =>
         transformPaginatedListResponse<RbacRoleListItem>(response, "getRoles"),
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.items.map(({ id }) => ({ type: "Role" as const, id })),
-              { type: "Role", id: "LIST" },
-            ]
-          : [{ type: "Role", id: "LIST" }],
+      providesTags: createProvidesTags("Role"),
     }),
     getRoleOptions: build.query<
       RbacRoleSummary[],
@@ -232,13 +227,7 @@ export const rbacApi = createApi({
       }),
       transformResponse: (response) =>
         transformPaginatedListResponse<RbacUser>(response, "getUsers"),
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.items.map(({ id }) => ({ type: "User" as const, id })),
-              { type: "User", id: "LIST" },
-            ]
-          : [{ type: "User", id: "LIST" }],
+      providesTags: createProvidesTags("User"),
     }),
     getUserOptions: build.query<
       RbacUser[],

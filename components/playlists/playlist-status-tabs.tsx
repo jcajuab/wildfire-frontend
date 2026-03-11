@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { StatusFilterTabs } from "@/components/common/status-filter-tabs";
 import type { PlaylistStatus } from "@/types/playlist";
 
 export type StatusFilter = "all" | PlaylistStatus;
@@ -25,26 +25,10 @@ export function PlaylistStatusTabs({
   onValueChange,
 }: PlaylistStatusTabsProps): ReactElement {
   return (
-    <ToggleGroup
-      type="single"
+    <StatusFilterTabs
       value={value}
-      onValueChange={(newValue) => {
-        if (newValue) {
-          onValueChange(newValue as StatusFilter);
-        }
-      }}
-      variant="outline"
-      size="default"
-    >
-      {statusOptions.map((option) => (
-        <ToggleGroupItem
-          key={option.value}
-          value={option.value}
-          aria-label={`Filter by ${option.label}`}
-        >
-          {option.label}
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
+      onValueChange={onValueChange}
+      options={statusOptions}
+    />
   );
 }

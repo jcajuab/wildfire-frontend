@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import type { Playlist } from "@/types/playlist";
+import { formatDuration, formatItemDuration } from "@/lib/formatters";
 
 interface PlaylistCardProps {
   readonly playlist: Playlist;
@@ -26,21 +27,6 @@ interface PlaylistCardProps {
   readonly onManageItems?: (playlist: Playlist) => void;
   readonly onPreview?: (playlist: Playlist) => void;
   readonly onDelete?: (playlist: Playlist) => void;
-}
-
-function formatDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")} sec`;
-}
-
-function formatItemDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes > 0) {
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  }
-  return `0:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
 export const PlaylistCard = memo(function PlaylistCard({

@@ -4,7 +4,9 @@ import {
   getBaseUrl,
   getDevOnlyRequestHeaders,
 } from "@/lib/api/base-query";
-import { extractApiError, parseApiListResponseSafe } from "@/lib/api/contracts";
+import { extractApiError } from "@/lib/api/contracts";
+import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
+import { createProvidesTags } from "@/lib/api/provide-tags";
 
 export interface BackendAuditEvent {
   readonly id: string;
@@ -128,28 +130,12 @@ export const auditApi = createApi({
           requestId: query?.requestId,
         },
       }),
-      transformResponse: (response) => {
-        const parsed = parseApiListResponseSafe<BackendAuditEvent>(
+      transformResponse: (response) =>
+        transformPaginatedListResponse<BackendAuditEvent>(
           response,
           "listAuditEvents",
-        );
-        return {
-          items: parsed.data,
-          total: parsed.meta.total,
-          page: parsed.meta.page,
-          pageSize: parsed.meta.pageSize,
-        };
-      },
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.items.map(({ id }) => ({
-                type: "AuditEvent" as const,
-                id,
-              })),
-              { type: "AuditEvent", id: "LIST" },
-            ]
-          : [{ type: "AuditEvent", id: "LIST" }],
+        ),
+      providesTags: createProvidesTags("AuditEvent"),
     }),
   }),
 });

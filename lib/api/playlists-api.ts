@@ -1,9 +1,8 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import {
-  parseApiListResponseSafe,
-  parseApiResponseDataSafe,
-} from "@/lib/api/contracts";
+import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { baseQuery } from "@/lib/api/base-query";
+import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
+import { createProvidesTags } from "@/lib/api/provide-tags";
 
 export interface BackendPlaylist {
   readonly id: string;
@@ -159,28 +158,12 @@ export const playlistsApi = createApi({
         url: "playlists",
         params: params ?? {},
       }),
-      transformResponse: (response) => {
-        const parsed = parseApiListResponseSafe<BackendPlaylist>(
+      transformResponse: (response) =>
+        transformPaginatedListResponse<BackendPlaylist>(
           response,
           "listPlaylists",
-        );
-        return {
-          items: parsed.data,
-          total: parsed.meta.total,
-          page: parsed.meta.page,
-          pageSize: parsed.meta.pageSize,
-        };
-      },
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.items.map(({ id }) => ({
-                type: "Playlist" as const,
-                id,
-              })),
-              { type: "Playlist", id: "LIST" },
-            ]
-          : [{ type: "Playlist", id: "LIST" }],
+        ),
+      providesTags: createProvidesTags("Playlist"),
     }),
     getPlaylist: build.query<BackendPlaylistWithItems, string>({
       query: (id) => `playlists/${id}`,

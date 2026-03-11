@@ -1,23 +1,18 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useMemo, useRef, useState } from "react";
 import { IconPlus, IconPresentation } from "@tabler/icons-react";
-import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { CreatePlaylistDialog } from "@/components/playlists/create-playlist-dialog";
-import {
-  EditPlaylistItemsDialog,
-  type PlaylistItemsAtomicSnapshot,
-} from "@/components/playlists/edit-playlist-items-dialog";
-import { Pagination } from "@/components/playlists/pagination";
+import { EditPlaylistItemsDialog } from "@/components/playlists/edit-playlist-items-dialog";
 import { PlaylistGrid } from "@/components/playlists/playlist-grid";
-import { PlaylistSearchInput } from "@/components/playlists/playlist-search-input";
+import { SearchControl } from "@/components/common/search-control";
 import { PlaylistSortSelect } from "@/components/playlists/playlist-sort-select";
 import { PlaylistStatusTabs } from "@/components/playlists/playlist-status-tabs";
+import { PaginationFooter } from "@/components/common/pagination-footer";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,261 +24,49 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCan } from "@/hooks/use-can";
-import {
-  useQueryEnumState,
-  useQueryNumberState,
-  useQueryStringState,
-} from "@/hooks/use-query-state";
-import { useListContentQuery } from "@/lib/api/content-api";
-import { useGetDisplaysQuery } from "@/lib/api/displays-api";
-import { notifyApiError } from "@/lib/api/get-api-error-message";
-import {
-  type PlaylistListQuery,
-  useCreatePlaylistMutation,
-  useDeletePlaylistMutation,
-  useLazyGetPlaylistQuery,
-  useListPlaylistsQuery,
-  useSavePlaylistItemsAtomicMutation,
-  useUpdatePlaylistMutation,
-} from "@/lib/api/playlists-api";
-import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
-import {
-  mapBackendPlaylistBase,
-  mapBackendPlaylistWithItems,
-} from "@/lib/mappers/playlist-mapper";
-import type { StatusFilter } from "@/components/playlists/playlist-status-tabs";
-import type { Content } from "@/types/content";
-import type {
-  Playlist,
-  PlaylistItem,
-  PlaylistSortField,
-} from "@/types/playlist";
-
-const PLAYLIST_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
-const PLAYLIST_SORT_VALUES = ["recent", "name"] as const;
-const isPlaylistRenderableContent = (
-  content: Content,
-): content is Content & { readonly type: "IMAGE" | "VIDEO" | "PDF" | "TEXT" } =>
-  content.type === "IMAGE" ||
-  content.type === "VIDEO" ||
-  content.type === "PDF" ||
-  content.type === "TEXT";
-
-interface NewPlaylistPayload {
-  readonly name: string;
-  readonly description: string | null;
-  readonly items: readonly PlaylistItem[];
-  readonly totalDuration: number;
-}
+import { PAGE_SIZE, usePlaylistsPage } from "./use-playlists-page";
 
 export default function PlaylistsPage(): ReactElement {
-  const canUpdatePlaylist = useCan("playlists:update");
-  const canDeletePlaylist = useCan("playlists:delete");
-  const canReadContent = useCan("content:read");
-  const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(
-    "status",
-    "all",
-    PLAYLIST_STATUS_VALUES,
-  );
-  const [sortBy, setSortBy] = useQueryEnumState<PlaylistSortField>(
-    "sort",
-    "recent",
-    PLAYLIST_SORT_VALUES,
-  );
-  const [search, setSearch] = useQueryStringState("q", "");
-  const [page, setPage] = useQueryNumberState("page", 1);
-
-  const pageSize = 12;
-
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [previewPlaylist, setPreviewPlaylist] = useState<Playlist | null>(null);
-  const [editPlaylist, setEditPlaylist] = useState<Playlist | null>(null);
-  const [manageItemsPlaylist, setManageItemsPlaylist] =
-    useState<Playlist | null>(null);
-  const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | null>(
-    null,
-  );
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [isSavingPlaylistItems, setIsSavingPlaylistItems] = useState(false);
-  const isSavingPlaylistItemsRef = useRef(false);
-  const playlistQuery = useMemo<PlaylistListQuery>(
-    () => ({
-      page,
-      pageSize,
-      status: statusFilter === "all" ? undefined : statusFilter,
-      search: search.length > 0 ? search : undefined,
-      sortBy: sortBy === "name" ? "name" : "updatedAt",
-      sortDirection: sortBy === "name" ? "asc" : "desc",
-    }),
-    [page, pageSize, search, sortBy, statusFilter],
-  );
-  const { data: playlistsData } = useListPlaylistsQuery(playlistQuery);
-  const { data: displaysData } = useGetDisplaysQuery({
-    page: 1,
-    pageSize: 100,
-  });
-  const { data: contentData } = useListContentQuery(
-    { page: 1, pageSize: 100 },
-    { skip: !canReadContent },
-  );
-  const [loadPlaylist] = useLazyGetPlaylistQuery();
-  const [createPlaylist] = useCreatePlaylistMutation();
-  const [updatePlaylist] = useUpdatePlaylistMutation();
-  const [deletePlaylistMutation] = useDeletePlaylistMutation();
-  const [savePlaylistItemsAtomic] = useSavePlaylistItemsAtomicMutation();
-  const playlists = useMemo(
-    () => (playlistsData?.items ?? []).map(mapBackendPlaylistBase),
-    [playlistsData?.items],
-  );
-  const availableContent = useMemo<
-    Array<Content & { readonly type: "IMAGE" | "VIDEO" | "PDF" | "TEXT" }>
-  >(
-    () =>
-      (contentData?.items ?? [])
-        .map(mapBackendContentToContent)
-        .filter(isPlaylistRenderableContent),
-    [contentData?.items],
-  );
-
-  const handleStatusFilterChange = useCallback(
-    (value: StatusFilter) => {
-      setStatusFilter(value);
-      setPage(1);
-    },
-    [setStatusFilter, setPage],
-  );
-
-  const handleSortChange = useCallback(
-    (value: PlaylistSortField) => {
-      setSortBy(value);
-      setPage(1);
-    },
-    [setSortBy, setPage],
-  );
-
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      setSearch(value);
-      setPage(1);
-    },
-    [setSearch, setPage],
-  );
-
-  const totalPlaylists = playlistsData?.total ?? 0;
-
-  const handleCreateDialogOpenChange = useCallback((open: boolean) => {
-    setCreateDialogOpen(open);
-  }, []);
-
-  const handleManageItemsDialogOpenChange = useCallback((open: boolean) => {
-    if (!open) {
-      setManageItemsPlaylist(null);
-    }
-  }, []);
-
-  const handleCreatePlaylist = useCallback(
-    async (data: NewPlaylistPayload) => {
-      let createdPlaylistId: string | null = null;
-
-      try {
-        const created = await createPlaylist({
-          name: data.name,
-          description: data.description,
-        }).unwrap();
-        createdPlaylistId = created.id;
-        if (data.items.length > 0) {
-          await savePlaylistItemsAtomic({
-            playlistId: created.id,
-            items: data.items.map((item) => ({
-              kind: "new" as const,
-              contentId: item.content.id,
-              duration: item.duration,
-            })),
-          }).unwrap();
-        }
-        toast.success("Playlist created.");
-        return true;
-      } catch (err) {
-        if (createdPlaylistId) {
-          try {
-            await deletePlaylistMutation(createdPlaylistId).unwrap();
-          } catch (rollbackError) {
-            console.error(
-              "Failed to roll back playlist creation after item-save failure.",
-              rollbackError,
-            );
-          }
-        }
-        notifyApiError(err, "Failed to create playlist.");
-        return false;
-      }
-    },
-    [createPlaylist, deletePlaylistMutation, savePlaylistItemsAtomic],
-  );
-
-  const handleEditPlaylist = useCallback((playlist: Playlist) => {
-    setEditPlaylist(playlist);
-    setEditName(playlist.name);
-    setEditDescription(playlist.description ?? "");
-  }, []);
-
-  const handleManageItems = useCallback(
-    async (playlist: Playlist) => {
-      try {
-        const detailed = await loadPlaylist(playlist.id, true).unwrap();
-        setManageItemsPlaylist(mapBackendPlaylistWithItems(detailed));
-      } catch (err) {
-        notifyApiError(err, "Failed to load playlist items.");
-      }
-    },
-    [loadPlaylist],
-  );
-
-  const handleSaveItems = useCallback(
-    async (playlistId: string, items: PlaylistItemsAtomicSnapshot) => {
-      if (isSavingPlaylistItemsRef.current) {
-        return;
-      }
-
-      isSavingPlaylistItemsRef.current = true;
-      setIsSavingPlaylistItems(true);
-
-      try {
-        await savePlaylistItemsAtomic({
-          playlistId,
-          items,
-        }).unwrap();
-        toast.success("Playlist items updated.");
-        handleManageItemsDialogOpenChange(false);
-      } catch (err) {
-        notifyApiError(err, "Failed to update playlist items.");
-      } finally {
-        isSavingPlaylistItemsRef.current = false;
-        setIsSavingPlaylistItems(false);
-      }
-    },
-    [handleManageItemsDialogOpenChange, savePlaylistItemsAtomic],
-  );
-
-  const handlePreviewPlaylist = useCallback(
-    async (playlist: Playlist) => {
-      try {
-        const detailed = await loadPlaylist(playlist.id, true).unwrap();
-        setPreviewPlaylist(mapBackendPlaylistWithItems(detailed));
-      } catch {
-        setPreviewPlaylist(playlist);
-      }
-    },
-    [loadPlaylist],
-  );
-
-  const handleDeletePlaylist = useCallback((playlist: Playlist) => {
-    setPlaylistToDelete(playlist);
-    setDeleteDialogOpen(true);
-  }, []);
+  const {
+    canUpdatePlaylist,
+    canDeletePlaylist,
+    statusFilter,
+    sortBy,
+    search,
+    page,
+    playlists,
+    totalPlaylists,
+    availableContent,
+    availableDisplays,
+    createDialogOpen,
+    previewPlaylist,
+    editPlaylist,
+    manageItemsPlaylist,
+    playlistToDelete,
+    deleteDialogOpen,
+    editName,
+    editDescription,
+    isSavingPlaylistItems,
+    setPage,
+    setEditPlaylist,
+    setPreviewPlaylist,
+    setPlaylistToDelete,
+    setEditName,
+    setEditDescription,
+    handleStatusFilterChange,
+    handleSortChange,
+    handleSearchChange,
+    handleCreateDialogOpenChange,
+    handleManageItemsDialogOpenChange,
+    handleCreatePlaylist,
+    handleEditPlaylist,
+    handleManageItems,
+    handleSaveItems,
+    handlePreviewPlaylist,
+    handleDeletePlaylist,
+    handleUpdatePlaylist,
+    deletePlaylistMutation,
+  } = usePlaylistsPage();
 
   return (
     <DashboardPage.Root>
@@ -312,9 +95,11 @@ export default function PlaylistsPage(): ReactElement {
                 value={sortBy}
                 onValueChange={handleSortChange}
               />
-              <PlaylistSearchInput
+              <SearchControl
                 value={search}
                 onChange={handleSearchChange}
+                ariaLabel="Search playlists"
+                placeholder="Search playlists…"
                 className="w-full max-w-none md:w-72"
               />
             </div>
@@ -332,11 +117,12 @@ export default function PlaylistsPage(): ReactElement {
         </DashboardPage.Content>
 
         <DashboardPage.Footer>
-          <Pagination
+          <PaginationFooter
             page={page}
-            pageSize={pageSize}
+            pageSize={PAGE_SIZE}
             total={totalPlaylists}
             onPageChange={setPage}
+            variant="compact"
           />
         </DashboardPage.Footer>
       </DashboardPage.Body>
@@ -346,7 +132,7 @@ export default function PlaylistsPage(): ReactElement {
         onOpenChange={handleCreateDialogOpenChange}
         onCreate={handleCreatePlaylist}
         availableContent={availableContent}
-        availableDisplays={displaysData?.items ?? []}
+        availableDisplays={availableDisplays}
       />
 
       {manageItemsPlaylist && (
@@ -355,7 +141,7 @@ export default function PlaylistsPage(): ReactElement {
           onOpenChange={handleManageItemsDialogOpenChange}
           playlist={manageItemsPlaylist}
           availableContent={availableContent}
-          availableDisplays={displaysData?.items ?? []}
+          availableDisplays={availableDisplays}
           onSave={handleSaveItems}
           isSaving={isSavingPlaylistItems}
         />
@@ -395,20 +181,7 @@ export default function PlaylistsPage(): ReactElement {
               Cancel
             </Button>
             <Button
-              onClick={async () => {
-                if (!editPlaylist || editName.trim().length === 0) return;
-                try {
-                  await updatePlaylist({
-                    id: editPlaylist.id,
-                    name: editName.trim(),
-                    description: editDescription.trim() || null,
-                  }).unwrap();
-                  setEditPlaylist(null);
-                  toast.success("Playlist updated.");
-                } catch (err) {
-                  notifyApiError(err, "Failed to update playlist.");
-                }
-              }}
+              onClick={handleUpdatePlaylist}
               disabled={editName.trim().length === 0}
             >
               Save
@@ -463,7 +236,9 @@ export default function PlaylistsPage(): ReactElement {
 
       <ConfirmActionDialog
         open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setPlaylistToDelete(null);
+        }}
         title="Delete playlist?"
         description={
           playlistToDelete
@@ -474,9 +249,8 @@ export default function PlaylistsPage(): ReactElement {
         errorFallback="Failed to delete playlist."
         onConfirm={async () => {
           if (!playlistToDelete) return;
-          await deletePlaylistMutation(playlistToDelete.id).unwrap();
+          await deletePlaylistMutation(playlistToDelete.id);
           setPlaylistToDelete(null);
-          toast.success("Playlist deleted.");
         }}
       />
     </DashboardPage.Root>

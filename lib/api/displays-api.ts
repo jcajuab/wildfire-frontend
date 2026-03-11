@@ -1,9 +1,8 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "@/lib/api/base-query";
-import {
-  parseApiListResponseSafe,
-  parseApiResponseDataSafe,
-} from "@/lib/api/contracts";
+import { parseApiResponseDataSafe } from "@/lib/api/contracts";
+import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
+import { createProvidesTags } from "@/lib/api/provide-tags";
 
 /** Backend display shape (matches GET /displays and GET /displays/:id). */
 export interface Display {
@@ -132,28 +131,9 @@ export const displaysApi = createApi({
   endpoints: (build) => ({
     getDisplays: build.query<DisplaysListResponse, DisplaysListQuery | void>({
       query: (query) => buildDisplaysListUrl(query),
-      transformResponse: (response) => {
-        const parsed = parseApiListResponseSafe<Display>(
-          response,
-          "getDisplays",
-        );
-        return {
-          items: parsed.data,
-          total: parsed.meta.total,
-          page: parsed.meta.page,
-          pageSize: parsed.meta.pageSize,
-        };
-      },
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.items.map(({ id }) => ({
-                type: "Display" as const,
-                id,
-              })),
-              { type: "Display", id: "LIST" },
-            ]
-          : [{ type: "Display", id: "LIST" }],
+      transformResponse: (response) =>
+        transformPaginatedListResponse<Display>(response, "getDisplays"),
+      providesTags: createProvidesTags("Display"),
     }),
     getDisplayOptions: build.query<
       DisplayOption[],

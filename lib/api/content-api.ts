@@ -1,9 +1,8 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import {
-  parseApiListResponseSafe,
-  parseApiResponseDataSafe,
-} from "@/lib/api/contracts";
+import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { baseQuery } from "@/lib/api/base-query";
+import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
+import { createProvidesTags } from "@/lib/api/provide-tags";
 import type { FlashTone } from "@/types/content";
 
 export interface BackendContent {
@@ -145,28 +144,9 @@ export const contentApi = createApi({
           sortDirection: query?.sortDirection ?? "desc",
         },
       }),
-      transformResponse: (response) => {
-        const parsed = parseApiListResponseSafe<BackendContent>(
-          response,
-          "listContent",
-        );
-        return {
-          items: parsed.data,
-          total: parsed.meta.total,
-          page: parsed.meta.page,
-          pageSize: parsed.meta.pageSize,
-        };
-      },
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.items.map(({ id }) => ({
-                type: "Content" as const,
-                id,
-              })),
-              { type: "Content", id: "LIST" },
-            ]
-          : [{ type: "Content", id: "LIST" }],
+      transformResponse: (response) =>
+        transformPaginatedListResponse<BackendContent>(response, "listContent"),
+      providesTags: createProvidesTags("Content"),
     }),
     getContent: build.query<BackendContent, string>({
       query: (id) => `content/${id}`,

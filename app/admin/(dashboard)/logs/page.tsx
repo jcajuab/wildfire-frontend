@@ -1,11 +1,10 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useMemo } from "react";
 
 import { DashboardPage } from "@/components/layout/dashboard-page";
-import { LogsPagination } from "@/components/logs/logs-pagination";
 import { LogsTable } from "@/components/logs/logs-table";
+import { PaginationFooter } from "@/components/common/pagination-footer";
 import { Button } from "@/components/ui/button";
 import {
   Combobox,
@@ -17,18 +16,6 @@ import {
 } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCan } from "@/hooks/use-can";
-import { useListAuditEventsQuery } from "@/lib/api/audit-api";
-import { useGetDisplaysQuery } from "@/lib/api/displays-api";
-import { useGetUsersQuery } from "@/lib/api/rbac-api";
-import {
-  getResourceTypeLabel,
-  getResourceTypeValueFromInput,
-  RESOURCE_TYPE_FILTER_OPTIONS,
-  RESOURCE_TYPE_SELECT_ALL_VALUE,
-  type ResourceTypeFilter,
-} from "@/lib/audit-resource-types";
-import { mapAuditEventToLogEntry } from "@/lib/mappers/audit-log-mapper";
 import {
   Select,
   SelectContent,
@@ -36,14 +23,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { LogEntry } from "@/types/log";
-import { useAuditLogFilters } from "./useAuditLogFilters";
-import { useActorResolver } from "./useActorResolver";
+import {
+  getResourceTypeLabel,
+  RESOURCE_TYPE_FILTER_OPTIONS,
+  RESOURCE_TYPE_SELECT_ALL_VALUE,
+  type ResourceTypeFilter,
+} from "@/lib/audit-resource-types";
 import { AuditExportPopover } from "./AuditExportPopover";
+import {
+  ACTOR_TYPE_FILTERS,
+  PAGE_SIZE,
+  useLogsPage,
+  type ActorTypeFilter,
+} from "./use-logs-page";
 
-const PAGE_SIZE = 20;
-const ACTOR_TYPE_FILTERS = ["all", "user", "display"] as const;
-type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
 const COMMON_STATUS_CODES = ["200", "401", "403", "404", "500"] as const;
 const STATUS_CODE_LABELS: Record<(typeof COMMON_STATUS_CODES)[number], string> =
   {
@@ -55,144 +48,22 @@ const STATUS_CODE_LABELS: Record<(typeof COMMON_STATUS_CODES)[number], string> =
   };
 
 export default function LogsPage(): ReactElement {
-  const canExport = useCan("audit:read");
-  const filters = useAuditLogFilters(PAGE_SIZE);
-
-  const { data } = useListAuditEventsQuery(filters.listQuery);
-  const canReadUsers = useCan("users:read");
-  const canReadDisplays = useCan("displays:read");
-  const { data: usersData } = useGetUsersQuery(
-    { page: 1, pageSize: 100 },
-    {
-      skip: !canReadUsers,
-    },
-  );
-  const { data: displaysData } = useGetDisplaysQuery(
-    { page: 1, pageSize: 100 },
-    {
-      skip: !canReadDisplays,
-    },
-  );
-  const users = usersData?.items ?? [];
-  const displays = displaysData?.items ?? [];
-
-  const actorResolver = useActorResolver({ users, displays });
-
-  const logs = useMemo<LogEntry[]>(() => {
-    return (data?.items ?? []).map((event) =>
-      mapAuditEventToLogEntry(event, {
-        getActorName: actorResolver.getActorName,
-        getActorAvatarUrl: actorResolver.getActorAvatarUrl,
-      }),
-    );
-  }, [data?.items, actorResolver]);
-
-  const total = data?.total ?? 0;
-
-  const resetToFirstPage = useCallback((): void => {
-    if (filters.page !== 1) {
-      filters.setPage(1);
-    }
-  }, [filters]);
-
-  const handleFromChange = useCallback(
-    (nextValue: string): void => {
-      filters.setFrom(nextValue);
-      resetToFirstPage();
-    },
-    [resetToFirstPage, filters],
-  );
-
-  const handleToChange = useCallback(
-    (nextValue: string): void => {
-      filters.setTo(nextValue);
-      resetToFirstPage();
-    },
-    [resetToFirstPage, filters],
-  );
-
-  const handleActionChange = useCallback(
-    (nextValue: string): void => {
-      filters.setActionDraft(nextValue);
-    },
-    [filters],
-  );
-
-  const handleActorTypeChange = useCallback(
-    (nextValue: ActorTypeFilter): void => {
-      filters.setActorType(nextValue);
-      resetToFirstPage();
-    },
-    [resetToFirstPage, filters],
-  );
-
-  const handleResourceTypeChange = useCallback(
-    (nextValue: ResourceTypeFilter): void => {
-      filters.setResourceType(nextValue);
-      filters.setResourceTypeInput(
-        nextValue === "" ? "" : getResourceTypeLabel(nextValue),
-      );
-      resetToFirstPage();
-    },
-    [resetToFirstPage, filters],
-  );
-
-  const handleResourceTypeInputChange = useCallback(
-    (nextInputValue: string): void => {
-      const resolvedValue = getResourceTypeValueFromInput(nextInputValue);
-
-      if (resolvedValue !== null && resolvedValue !== "") {
-        filters.setResourceType(resolvedValue);
-        filters.setResourceTypeInput(getResourceTypeLabel(resolvedValue));
-        resetToFirstPage();
-        return;
-      }
-
-      filters.setResourceTypeInput(nextInputValue);
-      if (nextInputValue === "") {
-        filters.setResourceType("");
-        resetToFirstPage();
-      }
-    },
-    [resetToFirstPage, filters],
-  );
-
-  const handleStatusChange = useCallback(
-    (nextValue: string): void => {
-      filters.setStatusRaw(nextValue);
-      resetToFirstPage();
-    },
-    [resetToFirstPage, filters],
-  );
-
-  const selectedStatusValue = useMemo<string | null>(() => {
-    return COMMON_STATUS_CODES.includes(
-      filters.statusRaw as (typeof COMMON_STATUS_CODES)[number],
-    )
-      ? filters.statusRaw
-      : null;
-  }, [filters.statusRaw]);
-
-  const handleRequestIdChange = useCallback(
-    (nextValue: string): void => {
-      filters.setRequestIdDraft(nextValue);
-    },
-    [filters],
-  );
-
-  const handleResetFilters = useCallback((): void => {
-    filters.setFrom("");
-    filters.setTo("");
-    filters.setAction("");
-    filters.setActionDraft("");
-    filters.setActorType("all");
-    filters.setResourceType("");
-    filters.setResourceTypeInput("");
-    filters.setStatusRaw("");
-    filters.setRequestId("");
-    filters.setRequestIdDraft("");
-    filters.setPage(1);
-  }, [filters]);
+  const {
+    canExport,
+    filters,
+    logs,
+    total,
+    handleFromChange,
+    handleToChange,
+    handleActionChange,
+    handleActorTypeChange,
+    handleResourceTypeChange,
+    handleResourceTypeInputChange,
+    handleStatusChange,
+    handleRequestIdChange,
+    handleResetFilters,
+    selectedStatusValue,
+  } = useLogsPage();
 
   return (
     <DashboardPage.Root>
@@ -377,11 +248,12 @@ export default function LogsPage(): ReactElement {
         </DashboardPage.Content>
 
         <DashboardPage.Footer>
-          <LogsPagination
+          <PaginationFooter
             page={filters.page}
             pageSize={PAGE_SIZE}
             total={total}
             onPageChange={filters.setPage}
+            variant="numbered"
           />
         </DashboardPage.Footer>
       </DashboardPage.Body>

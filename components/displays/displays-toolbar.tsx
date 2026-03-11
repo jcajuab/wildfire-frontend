@@ -3,7 +3,7 @@
 import type { ReactElement } from "react";
 
 import { DisplayFilterPopover } from "@/components/displays/display-filter-popover";
-import { DisplaySearchInput } from "@/components/displays/display-search-input";
+import { SearchControl } from "@/components/common/search-control";
 import { DisplaySortSelect } from "@/components/displays/display-sort-select";
 import {
   DisplayStatusTabs,
@@ -60,9 +60,10 @@ export function DisplaysToolbar({
           onClearFilters={onClearFilters}
         />
         <DisplaySortSelect value={sortBy} onValueChange={onSortChange} />
-        <DisplaySearchInput
+        <SearchControl
           value={search}
           onChange={onSearchChange}
+          ariaLabel="Search displays"
           className="w-full max-w-none md:w-72"
         />
       </div>

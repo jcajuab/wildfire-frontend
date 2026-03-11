@@ -130,6 +130,21 @@ export function dateToISOEnd(date: string): string {
   return localEnd.toISOString();
 }
 
+export function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")} sec`;
+}
+
+export function formatItemDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  if (minutes > 0) {
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  }
+  return `0:${remainingSeconds.toString().padStart(2, "0")}`;
+}
+
 export function formatClockTime(time: string): string {
   const [hoursRaw, minutesRaw] = time.split(":");
   const hours = Number(hoursRaw);

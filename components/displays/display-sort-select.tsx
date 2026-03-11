@@ -1,16 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconSortAscendingLetters } from "@tabler/icons-react";
-
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { SortSelect } from "@/components/common/sort-select";
 import type { DisplaySortField } from "@/types/display";
 
 interface DisplaySortSelectProps {
@@ -33,32 +24,13 @@ export function DisplaySortSelect({
   onValueChange,
   className,
 }: DisplaySortSelectProps): ReactElement {
-  const currentLabel =
-    sortOptions.find((option) => option.value === value)?.label ??
-    "Alphabetical";
-
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="default"
-          className={cn("gap-2", className)}
-        >
-          <IconSortAscendingLetters className="size-4" aria-hidden="true" />
-          <span>Sort: {currentLabel}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {sortOptions.map((option) => (
-          <DropdownMenuItem
-            key={option.value}
-            onClick={() => onValueChange(option.value)}
-          >
-            {option.label}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <SortSelect
+      value={value}
+      onValueChange={onValueChange}
+      options={sortOptions}
+      defaultLabel="Alphabetical"
+      className={className}
+    />
   );
 }

@@ -1,15 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconSortDescending } from "@tabler/icons-react";
-
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { SortSelect } from "@/components/common/sort-select";
 import type { ContentSortField } from "@/types/content";
 
 interface ContentSortSelectProps {
@@ -31,27 +23,12 @@ export function ContentSortSelect({
   value,
   onValueChange,
 }: ContentSortSelectProps): ReactElement {
-  const currentLabel =
-    sortOptions.find((option) => option.value === value)?.label ?? "Recent";
-
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="default">
-          <IconSortDescending className="size-4" />
-          <span>Sort: {currentLabel}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {sortOptions.map((option) => (
-          <DropdownMenuItem
-            key={option.value}
-            onClick={() => onValueChange(option.value)}
-          >
-            {option.label}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <SortSelect
+      value={value}
+      onValueChange={onValueChange}
+      options={sortOptions}
+      defaultLabel="Recent"
+    />
   );
 }
