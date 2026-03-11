@@ -27,11 +27,7 @@ import {
 } from "@/lib/mappers/playlist-mapper";
 import type { PlaylistStatusFilter } from "@/components/playlists/playlist-filter-popover";
 import type { Content } from "@/types/content";
-<<<<<<< HEAD
 import type { Playlist } from "@/types/playlist";
-=======
-import type { Playlist, PlaylistSortField } from "@/types/playlist";
->>>>>>> 928bb3a (feat(playlists): route playlist creation through dedicated page)
 import type { PlaylistItemsAtomicSnapshot } from "@/components/playlists/edit-playlist-items-dialog";
 import type { Display } from "@/lib/api/displays-api";
 
