@@ -16,6 +16,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
@@ -115,12 +116,6 @@ export const ContentCard = memo(function ContentCard({
           <h3 className="truncate text-sm font-semibold">
             {isPdfPageItem && pageLabel ? pageLabel : content.title}
           </h3>
-          <Badge
-            variant="outline"
-            className={cn("shrink-0", getContentStatusBadgeClassName(content.status))}
-          >
-            {formatContentStatus(content.status)}
-          </Badge>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -213,8 +208,15 @@ export const ContentCard = memo(function ContentCard({
 
       {/* Zone C — Footer metadata */}
       <div className="flex flex-col justify-between gap-3 p-3 pt-2">
-        {/* Type + size pills */}
-        <div className="flex flex-wrap gap-1.5">
+        {/* Status + type + size pills */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge
+            variant="outline"
+            className={cn(getContentStatusBadgeClassName(content.status))}
+          >
+            {formatContentStatus(content.status)}
+          </Badge>
+          <Separator orientation="vertical" className="h-4 bg-border/80" />
           <Badge variant="outline">{CONTENT_TYPE_LABEL[content.type]}</Badge>
           <Badge variant="outline">{formatFileSize(content.fileSize)}</Badge>
         </div>
