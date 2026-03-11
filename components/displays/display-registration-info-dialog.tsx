@@ -181,32 +181,47 @@ export function DisplayRegistrationInfoDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
+      <DialogContent className='max-w-[calc(100%-2rem)] sm:max-w-lg'>
         <DialogHeader>
           <DialogTitle>Register Display</DialogTitle>
-          <DialogDescription>
-            A one-time code is generated automatically. Open
-            <span className="mx-1 font-medium">/admin/displays/register</span>
-            on the display machine and complete registration before expiration.
+          <DialogDescription asChild>
+            <ol className='mt-1 list-none space-y-1 text-sm text-muted-foreground'>
+              <li>
+                <span className='mr-1 font-medium text-foreground'>1.</span>
+                On the display device, open a web browser.
+              </li>
+              <li>
+                <span className='mr-1 font-medium text-foreground'>2.</span>
+                Navigate to
+                <span className='mx-1 font-medium text-foreground'>
+                  /admin/displays/register
+                </span>
+              </li>
+              <li>
+                <span className='mr-1 font-medium text-foreground'>3.</span>
+                Enter the code below and complete registration before it expires
+                in 10 minutes.
+              </li>
+            </ol>
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-md border border-border bg-muted/30 p-4 text-sm">
-          <p className="text-muted-foreground">Active registration code</p>
-          <p className="mt-2 text-3xl font-semibold tracking-[0.25em]">
+        <div className='rounded-md border border-border bg-muted/30 p-4 text-sm text-center'>
+          <p className='text-muted-foreground'>Active registration code</p>
+          <p className='mt-2 text-3xl font-semibold tracking-[0.25em]'>
             {registrationCode ?? "------"}
           </p>
           {registrationCodeExpiresAt ? (
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className='mt-2 text-xs text-muted-foreground'>
               Expires at {formatTimeOfDay(registrationCodeExpiresAt)}
             </p>
           ) : null}
           {statusText ? (
             <p
-              className="mt-2 text-xs text-muted-foreground"
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
+              className='mt-2 text-xs text-muted-foreground'
+              role='status'
+              aria-live='polite'
+              aria-atomic='true'
             >
               {statusText}
             </p>
@@ -215,20 +230,20 @@ export function DisplayRegistrationInfoDialog({
 
         {successMessage ? (
           <p
-            className="rounded-md bg-[var(--success-muted)] px-3 py-2 text-sm text-[var(--success-foreground)]"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
+            className='rounded-md bg-[var(--success-muted)] px-3 py-2 text-sm text-[var(--success-foreground)]'
+            role='status'
+            aria-live='polite'
+            aria-atomic='true'
           >
             {successMessage}
           </p>
         ) : null}
 
-        <DialogFooter className="sm:justify-end">
+        <DialogFooter className='sm:justify-end'>
           {canIssueRegistrationCode ? (
             <Button
-              type="button"
-              variant="outline"
+              type='button'
+              variant='outline'
               disabled={!attemptId || isCreatingAttempt || isRotatingAttempt}
               onClick={() => {
                 if (!attemptId) return;

@@ -75,7 +75,7 @@ export default function DisplaysPage(): ReactElement {
             <Can permission="displays:create">
               <Button onClick={() => setIsAddInfoDialogOpen(true)}>
                 <IconPlus className="size-4" aria-hidden="true" />
-                Add Display
+                Register Display
               </Button>
             </Can>
             <Can permission="displays:update">

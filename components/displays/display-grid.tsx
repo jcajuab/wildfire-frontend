@@ -28,7 +28,7 @@ export function DisplayGrid({
     return (
       <EmptyState
         title="No displays found"
-        description="Displays register themselves automatically. Use Add Display to see registration instructions for your Raspberry Pi displays."
+        description="Displays register themselves automatically. Use Register Display to see registration instructions for your Raspberry Pi displays."
         icon={<IconPhoto className="size-7" aria-hidden="true" />}
       />
     );
