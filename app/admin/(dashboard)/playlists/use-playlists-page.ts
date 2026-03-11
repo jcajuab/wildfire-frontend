@@ -26,18 +26,16 @@ import {
   mapBackendPlaylistBase,
   mapBackendPlaylistWithItems,
 } from "@/lib/mappers/playlist-mapper";
-import type { StatusFilter } from "@/components/playlists/playlist-status-tabs";
+import type { PlaylistStatusFilter } from "@/components/playlists/playlist-filter-popover";
 import type { Content } from "@/types/content";
 import type {
   Playlist,
   PlaylistItem,
-  PlaylistSortField,
 } from "@/types/playlist";
 import type { PlaylistItemsAtomicSnapshot } from "@/components/playlists/edit-playlist-items-dialog";
 import type { Display } from "@/lib/api/displays-api";
 
 const PLAYLIST_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
-const PLAYLIST_SORT_VALUES = ["recent", "name"] as const;
 export const PAGE_SIZE = 12;
 
 const isPlaylistRenderableContent = (
@@ -61,8 +59,7 @@ export interface UsePlaylistsPageResult {
   canDeletePlaylist: boolean;
 
   // Filter state
-  statusFilter: StatusFilter;
-  sortBy: PlaylistSortField;
+  statusFilter: PlaylistStatusFilter;
   search: string;
   page: number;
 
@@ -94,8 +91,8 @@ export interface UsePlaylistsPageResult {
   setEditDescription: (description: string) => void;
 
   // Handlers
-  handleStatusFilterChange: (value: StatusFilter) => void;
-  handleSortChange: (value: PlaylistSortField) => void;
+  handleStatusFilterChange: (value: PlaylistStatusFilter) => void;
+  handleClearFilters: () => void;
   handleSearchChange: (value: string) => void;
   handleCreateDialogOpenChange: (open: boolean) => void;
   handleManageItemsDialogOpenChange: (open: boolean) => void;
@@ -117,16 +114,12 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   const canDeletePlaylist = useCan("playlists:delete");
   const canReadContent = useCan("content:read");
 
-  const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(
-    "status",
-    "all",
-    PLAYLIST_STATUS_VALUES,
-  );
-  const [sortBy, setSortBy] = useQueryEnumState<PlaylistSortField>(
-    "sort",
-    "recent",
-    PLAYLIST_SORT_VALUES,
-  );
+  const [statusFilter, setStatusFilter] =
+    useQueryEnumState<PlaylistStatusFilter>(
+      "status",
+      "all",
+      PLAYLIST_STATUS_VALUES,
+    );
   const [search, setSearch] = useQueryStringState("q", "");
   const [page, setPage] = useQueryNumberState("page", 1);
 
@@ -150,10 +143,10 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
       pageSize: PAGE_SIZE,
       status: statusFilter === "all" ? undefined : statusFilter,
       search: search.length > 0 ? search : undefined,
-      sortBy: sortBy === "name" ? "name" : "updatedAt",
-      sortDirection: sortBy === "name" ? "asc" : "desc",
+      sortBy: "updatedAt",
+      sortDirection: "desc",
     }),
-    [page, search, sortBy, statusFilter],
+    [page, search, statusFilter],
   );
 
   const { data: playlistsData } = useListPlaylistsQuery(playlistQuery);
@@ -190,20 +183,17 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   const totalPlaylists = playlistsData?.total ?? 0;
 
   const handleStatusFilterChange = useCallback(
-    (value: StatusFilter) => {
+    (value: PlaylistStatusFilter) => {
       setStatusFilter(value);
       setPage(1);
     },
     [setStatusFilter, setPage],
   );
 
-  const handleSortChange = useCallback(
-    (value: PlaylistSortField) => {
-      setSortBy(value);
-      setPage(1);
-    },
-    [setSortBy, setPage],
-  );
+  const handleClearFilters = useCallback(() => {
+    setStatusFilter("all");
+    setPage(1);
+  }, [setStatusFilter, setPage]);
 
   const handleSearchChange = useCallback(
     (value: string) => {
@@ -350,7 +340,6 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     canUpdatePlaylist,
     canDeletePlaylist,
     statusFilter,
-    sortBy,
     search,
     page,
     playlists,
@@ -373,7 +362,7 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     setEditName,
     setEditDescription,
     handleStatusFilterChange,
-    handleSortChange,
+    handleClearFilters,
     handleSearchChange,
     handleCreateDialogOpenChange,
     handleManageItemsDialogOpenChange,

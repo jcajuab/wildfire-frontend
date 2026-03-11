@@ -19,29 +19,50 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { DisplayOutputFilter } from "@/types/display";
+import type { DisplayOutputFilter, DisplayStatus } from "@/types/display";
+
+export type DisplayStatusFilter = "all" | DisplayStatus;
 
 interface DisplayFilterPopoverProps {
+  readonly statusFilter: DisplayStatusFilter;
   readonly selectedGroups: readonly string[];
   readonly selectedOutput: DisplayOutputFilter;
+  readonly filteredResultsCount: number;
   readonly availableGroups: readonly string[];
   readonly availableOutputs: readonly string[];
+  readonly onStatusChange: (nextStatus: DisplayStatusFilter) => void;
   readonly onGroupsChange: (nextGroups: readonly string[]) => void;
   readonly onOutputChange: (nextOutput: DisplayOutputFilter) => void;
   readonly onClearFilters: () => void;
 }
 
+const statusOptions: readonly {
+  readonly value: DisplayStatusFilter;
+  readonly label: string;
+}[] = [
+  { value: "all", label: "All" },
+  { value: "READY", label: "Ready" },
+  { value: "LIVE", label: "Live" },
+  { value: "DOWN", label: "Down" },
+] as const;
+
 export function DisplayFilterPopover({
+  statusFilter,
   selectedGroups,
   selectedOutput,
+  filteredResultsCount,
   availableGroups,
   availableOutputs,
+  onStatusChange,
   onGroupsChange,
   onOutputChange,
   onClearFilters,
 }: DisplayFilterPopoverProps): ReactElement {
   const activeFilterCount =
-    selectedGroups.length + (selectedOutput === "all" ? 0 : 1);
+    selectedGroups.length +
+    (selectedOutput === "all" ? 0 : 1) +
+    (statusFilter === "all" ? 0 : 1);
+  const hasActiveFilters = activeFilterCount > 0;
 
   const toggleGroup = (groupName: string, checked: boolean): void => {
     if (checked) {
@@ -59,14 +80,19 @@ export function DisplayFilterPopover({
         <Button variant="outline" size="default" className="gap-2">
           <IconFilter className="size-4" aria-hidden="true" />
           <span>Filter</span>
-          {activeFilterCount > 0 ? (
+          {hasActiveFilters ? (
             <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground tabular-nums">
-              {activeFilterCount}
+              {filteredResultsCount}
             </span>
           ) : null}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-4" align="end">
+      <PopoverContent
+        className="w-80 p-4"
+        side="bottom"
+        align="end"
+        avoidCollisions={false}
+      >
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">Filters</h3>
@@ -76,7 +102,7 @@ export function DisplayFilterPopover({
               size="sm"
               className="gap-1.5"
               onClick={onClearFilters}
-              disabled={activeFilterCount === 0}
+              disabled={!hasActiveFilters}
             >
               <IconX className="size-3.5" aria-hidden="true" />
               Clear
@@ -85,10 +111,44 @@ export function DisplayFilterPopover({
 
           <div className="flex flex-col gap-1.5">
             <Label
+              htmlFor="display-status-filter"
+              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              Status
+            </Label>
+            <Select
+              value={statusFilter}
+              onValueChange={(nextValue) =>
+                onStatusChange(nextValue as DisplayStatusFilter)
+              }
+            >
+              <SelectTrigger id="display-status-filter" className="w-full">
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent
+                position="popper"
+                side="bottom"
+                align="start"
+                avoidCollisions={false}
+              >
+                {statusOptions.map((statusOption) => (
+                  <SelectItem
+                    key={statusOption.value}
+                    value={statusOption.value}
+                  >
+                    {statusOption.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label
               htmlFor="display-output-filter"
               className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
             >
-              Display Output
+              Output
             </Label>
             <Select
               value={selectedOutput}
@@ -96,10 +156,15 @@ export function DisplayFilterPopover({
                 onOutputChange(nextValue as DisplayOutputFilter)
               }
             >
-              <SelectTrigger id="display-output-filter">
+              <SelectTrigger id="display-output-filter" className="w-full">
                 <SelectValue placeholder="All Outputs" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent
+                position="popper"
+                side="bottom"
+                align="start"
+                avoidCollisions={false}
+              >
                 <SelectItem value="all">All Outputs</SelectItem>
                 {availableOutputs.map((outputName) => (
                   <SelectItem key={outputName} value={outputName}>

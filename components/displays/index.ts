@@ -1,8 +1,5 @@
-export { DisplayStatusTabs } from "./display-status-tabs";
-export type { DisplayStatusFilter } from "./display-status-tabs";
-
-export { DisplaySortSelect } from "./display-sort-select";
 export { DisplayFilterPopover } from "./display-filter-popover";
+export type { DisplayStatusFilter } from "./display-filter-popover";
 export { DisplayCard } from "./display-card";
 export { DisplayGrid } from "./display-grid";
 export { AddDisplayDialog } from "./add-display-dialog";

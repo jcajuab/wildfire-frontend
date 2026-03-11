@@ -34,7 +34,7 @@ export function useContentPageController() {
     status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
     type: filters.typeFilter === "all" ? undefined : filters.typeFilter,
     search: filters.search.trim().length > 0 ? filters.search : undefined,
-    sortBy: filters.sortBy,
+    sortBy: "createdAt",
     sortDirection: "desc",
   });
 

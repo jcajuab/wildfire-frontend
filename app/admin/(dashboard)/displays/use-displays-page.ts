@@ -43,11 +43,10 @@ import {
   mapDisplayApiToDisplay,
   withDisplayGroups,
 } from "@/lib/map-display-to-display";
-import type { DisplayStatusFilter } from "@/components/displays/display-status-tabs";
+import type { DisplayStatusFilter } from "@/components/displays/display-filter-popover";
 import type {
   Display,
   DisplayOutputFilter,
-  DisplaySortField,
 } from "@/types/display";
 import type {
   DisplayGroup,
@@ -55,7 +54,6 @@ import type {
 } from "@/lib/api/displays-api";
 
 const DISPLAY_STATUS_VALUES = ["all", "READY", "LIVE", "DOWN"] as const;
-const DISPLAY_SORT_VALUES = ["alphabetical", "status", "location"] as const;
 export const PAGE_SIZE = 20;
 
 export interface UseDisplaysPageResult {
@@ -66,7 +64,6 @@ export interface UseDisplaysPageResult {
 
   // Filter state
   statusFilter: DisplayStatusFilter;
-  sortBy: DisplaySortField;
   search: string;
   page: number;
   groupFilters: readonly string[];
@@ -102,7 +99,6 @@ export interface UseDisplaysPageResult {
   // Handlers
   refetch: () => void;
   handleStatusFilterChange: (value: DisplayStatusFilter) => void;
-  handleSortChange: (value: DisplaySortField) => void;
   handleSearchChange: (value: string) => void;
   handleGroupFilterChange: (value: readonly string[]) => void;
   handleOutputFilterChange: (value: DisplayOutputFilter) => void;
@@ -129,11 +125,6 @@ export function useDisplaysPage(): UseDisplaysPageResult {
       "all",
       DISPLAY_STATUS_VALUES,
     );
-  const [sortBy, setSortBy] = useQueryEnumState<DisplaySortField>(
-    "sort",
-    "alphabetical",
-    DISPLAY_SORT_VALUES,
-  );
   const [search, setSearch] = useQueryStringState("q", "");
   const [page, setPage] = useQueryNumberState("page", 1);
   const [groupFilters, setGroupFilters] = useQueryListState("groups", []);
@@ -169,12 +160,7 @@ export function useDisplaysPage(): UseDisplaysPageResult {
       groupIds: selectedGroupIds.length > 0 ? selectedGroupIds : undefined,
       output:
         normalizedOutputFilter === "all" ? undefined : normalizedOutputFilter,
-      sortBy:
-        sortBy === "alphabetical"
-          ? "name"
-          : sortBy === "location"
-            ? "location"
-            : "status",
+      sortBy: "name",
       sortDirection: "asc",
     },
     {
@@ -292,14 +278,6 @@ export function useDisplaysPage(): UseDisplaysPageResult {
     [setStatusFilter, setPage],
   );
 
-  const handleSortChange = useCallback(
-    (value: DisplaySortField) => {
-      setSortBy(value);
-      setPage(1);
-    },
-    [setSortBy, setPage],
-  );
-
   const handleSearchChange = useCallback(
     (value: string) => {
       setSearch(value);
@@ -325,10 +303,11 @@ export function useDisplaysPage(): UseDisplaysPageResult {
   );
 
   const handleClearFilters = useCallback(() => {
+    setStatusFilter("all");
     setGroupFilters([]);
     setOutputFilter("all");
     setPage(1);
-  }, [setGroupFilters, setOutputFilter, setPage]);
+  }, [setStatusFilter, setGroupFilters, setOutputFilter, setPage]);
 
   const refreshSelectedDisplay = useCallback(
     async (display: Display): Promise<void> => {
@@ -505,7 +484,6 @@ export function useDisplaysPage(): UseDisplaysPageResult {
     canUpdateDisplay,
     canDeleteDisplay,
     statusFilter,
-    sortBy,
     search,
     page,
     groupFilters,
@@ -533,7 +511,6 @@ export function useDisplaysPage(): UseDisplaysPageResult {
     setPage,
     refetch,
     handleStatusFilterChange,
-    handleSortChange,
     handleSearchChange,
     handleGroupFilterChange,
     handleOutputFilterChange,
