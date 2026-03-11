@@ -35,7 +35,7 @@ export function DisplayGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
       {items.map((display) => (
         <DisplayCard
           key={display.id}

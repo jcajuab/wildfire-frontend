@@ -120,7 +120,7 @@ export default function DisplaysPage(): ReactElement {
 
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-5">
             {isLoading ? (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
                 {Array.from({ length: 6 }).map((_, index) => (
                   <Skeleton key={index} className="h-[220px] rounded-md" />
                 ))}

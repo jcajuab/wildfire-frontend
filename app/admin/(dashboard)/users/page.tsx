@@ -115,7 +115,7 @@ export default function UsersPage(): ReactElement {
             />
           </div>
 
-          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
+          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
             <div className="overflow-hidden rounded-md border border-border">
               <UsersTable
                 users={users}
@@ -135,7 +135,7 @@ export default function UsersPage(): ReactElement {
             </div>
 
             <Can permission="users:create">
-              <section className="mt-6 overflow-hidden rounded-md border border-border">
+              <section className="overflow-hidden rounded-md border border-border">
                 <div className="border-b border-border px-4 py-3">
                   <h3 className="text-sm font-semibold">Invitations</h3>
                   <p className="text-xs text-muted-foreground">

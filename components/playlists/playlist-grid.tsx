@@ -33,7 +33,7 @@ export function PlaylistGrid({
   }
 
   return (
-    <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
       {playlists.map((playlist) => (
         <PlaylistCard
           key={playlist.id}

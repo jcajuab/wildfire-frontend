@@ -186,10 +186,8 @@ export const DisplayCard = memo(function DisplayCard({
         )}
       </div>
 
-      <div className="space-y-2">
-        <div className="overflow-hidden rounded-xl border border-border/70 bg-background aspect-video">
-          <DisplayPreview displayId={display.id} displayName={display.name} />
-        </div>
+      <div className="overflow-hidden rounded-xl border border-border/70 bg-background aspect-video">
+        <DisplayPreview displayId={display.id} displayName={display.name} />
       </div>
     </article>
   );
