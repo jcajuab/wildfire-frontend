@@ -5,7 +5,6 @@ import Image from "next/image";
 import {
   IconDots,
   IconDownload,
-  IconFileText,
   IconFileTypePdf,
   IconPencil,
   IconEye,
@@ -31,6 +30,11 @@ import {
   formatFileSize,
   getContentStatusBadgeClassName,
 } from "@/lib/formatters";
+import {
+  getFlashThumbnailText,
+  getFlashTypographyClass,
+  getTextThumbnailText,
+} from "@/lib/content-thumbnail-preview";
 import type { Content, ContentType } from "@/types/content";
 
 const CONTENT_TYPE_LABEL: Record<ContentType, string> = {
@@ -86,15 +90,23 @@ export const ContentCard = memo(function ContentCard({
       : content.pageCount === 1
         ? "1 page"
         : `${content.pageCount} pages`;
+  const isFlashContent = content.type === "FLASH";
+  const isTextContent = content.type === "TEXT";
+  const flashThumbnailText = isFlashContent
+    ? getFlashThumbnailText(content)
+    : null;
+  const textThumbnailText = isTextContent ? getTextThumbnailText(content) : null;
+  const flashTypographyClass =
+    flashThumbnailText === null
+      ? null
+      : getFlashTypographyClass(flashThumbnailText.length);
 
   const ThumbnailFallbackIcon =
     content.type === "PDF"
       ? IconFileTypePdf
       : content.type === "VIDEO"
         ? IconVideo
-        : content.type === "TEXT"
-          ? IconFileText
-          : IconPhoto;
+        : IconPhoto;
 
   const handleRootToggle = () => {
     if (!canTogglePdfRoot || !onTogglePdfRootExpand) {
@@ -160,7 +172,14 @@ export const ContentCard = memo(function ContentCard({
       </div>
 
       {/* Zone B — Thumbnail (16:9) */}
-      <div className="relative flex aspect-video items-center justify-center bg-muted/50">
+      <div
+        className={cn(
+          "relative flex aspect-video bg-muted/50",
+          isTextContent
+            ? "items-center justify-center overflow-visible"
+            : "items-center justify-center",
+        )}
+      >
         {isPdfRoot ? (
           <div className="relative h-full w-full p-3">
             <div className="absolute inset-x-8 top-4 bottom-3 rotate-6 rounded-md border border-border/80 bg-card/80" />
@@ -184,6 +203,23 @@ export const ContentCard = memo(function ContentCard({
                 </div>
               )}
             </div>
+          </div>
+        ) : isFlashContent ? (
+          <div className="flex h-full w-full items-center justify-center px-3 py-2">
+            <p
+              className={cn(
+                "text-center font-medium whitespace-normal break-words text-foreground",
+                flashTypographyClass,
+              )}
+            >
+              {flashThumbnailText}
+            </p>
+          </div>
+        ) : isTextContent ? (
+          <div className="flex h-full w-full items-center justify-center overflow-visible p-2">
+            <p className="max-w-full text-center text-xs leading-snug whitespace-pre-wrap break-words text-foreground">
+              {textThumbnailText}
+            </p>
           </div>
         ) : (
           <>
