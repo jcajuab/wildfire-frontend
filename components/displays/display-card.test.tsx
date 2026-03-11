@@ -122,7 +122,7 @@ describe("DisplayCard", () => {
 
     expect(screen.getByText("hdmi-0")).toBeInTheDocument();
     expect(screen.getByText("1920x1080")).toBeInTheDocument();
-    expect(screen.getByText("|")).toBeInTheDocument();
+    expect(document.querySelector('[data-slot="separator"]')).toBeInTheDocument();
     expect(
       document.querySelector('[data-group-visible="Lobby"]'),
     ).toBeInTheDocument();

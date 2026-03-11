@@ -12,6 +12,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,7 @@ import { DisplayPreview } from "./display-preview";
 import type { Display, DisplayStatus } from "@/types/display";
 
 const GROUP_GAP_PX = 6;
+const META_BADGE_CLASSNAME = "h-6 shrink-0 px-2.5 text-[11px] leading-none";
 
 function getVisibleGroupCount(
   groupWidths: number[],
@@ -264,17 +266,25 @@ export const DisplayCard = memo(function DisplayCard({
       </header>
 
       <div className="flex min-h-6 min-w-0 items-center gap-1.5">
-        <Badge variant="outline" className="bg-background text-foreground">
+        <Badge
+          variant="outline"
+          className={`${META_BADGE_CLASSNAME} bg-background text-foreground`}
+        >
           {outputLabel}
         </Badge>
         {showResolution ? (
-          <Badge variant="outline" className="bg-background text-foreground">
+          <Badge
+            variant="outline"
+            className={`${META_BADGE_CLASSNAME} bg-background text-foreground`}
+          >
             {resolutionLabel}
           </Badge>
         ) : null}
-        <span className="text-muted-foreground">|</span>
+        <Separator orientation="vertical" className="h-4 bg-border/80" />
         {isGlobalEmergencyActive ? (
-          <Badge variant="destructive">Emergency Active</Badge>
+          <Badge variant="destructive" className={META_BADGE_CLASSNAME}>
+            Emergency Active
+          </Badge>
         ) : null}
         <div
           ref={groupOverflowContainerRef}
@@ -288,7 +298,7 @@ export const DisplayCard = memo(function DisplayCard({
                   key={group.name}
                   data-group-visible={group.name}
                   variant="secondary"
-                  className="max-w-full shrink-0 truncate border border-blue-200 bg-blue-600 text-white"
+                  className={`${META_BADGE_CLASSNAME} max-w-full truncate border border-blue-200 bg-blue-600 text-white`}
                 >
                   {group.name}
                 </Badge>
@@ -297,14 +307,16 @@ export const DisplayCard = memo(function DisplayCard({
                 <Badge
                   data-group-overflow-visible={String(hiddenGroupCount)}
                   variant="secondary"
-                  className="shrink-0 border border-blue-200 bg-blue-600 text-white"
+                  className={`${META_BADGE_CLASSNAME} border border-blue-200 bg-blue-600 text-white`}
                 >
                   +{hiddenGroupCount}
                 </Badge>
               ) : null}
             </>
           ) : (
-            <Badge variant="secondary">Ungrouped</Badge>
+            <Badge variant="secondary" className={META_BADGE_CLASSNAME}>
+              Ungrouped
+            </Badge>
           )}
         </div>
       </div>
@@ -315,7 +327,7 @@ export const DisplayCard = memo(function DisplayCard({
             key={`measure-${group.name}`}
             data-group-measure={group.name}
             variant="secondary"
-            className="shrink-0 border border-blue-200 bg-blue-600 text-white"
+            className={`${META_BADGE_CLASSNAME} border border-blue-200 bg-blue-600 text-white`}
           >
             {group.name}
           </Badge>
@@ -327,7 +339,7 @@ export const DisplayCard = memo(function DisplayCard({
               key={`measure-overflow-${hiddenCount}`}
               data-group-overflow-measure={String(hiddenCount)}
               variant="secondary"
-              className="shrink-0 border border-blue-200 bg-blue-600 text-white"
+              className={`${META_BADGE_CLASSNAME} border border-blue-200 bg-blue-600 text-white`}
             >
               +{hiddenCount}
             </Badge>
