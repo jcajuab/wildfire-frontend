@@ -172,7 +172,7 @@ export function RolesTable({
   }
 
   return (
-    <Table density="comfortable">
+    <Table>
       <TableHeader>
         <TableRow>
           <TableHead

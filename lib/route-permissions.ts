@@ -80,12 +80,6 @@ const MANAGE_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
       match: "exact",
       section: "manage",
     },
-    {
-      path: "/admin/settings",
-      title: "Settings",
-      match: "exact",
-      section: "manage",
-    },
   ];
 
 const NON_NAV_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =

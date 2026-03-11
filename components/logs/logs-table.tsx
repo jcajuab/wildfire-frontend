@@ -55,7 +55,7 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
 
   return (
     <>
-      <Table density="comfortable">
+      <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[220px]">Timestamp</TableHead>

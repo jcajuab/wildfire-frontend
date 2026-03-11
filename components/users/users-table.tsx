@@ -221,7 +221,7 @@ export function UsersTable({
   }
 
   return (
-    <Table density="comfortable">
+    <Table>
       <TableHeader>
         <TableRow>
           <TableHead

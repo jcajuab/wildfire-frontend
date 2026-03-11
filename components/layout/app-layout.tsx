@@ -3,6 +3,7 @@
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { MobileHeader } from "@/components/layout/mobile-header";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AIChatBubble } from "@/components/ai/ai-chat-bubble";
 
@@ -23,9 +24,10 @@ export function AppLayout({ children }: AppLayoutProps): ReactElement {
         }
       >
         <AppSidebar />
+        <MobileHeader />
         <main
           id="main-content"
-          className="flex min-h-svh w-full flex-1 flex-col bg-muted/30 p-2"
+          className="flex min-h-svh w-full flex-1 flex-col bg-muted/30 p-2 pt-16 md:pt-2"
         >
           {children}
         </main>

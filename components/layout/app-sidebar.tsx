@@ -17,9 +17,8 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import Image from "next/image";
-import type { CSSProperties, ComponentType, ReactElement } from "react";
+import type { ComponentType, ReactElement } from "react";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import {
   Sidebar,
@@ -32,8 +31,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,12 +40,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMounted } from "@/hooks/use-mounted";
+import { useGlobalEmergency } from "@/hooks/use-global-emergency";
 import { useAuth } from "@/context/auth-context";
-import {
-  useActivateGlobalEmergencyMutation,
-  useDeactivateGlobalEmergencyMutation,
-  useGetRuntimeOverridesQuery,
-} from "@/lib/api/displays-api";
 import {
   getRoutesBySection,
   isPathMatch,
@@ -55,6 +50,7 @@ import {
   type DashboardRouteReadPermissionEntry,
 } from "@/lib/route-permissions";
 import type { PermissionType } from "@/types/permission";
+import { WildfireLogo } from "@/components/common/wildfire-logo";
 
 interface NavItem {
   readonly title: string;
@@ -67,10 +63,6 @@ interface NavItem {
 const CORE_SECTION = "CORE";
 const MANAGE_SECTION = "MANAGE";
 
-type SidebarStyleVariables = CSSProperties & {
-  [key: `--${string}`]: string;
-};
-
 const NAV_ICON_BY_PATH: Record<
   string,
   ComponentType<{ className?: string }>
@@ -82,7 +74,6 @@ const NAV_ICON_BY_PATH: Record<
   "/admin/users": IconUsers,
   "/admin/roles": IconShield,
   "/admin/logs": IconList,
-  "/admin/settings": IconSettings,
 };
 
 function resolveNavItems(
@@ -121,21 +112,16 @@ function isReadyNavigationSectionVisible(
 export function AppSidebar(): ReactElement {
   const pathname = usePathname();
   const { user, logout, can, isInitialized } = useAuth();
+  const { isMobile } = useSidebar();
   const mounted = useMounted();
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
-  const canReadDisplays = isInitialized && can("displays:read");
-  const canUpdateDisplays = isInitialized && can("displays:update");
-  const { data: runtimeOverrides } = useGetRuntimeOverridesQuery(undefined, {
-    pollingInterval: 5_000,
-    skip: !canReadDisplays,
-  });
-  const [activateGlobalEmergency, { isLoading: isActivatingEmergency }] =
-    useActivateGlobalEmergencyMutation();
-  const [deactivateGlobalEmergency, { isLoading: isDeactivatingEmergency }] =
-    useDeactivateGlobalEmergencyMutation();
-  const isGlobalEmergencyActive =
-    runtimeOverrides?.globalEmergency.active ?? false;
-  const isEmergencyBusy = isActivatingEmergency || isDeactivatingEmergency;
+  const {
+    isActive: isEmergencyActive,
+    isBusy: isEmergencyBusy,
+    canRead: canReadEmergency,
+    canUpdate: canUpdateEmergency,
+    handleToggle: handleEmergencyToggle,
+  } = useGlobalEmergency();
 
   const coreNavItems = useMemo(() => {
     return isInitialized
@@ -160,106 +146,15 @@ export function AppSidebar(): ReactElement {
   const displayEmail =
     user?.email ?? (user?.username ? `@${user.username}` : "");
 
-  const sidebarColors: SidebarStyleVariables = {
-    "--sidebar": "var(--primary)",
-    "--sidebar-foreground": "var(--primary-foreground)",
-    "--sidebar-primary": "var(--primary-foreground)",
-    "--sidebar-primary-foreground": "var(--primary)",
-    "--sidebar-accent":
-      "color-mix(in oklab, var(--primary-foreground) 14%, var(--primary))",
-    "--sidebar-accent-foreground": "var(--primary-foreground)",
-    "--sidebar-border":
-      "color-mix(in oklab, var(--primary-foreground) 20%, var(--primary))",
-    "--sidebar-ring": "var(--primary-foreground)",
-  };
-
-  const handleGlobalEmergencyAction = async () => {
-    if (!canUpdateDisplays || isEmergencyBusy) {
-      return;
-    }
-    try {
-      if (isGlobalEmergencyActive) {
-        await deactivateGlobalEmergency({}).unwrap();
-        toast.success("Global emergency mode stopped.");
-      } else {
-        await activateGlobalEmergency({}).unwrap();
-        toast.success("Global emergency mode activated.");
-      }
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to update global emergency mode.",
-      );
-    }
-  };
-
   return (
-    <Sidebar
-      variant="floating"
-      collapsible="offcanvas"
-      className="pr-0"
-      style={sidebarColors}
-    >
-      <SidebarHeader className="flex flex-row items-center justify-between">
-        <Link
-          href={homeRoute}
-          className="flex items-center gap-2 px-2 font-semibold text-primary-foreground"
-        >
-          <span className="text-xl tracking-tight">WILDFIRE</span>
+    <Sidebar variant="floating" collapsible="offcanvas" className="pr-0">
+      <SidebarHeader>
+        <Link href={homeRoute}>
+          <WildfireLogo className="h-6" />
         </Link>
       </SidebarHeader>
 
       <SidebarContent>
-        {canReadDisplays ? (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-primary-foreground/70">
-              CONTROL
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <div className="space-y-2 rounded-md border border-primary-foreground/20 bg-primary-foreground/8 p-2.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-primary-foreground">
-                      Global Emergency
-                    </p>
-                    <p className="text-xs text-primary-foreground/80">
-                      {isGlobalEmergencyActive
-                        ? "Active on all displays"
-                        : "Inactive"}
-                    </p>
-                  </div>
-                  <IconAlertTriangle
-                    className={`size-4 shrink-0 ${
-                      isGlobalEmergencyActive
-                        ? "text-amber-200"
-                        : "text-primary-foreground/70"
-                    }`}
-                    aria-hidden="true"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={isGlobalEmergencyActive ? "secondary" : "outline"}
-                  className="h-8 w-full text-xs"
-                  onClick={() => {
-                    void handleGlobalEmergencyAction();
-                  }}
-                  disabled={!canUpdateDisplays || isEmergencyBusy}
-                  aria-pressed={isGlobalEmergencyActive}
-                >
-                  {isEmergencyBusy
-                    ? "Updating..."
-                    : isGlobalEmergencyActive
-                      ? "Stop Emergency"
-                      : "Start Emergency"}
-                </Button>
-              </div>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ) : null}
-
         {isReadyNavigationSectionVisible(coreNavItems) ? (
           <SidebarGroup>
             <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-primary-foreground/70">
@@ -329,71 +224,102 @@ export function AppSidebar(): ReactElement {
             </SidebarGroupContent>
           </SidebarGroup>
         ) : null}
+
+        {canReadEmergency && !isMobile ? (
+          <SidebarGroup className="mt-auto">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  size="default"
+                  onClick={handleEmergencyToggle}
+                  disabled={!canUpdateEmergency || isEmergencyBusy}
+                  className={
+                    isEmergencyActive
+                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
+                      : "bg-primary-foreground/10 text-primary-foreground hover:bg-destructive/80 hover:text-destructive-foreground [&_svg]:text-primary-foreground hover:[&_svg]:text-destructive-foreground"
+                  }
+                >
+                  <IconAlertTriangle className="size-4" />
+                  <span>
+                    {isEmergencyBusy
+                      ? "Updating..."
+                      : isEmergencyActive
+                        ? "Stop Emergency"
+                        : "Start Emergency"}
+                  </span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        ) : null}
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarMenu className="gap-1">
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="w-full justify-between text-primary-foreground hover:bg-primary-foreground/14 hover:text-primary-foreground"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="flex size-7 items-center justify-center rounded-full bg-primary-foreground/15">
-                      {user?.avatarUrl && failedAvatarUrl !== user.avatarUrl ? (
-                        <Image
-                          src={user.avatarUrl}
-                          alt={`${displayName} avatar`}
-                          width={48}
-                          height={48}
-                          className="size-7 rounded-full object-cover"
-                          unoptimized
-                          onError={() =>
-                            setFailedAvatarUrl(user?.avatarUrl ?? null)
-                          }
-                        />
-                      ) : (
-                        <IconUser className="size-6 text-primary-foreground/80" />
-                      )}
+      {!isMobile ? (
+        <SidebarFooter>
+          <SidebarMenu className="gap-1">
+            <SidebarMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton
+                    size="lg"
+                    className="w-full justify-between text-primary-foreground hover:bg-primary-foreground/14 hover:text-primary-foreground"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="flex size-7 items-center justify-center rounded-full bg-primary-foreground/15">
+                        {user?.avatarUrl &&
+                        failedAvatarUrl !== user.avatarUrl ? (
+                          <Image
+                            src={user.avatarUrl}
+                            alt={`${displayName} avatar`}
+                            width={48}
+                            height={48}
+                            className="size-7 rounded-full object-cover"
+                            unoptimized
+                            onError={() =>
+                              setFailedAvatarUrl(user?.avatarUrl ?? null)
+                            }
+                          />
+                        ) : (
+                          <IconUser className="size-6 text-primary-foreground/80" />
+                        )}
+                      </div>
+                      <div className="flex min-w-0 flex-col items-start">
+                        <span className="truncate text-base font-medium leading-5">
+                          {displayName}
+                        </span>
+                        <span className="truncate text-base leading-5 text-primary-foreground/85">
+                          {displayEmail}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex min-w-0 flex-col items-start">
-                      <span className="truncate text-sm font-medium leading-5">
-                        {displayName}
-                      </span>
-                      <span className="truncate text-sm leading-5 text-primary-foreground/85">
-                        {displayEmail}
-                      </span>
-                    </div>
-                  </div>
-                  <IconDotsVertical className="size-4 text-primary-foreground/90" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" align="center" sideOffset={8}>
-                {canAccessSettings ? (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/settings">
-                      <IconSettings className="size-4" />
-                      Settings
-                    </Link>
+                    <IconDotsVertical className="size-4 text-primary-foreground/90" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="top" align="center" sideOffset={8}>
+                  {canAccessSettings ? (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/settings">
+                        <IconSettings className="size-4" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      void logout();
+                    }}
+                  >
+                    <IconLogout className="size-4" />
+                    Log Out
                   </DropdownMenuItem>
-                ) : null}
-                <DropdownMenuItem
-                  variant="destructive"
-                  onSelect={(event) => {
-                    event.preventDefault();
-                    void logout();
-                  }}
-                >
-                  <IconLogout className="size-4" />
-                  Log Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      ) : null}
     </Sidebar>
   );
 }

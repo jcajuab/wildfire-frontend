@@ -22,9 +22,9 @@ describe("getFirstPermittedAdminRoute", () => {
     expect(actual).toBe("/admin/displays");
   });
 
-  test("falls back to account settings when no read permissions are allowed", () => {
+  test("returns null when no read permissions are allowed", () => {
     const actual = getFirstPermittedAdminRoute(() => false);
-    expect(actual).toBe("/admin/settings");
+    expect(actual).toBeNull();
   });
 
   test("returns first route for root-style permission logic", () => {

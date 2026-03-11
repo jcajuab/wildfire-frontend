@@ -18,8 +18,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WILDFIRE",
-  description: "Digital Signage Management Dashboard",
+  title: {
+    default: "Wildfire",
+    template: "%s | Wildfire",
+  },
+  description:
+    "Digital signage management dashboard for scheduling, managing displays, and organizing content.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

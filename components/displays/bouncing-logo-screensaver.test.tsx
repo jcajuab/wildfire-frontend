@@ -25,20 +25,20 @@ describe("BouncingLogoScreensaver", () => {
     expect(container).toBeInTheDocument();
   });
 
-  test("renders WILDFIRE logo text", () => {
-    render(<BouncingLogoScreensaver />);
-
-    const svgText = document.querySelector("text");
-    expect(svgText).toBeInTheDocument();
-    expect(svgText?.textContent).toBe("WILDFIRE");
-  });
-
-  test("renders SVG logo element", () => {
+  test("renders WILDFIRE logo SVG", () => {
     render(<BouncingLogoScreensaver />);
 
     const svg = document.querySelector("svg");
     expect(svg).toBeInTheDocument();
-    expect(svg).toHaveAttribute("viewBox", "0 0 200 80");
+    expect(svg).toHaveAttribute("fill", "none");
+  });
+
+  test("renders SVG logo element with correct viewBox", () => {
+    render(<BouncingLogoScreensaver />);
+
+    const svg = document.querySelector("svg");
+    expect(svg).toBeInTheDocument();
+    expect(svg).toHaveAttribute("viewBox", "0 0 448 100");
   });
 
   test("has aria-hidden for accessibility", () => {

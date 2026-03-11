@@ -66,7 +66,7 @@ export function PendingInvitationsTable({
   }
 
   return (
-    <Table density="comfortable">
+    <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Email</TableHead>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { WildfireLogo } from "@/components/common/wildfire-logo";
 
 const COLORS = [
   "#ef4444", // red
@@ -123,39 +124,7 @@ export function BouncingLogoScreensaver() {
           color: currentColor,
         }}
       >
-        <svg
-          viewBox="0 0 200 80"
-          className="h-full w-full"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M40 60C40 60 25 45 25 35C25 25 32 20 40 20C48 20 55 25 55 35C55 45 40 60 40 60Z"
-            fill="currentColor"
-            opacity="0.9"
-          />
-          <path
-            d="M40 55C40 55 30 43 30 36C30 29 35 26 40 26C45 26 50 29 50 36C50 43 40 55 40 55Z"
-            fill="currentColor"
-            opacity="0.6"
-          />
-          <path
-            d="M40 48C40 48 35 41 35 37C35 33 37 31 40 31C43 31 45 33 45 37C45 41 40 48 40 48Z"
-            fill="currentColor"
-            opacity="0.3"
-          />
-          <text
-            x="70"
-            y="48"
-            fontFamily="system-ui, -apple-system, sans-serif"
-            fontSize="24"
-            fontWeight="bold"
-            fill="currentColor"
-            letterSpacing="0.05em"
-          >
-            WILDFIRE
-          </text>
-        </svg>
+        <WildfireLogo className="h-full w-full" />
       </div>
     </div>
   );
