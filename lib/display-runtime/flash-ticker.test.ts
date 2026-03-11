@@ -14,9 +14,10 @@ describe("flash ticker helpers", () => {
 
   test("maps known tones and falls back safely for unknown tone", () => {
     expect(getFlashBadgeClassName("INFO")).toContain("bg-primary");
-    expect(getFlashBadgeClassName("WARNING")).toContain("bg-warning");
+    expect(getFlashBadgeClassName("WARNING")).toContain("bg-yellow-400");
     expect(getFlashBadgeClassName("WARNING")).toContain("text-black");
     expect(getFlashBadgeClassName("CRITICAL")).toContain("bg-destructive");
+    expect(getFlashBadgeClassName("CRITICAL")).toContain("text-white");
     expect(getFlashBadgeClassName("UNKNOWN")).toContain("bg-primary");
   });
 

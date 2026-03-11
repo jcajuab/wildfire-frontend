@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
 import { ContentCard } from "@/components/content/content-card";
+import { getFlashBadgeClassName } from "@/lib/display-runtime/flash-ticker";
 import type { Content } from "@/types/content";
 
 const baseContent: Content = {
@@ -34,6 +35,18 @@ const baseContent: Content = {
 };
 
 describe("ContentCard", () => {
+  const expectClassTokens = (
+    element: HTMLElement,
+    className: string,
+  ): void => {
+    className
+      .split(" ")
+      .filter((token) => token.length > 0)
+      .forEach((token) => {
+        expect(element).toHaveClass(token);
+      });
+  };
+
   test("does not show manage pages action for root PDFs", async () => {
     const user = userEvent.setup();
     render(<ContentCard content={baseContent} onPreview={vi.fn()} />);
@@ -83,9 +96,35 @@ describe("ContentCard", () => {
     expect(onTogglePdfRootExpand).not.toHaveBeenCalled();
   });
 
-  test("renders flash message text preview and ignores thumbnail image", () => {
+  test.each(["INFO", "WARNING", "CRITICAL"] as const)(
+    "renders %s tone for flash ticker preview using runtime badge classes",
+    (tone) => {
+      const flashMessage = "Ticker tone test message";
+      const flashContent: Content = {
+        ...baseContent,
+        id: `content-flash-${tone.toLowerCase()}`,
+        title: "Ticker title fallback",
+        type: "FLASH",
+        mimeType: "text/plain",
+        thumbnailUrl: "https://cdn.example.com/flash-thumb.jpg",
+        flashMessage,
+        flashTone: tone,
+      };
+
+      render(<ContentCard content={flashContent} onPreview={vi.fn()} />);
+
+      const toneBadge = screen.getByText(tone);
+      expectClassTokens(toneBadge, getFlashBadgeClassName(tone));
+      expect(screen.getByText(flashMessage)).toBeInTheDocument();
+      expect(
+        screen.queryByAltText(`${flashContent.title} preview`),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  test("defaults flash tone to INFO and truncates long ticker message in preview", () => {
     const longFlashMessage =
-      "This is a very long ticker message that should switch to the smallest responsive thumbnail typography tier automatically.";
+      "This is a very long ticker message that should be truncated in the content card preview so that it stays on a single line.";
     const flashContent: Content = {
       ...baseContent,
       id: "content-flash-1",
@@ -94,12 +133,15 @@ describe("ContentCard", () => {
       mimeType: "text/plain",
       thumbnailUrl: "https://cdn.example.com/flash-thumb.jpg",
       flashMessage: longFlashMessage,
+      flashTone: null,
     };
 
     render(<ContentCard content={flashContent} onPreview={vi.fn()} />);
 
+    const toneBadge = screen.getByText("INFO");
+    expectClassTokens(toneBadge, getFlashBadgeClassName("INFO"));
     const flashPreview = screen.getByText(longFlashMessage);
-    expect(flashPreview).toHaveClass("text-xs", "leading-snug");
+    expect(flashPreview).toHaveClass("truncate");
     expect(
       screen.queryByAltText(`${flashContent.title} preview`),
     ).not.toBeInTheDocument();

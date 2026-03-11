@@ -32,9 +32,9 @@ import {
 } from "@/lib/formatters";
 import {
   getFlashThumbnailText,
-  getFlashTypographyClass,
   getTextThumbnailText,
 } from "@/lib/content-thumbnail-preview";
+import { getFlashBadgeClassName } from "@/lib/display-runtime/flash-ticker";
 import type { Content, ContentType } from "@/types/content";
 
 const CONTENT_TYPE_LABEL: Record<ContentType, string> = {
@@ -96,10 +96,7 @@ export const ContentCard = memo(function ContentCard({
     ? getFlashThumbnailText(content)
     : null;
   const textThumbnailText = isTextContent ? getTextThumbnailText(content) : null;
-  const flashTypographyClass =
-    flashThumbnailText === null
-      ? null
-      : getFlashTypographyClass(flashThumbnailText.length);
+  const flashTone = content.flashTone ?? "INFO";
 
   const ThumbnailFallbackIcon =
     content.type === "PDF"
@@ -205,15 +202,27 @@ export const ContentCard = memo(function ContentCard({
             </div>
           </div>
         ) : isFlashContent ? (
-          <div className="flex h-full w-full items-center justify-center px-3 py-2">
-            <p
+          <div className="flex h-full w-full items-center justify-center p-2">
+            <div
               className={cn(
-                "text-center font-medium whitespace-normal break-words text-foreground",
-                flashTypographyClass,
+                "flex h-10 w-full overflow-hidden rounded-sm border border-border/60 bg-white sm:h-11",
+                "shadow-[0_2px_6px_rgba(0,0,0,0.08)]",
               )}
             >
-              {flashThumbnailText}
-            </p>
+              <div
+                className={cn(
+                  "flex h-full shrink-0 items-center justify-center px-2 text-[10px] font-extrabold leading-none tracking-[0.14em] sm:px-3 sm:text-xs",
+                  getFlashBadgeClassName(flashTone),
+                )}
+              >
+                {flashTone}
+              </div>
+              <div className="flex min-w-0 flex-1 items-center bg-white px-2 sm:px-3">
+                <p className="truncate text-xs font-semibold leading-tight text-foreground sm:text-sm">
+                  {flashThumbnailText}
+                </p>
+              </div>
+            </div>
           </div>
         ) : isTextContent ? (
           <div className="flex h-full w-full items-center justify-center overflow-visible p-2">

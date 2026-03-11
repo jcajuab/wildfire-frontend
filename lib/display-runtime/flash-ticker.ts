@@ -13,8 +13,8 @@ const FLASH_UNIT_GAP_PX = 40;
 
 const FLASH_TONE_BADGE_CLASSNAME: Record<FlashTone, string> = {
   INFO: "bg-primary text-primary-foreground",
-  WARNING: "bg-warning text-black",
-  CRITICAL: "bg-destructive text-destructive-foreground",
+  WARNING: "bg-yellow-400 text-black",
+  CRITICAL: "bg-destructive text-white",
 };
 
 const DEFAULT_BADGE_CLASSNAME = "bg-primary text-primary-foreground";
