@@ -202,11 +202,10 @@ export const ContentCard = memo(function ContentCard({
             </div>
           </div>
         ) : isFlashContent ? (
-          <div className="flex h-full w-full items-center justify-center p-2">
+          <div className="flex h-full w-full items-center justify-center py-2">
             <div
               className={cn(
-                "flex h-10 w-full overflow-hidden rounded-sm border border-border/60 bg-white sm:h-11",
-                "shadow-[0_2px_6px_rgba(0,0,0,0.08)]",
+                "flex h-10 min-w-0 w-[90%] overflow-hidden border border-border/80 bg-white sm:h-11 sm:w-[95%]",
               )}
             >
               <div
@@ -217,8 +216,8 @@ export const ContentCard = memo(function ContentCard({
               >
                 {flashTone}
               </div>
-              <div className="flex min-w-0 flex-1 items-center bg-white px-2 sm:px-3">
-                <p className="truncate text-xs font-semibold leading-tight text-foreground sm:text-sm">
+              <div className="flex min-w-0 flex-1 items-center overflow-hidden bg-white px-2 sm:px-3">
+                <p className="w-full truncate text-xs font-semibold leading-tight text-foreground sm:text-sm">
                   {flashThumbnailText}
                 </p>
               </div>
