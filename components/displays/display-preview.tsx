@@ -97,7 +97,7 @@ export function DisplayPreview({
 
   return (
     <div className="flex h-full items-center justify-center bg-muted/30 text-xs text-muted-foreground">
-      {isLoading ? "Loading preview..." : "No live preview"}
+      {isLoading ? "Loading preview..." : "No content scheduled"}
     </div>
   );
 }
