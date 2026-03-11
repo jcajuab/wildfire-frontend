@@ -30,13 +30,13 @@ export interface RuntimeItemTiming {
 const toPositive = (value: number, fallback: number): number =>
   Number.isFinite(value) && value > 0 ? value : fallback;
 
-export const computeOverflowExtraSeconds = (input: {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const computeOverflowExtraSeconds = (_input: {
   item: RuntimeManifestItem;
   viewport: RuntimeViewport;
   config: OverflowTimingConfig;
   measuredContentHeight?: number;
 }): number => {
-  const _unused = input;
   return 0;
 };
 
