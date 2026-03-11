@@ -112,7 +112,7 @@ export function BouncingLogoScreensaver() {
   return (
     <div
       ref={containerRef}
-      className="h-screen w-screen bg-black"
+      className="relative h-full w-full bg-black"
       aria-hidden="true"
     >
       <div

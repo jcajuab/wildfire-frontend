@@ -8,7 +8,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
 } from "react";
 import { getBaseUrl } from "@/lib/api/base-query";
 import {
@@ -29,6 +28,12 @@ import { createPlayerController } from "@/lib/display-runtime/player-controller"
 import { buildRuntimeTimings } from "@/lib/display-runtime/overflow-timing";
 import { PdfRenderer } from "@/lib/display-runtime/pdf-renderer";
 import { createDisplaySseClient } from "@/lib/display-runtime/sse-client";
+import {
+  buildFlashMarqueeStyle,
+  getFlashBadgeClassName,
+  getFlashMarqueeMessage,
+  inferFlashRepeatCount,
+} from "@/lib/display-runtime/flash-ticker";
 import { formatTimeOfDay } from "@/lib/formatters";
 import { useMounted } from "@/hooks/use-mounted";
 import { BouncingLogoScreensaver } from "@/components/displays/bouncing-logo-screensaver";
@@ -37,14 +42,6 @@ const POLL_MS = 60_000;
 const HEARTBEAT_MS = 30_000;
 const SNAPSHOT_UPLOAD_MS = 10_000;
 const DEFAULT_SCROLL_PX_PER_SECOND = 24;
-
-type FlashTone = "INFO" | "WARNING" | "CRITICAL";
-
-const FLASH_TONE_CLASSNAME: Record<FlashTone, string> = {
-  INFO: "border-cyan-300/70 bg-cyan-900/70 text-cyan-50",
-  WARNING: "border-amber-300/70 bg-amber-900/70 text-amber-50",
-  CRITICAL: "border-red-300/70 bg-red-900/75 text-red-50",
-};
 
 const formatRuntimeTimestamp = (timestamp: string | null): string | null => {
   if (!timestamp) {
@@ -344,27 +341,43 @@ export default function DisplayRuntimePage() {
     if (!activeFlash) {
       return null;
     }
-    const toneLabel = activeFlash.tone.toUpperCase();
-    return `${toneLabel} • ${activeFlash.message}`;
+    return getFlashMarqueeMessage(activeFlash.message);
   }, [activeFlash]);
+
+  const flashRepeatCount = useMemo(() => {
+    if (!flashMarqueeText) {
+      return 0;
+    }
+    return inferFlashRepeatCount({
+      message: flashMarqueeText,
+      containerWidthPx: viewport.width,
+    });
+  }, [flashMarqueeText, viewport.width]);
+
+  const flashRepeatUnits = useMemo(
+    () => Array.from({ length: flashRepeatCount }, (_, index) => index),
+    [flashRepeatCount],
+  );
 
   const flashMarqueeStyle = useMemo(() => {
     if (!flashMarqueeText || !activeFlash) {
       return undefined;
     }
-    const estimatedTrackWidthPx = Math.max(
-      viewport.width * 2,
-      flashMarqueeText.length * 22,
-    );
-    const durationSeconds = Math.max(
-      8,
-      Math.round(estimatedTrackWidthPx / activeFlash.speedPxPerSecond),
-    );
-    return {
-      "--wildfire-flash-duration": `${durationSeconds}s`,
-      height: `${activeFlash.heightPx}px`,
-    } as CSSProperties;
-  }, [activeFlash, flashMarqueeText, viewport.width]);
+    return buildFlashMarqueeStyle({
+      message: flashMarqueeText,
+      heightPx: activeFlash.heightPx,
+      speedPxPerSecond: activeFlash.speedPxPerSecond,
+      repeatCount: flashRepeatCount,
+      viewportWidth: viewport.width,
+      viewportHeight: viewport.height,
+    });
+  }, [
+    activeFlash,
+    flashMarqueeText,
+    flashRepeatCount,
+    viewport.height,
+    viewport.width,
+  ]);
 
   if (!isRegistrationResolved) {
     return (
@@ -392,7 +405,7 @@ export default function DisplayRuntimePage() {
   }
 
   return (
-    <main className="relative min-h-screen bg-black text-white">
+    <main className="relative flex h-screen min-h-screen flex-col overflow-hidden bg-black text-white">
       <div className="absolute left-2 top-2 z-10 rounded bg-black/60 px-2 py-1 text-xs">
         {connectionState}
         {lastEventAt ? ` • ${formatTimeOfDay(lastEventAt)}` : ""}
@@ -417,76 +430,104 @@ export default function DisplayRuntimePage() {
           </span>
         </div>
       ) : null}
-
-      {!currentItem ? (
-        <BouncingLogoScreensaver />
-      ) : currentItem.content.type === "VIDEO" ? (
-        <div className="flex h-screen w-screen items-center justify-center bg-black">
-          <video
-            key={currentItem.id}
-            src={currentItem.content.downloadUrl}
-            className="max-h-full max-w-full object-contain"
-            autoPlay
-            muted
-            playsInline
-          />
-        </div>
-      ) : currentItem.content.type === "IMAGE" ? (
-        <div className="pointer-events-none flex h-screen w-screen items-center justify-center overflow-hidden bg-black select-none">
-          <Image
-            key={currentItem.id}
-            src={currentItem.content.downloadUrl}
-            alt="Display content image"
-            width={currentItem.content.width ?? viewport.width}
-            height={currentItem.content.height ?? viewport.height}
-            className="h-auto w-full"
-            unoptimized
-          />
-        </div>
-      ) : currentItem.content.type === "TEXT" ? (
-        <div className="flex h-screen w-screen items-center justify-center overflow-hidden bg-white p-8">
-          <div
-            key={currentItem.id}
-            className="text-center text-4xl leading-relaxed text-black"
-            dangerouslySetInnerHTML={{
-              __html: currentItem.content.textHtmlContent ?? "",
-            }}
-          />
-        </div>
-      ) : (
-        <div className="flex h-screen w-screen items-center justify-center overflow-hidden bg-white">
-          <PdfRenderer
-            key={currentItem.id}
-            src={currentItem.content.downloadUrl}
-            viewportWidth={viewport.width}
-            viewportHeight={viewport.height}
-          />
-        </div>
-      )}
       {activeFlash && flashMarqueeText ? (
         <div
-          className={`pointer-events-none absolute inset-x-0 top-0 z-20 border-b px-3 ${FLASH_TONE_CLASSNAME[activeFlash.tone]}`}
+          className="pointer-events-none relative z-20 shrink-0 overflow-hidden bg-white shadow-[0_8px_20px_rgba(0,0,0,0.28)]"
           role="status"
           aria-live={activeFlash.tone === "CRITICAL" ? "assertive" : "polite"}
           aria-label={`${activeFlash.tone} flash message`}
           style={flashMarqueeStyle}
         >
-          <div className="relative flex h-full items-center overflow-hidden whitespace-nowrap">
-            <div className="flex min-w-max items-center gap-10 pr-10 text-sm font-semibold tracking-wide [animation:flash-marquee_var(--wildfire-flash-duration)_linear_infinite] motion-reduce:[animation:none]">
-              <span>{flashMarqueeText}</span>
-              <span aria-hidden="true">{flashMarqueeText}</span>
-              <span aria-hidden="true">{flashMarqueeText}</span>
+          <div className="flex h-full items-stretch">
+            <div
+              className={`flex h-full shrink-0 items-center justify-center px-6 text-lg font-extrabold leading-none tracking-[0.16em] ${getFlashBadgeClassName(
+                activeFlash.tone,
+              )}`}
+            >
+              {activeFlash.tone}
+            </div>
+            <div className="relative min-w-0 flex-1 overflow-hidden bg-white text-foreground">
+              <div
+                aria-hidden="true"
+                className="absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-black/25 to-transparent"
+              />
+              <div
+                aria-hidden="true"
+                className="absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-black/25 to-transparent"
+              />
+              <div className="flex h-full min-w-max items-center whitespace-nowrap [animation:flash-marquee_var(--wildfire-flash-duration)_linear_infinite] motion-reduce:[animation:none]">
+                {[0, 1].map((groupIndex) => (
+                  <div key={groupIndex} className="flex shrink-0 items-center">
+                    {flashRepeatUnits.map((unitIndex) => (
+                      <span
+                        key={`${groupIndex}-${unitIndex}`}
+                        aria-hidden={groupIndex > 0 || unitIndex > 0}
+                        className="pr-10 text-lg font-semibold leading-none tracking-wide"
+                      >
+                        {flashMarqueeText}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       ) : null}
+      <div className="relative flex-1 min-h-0">
+        {!currentItem ? (
+          <BouncingLogoScreensaver />
+        ) : currentItem.content.type === "VIDEO" ? (
+          <div className="flex h-full w-full items-center justify-center bg-black">
+            <video
+              key={currentItem.id}
+              src={currentItem.content.downloadUrl}
+              className="max-h-full max-w-full object-contain"
+              autoPlay
+              muted
+              playsInline
+            />
+          </div>
+        ) : currentItem.content.type === "IMAGE" ? (
+          <div className="pointer-events-none flex h-full w-full items-center justify-center overflow-hidden bg-black select-none">
+            <Image
+              key={currentItem.id}
+              src={currentItem.content.downloadUrl}
+              alt="Display content image"
+              width={currentItem.content.width ?? viewport.width}
+              height={currentItem.content.height ?? viewport.height}
+              className="h-auto w-full"
+              unoptimized
+            />
+          </div>
+        ) : currentItem.content.type === "TEXT" ? (
+          <div className="flex h-full w-full items-center justify-center overflow-hidden bg-white p-8">
+            <div
+              key={currentItem.id}
+              className="text-center text-4xl leading-relaxed text-black"
+              dangerouslySetInnerHTML={{
+                __html: currentItem.content.textHtmlContent ?? "",
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center overflow-hidden bg-white">
+            <PdfRenderer
+              key={currentItem.id}
+              src={currentItem.content.downloadUrl}
+              viewportWidth={viewport.width}
+              viewportHeight={viewport.height}
+            />
+          </div>
+        )}
+      </div>
       <style jsx>{`
         @keyframes flash-marquee {
           from {
-            transform: translateX(0);
+            transform: translateX(-50%);
           }
           to {
-            transform: translateX(-33.33%);
+            transform: translateX(0);
           }
         }
       `}</style>
