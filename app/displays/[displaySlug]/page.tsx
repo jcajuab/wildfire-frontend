@@ -478,25 +478,25 @@ export default function DisplayRuntimePage() {
         {!currentItem ? (
           <BouncingLogoScreensaver />
         ) : currentItem.content.type === "VIDEO" ? (
-          <div className="flex h-full w-full items-center justify-center bg-black">
+          <div className="h-full w-full overflow-hidden bg-black">
             <video
               key={currentItem.id}
               src={currentItem.content.downloadUrl}
-              className="max-h-full max-w-full object-contain"
+              className="h-full w-full object-cover"
               autoPlay
               muted
               playsInline
             />
           </div>
         ) : currentItem.content.type === "IMAGE" ? (
-          <div className="pointer-events-none flex h-full w-full items-center justify-center overflow-hidden bg-black select-none">
+          <div className="pointer-events-none relative h-full w-full overflow-hidden bg-black select-none">
             <Image
               key={currentItem.id}
               src={currentItem.content.downloadUrl}
               alt="Display content image"
-              width={currentItem.content.width ?? viewport.width}
-              height={currentItem.content.height ?? viewport.height}
-              className="h-auto w-full"
+              fill
+              sizes="100vw"
+              className="object-cover"
               unoptimized
             />
           </div>
@@ -511,7 +511,7 @@ export default function DisplayRuntimePage() {
             />
           </div>
         ) : (
-          <div className="flex h-full w-full items-center justify-center overflow-hidden bg-white">
+          <div className="h-full w-full overflow-hidden bg-white">
             <PdfRenderer
               key={currentItem.id}
               src={currentItem.content.downloadUrl}
