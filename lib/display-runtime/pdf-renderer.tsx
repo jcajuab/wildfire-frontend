@@ -15,14 +15,12 @@ interface PdfRendererProps {
   readonly src: string;
   readonly viewportWidth: number;
   readonly viewportHeight: number;
-  readonly cropY?: number | null;
 }
 
 export function PdfRenderer({
   src,
   viewportWidth,
   viewportHeight,
-  cropY,
 }: PdfRendererProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -52,7 +50,6 @@ export function PdfRenderer({
       canvas.style.height = `${viewport.height}px`;
       canvas.style.display = "block";
       canvas.style.pointerEvents = "none";
-      canvas.style.transform = `translateY(-${Math.max(0, Math.trunc(cropY ?? 0))}px)`;
 
       await page.render({
         canvas,
@@ -74,7 +71,7 @@ export function PdfRenderer({
     return () => {
       cancelled = true;
     };
-  }, [cropY, src, viewportWidth]);
+  }, [src, viewportWidth]);
 
   return (
     <div

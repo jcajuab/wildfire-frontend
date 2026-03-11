@@ -340,10 +340,6 @@ export default function DisplayRuntimePage() {
     };
   }, [timings]);
 
-  const currentCropY = Math.max(0, currentItem?.content.cropY ?? 0);
-  const currentScaledHeight =
-    currentItem?.content.scaledHeight ?? viewport.height;
-
   const flashMarqueeText = useMemo(() => {
     if (!activeFlash) {
       return null;
@@ -444,11 +440,6 @@ export default function DisplayRuntimePage() {
             width={currentItem.content.width ?? viewport.width}
             height={currentItem.content.height ?? viewport.height}
             className="h-auto w-full"
-            style={{
-              transform: `translateY(-${currentCropY}px)`,
-              height: `${Math.max(viewport.height, currentScaledHeight)}px`,
-              width: `${viewport.width}px`,
-            }}
             unoptimized
           />
         </div>
@@ -469,7 +460,6 @@ export default function DisplayRuntimePage() {
             src={currentItem.content.downloadUrl}
             viewportWidth={viewport.width}
             viewportHeight={viewport.height}
-            cropY={currentCropY}
           />
         </div>
       )}
