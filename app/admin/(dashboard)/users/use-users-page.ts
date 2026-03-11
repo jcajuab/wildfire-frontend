@@ -16,13 +16,15 @@ import {
   type CreateInvitationResponse,
   getInvitations,
   resendInvitation,
+  banUser,
+  unbanUser,
+  adminResetPassword,
 } from "@/lib/api-client";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   useGetUsersQuery,
   useGetRoleOptionsQuery,
   useUpdateUserMutation,
-  useDeleteUserMutation,
   useSetUserRolesMutation,
   type RbacUsersListResponse,
 } from "@/lib/api/rbac-api";
@@ -76,26 +78,35 @@ export interface UseUsersPageResult {
   isInviteDialogOpen: boolean;
   isEditDialogOpen: boolean;
   selectedUser: User | null;
-  userToRemove: User | null;
-  isRemoveDialogOpen: boolean;
+  userToBan: User | null;
+  isBanDialogOpen: boolean;
+
+  // Reset password dialog
+  resetPasswordResult: { userId: string; password: string } | null;
+  isResetPasswordDialogOpen: boolean;
 
   // Setters
   setPage: (page: number) => void;
   setIsInviteDialogOpen: (open: boolean) => void;
   setIsEditDialogOpen: (open: boolean) => void;
-  setIsRemoveDialogOpen: (open: boolean) => void;
-  setUserToRemove: (user: User | null) => void;
+  setIsBanDialogOpen: (open: boolean) => void;
+  setUserToBan: (user: User | null) => void;
+  setIsResetPasswordDialogOpen: (open: boolean) => void;
 
   // Handlers
   handleSearchChange: (value: string) => void;
   handleSortChange: (nextSort: UserSort) => void;
-  handleInvite: (emails: readonly string[]) => Promise<void>;
+  handleInvite: (emails: readonly string[]) => Promise<string | null>;
   handleResendInvitation: (id: string) => Promise<void>;
   handleRoleToggle: (userId: string, newRoleIds: string[]) => void;
   handleEdit: (user: User) => void;
   handleEditSubmit: (data: EditUserFormData) => Promise<void>;
-  handleRequestRemoveUser: (user: User) => void;
-  deleteUser: (id: string) => Promise<void>;
+  handleRequestBanUser: (user: User) => void;
+  handleRequestUnbanUser: (user: User) => void;
+
+  handleResetPassword: (userId: string) => Promise<void>;
+  banUserById: (id: string) => Promise<void>;
+  unbanUserById: (id: string) => Promise<void>;
 }
 
 export function useUsersPage(): UseUsersPageResult {
@@ -135,14 +146,13 @@ export function useUsersPage(): UseUsersPageResult {
     skip: !canReadRoles,
   });
   const [updateUser] = useUpdateUserMutation();
-  const [deleteUserMutation] = useDeleteUserMutation();
   const [setUserRoles] = useSetUserRolesMutation();
 
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [userToRemove, setUserToRemove] = useState<User | null>(null);
-  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+  const [userToBan, setUserToBan] = useState<User | null>(null);
+  const [isBanDialogOpen, setIsBanDialogOpen] = useState(false);
   const [isInvitationsLoading, setIsInvitationsLoading] = useState(false);
   const [invitations, setInvitations] = useState<readonly InvitationRecord[]>(
     [],
@@ -150,6 +160,12 @@ export function useUsersPage(): UseUsersPageResult {
   const [resendingInvitationId, setResendingInvitationId] = useState<
     string | null
   >(null);
+  const [resetPasswordResult, setResetPasswordResult] = useState<{
+    userId: string;
+    password: string;
+  } | null>(null);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] =
+    useState(false);
 
   const sort = useMemo<UserSort>(
     () => ({
@@ -167,6 +183,8 @@ export function useUsersPage(): UseUsersPageResult {
         email: user.email,
         name: user.name,
         isActive: user.isActive,
+        isInvitedUser: user.isInvitedUser,
+        bannedAt: user.bannedAt,
         lastSeenAt: user.lastSeenAt ?? null,
         avatarUrl: user.avatarUrl ?? null,
         roles: user.roles,
@@ -213,52 +231,53 @@ export function useUsersPage(): UseUsersPageResult {
     [setSortField, setSortDirection, setPage],
   );
 
-  const handleInvite = useCallback(async (emails: readonly string[]) => {
-    try {
-      const results = await Promise.allSettled(
-        emails.map((email) => createInvitation({ email })),
-      );
-
-      const failedInvites = results.filter(
-        (result): result is PromiseRejectedResult =>
-          result.status === "rejected",
-      );
-
-      if (failedInvites.length > 0) {
-        const firstError = failedInvites[0]?.reason;
-        const details =
-          firstError instanceof Error ? `: ${firstError.message}` : "";
-        throw new Error(
-          `${failedInvites.length} of ${emails.length} invites failed${details}`,
+  const handleInvite = useCallback(
+    async (emails: readonly string[]): Promise<string | null> => {
+      try {
+        const results = await Promise.allSettled(
+          emails.map((email) => createInvitation({ email })),
         );
-      }
 
-      const firstSuccess = results.find(
-        (result): result is PromiseFulfilledResult<CreateInvitationResponse> =>
-          result.status === "fulfilled",
-      );
-      if (firstSuccess?.value.inviteUrl) {
-        toast.success(
-          "Invitations created. Dev invite URL available in response.",
+        const failedInvites = results.filter(
+          (result): result is PromiseRejectedResult =>
+            result.status === "rejected",
         );
-      } else {
-        toast.success("Invitations created successfully.");
-      }
 
-      setIsInviteDialogOpen(false);
-      const latestInvitations = await getInvitations();
-      setInvitations(latestInvitations);
-    } catch (err) {
-      if (err instanceof AuthApiError && err.status === 429) {
-        notifyApiError(
-          err,
-          "Too many invite requests. Please wait and try again.",
+        if (failedInvites.length > 0) {
+          const firstError = failedInvites[0]?.reason;
+          const details =
+            firstError instanceof Error ? `: ${firstError.message}` : "";
+          throw new Error(
+            `${failedInvites.length} of ${emails.length} invites failed${details}`,
+          );
+        }
+
+        const firstSuccess = results.find(
+          (
+            result,
+          ): result is PromiseFulfilledResult<CreateInvitationResponse> =>
+            result.status === "fulfilled",
         );
-        return;
+        const inviteUrl = firstSuccess?.value.inviteUrl ?? null;
+
+        const latestInvitations = await getInvitations();
+        setInvitations(latestInvitations);
+
+        return inviteUrl;
+      } catch (err) {
+        if (err instanceof AuthApiError && err.status === 429) {
+          notifyApiError(
+            err,
+            "Too many invite requests. Please wait and try again.",
+          );
+          return null;
+        }
+        notifyApiError(err, "Failed to invite user(s)");
+        return null;
       }
-      notifyApiError(err, "Failed to invite user(s)");
-    }
-  }, []);
+    },
+    [],
+  );
 
   const loadInvitations = useCallback(async (): Promise<void> => {
     if (!canCreateUser) {
@@ -280,18 +299,12 @@ export function useUsersPage(): UseUsersPageResult {
   const handleResendInvitation = useCallback(async (id: string) => {
     setResendingInvitationId(id);
     try {
-      const result = await resendInvitation(id);
-      if (result.inviteUrl) {
-        toast.success(
-          "Invitation resent. Dev invite URL available in response.",
-        );
-      } else {
-        toast.success("Invitation resent.");
-      }
+      await resendInvitation(id);
+      toast.success("Invitation link regenerated.");
       const latestInvitations = await getInvitations();
       setInvitations(latestInvitations);
     } catch (err) {
-      notifyApiError(err, "Failed to resend invite");
+      notifyApiError(err, "Failed to regenerate invite link");
     } finally {
       setResendingInvitationId(null);
     }
@@ -351,17 +364,33 @@ export function useUsersPage(): UseUsersPageResult {
     [updateUser],
   );
 
-  const handleRequestRemoveUser = useCallback((user: User) => {
-    setUserToRemove(user);
-    setIsRemoveDialogOpen(true);
+  const handleRequestBanUser = useCallback((user: User) => {
+    setUserToBan(user);
+    setIsBanDialogOpen(true);
   }, []);
 
-  const deleteUser = useCallback(
-    async (id: string) => {
-      await deleteUserMutation(id).unwrap();
-    },
-    [deleteUserMutation],
-  );
+  const handleRequestUnbanUser = useCallback((user: User) => {
+    setUserToBan(user);
+    setIsBanDialogOpen(true);
+  }, []);
+
+  const banUserById = useCallback(async (id: string) => {
+    await banUser(id);
+  }, []);
+
+  const unbanUserById = useCallback(async (id: string) => {
+    await unbanUser(id);
+  }, []);
+
+  const handleResetPassword = useCallback(async (userId: string) => {
+    try {
+      const result = await adminResetPassword(userId);
+      setResetPasswordResult({ userId, password: result.password });
+      setIsResetPasswordDialogOpen(true);
+    } catch (err) {
+      notifyApiError(err, "Failed to reset password");
+    }
+  }, []);
 
   useEffect(() => {
     void loadInvitations();
@@ -389,13 +418,16 @@ export function useUsersPage(): UseUsersPageResult {
     isInviteDialogOpen,
     isEditDialogOpen,
     selectedUser,
-    userToRemove,
-    isRemoveDialogOpen,
+    userToBan,
+    isBanDialogOpen,
+    resetPasswordResult,
+    isResetPasswordDialogOpen,
     setPage,
     setIsInviteDialogOpen,
     setIsEditDialogOpen,
-    setIsRemoveDialogOpen,
-    setUserToRemove,
+    setIsBanDialogOpen,
+    setUserToBan,
+    setIsResetPasswordDialogOpen,
     handleSearchChange,
     handleSortChange,
     handleInvite,
@@ -403,7 +435,10 @@ export function useUsersPage(): UseUsersPageResult {
     handleRoleToggle,
     handleEdit,
     handleEditSubmit,
-    handleRequestRemoveUser,
-    deleteUser,
+    handleRequestBanUser,
+    handleRequestUnbanUser,
+    handleResetPassword,
+    banUserById,
+    unbanUserById,
   };
 }

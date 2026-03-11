@@ -2,7 +2,6 @@
 
 import type { FormEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,12 +107,6 @@ export default function LoginPage(): ReactElement {
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
             <Label htmlFor="password">Password</Label>
-            <Link
-              href="/forgot-password"
-              className="text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
-            >
-              Forgot password?
-            </Link>
           </div>
           <Input
             id="password"

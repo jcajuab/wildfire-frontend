@@ -40,7 +40,7 @@ interface SessionData {
 function readSession(): SessionData | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
+    const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
 
     const data = JSON.parse(raw) as unknown;
@@ -61,16 +61,15 @@ function readSession(): SessionData | null {
       return null;
 
     const isAdmin = typeof u.isAdmin === "boolean" ? u.isAdmin : false;
+    const isInvitedUser =
+      typeof u.isInvitedUser === "boolean" ? u.isInvitedUser : false;
     const normalizedUser: AuthUser = {
       id: u.id,
       username: u.username,
       email: u.email ?? null,
-      pendingEmail:
-        typeof u.pendingEmail === "string" || u.pendingEmail === null
-          ? u.pendingEmail
-          : null,
       name: u.name,
       isAdmin,
+      isInvitedUser,
       timezone: typeof u.timezone === "string" ? u.timezone : null,
       avatarUrl: typeof u.avatarUrl === "string" ? u.avatarUrl : null,
     };
@@ -99,11 +98,11 @@ function readSession(): SessionData | null {
 }
 
 function writeSession(data: SessionData): void {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+  localStorage.setItem(SESSION_KEY, JSON.stringify(data));
 }
 
 function clearSession(): void {
-  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY);
 }
 
 interface AuthContextValue {

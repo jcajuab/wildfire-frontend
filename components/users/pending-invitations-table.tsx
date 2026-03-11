@@ -1,7 +1,13 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconMail, IconRefresh } from "@tabler/icons-react";
+import { useState } from "react";
+import {
+  IconMail,
+  IconRefresh,
+  IconCopy,
+  IconCheck,
+} from "@tabler/icons-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,6 +45,57 @@ const statusLabel: Readonly<Record<InvitationStatus, string>> = {
   expired: "Expired",
 };
 
+function InviteUrlCell({
+  url,
+}: {
+  readonly url: string | null | undefined;
+}): ReactElement {
+  const [copied, setCopied] = useState(false);
+
+  if (!url) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+
+  const handleCopy = async (): Promise<void> => {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Show only the path portion truncated for display
+  let displayText = url;
+  try {
+    const parsed = new URL(url);
+    displayText = parsed.pathname + parsed.search;
+  } catch {
+    // keep original
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <span
+        className="max-w-[160px] truncate font-mono text-xs text-muted-foreground"
+        title={url}
+      >
+        {displayText}
+      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        onClick={handleCopy}
+        aria-label="Copy invite link"
+      >
+        {copied ? (
+          <IconCheck className="size-3.5 text-green-600" />
+        ) : (
+          <IconCopy className="size-3.5" />
+        )}
+      </Button>
+    </div>
+  );
+}
+
 export function PendingInvitationsTable({
   invitations,
   isLoading = false,
@@ -72,9 +129,10 @@ export function PendingInvitationsTable({
           <TableHead>Email</TableHead>
           <TableHead>Name</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Link</TableHead>
           <TableHead>Expires</TableHead>
           <TableHead>Created</TableHead>
-          <TableHead className="w-[120px] text-right">Action</TableHead>
+          <TableHead className="w-[160px] text-right">Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -92,6 +150,9 @@ export function PendingInvitationsTable({
                   {statusLabel[invitation.status]}
                 </Badge>
               </TableCell>
+              <TableCell>
+                <InviteUrlCell url={invitation.inviteUrl} />
+              </TableCell>
               <TableCell className="text-muted-foreground">
                 {formatDateTime(invitation.expiresAt)}
               </TableCell>
@@ -107,7 +168,7 @@ export function PendingInvitationsTable({
                   disabled={!canResend || isResending}
                 >
                   <IconRefresh className="size-4" />
-                  {isResending ? "Sending…" : "Resend"}
+                  {isResending ? "Regenerating…" : "Regenerate link"}
                 </Button>
               </TableCell>
             </TableRow>

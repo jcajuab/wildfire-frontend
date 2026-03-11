@@ -14,7 +14,7 @@ interface ProfileNameEditorProps {
   readonly lastName: string;
   readonly savedFirstName: string;
   readonly savedLastName: string;
-  readonly editingField: "firstName" | "lastName" | "email" | null;
+  readonly editingField: "firstName" | "lastName" | null;
   readonly isSavingProfileName: boolean;
   readonly profileNameError: string | null;
   readonly onFirstNameChange: (value: string) => void;

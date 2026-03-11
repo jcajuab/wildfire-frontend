@@ -9,9 +9,9 @@ export interface AuthUser {
   readonly id: string;
   readonly username: string;
   readonly email: string | null;
-  readonly pendingEmail?: string | null;
   readonly name: string;
   readonly isAdmin: boolean;
+  readonly isInvitedUser: boolean;
   readonly timezone?: string | null;
   readonly avatarUrl?: string | null;
 }

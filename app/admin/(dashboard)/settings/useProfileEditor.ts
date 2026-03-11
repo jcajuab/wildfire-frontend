@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  updateCurrentUserProfile,
-  uploadAvatar,
-  requestEmailChange,
-} from "@/lib/api-client";
+import { updateCurrentUserProfile, uploadAvatar } from "@/lib/api-client";
 import {
   getApiErrorMessage,
   notifyApiError,
@@ -23,14 +19,12 @@ const splitName = (
 
 interface UseProfileEditorProps {
   readonly userName: string | undefined;
-  readonly userEmail: string | null | undefined;
   readonly token: string | null;
   readonly updateSession: (response: AuthResponse) => void;
 }
 
 export function useProfileEditor({
   userName,
-  userEmail,
   token,
   updateSession,
 }: UseProfileEditorProps) {
@@ -40,16 +34,11 @@ export function useProfileEditor({
   const [savedFirstName, setSavedFirstName] = useState(initialName.first);
   const [savedLastName, setSavedLastName] = useState(initialName.last);
 
-  const [emailDraft, setEmailDraft] = useState(userEmail ?? "");
-  const [savedEmail, setSavedEmail] = useState(userEmail ?? "");
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [isRequestingEmailChange, setIsRequestingEmailChange] = useState(false);
-
   const [isSavingProfileName, setIsSavingProfileName] = useState(false);
   const [profileNameError, setProfileNameError] = useState<string | null>(null);
 
   const [editingField, setEditingField] = useState<
-    "firstName" | "lastName" | "email" | null
+    "firstName" | "lastName" | null
   >(null);
 
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
@@ -68,14 +57,6 @@ export function useProfileEditor({
       setLastName(nextName.last);
     }
   }, [editingField, userName]);
-
-  useEffect(() => {
-    const nextEmail = userEmail ?? "";
-    setSavedEmail(nextEmail);
-    if (editingField !== "email") {
-      setEmailDraft(nextEmail);
-    }
-  }, [editingField, userEmail]);
 
   const saveProfileName = useCallback(
     async (nextFirstName: string, nextLastName: string): Promise<boolean> => {
@@ -124,51 +105,6 @@ export function useProfileEditor({
     [token, savedFirstName, savedLastName, updateSession],
   );
 
-  const requestEmailVerification = useCallback(
-    async (displayedEmail: string): Promise<boolean> => {
-      if (!token) {
-        setEmailError("Not authenticated.");
-        return false;
-      }
-
-      const normalizedEmail = emailDraft.trim().toLowerCase();
-      if (normalizedEmail.length === 0) {
-        setEmailError("Email is required.");
-        return false;
-      }
-      if (normalizedEmail === displayedEmail.trim().toLowerCase()) {
-        setEditingField(null);
-        setEmailError(null);
-        return true;
-      }
-
-      setIsRequestingEmailChange(true);
-      setEmailError(null);
-      try {
-        const response = await requestEmailChange(token, {
-          email: normalizedEmail,
-        });
-        updateSession(response);
-        setEditingField(null);
-        setEmailDraft(response.user.pendingEmail ?? response.user.email ?? "");
-        setSavedEmail(response.user.email ?? "");
-        toast.success("Verification link sent to your new email.");
-        return true;
-      } catch (err) {
-        const message = getApiErrorMessage(
-          err,
-          "Failed to request email verification.",
-        );
-        setEmailError(message);
-        notifyApiError(err, "Failed to request email verification.");
-        return false;
-      } finally {
-        setIsRequestingEmailChange(false);
-      }
-    },
-    [token, emailDraft, updateSession],
-  );
-
   const handleAvatarUpload = useCallback(
     async (file: File): Promise<void> => {
       if (!token) {
@@ -213,10 +149,6 @@ export function useProfileEditor({
     lastName,
     savedFirstName,
     savedLastName,
-    emailDraft,
-    savedEmail,
-    emailError,
-    isRequestingEmailChange,
     isSavingProfileName,
     profileNameError,
     editingField,
@@ -224,13 +156,10 @@ export function useProfileEditor({
     profilePictureError,
     setFirstName,
     setLastName,
-    setEmailDraft,
-    setEmailError,
     setProfileNameError,
     setEditingField,
     setProfilePictureError,
     saveProfileName,
-    requestEmailVerification,
     handleAvatarUpload,
   };
 }

@@ -12,7 +12,6 @@ import {
 import { UserActionsMenu } from "./user-actions-menu";
 
 import { EmptyState } from "@/components/common/empty-state";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -33,7 +32,9 @@ interface UsersTableProps {
   readonly onSortChange: (sort: UserSort) => void;
   readonly onEdit: (user: User) => void;
   readonly onRoleToggle: (userId: string, roleIds: string[]) => void;
-  readonly onRemoveUser: (user: User) => void;
+  readonly onBanUser: (user: User) => void;
+  readonly onUnbanUser: (user: User) => void;
+  readonly onResetPassword: (userId: string) => Promise<void>;
   readonly canUpdate?: boolean;
   readonly canDelete?: boolean;
   /** When true, allow update/delete for Root users. When false, hide actions for users who have a system role. */
@@ -107,7 +108,9 @@ interface UserRowProps {
   readonly availableRoles: readonly UserRole[];
   readonly onEdit: (user: User) => void;
   readonly onRoleToggle: (userId: string, roleIds: string[]) => void;
-  readonly onRemoveUser: (user: User) => void;
+  readonly onBanUser: (user: User) => void;
+  readonly onUnbanUser: (user: User) => void;
+  readonly onResetPassword: (userId: string) => Promise<void>;
   readonly canUpdate: boolean;
   readonly canDelete: boolean;
   readonly currentUserId?: string | null;
@@ -119,13 +122,16 @@ function UserRow({
   availableRoles,
   onEdit,
   onRoleToggle,
-  onRemoveUser,
+  onBanUser,
+  onUnbanUser,
+  onResetPassword,
   canUpdate,
   canDelete,
   currentUserId,
 }: UserRowProps): ReactElement {
   const userRoleIds = userRoles.map((r) => r.id);
   const isCurrentUser = currentUserId != null && user.id === currentUserId;
+  const isBanned = Boolean(user.bannedAt);
 
   return (
     <TableRow>
@@ -153,8 +159,13 @@ function UserRow({
                 </span>
               )}
             </span>
-            <div className="text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               @{user.username}
+              {isBanned && (
+                <Badge variant="destructive" className="text-xs px-1 py-0">
+                  Banned
+                </Badge>
+              )}
             </div>
           </div>
         </div>
@@ -184,7 +195,9 @@ function UserRow({
           availableRoles={availableRoles}
           onEdit={onEdit}
           onRoleToggle={onRoleToggle}
-          onRemoveUser={onRemoveUser}
+          onBanUser={onBanUser}
+          onUnbanUser={onUnbanUser}
+          onResetPassword={onResetPassword}
           canUpdate={canUpdate}
           canDelete={canDelete}
         />
@@ -201,7 +214,9 @@ export function UsersTable({
   onSortChange,
   onEdit,
   onRoleToggle,
-  onRemoveUser,
+  onBanUser,
+  onUnbanUser,
+  onResetPassword,
   canUpdate = true,
   canDelete = true,
   isSuperAdmin = false,
@@ -291,7 +306,9 @@ export function UsersTable({
               availableRoles={availableRoles}
               onEdit={onEdit}
               onRoleToggle={onRoleToggle}
-              onRemoveUser={onRemoveUser}
+              onBanUser={onBanUser}
+              onUnbanUser={onUnbanUser}
+              onResetPassword={onResetPassword}
               canUpdate={canUpdateRow}
               canDelete={canDeleteRow}
               currentUserId={currentUserId}

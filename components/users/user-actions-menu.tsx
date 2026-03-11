@@ -5,7 +5,9 @@ import {
   IconDotsVertical,
   IconCircle,
   IconEdit,
-  IconTrash,
+  IconBan,
+  IconCircleCheck,
+  IconKey,
   IconCheck,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -26,7 +29,9 @@ export interface UserActionsMenuProps {
   readonly availableRoles: readonly UserRole[];
   readonly onEdit: (user: User) => void;
   readonly onRoleToggle: (userId: string, roleIds: string[]) => void;
-  readonly onRemoveUser: (user: User) => void;
+  readonly onBanUser: (user: User) => void;
+  readonly onUnbanUser: (user: User) => void;
+  readonly onResetPassword: (userId: string) => Promise<void>;
   readonly canUpdate: boolean;
   readonly canDelete: boolean;
 }
@@ -37,11 +42,17 @@ export function UserActionsMenu({
   availableRoles,
   onEdit,
   onRoleToggle,
-  onRemoveUser,
+  onBanUser,
+  onUnbanUser,
+  onResetPassword,
   canUpdate,
   canDelete,
 }: UserActionsMenuProps): ReactElement | null {
   if (!canUpdate && !canDelete) return null;
+
+  const isBanned = Boolean(user.bannedAt);
+  const isInvitedUser = user.isInvitedUser === true;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -87,16 +98,32 @@ export function UserActionsMenu({
                 })}
               </DropdownMenuSubContent>
             </DropdownMenuSub>
+            {isInvitedUser && (
+              <DropdownMenuItem onClick={() => void onResetPassword(user.id)}>
+                <IconKey className="size-4" />
+                Reset Password
+              </DropdownMenuItem>
+            )}
           </>
         )}
         {canDelete && (
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => onRemoveUser(user)}
-          >
-            <IconTrash className="size-4" />
-            Remove User
-          </DropdownMenuItem>
+          <>
+            {canUpdate && <DropdownMenuSeparator />}
+            {isBanned ? (
+              <DropdownMenuItem onClick={() => onUnbanUser(user)}>
+                <IconCircleCheck className="size-4" />
+                Unban User
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => onBanUser(user)}
+              >
+                <IconBan className="size-4" />
+                Ban User
+              </DropdownMenuItem>
+            )}
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

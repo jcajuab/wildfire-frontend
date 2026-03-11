@@ -35,6 +35,8 @@ export interface RbacUser {
   readonly email: string | null;
   readonly name: string;
   readonly isActive: boolean;
+  readonly isInvitedUser?: boolean;
+  readonly bannedAt?: string | null;
   readonly lastSeenAt?: string | null;
   readonly avatarUrl?: string | null;
   readonly roles?: readonly RbacUserRoleSummary[];

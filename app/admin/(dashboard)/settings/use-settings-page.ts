@@ -15,6 +15,7 @@ export interface UseSettingsPageResult {
   user: ReturnType<typeof useAuth>["user"];
   token: ReturnType<typeof useAuth>["token"];
   logout: ReturnType<typeof useAuth>["logout"];
+  isInvitedUser: boolean;
 
   // Theme
   theme: string | undefined;
@@ -29,8 +30,6 @@ export interface UseSettingsPageResult {
 
   // Derived
   avatarUrl: string | null;
-  pendingEmail: string | null;
-  displayedEmail: string;
   accountNameForDialog: string;
 
   // Dialog state
@@ -60,7 +59,6 @@ export function useSettingsPage(): UseSettingsPageResult {
 
   const profileEditor = useProfileEditor({
     userName: user?.name,
-    userEmail: user?.email,
     token,
     updateSession,
   });
@@ -70,8 +68,7 @@ export function useSettingsPage(): UseSettingsPageResult {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const avatarUrl = user?.avatarUrl ?? null;
-  const pendingEmail = user?.pendingEmail ?? null;
-  const displayedEmail = pendingEmail ?? profileEditor.savedEmail;
+  const isInvitedUser = user?.isInvitedUser ?? false;
 
   const sectionMotionProps = prefersReducedMotion
     ? {}
@@ -132,14 +129,13 @@ export function useSettingsPage(): UseSettingsPageResult {
     user,
     token,
     logout,
+    isInvitedUser,
     theme,
     setTheme,
     prefersReducedMotion: prefersReducedMotion ?? null,
     sectionMotionProps,
     profileEditor,
     avatarUrl,
-    pendingEmail,
-    displayedEmail,
     accountNameForDialog,
     isPasswordDialogOpen,
     isDeleteDialogOpen,

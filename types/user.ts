@@ -11,6 +11,10 @@ export interface User {
   readonly email: string | null;
   readonly name: string;
   readonly isActive: boolean;
+  /** True when user was created via invitation (WILDFIRE-managed credentials). */
+  readonly isInvitedUser?: boolean;
+  /** Timestamp when user was banned; null/undefined if not banned. */
+  readonly bannedAt?: string | null;
   /** Presigned avatar URL (when user has profile picture in MinIO). */
   readonly avatarUrl?: string | null;
   /** Assigned roles (for display when loaded). */

@@ -191,48 +191,6 @@ export async function updateCurrentUserProfile(
   return parseApiPayload<AuthResponse>(response);
 }
 
-/** POST /auth/profile/email-change/request. Starts verified email change flow and returns refreshed auth payload. */
-export async function requestEmailChange(
-  token: string | null | undefined,
-  payload: { email: string },
-): Promise<AuthResponse> {
-  const baseUrl = getBaseUrl();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...getDevOnlyRequestHeaders(),
-  };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  const response = await fetch(`${baseUrl}/auth/profile/email-change/request`, {
-    method: "POST",
-    credentials: "include",
-    headers,
-    body: JSON.stringify(payload),
-  });
-
-  return parseApiPayload<AuthResponse>(response);
-}
-
-/** POST /auth/profile/email-change/verify. Verifies a pending email change token. */
-export async function verifyEmailChangeToken(token: string): Promise<void> {
-  const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/profile/email-change/verify`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...getDevOnlyRequestHeaders(),
-    },
-    body: JSON.stringify({ token }),
-  });
-
-  if (response.status === 204) return;
-
-  const payload = await readJsonPayload(response);
-  throw createAuthApiError(response, payload);
-}
-
 /** POST /auth/password/change. Change current user password. Returns 204 on success; 401 if current password wrong. */
 export async function changePassword(
   token: string | null | undefined,
@@ -315,47 +273,6 @@ export async function deleteCurrentUser(token?: string | null): Promise<void> {
     method: "DELETE",
     credentials: "include",
     headers,
-  });
-
-  if (response.status === 204) return;
-
-  const payload = await readJsonPayload(response);
-  throw createAuthApiError(response, payload);
-}
-
-/** POST /auth/password/forgot. Always returns 204 when accepted. */
-export async function forgotPassword(email: string): Promise<void> {
-  const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/password/forgot`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...getDevOnlyRequestHeaders(),
-    },
-    body: JSON.stringify({ email }),
-  });
-
-  if (response.status === 204) return;
-
-  const payload = await readJsonPayload(response);
-  throw createAuthApiError(response, payload);
-}
-
-/** POST /auth/password/reset. Returns 204 on success. */
-export async function resetPassword(
-  token: string,
-  newPassword: string,
-): Promise<void> {
-  const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/password/reset`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...getDevOnlyRequestHeaders(),
-    },
-    body: JSON.stringify({ token, newPassword }),
   });
 
   if (response.status === 204) return;
@@ -448,6 +365,60 @@ export async function acceptInvitation(input: {
 
   const payload = await readJsonPayload(response);
   throw createAuthApiError(response, payload);
+}
+
+/** POST /users/:id/ban. Suspends a user's access. */
+export async function banUser(userId: string): Promise<void> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/users/${userId}/ban`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...getDevOnlyRequestHeaders(),
+    },
+  });
+
+  if (response.status === 204) return;
+
+  const payload = await readJsonPayload(response);
+  throw createAuthApiError(response, payload);
+}
+
+/** POST /users/:id/unban. Restores a user's access. */
+export async function unbanUser(userId: string): Promise<void> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/users/${userId}/unban`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...getDevOnlyRequestHeaders(),
+    },
+  });
+
+  if (response.status === 204) return;
+
+  const payload = await readJsonPayload(response);
+  throw createAuthApiError(response, payload);
+}
+
+export interface AdminResetPasswordResponse {
+  readonly password: string;
+}
+
+/** POST /users/:id/reset-password. Admin resets a user's password and returns the new random password. */
+export async function adminResetPassword(
+  userId: string,
+): Promise<AdminResetPasswordResponse> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/users/${userId}/reset-password`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...getDevOnlyRequestHeaders(),
+    },
+  });
+
+  return parseApiPayload<AdminResetPasswordResponse>(response);
 }
 
 /** Error thrown by auth API with status and optional backend body. */

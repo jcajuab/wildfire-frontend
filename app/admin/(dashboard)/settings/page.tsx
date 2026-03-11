@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useTheme } from "next-themes";
 
@@ -22,11 +21,11 @@ import { notifyApiError } from "@/lib/api/get-api-error-message";
 import { toast } from "sonner";
 import { SettingsField } from "./SettingsField";
 import { ProfileNameEditor } from "./ProfileNameEditor";
-import { EmailEditor } from "./EmailEditor";
 import { AvatarUploader } from "./AvatarUploader";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
 import { useProfileEditor } from "./useProfileEditor";
 import { AICredentialsSection } from "./AICredentialsSection";
+import { useState } from "react";
 
 const controlContainerClass = "w-full max-w-md";
 const controlClass = "h-10 w-full";
@@ -38,7 +37,6 @@ export default function SettingsPage(): ReactElement {
 
   const profileEditor = useProfileEditor({
     userName: user?.name,
-    userEmail: user?.email,
     token,
     updateSession,
   });
@@ -48,8 +46,7 @@ export default function SettingsPage(): ReactElement {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const avatarUrl = user?.avatarUrl ?? null;
-  const pendingEmail = user?.pendingEmail ?? null;
-  const displayedEmail = pendingEmail ?? profileEditor.savedEmail;
+  const isInvitedUser = user?.isInvitedUser ?? false;
 
   const sectionMotionProps = prefersReducedMotion
     ? {}
@@ -183,44 +180,37 @@ export default function SettingsPage(): ReactElement {
                   </SettingsField>
 
                   <SettingsField label="Email">
-                    <EmailEditor
-                      emailDraft={profileEditor.emailDraft}
-                      displayedEmail={displayedEmail}
-                      pendingEmail={pendingEmail}
-                      editingField={profileEditor.editingField}
-                      isRequestingEmailChange={
-                        profileEditor.isRequestingEmailChange
-                      }
-                      emailError={profileEditor.emailError}
-                      onEmailDraftChange={profileEditor.setEmailDraft}
-                      onEditFieldChange={(field) => {
-                        if (field) {
-                          profileEditor.setEmailError(null);
-                          profileEditor.setEmailDraft(displayedEmail);
-                        }
-                        profileEditor.setEditingField(field);
-                      }}
-                      onRequestEmailVerification={() =>
-                        profileEditor.requestEmailVerification(displayedEmail)
-                      }
-                      onCancelEdit={() => {
-                        profileEditor.setEmailDraft(displayedEmail);
-                        profileEditor.setEmailError(null);
-                        profileEditor.setEditingField(null);
-                      }}
-                    />
+                    <div className={controlContainerClass}>
+                      {user?.email ? (
+                        <Input
+                          disabled
+                          value={user.email}
+                          className={`${controlClass} disabled:border-border disabled:bg-muted/60 disabled:text-foreground/80 disabled:opacity-100`}
+                        />
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Contact your administrator
+                        </p>
+                      )}
+                    </div>
                   </SettingsField>
 
                   <SettingsField label="Password">
                     <div className={controlContainerClass}>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleChangePassword}
-                        className={controlClass}
-                      >
-                        Change Password
-                      </Button>
+                      {isInvitedUser ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleChangePassword}
+                          className={controlClass}
+                        >
+                          Change Password
+                        </Button>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Managed by your organization
+                        </p>
+                      )}
                     </div>
                   </SettingsField>
                 </dl>
@@ -315,25 +305,28 @@ export default function SettingsPage(): ReactElement {
                       </Button>
                     </div>
 
-                    <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
-                      <div className="max-w-2xl">
-                        <p className="text-sm font-semibold">
-                          Delete this account
-                        </p>
-                        <p className="text-sm text-destructive/80">
-                          Permanently removes your account and cannot be undone.
-                        </p>
+                    {isInvitedUser && (
+                      <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
+                        <div className="max-w-2xl">
+                          <p className="text-sm font-semibold">
+                            Delete this account
+                          </p>
+                          <p className="text-sm text-destructive/80">
+                            Permanently removes your account and cannot be
+                            undone.
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={handleDeleteAccount}
+                          className="h-10 w-full sm:w-auto"
+                          disabled={isLoggingOut}
+                        >
+                          Delete Account
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={handleDeleteAccount}
-                        className="h-10 w-full sm:w-auto"
-                        disabled={isLoggingOut}
-                      >
-                        Delete Account
-                      </Button>
-                    </div>
+                    )}
                   </div>
                 </div>
               </motion.section>
@@ -342,11 +335,13 @@ export default function SettingsPage(): ReactElement {
         </DashboardPage.Content>
       </DashboardPage.Body>
 
-      <ChangePasswordDialog
-        open={isPasswordDialogOpen}
-        onOpenChange={setIsPasswordDialogOpen}
-        onSubmit={handlePasswordSubmit}
-      />
+      {isInvitedUser && (
+        <ChangePasswordDialog
+          open={isPasswordDialogOpen}
+          onOpenChange={setIsPasswordDialogOpen}
+          onSubmit={handlePasswordSubmit}
+        />
+      )}
 
       <ConfirmActionDialog
         open={isDeleteDialogOpen}

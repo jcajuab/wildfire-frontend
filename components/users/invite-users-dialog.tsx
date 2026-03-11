@@ -2,7 +2,14 @@
 
 import type { ChangeEvent, FormEvent, ReactElement } from "react";
 import { useState, useRef } from "react";
-import { IconPlus, IconDownload, IconUpload, IconX } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconDownload,
+  IconUpload,
+  IconX,
+  IconCopy,
+  IconCheck,
+} from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +27,37 @@ import { Separator } from "@/components/ui/separator";
 interface InviteUsersDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onInvite: (emails: readonly string[]) => Promise<void> | void;
+  readonly onInvite: (emails: readonly string[]) => Promise<string | null>;
+}
+
+interface InviteResult {
+  readonly inviteUrl: string;
+}
+
+function CopyButton({ text }: { readonly text: string }): ReactElement {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (): Promise<void> => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      onClick={handleCopy}
+      aria-label="Copy invite link"
+    >
+      {copied ? (
+        <IconCheck className="size-4 text-green-600" />
+      ) : (
+        <IconCopy className="size-4" />
+      )}
+    </Button>
+  );
 }
 
 function InviteUsersDialogContent({
@@ -29,6 +66,7 @@ function InviteUsersDialogContent({
 }: Omit<InviteUsersDialogProps, "open">): ReactElement {
   const [emails, setEmails] = useState<string[]>([""]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inviteResult, setInviteResult] = useState<InviteResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleEmailChange = (index: number, value: string): void => {
@@ -92,7 +130,12 @@ function InviteUsersDialogContent({
     if (validEmails.length === 0) return;
     setIsSubmitting(true);
     try {
-      await onInvite(validEmails);
+      const inviteUrl = await onInvite(validEmails);
+      if (inviteUrl) {
+        setInviteResult({ inviteUrl });
+      } else {
+        onOpenChange(false);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -101,6 +144,29 @@ function InviteUsersDialogContent({
   const hasValidEmail = emails.some(
     (email) => email.trim() && email.includes("@"),
   );
+
+  // Show invite URL result view
+  if (inviteResult) {
+    return (
+      <div className="flex min-h-0 flex-col gap-4">
+        <DialogHeader>
+          <DialogTitle>Invitation Created</DialogTitle>
+          <DialogDescription>
+            Share this link with the invitee. The link expires after use.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2">
+          <span className="flex-1 truncate font-mono text-xs">
+            {inviteResult.inviteUrl}
+          </span>
+          <CopyButton text={inviteResult.inviteUrl} />
+        </div>
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>Done</Button>
+        </DialogFooter>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">

@@ -1,12 +1,21 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconPlus } from "@tabler/icons-react";
+import { useState } from "react";
+import { IconPlus, IconCopy, IconCheck } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { EditUserDialog } from "@/components/users/edit-user-dialog";
 import { InviteUsersDialog } from "@/components/users/invite-users-dialog";
 import { SearchControl } from "@/components/common/search-control";
@@ -15,13 +24,63 @@ import { UsersTable } from "@/components/users/users-table";
 import { PendingInvitationsTable } from "@/components/users/pending-invitations-table";
 import { PAGE_SIZE, useUsersPage } from "./use-users-page";
 
+function ResetPasswordDialog({
+  open,
+  password,
+  onOpenChange,
+}: {
+  readonly open: boolean;
+  readonly password: string;
+  readonly onOpenChange: (open: boolean) => void;
+}): ReactElement {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (): Promise<void> => {
+    await navigator.clipboard.writeText(password);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Password Reset</DialogTitle>
+          <DialogDescription>
+            The user&apos;s password has been reset. Share this temporary
+            password with them securely. It will not be shown again.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2">
+          <code className="flex-1 font-mono text-sm">{password}</code>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleCopy}
+            aria-label="Copy password"
+          >
+            {copied ? (
+              <IconCheck className="size-4 text-green-600" />
+            ) : (
+              <IconCopy className="size-4" />
+            )}
+          </Button>
+        </div>
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>Done</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function UsersPage(): ReactElement {
   const {
     currentUser,
     isAdmin,
     canUpdateUser,
     canDeleteUser,
-    canCreateUser,
     search,
     page,
     sort,
@@ -38,13 +97,16 @@ export default function UsersPage(): ReactElement {
     isInviteDialogOpen,
     isEditDialogOpen,
     selectedUser,
-    userToRemove,
-    isRemoveDialogOpen,
+    userToBan,
+    isBanDialogOpen,
+    resetPasswordResult,
+    isResetPasswordDialogOpen,
     setPage,
     setIsInviteDialogOpen,
     setIsEditDialogOpen,
-    setIsRemoveDialogOpen,
-    setUserToRemove,
+    setIsBanDialogOpen,
+    setUserToBan,
+    setIsResetPasswordDialogOpen,
     handleSearchChange,
     handleSortChange,
     handleInvite,
@@ -52,8 +114,11 @@ export default function UsersPage(): ReactElement {
     handleRoleToggle,
     handleEdit,
     handleEditSubmit,
-    handleRequestRemoveUser,
-    deleteUser,
+    handleRequestBanUser,
+    handleRequestUnbanUser,
+    handleResetPassword,
+    banUserById,
+    unbanUserById,
   } = useUsersPage();
 
   if (usersLoading) {
@@ -125,7 +190,9 @@ export default function UsersPage(): ReactElement {
                 onSortChange={handleSortChange}
                 onEdit={handleEdit}
                 onRoleToggle={handleRoleToggle}
-                onRemoveUser={handleRequestRemoveUser}
+                onBanUser={handleRequestBanUser}
+                onUnbanUser={handleRequestUnbanUser}
+                onResetPassword={handleResetPassword}
                 canUpdate={canUpdateUser}
                 canDelete={canDeleteUser}
                 isSuperAdmin={isAdmin}
@@ -178,21 +245,35 @@ export default function UsersPage(): ReactElement {
       />
 
       <ConfirmActionDialog
-        open={isRemoveDialogOpen}
-        onOpenChange={setIsRemoveDialogOpen}
-        title="Remove user?"
+        open={isBanDialogOpen}
+        onOpenChange={setIsBanDialogOpen}
+        title={userToBan?.bannedAt ? "Unban user?" : "Ban user?"}
         description={
-          userToRemove
-            ? `This will permanently remove "${userToRemove.name}".`
+          userToBan
+            ? userToBan.bannedAt
+              ? `This will restore ${userToBan.name}'s access to WILDFIRE.`
+              : `This will suspend ${userToBan.name}'s access to WILDFIRE.`
             : undefined
         }
-        confirmLabel="Remove user"
-        errorFallback="Failed to remove user"
+        confirmLabel={userToBan?.bannedAt ? "Unban user" : "Ban user"}
+        errorFallback={
+          userToBan?.bannedAt ? "Failed to unban user" : "Failed to ban user"
+        }
         onConfirm={async () => {
-          if (!userToRemove) return;
-          await deleteUser(userToRemove.id);
-          setUserToRemove(null);
+          if (!userToBan) return;
+          if (userToBan.bannedAt) {
+            await unbanUserById(userToBan.id);
+          } else {
+            await banUserById(userToBan.id);
+          }
+          setUserToBan(null);
         }}
+      />
+
+      <ResetPasswordDialog
+        open={isResetPasswordDialogOpen}
+        password={resetPasswordResult?.password ?? ""}
+        onOpenChange={setIsResetPasswordDialogOpen}
       />
     </DashboardPage.Root>
   );

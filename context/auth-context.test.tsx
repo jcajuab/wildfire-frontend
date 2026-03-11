@@ -42,14 +42,14 @@ function AuthProbe(): ReactElement {
 
 describe("AuthProvider", () => {
   beforeEach(() => {
-    sessionStorage.clear();
+    localStorage.clear();
     loginMock.mockReset();
     logoutMock.mockReset();
     refreshTokenMock.mockReset();
   });
 
-  test("hydrates session and permission checks from sessionStorage", async () => {
-    sessionStorage.setItem(
+  test("hydrates session and permission checks from localStorage", async () => {
+    localStorage.setItem(
       "wildfire_session",
       JSON.stringify({
         user: {
@@ -78,7 +78,7 @@ describe("AuthProvider", () => {
   });
 
   test("clears local session on logout even if API logout fails", async () => {
-    sessionStorage.setItem(
+    localStorage.setItem(
       "wildfire_session",
       JSON.stringify({
         user: {
@@ -109,6 +109,6 @@ describe("AuthProvider", () => {
     await waitFor(() => {
       expect(screen.getByTestId("auth-status")).toHaveTextContent("anonymous");
     });
-    expect(sessionStorage.getItem("wildfire_session")).toBeNull();
+    expect(localStorage.getItem("wildfire_session")).toBeNull();
   });
 });
