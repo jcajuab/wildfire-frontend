@@ -1,32 +1,44 @@
 "use client";
 
 import { isTextUIPart, isToolUIPart } from "ai";
+import { Fragment, useCallback, useState } from "react";
+import { WildfireLogo } from "@/components/common/wildfire-logo";
 import {
-  IconLoader2,
-  IconRobot,
-  IconSend,
-  IconUser,
-} from "@tabler/icons-react";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  PromptInput,
+  PromptInputBody,
+  PromptInputFooter,
+  PromptInputSelect,
+  PromptInputSelectContent,
+  PromptInputSelectItem,
+  PromptInputSelectTrigger,
+  PromptInputSelectValue,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputTools,
+} from "@/components/ai-elements/prompt-input";
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "@/components/ai-elements/tool";
 import { useAIChat } from "@/hooks/use-ai-chat";
+import type { SlashCommand } from "@/lib/slash-commands";
 import { PendingActionCard } from "./pending-action-card";
+import { SlashCommandMenu } from "./slash-command-menu";
+import { ToolChip } from "./tool-chip";
 
 const PROVIDERS = [
   { value: "openai", label: "OpenAI", models: ["gpt-4o", "gpt-4o-mini"] },
@@ -48,6 +60,8 @@ export function AIChat() {
   const [provider, setProvider] = useState<ProviderValue>("openai");
   const [model, setModel] = useState("gpt-4o");
   const [conversationId] = useState(() => crypto.randomUUID());
+  const [showSlashMenu, setShowSlashMenu] = useState(false);
+  const [slashQuery, setSlashQuery] = useState("");
 
   const {
     messages,
@@ -59,143 +73,102 @@ export function AIChat() {
     pendingActions,
     confirmAction,
     cancelAction,
+    selectedTools,
+    addTool,
+    removeTool,
   } = useAIChat({ provider, model, conversationId });
 
-  const isLoading = status === "submitted" || status === "streaming";
   const currentProvider = PROVIDERS.find((p) => p.value === provider);
 
-  function handleProviderChange(value: string) {
+  const handleInputChange = useCallback(
+    (value: string) => {
+      setInput(value);
+      const slashMatch = value.match(/\/(\S*)$/);
+      if (slashMatch) {
+        setShowSlashMenu(true);
+        setSlashQuery(slashMatch[1] ?? "");
+      } else {
+        setShowSlashMenu(false);
+        setSlashQuery("");
+      }
+    },
+    [setInput],
+  );
+
+  const handleCommandSelect = useCallback(
+    (cmd: SlashCommand) => {
+      addTool(cmd);
+      setInput((prev) => prev.replace(/\/\S*$/, "").trim());
+      setShowSlashMenu(false);
+      setSlashQuery("");
+    },
+    [addTool, setInput],
+  );
+
+  const handleProviderChange = (value: string) => {
     const next = value as ProviderValue;
     setProvider(next);
     const found = PROVIDERS.find((p) => p.value === next);
     setModel(found?.models[0] ?? "");
-  }
+  };
 
   return (
-    <Card className="flex h-[600px] flex-col">
-      <CardHeader className="border-b">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <IconRobot className="size-5" />
-            Signage Assistant
-          </CardTitle>
-          <div className="flex gap-2">
-            <Select value={provider} onValueChange={handleProviderChange}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PROVIDERS.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={model} onValueChange={setModel}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {currentProvider?.models.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="flex-1 overflow-hidden p-0">
-        <div className="h-full overflow-y-auto p-4">
+    <div className="flex h-full flex-col">
+      <Conversation className="flex-1">
+        <ConversationContent>
           {messages.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              <p>
-                Ask me to create content, playlists, or schedules for your
-                displays.
-              </p>
-            </div>
+            <ConversationEmptyState
+              icon={<WildfireLogo className="h-8 w-auto" />}
+              title=""
+              description="Ask me to create content, playlists, or schedules. Type / to see available commands."
+            />
           ) : (
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "flex gap-3",
-                    message.role === "user" ? "justify-end" : "justify-start",
-                  )}
-                >
-                  {message.role === "assistant" && (
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <IconRobot className="size-4" />
-                    </div>
-                  )}
-                  <div
-                    className={cn(
-                      "max-w-[80%] rounded-lg px-4 py-2",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted",
-                    )}
-                  >
-                    {message.parts.map((part, index) => {
-                      if (isTextUIPart(part)) {
-                        return (
-                          <p key={index} className="whitespace-pre-wrap">
-                            {part.text}
-                          </p>
-                        );
-                      }
-                      if (isToolUIPart(part)) {
-                        const toolName =
-                          "toolName" in part ? String(part.toolName) : "tool";
-                        const toolState =
-                          "state" in part ? String(part.state) : "";
-                        return (
-                          <div
-                            key={index}
-                            className="mt-2 rounded bg-background/50 p-2 text-sm"
-                          >
-                            <span className="font-medium">{toolName}</span>
-                            {toolState === "output" && (
-                              <span className="ml-2 text-green-600 dark:text-green-400">
-                                Completed
-                              </span>
+            messages.map((message) => (
+              <Fragment key={message.id}>
+                {message.parts.map((part, i) => {
+                  if (isTextUIPart(part)) {
+                    return (
+                      <Message key={`${message.id}-${i}`} from={message.role}>
+                        <MessageContent>
+                          <MessageResponse>{part.text}</MessageResponse>
+                        </MessageContent>
+                      </Message>
+                    );
+                  }
+                  if (isToolUIPart(part)) {
+                    if (part.type === "dynamic-tool") {
+                      return (
+                        <Tool key={`${message.id}-${i}`}>
+                          <ToolHeader
+                            type="dynamic-tool"
+                            state={part.state}
+                            toolName={part.toolName}
+                          />
+                          <ToolContent>
+                            <ToolInput input={part.input} />
+                            {"output" in part && part.output !== undefined && (
+                              <ToolOutput
+                                output={part.output}
+                                errorText={part.errorText}
+                              />
                             )}
-                            {toolState === "input" && (
-                              <span className="ml-2 text-muted-foreground">
-                                Running...
-                              </span>
-                            )}
-                          </div>
-                        );
-                      }
-                      return null;
-                    })}
-                  </div>
-                  {message.role === "user" && (
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary">
-                      <IconUser className="size-4" />
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {isLoading && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <IconLoader2 className="size-4 animate-spin" />
-                  <span>Thinking...</span>
-                </div>
-              )}
-            </div>
+                          </ToolContent>
+                        </Tool>
+                      );
+                    }
+                    return null;
+                  }
+                  return null;
+                })}
+              </Fragment>
+            ))
           )}
-        </div>
-      </CardContent>
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
 
       {pendingActions.length > 0 && (
-        <div className="border-t p-4">
+        <div className="border-t p-3">
           <p className="mb-2 text-sm font-medium">Pending Actions</p>
           <div className="space-y-2">
             {pendingActions.map((action) => (
@@ -211,29 +184,77 @@ export function AIChat() {
         </div>
       )}
 
-      <CardFooter className="border-t p-4">
-        <form onSubmit={handleSubmit} className="flex w-full flex-col gap-2">
-          <div className="flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Create a playlist for the lobby displays..."
-              disabled={isLoading}
-              aria-label="Chat message input"
-            />
-            <Button
-              type="submit"
-              disabled={isLoading || !input.trim()}
-              aria-label="Send message"
-            >
-              <IconSend className="size-4" />
-            </Button>
+      <div className="relative border-t p-3">
+        {selectedTools.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1">
+            {selectedTools.map((cmd) => (
+              <ToolChip
+                key={cmd.id}
+                command={cmd}
+                onRemove={() => removeTool(cmd.id)}
+              />
+            ))}
           </div>
-          {error != null && (
-            <p className="text-sm text-destructive">{error.message}</p>
-          )}
-        </form>
-      </CardFooter>
-    </Card>
+        )}
+
+        <SlashCommandMenu
+          query={slashQuery}
+          onSelect={handleCommandSelect}
+          onClose={() => setShowSlashMenu(false)}
+          visible={showSlashMenu}
+        />
+
+        <PromptInput
+          onSubmit={(message) => {
+            setInput(message.text);
+            handleSubmit();
+          }}
+        >
+          <PromptInputBody>
+            <PromptInputTextarea
+              value={input}
+              onChange={(e) => handleInputChange(e.currentTarget.value)}
+              placeholder="Type a message or / for commands..."
+            />
+          </PromptInputBody>
+          <PromptInputFooter>
+            <PromptInputTools>
+              <PromptInputSelect
+                value={provider}
+                onValueChange={handleProviderChange}
+              >
+                <PromptInputSelectTrigger>
+                  <PromptInputSelectValue />
+                </PromptInputSelectTrigger>
+                <PromptInputSelectContent>
+                  {PROVIDERS.map((p) => (
+                    <PromptInputSelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </PromptInputSelectItem>
+                  ))}
+                </PromptInputSelectContent>
+              </PromptInputSelect>
+              <PromptInputSelect value={model} onValueChange={setModel}>
+                <PromptInputSelectTrigger>
+                  <PromptInputSelectValue />
+                </PromptInputSelectTrigger>
+                <PromptInputSelectContent>
+                  {currentProvider?.models.map((m) => (
+                    <PromptInputSelectItem key={m} value={m}>
+                      {m}
+                    </PromptInputSelectItem>
+                  ))}
+                </PromptInputSelectContent>
+              </PromptInputSelect>
+            </PromptInputTools>
+            <PromptInputSubmit status={status} />
+          </PromptInputFooter>
+        </PromptInput>
+
+        {error != null && (
+          <p className="mt-1 text-sm text-destructive">{error.message}</p>
+        )}
+      </div>
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useCallback, useState } from "react";
 import { useAuth } from "@/context/auth-context";
+import type { SlashCommand } from "@/lib/slash-commands";
 
 export interface PendingAction {
   token: string;
@@ -27,6 +28,7 @@ export function useAIChat({
   const { token } = useAuth();
   const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
   const [input, setInput] = useState("");
+  const [selectedTools, setSelectedTools] = useState<SlashCommand[]>([]);
 
   const fetchPendingActions = useCallback(async () => {
     if (!token) return;
@@ -44,6 +46,8 @@ export function useAIChat({
     }
   }, [token]);
 
+  const toolNames = selectedTools.map((t) => t.toolName);
+
   const { messages, status, error, sendMessage } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/ai/chat",
@@ -52,6 +56,7 @@ export function useAIChat({
         provider,
         model,
         conversationId,
+        ...(toolNames.length > 0 ? { toolNames } : {}),
       },
     }),
     onFinish: () => {
@@ -66,9 +71,23 @@ export function useAIChat({
       if (!trimmed) return;
       void sendMessage({ text: trimmed });
       setInput("");
+      setSelectedTools([]);
     },
     [input, sendMessage],
   );
+
+  const addTool = useCallback(
+    (command: SlashCommand) => {
+      if (!selectedTools.some((t) => t.id === command.id)) {
+        setSelectedTools((prev) => [...prev, command]);
+      }
+    },
+    [selectedTools],
+  );
+
+  const removeTool = useCallback((commandId: string) => {
+    setSelectedTools((prev) => prev.filter((t) => t.id !== commandId));
+  }, []);
 
   const confirmAction = useCallback(
     async (actionToken: string, approved: boolean) => {
@@ -110,5 +129,8 @@ export function useAIChat({
     pendingActions,
     confirmAction,
     cancelAction,
+    selectedTools,
+    addTool,
+    removeTool,
   };
 }

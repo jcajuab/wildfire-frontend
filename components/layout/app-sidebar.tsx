@@ -284,10 +284,10 @@ export function AppSidebar(): ReactElement {
                         )}
                       </div>
                       <div className="flex min-w-0 flex-col items-start">
-                        <span className="truncate text-base font-medium leading-5">
+                        <span className="truncate text-sm font-medium leading-5">
                           {displayName}
                         </span>
-                        <span className="truncate text-base leading-5 text-primary-foreground/85">
+                        <span className="truncate text-xs leading-5 text-primary-foreground/85">
                           {displayEmail}
                         </span>
                       </div>
