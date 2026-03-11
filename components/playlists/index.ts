@@ -5,6 +5,6 @@ export { PlaylistCard } from "./playlist-card";
 
 export { PlaylistGrid } from "./playlist-grid";
 
-export { CreatePlaylistDialog } from "./create-playlist-dialog";
+export { CreatePlaylistForm } from "./create-playlist-form";
 export { EditPlaylistItemsDialog } from "./edit-playlist-items-dialog";
 export type { PlaylistItemsAtomicSnapshot } from "./edit-playlist-items-dialog";
