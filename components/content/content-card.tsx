@@ -28,8 +28,9 @@ import {
   formatContentStatus,
   formatDateWithTime,
   formatFileSize,
+  getContentStatusBadgeClassName,
 } from "@/lib/formatters";
-import type { Content, ContentType, ContentStatus } from "@/types/content";
+import type { Content, ContentType } from "@/types/content";
 
 const CONTENT_TYPE_LABEL: Record<ContentType, string> = {
   IMAGE: "Image",
@@ -37,12 +38,6 @@ const CONTENT_TYPE_LABEL: Record<ContentType, string> = {
   PDF: "PDF",
   FLASH: "Flash",
   TEXT: "Text",
-};
-
-const STATUS_DOT_CLASS: Record<ContentStatus, string> = {
-  READY: "bg-green-500",
-  PROCESSING: "bg-yellow-500",
-  FAILED: "bg-red-500",
 };
 
 export type ContentCardDisplayMode = "default" | "pdf-page-item";
@@ -91,9 +86,6 @@ export const ContentCard = memo(function ContentCard({
         ? "1 page"
         : `${content.pageCount} pages`;
 
-  const statusDotClass =
-    STATUS_DOT_CLASS[content.status] ?? "bg-muted-foreground";
-
   const ThumbnailFallbackIcon =
     content.type === "PDF"
       ? IconFileTypePdf
@@ -123,10 +115,12 @@ export const ContentCard = memo(function ContentCard({
           <h3 className="truncate text-sm font-semibold">
             {isPdfPageItem && pageLabel ? pageLabel : content.title}
           </h3>
-          <span
-            className={cn("size-2 shrink-0 rounded-full", statusDotClass)}
-            aria-label={formatContentStatus(content.status)}
-          />
+          <Badge
+            variant="outline"
+            className={cn("shrink-0", getContentStatusBadgeClassName(content.status))}
+          >
+            {formatContentStatus(content.status)}
+          </Badge>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -230,9 +224,9 @@ export const ContentCard = memo(function ContentCard({
         </p>
         {/* Dates */}
         <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
-          <span className="text-xs font-medium text-muted-foreground">Created</span>
+          <span className="text-xs font-medium text-muted-foreground">Created at</span>
           <span className="text-xs text-muted-foreground">{formatDateWithTime(content.createdAt)}</span>
-          <span className="text-xs font-medium text-muted-foreground">Updated</span>
+          <span className="text-xs font-medium text-muted-foreground">Updated at</span>
           <span className="text-xs text-muted-foreground">{formatDateWithTime(content.updatedAt || content.createdAt)}</span>
         </div>
         {/* PDF root: page count + expand/collapse button */}
