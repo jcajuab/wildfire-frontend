@@ -259,10 +259,10 @@ export function CreateContentDialog({
           <div className="space-y-2">
             <Label htmlFor="content-title">
               {isUploadMode
-                ? "Content Name"
+                ? "Content Title"
                 : isFlashMode
                   ? "Flash Title"
-                  : "Text Content Title"}
+                  : "Text Title"}
             </Label>
             <Input
               id="content-title"
