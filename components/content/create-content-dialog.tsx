@@ -1,8 +1,9 @@
 "use client";
 
 import type { ChangeEvent, ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { IconBolt, IconFileText, IconUpload } from "@tabler/icons-react";
+import { FlashTonePreview } from "@/components/content/flash-tone-preview";
 import {
   SUPPORTED_CONTENT_FILE_LABELS,
   SUPPORTED_CONTENT_FILE_MIME_TYPES,
@@ -29,6 +30,8 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { FlashTone } from "@/types/content";
+
+const FLASH_PREVIEW_DEBOUNCE_MS = 500;
 
 interface CreateContentDialogProps {
   readonly open: boolean;
@@ -62,6 +65,7 @@ export function CreateContentDialog({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [scrollPxPerSecond, setScrollPxPerSecond] = useState("");
   const [flashMessage, setFlashMessage] = useState("");
+  const [debouncedFlashMessage, setDebouncedFlashMessage] = useState("");
   const [flashTone, setFlashTone] = useState<FlashTone>("INFO");
   const [textJsonContent, setTextJsonContent] = useState("");
   const [textHtmlContent, setTextHtmlContent] = useState("");
@@ -76,6 +80,7 @@ export function CreateContentDialog({
     setSelectedFile(null);
     setScrollPxPerSecond("");
     setFlashMessage("");
+    setDebouncedFlashMessage("");
     setFlashTone("INFO");
     setTextJsonContent("");
     setTextHtmlContent("");
@@ -218,6 +223,14 @@ export function CreateContentDialog({
     );
   }, [selectedFile]);
 
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedFlashMessage(flashMessage);
+    }, FLASH_PREVIEW_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [flashMessage]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={isTextMode ? "sm:max-w-2xl" : "sm:max-w-lg"}>
@@ -229,7 +242,7 @@ export function CreateContentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <Tabs
             value={mode}
             onValueChange={(value) =>
@@ -335,7 +348,7 @@ export function CreateContentDialog({
               ) : null}
             </div>
           ) : isFlashMode ? (
-            <div className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="flash-message">Ticker Message</Label>
                 <Textarea
@@ -365,15 +378,10 @@ export function CreateContentDialog({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="overflow-hidden rounded-md border border-border bg-background">
-                <div className="flex h-12 items-center gap-3 whitespace-nowrap bg-foreground px-4 text-sm font-medium text-background">
-                  <IconBolt className="size-4 shrink-0" />
-                  <div className="animate-[marquee_14s_linear_infinite] pr-8 motion-reduce:animate-none">
-                    {(flashMessage.trim() || "Ticker preview") + "   "}
-                    .repeat(4)
-                  </div>
-                </div>
-              </div>
+              <FlashTonePreview
+                tone={flashTone}
+                message={debouncedFlashMessage}
+              />
             </div>
           ) : (
             <div className="space-y-2">

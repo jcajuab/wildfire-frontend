@@ -34,8 +34,8 @@ import {
   getFlashThumbnailText,
   getTextThumbnailText,
 } from "@/lib/content-thumbnail-preview";
-import { getFlashBadgeClassName } from "@/lib/display-runtime/flash-ticker";
 import type { Content, ContentType } from "@/types/content";
+import { FlashTonePreview } from "./flash-tone-preview";
 
 const CONTENT_TYPE_LABEL: Record<ContentType, string> = {
   IMAGE: "Image",
@@ -95,7 +95,9 @@ export const ContentCard = memo(function ContentCard({
   const flashThumbnailText = isFlashContent
     ? getFlashThumbnailText(content)
     : null;
-  const textThumbnailText = isTextContent ? getTextThumbnailText(content) : null;
+  const textThumbnailText = isTextContent
+    ? getTextThumbnailText(content)
+    : null;
   const flashTone = content.flashTone ?? "INFO";
 
   const ThumbnailFallbackIcon =
@@ -202,27 +204,10 @@ export const ContentCard = memo(function ContentCard({
             </div>
           </div>
         ) : isFlashContent ? (
-          <div className="flex h-full w-full items-center justify-center py-2">
-            <div
-              className={cn(
-                "flex h-10 min-w-0 w-[90%] overflow-hidden border border-border/80 bg-white sm:h-11 sm:w-[95%]",
-              )}
-            >
-              <div
-                className={cn(
-                  "flex h-full shrink-0 items-center justify-center px-2 text-[10px] font-extrabold leading-none tracking-[0.14em] sm:px-3 sm:text-xs",
-                  getFlashBadgeClassName(flashTone),
-                )}
-              >
-                {flashTone}
-              </div>
-              <div className="flex min-w-0 flex-1 items-center overflow-hidden bg-white px-2 sm:px-3">
-                <p className="w-full truncate text-xs font-semibold leading-tight text-foreground sm:text-sm">
-                  {flashThumbnailText}
-                </p>
-              </div>
-            </div>
-          </div>
+          <FlashTonePreview
+            tone={flashTone}
+            message={flashThumbnailText ?? ""}
+          />
         ) : isTextContent ? (
           <div className="flex h-full w-full items-center justify-center overflow-visible p-2">
             <p className="max-w-full text-center text-xs leading-snug whitespace-pre-wrap break-words text-foreground">
@@ -270,10 +255,18 @@ export const ContentCard = memo(function ContentCard({
         </p>
         {/* Dates */}
         <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
-          <span className="text-xs font-medium text-muted-foreground">Created at</span>
-          <span className="text-xs text-muted-foreground">{formatDateWithTime(content.createdAt)}</span>
-          <span className="text-xs font-medium text-muted-foreground">Updated at</span>
-          <span className="text-xs text-muted-foreground">{formatDateWithTime(content.updatedAt || content.createdAt)}</span>
+          <span className="text-xs font-medium text-muted-foreground">
+            Created at
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {formatDateWithTime(content.createdAt)}
+          </span>
+          <span className="text-xs font-medium text-muted-foreground">
+            Updated at
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {formatDateWithTime(content.updatedAt || content.createdAt)}
+          </span>
         </div>
         {/* PDF root: page count + expand/collapse button */}
         {canTogglePdfRoot ? (
