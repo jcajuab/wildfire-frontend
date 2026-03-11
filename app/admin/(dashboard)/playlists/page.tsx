@@ -1,12 +1,12 @@
 "use client";
 
 import type { ReactElement } from "react";
+import Link from "next/link";
 import { IconPlus, IconPresentation } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { DashboardPage } from "@/components/layout/dashboard-page";
-import { CreatePlaylistDialog } from "@/components/playlists/create-playlist-dialog";
 import { EditPlaylistItemsDialog } from "@/components/playlists/edit-playlist-items-dialog";
 import { PlaylistGrid } from "@/components/playlists/playlist-grid";
 import { SearchControl } from "@/components/common/search-control";
@@ -36,7 +36,6 @@ export default function PlaylistsPage(): ReactElement {
     totalPlaylists,
     availableContent,
     availableDisplays,
-    createDialogOpen,
     previewPlaylist,
     editPlaylist,
     manageItemsPlaylist,
@@ -54,9 +53,7 @@ export default function PlaylistsPage(): ReactElement {
     handleStatusFilterChange,
     handleClearFilters,
     handleSearchChange,
-    handleCreateDialogOpenChange,
     handleManageItemsDialogOpenChange,
-    handleCreatePlaylist,
     handleEditPlaylist,
     handleManageItems,
     handleSaveItems,
@@ -72,9 +69,11 @@ export default function PlaylistsPage(): ReactElement {
         title="Playlists"
         actions={
           <Can permission="playlists:create">
-            <Button onClick={() => handleCreateDialogOpenChange(true)}>
-              <IconPlus className="size-4" />
-              Create Playlist
+            <Button asChild>
+              <Link href="/admin/playlists/create">
+                <IconPlus className="size-4" />
+                Create Playlist
+              </Link>
             </Button>
           </Can>
         }
@@ -121,14 +120,6 @@ export default function PlaylistsPage(): ReactElement {
           />
         </DashboardPage.Footer>
       </DashboardPage.Body>
-
-      <CreatePlaylistDialog
-        open={createDialogOpen}
-        onOpenChange={handleCreateDialogOpenChange}
-        onCreate={handleCreatePlaylist}
-        availableContent={availableContent}
-        availableDisplays={availableDisplays}
-      />
 
       {manageItemsPlaylist && (
         <EditPlaylistItemsDialog

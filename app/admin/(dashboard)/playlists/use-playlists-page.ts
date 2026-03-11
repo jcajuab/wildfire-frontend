@@ -14,7 +14,6 @@ import { useGetDisplaysQuery } from "@/lib/api/displays-api";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   type PlaylistListQuery,
-  useCreatePlaylistMutation,
   useDeletePlaylistMutation,
   useLazyGetPlaylistQuery,
   useListPlaylistsQuery,
@@ -28,10 +27,11 @@ import {
 } from "@/lib/mappers/playlist-mapper";
 import type { PlaylistStatusFilter } from "@/components/playlists/playlist-filter-popover";
 import type { Content } from "@/types/content";
-import type {
-  Playlist,
-  PlaylistItem,
-} from "@/types/playlist";
+<<<<<<< HEAD
+import type { Playlist } from "@/types/playlist";
+=======
+import type { Playlist, PlaylistSortField } from "@/types/playlist";
+>>>>>>> 928bb3a (feat(playlists): route playlist creation through dedicated page)
 import type { PlaylistItemsAtomicSnapshot } from "@/components/playlists/edit-playlist-items-dialog";
 import type { Display } from "@/lib/api/displays-api";
 
@@ -45,13 +45,6 @@ const isPlaylistRenderableContent = (
   content.type === "VIDEO" ||
   content.type === "PDF" ||
   content.type === "TEXT";
-
-export interface NewPlaylistPayload {
-  readonly name: string;
-  readonly description: string | null;
-  readonly items: readonly PlaylistItem[];
-  readonly totalDuration: number;
-}
 
 export interface UsePlaylistsPageResult {
   // Permissions
@@ -71,8 +64,6 @@ export interface UsePlaylistsPageResult {
   >;
   availableDisplays: readonly Display[];
 
-  // Dialog state
-  createDialogOpen: boolean;
   previewPlaylist: Playlist | null;
   editPlaylist: Playlist | null;
   manageItemsPlaylist: Playlist | null;
@@ -94,9 +85,7 @@ export interface UsePlaylistsPageResult {
   handleStatusFilterChange: (value: PlaylistStatusFilter) => void;
   handleClearFilters: () => void;
   handleSearchChange: (value: string) => void;
-  handleCreateDialogOpenChange: (open: boolean) => void;
   handleManageItemsDialogOpenChange: (open: boolean) => void;
-  handleCreatePlaylist: (data: NewPlaylistPayload) => Promise<boolean>;
   handleEditPlaylist: (playlist: Playlist) => void;
   handleManageItems: (playlist: Playlist) => Promise<void>;
   handleSaveItems: (
@@ -123,7 +112,6 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   const [search, setSearch] = useQueryStringState("q", "");
   const [page, setPage] = useQueryNumberState("page", 1);
 
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [previewPlaylist, setPreviewPlaylist] = useState<Playlist | null>(null);
   const [editPlaylist, setEditPlaylist] = useState<Playlist | null>(null);
   const [manageItemsPlaylist, setManageItemsPlaylist] =
@@ -160,7 +148,6 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   );
 
   const [loadPlaylist] = useLazyGetPlaylistQuery();
-  const [createPlaylist] = useCreatePlaylistMutation();
   const [updatePlaylist] = useUpdatePlaylistMutation();
   const [deletePlaylist] = useDeletePlaylistMutation();
   const [savePlaylistItemsAtomic] = useSavePlaylistItemsAtomicMutation();
@@ -203,55 +190,11 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     [setSearch, setPage],
   );
 
-  const handleCreateDialogOpenChange = useCallback((open: boolean) => {
-    setCreateDialogOpen(open);
-  }, []);
-
   const handleManageItemsDialogOpenChange = useCallback((open: boolean) => {
     if (!open) {
       setManageItemsPlaylist(null);
     }
   }, []);
-
-  const handleCreatePlaylist = useCallback(
-    async (data: NewPlaylistPayload) => {
-      let createdPlaylistId: string | null = null;
-
-      try {
-        const created = await createPlaylist({
-          name: data.name,
-          description: data.description,
-        }).unwrap();
-        createdPlaylistId = created.id;
-        if (data.items.length > 0) {
-          await savePlaylistItemsAtomic({
-            playlistId: created.id,
-            items: data.items.map((item) => ({
-              kind: "new" as const,
-              contentId: item.content.id,
-              duration: item.duration,
-            })),
-          }).unwrap();
-        }
-        toast.success("Playlist created.");
-        return true;
-      } catch (err) {
-        if (createdPlaylistId) {
-          try {
-            await deletePlaylist(createdPlaylistId).unwrap();
-          } catch (rollbackError) {
-            console.error(
-              "Failed to roll back playlist creation after item-save failure.",
-              rollbackError,
-            );
-          }
-        }
-        notifyApiError(err, "Failed to create playlist.");
-        return false;
-      }
-    },
-    [createPlaylist, deletePlaylist, savePlaylistItemsAtomic],
-  );
 
   const handleEditPlaylist = useCallback((playlist: Playlist) => {
     setEditPlaylist(playlist);
@@ -346,7 +289,6 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     totalPlaylists,
     availableContent,
     availableDisplays: displaysData?.items ?? [],
-    createDialogOpen,
     previewPlaylist,
     editPlaylist,
     manageItemsPlaylist,
@@ -364,9 +306,7 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     handleStatusFilterChange,
     handleClearFilters,
     handleSearchChange,
-    handleCreateDialogOpenChange,
     handleManageItemsDialogOpenChange,
-    handleCreatePlaylist,
     handleEditPlaylist,
     handleManageItems,
     handleSaveItems,
