@@ -25,6 +25,7 @@ export function mapBackendContentToContent(item: BackendContent): Content {
     textHtmlContent: item.textHtmlContent ?? null,
     status: item.status,
     createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
     owner: {
       id: item.owner.id,
       name: item.owner.name ?? "Unknown",

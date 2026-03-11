@@ -65,6 +65,17 @@ export function formatDate(value: string | Date): string {
   });
 }
 
+export function formatDateWithTime(value: string | Date): string {
+  return formatWithLocale(value, {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 export function formatDateTime(value: string | Date): string {
   return formatWithLocale(value, {
     month: "short",
