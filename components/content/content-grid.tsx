@@ -200,7 +200,7 @@ export function ContentGrid({
   };
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(18rem,24rem))] gap-4">
       {items.map((content) => {
         const isPdfRoot = content.type === "PDF" && content.kind === "ROOT";
         const canExpand = isPdfRoot && content.status === "READY";
