@@ -136,6 +136,7 @@ describe("CreatePlaylistPage", () => {
     expect(screen.getByRole("heading", { name: "Create Playlist" })).toBeInTheDocument();
     expect(screen.getByLabelText("Name")).toBeInTheDocument();
     const formRoot = screen.getByTestId("create-playlist-form-root");
+    const header = screen.getByRole("banner");
 
     expect(formRoot).not.toHaveClass("rounded-md", "border", "bg-background");
     expect(formRoot.parentElement).toHaveClass(
@@ -147,6 +148,8 @@ describe("CreatePlaylistPage", () => {
     );
     expect(formRoot.parentElement).not.toHaveClass("px-6", "py-6", "sm:px-8");
     expect(formRoot).toHaveClass("overflow-auto", "px-6", "py-6", "sm:px-8");
+    expect(header).toContainElement(screen.getByRole("button", { name: "Cancel" }));
+    expect(header).toContainElement(screen.getByRole("button", { name: "Create" }));
 
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
@@ -190,6 +193,22 @@ describe("CreatePlaylistPage", () => {
     });
     expect(savePlaylistItemsAtomicMock).not.toHaveBeenCalled();
     expect(pushMock).toHaveBeenCalledWith("/admin/playlists");
+  });
+
+  test("shows creating state in the page header while submitting", async () => {
+    const user = userEvent.setup();
+
+    createPlaylistMock.mockReturnValueOnce({
+      unwrap: () => new Promise(() => undefined),
+    });
+
+    render(<CreatePlaylistPage />);
+
+    await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.click(screen.getByRole("button", { name: "Create" }));
+
+    expect(screen.getByRole("button", { name: "Creating..." })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
   });
 
   test("rolls back the playlist when saving added items fails", async () => {
