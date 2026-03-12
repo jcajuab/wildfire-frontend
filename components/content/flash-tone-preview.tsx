@@ -27,7 +27,7 @@ export function FlashTonePreview({
         className,
       )}
     >
-      <div className="flex h-10 min-w-0 w-[90%] max-w-full overflow-hidden border border-border/80 bg-white sm:h-11 sm:w-[95%]">
+      <div className="flex h-10 min-w-0 w-full max-w-full overflow-hidden border border-border/80 bg-white sm:h-11">
         <div
           className={cn(
             "flex h-full shrink-0 items-center justify-center px-2 text-[10px] font-extrabold leading-none tracking-[0.14em] sm:px-3 sm:text-xs",
