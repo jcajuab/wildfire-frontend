@@ -6,7 +6,7 @@ import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { formatLongDate, formatMonthDay } from "@/lib/formatters";
-import type { CalendarView } from "@/types/schedule";
+import type { CalendarView, ResourceMode } from "@/types/schedule";
 
 interface CalendarHeaderProps {
   readonly currentDate: Date;
@@ -16,12 +16,9 @@ interface CalendarHeaderProps {
   readonly onNext: () => void;
   readonly onToday: () => void;
   readonly resourcesCount: number;
-}
-
-function getStartOfWeek(date: Date): Date {
-  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  start.setDate(start.getDate() - start.getDay());
-  return start;
+  readonly resourceMode: ResourceMode;
+  readonly onResourceModeChange: (mode: ResourceMode) => void;
+  readonly displayGroupsCount: number;
 }
 
 function formatDateRange(date: Date, view: CalendarView): string {
@@ -30,7 +27,7 @@ function formatDateRange(date: Date, view: CalendarView): string {
   }
 
   if (view === "resource-week") {
-    const start = getStartOfWeek(date);
+    const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
 
@@ -54,11 +51,16 @@ export function CalendarHeader({
   onNext,
   onToday,
   resourcesCount,
+  resourceMode,
+  onResourceModeChange,
+  displayGroupsCount,
 }: CalendarHeaderProps): ReactElement {
   const label = formatDateRange(currentDate, view);
-  const resourcesLabel = `${resourcesCount} ${
-    resourcesCount === 1 ? "display" : "displays"
-  }`;
+
+  const resourcesLabel =
+    resourceMode === "display-group"
+      ? `${displayGroupsCount} ${displayGroupsCount === 1 ? "group" : "groups"}`
+      : `${resourcesCount} ${resourcesCount === 1 ? "display" : "displays"}`;
 
   return (
     <div className="grid w-full grid-cols-3 items-center gap-3">
@@ -95,8 +97,23 @@ export function CalendarHeader({
         </span>
       </div>
 
-      {/* Right: View Toggle */}
-      <div className="flex justify-end">
+      {/* Right: Resource Mode Toggle + View Toggle */}
+      <div className="flex justify-end gap-2">
+        <ToggleGroup
+          type="single"
+          value={resourceMode}
+          onValueChange={(value) => {
+            if (value) {
+              onResourceModeChange(value as ResourceMode);
+            }
+          }}
+          variant="outline"
+          size="default"
+        >
+          <ToggleGroupItem value="display">Display</ToggleGroupItem>
+          <ToggleGroupItem value="display-group">Display Group</ToggleGroupItem>
+        </ToggleGroup>
+
         <ToggleGroup
           type="single"
           value={view}
@@ -108,8 +125,8 @@ export function CalendarHeader({
           variant="outline"
           size="default"
         >
-          <ToggleGroupItem value="resource-week">Resource Week</ToggleGroupItem>
-          <ToggleGroupItem value="resource-day">Resource Day</ToggleGroupItem>
+          <ToggleGroupItem value="resource-week">Week</ToggleGroupItem>
+          <ToggleGroupItem value="resource-day">Day</ToggleGroupItem>
         </ToggleGroup>
       </div>
     </div>

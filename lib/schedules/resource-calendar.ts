@@ -41,7 +41,6 @@ export function toDateKey(date: Date): string {
 
 export function getWeekDates(currentDate: Date): readonly Date[] {
   const start = toDateOnly(currentDate);
-  start.setDate(start.getDate() - start.getDay());
 
   return Array.from({ length: 7 }, (_, index) => {
     const date = new Date(start);

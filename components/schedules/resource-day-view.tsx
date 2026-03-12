@@ -1,7 +1,9 @@
 "use client";
 
 import type { ReactElement } from "react";
-import type { Schedule, ScheduleDisplay } from "@/types/schedule";
+import { useState, useEffect } from "react";
+import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
+import type { Schedule } from "@/types/schedule";
 import { formatLongDate } from "@/lib/formatters";
 import {
   MINUTES_PER_DAY,
@@ -9,6 +11,7 @@ import {
   formatMinutesAsTime,
   type ResourceCalendarLaneEvent,
 } from "@/lib/schedules/resource-calendar";
+import { getGroupBadgeStyles } from "@/lib/display-group-colors";
 import type { ResourceGridSharedProps } from "./resource-week-view";
 
 const DAY_GRID_TEMPLATE = "16rem minmax(0, 1fr)";
@@ -38,14 +41,36 @@ function formatHourLabel(hour: number): string {
   return `${hour - 12} PM`;
 }
 
+function getNowMinutes(): number {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}
+
 export function ResourceDayView({
   days,
   resources,
   eventsByResourceDate,
   schedulesById,
   onScheduleClick,
+  onGroupToggle,
 }: ResourceGridSharedProps): ReactElement {
   const day = days[0];
+
+  const [nowMinutes, setNowMinutes] = useState(() => getNowMinutes());
+
+  useEffect(() => {
+    const tick = () => setNowMinutes(getNowMinutes());
+    const id = setInterval(tick, 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const today = new Date();
+  const isToday =
+    day.getFullYear() === today.getFullYear() &&
+    day.getMonth() === today.getMonth() &&
+    day.getDate() === today.getDate();
+
+  const nowFraction = nowMinutes / MINUTES_PER_DAY;
 
   return (
     <div className="flex max-h-[min(70dvh,calc(100dvh-14rem))] flex-col overflow-hidden rounded-md border border-border">
@@ -74,82 +99,128 @@ export function ResourceDayView({
             </div>
           </div>
 
-          {resources.map((resource) => {
-            const resourceDateKey = createResourceDateKey(resource.id, day);
-            const dayEvents = eventsByResourceDate.get(resourceDateKey) ?? [];
-            const laneHeight = getLaneHeight(dayEvents);
-
-            return (
+          <div className="relative">
+            {/* Current-time indicator line — only shown for today */}
+            {isToday && (
               <div
-                key={resource.id}
-                className="grid border-b border-border"
-                style={{ gridTemplateColumns: DAY_GRID_TEMPLATE }}
-              >
-                <div className="sticky left-0 z-20 flex items-center border-r border-border bg-background px-4 py-3">
-                  <p className="truncate text-sm font-medium">
-                    {resource.name}
-                  </p>
-                </div>
+                className="pointer-events-none absolute top-0 bottom-0 z-20 w-0.5 bg-black"
+                style={{
+                  left: `calc(16rem + (100% - 16rem) * ${nowFraction.toFixed(6)})`,
+                }}
+                aria-hidden="true"
+              />
+            )}
 
-                <div
-                  className="relative bg-background/60"
-                  style={{ minHeight: laneHeight }}
-                >
-                  <div className="pointer-events-none absolute inset-0 grid grid-cols-24">
-                    {HOURS.map((hour) => (
-                      <div
-                        key={hour}
-                        className="border-r border-border last:border-r-0"
+            {resources.map((row) => {
+              if (row.kind === "group-header") {
+                const dotClass = getGroupBadgeStyles(row.colorIndex).fill.split(
+                  " ",
+                )[0];
+                return (
+                  <div
+                    key={`group-${row.id}`}
+                    className="border-b border-border bg-muted/10"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => onGroupToggle?.(row.id)}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {row.expanded ? (
+                        <IconChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <IconChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+                      )}
+                      <span
+                        className={`size-2.5 shrink-0 rounded-full ${dotClass}`}
                       />
-                    ))}
+                      <span className="text-sm font-semibold">{row.name}</span>
+                      <span className="rounded-md border border-border bg-muted/40 px-1.5 py-0.5 text-xs text-muted-foreground">
+                        {row.displayCount}
+                      </span>
+                    </button>
+                  </div>
+                );
+              }
+
+              const resourceDateKey = createResourceDateKey(row.id, day);
+              const dayEvents = eventsByResourceDate.get(resourceDateKey) ?? [];
+              const laneHeight = getLaneHeight(dayEvents);
+
+              return (
+                <div
+                  key={row.rowKey}
+                  className="grid border-b border-border"
+                  style={{ gridTemplateColumns: DAY_GRID_TEMPLATE }}
+                >
+                  <div className="sticky left-0 z-10 flex items-center border-r border-border bg-background px-4 py-3">
+                    <p
+                      className={`truncate text-sm font-medium ${row.inGroup ? "pl-3" : ""}`}
+                    >
+                      {row.name}
+                    </p>
                   </div>
 
-                  {dayEvents.map((event) => {
-                    const schedule = schedulesById.get(event.scheduleId);
-                    if (!schedule) {
-                      return null;
-                    }
+                  <div
+                    className="relative bg-background/60"
+                    style={{ minHeight: laneHeight }}
+                  >
+                    <div className="pointer-events-none absolute inset-0 grid grid-cols-24">
+                      {HOURS.map((hour) => (
+                        <div
+                          key={hour}
+                          className="border-r border-border last:border-r-0"
+                        />
+                      ))}
+                    </div>
 
-                    const startPercent =
-                      (event.startMinutes / MINUTES_PER_DAY) * 100;
-                    const widthPercent = Math.max(
-                      ((event.endMinutes - event.startMinutes) /
-                        MINUTES_PER_DAY) *
-                        100,
-                      1.2,
-                    );
+                    {dayEvents.map((event) => {
+                      const schedule = schedulesById.get(event.scheduleId);
+                      if (!schedule) {
+                        return null;
+                      }
 
-                    return (
-                      <button
-                        key={event.id}
-                        type="button"
-                        onClick={() => onScheduleClick(schedule)}
-                        className={`absolute z-10 overflow-hidden rounded border-l-4 px-1.5 py-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                          schedule.kind === "FLASH"
-                            ? "border-amber-500 bg-amber-500/12 hover:bg-amber-500/20"
-                            : "border-primary bg-primary/12 hover:bg-primary/20"
-                        }`}
-                        style={{
-                          left: `${startPercent}%`,
-                          width: `${widthPercent}%`,
-                          top: `${DAY_EVENT_TOP_PADDING_PX + event.lane * (DAY_EVENT_HEIGHT_PX + DAY_EVENT_LANE_GAP_PX)}px`,
-                          height: `${DAY_EVENT_HEIGHT_PX}px`,
-                        }}
-                        aria-label={`View schedule ${schedule.name} on ${resource.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`}
-                      >
-                        <span className="block truncate text-xs font-medium">
-                          {schedule.name}
-                        </span>
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {event.timeLabel}
-                        </span>
-                      </button>
-                    );
-                  })}
+                      const startPercent =
+                        (event.startMinutes / MINUTES_PER_DAY) * 100;
+                      const widthPercent = Math.max(
+                        ((event.endMinutes - event.startMinutes) /
+                          MINUTES_PER_DAY) *
+                          100,
+                        1.2,
+                      );
+
+                      return (
+                        <button
+                          key={event.id}
+                          type="button"
+                          onClick={() => onScheduleClick(schedule)}
+                          className={`absolute z-10 cursor-pointer overflow-hidden rounded border-l-4 px-1.5 py-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                            schedule.kind === "FLASH"
+                              ? "border-amber-500 bg-amber-500/12 hover:bg-amber-500/20"
+                              : "border-primary bg-primary/12 hover:bg-primary/20"
+                          }`}
+                          style={{
+                            left: `${startPercent}%`,
+                            width: `${widthPercent}%`,
+                            top: `${DAY_EVENT_TOP_PADDING_PX + event.lane * (DAY_EVENT_HEIGHT_PX + DAY_EVENT_LANE_GAP_PX)}px`,
+                            height: `${DAY_EVENT_HEIGHT_PX}px`,
+                          }}
+                          aria-label={`View schedule ${schedule.name} on ${row.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`}
+                        >
+                          <span className="block truncate text-xs font-medium">
+                            {schedule.name}
+                          </span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {event.timeLabel}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

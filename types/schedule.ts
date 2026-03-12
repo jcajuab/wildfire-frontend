@@ -1,4 +1,5 @@
 export type CalendarView = "resource-week" | "resource-day";
+export type ResourceMode = "display" | "display-group";
 export type ScheduleKind = "PLAYLIST" | "FLASH";
 
 export interface SchedulePlaylist {

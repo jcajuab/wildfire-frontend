@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { useCan } from "@/hooks/use-can";
 import {
   useLazyGetContentJobQuery,
+  useLazyGetContentQuery,
   useListContentQuery,
 } from "@/lib/api/content-api";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
@@ -37,6 +39,35 @@ export function useContentPageController() {
     sortBy: "createdAt",
     sortDirection: "desc",
   });
+
+  const searchParams = useSearchParams();
+  const previewId = searchParams.get("preview");
+  const editId = searchParams.get("edit");
+  const handledPreviewRef = useRef<string | null>(null);
+  const handledEditRef = useRef<string | null>(null);
+  const [loadContent] = useLazyGetContentQuery();
+
+  useEffect(() => {
+    if (previewId && handledPreviewRef.current !== previewId) {
+      handledPreviewRef.current = previewId;
+      void loadContent(previewId).then((result) => {
+        if (result.data) {
+          dialogState.handlePreview(mapBackendContentToContent(result.data));
+        }
+      });
+    }
+  }, [previewId, loadContent, dialogState]);
+
+  useEffect(() => {
+    if (editId && handledEditRef.current !== editId) {
+      handledEditRef.current = editId;
+      void loadContent(editId).then((result) => {
+        if (result.data) {
+          dialogState.handleEdit(mapBackendContentToContent(result.data));
+        }
+      });
+    }
+  }, [editId, loadContent, dialogState]);
 
   const [getContentJob] = useLazyGetContentJobQuery();
   const { trackContentJob } = useContentJobMonitor({

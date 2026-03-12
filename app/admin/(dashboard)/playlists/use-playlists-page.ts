@@ -84,6 +84,7 @@ export interface UsePlaylistsPageResult {
   handleManageItemsDialogOpenChange: (open: boolean) => void;
   handleEditPlaylist: (playlist: Playlist) => void;
   handleManageItems: (playlist: Playlist) => Promise<void>;
+  handleManageItemsById: (id: string) => Promise<void>;
   handleSaveItems: (
     playlistId: string,
     items: PlaylistItemsAtomicSnapshot,
@@ -210,6 +211,18 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     [loadPlaylist],
   );
 
+  const handleManageItemsById = useCallback(
+    async (id: string) => {
+      try {
+        const detailed = await loadPlaylist(id, true).unwrap();
+        setManageItemsPlaylist(mapBackendPlaylistWithItems(detailed));
+      } catch (err) {
+        notifyApiError(err, "Failed to load playlist items.");
+      }
+    },
+    [loadPlaylist],
+  );
+
   const handleSaveItems = useCallback(
     async (playlistId: string, items: PlaylistItemsAtomicSnapshot) => {
       if (isSavingPlaylistItemsRef.current) {
@@ -305,6 +318,7 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     handleManageItemsDialogOpenChange,
     handleEditPlaylist,
     handleManageItems,
+    handleManageItemsById,
     handleSaveItems,
     handlePreviewPlaylist,
     handleDeletePlaylist,

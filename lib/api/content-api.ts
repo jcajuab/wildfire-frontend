@@ -341,4 +341,5 @@ export const {
   useReplaceContentFileMutation,
   useLazyGetContentFileUrlQuery,
   useLazyGetContentJobQuery,
+  useLazyGetContentQuery,
 } = contentApi;

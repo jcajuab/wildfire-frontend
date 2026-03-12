@@ -1,11 +1,12 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { IconPhoto } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
-import type { CalendarView, Schedule, ScheduleDisplay } from "@/types/schedule";
+import type { CalendarView, ResourceMode, Schedule, ScheduleDisplay } from "@/types/schedule";
+import type { DisplayGroup } from "@/lib/api/displays-api";
 import {
   assignEventLanes,
   getDayDates,
@@ -13,7 +14,7 @@ import {
   groupEventsByResourceDate,
   projectResourceEvents,
 } from "@/lib/schedules/resource-calendar";
-import { ResourceWeekView } from "./resource-week-view";
+import { ResourceWeekView, type CalendarRowItem } from "./resource-week-view";
 import { ResourceDayView } from "./resource-day-view";
 
 interface CalendarGridProps {
@@ -22,6 +23,8 @@ interface CalendarGridProps {
   readonly schedules: readonly Schedule[];
   readonly resources: readonly ScheduleDisplay[];
   readonly onScheduleClick: (schedule: Schedule) => void;
+  readonly resourceMode: ResourceMode;
+  readonly displayGroups: readonly DisplayGroup[];
 }
 
 function EmptyResourcesState(): ReactElement {
@@ -40,7 +43,25 @@ export function CalendarGrid({
   schedules,
   resources,
   onScheduleClick,
+  resourceMode,
+  displayGroups,
 }: CalendarGridProps): ReactElement {
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const handleGroupToggle = useCallback((groupId: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  }, []);
+
   const days = useMemo(() => {
     if (view === "resource-day") {
       return getDayDates(currentDate);
@@ -49,6 +70,55 @@ export function CalendarGrid({
     return getWeekDates(currentDate);
   }, [currentDate, view]);
 
+  const flatRows = useMemo((): readonly CalendarRowItem[] => {
+    if (resourceMode === "display") {
+      return resources.map((r) => ({
+        kind: "display" as const,
+        id: r.id,
+        rowKey: r.id,
+        name: r.name,
+      }));
+    }
+
+    const rows: CalendarRowItem[] = [];
+    for (const group of displayGroups) {
+      const isExpanded = expandedGroups.has(group.id);
+      rows.push({
+        kind: "group-header",
+        id: group.id,
+        name: group.name,
+        colorIndex: group.colorIndex,
+        expanded: isExpanded,
+        displayCount: group.displayIds.length,
+      });
+      if (isExpanded) {
+        const seenInGroup = new Set<string>();
+        for (const displayId of group.displayIds) {
+          if (seenInGroup.has(displayId)) continue;
+          seenInGroup.add(displayId);
+          const display = resources.find((r) => r.id === displayId);
+          if (display) {
+            rows.push({
+              kind: "display",
+              id: display.id,
+              rowKey: `${group.id}:${display.id}`,
+              name: display.name,
+              inGroup: true,
+            });
+          }
+        }
+      }
+    }
+    return rows;
+  }, [resourceMode, resources, displayGroups, expandedGroups]);
+
+  const displayRows = useMemo(() => {
+    return flatRows.filter(
+      (r): r is Extract<CalendarRowItem, { kind: "display" }> =>
+        r.kind === "display",
+    );
+  }, [flatRows]);
+
   const schedulesById = useMemo(() => {
     return new Map(schedules.map((schedule) => [schedule.id, schedule]));
   }, [schedules]);
@@ -56,10 +126,10 @@ export function CalendarGrid({
   const projectedEvents = useMemo(() => {
     return projectResourceEvents({
       schedules,
-      resources,
+      resources: displayRows,
       dates: days,
     });
-  }, [schedules, resources, days]);
+  }, [schedules, displayRows, days]);
 
   const laidOutEvents = useMemo(() => {
     return assignEventLanes(projectedEvents);
@@ -77,10 +147,11 @@ export function CalendarGrid({
     return (
       <ResourceDayView
         days={days}
-        resources={resources}
+        resources={flatRows}
         eventsByResourceDate={eventsByResourceDate}
         schedulesById={schedulesById}
         onScheduleClick={onScheduleClick}
+        onGroupToggle={handleGroupToggle}
       />
     );
   }
@@ -88,10 +159,11 @@ export function CalendarGrid({
   return (
     <ResourceWeekView
       days={days}
-      resources={resources}
+      resources={flatRows}
       eventsByResourceDate={eventsByResourceDate}
       schedulesById={schedulesById}
       onScheduleClick={onScheduleClick}
+      onGroupToggle={handleGroupToggle}
     />
   );
 }

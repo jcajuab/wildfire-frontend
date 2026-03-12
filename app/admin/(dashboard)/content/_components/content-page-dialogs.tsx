@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent, DragEvent, ReactElement } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { IconEye, IconUpload } from "@tabler/icons-react";
 import {
   SUPPORTED_CONTENT_FILE_LABELS,
@@ -26,8 +26,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { FlashTonePreview } from "@/components/content/flash-tone-preview";
 import { formatContentStatus, formatFileSize } from "@/lib/formatters";
 import type { Content, FlashTone } from "@/types/content";
+
+const FLASH_PREVIEW_DEBOUNCE_MS = 500;
 
 export interface EditContentDialogSaveInput {
   readonly contentId: string;
@@ -86,6 +89,9 @@ function EditContentDialogForm({
 }: EditContentDialogFormProps): ReactElement {
   const [title, setTitle] = useState(content.title);
   const [flashMessage, setFlashMessage] = useState(content.flashMessage ?? "");
+  const [debouncedFlashMessage, setDebouncedFlashMessage] = useState(
+    content.flashMessage ?? "",
+  );
   const [flashTone, setFlashTone] = useState<FlashTone>(
     content.flashTone ?? "INFO",
   );
@@ -101,6 +107,14 @@ function EditContentDialogForm({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      setDebouncedFlashMessage(flashMessage);
+    }, FLASH_PREVIEW_DEBOUNCE_MS);
+    return () => window.clearTimeout(id);
+  }, [flashMessage]);
+
   const canReplaceFile =
     content.kind === "ROOT" && content.status !== "PROCESSING";
   const isFlashContent = content.type === "FLASH";
@@ -187,6 +201,13 @@ function EditContentDialogForm({
                   <SelectItem value="CRITICAL">Critical</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Preview</Label>
+              <FlashTonePreview
+                tone={flashTone}
+                message={debouncedFlashMessage}
+              />
             </div>
           </>
         ) : isTextContent ? (

@@ -1,7 +1,9 @@
 "use client";
 
 import type { ReactElement } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { IconPlus, IconPresentation } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
@@ -26,6 +28,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { PAGE_SIZE, usePlaylistsPage } from "./use-playlists-page";
 
 export default function PlaylistsPage(): ReactElement {
+  const searchParams = useSearchParams();
+  const manageId = searchParams.get("manage");
+  const handledManageRef = useRef<string | null>(null);
+
   const {
     canUpdatePlaylist,
     canDeletePlaylist,
@@ -56,12 +62,20 @@ export default function PlaylistsPage(): ReactElement {
     handleManageItemsDialogOpenChange,
     handleEditPlaylist,
     handleManageItems,
+    handleManageItemsById,
     handleSaveItems,
     handlePreviewPlaylist,
     handleDeletePlaylist,
     handleUpdatePlaylist,
     deletePlaylistMutation,
   } = usePlaylistsPage();
+
+  useEffect(() => {
+    if (manageId && handledManageRef.current !== manageId) {
+      handledManageRef.current = manageId;
+      void handleManageItemsById(manageId);
+    }
+  }, [manageId, handleManageItemsById]);
 
   return (
     <DashboardPage.Root>

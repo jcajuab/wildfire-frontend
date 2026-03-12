@@ -14,7 +14,10 @@ import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog"
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
 import { useGetContentOptionsQuery } from "@/lib/api/content-api";
-import { useGetDisplayOptionsQuery } from "@/lib/api/displays-api";
+import {
+  useGetDisplayOptionsQuery,
+  useGetDisplayGroupsQuery,
+} from "@/lib/api/displays-api";
 import {
   useCreateScheduleMutation,
   useDeleteScheduleMutation,
@@ -35,6 +38,7 @@ import {
 import type {
   Schedule,
   CalendarView,
+  ResourceMode,
   ScheduleFormData,
 } from "@/types/schedule";
 
@@ -63,7 +67,6 @@ function getScheduleWindow(
   );
 
   if (view === "resource-week") {
-    start.setDate(start.getDate() - start.getDay());
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
     return { from: toIsoDate(start), to: toIsoDate(end) };
@@ -87,6 +90,7 @@ export default function SchedulesPage(): ReactElement {
   const canReadContent = useCan("content:read");
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [view, setView] = useState<CalendarView>("resource-week");
+  const [resourceMode, setResourceMode] = useState<ResourceMode>("display");
   const scheduleWindow = useMemo(
     () => getScheduleWindow(currentDate, view),
     [currentDate, view],
@@ -94,6 +98,7 @@ export default function SchedulesPage(): ReactElement {
   const { data: displaysData } = useGetDisplayOptionsQuery(undefined, {
     skip: !canReadDisplays,
   });
+  const { data: displayGroupsData } = useGetDisplayGroupsQuery();
   const { data: schedulesData } = useListSchedulesQuery(scheduleWindow);
   const { data: playlistsData } = useGetPlaylistOptionsQuery(undefined, {
     skip: !canReadPlaylists,
@@ -247,6 +252,9 @@ export default function SchedulesPage(): ReactElement {
               onNext={handleNext}
               onToday={handleToday}
               resourcesCount={availableDisplays.length}
+              resourceMode={resourceMode}
+              onResourceModeChange={setResourceMode}
+              displayGroupsCount={displayGroupsData?.length ?? 0}
             />
           </div>
 
@@ -257,6 +265,8 @@ export default function SchedulesPage(): ReactElement {
               schedules={schedules}
               resources={availableDisplays}
               onScheduleClick={handleScheduleClick}
+              resourceMode={resourceMode}
+              displayGroups={displayGroupsData ?? []}
             />
           </div>
         </DashboardPage.Content>

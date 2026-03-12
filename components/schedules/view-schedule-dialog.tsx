@@ -2,15 +2,9 @@
 
 import type { ReactElement } from "react";
 import { useState } from "react";
-import {
-  IconCalendarEvent,
-  IconCalendar,
-  IconClock,
-  IconPhoto,
-  IconPencil,
-  IconTrash,
-  IconBolt,
-} from "@tabler/icons-react";
+import Link from "next/link";
+import { IconPencil, IconTrash, IconArrowRight } from "@tabler/icons-react";
+
 
 import {
   Dialog,
@@ -49,75 +43,73 @@ export function ViewScheduleDialog({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>View Details</DialogTitle>
+            <DialogDescription>
+              Review the timing, content, and display assignment for this
+              scheduled item.
+            </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4 rounded-md bg-muted/20 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <IconCalendarEvent className="size-4" />
-                <span className="font-semibold">{schedule.name}</span>
-              </div>
-              <Badge variant={schedule.isActive ? "default" : "secondary"}>
-                {schedule.isActive ? "Active" : "Inactive"}
-              </Badge>
-            </div>
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
+              <span className="text-muted-foreground">Title</span>
+              <span>{schedule.name}</span>
 
-            <div className="flex items-center gap-2 text-sm">
-              <IconCalendar className="size-4" />
+              <span className="text-muted-foreground">Status</span>
               <span>
-                {formatDate(schedule.startDate)} -{" "}
+                <Badge variant={schedule.isActive ? "default" : "secondary"}>
+                  {schedule.isActive ? "Active" : "Inactive"}
+                </Badge>
+              </span>
+
+              <span className="text-muted-foreground">Scheduled for</span>
+              <span>
+                {formatDate(schedule.startDate)} –{" "}
                 {formatDate(schedule.endDate)}
               </span>
-            </div>
 
-            <div className="flex items-center gap-2 text-sm">
-              <IconClock className="size-4" />
+              <span className="text-muted-foreground">Time</span>
               <span>
-                {formatClockTime(schedule.startTime)} -{" "}
+                {formatClockTime(schedule.startTime)} –{" "}
                 {formatClockTime(schedule.endTime)}
               </span>
-            </div>
 
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Mode:</span>
-              <span className="text-foreground">
+              <span className="text-muted-foreground">Mode</span>
+              <span>
                 {schedule.kind === "PLAYLIST"
                   ? "Base playlist"
                   : "Flash overlay"}
               </span>
-            </div>
 
-            {schedule.playlist ? (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Playlist:</span>
-                <span className="text-foreground">
-                  {schedule.playlist.name}
-                </span>
-              </div>
-            ) : null}
+              {schedule.playlist ? (
+                <>
+                  <span className="text-muted-foreground">Playlist</span>
+                  <Link
+                    href={`/admin/playlists?manage=${schedule.playlist.id}`}
+                    onClick={() => onOpenChange(false)}
+                    className="flex items-center gap-1 text-primary hover:underline"
+                  >
+                    {schedule.playlist.name}
+                    <IconArrowRight className="size-3.5 shrink-0" />
+                  </Link>
+                </>
+              ) : null}
 
-            {schedule.content ? (
-              <div className="space-y-2 rounded-md border border-border bg-background/70 p-3 text-sm">
-                <div className="flex items-center gap-2 font-medium">
-                  <IconBolt className="size-4" />
-                  {schedule.content.title}
-                </div>
-                {schedule.content.flashMessage ? (
-                  <p className="text-muted-foreground">
-                    {schedule.content.flashMessage}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
+              {schedule.content ? (
+                <>
+                  <span className="text-muted-foreground">Content</span>
+                  <Link
+                    href={`/admin/content?edit=${schedule.content.id}`}
+                    onClick={() => onOpenChange(false)}
+                    className="flex items-center gap-1 text-primary hover:underline"
+                  >
+                    {schedule.content.title}
+                    <IconArrowRight className="size-3.5 shrink-0" />
+                  </Link>
+                </>
+              ) : null}
 
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Target Display:</span>
-              <div className="flex flex-wrap gap-1">
-                <Badge variant="outline" className="gap-1">
-                  <IconPhoto className="size-3" />
-                  {schedule.targetDisplay.name}
-                </Badge>
-              </div>
+              <span className="text-muted-foreground">Target display</span>
+              <span>{schedule.targetDisplay.name}</span>
             </div>
           </div>
 
