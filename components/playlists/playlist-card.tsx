@@ -1,12 +1,12 @@
 "use client";
 
 import { type ReactElement, memo } from "react";
+import Image from "next/image";
 import {
-  IconDotsVertical,
+  IconDots,
   IconPlaylist,
   IconClock,
-  IconPencil,
-  IconEye,
+  IconPhoto,
   IconTrash,
   IconListDetails,
 } from "@tabler/icons-react";
@@ -17,38 +17,41 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Playlist } from "@/types/playlist";
-import { formatDuration, formatItemDuration } from "@/lib/formatters";
+import type { PlaylistSummary } from "@/types/playlist";
+import {
+  formatDateWithTime,
+  formatDuration,
+  formatItemDuration,
+} from "@/lib/formatters";
 
 interface PlaylistCardProps {
-  readonly playlist: Playlist;
-  readonly onEdit?: (playlist: Playlist) => void;
-  readonly onManageItems?: (playlist: Playlist) => void;
-  readonly onPreview?: (playlist: Playlist) => void;
-  readonly onDelete?: (playlist: Playlist) => void;
+  readonly playlist: PlaylistSummary;
+  readonly onEditManage?: (playlist: PlaylistSummary) => void;
+  readonly onDelete?: (playlist: PlaylistSummary) => void;
 }
 
 export const PlaylistCard = memo(function PlaylistCard({
   playlist,
-  onEdit,
-  onManageItems,
-  onPreview,
+  onEditManage,
   onDelete,
 }: PlaylistCardProps): ReactElement {
-  // Show first 4 items as thumbnails
-  const visibleItems = playlist.items.slice(0, 4);
+  const visiblePreviewItems = playlist.previewItems.slice(0, 3);
+  const overflowCount = playlist.itemsCount - visiblePreviewItems.length;
+  const createdAtLabel = formatDateWithTime(playlist.createdAt);
+  const updatedAtLabel = formatDateWithTime(playlist.updatedAt);
 
   return (
-    <div className="flex flex-col gap-3 rounded-md border border-border bg-card p-4">
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-col gap-0.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <h3 className="text-sm font-semibold leading-tight">
             {playlist.name}
           </h3>
-          <p className="text-xs text-muted-foreground">
-            by {playlist.owner.name}
+          <p className="truncate text-xs text-muted-foreground">
+            @{playlist.owner.name}
           </p>
         </div>
         <DropdownMenu>
@@ -58,26 +61,14 @@ export const PlaylistCard = memo(function PlaylistCard({
               size="icon-sm"
               aria-label={`Actions for ${playlist.name}`}
             >
-              <IconDotsVertical className="size-4" />
+              <IconDots className="size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
-            {onEdit ? (
-              <DropdownMenuItem onClick={() => onEdit(playlist)}>
-                <IconPencil className="size-4" />
-                Edit Playlist Info
-              </DropdownMenuItem>
-            ) : null}
-            {onManageItems ? (
-              <DropdownMenuItem onClick={() => onManageItems(playlist)}>
+            {onEditManage ? (
+              <DropdownMenuItem onClick={() => onEditManage(playlist)}>
                 <IconListDetails className="size-4" />
-                Manage Items
-              </DropdownMenuItem>
-            ) : null}
-            {onPreview ? (
-              <DropdownMenuItem onClick={() => onPreview(playlist)}>
-                <IconEye className="size-4" />
-                Preview Playlist
+                Edit Playlist
               </DropdownMenuItem>
             ) : null}
             {onDelete ? (
@@ -94,32 +85,46 @@ export const PlaylistCard = memo(function PlaylistCard({
       </div>
 
       {/* Description */}
-      <p className="text-xs text-muted-foreground">
+      <p className="truncate text-xs text-muted-foreground" title={playlist.description ?? "No description provided."}>
         {playlist.description ?? "No description provided."}
       </p>
 
       {/* Stats */}
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <Badge variant="secondary" className="gap-1">
           <IconPlaylist className="size-4" />
           {playlist.itemsCount} items
-        </span>
-        <span className="flex items-center gap-1">
+        </Badge>
+        <Badge variant="secondary" className="gap-1">
           <IconClock className="size-4" />
           {formatDuration(playlist.totalDuration)}
-        </span>
+        </Badge>
       </div>
 
       {/* Content Thumbnails */}
-      {visibleItems.length > 0 && (
+      {visiblePreviewItems.length > 0 && (
         <div className="flex gap-2">
-          {visibleItems.map((item) => (
+          {visiblePreviewItems.map((item) => (
             <div
               key={item.id}
               className="relative flex w-20 flex-col overflow-hidden rounded"
             >
               {/* Thumbnail */}
               <div className="relative flex aspect-video items-center justify-center bg-muted">
+                {item.content.thumbnailUrl ? (
+                  <Image
+                    src={item.content.thumbnailUrl}
+                    alt={`${item.content.title} thumbnail`}
+                    fill
+                    unoptimized
+                    className="object-cover"
+                  />
+                ) : (
+                  <IconPhoto
+                    className="size-5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                )}
                 <span className="absolute right-1 top-1 rounded bg-black/60 px-1 py-0.5 text-xs text-white">
                   {formatItemDuration(item.duration)}
                 </span>
@@ -132,8 +137,24 @@ export const PlaylistCard = memo(function PlaylistCard({
               </div>
             </div>
           ))}
+          {overflowCount > 0 ? (
+            <div className="flex w-20 items-center justify-center rounded bg-muted text-xs font-medium text-muted-foreground">
+              +{overflowCount}
+            </div>
+          ) : null}
         </div>
       )}
+
+      <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+        <span className="text-xs font-medium text-muted-foreground">
+          Created at
+        </span>
+        <span className="text-xs text-muted-foreground">{createdAtLabel}</span>
+        <span className="text-xs font-medium text-muted-foreground">
+          Updated at
+        </span>
+        <span className="text-xs text-muted-foreground">{updatedAtLabel}</span>
+      </div>
     </div>
   );
 });
