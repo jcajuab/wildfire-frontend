@@ -2,9 +2,15 @@
 
 import type { ReactElement } from "react";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { IconClock, IconGripVertical, IconX } from "@tabler/icons-react";
+import {
+  IconClock,
+  IconGripVertical,
+  IconPhoto,
+  IconX,
+} from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import type { Content } from "@/types/content";
 import type { PlaylistItemContent } from "@/types/playlist";
@@ -60,7 +66,22 @@ export function SortableItemRow({
       style={style}
       className="flex items-center gap-3 rounded-md border border-border bg-muted/30 p-3"
     >
-      <div className="flex size-12 items-center justify-center rounded bg-muted" />
+      <div
+        data-testid="playlist-item-thumbnail"
+        className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded bg-muted"
+      >
+        {item.content.thumbnailUrl ? (
+          <Image
+            src={item.content.thumbnailUrl}
+            alt={`${item.content.title} thumbnail`}
+            fill
+            unoptimized
+            className="object-cover"
+          />
+        ) : (
+          <IconPhoto className="size-5 text-muted-foreground" aria-hidden="true" />
+        )}
+      </div>
 
       <div className="flex flex-1 flex-col gap-0.5">
         <span className="text-sm font-medium">{item.content.title}</span>

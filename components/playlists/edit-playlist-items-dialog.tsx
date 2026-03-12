@@ -2,6 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import {
   DndContext,
   closestCenter,
@@ -17,7 +18,13 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { IconPhoto, IconPlaylist, IconPlus, IconX } from "@tabler/icons-react";
+import {
+  IconInfoCircle,
+  IconPhoto,
+  IconPlaylist,
+  IconPlus,
+  IconX,
+} from "@tabler/icons-react";
 import { SortableItemRow, type DraftItem } from "./sortable-item-row";
 
 import { SearchControl } from "@/components/common/search-control";
@@ -29,15 +36,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { type Display } from "@/lib/api/displays-api";
-import { useEstimatePlaylistDurationMutation } from "@/lib/api/playlists-api";
 import type { Content } from "@/types/content";
 import type {
   Playlist,
@@ -50,23 +52,17 @@ type PlaylistSelectableContent = Content & {
   readonly type: PlaylistItemContent["type"];
 };
 
-const MAX_BASE_DURATION_SECONDS = 60;
-
 function createInitialDraftState(playlist: Playlist): {
+  name: string;
+  description: string;
   drafts: DraftItem[];
   contentSearch: string;
-  selectedDisplayId: string;
-  estimate: {
-    baseDurationSeconds: number;
-    scrollExtraSeconds: number;
-    effectiveDurationSeconds: number;
-  } | null;
 } {
   return {
+    name: playlist.name,
+    description: playlist.description ?? "",
     drafts: toDrafts(playlist.items),
     contentSearch: "",
-    selectedDisplayId: "",
-    estimate: null,
   };
 }
 
@@ -83,6 +79,16 @@ export type PlaylistItemsAtomicSnapshot = readonly (
     }
 )[];
 
+export interface PlaylistMetadataDraft {
+  readonly name: string;
+  readonly description: string | null;
+}
+
+export interface PlaylistEditorSavePayload {
+  readonly metadata: PlaylistMetadataDraft;
+  readonly items: PlaylistItemsAtomicSnapshot;
+}
+
 interface EditPlaylistItemsDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
@@ -91,7 +97,7 @@ interface EditPlaylistItemsDialogProps {
   readonly availableDisplays: readonly Display[];
   readonly onSave: (
     playlistId: string,
-    items: PlaylistItemsAtomicSnapshot,
+    payload: PlaylistEditorSavePayload,
   ) => void;
   readonly isSaving?: boolean;
 }
@@ -111,22 +117,20 @@ export function EditPlaylistItemsDialog({
   onOpenChange,
   playlist,
   availableContent,
-  availableDisplays,
+  availableDisplays: _availableDisplays,
   onSave,
   isSaving = false,
 }: EditPlaylistItemsDialogProps): ReactElement {
+  const [playlistName, setPlaylistName] = useState(
+    () => createInitialDraftState(playlist).name,
+  );
+  const [playlistDescription, setPlaylistDescription] = useState(
+    () => createInitialDraftState(playlist).description,
+  );
   const [drafts, setDrafts] = useState<DraftItem[]>(
     () => createInitialDraftState(playlist).drafts,
   );
   const [contentSearch, setContentSearch] = useState("");
-  const [selectedDisplayId, setSelectedDisplayId] = useState("");
-  const [estimate, setEstimate] = useState<{
-    baseDurationSeconds: number;
-    scrollExtraSeconds: number;
-    effectiveDurationSeconds: number;
-  } | null>(null);
-  const [estimatePlaylistDuration, { isLoading: isEstimatingDuration }] =
-    useEstimatePlaylistDurationMutation();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -187,81 +191,12 @@ export function EditPlaylistItemsDialog({
     [drafts],
   );
 
-  const isOverDurationLimit = totalDuration > MAX_BASE_DURATION_SECONDS;
-
-  const selectableDisplays = useMemo(
-    () =>
-      availableDisplays.filter(
-        (display) =>
-          typeof display.screenWidth === "number" &&
-          display.screenWidth > 0 &&
-          typeof display.screenHeight === "number" &&
-          display.screenHeight > 0,
-      ),
-    [availableDisplays],
-  );
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    if (selectedDisplayId.length === 0) {
-      return;
-    }
-    if (drafts.length === 0) {
-      return;
-    }
-
-    let disposed = false;
-    void estimatePlaylistDuration({
-      displayId: selectedDisplayId,
-      items: drafts.map((draft, index) => ({
-        contentId: draft.content.id,
-        duration: draft.duration,
-        sequence: index + 1,
-      })),
-    })
-      .unwrap()
-      .then((result) => {
-        if (!disposed) {
-          setEstimate({
-            baseDurationSeconds: result.baseDurationSeconds,
-            scrollExtraSeconds: result.scrollExtraSeconds,
-            effectiveDurationSeconds: result.effectiveDurationSeconds,
-          });
-        }
-      })
-      .catch(() => {
-        if (!disposed) {
-          setEstimate(null);
-        }
-      });
-
-    return () => {
-      disposed = true;
-    };
-  }, [drafts, estimatePlaylistDuration, open, selectedDisplayId]);
-
-  const resolvedEstimate = useMemo(() => {
-    if (selectedDisplayId.length === 0) {
-      return null;
-    }
-    if (drafts.length === 0) {
-      return {
-        baseDurationSeconds: 0,
-        scrollExtraSeconds: 0,
-        effectiveDurationSeconds: 0,
-      };
-    }
-    return estimate;
-  }, [drafts.length, estimate, selectedDisplayId]);
-
   const resetDraftState = useCallback((nextPlaylist: Playlist) => {
     const nextState = createInitialDraftState(nextPlaylist);
+    setPlaylistName(nextState.name);
+    setPlaylistDescription(nextState.description);
     setDrafts(nextState.drafts);
     setContentSearch(nextState.contentSearch);
-    setSelectedDisplayId(nextState.selectedDisplayId);
-    setEstimate(nextState.estimate);
   }, []);
 
   useEffect(() => {
@@ -283,8 +218,15 @@ export function EditPlaylistItemsDialog({
             duration: draft.duration,
           },
     );
-    onSave(playlist.id, snapshot);
-  }, [drafts, onSave, playlist.id]);
+    onSave(playlist.id, {
+      metadata: {
+        name: playlistName.trim(),
+        description:
+          playlistDescription.trim().length > 0 ? playlistDescription.trim() : null,
+      },
+      items: snapshot,
+    });
+  }, [drafts, onSave, playlist.id, playlistDescription, playlistName]);
 
   const handleDismiss = useCallback(() => {
     if (isSaving) {
@@ -317,11 +259,10 @@ export function EditPlaylistItemsDialog({
         <DialogHeader className="flex-row! items-center justify-between border-b border-border px-6 py-4">
           <div className="flex flex-col gap-0.5">
             <DialogTitle className="text-base font-semibold">
-              Manage Playlist Items
+              Edit Playlist
             </DialogTitle>
             <DialogDescription>
-              Reorder, update duration, add or remove items in &ldquo;
-              {playlist.name}&rdquo;
+              Update playlist details and manage items in one place.
             </DialogDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -343,7 +284,7 @@ export function EditPlaylistItemsDialog({
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isSaving || isOverDurationLimit}
+              disabled={isSaving}
             >
               {isSaving ? "Saving…" : "Save Changes"}
             </Button>
@@ -351,9 +292,39 @@ export function EditPlaylistItemsDialog({
         </DialogHeader>
 
         {/* Body */}
-        <div className="flex flex-1 gap-6 overflow-hidden p-6">
+        <div className="flex flex-1 gap-6 overflow-y-auto p-6">
           {/* Left — Current items */}
           <div className="flex flex-1 flex-col gap-4 overflow-hidden">
+            <div className="flex flex-col gap-4 rounded-md border border-border p-4">
+              <div className="flex items-center gap-2">
+                <IconInfoCircle className="size-4" />
+                <span className="text-sm font-semibold">Playlist Information</span>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="playlist-name">Name</Label>
+                  <Input
+                    id="playlist-name"
+                    placeholder="Demo Playlist"
+                    value={playlistName}
+                    onChange={(event) => setPlaylistName(event.target.value)}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="playlist-description">Description (Optional)</Label>
+                  <Textarea
+                    id="playlist-description"
+                    placeholder="Enter playlist description"
+                    rows={3}
+                    value={playlistDescription}
+                    onChange={(event) => setPlaylistDescription(event.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-md border border-border p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -361,50 +332,8 @@ export function EditPlaylistItemsDialog({
                   <span className="text-sm font-semibold">Playlist Items</span>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {drafts.length} items &middot;{" "}
-                  {formatDuration(
-                    resolvedEstimate?.effectiveDurationSeconds ?? totalDuration,
-                  )}
-                  {isEstimatingDuration ? " (calculating…)" : ""}
+                  {drafts.length} items &middot; {formatDuration(totalDuration)}
                 </span>
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">
-                    Display target (optional)
-                  </span>
-                  <Select
-                    value={selectedDisplayId}
-                    onValueChange={setSelectedDisplayId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a display" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectableDisplays.map((display) => (
-                        <SelectItem key={display.id} value={display.id}>
-                          {display.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">
-                    Base duration
-                  </span>
-                  <div
-                    className={`rounded-md border px-2.5 py-2 text-sm ${
-                      isOverDurationLimit
-                        ? "border-destructive text-destructive"
-                        : "border-border"
-                    }`}
-                  >
-                    {totalDuration}s / {MAX_BASE_DURATION_SECONDS}s max
-                    {isOverDurationLimit ? " — over limit" : ""}
-                  </div>
-                </div>
               </div>
 
               <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
@@ -463,10 +392,27 @@ export function EditPlaylistItemsDialog({
                     key={content.id}
                     type="button"
                     onClick={() => handleAddContent(content)}
-                    disabled={isOverDurationLimit}
-                    className="focus-visible:ring-ring flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="focus-visible:ring-ring flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2"
                   >
-                    <div className="flex size-10 items-center justify-center rounded bg-muted" />
+                    <div
+                      data-testid={`content-library-thumbnail-${content.id}`}
+                      className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded bg-muted"
+                    >
+                      {content.thumbnailUrl ? (
+                        <Image
+                          src={content.thumbnailUrl}
+                          alt={`${content.title} thumbnail`}
+                          fill
+                          unoptimized
+                          className="object-cover"
+                        />
+                      ) : (
+                        <IconPhoto
+                          className="size-4 text-muted-foreground"
+                          aria-hidden="true"
+                        />
+                      )}
+                    </div>
                     <span className="flex-1 truncate text-sm">
                       {content.title}
                     </span>

@@ -1,28 +1,17 @@
 import { useState, type ReactElement } from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
 import { EditPlaylistItemsDialog } from "@/components/playlists/edit-playlist-items-dialog";
 import type { Display } from "@/lib/api/displays-api";
-import { useEstimatePlaylistDurationMutation } from "@/lib/api/playlists-api";
 import type { Content } from "@/types/content";
 import type { Playlist } from "@/types/playlist";
-
-vi.mock("@/lib/api/playlists-api", () => ({
-  useEstimatePlaylistDurationMutation: vi.fn(),
-}));
-
-const useEstimatePlaylistDurationMutationMock = vi.mocked(
-  useEstimatePlaylistDurationMutation,
-);
-
-const estimatePlaylistDurationMock = vi.fn(() => ({
-  unwrap: async () => ({
-    baseDurationSeconds: 0,
-    scrollExtraSeconds: 0,
-    effectiveDurationSeconds: 0,
-  }),
-}));
 
 const availableDisplays: readonly Display[] = [
   {
@@ -47,6 +36,7 @@ const availableContent = [
   {
     id: "content-2",
     title: "Replacement Poster",
+    thumbnailUrl: "https://cdn.example.com/replacement.png",
     type: "IMAGE",
     kind: "ROOT",
     mimeType: "image/png",
@@ -66,13 +56,36 @@ const availableContent = [
     createdAt: "2025-01-01T00:00:00.000Z",
     owner: { id: "user-1", name: "Owner" },
   },
+  {
+    id: "content-3",
+    title: "No Thumbnail Poster",
+    thumbnailUrl: null,
+    type: "IMAGE",
+    kind: "ROOT",
+    mimeType: "image/png",
+    fileSize: 101,
+    checksum: "checksum-3",
+    parentContentId: null,
+    pageNumber: null,
+    pageCount: null,
+    isExcluded: false,
+    width: 1920,
+    height: 1080,
+    duration: 6,
+    scrollPxPerSecond: null,
+    flashMessage: null,
+    flashTone: null,
+    status: "READY",
+    createdAt: "2025-01-01T00:00:00.000Z",
+    owner: { id: "user-1", name: "Owner" },
+  },
 ] satisfies readonly (Content & { readonly type: "IMAGE" })[];
 
 function makePlaylist(id: string, title: string): Playlist {
   return {
     id,
     name: `${title} Playlist`,
-    description: null,
+    description: `${title} Description`,
     status: "DRAFT",
     itemsCount: 1,
     totalDuration: 5,
@@ -87,6 +100,7 @@ function makePlaylist(id: string, title: string): Playlist {
           title,
           type: "IMAGE",
           checksum: `${id}-checksum`,
+          thumbnailUrl: null,
         },
         duration: 5,
         order: 0,
@@ -121,7 +135,11 @@ async function dismissDialog(
   user: ReturnType<typeof userEvent.setup>,
 ) {
   if (mode === "button") {
-    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await user.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Cancel",
+      }),
+    );
   } else if (mode === "escape") {
     await user.keyboard("{Escape}");
   } else {
@@ -133,21 +151,73 @@ async function dismissDialog(
 
   await waitFor(() => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
+  }, { timeout: 3000 });
 }
 
 describe("EditPlaylistItemsDialog", () => {
-  test.each(["button", "overlay", "escape"] as const)(
-    "restores removed items when dismissed via %s",
-    async (mode) => {
-      useEstimatePlaylistDurationMutationMock.mockReturnValue([
-        estimatePlaylistDurationMock,
-        { isLoading: false },
-      ] as unknown as ReturnType<typeof useEstimatePlaylistDurationMutation>);
+  test("renders metadata fields above item management in one dialog", () => {
+    render(
+      <EditPlaylistItemsDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        playlist={makePlaylist("playlist-a", "Alpha")}
+        availableContent={availableContent}
+        availableDisplays={availableDisplays}
+        onSave={vi.fn()}
+      />,
+    );
 
+    expect(screen.getByLabelText("Name")).toHaveValue("Alpha Playlist");
+    expect(screen.getByLabelText("Description (Optional)")).toHaveValue(
+      "Alpha Description",
+    );
+    expect(screen.getByText("Playlist Items")).toBeInTheDocument();
+    expect(screen.getByText("Content Library")).toBeInTheDocument();
+  });
+
+  test("renders thumbnail and fallback visuals in existing and library rows", () => {
+    render(
+      <EditPlaylistItemsDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        playlist={makePlaylist("playlist-a", "Alpha")}
+        availableContent={availableContent}
+        availableDisplays={availableDisplays}
+        onSave={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByTestId("content-library-thumbnail-content-2").querySelector(
+        'img[alt="Replacement Poster thumbnail"]',
+      ),
+    ).not.toBeNull();
+
+    expect(
+      screen.getByTestId("content-library-thumbnail-content-3").querySelector("svg"),
+    ).not.toBeNull();
+
+    expect(
+      screen
+        .getByTestId("playlist-item-thumbnail")
+        .querySelector('svg[aria-hidden="true"]'),
+    ).not.toBeNull();
+  });
+
+  test.each(["button", "overlay", "escape"] as const)(
+    "restores metadata and removed items when dismissed via %s",
+    async (mode) => {
       const user = userEvent.setup();
 
       render(<EditPlaylistDialogHarness />);
+
+      await user.clear(screen.getByLabelText("Name"));
+      await user.type(screen.getByLabelText("Name"), "Edited Name");
+      await user.clear(screen.getByLabelText("Description (Optional)"));
+      await user.type(
+        screen.getByLabelText("Description (Optional)"),
+        "Edited Description",
+      );
 
       await user.click(
         screen.getByRole("button", { name: "Remove Alpha from playlist" }),
@@ -158,16 +228,15 @@ describe("EditPlaylistItemsDialog", () => {
 
       await user.click(screen.getByRole("button", { name: "Reopen" }));
 
+      expect(screen.getByLabelText("Name")).toHaveValue("Alpha Playlist");
+      expect(screen.getByLabelText("Description (Optional)")).toHaveValue(
+        "Alpha Description",
+      );
       expect(screen.getByText("Alpha")).toBeInTheDocument();
     },
   );
 
   test("rehydrates drafts when the playlist changes while open", async () => {
-    useEstimatePlaylistDurationMutationMock.mockReturnValue([
-      estimatePlaylistDurationMock,
-      { isLoading: false },
-    ] as unknown as ReturnType<typeof useEstimatePlaylistDurationMutation>);
-
     const { rerender } = render(
       <EditPlaylistItemsDialog
         open={true}
@@ -180,6 +249,7 @@ describe("EditPlaylistItemsDialog", () => {
     );
 
     expect(screen.getByText("Alpha")).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toHaveValue("Alpha Playlist");
 
     rerender(
       <EditPlaylistItemsDialog
@@ -194,5 +264,9 @@ describe("EditPlaylistItemsDialog", () => {
 
     expect(screen.getByText("Beta")).toBeInTheDocument();
     expect(screen.queryByText("Alpha")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toHaveValue("Beta Playlist");
+    expect(screen.getByLabelText("Description (Optional)")).toHaveValue(
+      "Beta Description",
+    );
   });
 });
