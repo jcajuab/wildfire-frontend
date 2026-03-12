@@ -23,7 +23,8 @@ const originalClientWidth = Object.getOwnPropertyDescriptor(
   HTMLElement.prototype,
   "clientWidth",
 );
-const originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+const originalGetBoundingClientRect =
+  HTMLElement.prototype.getBoundingClientRect;
 
 function mockGroupOverflowLayout({
   containerWidth,
@@ -78,7 +79,11 @@ function mockGroupOverflowLayout({
 
 function restoreGroupOverflowLayoutMocks() {
   if (originalClientWidth) {
-    Object.defineProperty(HTMLElement.prototype, "clientWidth", originalClientWidth);
+    Object.defineProperty(
+      HTMLElement.prototype,
+      "clientWidth",
+      originalClientWidth,
+    );
   }
   HTMLElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
 }
@@ -122,7 +127,9 @@ describe("DisplayCard", () => {
 
     expect(screen.getByText("hdmi-0")).toBeInTheDocument();
     expect(screen.getByText("1920x1080")).toBeInTheDocument();
-    expect(document.querySelector('[data-slot="separator"]')).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-slot="separator"]'),
+    ).toBeInTheDocument();
     expect(
       document.querySelector('[data-group-visible="Lobby"]'),
     ).toBeInTheDocument();
@@ -212,7 +219,9 @@ describe("DisplayCard", () => {
   test("does not show missing emergency indicator when emergency content is configured", () => {
     renderDisplayCard({ ...baseDisplay, emergencyContentId: "content-1" });
 
-    expect(screen.queryByLabelText("Emergency not set")).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Emergency not set"),
+    ).not.toBeInTheDocument();
   });
 
   test("keeps the actions menu button accessible", () => {

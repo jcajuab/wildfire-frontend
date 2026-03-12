@@ -117,10 +117,11 @@ export function EditPlaylistItemsDialog({
   onOpenChange,
   playlist,
   availableContent,
-  availableDisplays: _availableDisplays,
+  availableDisplays,
   onSave,
   isSaving = false,
 }: EditPlaylistItemsDialogProps): ReactElement {
+  void availableDisplays;
   const [playlistName, setPlaylistName] = useState(
     () => createInitialDraftState(playlist).name,
   );
@@ -222,7 +223,9 @@ export function EditPlaylistItemsDialog({
       metadata: {
         name: playlistName.trim(),
         description:
-          playlistDescription.trim().length > 0 ? playlistDescription.trim() : null,
+          playlistDescription.trim().length > 0
+            ? playlistDescription.trim()
+            : null,
       },
       items: snapshot,
     });
@@ -282,10 +285,7 @@ export function EditPlaylistItemsDialog({
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={isSaving}
-            >
+            <Button onClick={handleSave} disabled={isSaving}>
               {isSaving ? "Saving…" : "Save Changes"}
             </Button>
           </div>
@@ -298,7 +298,9 @@ export function EditPlaylistItemsDialog({
             <div className="flex flex-col gap-4 rounded-md border border-border p-4">
               <div className="flex items-center gap-2">
                 <IconInfoCircle className="size-4" />
-                <span className="text-sm font-semibold">Playlist Information</span>
+                <span className="text-sm font-semibold">
+                  Playlist Information
+                </span>
               </div>
 
               <div className="flex flex-col gap-3">
@@ -313,13 +315,17 @@ export function EditPlaylistItemsDialog({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="playlist-description">Description (Optional)</Label>
+                  <Label htmlFor="playlist-description">
+                    Description (Optional)
+                  </Label>
                   <Textarea
                     id="playlist-description"
                     placeholder="Enter playlist description"
                     rows={3}
                     value={playlistDescription}
-                    onChange={(event) => setPlaylistDescription(event.target.value)}
+                    onChange={(event) =>
+                      setPlaylistDescription(event.target.value)
+                    }
                   />
                 </div>
               </div>

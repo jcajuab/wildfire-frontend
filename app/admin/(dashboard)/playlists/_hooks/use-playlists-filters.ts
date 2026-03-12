@@ -6,18 +6,18 @@ import {
   useQueryNumberState,
   useQueryStringState,
 } from "@/hooks/use-query-state";
-import type { StatusFilter } from "@/components/playlists/playlist-status-tabs";
-import type { PlaylistSortField } from "@/types/playlist";
+import type { PlaylistSortField, PlaylistStatusFilter } from "@/types/playlist";
 
 const PLAYLIST_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
 const PLAYLIST_SORT_VALUES = ["recent", "name"] as const;
 
 export function usePlaylistsFilters() {
-  const [statusFilter, setStatusFilter] = useQueryEnumState<StatusFilter>(
-    "status",
-    "all",
-    PLAYLIST_STATUS_VALUES,
-  );
+  const [statusFilter, setStatusFilter] =
+    useQueryEnumState<PlaylistStatusFilter>(
+      "status",
+      "all",
+      PLAYLIST_STATUS_VALUES,
+    );
   const [sortBy, setSortBy] = useQueryEnumState<PlaylistSortField>(
     "sort",
     "recent",
@@ -27,7 +27,7 @@ export function usePlaylistsFilters() {
   const [page, setPage] = useQueryNumberState("page", 1);
 
   const handleStatusFilterChange = useCallback(
-    (value: StatusFilter) => {
+    (value: PlaylistStatusFilter) => {
       setStatusFilter(value);
       setPage(1);
     },

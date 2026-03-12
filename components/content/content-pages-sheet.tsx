@@ -120,7 +120,9 @@ export function ContentPagesSheet({
                           <p className="text-sm font-medium">{pageLabel}</p>
                           <Badge
                             variant="outline"
-                            className={getContentStatusBadgeClassName(page.status)}
+                            className={getContentStatusBadgeClassName(
+                              page.status,
+                            )}
                           >
                             {formatContentStatus(page.status)}
                           </Badge>

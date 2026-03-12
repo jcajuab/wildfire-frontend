@@ -7,8 +7,8 @@ import {
   useQueryNumberState,
   useQueryStringState,
 } from "@/hooks/use-query-state";
-import type { DisplayStatusFilter } from "@/components/displays/display-status-tabs";
 import type { DisplayOutputFilter, DisplaySortField } from "@/types/display";
+import type { DisplayStatusFilter } from "@/types/display";
 
 const DISPLAY_STATUS_VALUES = ["all", "READY", "LIVE", "DOWN"] as const;
 const DISPLAY_SORT_VALUES = ["alphabetical", "status", "location"] as const;

@@ -91,8 +91,7 @@ export function useContentPagePdfState(): ContentPagePdfState {
             item.id === updatedPage.id
               ? {
                   ...updatedPage,
-                  thumbnailUrl:
-                    updatedPage.thumbnailUrl ?? item.thumbnailUrl,
+                  thumbnailUrl: updatedPage.thumbnailUrl ?? item.thumbnailUrl,
                 }
               : item,
           ),

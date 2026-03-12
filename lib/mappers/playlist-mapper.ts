@@ -3,11 +3,7 @@ import type {
   BackendPlaylistSummary,
   BackendPlaylistWithItems,
 } from "@/lib/api/playlists-api";
-import type {
-  Playlist,
-  PlaylistItem,
-  PlaylistSummary,
-} from "@/types/playlist";
+import type { Playlist, PlaylistItem, PlaylistSummary } from "@/types/playlist";
 
 function mapBackendPlaylistItemToContent(
   item: BackendPlaylistItem,

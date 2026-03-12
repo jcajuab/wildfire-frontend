@@ -85,7 +85,10 @@ export const PlaylistCard = memo(function PlaylistCard({
       </div>
 
       {/* Description */}
-      <p className="truncate text-xs text-muted-foreground" title={playlist.description ?? "No description provided."}>
+      <p
+        className="truncate text-xs text-muted-foreground"
+        title={playlist.description ?? "No description provided."}
+      >
         {playlist.description ?? "No description provided."}
       </p>
 

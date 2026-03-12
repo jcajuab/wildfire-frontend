@@ -26,7 +26,9 @@ export interface ContentDialogState {
  */
 export function useContentDialogState(): ContentDialogState {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [createMode, setCreateMode] = useState<"text" | "upload" | "flash" | null>(null);
+  const [createMode, setCreateMode] = useState<
+    "text" | "upload" | "flash" | null
+  >(null);
   const [contentToPreview, setContentToPreview] = useState<Content | null>(
     null,
   );

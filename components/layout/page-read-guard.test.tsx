@@ -6,9 +6,8 @@ import { useAuth } from "@/context/auth-context";
 import { usePathname } from "next/navigation";
 
 vi.mock("next/navigation", async () => {
-  const actual = await vi.importActual<typeof import("next/navigation")>(
-    "next/navigation",
-  );
+  const actual =
+    await vi.importActual<typeof import("next/navigation")>("next/navigation");
 
   return {
     ...actual,

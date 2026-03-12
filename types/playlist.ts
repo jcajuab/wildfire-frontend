@@ -53,6 +53,7 @@ export interface PlaylistListResponse {
 }
 
 export type PlaylistSortField = "recent" | "name";
+export type PlaylistStatusFilter = "all" | PlaylistStatus;
 
 export interface PlaylistFilter {
   readonly status?: PlaylistStatus;

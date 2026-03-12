@@ -28,9 +28,7 @@ import {
 import type { PlaylistStatusFilter } from "@/components/playlists/playlist-filter-popover";
 import type { Content } from "@/types/content";
 import type { Playlist, PlaylistSummary } from "@/types/playlist";
-import type {
-  PlaylistEditorSavePayload,
-} from "@/components/playlists/edit-playlist-items-dialog";
+import type { PlaylistEditorSavePayload } from "@/components/playlists/edit-playlist-items-dialog";
 import type { Display } from "@/lib/api/displays-api";
 
 const PLAYLIST_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
@@ -101,9 +99,8 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   const [page, setPage] = useQueryNumberState("page", 1);
 
   const [editorPlaylist, setEditorPlaylist] = useState<Playlist | null>(null);
-  const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistSummary | null>(
-    null,
-  );
+  const [playlistToDelete, setPlaylistToDelete] =
+    useState<PlaylistSummary | null>(null);
   const [isSavingPlaylistItems, setIsSavingPlaylistItems] = useState(false);
   const isSavingPlaylistItemsRef = useRef(false);
 
@@ -228,11 +225,7 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
         setIsSavingPlaylistItems(false);
       }
     },
-    [
-      handleEditorDialogOpenChange,
-      savePlaylistItemsAtomic,
-      updatePlaylist,
-    ],
+    [handleEditorDialogOpenChange, savePlaylistItemsAtomic, updatePlaylist],
   );
 
   const handleDeletePlaylist = useCallback((playlist: PlaylistSummary) => {

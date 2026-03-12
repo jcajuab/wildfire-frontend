@@ -40,14 +40,26 @@ function getVisibleGroupCount(
     return groupWidths.length;
   }
 
-  for (let visibleCount = groupWidths.length; visibleCount >= 0; visibleCount -= 1) {
+  for (
+    let visibleCount = groupWidths.length;
+    visibleCount >= 0;
+    visibleCount -= 1
+  ) {
     const hiddenCount = groupWidths.length - visibleCount;
-    const visibleWidth = groupWidths.slice(0, visibleCount).reduce((sum, width) => sum + width, 0);
-    const visibleGapWidth = visibleCount > 1 ? (visibleCount - 1) * GROUP_GAP_PX : 0;
-    const overflowBadgeWidth = hiddenCount > 0 ? (overflowWidths[hiddenCount - 1] ?? 0) : 0;
-    const overflowGapWidth = hiddenCount > 0 && visibleCount > 0 ? GROUP_GAP_PX : 0;
+    const visibleWidth = groupWidths
+      .slice(0, visibleCount)
+      .reduce((sum, width) => sum + width, 0);
+    const visibleGapWidth =
+      visibleCount > 1 ? (visibleCount - 1) * GROUP_GAP_PX : 0;
+    const overflowBadgeWidth =
+      hiddenCount > 0 ? (overflowWidths[hiddenCount - 1] ?? 0) : 0;
+    const overflowGapWidth =
+      hiddenCount > 0 && visibleCount > 0 ? GROUP_GAP_PX : 0;
 
-    if (visibleWidth + visibleGapWidth + overflowBadgeWidth + overflowGapWidth <= containerWidth) {
+    if (
+      visibleWidth + visibleGapWidth + overflowBadgeWidth + overflowGapWidth <=
+      containerWidth
+    ) {
       return visibleCount;
     }
   }
@@ -132,7 +144,9 @@ export const DisplayCard = memo(function DisplayCard({
   const isEmergencyContentMissing = display.emergencyContentId === null;
   const groupOverflowContainerRef = useRef<HTMLDivElement | null>(null);
   const groupMeasureRef = useRef<HTMLDivElement | null>(null);
-  const [visibleGroupCount, setVisibleGroupCount] = useState(display.groups.length);
+  const [visibleGroupCount, setVisibleGroupCount] = useState(
+    display.groups.length,
+  );
 
   useEffect(() => {
     const updateVisibleGroups = () => {
@@ -153,7 +167,9 @@ export const DisplayCard = memo(function DisplayCard({
       ).map((node) => node.getBoundingClientRect().width);
 
       const overflowWidths = Array.from(
-        measureRoot.querySelectorAll<HTMLElement>("[data-group-overflow-measure]"),
+        measureRoot.querySelectorAll<HTMLElement>(
+          "[data-group-overflow-measure]",
+        ),
       ).map((node) => node.getBoundingClientRect().width);
 
       setVisibleGroupCount(
@@ -177,7 +193,10 @@ export const DisplayCard = memo(function DisplayCard({
   }, [display.groups]);
 
   const visibleGroups = display.groups.slice(0, visibleGroupCount);
-  const hiddenGroupCount = Math.max(display.groups.length - visibleGroups.length, 0);
+  const hiddenGroupCount = Math.max(
+    display.groups.length - visibleGroups.length,
+    0,
+  );
 
   return (
     <article className="group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors duration-200 hover:border-primary/25 motion-reduce:transition-none">
@@ -213,7 +232,10 @@ export const DisplayCard = memo(function DisplayCard({
                     className="inline-flex size-5 items-center justify-center rounded-full text-amber-700"
                     aria-label="Emergency not set"
                   >
-                    <IconAlertTriangle className="size-3.5" aria-hidden="true" />
+                    <IconAlertTriangle
+                      className="size-3.5"
+                      aria-hidden="true"
+                    />
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>Emergency not set</TooltipContent>
@@ -321,7 +343,10 @@ export const DisplayCard = memo(function DisplayCard({
         </div>
       </div>
 
-      <div ref={groupMeasureRef} className="invisible absolute -z-10 flex gap-1.5">
+      <div
+        ref={groupMeasureRef}
+        className="invisible absolute -z-10 flex gap-1.5"
+      >
         {display.groups.map((group) => (
           <Badge
             key={`measure-${group.name}`}

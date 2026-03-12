@@ -99,26 +99,24 @@ describe("PlaylistsPage", () => {
     const createLink = screen.getByRole("link", { name: "Create Playlist" });
 
     expect(createLink).toHaveAttribute("href", "/admin/playlists/create");
-    expect(
-      screen.queryByText("Create New Playlist"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Create New Playlist")).not.toBeInTheDocument();
   });
 
   test("mounts only the merged editor dialog when an editor playlist is active", () => {
     usePlaylistsPageMock.mockReturnValue(
       createHookResult({
         editorPlaylist: {
-        id: "playlist-1",
-        name: "Playlist",
-        description: null,
-        status: "DRAFT",
-        itemsCount: 0,
-        totalDuration: 0,
-        createdAt: "2025-01-01T00:00:00.000Z",
-        updatedAt: "2025-01-01T00:00:00.000Z",
-        owner: { id: "user-1", name: "Owner" },
-        items: [],
-      },
+          id: "playlist-1",
+          name: "Playlist",
+          description: null,
+          status: "DRAFT",
+          itemsCount: 0,
+          totalDuration: 0,
+          createdAt: "2025-01-01T00:00:00.000Z",
+          updatedAt: "2025-01-01T00:00:00.000Z",
+          owner: { id: "user-1", name: "Owner" },
+          items: [],
+        },
       }),
     );
 

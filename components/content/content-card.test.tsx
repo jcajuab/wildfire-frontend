@@ -35,10 +35,7 @@ const baseContent: Content = {
 };
 
 describe("ContentCard", () => {
-  const expectClassTokens = (
-    element: HTMLElement,
-    className: string,
-  ): void => {
+  const expectClassTokens = (element: HTMLElement, className: string): void => {
     className
       .split(" ")
       .filter((token) => token.length > 0)
@@ -162,7 +159,9 @@ describe("ContentCard", () => {
     render(<ContentCard content={textContent} onPreview={vi.fn()} />);
 
     const styledParagraph = screen.getByText((_, element) =>
-      element?.tagName === "P" ? element.textContent === "Hello world & team" : false,
+      element?.tagName === "P"
+        ? element.textContent === "Hello world & team"
+        : false,
     );
     expect(styledParagraph).toHaveStyle({ color: "rgb(22, 163, 74)" });
     expect(styledParagraph.querySelector("strong")?.textContent).toBe("world");

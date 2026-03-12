@@ -20,8 +20,8 @@ import type {
   Display,
   DisplayOutputFilter,
   DisplaySortField,
+  DisplayStatusFilter,
 } from "@/types/display";
-import type { DisplayStatusFilter } from "@/components/displays/display-status-tabs";
 import type {
   DisplayGroup,
   DisplaysListResponse,

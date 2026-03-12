@@ -25,6 +25,8 @@ interface UseAIChatOptions {
   conversationId: string;
 }
 
+type AffectedResourceType = PendingAction["resourceType"];
+
 export function useAIChat({
   provider,
   model,
@@ -105,33 +107,40 @@ export function useAIChat({
     [token],
   );
 
-  // Map AI tool names to RTK Query tags for smart cache invalidation.
+  // Map AI tool names to affected resource types for smart cache invalidation.
   // When the AI finishes, we invalidate only the entity tags that the
   // tool calls could have affected.
-  const invalidateAffectedTags = useCallback(
+  const getAffectedResourceTypesFromParts = useCallback(
     (assistantParts: Array<{ type: string; toolName?: string }>) => {
-      const tags = new Set<"Content" | "Playlist" | "Schedule">();
+      const resourceTypes = new Set<AffectedResourceType>();
       for (const part of assistantParts) {
-        // Dynamic tools have toolName directly; typed tools encode it in type as "tool-{name}"
+        // Dynamic tools have toolName directly; typed tools encode it in type as "tool-{name}".
         const name =
           ("toolName" in part ? part.toolName : undefined) ??
           (part.type.startsWith("tool-") ? part.type.slice(5) : undefined);
         if (!name) continue;
-        if (name.includes("content")) tags.add("Content");
-        if (name.includes("playlist")) tags.add("Playlist");
-        if (name.includes("schedule")) tags.add("Schedule");
+        if (name.includes("content")) resourceTypes.add("content");
+        if (name.includes("playlist")) resourceTypes.add("playlist");
+        if (name.includes("schedule")) resourceTypes.add("schedule");
       }
-      if (tags.has("Content")) {
+      return resourceTypes;
+    },
+    [],
+  );
+
+  const invalidateAffectedTags = useCallback(
+    (resourceTypes: ReadonlySet<AffectedResourceType>) => {
+      if (resourceTypes.has("content")) {
         dispatch(
           contentApi.util.invalidateTags([{ type: "Content", id: "LIST" }]),
         );
       }
-      if (tags.has("Playlist")) {
+      if (resourceTypes.has("playlist")) {
         dispatch(
           playlistsApi.util.invalidateTags([{ type: "Playlist", id: "LIST" }]),
         );
       }
-      if (tags.has("Schedule")) {
+      if (resourceTypes.has("schedule")) {
         dispatch(
           schedulesApi.util.invalidateTags([{ type: "Schedule", id: "LIST" }]),
         );
@@ -149,7 +158,7 @@ export function useAIChat({
       const toolParts = allMessages
         .filter((m) => m.role === "assistant")
         .flatMap((m) => m.parts);
-      invalidateAffectedTags(toolParts);
+      invalidateAffectedTags(getAffectedResourceTypesFromParts(toolParts));
     },
   });
 
@@ -203,7 +212,7 @@ export function useAIChat({
   }, []);
 
   const confirmAction = useCallback(
-    async (actionToken: string, approved: boolean) => {
+    async (action: PendingAction, approved: boolean) => {
       if (!token) return;
       const response = await fetch(`${getBaseUrl()}/ai/confirm`, {
         method: "POST",
@@ -211,7 +220,7 @@ export function useAIChat({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ token: actionToken, conversationId, approved }),
+        body: JSON.stringify({ token: action.token, conversationId, approved }),
       });
       if (!response.ok) {
         console.error(
@@ -219,9 +228,12 @@ export function useAIChat({
         );
         return;
       }
+      if (approved) {
+        invalidateAffectedTags(new Set([action.resourceType]));
+      }
       void fetchPendingActions();
     },
-    [conversationId, fetchPendingActions, token],
+    [conversationId, fetchPendingActions, invalidateAffectedTags, token],
   );
 
   const cancelAction = useCallback(

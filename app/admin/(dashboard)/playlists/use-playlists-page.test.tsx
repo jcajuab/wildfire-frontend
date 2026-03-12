@@ -1,5 +1,11 @@
 import type { ReactElement } from "react";
-import { act, render, renderHook, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { usePlaylistsPage } from "./use-playlists-page";
@@ -107,7 +113,8 @@ function HookProbe(): ReactElement {
     <div>
       <div>Displays: {page.availableDisplays.length}</div>
       <div>
-        Active playlist: {page.editorPlaylist ? page.editorPlaylist.name : "none"}
+        Active playlist:{" "}
+        {page.editorPlaylist ? page.editorPlaylist.name : "none"}
       </div>
       <button
         type="button"
@@ -132,7 +139,9 @@ describe("usePlaylistsPage", () => {
     useCanMock.mockReturnValue(true);
     useQueryEnumStateMock.mockImplementation((key) => {
       if (key === "status") {
-        return ["DRAFT", setStatusFilterMock] as ReturnType<typeof useQueryEnumState>;
+        return ["DRAFT", setStatusFilterMock] as ReturnType<
+          typeof useQueryEnumState
+        >;
       }
 
       return ["all", vi.fn()] as ReturnType<typeof useQueryEnumState>;
@@ -141,10 +150,9 @@ describe("usePlaylistsPage", () => {
       "morning",
       setSearchMock,
     ] as ReturnType<typeof useQueryStringState>);
-    useQueryNumberStateMock.mockReturnValue([
-      3,
-      setPageMock,
-    ] as ReturnType<typeof useQueryNumberState>);
+    useQueryNumberStateMock.mockReturnValue([3, setPageMock] as ReturnType<
+      typeof useQueryNumberState
+    >);
 
     useListPlaylistsQueryMock.mockReturnValue({
       data: {
@@ -265,7 +273,9 @@ describe("usePlaylistsPage", () => {
     });
 
     expect(result.current.playlists[0]?.previewItems).toHaveLength(1);
-    expect(result.current.playlists[0]?.previewItems[0]?.content.thumbnailUrl).toBeNull();
+    expect(
+      result.current.playlists[0]?.previewItems[0]?.content.thumbnailUrl,
+    ).toBeNull();
 
     act(() => {
       result.current.handleClearFilters();
@@ -286,7 +296,9 @@ describe("usePlaylistsPage", () => {
     await user.click(screen.getByRole("button", { name: "Open editor" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Active playlist: Detailed Playlist")).toBeInTheDocument();
+      expect(
+        screen.getByText("Active playlist: Detailed Playlist"),
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "Close editor" }));
@@ -383,7 +395,9 @@ describe("usePlaylistsPage", () => {
   });
 
   test("skips content query without content-read and keeps editor usable", async () => {
-    useCanMock.mockImplementation((permission) => permission !== "content:read");
+    useCanMock.mockImplementation(
+      (permission) => permission !== "content:read",
+    );
 
     const { result } = renderHook(() => usePlaylistsPage());
 

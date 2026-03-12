@@ -31,7 +31,6 @@ export default function PlaylistsPage(): ReactElement {
     deleteDialogOpen,
     isSavingPlaylistItems,
     setPage,
-    setEditorPlaylist,
     setPlaylistToDelete,
     handleStatusFilterChange,
     handleClearFilters,

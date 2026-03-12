@@ -7,10 +7,21 @@ import {
 } from "@/components/playlists/create-playlist-form";
 
 vi.mock("next/image", () => ({
-  default: ({ fill: _fill, unoptimized: _unoptimized, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { fill?: boolean; unoptimized?: boolean }) => (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img {...props} alt={props.alt ?? ""} />
-  ),
+  default: (
+    props: React.ImgHTMLAttributes<HTMLImageElement> & {
+      fill?: boolean;
+      unoptimized?: boolean;
+    },
+  ) => {
+    const { fill, unoptimized, ...imgProps } = props;
+    void fill;
+    void unoptimized;
+
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img {...imgProps} alt={imgProps.alt ?? ""} />
+    );
+  },
 }));
 
 const availableContent = [
@@ -57,7 +68,9 @@ describe("CreatePlaylistForm", () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Effective Duration:")).not.toBeInTheDocument();
     expect(screen.queryByText(/Base Duration:/)).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Preview" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Preview" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId("create-playlist-form-root")).toHaveClass(
       "rounded-md",
       "border",
@@ -79,9 +92,15 @@ describe("CreatePlaylistForm", () => {
       "border",
       "bg-background",
     );
-    expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Create" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Preview" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Cancel" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Create" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Preview" }),
+    ).not.toBeInTheDocument();
   });
 
   test("reports page-mode action state and over-limit disabled behavior", async () => {

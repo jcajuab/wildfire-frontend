@@ -149,9 +149,12 @@ async function dismissDialog(
     fireEvent.click(overlay as Element);
   }
 
-  await waitFor(() => {
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  }, { timeout: 3000 });
+  await waitFor(
+    () => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    },
+    { timeout: 3000 },
+  );
 }
 
 describe("EditPlaylistItemsDialog", () => {
@@ -188,13 +191,15 @@ describe("EditPlaylistItemsDialog", () => {
     );
 
     expect(
-      screen.getByTestId("content-library-thumbnail-content-2").querySelector(
-        'img[alt="Replacement Poster thumbnail"]',
-      ),
+      screen
+        .getByTestId("content-library-thumbnail-content-2")
+        .querySelector('img[alt="Replacement Poster thumbnail"]'),
     ).not.toBeNull();
 
     expect(
-      screen.getByTestId("content-library-thumbnail-content-3").querySelector("svg"),
+      screen
+        .getByTestId("content-library-thumbnail-content-3")
+        .querySelector("svg"),
     ).not.toBeNull();
 
     expect(
@@ -211,13 +216,12 @@ describe("EditPlaylistItemsDialog", () => {
 
       render(<EditPlaylistDialogHarness />);
 
-      await user.clear(screen.getByLabelText("Name"));
-      await user.type(screen.getByLabelText("Name"), "Edited Name");
-      await user.clear(screen.getByLabelText("Description (Optional)"));
-      await user.type(
-        screen.getByLabelText("Description (Optional)"),
-        "Edited Description",
-      );
+      fireEvent.change(screen.getByLabelText("Name"), {
+        target: { value: "Edited Name" },
+      });
+      fireEvent.change(screen.getByLabelText("Description (Optional)"), {
+        target: { value: "Edited Description" },
+      });
 
       await user.click(
         screen.getByRole("button", { name: "Remove Alpha from playlist" }),

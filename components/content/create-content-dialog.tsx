@@ -76,7 +76,7 @@ export function CreateContentDialog({
   const resetState = useCallback(() => {
     setTitle("");
     setSelectedFile(null);
-setFlashMessage("");
+    setFlashMessage("");
     setDebouncedFlashMessage("");
     setFlashTone("INFO");
     setTextJsonContent("");
@@ -210,7 +210,7 @@ setFlashMessage("");
 
   useEffect(() => {
     resetState();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
   useEffect(() => {
@@ -325,7 +325,6 @@ setFlashMessage("");
                   </div>
                 ) : null}
               </div>
-
             </div>
           ) : isFlashMode ? (
             <div className="space-y-4">

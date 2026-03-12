@@ -186,7 +186,10 @@ export const playlistsApi = createApi({
         body,
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<BackendPlaylistBase>(response, "createPlaylist"),
+        parseApiResponseDataSafe<BackendPlaylistBase>(
+          response,
+          "createPlaylist",
+        ),
       invalidatesTags: [{ type: "Playlist", id: "LIST" }],
     }),
     updatePlaylist: build.mutation<BackendPlaylistBase, UpdatePlaylistRequest>({
@@ -196,7 +199,10 @@ export const playlistsApi = createApi({
         body,
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<BackendPlaylistBase>(response, "updatePlaylist"),
+        parseApiResponseDataSafe<BackendPlaylistBase>(
+          response,
+          "updatePlaylist",
+        ),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Playlist", id: "LIST" },
         { type: "Playlist", id },

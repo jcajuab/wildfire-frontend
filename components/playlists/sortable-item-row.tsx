@@ -79,7 +79,10 @@ export function SortableItemRow({
             className="object-cover"
           />
         ) : (
-          <IconPhoto className="size-5 text-muted-foreground" aria-hidden="true" />
+          <IconPhoto
+            className="size-5 text-muted-foreground"
+            aria-hidden="true"
+          />
         )}
       </div>
 

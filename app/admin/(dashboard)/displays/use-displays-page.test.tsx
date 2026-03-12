@@ -77,7 +77,9 @@ const useCreateDisplayGroupMutationMock = vi.mocked(
   useCreateDisplayGroupMutation,
 );
 const useSetDisplayGroupsMutationMock = vi.mocked(useSetDisplayGroupsMutation);
-const useUnregisterDisplayMutationMock = vi.mocked(useUnregisterDisplayMutation);
+const useUnregisterDisplayMutationMock = vi.mocked(
+  useUnregisterDisplayMutation,
+);
 const useUpdateDisplayMutationMock = vi.mocked(useUpdateDisplayMutation);
 const useListContentQueryMock = vi.mocked(useListContentQuery);
 const subscribeToDisplayLifecycleEventsMock = vi.mocked(
@@ -104,10 +106,9 @@ describe("useDisplaysPage", () => {
       ["Lobby"],
       setGroupsMock,
     ] as ReturnType<typeof useQueryListState>);
-    useQueryNumberStateMock.mockReturnValue([
-      2,
-      setPageMock,
-    ] as ReturnType<typeof useQueryNumberState>);
+    useQueryNumberStateMock.mockReturnValue([2, setPageMock] as ReturnType<
+      typeof useQueryNumberState
+    >);
     useQueryStringStateMock.mockImplementation((key: string) => {
       if (key === "q") {
         return ["operator", setSearchMock] as ReturnType<

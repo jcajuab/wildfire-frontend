@@ -238,11 +238,7 @@ export function AIChat() {
 
               return (
                 <Fragment key={message.id}>
-                  {message.role === "assistant" ? (
-                    <>{parts}</>
-                  ) : (
-                    parts
-                  )}
+                  {message.role === "assistant" ? <>{parts}</> : parts}
                 </Fragment>
               );
             })
@@ -259,8 +255,8 @@ export function AIChat() {
               <PendingActionCard
                 key={action.token}
                 action={action}
-                onConfirm={() => void confirmAction(action.token, true)}
-                onReject={() => void confirmAction(action.token, false)}
+                onConfirm={() => void confirmAction(action, true)}
+                onReject={() => void confirmAction(action, false)}
                 onCancel={() => void cancelAction(action.token)}
               />
             ))}

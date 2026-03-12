@@ -1,7 +1,12 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconBolt, IconFileText, IconPlus, IconUpload } from "@tabler/icons-react";
+import {
+  IconBolt,
+  IconFileText,
+  IconPlus,
+  IconUpload,
+} from "@tabler/icons-react";
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { EmptyState } from "@/components/common/empty-state";
@@ -71,15 +76,21 @@ export default function ContentPage(): ReactElement {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => controller.openCreateDialog("text")}>
+                <DropdownMenuItem
+                  onClick={() => controller.openCreateDialog("text")}
+                >
                   <IconFileText className="size-4" />
                   Text
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => controller.openCreateDialog("upload")}>
+                <DropdownMenuItem
+                  onClick={() => controller.openCreateDialog("upload")}
+                >
                   <IconUpload className="size-4" />
                   Upload
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => controller.openCreateDialog("flash")}>
+                <DropdownMenuItem
+                  onClick={() => controller.openCreateDialog("flash")}
+                >
                   <IconBolt className="size-4" />
                   Flash
                 </DropdownMenuItem>
@@ -97,7 +108,9 @@ export default function ContentPage(): ReactElement {
                 statusFilter={controller.filters.statusFilter}
                 typeFilter={controller.filters.typeFilter}
                 filteredResultsCount={controller.data?.total ?? 0}
-                onStatusFilterChange={controller.filters.handleStatusFilterChange}
+                onStatusFilterChange={
+                  controller.filters.handleStatusFilterChange
+                }
                 onTypeFilterChange={controller.filters.handleTypeFilterChange}
                 onClearFilters={controller.filters.handleClearFilters}
               />

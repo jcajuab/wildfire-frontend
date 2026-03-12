@@ -9,10 +9,14 @@ import {
   useListPlaylistsQuery,
 } from "@/lib/api/playlists-api";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
-import { mapBackendPlaylistBase } from "@/lib/mappers/playlist-mapper";
+import { mapBackendPlaylistSummary } from "@/lib/mappers/playlist-mapper";
 import type { Content } from "@/types/content";
-import type { Playlist, PlaylistSortField } from "@/types/playlist";
-import type { StatusFilter } from "@/components/playlists/playlist-status-tabs";
+import type {
+  Playlist,
+  PlaylistSummary,
+  PlaylistSortField,
+  PlaylistStatusFilter,
+} from "@/types/playlist";
 import type { PlaylistItemsAtomicSnapshot } from "@/components/playlists/edit-playlist-items-dialog";
 import type { Display } from "@/lib/api/displays-api";
 import { usePlaylistsFilters } from "./use-playlists-filters";
@@ -30,13 +34,13 @@ export interface UsePlaylistsPageResult {
   canDeletePlaylist: boolean;
 
   // Filter state
-  statusFilter: StatusFilter;
+  statusFilter: PlaylistStatusFilter;
   sortBy: PlaylistSortField;
   search: string;
   page: number;
 
   // Query data
-  playlists: Playlist[];
+  playlists: PlaylistSummary[];
   totalPlaylists: number;
   availableContent: Array<
     Content & { readonly type: "IMAGE" | "VIDEO" | "PDF" | "TEXT" }
@@ -63,7 +67,7 @@ export interface UsePlaylistsPageResult {
   setEditDescription: (description: string) => void;
 
   // Handlers
-  handleStatusFilterChange: (value: StatusFilter) => void;
+  handleStatusFilterChange: (value: PlaylistStatusFilter) => void;
   handleSortChange: (value: PlaylistSortField) => void;
   handleSearchChange: (value: string) => void;
   handleCreateDialogOpenChange: (open: boolean) => void;
@@ -134,7 +138,7 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   });
 
   const playlists = useMemo(
-    () => (playlistsData?.items ?? []).map(mapBackendPlaylistBase),
+    () => (playlistsData?.items ?? []).map(mapBackendPlaylistSummary),
     [playlistsData?.items],
   );
 
