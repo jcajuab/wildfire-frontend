@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconPlus } from "@tabler/icons-react";
+import { IconBolt, IconFileText, IconPlus, IconUpload } from "@tabler/icons-react";
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { ContentFilterPopover } from "@/components/content/content-filter-popover";
@@ -11,6 +11,12 @@ import { PaginationFooter } from "@/components/common/pagination-footer";
 import { SearchControl } from "@/components/common/search-control";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   EditContentDialog,
   PreviewContentDialog,
@@ -56,10 +62,28 @@ export default function ContentPage(): ReactElement {
         title="Content"
         actions={
           <Can permission="content:create">
-            <Button onClick={() => controller.setIsCreateDialogOpen(true)}>
-              <IconPlus className="size-4" />
-              Create Content
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  <IconPlus className="size-4" />
+                  Create Content
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => controller.openCreateDialog("text")}>
+                  <IconFileText className="size-4" />
+                  Text
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => controller.openCreateDialog("upload")}>
+                  <IconUpload className="size-4" />
+                  Upload
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => controller.openCreateDialog("flash")}>
+                  <IconBolt className="size-4" />
+                  Flash
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </Can>
         }
       />
@@ -132,6 +156,7 @@ export default function ContentPage(): ReactElement {
       <CreateContentDialog
         open={controller.isCreateDialogOpen}
         onOpenChange={controller.setIsCreateDialogOpen}
+        mode={controller.createMode ?? "upload"}
         onUploadFile={controller.handleUploadFile}
         onCreateFlash={controller.handleCreateFlash}
         onCreateText={controller.handleCreateText}

@@ -27,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { FlashTone } from "@/types/content";
 
@@ -36,6 +35,7 @@ const FLASH_PREVIEW_DEBOUNCE_MS = 500;
 interface CreateContentDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
+  readonly mode: "upload" | "flash" | "text";
   readonly onUploadFile: (
     name: string,
     file: File,
@@ -56,14 +56,13 @@ interface CreateContentDialogProps {
 export function CreateContentDialog({
   open,
   onOpenChange,
+  mode,
   onUploadFile,
   onCreateFlash,
   onCreateText,
 }: CreateContentDialogProps): ReactElement {
-  const [mode, setMode] = useState<"upload" | "flash" | "text">("upload");
   const [title, setTitle] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [scrollPxPerSecond, setScrollPxPerSecond] = useState("");
   const [flashMessage, setFlashMessage] = useState("");
   const [debouncedFlashMessage, setDebouncedFlashMessage] = useState("");
   const [flashTone, setFlashTone] = useState<FlashTone>("INFO");
@@ -75,11 +74,9 @@ export function CreateContentDialog({
   const VIDEO_MAX_BYTES = 10 * 1024 * 1024;
 
   const resetState = useCallback(() => {
-    setMode("upload");
     setTitle("");
     setSelectedFile(null);
-    setScrollPxPerSecond("");
-    setFlashMessage("");
+setFlashMessage("");
     setDebouncedFlashMessage("");
     setFlashTone("INFO");
     setTextJsonContent("");
@@ -123,14 +120,7 @@ export function CreateContentDialog({
     if (!canSubmit) return;
 
     if (isUploadMode && selectedFile) {
-      const rawScrollPxPerSecond = Number(scrollPxPerSecond);
-      const parsedScrollPxPerSecond =
-        scrollPxPerSecond.trim().length > 0
-          ? Number.isFinite(rawScrollPxPerSecond) && rawScrollPxPerSecond > 0
-            ? Math.trunc(rawScrollPxPerSecond)
-            : undefined
-          : undefined;
-      onUploadFile(title.trim(), selectedFile, parsedScrollPxPerSecond);
+      onUploadFile(title.trim(), selectedFile);
     } else if (isFlashMode) {
       onCreateFlash({
         title: title.trim(),
@@ -158,7 +148,6 @@ export function CreateContentDialog({
     onCreateText,
     onUploadFile,
     selectedFile,
-    scrollPxPerSecond,
     textHtmlContent,
     textJsonContent,
     title,
@@ -213,15 +202,16 @@ export function CreateContentDialog({
     [handleFileSelect],
   );
 
-  const supportsScrollSpeed = useMemo(() => {
-    if (!selectedFile) {
-      return false;
+  useEffect(() => {
+    if (!open) {
+      resetState();
     }
-    return (
-      selectedFile.type.startsWith("image/") ||
-      selectedFile.type === "application/pdf"
-    );
-  }, [selectedFile]);
+  }, [open, resetState]);
+
+  useEffect(() => {
+    resetState();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -235,27 +225,23 @@ export function CreateContentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={isTextMode ? "sm:max-w-2xl" : "sm:max-w-lg"}>
         <DialogHeader>
-          <DialogTitle>Create Content</DialogTitle>
+          <DialogTitle>
+            {isUploadMode
+              ? "Upload File"
+              : isFlashMode
+                ? "Create Flash"
+                : "Create Text Content"}
+          </DialogTitle>
           <DialogDescription>
-            Upload media, create rich text content, or generate a flash ticker
-            item for scheduling.
+            {isUploadMode
+              ? "Upload an image, video, or PDF to display on your screens."
+              : isFlashMode
+                ? "Create a flash ticker message to display on your screens."
+                : "Create rich text content to display on your screens."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="min-w-0 space-y-4">
-          <Tabs
-            value={mode}
-            onValueChange={(value) =>
-              setMode(value as "upload" | "flash" | "text")
-            }
-          >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="upload">Upload</TabsTrigger>
-              <TabsTrigger value="flash">Flash</TabsTrigger>
-              <TabsTrigger value="text">Text</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
           <div className="space-y-2">
             <Label htmlFor="content-title">
               {isUploadMode
@@ -340,23 +326,6 @@ export function CreateContentDialog({
                 ) : null}
               </div>
 
-              {supportsScrollSpeed ? (
-                <div className="space-y-2">
-                  <Label htmlFor="content-scroll-speed">
-                    Scroll Speed (px/s)
-                  </Label>
-                  <Input
-                    id="content-scroll-speed"
-                    type="number"
-                    min={1}
-                    value={scrollPxPerSecond}
-                    onChange={(event) =>
-                      setScrollPxPerSecond(event.target.value)
-                    }
-                    placeholder="Leave empty to use default"
-                  />
-                </div>
-              ) : null}
             </div>
           ) : isFlashMode ? (
             <div className="space-y-4">

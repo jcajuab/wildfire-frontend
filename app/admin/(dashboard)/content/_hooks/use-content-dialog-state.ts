@@ -6,6 +6,8 @@ import type { Content } from "@/types/content";
 export interface ContentDialogState {
   readonly isCreateDialogOpen: boolean;
   readonly setIsCreateDialogOpen: (open: boolean) => void;
+  readonly createMode: "text" | "upload" | "flash" | null;
+  readonly openCreateDialog: (mode: "text" | "upload" | "flash") => void;
   readonly contentToPreview: Content | null;
   readonly contentToEdit: Content | null;
   readonly contentToDelete: Content | null;
@@ -24,6 +26,7 @@ export interface ContentDialogState {
  */
 export function useContentDialogState(): ContentDialogState {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [createMode, setCreateMode] = useState<"text" | "upload" | "flash" | null>(null);
   const [contentToPreview, setContentToPreview] = useState<Content | null>(
     null,
   );
@@ -56,9 +59,23 @@ export function useContentDialogState(): ContentDialogState {
     }
   }, []);
 
+  const handleSetIsCreateDialogOpen = useCallback((open: boolean) => {
+    setIsCreateDialogOpen(open);
+    if (!open) {
+      setCreateMode(null);
+    }
+  }, []);
+
+  const openCreateDialog = useCallback((mode: "text" | "upload" | "flash") => {
+    setCreateMode(mode);
+    setIsCreateDialogOpen(true);
+  }, []);
+
   return {
     isCreateDialogOpen,
-    setIsCreateDialogOpen,
+    setIsCreateDialogOpen: handleSetIsCreateDialogOpen,
+    createMode,
+    openCreateDialog,
     contentToPreview,
     contentToEdit,
     contentToDelete,

@@ -75,6 +75,8 @@ export function useContentPageController() {
     isError,
     isCreateDialogOpen: dialogState.isCreateDialogOpen,
     setIsCreateDialogOpen: dialogState.setIsCreateDialogOpen,
+    createMode: dialogState.createMode,
+    openCreateDialog: dialogState.openCreateDialog,
     contentToPreview: dialogState.contentToPreview,
     contentToEdit: dialogState.contentToEdit,
     contentToDelete: dialogState.contentToDelete,
