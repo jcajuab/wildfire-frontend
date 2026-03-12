@@ -2,7 +2,7 @@
 
 import type { ChangeEvent, ReactElement } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { IconBolt, IconFileText, IconUpload } from "@tabler/icons-react";
+import { IconBolt, IconFileText, IconUpload, IconX } from "@tabler/icons-react";
 import { FlashTonePreview } from "@/components/content/flash-tone-preview";
 import {
   SUPPORTED_CONTENT_FILE_LABELS,
@@ -284,7 +284,9 @@ export function CreateContentDialog({
                 className={`flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-8 transition-colors ${
                   isDragging
                     ? "border-primary bg-primary/5"
-                    : "border-muted-foreground/25"
+                    : selectedFile
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-muted-foreground/25"
                 }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -323,9 +325,18 @@ export function CreateContentDialog({
                   </p>
                 ) : null}
                 {selectedFile ? (
-                  <p className="text-xs font-medium text-primary">
-                    Selected: {selectedFile.name}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-primary leading-none">
+                      Selected: {selectedFile.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedFile(null)}
+                      className="text-primary hover:text-destructive transition-colors"
+                    >
+                      <IconX className="size-3.5" />
+                    </button>
+                  </div>
                 ) : null}
               </div>
 
