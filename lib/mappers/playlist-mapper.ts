@@ -31,7 +31,7 @@ export function mapBackendPlaylistItem(
 export function mapBackendPlaylistSummary(
   item: BackendPlaylistSummary,
 ): PlaylistSummary {
-  const previewItems = [...item.previewItems]
+  const previewItems = [...(item.previewItems ?? [])]
     .sort((a, b) => a.sequence - b.sequence)
     .map(mapBackendPlaylistItem);
 
