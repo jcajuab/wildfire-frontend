@@ -1,15 +1,22 @@
 import type { ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import PlaylistsPage from "./page";
+import type { UsePlaylistsPageResult } from "./use-playlists-page";
 import { usePlaylistsPage } from "./use-playlists-page";
+
+const playlistGridPropsSpy = vi.hoisted(() => vi.fn());
+const confirmDialogPropsSpy = vi.hoisted(() => vi.fn());
 
 vi.mock("@/components/common/can", () => ({
   Can: ({ children }: { children: ReactNode }) => children,
 }));
 
 vi.mock("@/components/common/confirm-action-dialog", () => ({
-  ConfirmActionDialog: () => null,
+  ConfirmActionDialog: (props: unknown) => {
+    confirmDialogPropsSpy(props);
+    return null;
+  },
 }));
 
 vi.mock("@/components/playlists/edit-playlist-items-dialog", () => ({
@@ -17,7 +24,10 @@ vi.mock("@/components/playlists/edit-playlist-items-dialog", () => ({
 }));
 
 vi.mock("@/components/playlists/playlist-grid", () => ({
-  PlaylistGrid: () => <div>Playlist Grid</div>,
+  PlaylistGrid: (props: unknown) => {
+    playlistGridPropsSpy(props);
+    return <div>Playlist Grid</div>;
+  },
 }));
 
 vi.mock("@/components/common/search-control", () => ({
@@ -43,45 +53,46 @@ vi.mock("./use-playlists-page", () => ({
 
 const usePlaylistsPageMock = vi.mocked(usePlaylistsPage);
 
+beforeEach(() => {
+  playlistGridPropsSpy.mockClear();
+  confirmDialogPropsSpy.mockClear();
+});
+
+function createHookResult(
+  overrides: Partial<UsePlaylistsPageResult> = {},
+): UsePlaylistsPageResult {
+  return {
+    canUpdatePlaylist: true,
+    canDeletePlaylist: true,
+    statusFilter: "all",
+    search: "",
+    page: 1,
+    playlists: [],
+    totalPlaylists: 0,
+    availableContent: [],
+    availableDisplays: [],
+    editorPlaylist: null,
+    playlistToDelete: null,
+    deleteDialogOpen: false,
+    isSavingPlaylistItems: false,
+    setPage: vi.fn(),
+    setEditorPlaylist: vi.fn(),
+    setPlaylistToDelete: vi.fn(),
+    handleStatusFilterChange: vi.fn(),
+    handleClearFilters: vi.fn(),
+    handleSearchChange: vi.fn(),
+    handleEditorDialogOpenChange: vi.fn(),
+    handleOpenEditor: vi.fn(),
+    handleSaveItems: vi.fn(),
+    handleDeletePlaylist: vi.fn(),
+    deletePlaylistMutation: vi.fn(),
+    ...overrides,
+  };
+}
+
 describe("PlaylistsPage", () => {
   test("renders a link-based create action to the dedicated route", () => {
-    usePlaylistsPageMock.mockReturnValue({
-      canUpdatePlaylist: true,
-      canDeletePlaylist: true,
-      statusFilter: "all",
-      sortBy: "recent",
-      search: "",
-      page: 1,
-      playlists: [],
-      totalPlaylists: 0,
-      availableContent: [],
-      availableDisplays: [],
-      previewPlaylist: null,
-      editPlaylist: null,
-      manageItemsPlaylist: null,
-      playlistToDelete: null,
-      deleteDialogOpen: false,
-      editName: "",
-      editDescription: "",
-      isSavingPlaylistItems: false,
-      setPage: vi.fn(),
-      setEditPlaylist: vi.fn(),
-      setPreviewPlaylist: vi.fn(),
-      setPlaylistToDelete: vi.fn(),
-      setEditName: vi.fn(),
-      setEditDescription: vi.fn(),
-      handleStatusFilterChange: vi.fn(),
-      handleSortChange: vi.fn(),
-      handleSearchChange: vi.fn(),
-      handleManageItemsDialogOpenChange: vi.fn(),
-      handleEditPlaylist: vi.fn(),
-      handleManageItems: vi.fn(),
-      handleSaveItems: vi.fn(),
-      handlePreviewPlaylist: vi.fn(),
-      handleDeletePlaylist: vi.fn(),
-      handleUpdatePlaylist: vi.fn(),
-      deletePlaylistMutation: vi.fn(),
-    });
+    usePlaylistsPageMock.mockReturnValue(createHookResult());
 
     render(<PlaylistsPage />);
 
@@ -93,57 +104,85 @@ describe("PlaylistsPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  test("preserves the manage-items dialog path after removing create modal wiring", () => {
-    usePlaylistsPageMock.mockReturnValue({
-      canUpdatePlaylist: true,
-      canDeletePlaylist: true,
-      statusFilter: "all",
-      sortBy: "recent",
-      search: "",
-      page: 1,
-      playlists: [],
-      totalPlaylists: 0,
-      availableContent: [],
-      availableDisplays: [],
-      previewPlaylist: null,
-      editPlaylist: null,
-      manageItemsPlaylist: {
+  test("mounts only the merged editor dialog when an editor playlist is active", () => {
+    usePlaylistsPageMock.mockReturnValue(
+      createHookResult({
+        editorPlaylist: {
         id: "playlist-1",
         name: "Playlist",
         description: null,
         status: "DRAFT",
-        itemCount: 0,
+        itemsCount: 0,
         totalDuration: 0,
+        createdAt: "2025-01-01T00:00:00.000Z",
         updatedAt: "2025-01-01T00:00:00.000Z",
+        owner: { id: "user-1", name: "Owner" },
         items: [],
       },
-      playlistToDelete: null,
-      deleteDialogOpen: false,
-      editName: "",
-      editDescription: "",
-      isSavingPlaylistItems: false,
-      setPage: vi.fn(),
-      setEditPlaylist: vi.fn(),
-      setPreviewPlaylist: vi.fn(),
-      setPlaylistToDelete: vi.fn(),
-      setEditName: vi.fn(),
-      setEditDescription: vi.fn(),
-      handleStatusFilterChange: vi.fn(),
-      handleSortChange: vi.fn(),
-      handleSearchChange: vi.fn(),
-      handleManageItemsDialogOpenChange: vi.fn(),
-      handleEditPlaylist: vi.fn(),
-      handleManageItems: vi.fn(),
-      handleSaveItems: vi.fn(),
-      handlePreviewPlaylist: vi.fn(),
-      handleDeletePlaylist: vi.fn(),
-      handleUpdatePlaylist: vi.fn(),
-      deletePlaylistMutation: vi.fn(),
-    });
+      }),
+    );
 
     render(<PlaylistsPage />);
 
     expect(screen.getByText("Manage Items Dialog")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  test("wires playlist grid with merged edit/manage callback and no preview callback", () => {
+    const handleOpenEditor = vi.fn();
+
+    usePlaylistsPageMock.mockReturnValue(
+      createHookResult({
+        canUpdatePlaylist: true,
+        handleOpenEditor,
+      }),
+    );
+
+    render(<PlaylistsPage />);
+
+    expect(playlistGridPropsSpy).toHaveBeenCalledTimes(1);
+
+    const props = playlistGridPropsSpy.mock.calls[0]?.[0] as {
+      onEditManage?: unknown;
+      onPreview?: unknown;
+    };
+
+    expect(props.onEditManage).toBe(handleOpenEditor);
+    expect(props.onPreview).toBeUndefined();
+  });
+
+  test("closes the delete dialog by clearing the selected playlist", async () => {
+    const setPlaylistToDelete = vi.fn();
+
+    usePlaylistsPageMock.mockReturnValue(
+      createHookResult({
+        deleteDialogOpen: true,
+        playlistToDelete: {
+          id: "playlist-1",
+          name: "Playlist",
+          description: null,
+          status: "DRAFT",
+          itemsCount: 0,
+          previewItems: [],
+          totalDuration: 0,
+          createdAt: "2025-01-01T00:00:00.000Z",
+          updatedAt: "2025-01-01T00:00:00.000Z",
+          owner: { id: "user-1", name: "Owner" },
+        },
+        setPlaylistToDelete,
+      }),
+    );
+
+    render(<PlaylistsPage />);
+
+    const props = confirmDialogPropsSpy.mock.calls[0]?.[0] as {
+      open: boolean;
+      onOpenChange: (open: boolean) => void;
+    };
+
+    expect(props.open).toBe(true);
+    props.onOpenChange(false);
+
+    expect(setPlaylistToDelete).toHaveBeenCalledWith(null);
   });
 });

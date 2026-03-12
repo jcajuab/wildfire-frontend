@@ -5,21 +5,17 @@ import { IconPlaylist } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { PlaylistCard } from "./playlist-card";
-import type { Playlist } from "@/types/playlist";
+import type { PlaylistSummary } from "@/types/playlist";
 
 interface PlaylistGridProps {
-  readonly playlists: readonly Playlist[];
-  readonly onEdit?: (playlist: Playlist) => void;
-  readonly onManageItems?: (playlist: Playlist) => void;
-  readonly onPreview?: (playlist: Playlist) => void;
-  readonly onDelete?: (playlist: Playlist) => void;
+  readonly playlists: readonly PlaylistSummary[];
+  readonly onEditManage?: (playlist: PlaylistSummary) => void;
+  readonly onDelete?: (playlist: PlaylistSummary) => void;
 }
 
 export function PlaylistGrid({
   playlists,
-  onEdit,
-  onManageItems,
-  onPreview,
+  onEditManage,
   onDelete,
 }: PlaylistGridProps): ReactElement {
   if (playlists.length === 0) {
@@ -38,9 +34,7 @@ export function PlaylistGrid({
         <PlaylistCard
           key={playlist.id}
           playlist={playlist}
-          onEdit={onEdit}
-          onManageItems={onManageItems}
-          onPreview={onPreview}
+          onEditManage={onEditManage}
           onDelete={onDelete}
         />
       ))}
