@@ -32,6 +32,7 @@ import {
 } from "@/lib/formatters";
 import {
   getFlashThumbnailText,
+  getTextThumbnailHtml,
   getTextThumbnailText,
 } from "@/lib/content-thumbnail-preview";
 import type { Content, ContentType } from "@/types/content";
@@ -97,6 +98,9 @@ export const ContentCard = memo(function ContentCard({
     : null;
   const textThumbnailText = isTextContent
     ? getTextThumbnailText(content)
+    : null;
+  const textThumbnailHtml = isTextContent
+    ? getTextThumbnailHtml(content)
     : null;
   const flashTone = content.flashTone ?? "INFO";
 
@@ -210,9 +214,11 @@ export const ContentCard = memo(function ContentCard({
           />
         ) : isTextContent ? (
           <div className="flex h-full w-full items-center justify-center overflow-visible p-2">
-            <p className="max-w-full text-center text-xs leading-snug whitespace-pre-wrap break-words text-foreground">
-              {textThumbnailText}
-            </p>
+            <div
+              className="max-w-full text-center text-xs leading-snug break-words text-foreground [&_blockquote]:my-1 [&_blockquote]:border-l [&_blockquote]:border-border [&_blockquote]:pl-2 [&_em]:italic [&_i]:italic [&_li]:list-item [&_ol]:my-1 [&_ol]:ml-4 [&_ol]:list-decimal [&_p]:my-0 [&_strong]:font-semibold [&_u]:underline [&_ul]:my-1 [&_ul]:ml-4 [&_ul]:list-disc"
+              aria-label={textThumbnailText ?? content.title}
+              dangerouslySetInnerHTML={{ __html: textThumbnailHtml ?? "" }}
+            />
           </div>
         ) : (
           <>

@@ -3,6 +3,7 @@ import {
   extractPlainTextFromHtml,
   getFlashThumbnailText,
   getFlashTypographyClass,
+  getTextThumbnailHtml,
   getTextThumbnailText,
 } from "@/lib/content-thumbnail-preview";
 import type { Content } from "@/types/content";
@@ -83,6 +84,28 @@ describe("thumbnail preview text helpers", () => {
         textHtmlContent: "<p><br/></p>",
       }),
     ).toBe("Announcement title");
+  });
+
+  test("returns sanitized rich text html and preserves formatting", () => {
+    expect(
+      getTextThumbnailHtml({
+        ...baseContent,
+        textHtmlContent:
+          '<p style="text-align:center;color:#0f172a">Hello <strong>world</strong> and <em>team</em></p><script>alert(1)</script>',
+      }),
+    ).toBe(
+      '<p style="text-align:center;color:#0f172a">Hello <strong>world</strong> and <em>team</em></p>',
+    );
+  });
+
+  test("falls back to escaped title when rich text has no visible text", () => {
+    expect(
+      getTextThumbnailHtml({
+        ...baseContent,
+        title: "A <Title>",
+        textHtmlContent: "<p><br/></p>",
+      }),
+    ).toBe("<p>A &lt;Title&gt;</p>");
   });
 });
 

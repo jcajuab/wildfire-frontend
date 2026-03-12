@@ -147,7 +147,7 @@ describe("ContentCard", () => {
     ).not.toBeInTheDocument();
   });
 
-  test("renders text content as plain text extracted from HTML", () => {
+  test("renders text content with rich text formatting in thumbnail preview", () => {
     const textContent: Content = {
       ...baseContent,
       id: "content-text-1",
@@ -156,21 +156,17 @@ describe("ContentCard", () => {
       mimeType: "text/html",
       thumbnailUrl: "https://cdn.example.com/text-thumb.jpg",
       textHtmlContent:
-        "<p>Hello <strong>world</strong> &amp; team</p><p></p><p>Second line</p>",
+        '<p style="color:#16a34a">Hello <strong>world</strong> &amp; <em>team</em></p>',
     };
 
     render(<ContentCard content={textContent} onPreview={vi.fn()} />);
 
-    const previewText = screen.getByText((_, element) =>
-      element?.classList.contains("whitespace-pre-wrap")
-        ? element.textContent === "Hello world & team\n\nSecond line"
-        : false,
+    const styledParagraph = screen.getByText((_, element) =>
+      element?.tagName === "P" ? element.textContent === "Hello world & team" : false,
     );
-    expect(previewText).toHaveClass(
-      "whitespace-pre-wrap",
-      "break-words",
-      "text-center",
-    );
+    expect(styledParagraph).toHaveStyle({ color: "rgb(22, 163, 74)" });
+    expect(styledParagraph.querySelector("strong")?.textContent).toBe("world");
+    expect(styledParagraph.querySelector("em")?.textContent).toBe("team");
     expect(
       screen.queryByAltText(`${textContent.title} preview`),
     ).not.toBeInTheDocument();
@@ -190,10 +186,6 @@ describe("ContentCard", () => {
 
     const titleMatches = screen.getAllByText("Announcement fallback title");
     expect(titleMatches.length).toBeGreaterThan(1);
-    expect(
-      titleMatches.some((element) =>
-        element.classList.contains("whitespace-pre-wrap"),
-      ),
-    ).toBe(true);
+    expect(titleMatches.some((element) => element.tagName === "P")).toBe(true);
   });
 });

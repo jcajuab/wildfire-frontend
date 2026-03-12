@@ -88,7 +88,13 @@ export function useContentPagePdfState(): ContentPagePdfState {
         pageCollection.updatePageCollection(parentContentId, (current) => ({
           ...current,
           items: current.items.map((item) =>
-            item.id === updatedPage.id ? updatedPage : item,
+            item.id === updatedPage.id
+              ? {
+                  ...updatedPage,
+                  thumbnailUrl:
+                    updatedPage.thumbnailUrl ?? item.thumbnailUrl,
+                }
+              : item,
           ),
         }));
         const tags = [
