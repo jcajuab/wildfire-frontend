@@ -44,10 +44,7 @@ import {
   withDisplayGroups,
 } from "@/lib/map-display-to-display";
 import type { DisplayStatusFilter } from "@/components/displays/display-filter-popover";
-import type {
-  Display,
-  DisplayOutputFilter,
-} from "@/types/display";
+import type { Display, DisplayOutputFilter } from "@/types/display";
 import type {
   DisplayGroup,
   DisplaysListResponse,

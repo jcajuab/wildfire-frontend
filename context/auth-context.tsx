@@ -15,7 +15,7 @@ import {
   login as loginApi,
   logoutApi,
   refreshToken,
-} from "@/lib/api-client";
+} from "@/lib/api/auth-api";
 import {
   AUTH_API_ERROR_EVENT,
   AUTH_REFRESH_REQUEST_EVENT,

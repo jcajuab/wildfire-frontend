@@ -13,6 +13,7 @@ export interface PlaylistItemContent {
   readonly title: string;
   readonly type: "IMAGE" | "VIDEO" | "PDF" | "TEXT";
   readonly checksum: string;
+  readonly thumbnailUrl?: string | null;
 }
 
 export interface PlaylistItem {
@@ -22,27 +23,37 @@ export interface PlaylistItem {
   readonly order: number;
 }
 
-export interface Playlist {
+export interface PlaylistBase {
   readonly id: string;
   readonly name: string;
   readonly description: string | null;
   readonly status: PlaylistStatus;
   readonly itemsCount: number;
-  readonly items: readonly PlaylistItem[];
   readonly totalDuration: number;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly owner: PlaylistOwner;
 }
 
+export interface PlaylistSummary extends PlaylistBase {
+  readonly previewItems: readonly PlaylistItem[];
+}
+
+export interface PlaylistDetail extends PlaylistBase {
+  readonly items: readonly PlaylistItem[];
+}
+
+export type Playlist = PlaylistDetail;
+
 export interface PlaylistListResponse {
-  readonly items: readonly Playlist[];
+  readonly items: readonly PlaylistSummary[];
   readonly page: number;
   readonly pageSize: number;
   readonly total: number;
 }
 
 export type PlaylistSortField = "recent" | "name";
+export type PlaylistStatusFilter = "all" | PlaylistStatus;
 
 export interface PlaylistFilter {
   readonly status?: PlaylistStatus;

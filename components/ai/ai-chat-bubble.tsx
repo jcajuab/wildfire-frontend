@@ -4,11 +4,14 @@ import type { ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { IconMessageChatbot, IconX } from "@tabler/icons-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useAICredentials } from "@/hooks/use-ai-credentials";
 import { AIChat } from "@/components/ai/ai-chat";
 
 export function AIChatBubble(): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
+  const { refetch: refetchCredentials } = useAICredentials();
   const prefersReducedMotion = useReducedMotion();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -51,17 +54,17 @@ export function AIChatBubble(): ReactElement {
             style={{ height: "600px" }}
             {...panelMotionProps}
             role="dialog"
-            aria-label="AI Assistant"
+            aria-label="WILDFIRE AI"
             aria-modal="true"
           >
             <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
-              <span className="text-sm font-semibold">AI Assistant</span>
+              <span className="text-sm font-semibold">WILDFIRE AI</span>
               <Button
                 ref={closeButtonRef}
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Close AI Assistant"
+                aria-label="Close WILDFIRE AI"
                 onClick={() => setIsOpen(false)}
               >
                 <IconX className="size-4" />
@@ -76,9 +79,25 @@ export function AIChatBubble(): ReactElement {
 
       <Button
         type="button"
-        aria-label="Open AI Assistant"
+        aria-label="Open WILDFIRE AI"
         aria-expanded={isOpen}
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          if (isOpen) {
+            setIsOpen(false);
+            return;
+          }
+          void refetchCredentials().then((fresh) => {
+            if (fresh.length === 0) {
+              toast.error("Please provide an API key in Settings first.", {
+                description:
+                  "Go to Settings > AI Provider Credentials to configure.",
+                duration: 5000,
+              });
+              return;
+            }
+            setIsOpen(true);
+          });
+        }}
         className="size-14 rounded-full shadow-lg"
       >
         <IconMessageChatbot className="size-6" />

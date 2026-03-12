@@ -18,11 +18,12 @@ const expectClassTokens = (element: HTMLElement, className: string): void => {
     });
 };
 
-const renderDialog = (): void => {
+const renderDialog = (mode: "upload" | "flash" | "text" = "upload"): void => {
   render(
     <CreateContentDialog
       open
       onOpenChange={onOpenChange}
+      mode={mode}
       onUploadFile={onUploadFile}
       onCreateFlash={onCreateFlash}
       onCreateText={onCreateText}
@@ -51,11 +52,10 @@ describe("CreateContentDialog", () => {
   });
 
   test("debounces ticker preview updates by 500ms while keeping character count immediate", async () => {
-    const user = userEvent.setup();
+    renderDialog("flash");
 
-    renderDialog();
-
-    await user.click(screen.getByRole("tab", { name: "Flash" }));
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAccessibleName("Create Flash");
     vi.useFakeTimers();
 
     fireEvent.change(screen.getByLabelText("Ticker Message"), {
@@ -85,9 +85,7 @@ describe("CreateContentDialog", () => {
   test("uses tone badge styling in the single live preview", async () => {
     const user = userEvent.setup();
 
-    renderDialog();
-
-    await user.click(screen.getByRole("tab", { name: "Flash" }));
+    renderDialog("flash");
 
     const infoBadge = screen.getByText("INFO");
     expectClassTokens(infoBadge, getFlashBadgeClassName("INFO"));
@@ -104,11 +102,7 @@ describe("CreateContentDialog", () => {
   });
 
   test("applies shared overflow-safe sizing classes for long ticker input", async () => {
-    const user = userEvent.setup();
-
-    renderDialog();
-
-    await user.click(screen.getByRole("tab", { name: "Flash" }));
+    renderDialog("flash");
 
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveClass("min-w-0");

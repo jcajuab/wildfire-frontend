@@ -36,6 +36,7 @@ export interface Display {
 
 export type DisplaySortField = "alphabetical" | "status" | "location";
 export type DisplayOutputFilter = "all" | string;
+export type DisplayStatusFilter = "all" | DisplayStatus;
 
 export interface DisplayFilter {
   readonly status?: DisplayStatus | "all";

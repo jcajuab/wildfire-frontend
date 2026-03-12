@@ -132,7 +132,9 @@ export function CreatePlaylistForm({
     (itemId: string, duration: number) => {
       setPlaylistItems((prev) =>
         prev.map((item) =>
-          item.id === itemId ? { ...item, duration: Math.max(1, duration) } : item,
+          item.id === itemId
+            ? { ...item, duration: Math.max(1, duration) }
+            : item,
         ),
       );
     },
@@ -281,7 +283,9 @@ export function CreatePlaylistForm({
           <div className="flex flex-col gap-4 rounded-md border border-border p-4">
             <div className="flex items-center gap-2">
               <IconInfoCircle className="size-4" />
-              <span className="text-sm font-semibold">Playlist Information</span>
+              <span className="text-sm font-semibold">
+                Playlist Information
+              </span>
             </div>
 
             <div className="flex flex-col gap-3">
@@ -301,7 +305,9 @@ export function CreatePlaylistForm({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="playlist-description">Description (Optional)</Label>
+                <Label htmlFor="playlist-description">
+                  Description (Optional)
+                </Label>
                 <Textarea
                   id="playlist-description"
                   placeholder="Enter playlist description"
@@ -315,7 +321,6 @@ export function CreatePlaylistForm({
                   }
                 />
               </div>
-
             </div>
           </div>
 
@@ -402,7 +407,9 @@ export function CreatePlaylistForm({
                       />
                     )}
                   </div>
-                  <span className="flex-1 truncate text-sm">{content.title}</span>
+                  <span className="flex-1 truncate text-sm">
+                    {content.title}
+                  </span>
                   <IconPlus className="size-4 text-muted-foreground" />
                 </button>
               ))
@@ -410,7 +417,6 @@ export function CreatePlaylistForm({
           </div>
         </div>
       </div>
-
     </div>
   );
 }

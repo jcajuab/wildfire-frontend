@@ -3,6 +3,7 @@
 import type { ReactElement } from "react";
 
 import { DashboardPage } from "@/components/layout/dashboard-page";
+import { EmptyState } from "@/components/common/empty-state";
 import { LogsTable } from "@/components/logs/logs-table";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { Button } from "@/components/ui/button";
@@ -241,9 +242,16 @@ export default function LogsPage(): ReactElement {
             </div>
           </div>
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
-            <div className="overflow-hidden rounded-md border border-border">
-              <LogsTable logs={logs} />
-            </div>
+            {logs.length === 0 ? (
+              <EmptyState
+                title="No logs found"
+                description="No audit log entries match the current filters. Try adjusting or resetting your filters."
+              />
+            ) : (
+              <div className="overflow-hidden rounded-md border border-border">
+                <LogsTable logs={logs} />
+              </div>
+            )}
           </div>
         </DashboardPage.Content>
 

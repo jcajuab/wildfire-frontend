@@ -19,9 +19,8 @@ const deletePlaylistMock = vi.fn();
 const savePlaylistItemsAtomicMock = vi.fn();
 
 vi.mock("next/navigation", async () => {
-  const actual = await vi.importActual<typeof import("next/navigation")>(
-    "next/navigation",
-  );
+  const actual =
+    await vi.importActual<typeof import("next/navigation")>("next/navigation");
 
   return {
     ...actual,
@@ -72,7 +71,9 @@ describe("CreatePlaylistPage", () => {
       push: pushMock,
     } as ReturnType<typeof useRouter>);
 
-    useCanMock.mockImplementation((permission) => permission === "content:read");
+    useCanMock.mockImplementation(
+      (permission) => permission === "content:read",
+    );
 
     useListContentQueryMock.mockReturnValue({
       data: {
@@ -133,7 +134,9 @@ describe("CreatePlaylistPage", () => {
 
     render(<CreatePlaylistPage />);
 
-    expect(screen.getByRole("heading", { name: "Create Playlist" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Create Playlist" }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Name")).toBeInTheDocument();
     const formRoot = screen.getByTestId("create-playlist-form-root");
     const header = screen.getByRole("banner");
@@ -148,8 +151,12 @@ describe("CreatePlaylistPage", () => {
     );
     expect(formRoot.parentElement).not.toHaveClass("px-6", "py-6", "sm:px-8");
     expect(formRoot).toHaveClass("overflow-auto", "px-6", "py-6", "sm:px-8");
-    expect(header).toContainElement(screen.getByRole("button", { name: "Cancel" }));
-    expect(header).toContainElement(screen.getByRole("button", { name: "Create" }));
+    expect(header).toContainElement(
+      screen.getByRole("button", { name: "Cancel" }),
+    );
+    expect(header).toContainElement(
+      screen.getByRole("button", { name: "Create" }),
+    );
 
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 

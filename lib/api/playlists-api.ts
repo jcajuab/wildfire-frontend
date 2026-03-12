@@ -4,7 +4,7 @@ import { baseQuery } from "@/lib/api/base-query";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
 
-export interface BackendPlaylist {
+export interface BackendPlaylistBase {
   readonly id: string;
   readonly name: string;
   readonly description: string | null;
@@ -28,15 +28,20 @@ export interface BackendPlaylistItem {
     readonly title: string;
     readonly type: "IMAGE" | "VIDEO" | "PDF" | "TEXT";
     readonly checksum: string;
+    readonly thumbnailUrl?: string | null;
   };
 }
 
-export interface BackendPlaylistWithItems extends BackendPlaylist {
+export interface BackendPlaylistSummary extends BackendPlaylistBase {
+  readonly previewItems: readonly BackendPlaylistItem[];
+}
+
+export interface BackendPlaylistWithItems extends BackendPlaylistBase {
   readonly items: readonly BackendPlaylistItem[];
 }
 
 export interface BackendPlaylistListResponse {
-  readonly items: readonly BackendPlaylist[];
+  readonly items: readonly BackendPlaylistSummary[];
   readonly total: number;
   readonly page: number;
   readonly pageSize: number;
@@ -159,7 +164,7 @@ export const playlistsApi = createApi({
         params: params ?? {},
       }),
       transformResponse: (response) =>
-        transformPaginatedListResponse<BackendPlaylist>(
+        transformPaginatedListResponse<BackendPlaylistSummary>(
           response,
           "listPlaylists",
         ),
@@ -174,24 +179,30 @@ export const playlistsApi = createApi({
         ),
       providesTags: (_result, _error, id) => [{ type: "Playlist", id }],
     }),
-    createPlaylist: build.mutation<BackendPlaylist, CreatePlaylistRequest>({
+    createPlaylist: build.mutation<BackendPlaylistBase, CreatePlaylistRequest>({
       query: (body) => ({
         url: "playlists",
         method: "POST",
         body,
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<BackendPlaylist>(response, "createPlaylist"),
+        parseApiResponseDataSafe<BackendPlaylistBase>(
+          response,
+          "createPlaylist",
+        ),
       invalidatesTags: [{ type: "Playlist", id: "LIST" }],
     }),
-    updatePlaylist: build.mutation<BackendPlaylist, UpdatePlaylistRequest>({
+    updatePlaylist: build.mutation<BackendPlaylistBase, UpdatePlaylistRequest>({
       query: ({ id, ...body }) => ({
         url: `playlists/${id}`,
         method: "PATCH",
         body,
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<BackendPlaylist>(response, "updatePlaylist"),
+        parseApiResponseDataSafe<BackendPlaylistBase>(
+          response,
+          "updatePlaylist",
+        ),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Playlist", id: "LIST" },
         { type: "Playlist", id },

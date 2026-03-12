@@ -141,7 +141,9 @@ export function ContentFilterPopover({
               </Label>
               <Select
                 value={typeFilter}
-                onValueChange={(value) => onTypeFilterChange(value as TypeFilter)}
+                onValueChange={(value) =>
+                  onTypeFilterChange(value as TypeFilter)
+                }
               >
                 <SelectTrigger id="type-filter" className="w-full">
                   <SelectValue placeholder="Select type" />

@@ -22,13 +22,13 @@ import {
 } from "@/lib/api/playlists-api";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import {
-  mapBackendPlaylistBase,
+  mapBackendPlaylistSummary,
   mapBackendPlaylistWithItems,
 } from "@/lib/mappers/playlist-mapper";
 import type { PlaylistStatusFilter } from "@/components/playlists/playlist-filter-popover";
 import type { Content } from "@/types/content";
-import type { Playlist } from "@/types/playlist";
-import type { PlaylistItemsAtomicSnapshot } from "@/components/playlists/edit-playlist-items-dialog";
+import type { Playlist, PlaylistSummary } from "@/types/playlist";
+import type { PlaylistEditorSavePayload } from "@/components/playlists/edit-playlist-items-dialog";
 import type { Display } from "@/lib/api/displays-api";
 
 const PLAYLIST_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
@@ -53,45 +53,35 @@ export interface UsePlaylistsPageResult {
   page: number;
 
   // Query data
-  playlists: Playlist[];
+  playlists: PlaylistSummary[];
   totalPlaylists: number;
   availableContent: Array<
     Content & { readonly type: "IMAGE" | "VIDEO" | "PDF" | "TEXT" }
   >;
   availableDisplays: readonly Display[];
 
-  previewPlaylist: Playlist | null;
-  editPlaylist: Playlist | null;
-  manageItemsPlaylist: Playlist | null;
-  playlistToDelete: Playlist | null;
+  editorPlaylist: Playlist | null;
+  playlistToDelete: PlaylistSummary | null;
   deleteDialogOpen: boolean;
-  editName: string;
-  editDescription: string;
   isSavingPlaylistItems: boolean;
 
   // Setters
   setPage: (page: number) => void;
-  setEditPlaylist: (playlist: Playlist | null) => void;
-  setPreviewPlaylist: (playlist: Playlist | null) => void;
-  setPlaylistToDelete: (playlist: Playlist | null) => void;
-  setEditName: (name: string) => void;
-  setEditDescription: (description: string) => void;
+  setEditorPlaylist: (playlist: Playlist | null) => void;
+  setPlaylistToDelete: (playlist: PlaylistSummary | null) => void;
 
   // Handlers
   handleStatusFilterChange: (value: PlaylistStatusFilter) => void;
   handleClearFilters: () => void;
   handleSearchChange: (value: string) => void;
-  handleManageItemsDialogOpenChange: (open: boolean) => void;
-  handleEditPlaylist: (playlist: Playlist) => void;
-  handleManageItems: (playlist: Playlist) => Promise<void>;
+  handleEditorDialogOpenChange: (open: boolean) => void;
+  handleOpenEditor: (playlist: PlaylistSummary) => Promise<void>;
   handleManageItemsById: (id: string) => Promise<void>;
   handleSaveItems: (
     playlistId: string,
-    items: PlaylistItemsAtomicSnapshot,
+    payload: PlaylistEditorSavePayload,
   ) => Promise<void>;
-  handlePreviewPlaylist: (playlist: Playlist) => Promise<void>;
-  handleDeletePlaylist: (playlist: Playlist) => void;
-  handleUpdatePlaylist: () => Promise<void>;
+  handleDeletePlaylist: (playlist: PlaylistSummary) => void;
   deletePlaylistMutation: (id: string) => Promise<void>;
 }
 
@@ -109,16 +99,9 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   const [search, setSearch] = useQueryStringState("q", "");
   const [page, setPage] = useQueryNumberState("page", 1);
 
-  const [previewPlaylist, setPreviewPlaylist] = useState<Playlist | null>(null);
-  const [editPlaylist, setEditPlaylist] = useState<Playlist | null>(null);
-  const [manageItemsPlaylist, setManageItemsPlaylist] =
-    useState<Playlist | null>(null);
-  const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | null>(
-    null,
-  );
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editDescription, setEditDescription] = useState("");
+  const [editorPlaylist, setEditorPlaylist] = useState<Playlist | null>(null);
+  const [playlistToDelete, setPlaylistToDelete] =
+    useState<PlaylistSummary | null>(null);
   const [isSavingPlaylistItems, setIsSavingPlaylistItems] = useState(false);
   const isSavingPlaylistItemsRef = useRef(false);
 
@@ -145,12 +128,14 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   );
 
   const [loadPlaylist] = useLazyGetPlaylistQuery();
-  const [updatePlaylist] = useUpdatePlaylistMutation();
   const [deletePlaylist] = useDeletePlaylistMutation();
+  const [updatePlaylist] = useUpdatePlaylistMutation();
   const [savePlaylistItemsAtomic] = useSavePlaylistItemsAtomicMutation();
 
+  const deleteDialogOpen = playlistToDelete !== null;
+
   const playlists = useMemo(
-    () => (playlistsData?.items ?? []).map(mapBackendPlaylistBase),
+    () => (playlistsData?.items ?? []).map(mapBackendPlaylistSummary),
     [playlistsData?.items],
   );
 
@@ -187,23 +172,17 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     [setSearch, setPage],
   );
 
-  const handleManageItemsDialogOpenChange = useCallback((open: boolean) => {
+  const handleEditorDialogOpenChange = useCallback((open: boolean) => {
     if (!open) {
-      setManageItemsPlaylist(null);
+      setEditorPlaylist(null);
     }
   }, []);
 
-  const handleEditPlaylist = useCallback((playlist: Playlist) => {
-    setEditPlaylist(playlist);
-    setEditName(playlist.name);
-    setEditDescription(playlist.description ?? "");
-  }, []);
-
-  const handleManageItems = useCallback(
-    async (playlist: Playlist) => {
+  const handleOpenEditor = useCallback(
+    async (playlist: PlaylistSummary) => {
       try {
         const detailed = await loadPlaylist(playlist.id, true).unwrap();
-        setManageItemsPlaylist(mapBackendPlaylistWithItems(detailed));
+        setEditorPlaylist(mapBackendPlaylistWithItems(detailed));
       } catch (err) {
         notifyApiError(err, "Failed to load playlist items.");
       }
@@ -215,7 +194,7 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     async (id: string) => {
       try {
         const detailed = await loadPlaylist(id, true).unwrap();
-        setManageItemsPlaylist(mapBackendPlaylistWithItems(detailed));
+        setEditorPlaylist(mapBackendPlaylistWithItems(detailed));
       } catch (err) {
         notifyApiError(err, "Failed to load playlist items.");
       }
@@ -224,7 +203,7 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   );
 
   const handleSaveItems = useCallback(
-    async (playlistId: string, items: PlaylistItemsAtomicSnapshot) => {
+    async (playlistId: string, payload: PlaylistEditorSavePayload) => {
       if (isSavingPlaylistItemsRef.current) {
         return;
       }
@@ -233,53 +212,38 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
       setIsSavingPlaylistItems(true);
 
       try {
-        await savePlaylistItemsAtomic({
-          playlistId,
-          items,
+        await updatePlaylist({
+          id: playlistId,
+          name: payload.metadata.name,
+          description: payload.metadata.description,
         }).unwrap();
-        toast.success("Playlist items updated.");
-        handleManageItemsDialogOpenChange(false);
+
+        try {
+          await savePlaylistItemsAtomic({
+            playlistId,
+            items: payload.items,
+          }).unwrap();
+          toast.success("Playlist updated.");
+          handleEditorDialogOpenChange(false);
+        } catch (err) {
+          notifyApiError(
+            err,
+            "Playlist info saved, but item changes failed. Review items and save again.",
+          );
+        }
       } catch (err) {
-        notifyApiError(err, "Failed to update playlist items.");
+        notifyApiError(err, "Failed to update playlist info.");
       } finally {
         isSavingPlaylistItemsRef.current = false;
         setIsSavingPlaylistItems(false);
       }
     },
-    [handleManageItemsDialogOpenChange, savePlaylistItemsAtomic],
+    [handleEditorDialogOpenChange, savePlaylistItemsAtomic, updatePlaylist],
   );
 
-  const handlePreviewPlaylist = useCallback(
-    async (playlist: Playlist) => {
-      try {
-        const detailed = await loadPlaylist(playlist.id, true).unwrap();
-        setPreviewPlaylist(mapBackendPlaylistWithItems(detailed));
-      } catch {
-        setPreviewPlaylist(playlist);
-      }
-    },
-    [loadPlaylist],
-  );
-
-  const handleDeletePlaylist = useCallback((playlist: Playlist) => {
+  const handleDeletePlaylist = useCallback((playlist: PlaylistSummary) => {
     setPlaylistToDelete(playlist);
-    setDeleteDialogOpen(true);
   }, []);
-
-  const handleUpdatePlaylist = useCallback(async () => {
-    if (!editPlaylist || editName.trim().length === 0) return;
-    try {
-      await updatePlaylist({
-        id: editPlaylist.id,
-        name: editName.trim(),
-        description: editDescription.trim() || null,
-      }).unwrap();
-      setEditPlaylist(null);
-      toast.success("Playlist updated.");
-    } catch (err) {
-      notifyApiError(err, "Failed to update playlist.");
-    }
-  }, [editPlaylist, editName, editDescription, updatePlaylist]);
 
   const deletePlaylistById = useCallback(
     async (id: string) => {
@@ -298,31 +262,21 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     totalPlaylists,
     availableContent,
     availableDisplays: displaysData?.items ?? [],
-    previewPlaylist,
-    editPlaylist,
-    manageItemsPlaylist,
+    editorPlaylist,
     playlistToDelete,
     deleteDialogOpen,
-    editName,
-    editDescription,
     isSavingPlaylistItems,
     setPage,
-    setEditPlaylist,
-    setPreviewPlaylist,
+    setEditorPlaylist,
     setPlaylistToDelete,
-    setEditName,
-    setEditDescription,
     handleStatusFilterChange,
     handleClearFilters,
     handleSearchChange,
-    handleManageItemsDialogOpenChange,
-    handleEditPlaylist,
-    handleManageItems,
+    handleEditorDialogOpenChange,
+    handleOpenEditor,
     handleManageItemsById,
     handleSaveItems,
-    handlePreviewPlaylist,
     handleDeletePlaylist,
-    handleUpdatePlaylist,
     deletePlaylistMutation: deletePlaylistById,
   };
 }

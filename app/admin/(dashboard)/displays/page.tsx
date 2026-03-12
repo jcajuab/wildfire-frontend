@@ -5,6 +5,7 @@ import { IconPlus, IconSettings } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { EmptyState } from "@/components/common/empty-state";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { DisplayRegistrationInfoDialog } from "@/components/displays/display-registration-info-dialog";
 import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";
@@ -122,6 +123,19 @@ export default function DisplaysPage(): ReactElement {
                   <Skeleton key={index} className="h-[220px] rounded-md" />
                 ))}
               </div>
+            ) : displays.length === 0 ? (
+              <EmptyState
+                title="No displays yet"
+                description="Register a display to start showing content on your screens."
+                action={
+                  <Can permission="displays:create">
+                    <Button onClick={() => setIsAddInfoDialogOpen(true)}>
+                      <IconPlus className="size-4" aria-hidden="true" />
+                      Add Display
+                    </Button>
+                  </Can>
+                }
+              />
             ) : (
               <DisplayGrid
                 items={displays}

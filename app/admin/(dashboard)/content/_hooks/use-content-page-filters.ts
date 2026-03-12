@@ -22,11 +22,12 @@ const CONTENT_TYPE_VALUES = [
 ] as const;
 
 export function useContentPageFilters() {
-  const [statusFilter, setStatusFilter] = useQueryEnumState<ContentStatusFilter>(
-    "status",
-    "all",
-    CONTENT_STATUS_VALUES,
-  );
+  const [statusFilter, setStatusFilter] =
+    useQueryEnumState<ContentStatusFilter>(
+      "status",
+      "all",
+      CONTENT_STATUS_VALUES,
+    );
   const [typeFilter, setTypeFilter] = useQueryEnumState<TypeFilter>(
     "type",
     "all",

@@ -3,10 +3,21 @@ import { describe, expect, test, vi } from "vitest";
 import { SortablePlaylistItem } from "@/components/playlists/sortable-playlist-item";
 
 vi.mock("next/image", () => ({
-  default: ({ fill: _fill, unoptimized: _unoptimized, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { fill?: boolean; unoptimized?: boolean }) => (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img {...props} alt={props.alt ?? ""} />
-  ),
+  default: (
+    props: React.ImgHTMLAttributes<HTMLImageElement> & {
+      fill?: boolean;
+      unoptimized?: boolean;
+    },
+  ) => {
+    const { fill, unoptimized, ...imgProps } = props;
+    void fill;
+    void unoptimized;
+
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img {...imgProps} alt={imgProps.alt ?? ""} />
+    );
+  },
 }));
 
 vi.mock("@dnd-kit/sortable", () => ({

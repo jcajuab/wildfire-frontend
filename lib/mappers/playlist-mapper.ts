@@ -1,9 +1,9 @@
 import type {
-  BackendPlaylist,
   BackendPlaylistItem,
+  BackendPlaylistSummary,
   BackendPlaylistWithItems,
 } from "@/lib/api/playlists-api";
-import type { Playlist, PlaylistItem } from "@/types/playlist";
+import type { Playlist, PlaylistItem, PlaylistSummary } from "@/types/playlist";
 
 function mapBackendPlaylistItemToContent(
   item: BackendPlaylistItem,
@@ -13,6 +13,7 @@ function mapBackendPlaylistItemToContent(
     title: item.content.title,
     type: item.content.type,
     checksum: item.content.checksum,
+    thumbnailUrl: item.content.thumbnailUrl ?? null,
   };
 }
 
@@ -27,14 +28,20 @@ export function mapBackendPlaylistItem(
   };
 }
 
-export function mapBackendPlaylistBase(item: BackendPlaylist): Playlist {
+export function mapBackendPlaylistSummary(
+  item: BackendPlaylistSummary,
+): PlaylistSummary {
+  const previewItems = [...item.previewItems]
+    .sort((a, b) => a.sequence - b.sequence)
+    .map(mapBackendPlaylistItem);
+
   return {
     id: item.id,
     name: item.name,
     description: item.description,
     status: item.status,
     itemsCount: item.itemsCount,
-    items: [],
+    previewItems,
     totalDuration: item.totalDuration,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
@@ -54,8 +61,18 @@ export function mapBackendPlaylistWithItems(
   const totalDuration = mappedItems.reduce((sum, x) => sum + x.duration, 0);
 
   return {
-    ...mapBackendPlaylistBase(item),
+    id: item.id,
+    name: item.name,
+    description: item.description,
+    status: item.status,
+    itemsCount: item.itemsCount,
     items: mappedItems,
     totalDuration,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+    owner: {
+      id: item.owner.id,
+      name: item.owner.name ?? "Unknown",
+    },
   };
 }

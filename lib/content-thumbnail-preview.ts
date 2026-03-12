@@ -97,7 +97,10 @@ function sanitizeRichTextHtml(html: string): string {
     return `<p>${escapeHtml(extractPlainTextFromHtml(html))}</p>`;
   }
 
-  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
+  const doc = new DOMParser().parseFromString(
+    `<div>${html}</div>`,
+    "text/html",
+  );
   const root = doc.body.firstElementChild;
   if (!root) {
     return "";
@@ -154,7 +157,10 @@ export function extractPlainTextFromHtml(html: string | null): string {
   const compactHtml = html.replace(/>\s+</g, "><");
   const withParagraphBreaks = compactHtml
     .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(p|div|section|article|header|footer|li|ul|ol|h[1-6])>/gi, "\n");
+    .replace(
+      /<\/(p|div|section|article|header|footer|li|ul|ol|h[1-6])>/gi,
+      "\n",
+    );
 
   const withoutTags = withParagraphBreaks.replace(/<[^>]*>/g, "");
   return decodeHtmlEntities(withoutTags)

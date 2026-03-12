@@ -1,53 +1,118 @@
 "use client";
 
 import { isTextUIPart, isToolUIPart } from "ai";
+import { Fragment, useCallback, useMemo, useState } from "react";
+import { WildfireLogo } from "@/components/common/wildfire-logo";
 import {
-  IconLoader2,
-  IconRobot,
-  IconSend,
-  IconUser,
-} from "@tabler/icons-react";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  PromptInput,
+  PromptInputBody,
+  PromptInputFooter,
+  PromptInputSelect,
+  PromptInputSelectContent,
+  PromptInputSelectItem,
+  PromptInputSelectTrigger,
+  PromptInputSelectValue,
+  PromptInputSubmit,
+  PromptInputTools,
+} from "@/components/ai-elements/prompt-input";
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "@/components/ai-elements/tool";
 import { useAIChat } from "@/hooks/use-ai-chat";
+import { useAICredentials } from "@/hooks/use-ai-credentials";
+import { SLASH_COMMANDS, type SlashCommand } from "@/lib/slash-commands";
 import { PendingActionCard } from "./pending-action-card";
+import { SlashCommandMenu } from "./slash-command-menu";
+
+const KNOWN_COMMAND_IDS = new Set(SLASH_COMMANDS.map((c) => c.id));
+
+function formatErrorMessage(message: string): string {
+  if (typeof message !== "string") return "Something went wrong.";
+  if (message.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(message) as Record<string, unknown>;
+      const msg =
+        typeof parsed.message === "string"
+          ? parsed.message
+          : typeof parsed.error === "string"
+            ? parsed.error
+            : null;
+      if (msg) return msg;
+    } catch {
+      // fall through to raw message
+    }
+  }
+  return message || "Something went wrong.";
+}
+
+function parseMessageTokens(
+  text: string,
+): Array<{ type: "command" | "text"; value: string }> {
+  const tokens: Array<{ type: "command" | "text"; value: string }> = [];
+  const parts = text.split(/(\/[\w-]+)/g);
+  for (const part of parts) {
+    if (!part) continue;
+    if (part.startsWith("/") && KNOWN_COMMAND_IDS.has(part.slice(1))) {
+      tokens.push({ type: "command", value: part });
+    } else {
+      tokens.push({ type: "text", value: part });
+    }
+  }
+  return tokens;
+}
 
 const PROVIDERS = [
-  { value: "openai", label: "OpenAI", models: ["gpt-4o", "gpt-4o-mini"] },
+  { value: "openai", label: "OpenAI", model: "gpt-4o-mini" },
   {
     value: "anthropic",
     label: "Anthropic",
-    models: ["claude-sonnet-4-20250514", "claude-3-5-haiku-20241022"],
+    model: "claude-3-5-haiku-20241022",
   },
-  {
-    value: "google",
-    label: "Google",
-    models: ["gemini-2.0-flash", "gemini-1.5-pro"],
-  },
+  { value: "google", label: "Google", model: "gemini-2.5-flash" },
 ] as const;
 
 type ProviderValue = (typeof PROVIDERS)[number]["value"];
 
 export function AIChat() {
-  const [provider, setProvider] = useState<ProviderValue>("openai");
-  const [model, setModel] = useState("gpt-4o");
+  const { credentials } = useAICredentials();
+
+  const configuredProviders = useMemo(
+    () =>
+      PROVIDERS.filter((p) => credentials.some((c) => c.provider === p.value)),
+    [credentials],
+  );
+
+  const hasCredentials = configuredProviders.length > 0;
+
+  const [selectedProvider, setSelectedProvider] =
+    useState<ProviderValue>("openai");
   const [conversationId] = useState(() => crypto.randomUUID());
+  const [showSlashMenu, setShowSlashMenu] = useState(false);
+  const [slashQuery, setSlashQuery] = useState("");
+  const [isComposing, setIsComposing] = useState(false);
+
+  // Derive effective provider: use selected if available, otherwise first configured
+  const provider = configuredProviders.some((p) => p.value === selectedProvider)
+    ? selectedProvider
+    : (configuredProviders[0]?.value ?? selectedProvider);
+
+  const currentProvider = configuredProviders.find((p) => p.value === provider);
+  const model = currentProvider?.model ?? PROVIDERS[0].model;
 
   const {
     messages,
@@ -61,149 +126,137 @@ export function AIChat() {
     cancelAction,
   } = useAIChat({ provider, model, conversationId });
 
-  const isLoading = status === "submitted" || status === "streaming";
-  const currentProvider = PROVIDERS.find((p) => p.value === provider);
+  const handleInputChange = useCallback(
+    (value: string) => {
+      setInput(value);
+      const slashMatch = value.match(/\/(\S*)$/);
+      if (slashMatch) {
+        setShowSlashMenu(true);
+        setSlashQuery(slashMatch[1] ?? "");
+      } else {
+        setShowSlashMenu(false);
+        setSlashQuery("");
+      }
+    },
+    [setInput],
+  );
 
-  function handleProviderChange(value: string) {
-    const next = value as ProviderValue;
-    setProvider(next);
-    const found = PROVIDERS.find((p) => p.value === next);
-    setModel(found?.models[0] ?? "");
-  }
+  const handleCommandSelect = useCallback(
+    (cmd: SlashCommand) => {
+      setInput((prev) => {
+        const replaced = prev.replace(/\/\S*$/, `/${cmd.id} `);
+        return replaced;
+      });
+      setShowSlashMenu(false);
+      setSlashQuery("");
+    },
+    [setInput],
+  );
+
+  const handleProviderChange = (value: string) => {
+    setSelectedProvider(value as ProviderValue);
+  };
 
   return (
-    <Card className="flex h-[600px] flex-col">
-      <CardHeader className="border-b">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <IconRobot className="size-5" />
-            Signage Assistant
-          </CardTitle>
-          <div className="flex gap-2">
-            <Select value={provider} onValueChange={handleProviderChange}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PROVIDERS.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={model} onValueChange={setModel}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {currentProvider?.models.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="flex-1 overflow-hidden p-0">
-        <div className="h-full overflow-y-auto p-4">
+    <div className="flex h-full flex-col">
+      <Conversation className="flex-1">
+        <ConversationContent>
           {messages.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              <p>
-                Ask me to create content, playlists, or schedules for your
-                displays.
-              </p>
-            </div>
+            <ConversationEmptyState
+              icon={<WildfireLogo className="h-8 w-auto" />}
+              title=""
+              description="Ask me to create content, playlists, or schedules. Type / to see available commands."
+            />
           ) : (
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "flex gap-3",
-                    message.role === "user" ? "justify-end" : "justify-start",
-                  )}
-                >
-                  {message.role === "assistant" && (
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <IconRobot className="size-4" />
-                    </div>
-                  )}
-                  <div
-                    className={cn(
-                      "max-w-[80%] rounded-lg px-4 py-2",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted",
-                    )}
-                  >
-                    {message.parts.map((part, index) => {
-                      if (isTextUIPart(part)) {
-                        return (
-                          <p key={index} className="whitespace-pre-wrap">
-                            {part.text}
-                          </p>
-                        );
-                      }
-                      if (isToolUIPart(part)) {
-                        const toolName =
-                          "toolName" in part ? String(part.toolName) : "tool";
-                        const toolState =
-                          "state" in part ? String(part.state) : "";
-                        return (
-                          <div
-                            key={index}
-                            className="mt-2 rounded bg-background/50 p-2 text-sm"
-                          >
-                            <span className="font-medium">{toolName}</span>
-                            {toolState === "output" && (
-                              <span className="ml-2 text-green-600 dark:text-green-400">
-                                Completed
-                              </span>
-                            )}
-                            {toolState === "input" && (
-                              <span className="ml-2 text-muted-foreground">
-                                Running...
-                              </span>
-                            )}
-                          </div>
-                        );
-                      }
-                      return null;
-                    })}
-                  </div>
-                  {message.role === "user" && (
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary">
-                      <IconUser className="size-4" />
-                    </div>
-                  )}
-                </div>
-              ))}
+            messages.map((message) => {
+              const parts = message.parts.map((part, i) => {
+                if (isTextUIPart(part)) {
+                  if (message.role === "user") {
+                    const tokens = parseMessageTokens(part.text);
+                    const hasCommands = tokens.some(
+                      (t) => t.type === "command",
+                    );
+                    if (hasCommands) {
+                      return (
+                        <Message key={`${message.id}-${i}`} from="user">
+                          <MessageContent>
+                            <p className="text-sm leading-relaxed">
+                              {tokens.map((token, j) =>
+                                token.type === "command" ? (
+                                  <span
+                                    key={j}
+                                    className="rounded bg-primary/15 px-1 py-0.5 font-medium text-primary"
+                                  >
+                                    {token.value}
+                                  </span>
+                                ) : (
+                                  <span key={j}>{token.value}</span>
+                                ),
+                              )}
+                            </p>
+                          </MessageContent>
+                        </Message>
+                      );
+                    }
+                  }
+                  return (
+                    <Message key={`${message.id}-${i}`} from={message.role}>
+                      <MessageContent>
+                        <MessageResponse>{part.text}</MessageResponse>
+                      </MessageContent>
+                    </Message>
+                  );
+                }
+                if (isToolUIPart(part)) {
+                  const header =
+                    part.type === "dynamic-tool" ? (
+                      <ToolHeader
+                        type={part.type}
+                        state={part.state}
+                        toolName={part.toolName}
+                      />
+                    ) : (
+                      <ToolHeader type={part.type} state={part.state} />
+                    );
+                  return (
+                    <Tool key={`${message.id}-${i}`}>
+                      {header}
+                      <ToolContent>
+                        <ToolInput input={part.input} />
+                        {"output" in part && part.output !== undefined && (
+                          <ToolOutput
+                            output={part.output}
+                            errorText={part.errorText}
+                          />
+                        )}
+                      </ToolContent>
+                    </Tool>
+                  );
+                }
+                return null;
+              });
 
-              {isLoading && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <IconLoader2 className="size-4 animate-spin" />
-                  <span>Thinking...</span>
-                </div>
-              )}
-            </div>
+              return (
+                <Fragment key={message.id}>
+                  {message.role === "assistant" ? <>{parts}</> : parts}
+                </Fragment>
+              );
+            })
           )}
-        </div>
-      </CardContent>
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
 
       {pendingActions.length > 0 && (
-        <div className="border-t p-4">
+        <div className="border-t p-3">
           <p className="mb-2 text-sm font-medium">Pending Actions</p>
           <div className="space-y-2">
             {pendingActions.map((action) => (
               <PendingActionCard
                 key={action.token}
                 action={action}
-                onConfirm={() => void confirmAction(action.token, true)}
-                onReject={() => void confirmAction(action.token, false)}
+                onConfirm={() => void confirmAction(action, true)}
+                onReject={() => void confirmAction(action, false)}
                 onCancel={() => void cancelAction(action.token)}
               />
             ))}
@@ -211,29 +264,134 @@ export function AIChat() {
         </div>
       )}
 
-      <CardFooter className="border-t p-4">
-        <form onSubmit={handleSubmit} className="flex w-full flex-col gap-2">
-          <div className="flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Create a playlist for the lobby displays..."
-              disabled={isLoading}
-              aria-label="Chat message input"
-            />
-            <Button
-              type="submit"
-              disabled={isLoading || !input.trim()}
-              aria-label="Send message"
-            >
-              <IconSend className="size-4" />
-            </Button>
-          </div>
-          {error != null && (
-            <p className="text-sm text-destructive">{error.message}</p>
-          )}
-        </form>
-      </CardFooter>
-    </Card>
+      <div className="border-t p-3">
+        <div className="relative">
+          <SlashCommandMenu
+            query={slashQuery}
+            onSelect={handleCommandSelect}
+            onClose={() => setShowSlashMenu(false)}
+            visible={showSlashMenu}
+          />
+
+          <PromptInput
+            onSubmit={() => {
+              handleSubmit();
+            }}
+          >
+            <PromptInputBody>
+              <div
+                className="grid w-full grid-cols-1 min-h-16 max-h-48 overflow-y-auto"
+                onClick={(e) => {
+                  if (!(e.target as HTMLElement).closest("button")) {
+                    (
+                      e.currentTarget.querySelector(
+                        "textarea",
+                      ) as HTMLTextAreaElement | null
+                    )?.focus();
+                  }
+                }}
+              >
+                {/* Mirror div for highlighting — grid-stacked behind textarea.
+                    Both occupy the same grid cell so the mirror tracks height exactly. */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none col-start-1 row-start-1 w-full whitespace-pre-wrap break-words px-3 py-2 text-sm"
+                  style={{ wordBreak: "break-word" }}
+                >
+                  {input
+                    ? input.split(/(\s+)/).map((segment, idx) => {
+                        const isCommand =
+                          /^\/[\w-]+$/.test(segment) &&
+                          KNOWN_COMMAND_IDS.has(segment.slice(1));
+                        return isCommand ? (
+                          <span
+                            key={idx}
+                            className="rounded bg-primary/15 px-0.5 text-transparent"
+                          >
+                            {segment}
+                          </span>
+                        ) : (
+                          <span key={idx} className="text-transparent">
+                            {segment}
+                          </span>
+                        );
+                      })
+                    : /* empty placeholder to maintain min-height */ "\u00A0"}
+                </div>
+                <textarea
+                  data-slot="input-group-control"
+                  name="message"
+                  rows={1}
+                  disabled={!hasCredentials}
+                  className="col-start-1 row-start-1 w-full min-w-0 resize-none border-0 bg-transparent px-3 py-2 text-sm caret-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ wordBreak: "break-word" }}
+                  value={input}
+                  onChange={(e) => handleInputChange(e.currentTarget.value)}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={() => setIsComposing(false)}
+                  onKeyDown={(e) => {
+                    if (
+                      (e.key === "Enter" || e.key === "Tab") &&
+                      showSlashMenu
+                    ) {
+                      e.preventDefault();
+                      return;
+                    }
+                    if (
+                      e.key === "Enter" &&
+                      !e.shiftKey &&
+                      !isComposing &&
+                      !e.nativeEvent.isComposing
+                    ) {
+                      e.preventDefault();
+                      const form = e.currentTarget.form;
+                      const submitBtn = form?.querySelector(
+                        'button[type="submit"]',
+                      ) as HTMLButtonElement | null;
+                      if (!submitBtn?.disabled) {
+                        form?.requestSubmit();
+                      }
+                    }
+                  }}
+                  placeholder={
+                    !hasCredentials
+                      ? "Configure an API key in Settings to start..."
+                      : "Type a message or / for commands..."
+                  }
+                />
+              </div>
+            </PromptInputBody>
+            <PromptInputFooter>
+              <PromptInputTools>
+                {hasCredentials && (
+                  <PromptInputSelect
+                    value={provider}
+                    onValueChange={handleProviderChange}
+                  >
+                    <PromptInputSelectTrigger>
+                      <PromptInputSelectValue />
+                    </PromptInputSelectTrigger>
+                    <PromptInputSelectContent>
+                      {configuredProviders.map((p) => (
+                        <PromptInputSelectItem key={p.value} value={p.value}>
+                          {p.label}
+                        </PromptInputSelectItem>
+                      ))}
+                    </PromptInputSelectContent>
+                  </PromptInputSelect>
+                )}
+              </PromptInputTools>
+              <PromptInputSubmit status={status} disabled={!hasCredentials} />
+            </PromptInputFooter>
+          </PromptInput>
+        </div>
+
+        {error != null && (
+          <p className="mt-1 text-sm text-destructive">
+            {formatErrorMessage(error.message)} Please try again.
+          </p>
+        )}
+      </div>
+    </div>
   );
 }

@@ -3,7 +3,6 @@
 import type { ReactElement } from "react";
 import { useState, useEffect } from "react";
 import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
-import type { Schedule } from "@/types/schedule";
 import { formatLongDate } from "@/lib/formatters";
 import {
   MINUTES_PER_DAY,

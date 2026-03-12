@@ -28,7 +28,6 @@ import {
   IconAlignRight,
   IconAlignJustified,
 } from "@tabler/icons-react";
-import { EditorContent as EditorContentComponent } from "@tiptap/react";
 import { cn } from "@/lib/utils";
 import { ToolbarButton, ToolbarDivider } from "./tiptap-toolbar";
 import { LinkPopover } from "./tiptap-link-popover";
