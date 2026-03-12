@@ -28,15 +28,18 @@ export function useContentPageController() {
   const pdfState = useContentPagePdfState();
   const dialogState = useContentDialogState();
 
-  const { data, isLoading, isError, error } = useListContentQuery({
-    page: filters.page,
-    pageSize: PAGE_SIZE,
-    status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
-    type: filters.typeFilter === "all" ? undefined : filters.typeFilter,
-    search: filters.search.trim().length > 0 ? filters.search : undefined,
-    sortBy: filters.sortBy,
-    sortDirection: "desc",
-  });
+  const { data, isLoading, isError, error } = useListContentQuery(
+    {
+      page: filters.page,
+      pageSize: PAGE_SIZE,
+      status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
+      type: filters.typeFilter === "all" ? undefined : filters.typeFilter,
+      search: filters.search.trim().length > 0 ? filters.search : undefined,
+      sortBy: filters.sortBy,
+      sortDirection: "desc",
+    },
+    { refetchOnFocus: true, refetchOnReconnect: true },
+  );
 
   const [getContentJob] = useLazyGetContentJobQuery();
   const { trackContentJob } = useContentJobMonitor({

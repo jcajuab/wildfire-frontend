@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactElement } from "react";
-import type { Schedule, ScheduleDisplay } from "@/types/schedule";
 import { formatLongDate } from "@/lib/formatters";
 import {
   MINUTES_PER_DAY,

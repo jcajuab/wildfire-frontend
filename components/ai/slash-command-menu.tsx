@@ -2,11 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import {
-  filterCommands,
-  groupByCategory,
-  type SlashCommand,
-} from "@/lib/slash-commands";
+import { filterCommands, type SlashCommand } from "@/lib/slash-commands";
 
 interface SlashCommandMenuProps {
   query: string;
@@ -29,8 +25,6 @@ export function SlashCommandMenu({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const filtered = filterCommands(query);
-  const grouped = groupByCategory(filtered);
-  const flatList = filtered;
 
   // When query changes, derive reset during render (not in effect)
   const resolvedIndex = indexedQuery !== query ? 0 : activeIndex;
@@ -42,19 +36,22 @@ export function SlashCommandMenu({
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setIndexState((prev) => ({
-          activeIndex: (prev.activeIndex + 1) % flatList.length,
+          activeIndex: (prev.activeIndex + 1) % filtered.length,
           indexedQuery: query,
         }));
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setIndexState((prev) => ({
           activeIndex:
-            (prev.activeIndex - 1 + flatList.length) % flatList.length,
+            (prev.activeIndex - 1 + filtered.length) % filtered.length,
           indexedQuery: query,
         }));
-      } else if (e.key === "Enter" && flatList.length > 0) {
+      } else if (
+        (e.key === "Enter" || e.key === "Tab") &&
+        filtered.length > 0
+      ) {
         e.preventDefault();
-        onSelect(flatList[resolvedIndex]);
+        onSelect(filtered[resolvedIndex]);
       } else if (e.key === "Escape") {
         e.preventDefault();
         onClose();
@@ -63,7 +60,7 @@ export function SlashCommandMenu({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [visible, resolvedIndex, flatList, onSelect, onClose, query]);
+  }, [visible, resolvedIndex, filtered, onSelect, onClose, query]);
 
   // Scroll active item into view
   useEffect(() => {
@@ -74,47 +71,37 @@ export function SlashCommandMenu({
     active?.scrollIntoView({ block: "nearest" });
   }, [visible, resolvedIndex]);
 
-  if (!visible || flatList.length === 0) return null;
+  if (!visible || filtered.length === 0) return null;
 
   return (
     <div
       ref={menuRef}
-      className="absolute bottom-full left-0 z-50 mb-1 max-h-64 w-72 overflow-y-auto rounded-lg border border-border bg-popover p-1 shadow-md"
+      className="absolute bottom-full left-0 z-50 mb-1 max-h-64 w-full overflow-y-auto rounded-lg border border-border bg-popover p-1 shadow-md"
       role="listbox"
     >
-      {Object.entries(grouped).map(([category, commands]) => (
-        <div key={category}>
-          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-            {category}
-          </div>
-          {commands.map((cmd) => {
-            const globalIdx = flatList.indexOf(cmd);
-            return (
-              <button
-                key={cmd.id}
-                type="button"
-                role="option"
-                data-index={globalIdx}
-                aria-selected={globalIdx === resolvedIndex}
-                className={cn(
-                  "flex w-full flex-col rounded-md px-2 py-1.5 text-left text-sm",
-                  globalIdx === resolvedIndex
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-accent/50",
-                )}
-                onClick={() => onSelect(cmd)}
-                onMouseEnter={() =>
-                  setIndexState({ activeIndex: globalIdx, indexedQuery: query })
-                }
-              >
-                <span className="font-medium">/{cmd.id}</span>
-                <span className="text-xs text-muted-foreground">
-                  {cmd.description}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+      {filtered.map((cmd, idx) => (
+        <button
+          key={cmd.id}
+          type="button"
+          role="option"
+          data-index={idx}
+          aria-selected={idx === resolvedIndex}
+          className={cn(
+            "flex w-full flex-col rounded-md px-2 py-1.5 text-left text-sm",
+            idx === resolvedIndex
+              ? "bg-accent text-accent-foreground"
+              : "hover:bg-accent/50",
+          )}
+          onClick={() => onSelect(cmd)}
+          onMouseEnter={() =>
+            setIndexState({ activeIndex: idx, indexedQuery: query })
+          }
+        >
+          <span className="font-medium">/{cmd.id}</span>
+          <span className="text-xs text-muted-foreground">
+            {cmd.description}
+          </span>
+        </button>
       ))}
     </div>
   );

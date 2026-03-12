@@ -1,7 +1,7 @@
 "use client";
 
 import { isTextUIPart, isToolUIPart } from "ai";
-import { Fragment, useCallback, useState } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import { WildfireLogo } from "@/components/common/wildfire-logo";
 import {
   Conversation,
@@ -24,7 +24,6 @@ import {
   PromptInputSelectTrigger,
   PromptInputSelectValue,
   PromptInputSubmit,
-  PromptInputTextarea,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 import {
@@ -35,33 +34,85 @@ import {
   ToolOutput,
 } from "@/components/ai-elements/tool";
 import { useAIChat } from "@/hooks/use-ai-chat";
-import type { SlashCommand } from "@/lib/slash-commands";
+import { useAICredentials } from "@/hooks/use-ai-credentials";
+import { SLASH_COMMANDS, type SlashCommand } from "@/lib/slash-commands";
 import { PendingActionCard } from "./pending-action-card";
 import { SlashCommandMenu } from "./slash-command-menu";
-import { ToolChip } from "./tool-chip";
+
+const KNOWN_COMMAND_IDS = new Set(SLASH_COMMANDS.map((c) => c.id));
+
+function formatErrorMessage(message: string): string {
+  if (typeof message !== "string") return "Something went wrong.";
+  if (message.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(message) as Record<string, unknown>;
+      const msg =
+        typeof parsed.message === "string"
+          ? parsed.message
+          : typeof parsed.error === "string"
+            ? parsed.error
+            : null;
+      if (msg) return msg;
+    } catch {
+      // fall through to raw message
+    }
+  }
+  return message || "Something went wrong.";
+}
+
+function parseMessageTokens(
+  text: string,
+): Array<{ type: "command" | "text"; value: string }> {
+  const tokens: Array<{ type: "command" | "text"; value: string }> = [];
+  const parts = text.split(/(\/[\w-]+)/g);
+  for (const part of parts) {
+    if (!part) continue;
+    if (part.startsWith("/") && KNOWN_COMMAND_IDS.has(part.slice(1))) {
+      tokens.push({ type: "command", value: part });
+    } else {
+      tokens.push({ type: "text", value: part });
+    }
+  }
+  return tokens;
+}
 
 const PROVIDERS = [
-  { value: "openai", label: "OpenAI", models: ["gpt-4o", "gpt-4o-mini"] },
+  { value: "openai", label: "OpenAI", model: "gpt-4o-mini" },
   {
     value: "anthropic",
     label: "Anthropic",
-    models: ["claude-sonnet-4-20250514", "claude-3-5-haiku-20241022"],
+    model: "claude-3-5-haiku-20241022",
   },
-  {
-    value: "google",
-    label: "Google",
-    models: ["gemini-2.0-flash", "gemini-1.5-pro"],
-  },
+  { value: "google", label: "Google", model: "gemini-2.5-flash" },
 ] as const;
 
 type ProviderValue = (typeof PROVIDERS)[number]["value"];
 
 export function AIChat() {
-  const [provider, setProvider] = useState<ProviderValue>("openai");
-  const [model, setModel] = useState("gpt-4o");
+  const { credentials } = useAICredentials();
+
+  const configuredProviders = useMemo(
+    () =>
+      PROVIDERS.filter((p) => credentials.some((c) => c.provider === p.value)),
+    [credentials],
+  );
+
+  const hasCredentials = configuredProviders.length > 0;
+
+  const [selectedProvider, setSelectedProvider] =
+    useState<ProviderValue>("openai");
   const [conversationId] = useState(() => crypto.randomUUID());
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
+  const [isComposing, setIsComposing] = useState(false);
+
+  // Derive effective provider: use selected if available, otherwise first configured
+  const provider = configuredProviders.some((p) => p.value === selectedProvider)
+    ? selectedProvider
+    : (configuredProviders[0]?.value ?? selectedProvider);
+
+  const currentProvider = configuredProviders.find((p) => p.value === provider);
+  const model = currentProvider?.model ?? PROVIDERS[0].model;
 
   const {
     messages,
@@ -73,12 +124,7 @@ export function AIChat() {
     pendingActions,
     confirmAction,
     cancelAction,
-    selectedTools,
-    addTool,
-    removeTool,
   } = useAIChat({ provider, model, conversationId });
-
-  const currentProvider = PROVIDERS.find((p) => p.value === provider);
 
   const handleInputChange = useCallback(
     (value: string) => {
@@ -97,19 +143,18 @@ export function AIChat() {
 
   const handleCommandSelect = useCallback(
     (cmd: SlashCommand) => {
-      addTool(cmd);
-      setInput((prev) => prev.replace(/\/\S*$/, "").trim());
+      setInput((prev) => {
+        const replaced = prev.replace(/\/\S*$/, `/${cmd.id} `);
+        return replaced;
+      });
       setShowSlashMenu(false);
       setSlashQuery("");
     },
-    [addTool, setInput],
+    [setInput],
   );
 
   const handleProviderChange = (value: string) => {
-    const next = value as ProviderValue;
-    setProvider(next);
-    const found = PROVIDERS.find((p) => p.value === next);
-    setModel(found?.models[0] ?? "");
+    setSelectedProvider(value as ProviderValue);
   };
 
   return (
@@ -123,45 +168,84 @@ export function AIChat() {
               description="Ask me to create content, playlists, or schedules. Type / to see available commands."
             />
           ) : (
-            messages.map((message) => (
-              <Fragment key={message.id}>
-                {message.parts.map((part, i) => {
-                  if (isTextUIPart(part)) {
-                    return (
-                      <Message key={`${message.id}-${i}`} from={message.role}>
-                        <MessageContent>
-                          <MessageResponse>{part.text}</MessageResponse>
-                        </MessageContent>
-                      </Message>
+            messages.map((message) => {
+              const parts = message.parts.map((part, i) => {
+                if (isTextUIPart(part)) {
+                  if (message.role === "user") {
+                    const tokens = parseMessageTokens(part.text);
+                    const hasCommands = tokens.some(
+                      (t) => t.type === "command",
                     );
-                  }
-                  if (isToolUIPart(part)) {
-                    if (part.type === "dynamic-tool") {
+                    if (hasCommands) {
                       return (
-                        <Tool key={`${message.id}-${i}`}>
-                          <ToolHeader
-                            type="dynamic-tool"
-                            state={part.state}
-                            toolName={part.toolName}
-                          />
-                          <ToolContent>
-                            <ToolInput input={part.input} />
-                            {"output" in part && part.output !== undefined && (
-                              <ToolOutput
-                                output={part.output}
-                                errorText={part.errorText}
-                              />
-                            )}
-                          </ToolContent>
-                        </Tool>
+                        <Message key={`${message.id}-${i}`} from="user">
+                          <MessageContent>
+                            <p className="text-sm leading-relaxed">
+                              {tokens.map((token, j) =>
+                                token.type === "command" ? (
+                                  <span
+                                    key={j}
+                                    className="rounded bg-primary/15 px-1 py-0.5 font-medium text-primary"
+                                  >
+                                    {token.value}
+                                  </span>
+                                ) : (
+                                  <span key={j}>{token.value}</span>
+                                ),
+                              )}
+                            </p>
+                          </MessageContent>
+                        </Message>
                       );
                     }
-                    return null;
                   }
-                  return null;
-                })}
-              </Fragment>
-            ))
+                  return (
+                    <Message key={`${message.id}-${i}`} from={message.role}>
+                      <MessageContent>
+                        <MessageResponse>{part.text}</MessageResponse>
+                      </MessageContent>
+                    </Message>
+                  );
+                }
+                if (isToolUIPart(part)) {
+                  const header =
+                    part.type === "dynamic-tool" ? (
+                      <ToolHeader
+                        type={part.type}
+                        state={part.state}
+                        toolName={part.toolName}
+                      />
+                    ) : (
+                      <ToolHeader type={part.type} state={part.state} />
+                    );
+                  return (
+                    <Tool key={`${message.id}-${i}`}>
+                      {header}
+                      <ToolContent>
+                        <ToolInput input={part.input} />
+                        {"output" in part && part.output !== undefined && (
+                          <ToolOutput
+                            output={part.output}
+                            errorText={part.errorText}
+                          />
+                        )}
+                      </ToolContent>
+                    </Tool>
+                  );
+                }
+                return null;
+              });
+
+              return (
+                <Fragment key={message.id}>
+                  {message.role === "assistant" ? (
+                    <>{parts}</>
+                  ) : (
+                    parts
+                  )}
+                </Fragment>
+              );
+            })
           )}
         </ConversationContent>
         <ConversationScrollButton />
@@ -184,75 +268,132 @@ export function AIChat() {
         </div>
       )}
 
-      <div className="relative border-t p-3">
-        {selectedTools.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-1">
-            {selectedTools.map((cmd) => (
-              <ToolChip
-                key={cmd.id}
-                command={cmd}
-                onRemove={() => removeTool(cmd.id)}
-              />
-            ))}
-          </div>
-        )}
+      <div className="border-t p-3">
+        <div className="relative">
+          <SlashCommandMenu
+            query={slashQuery}
+            onSelect={handleCommandSelect}
+            onClose={() => setShowSlashMenu(false)}
+            visible={showSlashMenu}
+          />
 
-        <SlashCommandMenu
-          query={slashQuery}
-          onSelect={handleCommandSelect}
-          onClose={() => setShowSlashMenu(false)}
-          visible={showSlashMenu}
-        />
-
-        <PromptInput
-          onSubmit={(message) => {
-            setInput(message.text);
-            handleSubmit();
-          }}
-        >
-          <PromptInputBody>
-            <PromptInputTextarea
-              value={input}
-              onChange={(e) => handleInputChange(e.currentTarget.value)}
-              placeholder="Type a message or / for commands..."
-            />
-          </PromptInputBody>
-          <PromptInputFooter>
-            <PromptInputTools>
-              <PromptInputSelect
-                value={provider}
-                onValueChange={handleProviderChange}
+          <PromptInput
+            onSubmit={() => {
+              handleSubmit();
+            }}
+          >
+            <PromptInputBody>
+              <div
+                className="grid w-full grid-cols-1 min-h-16 max-h-48 overflow-y-auto"
+                onClick={(e) => {
+                  if (!(e.target as HTMLElement).closest("button")) {
+                    (
+                      e.currentTarget.querySelector(
+                        "textarea",
+                      ) as HTMLTextAreaElement | null
+                    )?.focus();
+                  }
+                }}
               >
-                <PromptInputSelectTrigger>
-                  <PromptInputSelectValue />
-                </PromptInputSelectTrigger>
-                <PromptInputSelectContent>
-                  {PROVIDERS.map((p) => (
-                    <PromptInputSelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </PromptInputSelectItem>
-                  ))}
-                </PromptInputSelectContent>
-              </PromptInputSelect>
-              <PromptInputSelect value={model} onValueChange={setModel}>
-                <PromptInputSelectTrigger>
-                  <PromptInputSelectValue />
-                </PromptInputSelectTrigger>
-                <PromptInputSelectContent>
-                  {currentProvider?.models.map((m) => (
-                    <PromptInputSelectItem key={m} value={m}>
-                      {m}
-                    </PromptInputSelectItem>
-                  ))}
-                </PromptInputSelectContent>
-              </PromptInputSelect>
-            </PromptInputTools>
-            <PromptInputSubmit status={status} />
-          </PromptInputFooter>
-        </PromptInput>
+                {/* Mirror div for highlighting — grid-stacked behind textarea.
+                    Both occupy the same grid cell so the mirror tracks height exactly. */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none col-start-1 row-start-1 w-full whitespace-pre-wrap break-words px-3 py-2 text-sm"
+                  style={{ wordBreak: "break-word" }}
+                >
+                  {input
+                    ? input.split(/(\s+)/).map((segment, idx) => {
+                        const isCommand =
+                          /^\/[\w-]+$/.test(segment) &&
+                          KNOWN_COMMAND_IDS.has(segment.slice(1));
+                        return isCommand ? (
+                          <span
+                            key={idx}
+                            className="rounded bg-primary/15 px-0.5 text-transparent"
+                          >
+                            {segment}
+                          </span>
+                        ) : (
+                          <span key={idx} className="text-transparent">
+                            {segment}
+                          </span>
+                        );
+                      })
+                    : /* empty placeholder to maintain min-height */ "\u00A0"}
+                </div>
+                <textarea
+                  data-slot="input-group-control"
+                  name="message"
+                  rows={1}
+                  disabled={!hasCredentials}
+                  className="col-start-1 row-start-1 w-full min-w-0 resize-none border-0 bg-transparent px-3 py-2 text-sm caret-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ wordBreak: "break-word" }}
+                  value={input}
+                  onChange={(e) => handleInputChange(e.currentTarget.value)}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={() => setIsComposing(false)}
+                  onKeyDown={(e) => {
+                    if (
+                      (e.key === "Enter" || e.key === "Tab") &&
+                      showSlashMenu
+                    ) {
+                      e.preventDefault();
+                      return;
+                    }
+                    if (
+                      e.key === "Enter" &&
+                      !e.shiftKey &&
+                      !isComposing &&
+                      !e.nativeEvent.isComposing
+                    ) {
+                      e.preventDefault();
+                      const form = e.currentTarget.form;
+                      const submitBtn = form?.querySelector(
+                        'button[type="submit"]',
+                      ) as HTMLButtonElement | null;
+                      if (!submitBtn?.disabled) {
+                        form?.requestSubmit();
+                      }
+                    }
+                  }}
+                  placeholder={
+                    !hasCredentials
+                      ? "Configure an API key in Settings to start..."
+                      : "Type a message or / for commands..."
+                  }
+                />
+              </div>
+            </PromptInputBody>
+            <PromptInputFooter>
+              <PromptInputTools>
+                {hasCredentials && (
+                  <PromptInputSelect
+                    value={provider}
+                    onValueChange={handleProviderChange}
+                  >
+                    <PromptInputSelectTrigger>
+                      <PromptInputSelectValue />
+                    </PromptInputSelectTrigger>
+                    <PromptInputSelectContent>
+                      {configuredProviders.map((p) => (
+                        <PromptInputSelectItem key={p.value} value={p.value}>
+                          {p.label}
+                        </PromptInputSelectItem>
+                      ))}
+                    </PromptInputSelectContent>
+                  </PromptInputSelect>
+                )}
+              </PromptInputTools>
+              <PromptInputSubmit status={status} disabled={!hasCredentials} />
+            </PromptInputFooter>
+          </PromptInput>
+        </div>
 
         {error != null && (
-          <p className="mt-1 text-sm text-destructive">{error.message}</p>
+          <p className="mt-1 text-sm text-destructive">
+            {formatErrorMessage(error.message)} Please try again.
+          </p>
         )}
       </div>
     </div>

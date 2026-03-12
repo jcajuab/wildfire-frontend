@@ -32,11 +32,8 @@ import { createHighlighter } from "shiki";
 
 // Shiki uses bitflags for font styles: 1=italic, 2=bold, 4=underline
 // biome-ignore lint/suspicious/noBitwiseOperators: shiki bitflag check
-// eslint-disable-next-line no-bitwise -- shiki bitflag check
 const isItalic = (fontStyle: number | undefined) => fontStyle && fontStyle & 1;
 // biome-ignore lint/suspicious/noBitwiseOperators: shiki bitflag check
-// eslint-disable-next-line no-bitwise -- shiki bitflag check
-// oxlint-disable-next-line eslint(no-bitwise)
 const isBold = (fontStyle: number | undefined) => fontStyle && fontStyle & 2;
 const isUnderline = (fontStyle: number | undefined) =>
   // biome-ignore lint/suspicious/noBitwiseOperators: shiki bitflag check
@@ -389,28 +386,37 @@ export const CodeBlockContent = ({
   // Memoized raw tokens for immediate display
   const rawTokens = useMemo(() => createRawTokens(code), [code]);
 
-  // Try to get cached result synchronously, otherwise use raw tokens
-  const [tokenized, setTokenized] = useState<TokenizedCode>(
+  // Synchronously resolve cached highlight or fall back to raw tokens
+  const syncTokenized = useMemo(
     () => highlightCode(code, language) ?? rawTokens,
+    [code, language, rawTokens],
   );
+
+  // Async highlighting upgrades the sync result when ready.
+  // Key-based staleness check avoids needing sync setState or ref reads in render.
+  const [asyncResult, setAsyncResult] = useState<{
+    key: string;
+    tokens: TokenizedCode;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    const key = `${code}\0${language}`;
 
-    // Reset to raw tokens when code changes (shows current code, not stale tokens)
-    setTokenized(highlightCode(code, language) ?? rawTokens);
-
-    // Subscribe to async highlighting result
     highlightCode(code, language, (result) => {
       if (!cancelled) {
-        setTokenized(result);
+        setAsyncResult({ key, tokens: result });
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [code, language, rawTokens]);
+  }, [code, language]);
+
+  const currentKey = `${code}\0${language}`;
+  const tokenized =
+    asyncResult?.key === currentKey ? asyncResult.tokens : syncTokenized;
 
   return (
     <div className="relative overflow-auto">

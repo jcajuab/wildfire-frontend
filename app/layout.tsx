@@ -52,7 +52,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <StoreProvider>{children}</StoreProvider>
-            <Toaster />
+            <Toaster position="top-center" />
           </AuthProvider>
         </ThemeProvider>
       </body>

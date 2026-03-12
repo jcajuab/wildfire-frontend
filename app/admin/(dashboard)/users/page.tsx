@@ -6,6 +6,7 @@ import { IconPlus, IconCopy, IconCheck } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { EmptyState } from "@/components/common/empty-state";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
 import {
@@ -181,25 +182,40 @@ export default function UsersPage(): ReactElement {
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
-            <div className="overflow-hidden rounded-md border border-border">
-              <UsersTable
-                users={users}
-                availableRoles={availableRoles}
-                userRolesByUserId={userRolesByUserId}
-                sort={sort}
-                onSortChange={handleSortChange}
-                onEdit={handleEdit}
-                onRoleToggle={handleRoleToggle}
-                onBanUser={handleRequestBanUser}
-                onUnbanUser={handleRequestUnbanUser}
-                onResetPassword={handleResetPassword}
-                canUpdate={canUpdateUser}
-                canDelete={canDeleteUser}
-                isSuperAdmin={isAdmin}
-                systemRoleIds={systemRoleIds}
-                currentUserId={currentUser?.id}
+            {users.length === 0 ? (
+              <EmptyState
+                title="No users yet"
+                description="Invite users to give them access to WILDFIRE."
+                action={
+                  <Can permission="users:create">
+                    <Button onClick={() => setIsInviteDialogOpen(true)}>
+                      <IconPlus className="size-4" />
+                      Invite User
+                    </Button>
+                  </Can>
+                }
               />
-            </div>
+            ) : (
+              <div className="overflow-hidden rounded-md border border-border">
+                <UsersTable
+                  users={users}
+                  availableRoles={availableRoles}
+                  userRolesByUserId={userRolesByUserId}
+                  sort={sort}
+                  onSortChange={handleSortChange}
+                  onEdit={handleEdit}
+                  onRoleToggle={handleRoleToggle}
+                  onBanUser={handleRequestBanUser}
+                  onUnbanUser={handleRequestUnbanUser}
+                  onResetPassword={handleResetPassword}
+                  canUpdate={canUpdateUser}
+                  canDelete={canDeleteUser}
+                  isSuperAdmin={isAdmin}
+                  systemRoleIds={systemRoleIds}
+                  currentUserId={currentUser?.id}
+                />
+              </div>
+            )}
 
             <Can permission="users:create">
               <section className="overflow-hidden rounded-md border border-border">

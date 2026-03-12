@@ -5,6 +5,7 @@ import { IconPlus } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { EmptyState } from "@/components/common/empty-state";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { RoleDialog } from "@/components/roles/role-dialog";
 import { SearchControl } from "@/components/common/search-control";
@@ -108,17 +109,32 @@ export default function RolesPage(): ReactElement {
           </div>
 
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
-            <div className="overflow-hidden rounded-md border border-border">
-              <RolesTable
-                roles={roles}
-                sort={sort}
-                onSortChange={handleSortChange}
-                onEdit={handleEdit}
-                onDelete={handleDeleteRole}
-                canEdit={canUpdateRole}
-                canDelete={canDeleteRole}
+            {roles.length === 0 ? (
+              <EmptyState
+                title="No roles yet"
+                description="Create roles to group permissions and assign them to users."
+                action={
+                  <Can permission="roles:create">
+                    <Button onClick={handleCreate}>
+                      <IconPlus className="size-4" />
+                      Create Role
+                    </Button>
+                  </Can>
+                }
               />
-            </div>
+            ) : (
+              <div className="overflow-hidden rounded-md border border-border">
+                <RolesTable
+                  roles={roles}
+                  sort={sort}
+                  onSortChange={handleSortChange}
+                  onEdit={handleEdit}
+                  onDelete={handleDeleteRole}
+                  canEdit={canUpdateRole}
+                  canDelete={canDeleteRole}
+                />
+              </div>
+            )}
           </div>
         </DashboardPage.Content>
 

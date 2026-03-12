@@ -94,7 +94,10 @@ export default function SchedulesPage(): ReactElement {
   const { data: displaysData } = useGetDisplayOptionsQuery(undefined, {
     skip: !canReadDisplays,
   });
-  const { data: schedulesData } = useListSchedulesQuery(scheduleWindow);
+  const { data: schedulesData } = useListSchedulesQuery(scheduleWindow, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
   const { data: playlistsData } = useGetPlaylistOptionsQuery(undefined, {
     skip: !canReadPlaylists,
   });

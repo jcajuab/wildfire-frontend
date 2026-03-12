@@ -5,6 +5,7 @@ import { IconPlus, IconPresentation } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { EmptyState } from "@/components/common/empty-state";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { CreatePlaylistDialog } from "@/components/playlists/create-playlist-dialog";
 import { EditPlaylistItemsDialog } from "@/components/playlists/edit-playlist-items-dialog";
@@ -106,13 +107,30 @@ export default function PlaylistsPage(): ReactElement {
           </div>
 
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
-            <PlaylistGrid
-              playlists={playlists}
-              onEdit={canUpdatePlaylist ? handleEditPlaylist : undefined}
-              onManageItems={canUpdatePlaylist ? handleManageItems : undefined}
-              onPreview={handlePreviewPlaylist}
-              onDelete={canDeletePlaylist ? handleDeletePlaylist : undefined}
-            />
+            {playlists.length === 0 ? (
+              <EmptyState
+                title="No playlists yet"
+                description="Create a playlist to organize content and assign it to your displays."
+                action={
+                  <Can permission="playlists:create">
+                    <Button onClick={() => handleCreateDialogOpenChange(true)}>
+                      <IconPlus className="size-4" />
+                      Create Playlist
+                    </Button>
+                  </Can>
+                }
+              />
+            ) : (
+              <PlaylistGrid
+                playlists={playlists}
+                onEdit={canUpdatePlaylist ? handleEditPlaylist : undefined}
+                onManageItems={
+                  canUpdatePlaylist ? handleManageItems : undefined
+                }
+                onPreview={handlePreviewPlaylist}
+                onDelete={canDeletePlaylist ? handleDeletePlaylist : undefined}
+              />
+            )}
           </div>
         </DashboardPage.Content>
 

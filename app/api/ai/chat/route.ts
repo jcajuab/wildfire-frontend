@@ -1,40 +1,19 @@
 import type { NextRequest } from "next/server";
-import { getBackendUrl } from "@/lib/api/backend-url";
+import { proxyToBackend } from "@/lib/api/proxy";
 
 export async function POST(request: NextRequest): Promise<Response> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader) {
-    return new Response("Unauthorized", { status: 401 });
+  const aiProviderKey = request.headers.get("x-ai-provider-key");
+  const extraHeaders: Record<string, string> = {};
+  if (aiProviderKey) {
+    extraHeaders["x-ai-provider-key"] = aiProviderKey;
   }
 
-  const body = await request.text();
-
-  const response = await fetch(`${getBackendUrl()}/ai/chat`, {
+  return proxyToBackend({
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: authHeader,
-    },
-    body,
-  });
-
-  if (
-    !response.ok &&
-    !response.headers.get("content-type")?.includes("text/event-stream")
-  ) {
-    const text = await response.text();
-    return new Response(text, {
-      status: response.status,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  return new Response(response.body, {
-    status: response.status,
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
+    path: "/ai/chat",
+    authHeader: request.headers.get("Authorization"),
+    body: await request.text(),
+    streamResponse: true,
+    extraHeaders,
   });
 }

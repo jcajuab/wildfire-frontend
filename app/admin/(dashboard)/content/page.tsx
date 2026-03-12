@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import { IconPlus } from "@tabler/icons-react";
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { EmptyState } from "@/components/common/empty-state";
 import { ContentFilterPopover } from "@/components/content/content-filter-popover";
 import { ContentGrid } from "@/components/content/content-grid";
 import { CreateContentDialog } from "@/components/content/create-content-dialog";
@@ -93,36 +94,55 @@ export default function ContentPage(): ReactElement {
           </div>
 
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
-            <ContentGrid
-              items={controller.visibleContents}
-              expandedPdfParentIds={controller.pdfState.expandedPdfParentIds}
-              pageCollectionsByParentId={
-                controller.pdfState.pageCollectionsByParentId
-              }
-              updatingPageId={controller.pdfState.updatingPageId}
-              onTogglePdfExpand={controller.pdfState.handleTogglePdfExpand}
-              onLoadMorePages={controller.pdfState.handleLoadMorePages}
-              onRetryLoadPages={controller.pdfState.handleRetryLoadPages}
-              onTogglePageExclusion={
-                controller.canUpdateContent
-                  ? controller.pdfState.handleTogglePageExclusion
-                  : undefined
-              }
-              onEdit={
-                controller.canUpdateContent ? controller.handleEdit : undefined
-              }
-              onPreview={controller.handlePreview}
-              onDelete={
-                controller.canDeleteContent
-                  ? controller.handleDelete
-                  : undefined
-              }
-              onDownload={
-                controller.canDownloadContent
-                  ? controller.handleDownload
-                  : undefined
-              }
-            />
+            {controller.visibleContents.length === 0 ? (
+              <EmptyState
+                title="No content yet"
+                description="Upload images, videos, or create flash and text content to get started."
+                action={
+                  <Can permission="content:create">
+                    <Button
+                      onClick={() => controller.setIsCreateDialogOpen(true)}
+                    >
+                      <IconPlus className="size-4" />
+                      Create Content
+                    </Button>
+                  </Can>
+                }
+              />
+            ) : (
+              <ContentGrid
+                items={controller.visibleContents}
+                expandedPdfParentIds={controller.pdfState.expandedPdfParentIds}
+                pageCollectionsByParentId={
+                  controller.pdfState.pageCollectionsByParentId
+                }
+                updatingPageId={controller.pdfState.updatingPageId}
+                onTogglePdfExpand={controller.pdfState.handleTogglePdfExpand}
+                onLoadMorePages={controller.pdfState.handleLoadMorePages}
+                onRetryLoadPages={controller.pdfState.handleRetryLoadPages}
+                onTogglePageExclusion={
+                  controller.canUpdateContent
+                    ? controller.pdfState.handleTogglePageExclusion
+                    : undefined
+                }
+                onEdit={
+                  controller.canUpdateContent
+                    ? controller.handleEdit
+                    : undefined
+                }
+                onPreview={controller.handlePreview}
+                onDelete={
+                  controller.canDeleteContent
+                    ? controller.handleDelete
+                    : undefined
+                }
+                onDownload={
+                  controller.canDownloadContent
+                    ? controller.handleDownload
+                    : undefined
+                }
+              />
+            )}
           </div>
         </DashboardPage.Content>
 

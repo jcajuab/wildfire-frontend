@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { useAuth } from "@/context/auth-context";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import { getBaseUrl } from "@/lib/api/base-query";
 
 export interface AICredential {
   provider: string;
@@ -19,6 +20,7 @@ interface UseAICredentialsReturn {
   isDeleting: string | null;
   saveCredential: (provider: string, apiKey: string) => Promise<boolean>;
   deleteCredential: (provider: string) => Promise<boolean>;
+  refetch: () => Promise<AICredential[]>;
 }
 
 export function useAICredentials(): UseAICredentialsReturn {
@@ -29,12 +31,12 @@ export function useAICredentials(): UseAICredentialsReturn {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
-  const fetchCredentials = useCallback(async () => {
-    if (!token) return;
+  const fetchCredentials = useCallback(async (): Promise<AICredential[]> => {
+    if (!token) return [];
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/ai/credentials", {
+      const response = await fetch(`${getBaseUrl()}/ai/credentials`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) {
@@ -43,10 +45,13 @@ export function useAICredentials(): UseAICredentialsReturn {
       const json = (await response.json()) as {
         data: Array<{ provider: string; keyHint: string }>;
       };
-      setCredentials(json.data ?? []);
+      const result = json.data ?? [];
+      setCredentials(result);
+      return result;
     } catch (err) {
       const message = getApiErrorMessage(err, "Failed to load AI credentials.");
       setError(message);
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +66,7 @@ export function useAICredentials(): UseAICredentialsReturn {
       if (!token) return false;
       setIsSaving(true);
       try {
-        const response = await fetch("/api/ai/credentials", {
+        const response = await fetch(`${getBaseUrl()}/ai/credentials`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -92,10 +97,13 @@ export function useAICredentials(): UseAICredentialsReturn {
       if (!token) return false;
       setIsDeleting(provider);
       try {
-        const response = await fetch(`/api/ai/credentials/${provider}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await fetch(
+          `${getBaseUrl()}/ai/credentials/${provider}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         if (!response.ok) {
           const payload: unknown = await response.json().catch(() => null);
           throw payload ?? new Error(`HTTP ${response.status}`);
@@ -122,5 +130,6 @@ export function useAICredentials(): UseAICredentialsReturn {
     isDeleting,
     saveCredential,
     deleteCredential,
+    refetch: fetchCredentials,
   };
 }
