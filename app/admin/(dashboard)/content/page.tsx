@@ -105,6 +105,7 @@ export default function ContentPage(): ReactElement {
                 value={controller.filters.search}
                 onChange={controller.filters.handleSearchChange}
                 ariaLabel="Search content"
+                placeholder="Search content..."
                 className="w-full max-w-none sm:w-72"
               />
             </div>
