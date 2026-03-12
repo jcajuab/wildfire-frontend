@@ -12,7 +12,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
-import { formatContentStatus } from "@/lib/formatters";
+import {
+  formatContentStatus,
+  getContentStatusBadgeClassName,
+} from "@/lib/formatters";
 import type { Content } from "@/types/content";
 
 interface ContentPagesSheetProps {
@@ -115,7 +118,10 @@ export function ContentPagesSheet({
                       <div className="min-w-0 flex-1 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-sm font-medium">{pageLabel}</p>
-                          <Badge variant="outline">
+                          <Badge
+                            variant="outline"
+                            className={getContentStatusBadgeClassName(page.status)}
+                          >
                             {formatContentStatus(page.status)}
                           </Badge>
                           {page.isExcluded ? (

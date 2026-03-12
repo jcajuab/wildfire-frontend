@@ -1,8 +1,9 @@
 "use client";
 
-import { type ReactElement, memo } from "react";
+import { type ReactElement, memo, useEffect, useRef, useState } from "react";
 import {
-  IconDotsVertical,
+  IconAlertTriangle,
+  IconDots,
   IconEye,
   IconExternalLink,
   IconEdit,
@@ -11,6 +12,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,8 +26,34 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { DisplayPreview } from "./display-preview";
-import { GroupBadge } from "./group-badge";
 import type { Display, DisplayStatus } from "@/types/display";
+
+const GROUP_GAP_PX = 6;
+const META_BADGE_CLASSNAME = "h-6 shrink-0 px-2.5 text-[11px] leading-none";
+
+function getVisibleGroupCount(
+  groupWidths: number[],
+  overflowWidths: number[],
+  containerWidth: number,
+): number {
+  if (groupWidths.length === 0 || containerWidth <= 0) {
+    return groupWidths.length;
+  }
+
+  for (let visibleCount = groupWidths.length; visibleCount >= 0; visibleCount -= 1) {
+    const hiddenCount = groupWidths.length - visibleCount;
+    const visibleWidth = groupWidths.slice(0, visibleCount).reduce((sum, width) => sum + width, 0);
+    const visibleGapWidth = visibleCount > 1 ? (visibleCount - 1) * GROUP_GAP_PX : 0;
+    const overflowBadgeWidth = hiddenCount > 0 ? (overflowWidths[hiddenCount - 1] ?? 0) : 0;
+    const overflowGapWidth = hiddenCount > 0 && visibleCount > 0 ? GROUP_GAP_PX : 0;
+
+    if (visibleWidth + visibleGapWidth + overflowBadgeWidth + overflowGapWidth <= containerWidth) {
+      return visibleCount;
+    }
+  }
+
+  return 0;
+}
 
 interface DisplayCardProps {
   readonly display: Display;
@@ -97,6 +125,59 @@ export const DisplayCard = memo(function DisplayCard({
   const statusStyles = getStatusStyles(display.status);
   const shouldPulse = display.status === "LIVE" || display.status === "READY";
   const statusLabel = getStatusLabel(display.status);
+  const outputLabel = display.output.trim() || "Not available";
+  const resolutionLabel = display.resolution.trim();
+  const showResolution =
+    resolutionLabel !== "" && resolutionLabel.toLowerCase() !== "not available";
+  const isEmergencyContentMissing = display.emergencyContentId === null;
+  const groupOverflowContainerRef = useRef<HTMLDivElement | null>(null);
+  const groupMeasureRef = useRef<HTMLDivElement | null>(null);
+  const [visibleGroupCount, setVisibleGroupCount] = useState(display.groups.length);
+
+  useEffect(() => {
+    const updateVisibleGroups = () => {
+      const container = groupOverflowContainerRef.current;
+      const measureRoot = groupMeasureRef.current;
+      if (!container || !measureRoot) {
+        return;
+      }
+
+      const containerWidth = container.clientWidth;
+      if (containerWidth <= 0) {
+        setVisibleGroupCount(display.groups.length);
+        return;
+      }
+
+      const groupWidths = Array.from(
+        measureRoot.querySelectorAll<HTMLElement>("[data-group-measure]"),
+      ).map((node) => node.getBoundingClientRect().width);
+
+      const overflowWidths = Array.from(
+        measureRoot.querySelectorAll<HTMLElement>("[data-group-overflow-measure]"),
+      ).map((node) => node.getBoundingClientRect().width);
+
+      setVisibleGroupCount(
+        getVisibleGroupCount(groupWidths, overflowWidths, containerWidth),
+      );
+    };
+
+    updateVisibleGroups();
+
+    const observer = new ResizeObserver(() => {
+      updateVisibleGroups();
+    });
+
+    if (groupOverflowContainerRef.current) {
+      observer.observe(groupOverflowContainerRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [display.groups]);
+
+  const visibleGroups = display.groups.slice(0, visibleGroupCount);
+  const hiddenGroupCount = Math.max(display.groups.length - visibleGroups.length, 0);
 
   return (
     <article className="group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors duration-200 hover:border-primary/25 motion-reduce:transition-none">
@@ -105,25 +186,40 @@ export const DisplayCard = memo(function DisplayCard({
           <h3 className="truncate text-lg font-semibold leading-none">
             {display.name}
           </h3>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                className="relative inline-flex size-4 shrink-0 cursor-default items-center justify-center"
-                aria-label={statusLabel}
-              >
-                {shouldPulse ? (
-                  <span
-                    className={`absolute inline-flex h-full w-full animate-ping rounded-full ${statusStyles.pulseClassName} opacity-55 motion-reduce:animate-none`}
-                  />
-                ) : null}
+          <div className="flex items-center gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <span
-                  className={`relative inline-flex size-2.5 rounded-full ${statusStyles.dotClassName}`}
-                  aria-hidden="true"
-                />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>{statusLabel}</TooltipContent>
-          </Tooltip>
+                  className="relative inline-flex size-4 shrink-0 cursor-default items-center justify-center"
+                  aria-label={statusLabel}
+                >
+                  {shouldPulse ? (
+                    <span
+                      className={`absolute inline-flex h-full w-full animate-ping rounded-full ${statusStyles.pulseClassName} opacity-55 motion-reduce:animate-none`}
+                    />
+                  ) : null}
+                  <span
+                    className={`relative inline-flex size-2.5 rounded-full ${statusStyles.dotClassName}`}
+                    aria-hidden="true"
+                  />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{statusLabel}</TooltipContent>
+            </Tooltip>
+            {isEmergencyContentMissing ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="inline-flex size-5 items-center justify-center rounded-full text-amber-700"
+                    aria-label="Emergency not set"
+                  >
+                    <IconAlertTriangle className="size-3.5" aria-hidden="true" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>Emergency not set</TooltipContent>
+              </Tooltip>
+            ) : null}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -134,7 +230,7 @@ export const DisplayCard = memo(function DisplayCard({
                 size="icon-sm"
                 aria-label={`Actions for ${display.name}`}
               >
-                <IconDotsVertical className="size-4" aria-hidden="true" />
+                <IconDots className="size-4" aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-44">
@@ -169,25 +265,92 @@ export const DisplayCard = memo(function DisplayCard({
         </div>
       </header>
 
-      <div className="flex min-h-6 flex-wrap gap-1.5 items-center">
-        {isGlobalEmergencyActive ? (
-          <Badge variant="destructive">Emergency Active</Badge>
+      <div className="flex min-h-6 min-w-0 items-center gap-1.5">
+        <Badge
+          variant="outline"
+          className={`${META_BADGE_CLASSNAME} bg-background text-foreground`}
+        >
+          {outputLabel}
+        </Badge>
+        {showResolution ? (
+          <Badge
+            variant="outline"
+            className={`${META_BADGE_CLASSNAME} bg-background text-foreground`}
+          >
+            {resolutionLabel}
+          </Badge>
         ) : null}
-        {display.groups.length > 0 ? (
-          display.groups.map((group) => (
-            <GroupBadge
-              key={group.name}
-              name={group.name}
-              colorIndex={group.colorIndex ?? 0}
-            />
-          ))
-        ) : (
-          <Badge variant="secondary">Ungrouped</Badge>
-        )}
+        <Separator orientation="vertical" className="h-4 bg-border/80" />
+        {isGlobalEmergencyActive ? (
+          <Badge variant="destructive" className={META_BADGE_CLASSNAME}>
+            Emergency Active
+          </Badge>
+        ) : null}
+        <div
+          ref={groupOverflowContainerRef}
+          data-group-overflow-container="true"
+          className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden"
+        >
+          {display.groups.length > 0 ? (
+            <>
+              {visibleGroups.map((group) => (
+                <Badge
+                  key={group.name}
+                  data-group-visible={group.name}
+                  variant="secondary"
+                  className={`${META_BADGE_CLASSNAME} max-w-full truncate border border-blue-200 bg-blue-600 text-white`}
+                >
+                  {group.name}
+                </Badge>
+              ))}
+              {hiddenGroupCount > 0 ? (
+                <Badge
+                  data-group-overflow-visible={String(hiddenGroupCount)}
+                  variant="secondary"
+                  className={`${META_BADGE_CLASSNAME} border border-blue-200 bg-blue-600 text-white`}
+                >
+                  +{hiddenGroupCount}
+                </Badge>
+              ) : null}
+            </>
+          ) : (
+            <Badge variant="secondary" className={META_BADGE_CLASSNAME}>
+              Ungrouped
+            </Badge>
+          )}
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border/70 bg-background aspect-video">
-        <DisplayPreview displayId={display.id} displayName={display.name} />
+      <div ref={groupMeasureRef} className="invisible absolute -z-10 flex gap-1.5">
+        {display.groups.map((group) => (
+          <Badge
+            key={`measure-${group.name}`}
+            data-group-measure={group.name}
+            variant="secondary"
+            className={`${META_BADGE_CLASSNAME} border border-blue-200 bg-blue-600 text-white`}
+          >
+            {group.name}
+          </Badge>
+        ))}
+        {display.groups.slice(1).map((_, index) => {
+          const hiddenCount = index + 1;
+          return (
+            <Badge
+              key={`measure-overflow-${hiddenCount}`}
+              data-group-overflow-measure={String(hiddenCount)}
+              variant="secondary"
+              className={`${META_BADGE_CLASSNAME} border border-blue-200 bg-blue-600 text-white`}
+            >
+              +{hiddenCount}
+            </Badge>
+          );
+        })}
+      </div>
+
+      <div className="relative overflow-hidden rounded-xl border border-border/70 bg-background aspect-[16/8.5]">
+        <div className="h-full w-full">
+          <DisplayPreview displayId={display.id} displayName={display.name} />
+        </div>
       </div>
     </article>
   );

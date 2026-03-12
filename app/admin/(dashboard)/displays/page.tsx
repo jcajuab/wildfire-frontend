@@ -23,7 +23,6 @@ export default function DisplaysPage(): ReactElement {
     canUpdateDisplay,
     canDeleteDisplay,
     statusFilter,
-    sortBy,
     search,
     page,
     groupFilters,
@@ -51,7 +50,6 @@ export default function DisplaysPage(): ReactElement {
     setPage,
     refetch,
     handleStatusFilterChange,
-    handleSortChange,
     handleSearchChange,
     handleGroupFilterChange,
     handleOutputFilterChange,
@@ -76,7 +74,7 @@ export default function DisplaysPage(): ReactElement {
             <Can permission="displays:create">
               <Button onClick={() => setIsAddInfoDialogOpen(true)}>
                 <IconPlus className="size-4" aria-hidden="true" />
-                Add Display
+                Register Display
               </Button>
             </Can>
             <Can permission="displays:update">
@@ -104,14 +102,13 @@ export default function DisplaysPage(): ReactElement {
           <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
             <DisplaysToolbar
               statusFilter={statusFilter}
-              sortBy={sortBy}
               search={search}
               selectedGroups={groupFilters}
               selectedOutput={normalizedOutputFilter}
+              filteredResultsCount={displaysData?.total ?? 0}
               availableGroups={availableGroupFilters}
               availableOutputs={availableOutputFilters}
               onStatusFilterChange={handleStatusFilterChange}
-              onSortChange={handleSortChange}
               onSearchChange={handleSearchChange}
               onGroupFilterChange={handleGroupFilterChange}
               onOutputFilterChange={handleOutputFilterChange}

@@ -1,6 +1,23 @@
 import { describe, expect, test } from "vitest";
 import { can as canPermission } from "@/lib/permissions";
-import { getFirstPermittedAdminRoute } from "@/lib/route-permissions";
+import {
+  getFirstPermittedAdminRoute,
+  getRequiredReadPermission,
+} from "@/lib/route-permissions";
+
+describe("getRequiredReadPermission", () => {
+  test("returns playlist create for the dedicated create route", () => {
+    expect(getRequiredReadPermission("/admin/playlists/create")).toBe(
+      "playlists:create",
+    );
+  });
+
+  test("keeps playlist index on the read permission", () => {
+    expect(getRequiredReadPermission("/admin/playlists")).toBe(
+      "playlists:read",
+    );
+  });
+});
 
 describe("getFirstPermittedAdminRoute", () => {
   test("returns first route when the first permission is available", () => {

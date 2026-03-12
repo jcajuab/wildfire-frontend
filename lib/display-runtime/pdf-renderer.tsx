@@ -27,7 +27,7 @@ export function PdfRenderer({
   useEffect(() => {
     let cancelled = false;
     const container = containerRef.current;
-    if (!container || viewportWidth <= 0) {
+    if (!container || viewportWidth <= 0 || viewportHeight <= 0) {
       return;
     }
 
@@ -37,7 +37,10 @@ export function PdfRenderer({
       const pdfDocument = await loadingTask.promise;
       const page = await pdfDocument.getPage(1);
       const initialViewport = page.getViewport({ scale: 1 });
-      const scale = viewportWidth / initialViewport.width;
+      const scale = Math.max(
+        viewportWidth / initialViewport.width,
+        viewportHeight / initialViewport.height,
+      );
       const viewport = page.getViewport({ scale });
       const canvas = window.document.createElement("canvas");
       const context = canvas.getContext("2d");
@@ -50,6 +53,10 @@ export function PdfRenderer({
       canvas.style.height = `${viewport.height}px`;
       canvas.style.display = "block";
       canvas.style.pointerEvents = "none";
+      canvas.style.position = "absolute";
+      canvas.style.left = "50%";
+      canvas.style.top = "50%";
+      canvas.style.transform = "translate(-50%, -50%)";
 
       await page.render({
         canvas,
@@ -71,12 +78,12 @@ export function PdfRenderer({
     return () => {
       cancelled = true;
     };
-  }, [src, viewportWidth]);
+  }, [src, viewportHeight, viewportWidth]);
 
   return (
     <div
       ref={containerRef}
-      className="pointer-events-none w-full select-none overflow-hidden"
+      className="pointer-events-none relative h-full w-full select-none overflow-hidden"
       style={{ height: `${viewportHeight}px` }}
     />
   );

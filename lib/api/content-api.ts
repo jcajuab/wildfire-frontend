@@ -28,6 +28,7 @@ export interface BackendContent {
   readonly textJsonContent: string | null;
   readonly textHtmlContent: string | null;
   readonly createdAt: string;
+  readonly updatedAt: string;
   readonly owner: {
     readonly id: string;
     readonly name: string | null;

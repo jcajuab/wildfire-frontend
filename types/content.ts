@@ -36,6 +36,7 @@ export interface Content {
   readonly textHtmlContent: string | null;
   readonly status: ContentStatus;
   readonly createdAt: string;
+  readonly updatedAt: string;
   readonly owner: ContentOwner;
 }
 

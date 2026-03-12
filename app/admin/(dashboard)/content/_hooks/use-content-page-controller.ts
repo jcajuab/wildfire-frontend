@@ -28,18 +28,15 @@ export function useContentPageController() {
   const pdfState = useContentPagePdfState();
   const dialogState = useContentDialogState();
 
-  const { data, isLoading, isError, error } = useListContentQuery(
-    {
-      page: filters.page,
-      pageSize: PAGE_SIZE,
-      status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
-      type: filters.typeFilter === "all" ? undefined : filters.typeFilter,
-      search: filters.search.trim().length > 0 ? filters.search : undefined,
-      sortBy: filters.sortBy,
-      sortDirection: "desc",
-    },
-    { refetchOnFocus: true, refetchOnReconnect: true },
-  );
+  const { data, isLoading, isError, error } = useListContentQuery({
+    page: filters.page,
+    pageSize: PAGE_SIZE,
+    status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
+    type: filters.typeFilter === "all" ? undefined : filters.typeFilter,
+    search: filters.search.trim().length > 0 ? filters.search : undefined,
+    sortBy: "createdAt",
+    sortDirection: "desc",
+  });
 
   const [getContentJob] = useLazyGetContentJobQuery();
   const { trackContentJob } = useContentJobMonitor({
@@ -78,6 +75,8 @@ export function useContentPageController() {
     isError,
     isCreateDialogOpen: dialogState.isCreateDialogOpen,
     setIsCreateDialogOpen: dialogState.setIsCreateDialogOpen,
+    createMode: dialogState.createMode,
+    openCreateDialog: dialogState.openCreateDialog,
     contentToPreview: dialogState.contentToPreview,
     contentToEdit: dialogState.contentToEdit,
     contentToDelete: dialogState.contentToDelete,

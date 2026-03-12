@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconFilter } from "@tabler/icons-react";
+import { IconFilter, IconX } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,53 +17,92 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import type { PlaylistStatus } from "@/types/playlist";
 
-export type DurationFilter = "all" | "short" | "medium" | "long";
+export type PlaylistStatusFilter = "all" | PlaylistStatus;
 
 interface PlaylistFilterPopoverProps {
-  readonly durationFilter: DurationFilter;
-  readonly onDurationFilterChange: (value: DurationFilter) => void;
+  readonly statusFilter: PlaylistStatusFilter;
+  readonly filteredResultsCount: number;
+  readonly onStatusFilterChange: (value: PlaylistStatusFilter) => void;
+  readonly onClearFilters: () => void;
 }
 
-const durationOptions: readonly {
-  readonly value: DurationFilter;
+const statusOptions: readonly {
+  readonly value: PlaylistStatusFilter;
   readonly label: string;
 }[] = [
-  { value: "all", label: "All Durations" },
-  { value: "short", label: "< 1 min" },
-  { value: "medium", label: "1-5 min" },
-  { value: "long", label: "> 5 min" },
+  { value: "all", label: "All" },
+  { value: "DRAFT", label: "Draft" },
+  { value: "IN_USE", label: "In Use" },
 ] as const;
 
 export function PlaylistFilterPopover({
-  durationFilter,
-  onDurationFilterChange,
+  statusFilter,
+  filteredResultsCount,
+  onStatusFilterChange,
+  onClearFilters,
 }: PlaylistFilterPopoverProps): ReactElement {
+  const hasActiveFilters = statusFilter !== "all";
+
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="default">
+        <Button variant="outline" size="default" className="gap-2">
           <IconFilter className="size-4" />
           Filter
+          {hasActiveFilters ? (
+            <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground tabular-nums">
+              {filteredResultsCount}
+            </span>
+          ) : null}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64" align="end">
-        <div className="flex flex-col gap-3">
+      <PopoverContent
+        className="w-80 p-4"
+        side="bottom"
+        align="end"
+        avoidCollisions={false}
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Filters</h3>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="gap-1.5"
+              onClick={onClearFilters}
+              disabled={!hasActiveFilters}
+            >
+              <IconX className="size-3.5" aria-hidden="true" />
+              Clear
+            </Button>
+          </div>
+
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="duration-filter" className="text-xs font-medium">
-              Duration
+            <Label
+              htmlFor="playlist-status-filter"
+              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              Status
             </Label>
             <Select
-              value={durationFilter}
+              value={statusFilter}
               onValueChange={(value) =>
-                onDurationFilterChange(value as DurationFilter)
+                onStatusFilterChange(value as PlaylistStatusFilter)
               }
             >
-              <SelectTrigger id="duration-filter">
-                <SelectValue placeholder="Select duration" />
+              <SelectTrigger id="playlist-status-filter" className="w-full">
+                <SelectValue placeholder="All" />
               </SelectTrigger>
-              <SelectContent>
-                {durationOptions.map((option) => (
+              <SelectContent
+                position="popper"
+                side="bottom"
+                align="start"
+                avoidCollisions={false}
+              >
+                {statusOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

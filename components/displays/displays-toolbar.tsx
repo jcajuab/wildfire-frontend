@@ -4,23 +4,18 @@ import type { ReactElement } from "react";
 
 import { DisplayFilterPopover } from "@/components/displays/display-filter-popover";
 import { SearchControl } from "@/components/common/search-control";
-import { DisplaySortSelect } from "@/components/displays/display-sort-select";
-import {
-  DisplayStatusTabs,
-  type DisplayStatusFilter,
-} from "@/components/displays/display-status-tabs";
-import type { DisplayOutputFilter, DisplaySortField } from "@/types/display";
+import type { DisplayOutputFilter } from "@/types/display";
+import type { DisplayStatusFilter } from "@/components/displays/display-filter-popover";
 
 interface DisplaysToolbarProps {
   readonly statusFilter: DisplayStatusFilter;
-  readonly sortBy: DisplaySortField;
   readonly search: string;
   readonly selectedGroups: readonly string[];
   readonly selectedOutput: DisplayOutputFilter;
+  readonly filteredResultsCount: number;
   readonly availableGroups: readonly string[];
   readonly availableOutputs: readonly string[];
   readonly onStatusFilterChange: (value: DisplayStatusFilter) => void;
-  readonly onSortChange: (value: DisplaySortField) => void;
   readonly onSearchChange: (value: string) => void;
   readonly onGroupFilterChange: (value: readonly string[]) => void;
   readonly onOutputFilterChange: (value: DisplayOutputFilter) => void;
@@ -29,44 +24,38 @@ interface DisplaysToolbarProps {
 
 export function DisplaysToolbar({
   statusFilter,
-  sortBy,
   search,
   selectedGroups,
   selectedOutput,
+  filteredResultsCount,
   availableGroups,
   availableOutputs,
   onStatusFilterChange,
-  onSortChange,
   onSearchChange,
   onGroupFilterChange,
   onOutputFilterChange,
   onClearFilters,
 }: DisplaysToolbarProps): ReactElement {
   return (
-    <>
-      <DisplayStatusTabs
-        value={statusFilter}
-        onValueChange={onStatusFilterChange}
+    <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+      <DisplayFilterPopover
+        statusFilter={statusFilter}
+        selectedGroups={selectedGroups}
+        selectedOutput={selectedOutput}
+        filteredResultsCount={filteredResultsCount}
+        availableGroups={availableGroups}
+        availableOutputs={availableOutputs}
+        onStatusChange={onStatusFilterChange}
+        onGroupsChange={onGroupFilterChange}
+        onOutputChange={onOutputFilterChange}
+        onClearFilters={onClearFilters}
       />
-
-      <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto">
-        <DisplayFilterPopover
-          selectedGroups={selectedGroups}
-          selectedOutput={selectedOutput}
-          availableGroups={availableGroups}
-          availableOutputs={availableOutputs}
-          onGroupsChange={onGroupFilterChange}
-          onOutputChange={onOutputFilterChange}
-          onClearFilters={onClearFilters}
-        />
-        <DisplaySortSelect value={sortBy} onValueChange={onSortChange} />
-        <SearchControl
-          value={search}
-          onChange={onSearchChange}
-          ariaLabel="Search displays"
-          className="w-full max-w-none md:w-72"
-        />
-      </div>
-    </>
+      <SearchControl
+        value={search}
+        onChange={onSearchChange}
+        ariaLabel="Search displays"
+        className="w-full max-w-none sm:w-72"
+      />
+    </div>
   );
 }

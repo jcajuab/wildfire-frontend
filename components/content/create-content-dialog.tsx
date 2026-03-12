@@ -1,8 +1,9 @@
 "use client";
 
 import type { ChangeEvent, ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
-import { IconBolt, IconFileText, IconUpload } from "@tabler/icons-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { IconBolt, IconFileText, IconUpload, IconX } from "@tabler/icons-react";
+import { FlashTonePreview } from "@/components/content/flash-tone-preview";
 import {
   SUPPORTED_CONTENT_FILE_LABELS,
   SUPPORTED_CONTENT_FILE_MIME_TYPES,
@@ -26,13 +27,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { FlashTone } from "@/types/content";
+
+const FLASH_PREVIEW_DEBOUNCE_MS = 500;
 
 interface CreateContentDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
+  readonly mode: "upload" | "flash" | "text";
   readonly onUploadFile: (
     name: string,
     file: File,
@@ -53,15 +56,15 @@ interface CreateContentDialogProps {
 export function CreateContentDialog({
   open,
   onOpenChange,
+  mode,
   onUploadFile,
   onCreateFlash,
   onCreateText,
 }: CreateContentDialogProps): ReactElement {
-  const [mode, setMode] = useState<"upload" | "flash" | "text">("upload");
   const [title, setTitle] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [scrollPxPerSecond, setScrollPxPerSecond] = useState("");
   const [flashMessage, setFlashMessage] = useState("");
+  const [debouncedFlashMessage, setDebouncedFlashMessage] = useState("");
   const [flashTone, setFlashTone] = useState<FlashTone>("INFO");
   const [textJsonContent, setTextJsonContent] = useState("");
   const [textHtmlContent, setTextHtmlContent] = useState("");
@@ -71,11 +74,10 @@ export function CreateContentDialog({
   const VIDEO_MAX_BYTES = 10 * 1024 * 1024;
 
   const resetState = useCallback(() => {
-    setMode("upload");
     setTitle("");
     setSelectedFile(null);
-    setScrollPxPerSecond("");
-    setFlashMessage("");
+setFlashMessage("");
+    setDebouncedFlashMessage("");
     setFlashTone("INFO");
     setTextJsonContent("");
     setTextHtmlContent("");
@@ -118,14 +120,7 @@ export function CreateContentDialog({
     if (!canSubmit) return;
 
     if (isUploadMode && selectedFile) {
-      const rawScrollPxPerSecond = Number(scrollPxPerSecond);
-      const parsedScrollPxPerSecond =
-        scrollPxPerSecond.trim().length > 0
-          ? Number.isFinite(rawScrollPxPerSecond) && rawScrollPxPerSecond > 0
-            ? Math.trunc(rawScrollPxPerSecond)
-            : undefined
-          : undefined;
-      onUploadFile(title.trim(), selectedFile, parsedScrollPxPerSecond);
+      onUploadFile(title.trim(), selectedFile);
     } else if (isFlashMode) {
       onCreateFlash({
         title: title.trim(),
@@ -153,7 +148,6 @@ export function CreateContentDialog({
     onCreateText,
     onUploadFile,
     selectedFile,
-    scrollPxPerSecond,
     textHtmlContent,
     textJsonContent,
     title,
@@ -208,48 +202,53 @@ export function CreateContentDialog({
     [handleFileSelect],
   );
 
-  const supportsScrollSpeed = useMemo(() => {
-    if (!selectedFile) {
-      return false;
+  useEffect(() => {
+    if (!open) {
+      resetState();
     }
-    return (
-      selectedFile.type.startsWith("image/") ||
-      selectedFile.type === "application/pdf"
-    );
-  }, [selectedFile]);
+  }, [open, resetState]);
+
+  useEffect(() => {
+    resetState();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedFlashMessage(flashMessage);
+    }, FLASH_PREVIEW_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [flashMessage]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={isTextMode ? "sm:max-w-2xl" : "sm:max-w-lg"}>
         <DialogHeader>
-          <DialogTitle>Create Content</DialogTitle>
+          <DialogTitle>
+            {isUploadMode
+              ? "Upload File"
+              : isFlashMode
+                ? "Create Flash"
+                : "Create Text Content"}
+          </DialogTitle>
           <DialogDescription>
-            Upload media, create rich text content, or generate a flash ticker
-            item for scheduling.
+            {isUploadMode
+              ? "Upload an image, video, or PDF to display on your screens."
+              : isFlashMode
+                ? "Create a flash ticker message to display on your screens."
+                : "Create rich text content to display on your screens."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <Tabs
-            value={mode}
-            onValueChange={(value) =>
-              setMode(value as "upload" | "flash" | "text")
-            }
-          >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="upload">Upload</TabsTrigger>
-              <TabsTrigger value="flash">Flash</TabsTrigger>
-              <TabsTrigger value="text">Text</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
+        <div className="min-w-0 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="content-title">
               {isUploadMode
-                ? "Content Name"
+                ? "Content Title"
                 : isFlashMode
                   ? "Flash Title"
-                  : "Text Content Title"}
+                  : "Text Title"}
             </Label>
             <Input
               id="content-title"
@@ -271,7 +270,9 @@ export function CreateContentDialog({
                 className={`flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-8 transition-colors ${
                   isDragging
                     ? "border-primary bg-primary/5"
-                    : "border-muted-foreground/25"
+                    : selectedFile
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-muted-foreground/25"
                 }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -310,32 +311,24 @@ export function CreateContentDialog({
                   </p>
                 ) : null}
                 {selectedFile ? (
-                  <p className="text-xs font-medium text-primary">
-                    Selected: {selectedFile.name}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-primary leading-none">
+                      Selected: {selectedFile.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedFile(null)}
+                      className="text-primary hover:text-destructive transition-colors"
+                    >
+                      <IconX className="size-3.5" />
+                    </button>
+                  </div>
                 ) : null}
               </div>
 
-              {supportsScrollSpeed ? (
-                <div className="space-y-2">
-                  <Label htmlFor="content-scroll-speed">
-                    Scroll Speed (px/s)
-                  </Label>
-                  <Input
-                    id="content-scroll-speed"
-                    type="number"
-                    min={1}
-                    value={scrollPxPerSecond}
-                    onChange={(event) =>
-                      setScrollPxPerSecond(event.target.value)
-                    }
-                    placeholder="Leave empty to use default"
-                  />
-                </div>
-              ) : null}
             </div>
           ) : isFlashMode ? (
-            <div className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="flash-message">Ticker Message</Label>
                 <Textarea
@@ -365,15 +358,10 @@ export function CreateContentDialog({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="overflow-hidden rounded-md border border-border bg-background">
-                <div className="flex h-12 items-center gap-3 whitespace-nowrap bg-foreground px-4 text-sm font-medium text-background">
-                  <IconBolt className="size-4 shrink-0" />
-                  <div className="animate-[marquee_14s_linear_infinite] pr-8 motion-reduce:animate-none">
-                    {(flashMessage.trim() || "Ticker preview") + "   "}
-                    .repeat(4)
-                  </div>
-                </div>
-              </div>
+              <FlashTonePreview
+                tone={flashTone}
+                message={debouncedFlashMessage}
+              />
             </div>
           ) : (
             <div className="space-y-2">

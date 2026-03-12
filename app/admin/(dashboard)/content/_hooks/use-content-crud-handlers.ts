@@ -221,7 +221,12 @@ export function useContentCrudHandlers(
           input.updatePageCollection(updatedParentContentId, (current) => ({
             ...current,
             items: current.items.map((item) =>
-              item.id === updated.id ? updated : item,
+              item.id === updated.id
+                ? {
+                    ...updated,
+                    thumbnailUrl: updated.thumbnailUrl ?? item.thumbnailUrl,
+                  }
+                : item,
             ),
           }));
         }

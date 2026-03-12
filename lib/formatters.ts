@@ -30,6 +30,20 @@ export function formatContentStatus(status: ContentStatus): string {
   }
 }
 
+/** Tailwind classes for content status badges (use with Badge variant="outline" + className). */
+export function getContentStatusBadgeClassName(status: ContentStatus): string {
+  switch (status) {
+    case "READY":
+      return "border-green-200 bg-green-100 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400";
+    case "PROCESSING":
+      return "border-amber-200 bg-amber-100 text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
+    case "FAILED":
+      return "border-gray-200 bg-gray-100 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400";
+    default:
+      return "";
+  }
+}
+
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat(APP_LOCALE).format(value);
 }
@@ -62,6 +76,17 @@ export function formatDate(value: string | Date): string {
     month: "short",
     day: "2-digit",
     year: "numeric",
+  });
+}
+
+export function formatDateWithTime(value: string | Date): string {
+  return formatWithLocale(value, {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   });
 }
 

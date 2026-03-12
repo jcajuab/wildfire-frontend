@@ -3,9 +3,8 @@
 import { type ReactElement, memo } from "react";
 import Image from "next/image";
 import {
-  IconDotsVertical,
+  IconDots,
   IconDownload,
-  IconFileText,
   IconFileTypePdf,
   IconPencil,
   IconEye,
@@ -16,6 +15,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
@@ -23,8 +23,28 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatContentStatus, formatDate } from "@/lib/formatters";
-import type { Content } from "@/types/content";
+import { cn } from "@/lib/utils";
+import {
+  formatContentStatus,
+  formatDateWithTime,
+  formatFileSize,
+  getContentStatusBadgeClassName,
+} from "@/lib/formatters";
+import {
+  getFlashThumbnailText,
+  getTextThumbnailHtml,
+  getTextThumbnailText,
+} from "@/lib/content-thumbnail-preview";
+import type { Content, ContentType } from "@/types/content";
+import { FlashTonePreview } from "./flash-tone-preview";
+
+const CONTENT_TYPE_LABEL: Record<ContentType, string> = {
+  IMAGE: "Image",
+  VIDEO: "Video",
+  PDF: "PDF",
+  FLASH: "Flash",
+  TEXT: "Text",
+};
 
 export type ContentCardDisplayMode = "default" | "pdf-page-item";
 
@@ -71,16 +91,25 @@ export const ContentCard = memo(function ContentCard({
       : content.pageCount === 1
         ? "1 page"
         : `${content.pageCount} pages`;
-  const rootLastUpdated = formatDate(content.createdAt);
+  const isFlashContent = content.type === "FLASH";
+  const isTextContent = content.type === "TEXT";
+  const flashThumbnailText = isFlashContent
+    ? getFlashThumbnailText(content)
+    : null;
+  const textThumbnailText = isTextContent
+    ? getTextThumbnailText(content)
+    : null;
+  const textThumbnailHtml = isTextContent
+    ? getTextThumbnailHtml(content)
+    : null;
+  const flashTone = content.flashTone ?? "INFO";
 
   const ThumbnailFallbackIcon =
     content.type === "PDF"
       ? IconFileTypePdf
       : content.type === "VIDEO"
         ? IconVideo
-        : content.type === "TEXT"
-          ? IconFileText
-          : IconPhoto;
+        : IconPhoto;
 
   const handleRootToggle = () => {
     if (!canTogglePdfRoot || !onTogglePdfRootExpand) {
@@ -89,129 +118,20 @@ export const ContentCard = memo(function ContentCard({
     onTogglePdfRootExpand(content);
   };
 
-  const cardClassName = [
+  const cardClassName = cn(
     "group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors duration-150",
-    canTogglePdfRoot && isPdfRootExpanded
-      ? "border-primary/60 bg-primary/5"
-      : "",
-  ]
-    .filter((value) => value.length > 0)
-    .join(" ");
+    canTogglePdfRoot && isPdfRootExpanded && "border-primary/60 bg-primary/5",
+  );
 
   return (
     <div className={cardClassName}>
-      {/* Thumbnail area */}
-      <div className="relative flex aspect-4/3 items-center justify-center bg-muted/50">
-        {isPdfRoot ? (
-          <div className="relative h-full w-full p-3">
-            <div className="absolute inset-x-8 top-4 bottom-3 rotate-6 rounded-md border border-border/80 bg-card/80" />
-            <div className="absolute inset-x-7 top-3 bottom-4 -rotate-3 rounded-md border border-border/80 bg-card/90" />
-            <div className="absolute inset-x-6 top-2 bottom-5 rounded-md border border-border bg-card">
-              {content.thumbnailUrl ? (
-                <Image
-                  src={content.thumbnailUrl}
-                  alt={`${content.title} preview`}
-                  width={400}
-                  height={300}
-                  unoptimized
-                  className="h-full w-full rounded-md object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <ThumbnailFallbackIcon
-                    className="size-7 text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <>
-            {content.thumbnailUrl ? (
-              <Image
-                src={content.thumbnailUrl}
-                alt={`${content.title} preview`}
-                width={400}
-                height={300}
-                unoptimized
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <ThumbnailFallbackIcon
-                className="size-7 text-muted-foreground"
-                aria-hidden="true"
-              />
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Content info */}
-      <div className="flex items-start justify-between gap-2 p-3">
-        <div className="flex min-w-0 flex-col gap-0.5">
+      {/* Zone A — Card header */}
+      <div className="flex items-center justify-between px-3 py-2">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
           <h3 className="truncate text-sm font-semibold">
             {isPdfPageItem && pageLabel ? pageLabel : content.title}
           </h3>
-          {isPdfPageItem && pageLabel ? (
-            <p className="truncate text-xs text-muted-foreground">
-              {content.title}
-            </p>
-          ) : isPdfRoot ? (
-            <div className="flex min-w-0 flex-col gap-0.5 text-xs text-muted-foreground">
-              <span className="truncate">{rootPageCount}</span>
-              <span className="truncate">Updated {rootLastUpdated}</span>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              by {content.owner.name}
-            </p>
-          )}
-          <div className="pt-1">
-            <Badge variant="outline">
-              {formatContentStatus(content.status)}
-            </Badge>
-          </div>
-          {canTogglePdfRoot ? (
-            <div className="pt-1">
-              <Button
-                type="button"
-                variant="outline"
-                size="xs"
-                onClick={handleRootToggle}
-                aria-expanded={isPdfRootExpanded}
-                aria-controls={`pdf-pages-${content.id}`}
-                aria-label={
-                  isPdfRootExpanded
-                    ? `Collapse pages for ${content.title}`
-                    : `Expand pages for ${content.title}`
-                }
-              >
-                {isPdfRootExpanded ? "Collapse pages" : "Expand pages"}
-              </Button>
-            </div>
-          ) : null}
         </div>
-
-        {isPdfPageItem && onToggleExclusion ? (
-          <div
-            className="flex flex-col items-end gap-1"
-            data-prevent-card-toggle="true"
-          >
-            <span className="text-xs text-muted-foreground">Exclude</span>
-            <Switch
-              checked={content.isExcluded}
-              disabled={isExclusionToggleDisabled}
-              aria-label={`Exclude ${pageLabel ?? content.title} from playback`}
-              data-prevent-card-toggle="true"
-              onCheckedChange={(checked) => {
-                void onToggleExclusion(content, checked);
-              }}
-            />
-          </div>
-        ) : null}
-
-        {/* Actions menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -221,7 +141,7 @@ export const ContentCard = memo(function ContentCard({
               className="shrink-0"
               data-prevent-card-toggle="true"
             >
-              <IconDotsVertical className="size-4" />
+              <IconDots className="size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
@@ -252,6 +172,153 @@ export const ContentCard = memo(function ContentCard({
             ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
+      </div>
+
+      {/* Zone B — Thumbnail (16:9) */}
+      <div
+        className={cn(
+          "relative flex aspect-video bg-muted/50",
+          isTextContent
+            ? "items-center justify-center overflow-visible"
+            : "items-center justify-center",
+        )}
+      >
+        {isPdfRoot ? (
+          <div className="relative h-full w-full p-3">
+            <div className="absolute inset-x-8 top-4 bottom-3 rotate-6 rounded-md border border-border/80 bg-card/80" />
+            <div className="absolute inset-x-7 top-3 bottom-4 -rotate-3 rounded-md border border-border/80 bg-card/90" />
+            <div className="absolute inset-x-6 top-2 bottom-5 rounded-md border border-border bg-card">
+              {content.thumbnailUrl ? (
+                <Image
+                  src={content.thumbnailUrl}
+                  alt={`${content.title} preview`}
+                  width={400}
+                  height={225}
+                  unoptimized
+                  className="h-full w-full rounded-md object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <ThumbnailFallbackIcon
+                    className="size-7 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        ) : isFlashContent ? (
+          <FlashTonePreview
+            tone={flashTone}
+            message={flashThumbnailText ?? ""}
+          />
+        ) : isTextContent ? (
+          <div className="flex h-full w-full items-center justify-center overflow-visible p-2">
+            <div
+              className="max-w-full text-center text-xs leading-snug break-words text-foreground [&_blockquote]:my-1 [&_blockquote]:border-l [&_blockquote]:border-border [&_blockquote]:pl-2 [&_em]:italic [&_i]:italic [&_li]:list-item [&_ol]:my-1 [&_ol]:ml-4 [&_ol]:list-decimal [&_p]:my-0 [&_strong]:font-semibold [&_u]:underline [&_ul]:my-1 [&_ul]:ml-4 [&_ul]:list-disc"
+              aria-label={textThumbnailText ?? content.title}
+              dangerouslySetInnerHTML={{ __html: textThumbnailHtml ?? "" }}
+            />
+          </div>
+        ) : (
+          <>
+            {content.thumbnailUrl ? (
+              <Image
+                src={content.thumbnailUrl}
+                alt={`${content.title} preview`}
+                width={400}
+                height={225}
+                unoptimized
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <ThumbnailFallbackIcon
+                className="size-7 text-muted-foreground"
+                aria-hidden="true"
+              />
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Zone C — Footer metadata */}
+      <div className="flex flex-col justify-between gap-3 p-3 pt-2">
+        {/* Status + type + size pills */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge
+            variant="outline"
+            className={cn(getContentStatusBadgeClassName(content.status))}
+          >
+            {formatContentStatus(content.status)}
+          </Badge>
+          <Separator orientation="vertical" className="h-4 bg-border/80" />
+          <Badge variant="outline">{CONTENT_TYPE_LABEL[content.type]}</Badge>
+          <Badge variant="outline">{formatFileSize(content.fileSize)}</Badge>
+        </div>
+        {/* Owner */}
+        <p className="truncate text-xs text-muted-foreground">
+          @{content.owner.name}
+        </p>
+        {/* Dates */}
+        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+          <span className="text-xs font-medium text-muted-foreground">
+            Created at
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {formatDateWithTime(content.createdAt)}
+          </span>
+          <span className="text-xs font-medium text-muted-foreground">
+            Updated at
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {formatDateWithTime(content.updatedAt || content.createdAt)}
+          </span>
+        </div>
+        {/* PDF root: page count + expand/collapse button */}
+        {canTogglePdfRoot ? (
+          <div className="flex items-center gap-2 pt-0.5">
+            <span className="text-xs text-muted-foreground">
+              {rootPageCount}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="xs"
+              onClick={handleRootToggle}
+              aria-expanded={isPdfRootExpanded}
+              aria-controls={`pdf-pages-${content.id}`}
+              aria-label={
+                isPdfRootExpanded
+                  ? `Collapse pages for ${content.title}`
+                  : `Expand pages for ${content.title}`
+              }
+            >
+              {isPdfRootExpanded ? "Collapse pages" : "Expand pages"}
+            </Button>
+          </div>
+        ) : isPdfRoot ? (
+          <p className="text-xs text-muted-foreground">{rootPageCount}</p>
+        ) : null}
+        {/* PDF page item: exclusion toggle */}
+        {isPdfPageItem && onToggleExclusion ? (
+          <div
+            className="flex items-center justify-between pt-0.5"
+            data-prevent-card-toggle="true"
+          >
+            <span className="text-xs text-muted-foreground">
+              Exclude from playback
+            </span>
+            <Switch
+              checked={content.isExcluded}
+              disabled={isExclusionToggleDisabled}
+              aria-label={`Exclude ${pageLabel ?? content.title} from playback`}
+              data-prevent-card-toggle="true"
+              onCheckedChange={(checked) => {
+                void onToggleExclusion(content, checked);
+              }}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -1,18 +1,17 @@
 "use client";
 
 import type { ReactElement } from "react";
+import Link from "next/link";
 import { IconPlus, IconPresentation } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { EmptyState } from "@/components/common/empty-state";
 import { DashboardPage } from "@/components/layout/dashboard-page";
-import { CreatePlaylistDialog } from "@/components/playlists/create-playlist-dialog";
 import { EditPlaylistItemsDialog } from "@/components/playlists/edit-playlist-items-dialog";
 import { PlaylistGrid } from "@/components/playlists/playlist-grid";
 import { SearchControl } from "@/components/common/search-control";
-import { PlaylistSortSelect } from "@/components/playlists/playlist-sort-select";
-import { PlaylistStatusTabs } from "@/components/playlists/playlist-status-tabs";
+import { PlaylistFilterPopover } from "@/components/playlists/playlist-filter-popover";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,14 +31,12 @@ export default function PlaylistsPage(): ReactElement {
     canUpdatePlaylist,
     canDeletePlaylist,
     statusFilter,
-    sortBy,
     search,
     page,
     playlists,
     totalPlaylists,
     availableContent,
     availableDisplays,
-    createDialogOpen,
     previewPlaylist,
     editPlaylist,
     manageItemsPlaylist,
@@ -55,11 +52,9 @@ export default function PlaylistsPage(): ReactElement {
     setEditName,
     setEditDescription,
     handleStatusFilterChange,
-    handleSortChange,
+    handleClearFilters,
     handleSearchChange,
-    handleCreateDialogOpenChange,
     handleManageItemsDialogOpenChange,
-    handleCreatePlaylist,
     handleEditPlaylist,
     handleManageItems,
     handleSaveItems,
@@ -75,9 +70,11 @@ export default function PlaylistsPage(): ReactElement {
         title="Playlists"
         actions={
           <Can permission="playlists:create">
-            <Button onClick={() => handleCreateDialogOpenChange(true)}>
-              <IconPlus className="size-4" />
-              Create Playlist
+            <Button asChild>
+              <Link href="/admin/playlists/create">
+                <IconPlus className="size-4" />
+                Create Playlist
+              </Link>
             </Button>
           </Can>
         }
@@ -86,22 +83,19 @@ export default function PlaylistsPage(): ReactElement {
       <DashboardPage.Body>
         <DashboardPage.Content>
           <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
-            <PlaylistStatusTabs
-              value={statusFilter}
-              onValueChange={handleStatusFilterChange}
-            />
-
-            <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto">
-              <PlaylistSortSelect
-                value={sortBy}
-                onValueChange={handleSortChange}
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+              <PlaylistFilterPopover
+                statusFilter={statusFilter}
+                filteredResultsCount={totalPlaylists}
+                onStatusFilterChange={handleStatusFilterChange}
+                onClearFilters={handleClearFilters}
               />
               <SearchControl
                 value={search}
                 onChange={handleSearchChange}
                 ariaLabel="Search playlists"
                 placeholder="Search playlists…"
-                className="w-full max-w-none md:w-72"
+                className="w-full max-w-none sm:w-72"
               />
             </div>
           </div>
@@ -144,14 +138,6 @@ export default function PlaylistsPage(): ReactElement {
           />
         </DashboardPage.Footer>
       </DashboardPage.Body>
-
-      <CreatePlaylistDialog
-        open={createDialogOpen}
-        onOpenChange={handleCreateDialogOpenChange}
-        onCreate={handleCreatePlaylist}
-        availableContent={availableContent}
-        availableDisplays={availableDisplays}
-      />
 
       {manageItemsPlaylist && (
         <EditPlaylistItemsDialog
