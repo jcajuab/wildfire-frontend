@@ -153,9 +153,9 @@ export function AIChat() {
     [setInput],
   );
 
-  const handleProviderChange = (value: string) => {
+  const handleProviderChange = useCallback((value: string) => {
     setSelectedProvider(value as ProviderValue);
-  };
+  }, []);
 
   return (
     <div className="flex h-full flex-col">

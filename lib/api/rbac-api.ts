@@ -56,10 +56,6 @@ export interface RbacUsersListResponse {
   readonly pageSize: number;
 }
 
-// Note: These response types maintain backward compatibility but can be
-// replaced with PaginatedListResponse<T> from response-transformers.ts
-// in future refactoring.
-
 export interface RbacRoleListQuery {
   readonly page?: number;
   readonly pageSize?: number;
@@ -75,9 +71,6 @@ export interface RbacUserListQuery {
   readonly sortBy?: "name" | "lastSeenAt";
   readonly sortDirection?: "asc" | "desc";
 }
-
-// All pagination, auth refresh, and response transformation utilities
-// have been extracted to shared modules for reuse across API files.
 
 export const rbacApi = createApi({
   reducerPath: "rbacApi",

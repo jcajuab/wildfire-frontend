@@ -103,12 +103,6 @@ function isActiveRoute(
   return isPathMatch(pathname, href, match);
 }
 
-function isReadyNavigationSectionVisible(
-  items: readonly NavItem[],
-): items is readonly NavItem[] {
-  return items.length > 0;
-}
-
 export function AppSidebar(): ReactElement {
   const pathname = usePathname();
   const { user, logout, can, isInitialized } = useAuth();
@@ -155,7 +149,7 @@ export function AppSidebar(): ReactElement {
       </SidebarHeader>
 
       <SidebarContent>
-        {isReadyNavigationSectionVisible(coreNavItems) ? (
+        {coreNavItems.length > 0 ? (
           <SidebarGroup>
             <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-primary-foreground/70">
               {CORE_SECTION}
@@ -190,7 +184,7 @@ export function AppSidebar(): ReactElement {
           </SidebarGroup>
         ) : null}
 
-        {isReadyNavigationSectionVisible(manageNavItems) ? (
+        {manageNavItems.length > 0 ? (
           <SidebarGroup>
             <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-primary-foreground/70">
               {MANAGE_SECTION}

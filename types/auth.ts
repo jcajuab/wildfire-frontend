@@ -1,3 +1,5 @@
+import type { PermissionType } from "@/types/permission";
+
 /** Login request body (POST /auth/login). */
 export interface LoginCredentials {
   readonly username: string;
@@ -12,8 +14,8 @@ export interface AuthUser {
   readonly name: string;
   readonly isAdmin: boolean;
   readonly isInvitedUser: boolean;
-  readonly timezone?: string | null;
-  readonly avatarUrl?: string | null;
+  readonly timezone: string | null;
+  readonly avatarUrl: string | null;
 }
 
 /** Success response from POST /auth/login and POST /auth/session/refresh. */
@@ -35,4 +37,3 @@ export interface ApiErrorResponse {
     readonly details?: unknown;
   };
 }
-import type { PermissionType } from "@/types/permission";

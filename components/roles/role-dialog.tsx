@@ -189,11 +189,6 @@ function RoleForm({
     });
   }, [normalizedUserSearch, unassignedUsers]);
 
-  const visibleUnassignedUsers = useMemo(
-    () => filteredUnassignedUsers,
-    [filteredUnassignedUsers],
-  );
-
   const visibleAssignedUsers = useMemo(
     () => assignedUsers.slice(0, visibleAssignedCount),
     [assignedUsers, visibleAssignedCount],
@@ -333,8 +328,8 @@ function RoleForm({
                       <SelectValue placeholder="Select user" />
                     </SelectTrigger>
                     <SelectContent>
-                      {visibleUnassignedUsers.length > 0 ? (
-                        visibleUnassignedUsers.map((user) => (
+                      {filteredUnassignedUsers.length > 0 ? (
+                        filteredUnassignedUsers.map((user) => (
                           <SelectItem key={user.id} value={user.id}>
                             {user.name}
                           </SelectItem>

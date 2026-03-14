@@ -191,7 +191,6 @@ function ProviderCredentialRow({
 
 interface AICredentialsSectionProps {
   readonly sectionMotionProps: Record<string, unknown>;
-  readonly token: string | null;
 }
 
 export function AICredentialsSection({

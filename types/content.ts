@@ -1,7 +1,5 @@
 import type { SortDirection } from "@/types/common";
 
-export type { SortDirection };
-
 export type ContentType = "IMAGE" | "VIDEO" | "PDF" | "FLASH" | "TEXT";
 export type ContentKind = "ROOT" | "PAGE";
 export type FlashTone = "INFO" | "WARNING" | "CRITICAL";

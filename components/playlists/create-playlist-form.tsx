@@ -24,7 +24,7 @@ import {
   IconPlaylist,
   IconPlus,
 } from "@tabler/icons-react";
-import { SortablePlaylistItem } from "./sortable-playlist-item";
+import { SortableItemRow, type DraftItem } from "./sortable-item-row";
 import { SearchControl } from "@/components/common/search-control";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,13 +68,6 @@ interface PlaylistFormData {
   description: string;
 }
 
-interface DraftPlaylistItem {
-  readonly id: string;
-  readonly content: PlaylistSelectableContent;
-  readonly duration: number;
-  readonly order: number;
-}
-
 export const MAX_BASE_DURATION_SECONDS = 60;
 
 function createInitialFormData(): PlaylistFormData {
@@ -98,7 +91,7 @@ export function CreatePlaylistForm({
   const [formData, setFormData] = useState<PlaylistFormData>(
     createInitialFormData,
   );
-  const [playlistItems, setPlaylistItems] = useState<DraftPlaylistItem[]>([]);
+  const [playlistItems, setPlaylistItems] = useState<DraftItem[]>([]);
   const [contentSearch, setContentSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -114,7 +107,7 @@ export function CreatePlaylistForm({
   );
 
   const handleAddContent = useCallback((content: PlaylistSelectableContent) => {
-    const newItem: DraftPlaylistItem = {
+    const newItem: DraftItem = {
       id: `draft-${Date.now()}-${content.id}`,
       content,
       duration: content.duration ?? 5,
@@ -346,7 +339,7 @@ export function CreatePlaylistForm({
                     </div>
                   ) : (
                     playlistItems.map((item) => (
-                      <SortablePlaylistItem
+                      <SortableItemRow
                         key={item.id}
                         item={item}
                         onRemove={handleRemoveItem}

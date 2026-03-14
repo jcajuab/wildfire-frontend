@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import type { User } from "@/types/user";
 import type { Display } from "@/lib/api/displays-api";
 
@@ -23,28 +23,26 @@ export function useActorResolver({ users, displays }: UseActorResolverProps) {
     [displays],
   );
 
-  const getActorName = useMemo(
-    () =>
-      (actorId: string, actorType: string | null): string => {
-        if (actorType === "user") {
-          return userMap.get(actorId) ?? "Unknown user";
-        }
-        if (actorType === "display") {
-          return displayMap.get(actorId) ?? "Display";
-        }
-        return actorType ?? "Unknown";
-      },
+  const getActorName = useCallback(
+    (actorId: string, actorType: string | null): string => {
+      if (actorType === "user") {
+        return userMap.get(actorId) ?? "Unknown user";
+      }
+      if (actorType === "display") {
+        return displayMap.get(actorId) ?? "Display";
+      }
+      return actorType ?? "Unknown";
+    },
     [userMap, displayMap],
   );
 
-  const getActorAvatarUrl = useMemo(
-    () =>
-      (actorId: string, actorType: string | null): string | null => {
-        if (actorType === "user") {
-          return avatarUrlByUserId.get(actorId) ?? null;
-        }
-        return null;
-      },
+  const getActorAvatarUrl = useCallback(
+    (actorId: string, actorType: string | null): string | null => {
+      if (actorType === "user") {
+        return avatarUrlByUserId.get(actorId) ?? null;
+      }
+      return null;
+    },
     [avatarUrlByUserId],
   );
 

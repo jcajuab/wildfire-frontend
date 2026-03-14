@@ -261,10 +261,7 @@ export default function SettingsPage(): ReactElement {
                 </dl>
               </motion.section>
 
-              <AICredentialsSection
-                sectionMotionProps={sectionMotionProps}
-                token={token}
-              />
+              <AICredentialsSection sectionMotionProps={sectionMotionProps} />
 
               <motion.section
                 aria-labelledby="danger-zone-heading"

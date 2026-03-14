@@ -1,5 +1,4 @@
 import type { SortDirection } from "@/types/common";
-export type { SortDirection };
 
 export type PlaylistStatus = "DRAFT" | "IN_USE";
 

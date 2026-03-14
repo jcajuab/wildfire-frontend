@@ -1,17 +1,10 @@
-import {
-  getBaseUrl as getApiBaseUrl,
-  getDevOnlyRequestHeaders,
-} from "@/lib/api/base-query";
+import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/base-query";
 import { extractApiError, parseApiResponseData } from "@/lib/api/contracts";
 import type {
   ApiErrorResponse,
   AuthResponse,
   LoginCredentials,
 } from "@/types/auth";
-
-function getBaseUrl(): string {
-  return getApiBaseUrl();
-}
 
 interface JsonParseFailurePayload {
   readonly __parseFailure: true;

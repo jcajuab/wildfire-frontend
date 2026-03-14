@@ -215,23 +215,16 @@ export function parseApiListResponse<T>(payload: unknown): ApiListResponse<T> {
   const pageSize = toPositiveInteger(meta.pageSize);
   const totalPages = toNonNegativeInteger(meta.totalPages);
 
-  const totalValue = isInteger(total) && total >= 0 ? total : undefined;
-  const pageValue = isInteger(page) && page >= 1 ? page : undefined;
-  const pageSizeValue =
-    isInteger(pageSize) && pageSize >= 1 ? pageSize : undefined;
-  const totalPagesValue =
-    isInteger(totalPages) && totalPages >= 0 ? totalPages : undefined;
-
-  if (totalValue === undefined) {
+  if (total === undefined) {
     throw new Error("API payload list response has invalid meta.total.");
   }
-  if (pageValue === undefined) {
+  if (page === undefined) {
     throw new Error("API payload list response has invalid meta.page.");
   }
-  if (pageSizeValue === undefined) {
+  if (pageSize === undefined) {
     throw new Error("API payload list response has invalid meta.pageSize.");
   }
-  if (totalPagesValue === undefined) {
+  if (totalPages === undefined) {
     throw new Error("API payload list response has invalid meta.totalPages.");
   }
 
@@ -239,10 +232,10 @@ export function parseApiListResponse<T>(payload: unknown): ApiListResponse<T> {
     data: maybeData as readonly T[],
     links: parseApiResponse<readonly T[]>(payload).links,
     meta: {
-      total: totalValue,
-      page: pageValue,
-      pageSize: pageSizeValue,
-      totalPages: totalPagesValue,
+      total,
+      page,
+      pageSize,
+      totalPages,
     },
   };
 }

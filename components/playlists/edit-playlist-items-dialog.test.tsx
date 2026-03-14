@@ -9,28 +9,8 @@ import {
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
 import { EditPlaylistItemsDialog } from "@/components/playlists/edit-playlist-items-dialog";
-import type { Display } from "@/lib/api/displays-api";
 import type { Content } from "@/types/content";
 import type { Playlist } from "@/types/playlist";
-
-const availableDisplays: readonly Display[] = [
-  {
-    id: "display-1",
-    slug: "lobby",
-    name: "Lobby",
-    location: null,
-    ipAddress: null,
-    macAddress: null,
-    screenWidth: 1920,
-    screenHeight: 1080,
-    output: "hdmi-0",
-    orientation: "LANDSCAPE",
-    lastSeenAt: null,
-    status: "READY",
-    createdAt: "2025-01-01T00:00:00.000Z",
-    updatedAt: "2025-01-01T00:00:00.000Z",
-  },
-];
 
 const availableContent = [
   {
@@ -123,7 +103,6 @@ function EditPlaylistDialogHarness(): ReactElement {
         onOpenChange={setOpen}
         playlist={playlist}
         availableContent={availableContent}
-        availableDisplays={availableDisplays}
         onSave={vi.fn()}
       />
     </>
@@ -165,7 +144,6 @@ describe("EditPlaylistItemsDialog", () => {
         onOpenChange={vi.fn()}
         playlist={makePlaylist("playlist-a", "Alpha")}
         availableContent={availableContent}
-        availableDisplays={availableDisplays}
         onSave={vi.fn()}
       />,
     );
@@ -185,7 +163,6 @@ describe("EditPlaylistItemsDialog", () => {
         onOpenChange={vi.fn()}
         playlist={makePlaylist("playlist-a", "Alpha")}
         availableContent={availableContent}
-        availableDisplays={availableDisplays}
         onSave={vi.fn()}
       />,
     );
@@ -247,7 +224,6 @@ describe("EditPlaylistItemsDialog", () => {
         onOpenChange={vi.fn()}
         playlist={makePlaylist("playlist-a", "Alpha")}
         availableContent={availableContent}
-        availableDisplays={availableDisplays}
         onSave={vi.fn()}
       />,
     );
@@ -261,7 +237,6 @@ describe("EditPlaylistItemsDialog", () => {
         onOpenChange={vi.fn()}
         playlist={makePlaylist("playlist-b", "Beta")}
         availableContent={availableContent}
-        availableDisplays={availableDisplays}
         onSave={vi.fn()}
       />,
     );

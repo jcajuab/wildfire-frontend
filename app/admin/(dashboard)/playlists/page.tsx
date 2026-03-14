@@ -31,7 +31,6 @@ export default function PlaylistsPage(): ReactElement {
     playlists,
     totalPlaylists,
     availableContent,
-    availableDisplays,
     editorPlaylist,
     playlistToDelete,
     deleteDialogOpen,
@@ -118,7 +117,6 @@ export default function PlaylistsPage(): ReactElement {
           onOpenChange={handleEditorDialogOpenChange}
           playlist={editorPlaylist}
           availableContent={availableContent}
-          availableDisplays={availableDisplays}
           onSave={handleSaveItems}
           isSaving={isSavingPlaylistItems}
         />

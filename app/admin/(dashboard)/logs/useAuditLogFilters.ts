@@ -15,8 +15,8 @@ import {
 import { dateToISOEnd, dateToISOStart } from "@/lib/formatters";
 
 const LOG_FILTER_DEBOUNCE_MS = 250;
-const ACTOR_TYPE_FILTERS = ["all", "user", "display"] as const;
-type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
+export const ACTOR_TYPE_FILTERS = ["all", "user", "display"] as const;
+export type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
 
 export function useAuditLogFilters(pageSize: number) {
   const [page, setPage] = useQueryNumberState("page", 1);

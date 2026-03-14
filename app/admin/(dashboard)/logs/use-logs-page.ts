@@ -13,13 +13,16 @@ import {
 } from "@/lib/audit-resource-types";
 import { mapAuditEventToLogEntry } from "@/lib/mappers/audit-log-mapper";
 import type { LogEntry } from "@/types/log";
-import { useAuditLogFilters } from "./useAuditLogFilters";
+import {
+  useAuditLogFilters,
+  ACTOR_TYPE_FILTERS,
+  type ActorTypeFilter,
+} from "./useAuditLogFilters";
 import { useActorResolver } from "./useActorResolver";
 
-export const PAGE_SIZE = 20;
+export { ACTOR_TYPE_FILTERS, type ActorTypeFilter };
 
-export const ACTOR_TYPE_FILTERS = ["all", "user", "display"] as const;
-export type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
+export const PAGE_SIZE = 20;
 
 export interface UseLogsPageResult {
   // Permissions

@@ -10,7 +10,7 @@ import {
   IconLoader,
 } from "@tabler/icons-react";
 
-const Toaster = ({ ...props }: ToasterProps) => {
+function Toaster({ ...props }: ToasterProps) {
   const { theme = "system" } = useTheme();
 
   return (
@@ -40,6 +40,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
       {...props}
     />
   );
-};
+}
 
 export { Toaster };

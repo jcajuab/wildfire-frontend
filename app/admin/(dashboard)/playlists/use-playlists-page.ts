@@ -10,7 +10,6 @@ import {
   useQueryStringState,
 } from "@/hooks/use-query-state";
 import { useListContentQuery } from "@/lib/api/content-api";
-import { useGetDisplaysQuery } from "@/lib/api/displays-api";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   type PlaylistListQuery,
@@ -29,7 +28,6 @@ import type { PlaylistStatusFilter } from "@/components/playlists/playlist-filte
 import type { Content } from "@/types/content";
 import type { Playlist, PlaylistSummary } from "@/types/playlist";
 import type { PlaylistEditorSavePayload } from "@/components/playlists/edit-playlist-items-dialog";
-import type { Display } from "@/lib/api/displays-api";
 
 const PLAYLIST_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
 export const PAGE_SIZE = 12;
@@ -58,7 +56,6 @@ export interface UsePlaylistsPageResult {
   availableContent: Array<
     Content & { readonly type: "IMAGE" | "VIDEO" | "PDF" | "TEXT" }
   >;
-  availableDisplays: readonly Display[];
 
   editorPlaylist: Playlist | null;
   playlistToDelete: PlaylistSummary | null;
@@ -118,10 +115,6 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   );
 
   const { data: playlistsData } = useListPlaylistsQuery(playlistQuery);
-  const { data: displaysData } = useGetDisplaysQuery({
-    page: 1,
-    pageSize: 100,
-  });
   const { data: contentData } = useListContentQuery(
     { page: 1, pageSize: 100 },
     { skip: !canReadContent },
@@ -261,7 +254,6 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     playlists,
     totalPlaylists,
     availableContent,
-    availableDisplays: displaysData?.items ?? [],
     editorPlaylist,
     playlistToDelete,
     deleteDialogOpen,

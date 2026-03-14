@@ -1,3 +1,8 @@
+function capitalizeResource(resource: string): string {
+  if (resource === "*") return "All";
+  return resource.charAt(0).toUpperCase() + resource.slice(1).toLowerCase();
+}
+
 /**
  * Human-readable label for a permission (resource:action).
  * E.g. "content:read" → "Content: Read".
@@ -6,11 +11,7 @@ export function formatPermissionLabel(permission: {
   readonly resource: string;
   readonly action: string;
 }): string {
-  const resource =
-    permission.resource === "*"
-      ? "All"
-      : permission.resource.charAt(0).toUpperCase() +
-        permission.resource.slice(1).toLowerCase();
+  const resource = capitalizeResource(permission.resource);
   const action =
     permission.action === "*"
       ? "Manage"
@@ -27,11 +28,7 @@ export function formatPermissionReadableLabel(permission: {
   readonly resource: string;
   readonly action: string;
 }): string {
-  const resource =
-    permission.resource === "*"
-      ? "All"
-      : permission.resource.charAt(0).toUpperCase() +
-        permission.resource.slice(1).toLowerCase();
+  const resource = capitalizeResource(permission.resource);
   const action = permission.action.toLowerCase();
   if (permission.resource === "*" && action === "*") return "Manage all";
   switch (action) {

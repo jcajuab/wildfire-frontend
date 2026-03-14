@@ -1,12 +1,13 @@
+import type { ReactElement } from "react";
 import { IconX } from "@tabler/icons-react";
 import type { SlashCommand } from "@/lib/slash-commands";
 
 interface ToolChipProps {
-  command: SlashCommand;
-  onRemove: () => void;
+  readonly command: SlashCommand;
+  readonly onRemove: () => void;
 }
 
-export function ToolChip({ command, onRemove }: ToolChipProps) {
+export function ToolChip({ command, onRemove }: ToolChipProps): ReactElement {
   return (
     <span className="inline-flex items-center gap-0.5 rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
       /{command.id}

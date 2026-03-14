@@ -1,13 +1,14 @@
+import type { ReactElement } from "react";
 import { IconCheck, IconTrash, IconX } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { PendingAction } from "@/hooks/use-ai-chat";
 
 interface PendingActionCardProps {
-  action: PendingAction;
-  onConfirm: () => void;
-  onReject: () => void;
-  onCancel: () => void;
+  readonly action: PendingAction;
+  readonly onConfirm: () => void;
+  readonly onReject: () => void;
+  readonly onCancel: () => void;
 }
 
 export function PendingActionCard({
@@ -15,7 +16,7 @@ export function PendingActionCard({
   onConfirm,
   onReject,
   onCancel,
-}: PendingActionCardProps) {
+}: PendingActionCardProps): ReactElement {
   const isDelete = action.actionType === "delete";
 
   return (

@@ -70,7 +70,6 @@ function createHookResult(
     playlists: [],
     totalPlaylists: 0,
     availableContent: [],
-    availableDisplays: [],
     editorPlaylist: null,
     playlistToDelete: null,
     deleteDialogOpen: false,

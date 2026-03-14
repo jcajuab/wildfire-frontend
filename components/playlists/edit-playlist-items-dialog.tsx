@@ -39,7 +39,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { type Display } from "@/lib/api/displays-api";
 import type { Content } from "@/types/content";
 import type {
   Playlist,
@@ -94,7 +93,6 @@ interface EditPlaylistItemsDialogProps {
   readonly onOpenChange: (open: boolean) => void;
   readonly playlist: Playlist;
   readonly availableContent: readonly PlaylistSelectableContent[];
-  readonly availableDisplays: readonly Display[];
   readonly onSave: (
     playlistId: string,
     payload: PlaylistEditorSavePayload,
@@ -117,19 +115,15 @@ export function EditPlaylistItemsDialog({
   onOpenChange,
   playlist,
   availableContent,
-  availableDisplays,
   onSave,
   isSaving = false,
 }: EditPlaylistItemsDialogProps): ReactElement {
-  void availableDisplays;
-  const [playlistName, setPlaylistName] = useState(
-    () => createInitialDraftState(playlist).name,
-  );
+  const [playlistName, setPlaylistName] = useState(() => playlist.name);
   const [playlistDescription, setPlaylistDescription] = useState(
-    () => createInitialDraftState(playlist).description,
+    () => playlist.description ?? "",
   );
-  const [drafts, setDrafts] = useState<DraftItem[]>(
-    () => createInitialDraftState(playlist).drafts,
+  const [drafts, setDrafts] = useState<DraftItem[]>(() =>
+    toDrafts(playlist.items),
   );
   const [contentSearch, setContentSearch] = useState("");
 

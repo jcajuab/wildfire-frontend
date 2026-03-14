@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
-import { SortablePlaylistItem } from "@/components/playlists/sortable-playlist-item";
+import { SortableItemRow } from "@/components/playlists/sortable-item-row";
 
 vi.mock("next/image", () => ({
   default: (
@@ -47,34 +47,15 @@ const baseItem = {
     id: "content-1",
     title: "Poster",
     type: "IMAGE" as const,
-    kind: "ROOT" as const,
     thumbnailUrl: null,
-    mimeType: "image/png",
-    fileSize: 100,
     checksum: "checksum-1",
-    parentContentId: null,
-    pageNumber: null,
-    pageCount: null,
-    isExcluded: false,
-    width: 1920,
-    height: 1080,
-    duration: 5,
-    scrollPxPerSecond: null,
-    flashMessage: null,
-    flashTone: null,
-    textJsonContent: null,
-    textHtmlContent: null,
-    status: "READY" as const,
-    createdAt: "2025-01-01T00:00:00.000Z",
-    updatedAt: "2025-01-01T00:00:00.000Z",
-    owner: { id: "user-1", name: "Owner" },
   },
 };
 
-describe("SortablePlaylistItem", () => {
+describe("SortableItemRow", () => {
   test("renders a thumbnail image when thumbnailUrl exists", () => {
     render(
-      <SortablePlaylistItem
+      <SortableItemRow
         item={{
           ...baseItem,
           content: {
@@ -95,7 +76,7 @@ describe("SortablePlaylistItem", () => {
 
   test("renders a fallback icon when thumbnailUrl is missing", () => {
     render(
-      <SortablePlaylistItem
+      <SortableItemRow
         item={baseItem}
         onRemove={vi.fn()}
         onUpdateDuration={vi.fn()}

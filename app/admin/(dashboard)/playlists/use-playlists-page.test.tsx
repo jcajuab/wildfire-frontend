@@ -16,7 +16,6 @@ import {
   useQueryStringState,
 } from "@/hooks/use-query-state";
 import { useListContentQuery } from "@/lib/api/content-api";
-import { useGetDisplaysQuery } from "@/lib/api/displays-api";
 import {
   useDeletePlaylistMutation,
   useLazyGetPlaylistQuery,
@@ -40,10 +39,6 @@ vi.mock("@/lib/api/content-api", () => ({
   useListContentQuery: vi.fn(),
 }));
 
-vi.mock("@/lib/api/displays-api", () => ({
-  useGetDisplaysQuery: vi.fn(),
-}));
-
 vi.mock("@/lib/api/playlists-api", () => ({
   useDeletePlaylistMutation: vi.fn(),
   useLazyGetPlaylistQuery: vi.fn(),
@@ -61,7 +56,6 @@ const useQueryEnumStateMock = vi.mocked(useQueryEnumState);
 const useQueryStringStateMock = vi.mocked(useQueryStringState);
 const useQueryNumberStateMock = vi.mocked(useQueryNumberState);
 const useListContentQueryMock = vi.mocked(useListContentQuery);
-const useGetDisplaysQueryMock = vi.mocked(useGetDisplaysQuery);
 const useListPlaylistsQueryMock = vi.mocked(useListPlaylistsQuery);
 const useLazyGetPlaylistQueryMock = vi.mocked(useLazyGetPlaylistQuery);
 const useDeletePlaylistMutationMock = vi.mocked(useDeletePlaylistMutation);
@@ -111,7 +105,6 @@ function HookProbe(): ReactElement {
 
   return (
     <div>
-      <div>Displays: {page.availableDisplays.length}</div>
       <div>
         Active playlist:{" "}
         {page.editorPlaylist ? page.editorPlaylist.name : "none"}
@@ -186,28 +179,6 @@ describe("usePlaylistsPage", () => {
         total: 1,
       },
     } as ReturnType<typeof useListPlaylistsQuery>);
-    useGetDisplaysQueryMock.mockReturnValue({
-      data: {
-        items: [
-          {
-            id: "display-1",
-            slug: "lobby",
-            name: "Lobby",
-            location: null,
-            ipAddress: null,
-            macAddress: null,
-            screenWidth: 1920,
-            screenHeight: 1080,
-            output: "hdmi-0",
-            orientation: "LANDSCAPE",
-            lastSeenAt: null,
-            status: "READY",
-            createdAt: "2025-01-01T00:00:00.000Z",
-            updatedAt: "2025-01-01T00:00:00.000Z",
-          },
-        ],
-      },
-    } as ReturnType<typeof useGetDisplaysQuery>);
     useListContentQueryMock.mockReturnValue({
       data: { items: [] },
     } as ReturnType<typeof useListContentQuery>);
@@ -285,12 +256,11 @@ describe("usePlaylistsPage", () => {
     expect(setPageMock).toHaveBeenCalledWith(1);
   });
 
-  test("preserves displays data and merged editor behavior", async () => {
+  test("opens editor with loaded playlist data", async () => {
     const user = userEvent.setup();
 
     render(<HookProbe />);
 
-    expect(screen.getByText("Displays: 1")).toBeInTheDocument();
     expect(screen.getByText("Active playlist: none")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Open editor" }));

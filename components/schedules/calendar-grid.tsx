@@ -5,7 +5,12 @@ import { useMemo, useState, useCallback } from "react";
 import { IconPhoto } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
-import type { CalendarView, ResourceMode, Schedule, ScheduleDisplay } from "@/types/schedule";
+import type {
+  CalendarView,
+  ResourceMode,
+  Schedule,
+  ScheduleDisplay,
+} from "@/types/schedule";
 import type { DisplayGroup } from "@/lib/api/displays-api";
 import {
   assignEventLanes,
@@ -46,9 +51,7 @@ export function CalendarGrid({
   resourceMode,
   displayGroups,
 }: CalendarGridProps): ReactElement {
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    new Set(),
-  );
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   const handleGroupToggle = useCallback((groupId: string) => {
     setExpandedGroups((prev) => {

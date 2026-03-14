@@ -1,14 +1,15 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { filterCommands, type SlashCommand } from "@/lib/slash-commands";
 
 interface SlashCommandMenuProps {
-  query: string;
-  onSelect: (command: SlashCommand) => void;
-  onClose: () => void;
-  visible: boolean;
+  readonly query: string;
+  readonly onSelect: (command: SlashCommand) => void;
+  readonly onClose: () => void;
+  readonly visible: boolean;
 }
 
 export function SlashCommandMenu({
@@ -16,7 +17,7 @@ export function SlashCommandMenu({
   onSelect,
   onClose,
   visible,
-}: SlashCommandMenuProps) {
+}: SlashCommandMenuProps): ReactElement | null {
   // activeIndex resets to 0 whenever query changes by pairing them in state
   const [{ activeIndex, indexedQuery }, setIndexState] = useState({
     activeIndex: 0,

@@ -52,8 +52,8 @@ export function EditScheduleDialog({
   const [isSaving, setIsSaving] = useState(false);
 
   if (!schedule) return null;
+
   const currentSchedule = schedule;
-  const scheduleId = currentSchedule.id;
 
   async function handleSubmit(data: ScheduleFormData): Promise<void> {
     if (isSaving) return;
@@ -79,8 +79,8 @@ export function EditScheduleDialog({
         </DialogHeader>
 
         <EditScheduleForm
-          key={scheduleId}
-          initialData={toFormData(currentSchedule)}
+          key={schedule.id}
+          initialData={toFormData(schedule)}
           availablePlaylists={availablePlaylists}
           availableFlashContents={availableFlashContents}
           availableDisplays={availableDisplays}
