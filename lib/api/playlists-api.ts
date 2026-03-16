@@ -154,6 +154,7 @@ export const playlistsApi = createApi({
           response,
           "getPlaylistOptions",
         ),
+      providesTags: [{ type: "Playlist", id: "LIST" }],
     }),
     listPlaylists: build.query<
       BackendPlaylistListResponse,

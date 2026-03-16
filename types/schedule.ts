@@ -45,7 +45,7 @@ export interface ScheduleFormData {
   endTime: string;
   playlistId: string | null;
   contentId: string | null;
-  targetDisplayId: string;
+  targetDisplayIds: string[];
   isActive: boolean;
 }
 

@@ -1,8 +1,14 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useMemo, useState } from "react";
-import { IconCalendar, IconClock } from "@tabler/icons-react";
+import { useMemo, useRef, useState } from "react";
+import {
+  IconCalendar,
+  IconCheck,
+  IconClock,
+  IconX,
+} from "@tabler/icons-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,9 +19,192 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import type { ScheduleFormData } from "@/types/schedule";
+
+// ---------------------------------------------------------------------------
+// DisplayMultiSelect — pill input with searchable dropdown
+// ---------------------------------------------------------------------------
+
+interface DisplayMultiSelectProps {
+  value: string[];
+  onChange: (ids: string[]) => void;
+  options: readonly { id: string; name: string }[];
+}
+
+function DisplayMultiSelect({
+  value,
+  onChange,
+  options,
+}: DisplayMultiSelectProps): ReactElement {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return options;
+    return options.filter((d) => d.name.toLowerCase().includes(q));
+  }, [options, search]);
+
+  function toggle(id: string) {
+    if (value.includes(id)) {
+      onChange(value.filter((v) => v !== id));
+    } else {
+      onChange([...value, id]);
+    }
+    setSearch("");
+    inputRef.current?.focus();
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverAnchor asChild>
+        {/* Pill container */}
+        <div
+          ref={containerRef}
+          role="combobox"
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          className={cn(
+            "flex min-h-7 w-full flex-wrap items-center gap-1 rounded-md border border-input bg-input/20 px-2 py-1 text-xs/relaxed transition-colors cursor-text dark:bg-input/30",
+            open ? "border-ring ring-2 ring-ring/30" : "hover:border-ring/50",
+          )}
+          onClick={() => {
+            setOpen(true);
+            inputRef.current?.focus();
+          }}
+        >
+          {value.map((id) => {
+            const display = options.find((d) => d.id === id);
+            return (
+              <span
+                key={id}
+                className="inline-flex h-[1.125rem] items-center gap-0.5 rounded-sm bg-muted-foreground/10 pl-1.5 pr-0.5 text-xs font-medium text-foreground whitespace-nowrap"
+              >
+                {display?.name ?? id}
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onChange(value.filter((v) => v !== id));
+                  }}
+                  className="flex items-center justify-center rounded-sm p-0.5 opacity-50 hover:opacity-100 focus:outline-none"
+                  aria-label={`Remove ${display?.name ?? id}`}
+                >
+                  <IconX className="size-2.5" />
+                </button>
+              </span>
+            );
+          })}
+          <input
+            ref={inputRef}
+            type="text"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setOpen(true);
+            }}
+            onFocus={() => setOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Backspace" && !search && value.length > 0) {
+                onChange(value.slice(0, -1));
+              }
+              if (e.key === "Escape") {
+                setOpen(false);
+                setSearch("");
+              }
+            }}
+            placeholder={value.length === 0 ? "Search displays…" : ""}
+            className="min-w-24 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
+          />
+        </div>
+      </PopoverAnchor>
+
+      {/* Portal dropdown — renders at document.body, never clipped by the dialog */}
+      <PopoverContent
+        className="w-[var(--radix-popover-anchor-width)] p-0"
+        align="start"
+        sideOffset={4}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          // Don't close when the interaction is on the pill container itself
+          if (containerRef.current?.contains(e.target as Node)) {
+            e.preventDefault();
+          }
+        }}
+      >
+        <div
+          role="listbox"
+          aria-multiselectable="true"
+          className="no-scrollbar max-h-60 overflow-y-auto p-1"
+        >
+          {filtered.length === 0 ? (
+            <p className="py-6 text-center text-xs/relaxed text-muted-foreground">
+              No displays found.
+            </p>
+          ) : (
+            filtered.map((display) => {
+              const selected = value.includes(display.id);
+              return (
+                <button
+                  key={display.id}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onMouseDown={(e) => {
+                    e.preventDefault(); // keep search input focused
+                    toggle(display.id);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs/relaxed select-none cursor-default hover:bg-accent hover:text-accent-foreground"
+                >
+                  {selected && <IconCheck className="size-3.5 shrink-0" />}
+                  {display.name}
+                </button>
+              );
+            })
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// EmptyResourceCta
+// ---------------------------------------------------------------------------
+
+function EmptyResourceCta({
+  message,
+  href,
+  onNavigate,
+}: {
+  message: string;
+  href: string;
+  onNavigate: () => void;
+}): ReactElement {
+  return (
+    <p className="text-xs text-muted-foreground">
+      {message}{" "}
+      <Link href={href} onClick={onNavigate} className="text-blue-500 underline underline-offset-2 hover:text-blue-600">
+        Create one here.
+      </Link>
+    </p>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ScheduleFormFrame
+// ---------------------------------------------------------------------------
 
 interface ScheduleFormProps {
   readonly initialData: ScheduleFormData;
@@ -44,7 +233,7 @@ function ScheduleFormFrame({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const canSubmit = useMemo(() => {
-    if (!formData.name.trim() || !formData.targetDisplayId) {
+    if (!formData.name.trim() || formData.targetDisplayIds.length === 0) {
       return false;
     }
     if (isCreate && formData.startDate && formData.startTime) {
@@ -206,74 +395,100 @@ function ScheduleFormFrame({
         {formData.kind === "PLAYLIST" ? (
           <div className="space-y-2">
             <Label>Playlist</Label>
-            <Select
-              value={formData.playlistId ?? ""}
-              onValueChange={(value) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  playlistId: value,
-                  contentId: null,
-                }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a playlist" />
-              </SelectTrigger>
-              <SelectContent>
-                {availablePlaylists.map((playlist) => (
-                  <SelectItem key={playlist.id} value={playlist.id}>
-                    {playlist.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {isCreate && availablePlaylists.length === 0 ? (
+              <EmptyResourceCta
+                message="No playlists yet."
+                href="/admin/playlists/create"
+                onNavigate={onCancel}
+              />
+            ) : (
+              <Select
+                value={formData.playlistId ?? ""}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    playlistId: value,
+                    contentId: null,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a playlist" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availablePlaylists.map((playlist) => (
+                    <SelectItem key={playlist.id} value={playlist.id}>
+                      {playlist.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         ) : (
           <div className="space-y-2">
             <Label>Flash Content</Label>
-            <Select
-              value={formData.contentId ?? ""}
-              onValueChange={(value) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  contentId: value,
-                  playlistId: null,
-                }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select flash content" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableFlashContents.map((content) => (
-                  <SelectItem key={content.id} value={content.id}>
-                    {content.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {isCreate && availableFlashContents.length === 0 ? (
+              <EmptyResourceCta
+                message="No flash content yet."
+                href="/admin/content?create=flash"
+                onNavigate={onCancel}
+              />
+            ) : (
+              <Select
+                value={formData.contentId ?? ""}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    contentId: value,
+                    playlistId: null,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select flash content" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableFlashContents.map((content) => (
+                    <SelectItem key={content.id} value={content.id}>
+                      {content.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         )}
 
         <div className="space-y-2">
           <Label>Target Display</Label>
-          <Select
-            value={formData.targetDisplayId}
-            onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, targetDisplayId: value }))
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a display" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableDisplays.map((display) => (
-                <SelectItem key={display.id} value={display.id}>
-                  {display.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isCreate ? (
+            <DisplayMultiSelect
+              value={formData.targetDisplayIds}
+              onChange={(ids) =>
+                setFormData((prev) => ({ ...prev, targetDisplayIds: ids }))
+              }
+              options={availableDisplays}
+            />
+          ) : (
+            <Select
+              value={formData.targetDisplayIds[0] ?? ""}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, targetDisplayIds: [value] }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a display" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableDisplays.map((display) => (
+                  <SelectItem key={display.id} value={display.id}>
+                    {display.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -342,7 +557,7 @@ export function CreateScheduleForm({
         endTime: "17:00",
         playlistId: null,
         contentId: null,
-        targetDisplayId: "",
+        targetDisplayIds: [],
         isActive: true,
       }}
       submitLabel="Create"

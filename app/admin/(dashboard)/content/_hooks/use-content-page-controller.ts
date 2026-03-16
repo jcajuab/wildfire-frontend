@@ -43,8 +43,10 @@ export function useContentPageController() {
   const searchParams = useSearchParams();
   const previewId = searchParams.get("preview");
   const editId = searchParams.get("edit");
+  const createMode = searchParams.get("create");
   const handledPreviewRef = useRef<string | null>(null);
   const handledEditRef = useRef<string | null>(null);
+  const handledCreateRef = useRef<string | null>(null);
   const scrollTargetRef = useRef<string | null>(null);
   const [loadContent] = useLazyGetContentQuery();
 
@@ -79,6 +81,19 @@ export function useContentPageController() {
       handleSearchChange("");
     }
   }, [editId, handleClearFilters, handleSearchChange]);
+
+  useEffect(() => {
+    if (
+      createMode &&
+      (createMode === "flash" ||
+        createMode === "text" ||
+        createMode === "upload") &&
+      handledCreateRef.current !== createMode
+    ) {
+      handledCreateRef.current = createMode;
+      dialogState.openCreateDialog(createMode as "text" | "upload" | "flash");
+    }
+  }, [createMode, dialogState]);
 
   const [getContentJob] = useLazyGetContentJobQuery();
   const { trackContentJob } = useContentJobMonitor({

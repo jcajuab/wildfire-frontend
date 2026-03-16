@@ -47,13 +47,14 @@ export function mapBackendSchedulesToSchedules(
 
 export function mapCreateFormToScheduleRequest(
   data: ScheduleFormData,
+  displayId: string,
 ): CreateScheduleRequest {
   return {
     name: data.name.trim(),
     kind: data.kind,
     playlistId: data.kind === "PLAYLIST" ? data.playlistId : null,
     contentId: data.kind === "FLASH" ? data.contentId : null,
-    displayId: data.targetDisplayId,
+    displayId,
     startDate: data.startDate,
     endDate: data.endDate,
     startTime: data.startTime,
@@ -72,7 +73,7 @@ export function mapUpdateFormToScheduleRequest(
     kind: data.kind,
     playlistId: data.kind === "PLAYLIST" ? data.playlistId : null,
     contentId: data.kind === "FLASH" ? data.contentId : null,
-    displayId: data.targetDisplayId,
+    displayId: data.targetDisplayIds[0],
     startDate: data.startDate,
     endDate: data.endDate,
     startTime: data.startTime,

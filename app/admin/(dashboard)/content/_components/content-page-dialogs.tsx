@@ -8,6 +8,7 @@ import {
   SUPPORTED_CONTENT_FILE_MIME_TYPES,
 } from "@/components/content/content-file-types";
 import { TiptapEditor } from "@/components/content/tiptap-editor";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,7 +29,12 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FlashTonePreview } from "@/components/content/flash-tone-preview";
-import { formatContentStatus, formatFileSize } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
+import {
+  formatContentStatus,
+  formatFileSize,
+  getContentStatusBadgeClassName,
+} from "@/lib/formatters";
 import type { Content, FlashTone } from "@/types/content";
 
 const FLASH_PREVIEW_DEBOUNCE_MS = 500;
@@ -385,7 +391,12 @@ export function PreviewContentDialog({
           <span className="text-muted-foreground">Size</span>
           <span>{formatFileSize(content.fileSize)}</span>
           <span className="text-muted-foreground">Status</span>
-          <span>{formatContentStatus(content.status)}</span>
+          <Badge
+            variant="outline"
+            className={cn(getContentStatusBadgeClassName(content.status))}
+          >
+            {formatContentStatus(content.status)}
+          </Badge>
         </div>
         <DialogFooter className="pt-4 sm:justify-between">
           <Button variant="outline" onClick={() => onOpenChange(false)}>

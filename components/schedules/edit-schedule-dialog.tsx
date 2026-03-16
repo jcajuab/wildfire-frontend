@@ -35,7 +35,7 @@ function toFormData(schedule: Schedule): ScheduleFormData {
     endTime: schedule.endTime,
     playlistId: schedule.playlist?.id ?? null,
     contentId: schedule.content?.id ?? null,
-    targetDisplayId: schedule.targetDisplay.id,
+    targetDisplayIds: [schedule.targetDisplay.id],
     isActive: schedule.isActive,
   };
 }

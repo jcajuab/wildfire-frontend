@@ -127,6 +127,7 @@ export const contentApi = createApi({
           response,
           "getContentOptions",
         ),
+      providesTags: [{ type: "Content", id: "LIST" }],
     }),
     listContent: build.query<
       BackendContentListResponse,

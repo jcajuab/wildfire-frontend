@@ -192,18 +192,24 @@ export default function SchedulesPage(): ReactElement {
   const handleCreateSchedule = useCallback(
     async (data: ScheduleFormData) => {
       try {
-        await createSchedule(mapCreateFormToScheduleRequest(data)).unwrap();
-        toast.success("Schedule created.");
+        await Promise.all(
+          data.targetDisplayIds.map((displayId) =>
+            createSchedule(
+              mapCreateFormToScheduleRequest(data, displayId),
+            ).unwrap(),
+          ),
+        );
+        toast.success(
+          data.targetDisplayIds.length > 1
+            ? `${data.targetDisplayIds.length} schedules created.`
+            : "Schedule created.",
+        );
       } catch (err) {
         if (isConflictError(err)) {
           notifyApiError(err, SCHEDULE_CONFLICT_MESSAGE);
           throw err;
         }
-        const message = getApiErrorMessage(
-          err,
-          SCHEDULE_CREATE_FALLBACK_MESSAGE,
-        );
-        notifyApiError(err, message);
+        notifyApiError(err, getApiErrorMessage(err, SCHEDULE_CREATE_FALLBACK_MESSAGE));
         throw err;
       }
     },
