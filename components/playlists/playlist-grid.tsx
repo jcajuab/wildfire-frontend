@@ -9,13 +9,13 @@ import type { PlaylistSummary } from "@/types/playlist";
 
 interface PlaylistGridProps {
   readonly playlists: readonly PlaylistSummary[];
-  readonly onEditManage?: (playlist: PlaylistSummary) => void;
+  readonly onEdit?: (playlist: PlaylistSummary) => void;
   readonly onDelete?: (playlist: PlaylistSummary) => void;
 }
 
 export function PlaylistGrid({
   playlists,
-  onEditManage,
+  onEdit,
   onDelete,
 }: PlaylistGridProps): ReactElement {
   if (playlists.length === 0) {
@@ -34,7 +34,7 @@ export function PlaylistGrid({
         <PlaylistCard
           key={playlist.id}
           playlist={playlist}
-          onEditManage={onEditManage}
+          onEdit={onEdit}
           onDelete={onDelete}
         />
       ))}

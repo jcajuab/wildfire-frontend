@@ -16,9 +16,8 @@ import {
   type PlaylistSelectableContent,
 } from "@/components/playlists/create-playlist-form";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
+import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
 import type { Content } from "@/types/content";
-
-const PLAYLIST_INDEX_PATH = "/admin/playlists";
 
 const isPlaylistRenderableContent = (
   content: Content,

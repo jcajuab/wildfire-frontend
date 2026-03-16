@@ -6,5 +6,9 @@ export { PlaylistCard } from "./playlist-card";
 export { PlaylistGrid } from "./playlist-grid";
 
 export { CreatePlaylistForm } from "./create-playlist-form";
-export { EditPlaylistItemsDialog } from "./edit-playlist-items-dialog";
-export type { PlaylistItemsAtomicSnapshot } from "./edit-playlist-items-dialog";
+export { EditPlaylistForm } from "./edit-playlist-form";
+export type {
+  PlaylistEditorSavePayload,
+  PlaylistItemsAtomicSnapshot,
+  PlaylistMetadataDraft,
+} from "./edit-playlist-form";

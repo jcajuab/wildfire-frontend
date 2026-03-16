@@ -98,6 +98,13 @@ const NON_NAV_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
       match: "exact",
       section: "core",
     },
+    {
+      path: "/admin/playlists/edit",
+      permission: "playlists:update",
+      title: "Edit Playlist",
+      match: "prefix",
+      section: "core",
+    },
   ];
 
 export const DASHBOARD_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =

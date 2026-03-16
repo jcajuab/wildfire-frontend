@@ -28,13 +28,13 @@ import {
 
 interface PlaylistCardProps {
   readonly playlist: PlaylistSummary;
-  readonly onEditManage?: (playlist: PlaylistSummary) => void;
+  readonly onEdit?: (playlist: PlaylistSummary) => void;
   readonly onDelete?: (playlist: PlaylistSummary) => void;
 }
 
 export const PlaylistCard = memo(function PlaylistCard({
   playlist,
-  onEditManage,
+  onEdit,
   onDelete,
 }: PlaylistCardProps): ReactElement {
   const visiblePreviewItems = playlist.previewItems.slice(0, 3);
@@ -65,8 +65,8 @@ export const PlaylistCard = memo(function PlaylistCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
-            {onEditManage ? (
-              <DropdownMenuItem onClick={() => onEditManage(playlist)}>
+            {onEdit ? (
+              <DropdownMenuItem onClick={() => onEdit(playlist)}>
                 <IconListDetails className="size-4" />
                 Edit Playlist
               </DropdownMenuItem>

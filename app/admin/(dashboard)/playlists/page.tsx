@@ -3,21 +3,22 @@
 import type { ReactElement } from "react";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { IconPlus } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { DashboardPage } from "@/components/layout/dashboard-page";
-import { EditPlaylistItemsDialog } from "@/components/playlists/edit-playlist-items-dialog";
 import { PlaylistGrid } from "@/components/playlists/playlist-grid";
 import { SearchControl } from "@/components/common/search-control";
 import { PlaylistFilterPopover } from "@/components/playlists/playlist-filter-popover";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { Button } from "@/components/ui/button";
+import { getPlaylistEditPath } from "@/lib/playlist-paths";
 import { PAGE_SIZE, usePlaylistsPage } from "./use-playlists-page";
 
 export default function PlaylistsPage(): ReactElement {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const manageId = searchParams.get("manage");
   const handledManageRef = useRef<string | null>(null);
@@ -30,20 +31,14 @@ export default function PlaylistsPage(): ReactElement {
     page,
     playlists,
     totalPlaylists,
-    availableContent,
-    editorPlaylist,
     playlistToDelete,
     deleteDialogOpen,
-    isSavingPlaylistItems,
     setPage,
     setPlaylistToDelete,
     handleStatusFilterChange,
     handleClearFilters,
     handleSearchChange,
-    handleEditorDialogOpenChange,
-    handleOpenEditor,
-    handleManageItemsById,
-    handleSaveItems,
+    handleEditPlaylist,
     handleDeletePlaylist,
     deletePlaylistMutation,
   } = usePlaylistsPage();
@@ -51,9 +46,9 @@ export default function PlaylistsPage(): ReactElement {
   useEffect(() => {
     if (manageId && handledManageRef.current !== manageId) {
       handledManageRef.current = manageId;
-      void handleManageItemsById(manageId);
+      router.replace(getPlaylistEditPath(manageId));
     }
-  }, [manageId, handleManageItemsById]);
+  }, [manageId, router]);
 
   return (
     <DashboardPage.Root>
@@ -94,7 +89,7 @@ export default function PlaylistsPage(): ReactElement {
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
             <PlaylistGrid
               playlists={playlists}
-              onEditManage={canUpdatePlaylist ? handleOpenEditor : undefined}
+              onEdit={canUpdatePlaylist ? handleEditPlaylist : undefined}
               onDelete={canDeletePlaylist ? handleDeletePlaylist : undefined}
             />
           </div>
@@ -110,17 +105,6 @@ export default function PlaylistsPage(): ReactElement {
           />
         </DashboardPage.Footer>
       </DashboardPage.Body>
-
-      {editorPlaylist && (
-        <EditPlaylistItemsDialog
-          open={editorPlaylist !== null}
-          onOpenChange={handleEditorDialogOpenChange}
-          playlist={editorPlaylist}
-          availableContent={availableContent}
-          onSave={handleSaveItems}
-          isSaving={isSavingPlaylistItems}
-        />
-      )}
 
       <ConfirmActionDialog
         open={deleteDialogOpen}
