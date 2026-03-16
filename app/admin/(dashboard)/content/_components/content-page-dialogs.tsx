@@ -398,7 +398,7 @@ export function PreviewContentDialog({
             {formatContentStatus(content.status)}
           </Badge>
         </div>
-        <DialogFooter className="pt-4 sm:justify-between">
+        <DialogFooter className="pt-4 sm:justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>

@@ -120,7 +120,7 @@ export function ViewDisplayDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex items-center justify-between pt-4 sm:justify-between">
+        <DialogFooter className="flex items-center justify-end gap-2 pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
