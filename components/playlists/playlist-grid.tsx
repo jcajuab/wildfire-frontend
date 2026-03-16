@@ -1,9 +1,12 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconPlaylist } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
+import Link from "next/link";
 
+import { Can } from "@/components/common/can";
 import { EmptyState } from "@/components/common/empty-state";
+import { Button } from "@/components/ui/button";
 import { PlaylistCard } from "./playlist-card";
 import type { PlaylistSummary } from "@/types/playlist";
 
@@ -23,7 +26,16 @@ export function PlaylistGrid({
       <EmptyState
         title="No playlists yet"
         description="Create your first playlist to combine content and publish it to displays."
-        icon={<IconPlaylist className="size-7" aria-hidden="true" />}
+        action={
+          <Can permission="playlists:create">
+            <Button asChild>
+              <Link href="/admin/playlists/create">
+                <IconPlus className="size-4" aria-hidden="true" />
+                Create Playlist
+              </Link>
+            </Button>
+          </Can>
+        }
       />
     );
   }

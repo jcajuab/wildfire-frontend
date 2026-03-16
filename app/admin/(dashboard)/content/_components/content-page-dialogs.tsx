@@ -2,7 +2,7 @@
 
 import type { ChangeEvent, DragEvent, ReactElement } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { IconEye, IconUpload } from "@tabler/icons-react";
+import { IconUpload } from "@tabler/icons-react";
 import {
   SUPPORTED_CONTENT_FILE_LABELS,
   SUPPORTED_CONTENT_FILE_MIME_TYPES,
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -369,33 +370,24 @@ export function PreviewContentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <IconEye className="size-4" />
-            Content Details
-          </DialogTitle>
+          <DialogTitle>Content Details</DialogTitle>
+          <DialogDescription>
+            File details, type, and processing status for this content item.
+          </DialogDescription>
         </DialogHeader>
-        <div className="space-y-2 text-sm">
-          <p>
-            <span className="text-muted-foreground">Title:</span>{" "}
-            {content.title}
-          </p>
-          <p>
-            <span className="text-muted-foreground">Type:</span> {content.type}
-          </p>
-          <p>
-            <span className="text-muted-foreground">MIME Type:</span>{" "}
-            {content.mimeType || "Unknown"}
-          </p>
-          <p>
-            <span className="text-muted-foreground">Size:</span>{" "}
-            {formatFileSize(content.fileSize)}
-          </p>
-          <p>
-            <span className="text-muted-foreground">Status:</span>{" "}
-            {formatContentStatus(content.status)}
-          </p>
+        <div className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
+          <span className="text-muted-foreground">Title</span>
+          <span>{content.title}</span>
+          <span className="text-muted-foreground">Type</span>
+          <span>{content.type}</span>
+          <span className="text-muted-foreground">MIME Type</span>
+          <span>{content.mimeType || "Unknown"}</span>
+          <span className="text-muted-foreground">Size</span>
+          <span>{formatFileSize(content.fileSize)}</span>
+          <span className="text-muted-foreground">Status</span>
+          <span>{formatContentStatus(content.status)}</span>
         </div>
-        <DialogFooter>
+        <DialogFooter className="pt-4 sm:justify-between">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>

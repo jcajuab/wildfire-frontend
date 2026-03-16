@@ -3,7 +3,6 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 import {
-  IconMail,
   IconRefresh,
   IconCopy,
   IconCheck,
@@ -27,6 +26,7 @@ interface PendingInvitationsTableProps {
   readonly isLoading?: boolean;
   readonly resendingInvitationId?: string | null;
   readonly onResend: (invitationId: string) => void;
+  readonly onSendInvitation?: () => void;
 }
 
 const statusVariant: Readonly<
@@ -101,6 +101,7 @@ export function PendingInvitationsTable({
   isLoading = false,
   resendingInvitationId,
   onResend,
+  onSendInvitation,
 }: PendingInvitationsTableProps): ReactElement {
   if (isLoading) {
     return (
@@ -116,7 +117,11 @@ export function PendingInvitationsTable({
         <EmptyState
           title="No invitations yet"
           description="Invitations you send will appear here with status and expiration details."
-          icon={<IconMail className="size-7" aria-hidden="true" />}
+          action={
+            onSendInvitation ? (
+              <Button onClick={onSendInvitation}>Send Invitation</Button>
+            ) : null
+          }
         />
       </div>
     );

@@ -230,6 +230,7 @@ export default function UsersPage(): ReactElement {
                   isLoading={isInvitationsLoading}
                   resendingInvitationId={resendingInvitationId}
                   onResend={handleResendInvitation}
+                  onSendInvitation={() => setIsInviteDialogOpen(true)}
                 />
               </section>
             </Can>

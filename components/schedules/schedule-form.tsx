@@ -26,6 +26,7 @@ interface ScheduleFormProps {
   readonly onCancel: () => void;
   readonly submitLabel: string;
   readonly isCreate?: boolean;
+  readonly lockedKind?: "PLAYLIST" | "FLASH";
 }
 
 function ScheduleFormFrame({
@@ -37,6 +38,7 @@ function ScheduleFormFrame({
   onCancel,
   submitLabel,
   isCreate = false,
+  lockedKind,
 }: ScheduleFormProps): ReactElement {
   const [formData, setFormData] = useState<ScheduleFormData>(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,25 +85,27 @@ function ScheduleFormFrame({
           <Label htmlFor="schedule-active">Active</Label>
         </div>
 
-        <div className="space-y-2">
-          <Label>Schedule Type</Label>
-          <Tabs
-            value={formData.kind}
-            onValueChange={(value) =>
-              setFormData((prev) => ({
-                ...prev,
-                kind: value as "PLAYLIST" | "FLASH",
-                playlistId: value === "PLAYLIST" ? prev.playlistId : null,
-                contentId: value === "FLASH" ? prev.contentId : null,
-              }))
-            }
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="PLAYLIST">Playlist</TabsTrigger>
-              <TabsTrigger value="FLASH">Flash Overlay</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+        {!lockedKind && (
+          <div className="space-y-2">
+            <Label>Schedule Type</Label>
+            <Tabs
+              value={formData.kind}
+              onValueChange={(value) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  kind: value as "PLAYLIST" | "FLASH",
+                  playlistId: value === "PLAYLIST" ? prev.playlistId : null,
+                  contentId: value === "FLASH" ? prev.contentId : null,
+                }))
+              }
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="PLAYLIST">Playlist</TabsTrigger>
+                <TabsTrigger value="FLASH">Flash Overlay</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="schedule-name">Name</Label>
@@ -290,8 +294,10 @@ function ScheduleFormFrame({
 
 type CreateScheduleFormProps = Omit<
   ScheduleFormProps,
-  "initialData" | "submitLabel" | "isCreate"
->;
+  "initialData" | "submitLabel" | "isCreate" | "lockedKind"
+> & {
+  readonly kind?: "PLAYLIST" | "FLASH";
+};
 
 interface EditScheduleFormProps extends Omit<ScheduleFormProps, "submitLabel"> {
   readonly initialData: ScheduleFormData;
@@ -321,14 +327,15 @@ function getCurrentTimeRoundedUp5Min(): string {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
-export function CreateScheduleForm(
-  props: CreateScheduleFormProps,
-): ReactElement {
+export function CreateScheduleForm({
+  kind,
+  ...props
+}: CreateScheduleFormProps): ReactElement {
   return (
     <ScheduleFormFrame
       initialData={{
         name: "",
-        kind: "PLAYLIST",
+        kind: kind ?? "PLAYLIST",
         startDate: getTodayDateString(),
         endDate: getTodayDateString(),
         startTime: getCurrentTimeRoundedUp5Min(),
@@ -340,11 +347,18 @@ export function CreateScheduleForm(
       }}
       submitLabel="Create"
       isCreate={true}
+      lockedKind={kind}
       {...props}
     />
   );
 }
 
 export function EditScheduleForm(props: EditScheduleFormProps): ReactElement {
-  return <ScheduleFormFrame submitLabel="Save" {...props} />;
+  return (
+    <ScheduleFormFrame
+      submitLabel="Save"
+      lockedKind={props.initialData.kind}
+      {...props}
+    />
+  );
 }

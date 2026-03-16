@@ -14,6 +14,7 @@ import type { ScheduleFormData } from "@/types/schedule";
 interface CreateScheduleDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
+  readonly kind: "PLAYLIST" | "FLASH";
   readonly onCreate: (data: ScheduleFormData) => Promise<void> | void;
   readonly availablePlaylists: readonly { id: string; name: string }[];
   readonly availableFlashContents: readonly { id: string; title: string }[];
@@ -23,6 +24,7 @@ interface CreateScheduleDialogProps {
 export function CreateScheduleDialog({
   open,
   onOpenChange,
+  kind,
   onCreate,
   availablePlaylists,
   availableFlashContents,
@@ -41,13 +43,20 @@ export function CreateScheduleDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create New Schedule</DialogTitle>
+          <DialogTitle>
+            {kind === "PLAYLIST"
+              ? "Create Playlist Schedule"
+              : "Create Flash Overlay Schedule"}
+          </DialogTitle>
           <DialogDescription>
-            Configure schedule timing, target display, and playlist assignment.
+            {kind === "PLAYLIST"
+              ? "Configure timing, playlist, and target display."
+              : "Configure timing, flash content, and target display."}
           </DialogDescription>
         </DialogHeader>
 
         <CreateScheduleForm
+          kind={kind}
           availablePlaylists={availablePlaylists}
           availableFlashContents={availableFlashContents}
           availableDisplays={availableDisplays}

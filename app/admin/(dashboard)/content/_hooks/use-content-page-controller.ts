@@ -45,6 +45,7 @@ export function useContentPageController() {
   const editId = searchParams.get("edit");
   const handledPreviewRef = useRef<string | null>(null);
   const handledEditRef = useRef<string | null>(null);
+  const scrollTargetRef = useRef<string | null>(null);
   const [loadContent] = useLazyGetContentQuery();
 
   useEffect(() => {
@@ -58,9 +59,12 @@ export function useContentPageController() {
     }
   }, [previewId, loadContent, dialogState]);
 
+  const { handleClearFilters, handleSearchChange } = filters;
+
   useEffect(() => {
     if (editId && handledEditRef.current !== editId) {
       handledEditRef.current = editId;
+      scrollTargetRef.current = editId;
       void loadContent(editId).then((result) => {
         if (result.data) {
           dialogState.handleEdit(mapBackendContentToContent(result.data));
@@ -68,6 +72,13 @@ export function useContentPageController() {
       });
     }
   }, [editId, loadContent, dialogState]);
+
+  useEffect(() => {
+    if (editId) {
+      handleClearFilters();
+      handleSearchChange("");
+    }
+  }, [editId, handleClearFilters, handleSearchChange]);
 
   const [getContentJob] = useLazyGetContentJobQuery();
   const { trackContentJob } = useContentJobMonitor({
@@ -87,6 +98,20 @@ export function useContentPageController() {
     () => (data?.items ?? []).map(mapBackendContentToContent),
     [data?.items],
   );
+
+  useEffect(() => {
+    const targetId = scrollTargetRef.current;
+    if (!targetId) return;
+    const isVisible = visibleContents.some((c) => c.id === targetId);
+    if (!isVisible) return;
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`content-card-${targetId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        scrollTargetRef.current = null;
+      }
+    });
+  }, [visibleContents]);
 
   return {
     canUpdateContent,

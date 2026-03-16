@@ -2,9 +2,12 @@
 
 import type { ReactElement } from "react";
 import { useMemo, useState, useCallback } from "react";
-import { IconPhoto } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
+import Link from "next/link";
 
+import { Can } from "@/components/common/can";
 import { EmptyState } from "@/components/common/empty-state";
+import { Button } from "@/components/ui/button";
 import type {
   CalendarView,
   ResourceMode,
@@ -37,7 +40,16 @@ function EmptyResourcesState(): ReactElement {
     <EmptyState
       title="No displays available for scheduling"
       description="Add displays first, then assign schedules to resources."
-      icon={<IconPhoto className="size-7" aria-hidden="true" />}
+      action={
+        <Can permission="displays:create">
+          <Button asChild>
+            <Link href="/admin/displays">
+              <IconPlus className="size-4" aria-hidden="true" />
+              Add Display
+            </Link>
+          </Button>
+        </Can>
+      }
     />
   );
 }

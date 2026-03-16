@@ -207,7 +207,7 @@ export function ContentGrid({
         const isExpanded = expandedPdfParentIdSet.has(content.id);
 
         return (
-          <div key={content.id} className="relative">
+          <div key={content.id} id={`content-card-${content.id}`} className="relative">
             <ContentCard
               content={content}
               isPdfRootExpandable={canExpand}

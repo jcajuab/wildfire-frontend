@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useState, useCallback, useMemo } from "react";
-import { IconPlus } from "@tabler/icons-react";
+import { IconBolt, IconList, IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
@@ -13,6 +13,12 @@ import { EditScheduleDialog } from "@/components/schedules/edit-schedule-dialog"
 import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useGetContentOptionsQuery } from "@/lib/api/content-api";
 import {
   useGetDisplayOptionsQuery,
@@ -141,7 +147,9 @@ export default function SchedulesPage(): ReactElement {
     [schedulesData],
   );
 
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createDialogKind, setCreateDialogKind] = useState<
+    "PLAYLIST" | "FLASH" | null
+  >(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(
@@ -236,10 +244,26 @@ export default function SchedulesPage(): ReactElement {
         title="Schedules"
         actions={
           <Can permission="schedules:create">
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <IconPlus className="size-4" />
-              Create Schedule
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  <IconPlus className="size-4" />
+                  Create Schedule
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => setCreateDialogKind("PLAYLIST")}
+                >
+                  <IconList className="size-4" />
+                  Playlist
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCreateDialogKind("FLASH")}>
+                  <IconBolt className="size-4" />
+                  Flash Overlay
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </Can>
         }
       />
@@ -279,8 +303,11 @@ export default function SchedulesPage(): ReactElement {
 
       {/* Create Schedule Dialog */}
       <CreateScheduleDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
+        open={createDialogKind !== null}
+        onOpenChange={(open) => {
+          if (!open) setCreateDialogKind(null);
+        }}
+        kind={createDialogKind ?? "PLAYLIST"}
         onCreate={handleCreateSchedule}
         availablePlaylists={availablePlaylists}
         availableFlashContents={availableFlashContents}
