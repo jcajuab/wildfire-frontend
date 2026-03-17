@@ -61,7 +61,11 @@ export default function PdfCropPage() {
           width: r.width,
           height: r.height,
         }));
-        await submitPdfCrops({ uploadId, regions: mapped, contentName }).unwrap();
+        await submitPdfCrops({
+          uploadId,
+          regions: mapped,
+          contentName,
+        }).unwrap();
         sessionStorage.removeItem(`${SESSION_KEY_PREFIX}${uploadId}`);
         router.push("/admin/content");
       } catch {

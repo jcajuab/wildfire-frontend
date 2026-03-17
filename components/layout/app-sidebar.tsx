@@ -274,7 +274,7 @@ export function AppSidebar(): ReactElement {
                             }
                           />
                         ) : (
-                            <IconUser className="size-6 text-sidebar-foreground/80" />
+                          <IconUser className="size-6 text-sidebar-foreground/80" />
                         )}
                       </div>
                       <div className="flex min-w-0 flex-col items-start">

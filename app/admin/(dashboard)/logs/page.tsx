@@ -30,7 +30,7 @@ import {
   RESOURCE_TYPE_SELECT_ALL_VALUE,
   type ResourceTypeFilter,
 } from "@/lib/audit-resource-types";
-import { AuditExportPopover } from "./AuditExportPopover";
+import { AuditExportPopover } from "./_components/audit-export-popover";
 import {
   ACTOR_TYPE_FILTERS,
   PAGE_SIZE,

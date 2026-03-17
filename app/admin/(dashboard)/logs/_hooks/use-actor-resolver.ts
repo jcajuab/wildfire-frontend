@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useMemo } from "react";
 import type { User } from "@/types/user";
 import type { Display } from "@/lib/api/displays-api";

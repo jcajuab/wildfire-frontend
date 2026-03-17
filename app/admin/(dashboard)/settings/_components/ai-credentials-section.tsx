@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAICredentials } from "@/hooks/use-ai-credentials";
 import { AI_PROVIDERS } from "@/lib/ai/providers";
-import { SettingsField } from "./SettingsField";
+import { SettingsField } from "./settings-field";
 
 const controlContainerClass = "w-full max-w-md";
 const controlClass = "h-10 w-full";

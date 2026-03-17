@@ -14,7 +14,7 @@ import { RolesTable } from "@/components/roles/roles-table";
 import { Button } from "@/components/ui/button";
 import { ROLE_CREATE_PATH } from "@/lib/role-paths";
 import { toast } from "sonner";
-import { PAGE_SIZE, useRolesPage } from "./use-roles-page";
+import { PAGE_SIZE, useRolesPage } from "./_hooks/use-roles-page";
 
 export default function RolesPage(): ReactElement {
   const {

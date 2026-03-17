@@ -17,8 +17,8 @@ import {
   useAuditLogFilters,
   ACTOR_TYPE_FILTERS,
   type ActorTypeFilter,
-} from "./useAuditLogFilters";
-import { useActorResolver } from "./useActorResolver";
+} from "./_hooks/use-audit-log-filters";
+import { useActorResolver } from "./_hooks/use-actor-resolver";
 
 export { ACTOR_TYPE_FILTERS, type ActorTypeFilter };
 

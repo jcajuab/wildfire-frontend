@@ -3,8 +3,8 @@ import { IconPencil } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DirtyFieldActions } from "./DirtyFieldActions";
-import { SettingsField } from "./SettingsField";
+import { DirtyFieldActions } from "./dirty-field-actions";
+import { SettingsField } from "./settings-field";
 
 const controlContainerClass = "w-full max-w-md";
 const controlClass = "h-10 w-full";

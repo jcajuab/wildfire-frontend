@@ -95,42 +95,29 @@ export interface DisplayRuntimeOverrides {
   };
 }
 
-const buildDisplaysListUrl = (query: DisplaysListQuery | void): string => {
-  const params = new URLSearchParams();
-  params.set("page", String(query?.page ?? 1));
-  params.set("pageSize", String(query?.pageSize ?? 20));
-
-  if (query?.q) {
-    params.set("q", query.q);
-  }
-  if (query?.status) {
-    params.set("status", query.status);
-  }
-  if (query?.output) {
-    params.set("output", query.output);
-  }
-  if (query?.sortBy) {
-    params.set("sortBy", query.sortBy);
-  }
-  if (query?.sortDirection) {
-    params.set("sortDirection", query.sortDirection);
-  }
-  if (query?.groupIds) {
-    for (const groupId of query.groupIds) {
-      params.append("groupIds", groupId);
-    }
-  }
-
-  return `displays?${params.toString()}`;
-};
-
 export const displaysApi = createApi({
   reducerPath: "displaysApi",
   baseQuery,
   tagTypes: ["Display", "DisplayGroup", "RuntimeOverrides"],
   endpoints: (build) => ({
     getDisplays: build.query<DisplaysListResponse, DisplaysListQuery | void>({
-      query: (query) => buildDisplaysListUrl(query),
+      query: (query) => {
+        const params = new URLSearchParams();
+        params.set("page", String(query?.page ?? 1));
+        params.set("pageSize", String(query?.pageSize ?? 20));
+        if (query?.q) params.set("q", query.q);
+        if (query?.status) params.set("status", query.status);
+        if (query?.output) params.set("output", query.output);
+        if (query?.sortBy) params.set("sortBy", query.sortBy);
+        if (query?.sortDirection)
+          params.set("sortDirection", query.sortDirection);
+        if (query?.groupIds) {
+          for (const groupId of query.groupIds) {
+            params.append("groupIds", groupId);
+          }
+        }
+        return `displays?${params.toString()}`;
+      },
       transformResponse: (response) =>
         transformPaginatedListResponse<Display>(response, "getDisplays"),
       providesTags: createProvidesTags("Display"),
@@ -192,7 +179,7 @@ export const displaysApi = createApi({
       query: (body) => ({
         url: "displays/runtime-overrides/emergency",
         method: "PUT",
-        body: { active: true, ...((body as object) ?? {}) },
+        body: { active: true, ...(body ?? {}) },
       }),
       invalidatesTags: [
         { type: "RuntimeOverrides", id: "GLOBAL" },
@@ -204,7 +191,7 @@ export const displaysApi = createApi({
         query: (body) => ({
           url: "displays/runtime-overrides/emergency",
           method: "PUT",
-          body: { active: false, ...((body as object) ?? {}) },
+          body: { active: false, ...(body ?? {}) },
         }),
         invalidatesTags: [
           { type: "RuntimeOverrides", id: "GLOBAL" },

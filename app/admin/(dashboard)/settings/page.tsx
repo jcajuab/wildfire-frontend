@@ -1,8 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { motion, useReducedMotion } from "framer-motion";
-import { useTheme } from "next-themes";
+import { motion } from "framer-motion";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { DashboardPage } from "@/components/layout/dashboard-page";
@@ -15,93 +14,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/context/auth-context";
-import { changePassword, deleteCurrentUser } from "@/lib/api-client";
-import { notifyApiError } from "@/lib/api/get-api-error-message";
-import { toast } from "sonner";
-import { SettingsField } from "./SettingsField";
-import { ProfileNameEditor } from "./ProfileNameEditor";
-import { AvatarUploader } from "./AvatarUploader";
-import { ChangePasswordDialog } from "./ChangePasswordDialog";
-import { useProfileEditor } from "./useProfileEditor";
-import { AICredentialsSection } from "./AICredentialsSection";
-import { useState } from "react";
+import { AICredentialsSection } from "./_components/ai-credentials-section";
+import { AvatarUploader } from "./_components/avatar-uploader";
+import { ChangePasswordDialog } from "./_components/change-password-dialog";
+import { ProfileNameEditor } from "./_components/profile-name-editor";
+import { SettingsField } from "./_components/settings-field";
+import { useSettingsPage } from "./_hooks/use-settings-page";
 
 const controlContainerClass = "w-full max-w-md";
 const controlClass = "h-10 w-full";
 
 export default function SettingsPage(): ReactElement {
-  const { user, token, logout, updateSession } = useAuth();
-  const { theme, setTheme } = useTheme();
-  const prefersReducedMotion = useReducedMotion();
-
-  const profileEditor = useProfileEditor({
-    userName: user?.name,
-    token,
-    updateSession,
-  });
-
-  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  const avatarUrl = user?.avatarUrl ?? null;
-  const isInvitedUser = user?.isInvitedUser ?? false;
-
-  const sectionMotionProps = prefersReducedMotion
-    ? {}
-    : {
-        initial: { opacity: 0, y: 6 },
-        animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.16, ease: "easeOut" as const },
-      };
-
-  const handleChangePassword = (): void => {
-    setIsPasswordDialogOpen(true);
-  };
-
-  const handlePasswordSubmit = async (data: {
-    currentPassword: string;
-    newPassword: string;
-  }): Promise<void> => {
-    await changePassword(token, data);
-    toast.success("Password updated.");
-    setIsPasswordDialogOpen(false);
-  };
-
-  const handleLogOut = async (): Promise<void> => {
-    if (isLoggingOut) return;
-    setIsLoggingOut(true);
-    try {
-      await logout();
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
-  const handleDeleteAccount = (): void => {
-    setIsDeleteDialogOpen(true);
-  };
-
-  const accountDisplayName = [
-    profileEditor.firstName.trim(),
-    profileEditor.lastName.trim(),
-  ]
-    .filter((part) => part.length > 0)
-    .join(" ");
-  const accountNameForDialog =
-    accountDisplayName.length > 0
-      ? accountDisplayName
-      : (user?.name ?? "this account");
-
-  const handleDeleteAccountConfirm = async (): Promise<void> => {
-    try {
-      await deleteCurrentUser(token);
-      await logout();
-    } catch (err) {
-      notifyApiError(err, "Failed to delete account.");
-    }
-  };
+  const {
+    user,
+    isInvitedUser,
+    theme,
+    setTheme,
+    sectionMotionProps,
+    profileEditor,
+    avatarUrl,
+    accountNameForDialog,
+    isPasswordDialogOpen,
+    isDeleteDialogOpen,
+    isLoggingOut,
+    handleChangePassword,
+    handlePasswordSubmit,
+    handleLogOut,
+    handleDeleteAccount,
+    handleDeleteAccountConfirm,
+    setIsPasswordDialogOpen,
+    setIsDeleteDialogOpen,
+  } = useSettingsPage();
 
   return (
     <DashboardPage.Root>

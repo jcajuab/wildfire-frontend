@@ -22,3 +22,6 @@ next-env.d.ts
 # Miscellaneous
 .DS_Store
 Thumbs.db
+
+# omc state
+.omc/

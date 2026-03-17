@@ -27,13 +27,3 @@ export interface AuthResponse {
   /** Current user's permissions (resource:action). Empty if no roles. */
   readonly permissions: PermissionType[];
 }
-
-/** Backend error response shape. */
-export interface ApiErrorResponse {
-  readonly error: {
-    readonly code: string;
-    readonly message: string;
-    readonly requestId: string;
-    readonly details?: unknown;
-  };
-}

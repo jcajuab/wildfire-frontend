@@ -58,8 +58,6 @@ describe("CalendarGrid", () => {
         resourceMode="display"
         displayGroups={[]}
         onScheduleClick={vi.fn()}
-        resourceMode="display"
-        displayGroups={[]}
       />,
     );
 

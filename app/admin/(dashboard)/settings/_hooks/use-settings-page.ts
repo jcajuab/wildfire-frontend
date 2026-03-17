@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/auth-context";
 import { changePassword, deleteCurrentUser } from "@/lib/api-client";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
-import { useProfileEditor } from "./useProfileEditor";
+import { useProfileEditor } from "./use-profile-editor";
 
 export interface UseSettingsPageResult {
   // Auth

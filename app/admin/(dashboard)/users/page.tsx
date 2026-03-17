@@ -23,7 +23,7 @@ import { SearchControl } from "@/components/common/search-control";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { UsersTable } from "@/components/users/users-table";
 import { PendingInvitationsTable } from "@/components/users/pending-invitations-table";
-import { PAGE_SIZE, useUsersPage } from "./use-users-page";
+import { PAGE_SIZE, useUsersPage } from "./_hooks/use-users-page";
 
 function ResetPasswordDialog({
   open,

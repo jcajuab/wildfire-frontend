@@ -1,10 +1,10 @@
 import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/base-query";
-import { extractApiError, parseApiResponseData } from "@/lib/api/contracts";
-import type {
-  ApiErrorResponse,
-  AuthResponse,
-  LoginCredentials,
-} from "@/types/auth";
+import {
+  extractApiError,
+  parseApiResponseData,
+  type ApiErrorResponse,
+} from "@/lib/api/contracts";
+import type { AuthResponse, LoginCredentials } from "@/types/auth";
 
 interface JsonParseFailurePayload {
   readonly __parseFailure: true;
@@ -24,7 +24,7 @@ const previewResponseBody = (body: string, maxLength = 500): string => {
   return `${trimmed.slice(0, maxLength)}…`;
 };
 
-const buildParseFailurePayload = (
+export const buildParseFailurePayload = (
   response: Response,
   body: string,
 ): JsonParseFailurePayload => {
@@ -45,7 +45,7 @@ const buildParseFailurePayload = (
   };
 };
 
-async function readJsonPayload(response: Response): Promise<unknown> {
+export async function readJsonPayload(response: Response): Promise<unknown> {
   let body: string;
 
   try {
@@ -65,7 +65,7 @@ async function readJsonPayload(response: Response): Promise<unknown> {
   }
 }
 
-function createAuthApiError(
+export function createAuthApiError(
   response: Response,
   payload: unknown,
 ): AuthApiError {
