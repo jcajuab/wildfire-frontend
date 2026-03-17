@@ -80,7 +80,7 @@ export default function PlaylistsPage(): ReactElement {
                 value={search}
                 onChange={handleSearchChange}
                 ariaLabel="Search playlists"
-                placeholder="Search playlists…"
+                placeholder="Search..."
                 className="w-full max-w-none sm:w-72"
               />
             </div>

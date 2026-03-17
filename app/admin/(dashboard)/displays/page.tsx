@@ -71,12 +71,6 @@ export default function DisplaysPage(): ReactElement {
         title="Displays"
         actions={
           <>
-            <Can permission="displays:create">
-              <Button onClick={() => setIsAddInfoDialogOpen(true)}>
-                <IconPlus className="size-4" aria-hidden="true" />
-                Register Display
-              </Button>
-            </Can>
             <Can permission="displays:update">
               <Button
                 variant="outline"
@@ -85,6 +79,12 @@ export default function DisplaysPage(): ReactElement {
               >
                 <IconSettings className="size-4" aria-hidden="true" />
                 Add Display Group
+              </Button>
+            </Can>
+            <Can permission="displays:create">
+              <Button onClick={() => setIsAddInfoDialogOpen(true)}>
+                <IconPlus className="size-4" aria-hidden="true" />
+                Register Display
               </Button>
             </Can>
           </>

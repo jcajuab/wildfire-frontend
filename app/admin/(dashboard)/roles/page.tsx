@@ -95,7 +95,7 @@ export default function RolesPage(): ReactElement {
                 value={search}
                 onChange={handleSearchChange}
                 ariaLabel="Search roles"
-                placeholder="Search roles…"
+                placeholder="Search..."
                 className="w-full max-w-none sm:w-72"
               />
             </div>

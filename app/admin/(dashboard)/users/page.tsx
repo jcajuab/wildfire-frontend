@@ -177,7 +177,7 @@ export default function UsersPage(): ReactElement {
                 value={search}
                 onChange={handleSearchChange}
                 ariaLabel="Search users"
-                placeholder="Search users…"
+                placeholder="Search..."
                 className="w-full max-w-none sm:w-72"
               />
             </div>
