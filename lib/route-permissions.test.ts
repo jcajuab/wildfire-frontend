@@ -17,6 +17,22 @@ describe("getRequiredReadPermission", () => {
       "playlists:read",
     );
   });
+
+  test("keeps role index on the read permission", () => {
+    expect(getRequiredReadPermission("/admin/roles")).toBe("roles:read");
+  });
+
+  test("returns role create for the dedicated create route", () => {
+    expect(getRequiredReadPermission("/admin/roles/create")).toBe(
+      "roles:create",
+    );
+  });
+
+  test("returns role update for edit child routes", () => {
+    expect(getRequiredReadPermission("/admin/roles/edit/role-123")).toBe(
+      "roles:update",
+    );
+  });
 });
 
 describe("getFirstPermittedAdminRoute", () => {

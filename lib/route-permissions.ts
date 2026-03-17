@@ -1,4 +1,9 @@
 import type { PermissionType } from "@/types/permission";
+import {
+  ROLE_CREATE_PATH,
+  ROLE_EDIT_PATH_PREFIX,
+  ROLE_INDEX_PATH,
+} from "@/lib/role-paths";
 
 export type RouteMatchMode = "exact" | "prefix";
 export type SidebarSection = "core" | "manage";
@@ -67,7 +72,7 @@ const MANAGE_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
       section: "manage",
     },
     {
-      path: "/admin/roles",
+      path: ROLE_INDEX_PATH,
       permission: "roles:read",
       title: "Roles",
       match: "exact",
@@ -104,6 +109,20 @@ const NON_NAV_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
       title: "Edit Playlist",
       match: "prefix",
       section: "core",
+    },
+    {
+      path: ROLE_CREATE_PATH,
+      permission: "roles:create",
+      title: "Create Role",
+      match: "exact",
+      section: "manage",
+    },
+    {
+      path: ROLE_EDIT_PATH_PREFIX,
+      permission: "roles:update",
+      title: "Edit Role",
+      match: "prefix",
+      section: "manage",
     },
   ];
 
