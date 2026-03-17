@@ -14,7 +14,6 @@ Display content player runtime. Runs on public display pages to render scheduled
 | `player-controller.ts` | Main playback controller — advances through playlist items |
 | `flash-ticker.ts`      | Flash message ticker with scrolling animation timing       |
 | `overflow-timing.ts`   | Content overflow detection and timing adjustments          |
-| `pdf-renderer.tsx`     | PDF page rendering component using pdfjs-dist              |
 | `sse-client.ts`        | Server-Sent Events client for real-time display updates    |
 
 ## For AI Agents

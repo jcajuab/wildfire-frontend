@@ -8,16 +8,19 @@ Next.js 16 frontend for the Wildfire digital signage management system. Provides
 
 ## Key Files
 
-| File               | Description                                              |
-| ------------------ | -------------------------------------------------------- |
-| `app/layout.tsx`   | Root layout — theme provider, store provider, auth guard |
-| `app/globals.css`  | Tailwind CSS v4 global styles and CSS variables          |
-| `package.json`     | Dependencies and scripts (pnpm, next, react 19)          |
-| `tsconfig.json`    | TypeScript config — `@/*` path alias to `./*`            |
-| `next.config.ts`   | Next.js configuration                                    |
-| `components.json`  | shadcn/ui config — radix-mira style, tabler icons        |
-| `vitest.config.ts` | Vitest test runner configuration                         |
-| `eslint.config.js` | ESLint config with next, jsx-a11y plugins                |
+| File                  | Description                                              |
+| --------------------- | -------------------------------------------------------- |
+| `app/layout.tsx`      | Root layout — theme provider, store provider, auth guard |
+| `app/globals.css`     | Tailwind CSS v4 global styles and CSS variables          |
+| `package.json`        | Dependencies and scripts (pnpm, next, react 19)          |
+| `tsconfig.json`       | TypeScript config — `@/*` path alias to `./*`            |
+| `next.config.ts`      | Next.js configuration                                    |
+| `components.json`     | shadcn/ui config — radix-mira style, tabler icons        |
+| `vitest.config.ts`    | Vitest test runner configuration                         |
+| `eslint.config.js`    | ESLint config with next, jsx-a11y plugins                |
+| `vitest.setup.ts`     | Vitest global test setup (Testing Library, jsdom)        |
+| `postcss.config.js`   | PostCSS configuration for Tailwind CSS                   |
+| `pnpm-workspace.yaml` | pnpm workspace definition                                |
 
 ## Subdirectories
 

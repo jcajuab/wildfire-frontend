@@ -4,6 +4,8 @@ import {
   type ReactElement,
   useCallback,
   useEffect,
+  useId,
+  useReducer,
   useRef,
   useState,
 } from "react";
@@ -12,10 +14,12 @@ import {
   getDocument,
 } from "pdfjs-dist/legacy/build/pdf.mjs";
 import {
+  IconCheck,
   IconChevronLeft,
   IconChevronRight,
   IconCrop,
   IconTrash,
+  IconX,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,8 +28,6 @@ GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/legacy/build/pdf.worker.mjs",
   import.meta.url,
 ).toString();
-
-const ASPECT_RATIO = 16 / 9;
 
 export interface PdfPageMeta {
   pageNumber: number;
@@ -45,20 +47,189 @@ export interface PdfCropEditorProps {
   pdfUrl: string;
   pages: PdfPageMeta[];
   filename: string;
+  contentName?: string;
   onSubmit: (regions: CropRegion[]) => void;
   onCancel: () => void;
 }
 
-interface DraftRect {
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
+interface CollectedCrop extends CropRegion {
+  id: string;
+  previewDataUrl: string;
 }
 
-interface PageCropRegion extends CropRegion {
-  id: string;
+/* ------------------------------------------------------------------ */
+/*  State machine types                                                */
+/* ------------------------------------------------------------------ */
+
+type Corner = "tl" | "tr" | "bl" | "br";
+
+interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
+
+type CropMode =
+  | { mode: "idle" }
+  | {
+      mode: "drawing";
+      startX: number;
+      startY: number;
+      currentX: number;
+      currentY: number;
+    }
+  | {
+      mode: "editing";
+      rect: Rect;
+      drag:
+        | null
+        | { type: "move"; offsetX: number; offsetY: number }
+        | {
+            type: "resize";
+            corner: Corner;
+            anchorX: number;
+            anchorY: number;
+            initialAspectRatio: number;
+          };
+    };
+
+type CropAction =
+  | { type: "START_DRAW"; x: number; y: number }
+  | { type: "UPDATE_DRAW"; x: number; y: number }
+  | {
+      type: "FINISH_DRAW";
+      containerWidth: number;
+      containerHeight: number;
+    }
+  | { type: "START_MOVE"; offsetX: number; offsetY: number }
+  | {
+      type: "START_RESIZE";
+      corner: Corner;
+      anchorX: number;
+      anchorY: number;
+      initialAspectRatio: number;
+    }
+  | {
+      type: "UPDATE_DRAG";
+      x: number;
+      y: number;
+      containerWidth: number;
+      containerHeight: number;
+      shiftKey: boolean;
+    }
+  | { type: "FINISH_DRAG" }
+  | { type: "CONFIRM" }
+  | { type: "DISCARD" }
+  | { type: "PAGE_CHANGE" };
+
+function cropReducer(state: CropMode, action: CropAction): CropMode {
+  switch (action.type) {
+    case "START_DRAW": {
+      if (state.mode !== "idle") return state;
+      return {
+        mode: "drawing",
+        startX: action.x,
+        startY: action.y,
+        currentX: action.x,
+        currentY: action.y,
+      };
+    }
+    case "UPDATE_DRAW": {
+      if (state.mode !== "drawing") return state;
+      return { ...state, currentX: action.x, currentY: action.y };
+    }
+    case "FINISH_DRAW": {
+      if (state.mode !== "drawing") return state;
+      const rect = computeConstrainedRect(
+        state.startX,
+        state.startY,
+        state.currentX,
+        state.currentY,
+        action.containerWidth,
+        action.containerHeight,
+        false,
+      );
+      if (!rect) return { mode: "idle" };
+      return { mode: "editing", rect, drag: null };
+    }
+    case "START_MOVE": {
+      if (state.mode !== "editing") return state;
+      return {
+        ...state,
+        drag: {
+          type: "move",
+          offsetX: action.offsetX,
+          offsetY: action.offsetY,
+        },
+      };
+    }
+    case "START_RESIZE": {
+      if (state.mode !== "editing") return state;
+      return {
+        ...state,
+        drag: {
+          type: "resize",
+          corner: action.corner,
+          anchorX: action.anchorX,
+          anchorY: action.anchorY,
+          initialAspectRatio: action.initialAspectRatio,
+        },
+      };
+    }
+    case "UPDATE_DRAG": {
+      if (state.mode !== "editing" || !state.drag) return state;
+      if (state.drag.type === "move") {
+        const newX = Math.max(
+          0,
+          Math.min(
+            action.x - state.drag.offsetX,
+            action.containerWidth - state.rect.width,
+          ),
+        );
+        const newY = Math.max(
+          0,
+          Math.min(
+            action.y - state.drag.offsetY,
+            action.containerHeight - state.rect.height,
+          ),
+        );
+        return {
+          ...state,
+          rect: { ...state.rect, x: newX, y: newY },
+        };
+      }
+      // resize
+      const newRect = computeConstrainedRect(
+        state.drag.anchorX,
+        state.drag.anchorY,
+        action.x,
+        action.y,
+        action.containerWidth,
+        action.containerHeight,
+        true,
+        action.shiftKey ? state.drag.initialAspectRatio : undefined,
+      );
+      if (!newRect) return state; // keep previous rect
+      return { ...state, rect: newRect };
+    }
+    case "FINISH_DRAG": {
+      if (state.mode !== "editing") return state;
+      return { ...state, drag: null };
+    }
+    case "CONFIRM":
+    case "DISCARD":
+    case "PAGE_CHANGE": {
+      return { mode: "idle" };
+    }
+    default:
+      return state;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Geometry helpers                                                    */
+/* ------------------------------------------------------------------ */
 
 function computeConstrainedRect(
   startX: number,
@@ -67,21 +238,30 @@ function computeConstrainedRect(
   currentY: number,
   containerWidth: number,
   containerHeight: number,
-): { x: number; y: number; width: number; height: number } | null {
+  skipMinDelta: boolean,
+  lockAspectRatio?: number,
+): Rect | null {
   const rawDx = currentX - startX;
   const rawDy = currentY - startY;
 
-  if (Math.abs(rawDx) < 4 && Math.abs(rawDy) < 4) return null;
+  if (!skipMinDelta && Math.abs(rawDx) < 4 && Math.abs(rawDy) < 4) return null;
 
   let width: number;
   let height: number;
 
-  if (Math.abs(rawDx) >= Math.abs(rawDy) * ASPECT_RATIO) {
-    width = Math.abs(rawDx);
-    height = width / ASPECT_RATIO;
+  if (lockAspectRatio != null && lockAspectRatio > 0) {
+    // Constrain to the locked aspect ratio
+    if (Math.abs(rawDx) >= Math.abs(rawDy) * lockAspectRatio) {
+      width = Math.abs(rawDx);
+      height = width / lockAspectRatio;
+    } else {
+      height = Math.abs(rawDy);
+      width = height * lockAspectRatio;
+    }
   } else {
+    // Free-form: use raw deltas
+    width = Math.abs(rawDx);
     height = Math.abs(rawDy);
-    width = height * ASPECT_RATIO;
   }
 
   const x = rawDx >= 0 ? startX : startX - width;
@@ -90,31 +270,26 @@ function computeConstrainedRect(
   const clampedX = Math.max(0, Math.min(x, containerWidth - width));
   const clampedY = Math.max(0, Math.min(y, containerHeight - height));
   const clampedWidth = Math.min(width, containerWidth - clampedX);
-  const clampedHeight = Math.min(
-    clampedWidth / ASPECT_RATIO,
-    containerHeight - clampedY,
-  );
-  const finalWidth = clampedHeight * ASPECT_RATIO;
+  const clampedHeight = Math.min(height, containerHeight - clampedY);
 
-  if (finalWidth < 16 || clampedHeight < 9) return null;
+  if (clampedWidth < 16 || clampedHeight < 16) return null;
 
   return {
     x: clampedX,
     y: clampedY,
-    width: finalWidth,
+    width: clampedWidth,
     height: clampedHeight,
   };
 }
 
-let regionIdCounter = 0;
-function makeRegionId(): string {
-  regionIdCounter += 1;
-  return `region-${regionIdCounter}`;
+function makeCropId(): string {
+  return `crop-${crypto.randomUUID()}`;
 }
 
-/**
- * Renders a single PDF page onto a canvas and returns it.
- */
+/* ------------------------------------------------------------------ */
+/*  PDF rendering helpers                                              */
+/* ------------------------------------------------------------------ */
+
 async function renderPageToCanvas(
   pdfUrl: string,
   pageNumber: number,
@@ -126,7 +301,6 @@ async function renderPageToCanvas(
   const page = await pdfDocument.getPage(pageNumber);
   const initialViewport = page.getViewport({ scale: 1 });
 
-  // Scale to fit within maxWidth/maxHeight while preserving aspect ratio
   const scaleX = maxWidth / initialViewport.width;
   const scaleY = maxHeight / initialViewport.height;
   const scale = Math.min(scaleX, scaleY);
@@ -143,9 +317,6 @@ async function renderPageToCanvas(
   return { canvas, scale };
 }
 
-/**
- * Renders a thumbnail-sized canvas for the sidebar.
- */
 async function renderThumbnail(
   pdfUrl: string,
   pageNumber: number,
@@ -155,34 +326,128 @@ async function renderThumbnail(
   return result.canvas.toDataURL("image/jpeg", 0.6);
 }
 
+function extractCropPreview(
+  canvas: HTMLCanvasElement,
+  rect: Rect,
+): string | null {
+  try {
+    const offscreen = document.createElement("canvas");
+    offscreen.width = Math.round(rect.width);
+    offscreen.height = Math.round(rect.height);
+    const ctx = offscreen.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(
+      canvas,
+      Math.round(rect.x),
+      Math.round(rect.y),
+      Math.round(rect.width),
+      Math.round(rect.height),
+      0,
+      0,
+      offscreen.width,
+      offscreen.height,
+    );
+    return offscreen.toDataURL("image/jpeg", 0.8);
+  } catch {
+    return null;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Handle hit-testing                                                 */
+/* ------------------------------------------------------------------ */
+
+const HANDLE_SIZE = 12;
+const HANDLE_HIT = 14; // slightly larger for easier clicking
+
+function getCornerPositions(
+  rect: Rect,
+): Record<Corner, { cx: number; cy: number }> {
+  return {
+    tl: { cx: rect.x, cy: rect.y },
+    tr: { cx: rect.x + rect.width, cy: rect.y },
+    bl: { cx: rect.x, cy: rect.y + rect.height },
+    br: { cx: rect.x + rect.width, cy: rect.y + rect.height },
+  };
+}
+
+function getAnchorForCorner(
+  rect: Rect,
+  corner: Corner,
+): { anchorX: number; anchorY: number } {
+  const opposite: Record<Corner, Corner> = {
+    tl: "br",
+    tr: "bl",
+    bl: "tr",
+    br: "tl",
+  };
+  const positions = getCornerPositions(rect);
+  const opp = positions[opposite[corner]];
+  return { anchorX: opp.cx, anchorY: opp.cy };
+}
+
+function hitTestCorner(x: number, y: number, rect: Rect): Corner | null {
+  const corners = getCornerPositions(rect);
+  const half = HANDLE_HIT / 2;
+  for (const [corner, pos] of Object.entries(corners) as [
+    Corner,
+    { cx: number; cy: number },
+  ][]) {
+    if (Math.abs(x - pos.cx) <= half && Math.abs(y - pos.cy) <= half) {
+      return corner;
+    }
+  }
+  return null;
+}
+
+function isInsideRect(x: number, y: number, rect: Rect): boolean {
+  return (
+    x >= rect.x &&
+    x <= rect.x + rect.width &&
+    y >= rect.y &&
+    y <= rect.y + rect.height
+  );
+}
+
+const CORNER_CURSORS: Record<Corner, string> = {
+  tl: "nwse-resize",
+  tr: "nesw-resize",
+  bl: "nesw-resize",
+  br: "nwse-resize",
+};
+
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
+
 export function PdfCropEditor({
   pdfUrl,
   pages,
   filename,
+  contentName,
   onSubmit,
   onCancel,
 }: PdfCropEditorProps): ReactElement {
+  const maskId = useId();
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
-  const [regionsByPage, setRegionsByPage] = useState<
-    Record<number, PageCropRegion[]>
-  >({});
-  const [draft, setDraft] = useState<DraftRect | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [collectedCrops, setCollectedCrops] = useState<CollectedCrop[]>([]);
+  const [cropMode, dispatch] = useReducer(cropReducer, { mode: "idle" });
+  const [lightboxCropId, setLightboxCropId] = useState<string | null>(null);
   const canvasAreaRef = useRef<HTMLDivElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const mainCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const lightboxCloseRef = useRef<HTMLButtonElement>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [thumbnails, setThumbnails] = useState<Record<number, string>>({});
 
   const currentPage = pages[currentPageIndex];
-  const currentPageNumber = currentPage?.pageNumber ?? 1;
-  const currentRegions = regionsByPage[currentPageNumber] ?? [];
+  const canSubmit = collectedCrops.length > 0;
 
-  const totalRegions = Object.values(regionsByPage).reduce(
-    (sum, regions) => sum + regions.length,
-    0,
-  );
-  const canSubmit = totalRegions > 0;
+  // Auto-discard editing crop on page change
+  useEffect(() => {
+    dispatch({ type: "PAGE_CHANGE" });
+  }, [currentPageIndex]);
 
   // Render the current page to canvas
   useEffect(() => {
@@ -202,6 +467,7 @@ export function PdfCropEditor({
         const { canvas } = result;
         canvas.style.display = "block";
         canvas.style.pointerEvents = "none";
+        mainCanvasRef.current = canvas;
         container.appendChild(canvas);
         setCanvasSize({ width: canvas.width, height: canvas.height });
       },
@@ -226,7 +492,19 @@ export function PdfCropEditor({
     return () => {
       cancelled = true;
     };
-  }, [pdfUrl, pages, thumbnails]);
+  }, [pdfUrl, pages]);
+
+  // Escape key closes lightbox
+  useEffect(() => {
+    if (!lightboxCropId) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setLightboxCropId(null);
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    // Focus close button for accessibility
+    lightboxCloseRef.current?.focus();
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxCropId]);
 
   const getRelativeCoords = useCallback(
     (event: React.MouseEvent | React.TouchEvent): { x: number; y: number } => {
@@ -250,102 +528,172 @@ export function PdfCropEditor({
       if (event.button !== 0) return;
       event.preventDefault();
       const { x, y } = getRelativeCoords(event);
-      setDraft({ startX: x, startY: y, endX: x, endY: y });
-      setIsDrawing(true);
+
+      if (cropMode.mode === "idle") {
+        dispatch({ type: "START_DRAW", x, y });
+        return;
+      }
+
+      if (cropMode.mode === "editing") {
+        // Hit-test corner handles first
+        const corner = hitTestCorner(x, y, cropMode.rect);
+        if (corner) {
+          const { anchorX, anchorY } = getAnchorForCorner(
+            cropMode.rect,
+            corner,
+          );
+          dispatch({
+            type: "START_RESIZE",
+            corner,
+            anchorX,
+            anchorY,
+            initialAspectRatio: cropMode.rect.width / cropMode.rect.height,
+          });
+          return;
+        }
+        // Hit-test body for move
+        if (isInsideRect(x, y, cropMode.rect)) {
+          dispatch({
+            type: "START_MOVE",
+            offsetX: x - cropMode.rect.x,
+            offsetY: y - cropMode.rect.y,
+          });
+          return;
+        }
+        // Click outside rect: no-op (user must use discard button)
+      }
     },
-    [getRelativeCoords],
+    [getRelativeCoords, cropMode],
   );
 
   const handleMouseMove = useCallback(
     (event: React.MouseEvent) => {
-      if (!isDrawing || !draft) return;
       const { x, y } = getRelativeCoords(event);
-      setDraft((prev) => (prev ? { ...prev, endX: x, endY: y } : prev));
+
+      if (cropMode.mode === "drawing") {
+        dispatch({ type: "UPDATE_DRAW", x, y });
+        return;
+      }
+
+      if (cropMode.mode === "editing" && cropMode.drag) {
+        dispatch({
+          type: "UPDATE_DRAG",
+          x,
+          y,
+          containerWidth: canvasSize.width,
+          containerHeight: canvasSize.height,
+          shiftKey: "shiftKey" in event ? event.shiftKey : false,
+        });
+      }
     },
-    [isDrawing, draft, getRelativeCoords],
+    [getRelativeCoords, cropMode, canvasSize],
   );
 
   const handleMouseUp = useCallback(() => {
-    if (!isDrawing || !draft || !currentPage) return;
-    setIsDrawing(false);
+    if (cropMode.mode === "drawing") {
+      dispatch({
+        type: "FINISH_DRAW",
+        containerWidth: canvasSize.width,
+        containerHeight: canvasSize.height,
+      });
+      return;
+    }
+    if (cropMode.mode === "editing" && cropMode.drag) {
+      dispatch({ type: "FINISH_DRAG" });
+    }
+  }, [cropMode, canvasSize]);
 
-    const rect = computeConstrainedRect(
-      draft.startX,
-      draft.startY,
-      draft.endX,
-      draft.endY,
-      canvasSize.width,
-      canvasSize.height,
-    );
+  const handleMouseLeave = useCallback(() => {
+    if (cropMode.mode === "drawing") {
+      dispatch({ type: "DISCARD" });
+      return;
+    }
+    if (cropMode.mode === "editing" && cropMode.drag) {
+      dispatch({ type: "FINISH_DRAG" });
+    }
+  }, [cropMode]);
 
-    if (!rect) {
-      setDraft(null);
+  const handleConfirm = useCallback(() => {
+    if (cropMode.mode !== "editing" || !currentPage) return;
+    const { rect } = cropMode;
+
+    const canvas = mainCanvasRef.current;
+    const previewDataUrl = canvas ? extractCropPreview(canvas, rect) : null;
+    if (!previewDataUrl) {
+      dispatch({ type: "DISCARD" });
       return;
     }
 
     const scaleX = currentPage.width / canvasSize.width;
     const scaleY = currentPage.height / canvasSize.height;
 
-    const newRegion: PageCropRegion = {
-      id: makeRegionId(),
-      pageNumber: currentPageNumber,
+    const newCrop: CollectedCrop = {
+      id: makeCropId(),
+      pageNumber: currentPage.pageNumber,
       x: rect.x * scaleX,
       y: rect.y * scaleY,
       width: rect.width * scaleX,
       height: rect.height * scaleY,
+      previewDataUrl,
     };
 
-    setRegionsByPage((prev) => ({
-      ...prev,
-      [currentPageNumber]: [...(prev[currentPageNumber] ?? []), newRegion],
-    }));
-    setDraft(null);
-  }, [isDrawing, draft, currentPage, canvasSize, currentPageNumber]);
+    setCollectedCrops((prev) => [...prev, newCrop]);
+    dispatch({ type: "CONFIRM" });
+  }, [cropMode, currentPage, canvasSize]);
 
-  const handleMouseLeave = useCallback(() => {
-    if (isDrawing) {
-      setIsDrawing(false);
-      setDraft(null);
-    }
-  }, [isDrawing]);
+  const handleDiscard = useCallback(() => {
+    dispatch({ type: "DISCARD" });
+  }, []);
 
-  const handleDeleteRegion = useCallback(
-    (regionId: string) => {
-      setRegionsByPage((prev) => ({
-        ...prev,
-        [currentPageNumber]: (prev[currentPageNumber] ?? []).filter(
-          (r) => r.id !== regionId,
-        ),
-      }));
-    },
-    [currentPageNumber],
-  );
+  const handleDeleteCrop = useCallback((cropId: string) => {
+    setCollectedCrops((prev) => prev.filter((c) => c.id !== cropId));
+  }, []);
 
   const handleSubmit = useCallback(() => {
     if (!canSubmit) return;
-    const allRegions: CropRegion[] = Object.values(regionsByPage)
-      .flat()
-      .map((r) => ({
-        pageNumber: r.pageNumber,
-        x: r.x,
-        y: r.y,
-        width: r.width,
-        height: r.height,
-      }));
-    onSubmit(allRegions);
-  }, [canSubmit, regionsByPage, onSubmit]);
+    const regions: CropRegion[] = collectedCrops.map((c) => ({
+      pageNumber: c.pageNumber,
+      x: c.x,
+      y: c.y,
+      width: c.width,
+      height: c.height,
+    }));
+    onSubmit(regions);
+  }, [canSubmit, collectedCrops, onSubmit]);
 
+  // Compute the visual draft rect for the drawing state
   const draftRect =
-    draft && canvasSize.width > 0
+    cropMode.mode === "drawing" && canvasSize.width > 0
       ? computeConstrainedRect(
-          draft.startX,
-          draft.startY,
-          draft.endX,
-          draft.endY,
+          cropMode.startX,
+          cropMode.startY,
+          cropMode.currentX,
+          cropMode.currentY,
           canvasSize.width,
           canvasSize.height,
+          false,
         )
       : null;
+
+  // Determine active rect for SVG overlay (drawing or editing)
+  const activeRect = cropMode.mode === "editing" ? cropMode.rect : draftRect;
+  const isEditing = cropMode.mode === "editing";
+
+  // Cursor logic for the overlay
+  const overlayCursor = (() => {
+    if (cropMode.mode === "editing") {
+      if (cropMode.drag?.type === "move") return "grabbing";
+      if (cropMode.drag?.type === "resize")
+        return CORNER_CURSORS[cropMode.drag.corner];
+      return "default";
+    }
+    return "crosshair";
+  })();
+
+  // Lightbox crop
+  const lightboxCrop = lightboxCropId
+    ? (collectedCrops.find((c) => c.id === lightboxCropId) ?? null)
+    : null;
 
   if (!currentPage) {
     return (
@@ -355,6 +703,54 @@ export function PdfCropEditor({
     );
   }
 
+  // Edge-aware button positioning for confirm/discard
+  const renderActionButtons = (rect: Rect) => {
+    const nearBottom = rect.y + rect.height > canvasSize.height - 40;
+    const nearRight = rect.x + rect.width > canvasSize.width - 40;
+    const renderInside = nearBottom || nearRight;
+
+    const style: React.CSSProperties = renderInside
+      ? {
+          position: "absolute",
+          top: rect.y + 4,
+          left: rect.x + rect.width - 60,
+        }
+      : {
+          position: "absolute",
+          top: rect.y + rect.height + 4,
+          left: rect.x + rect.width - 56,
+        };
+
+    return (
+      <div style={style} className="flex items-center gap-1 z-10">
+        <button
+          type="button"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleConfirm();
+          }}
+          className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+          aria-label="Confirm crop"
+        >
+          <IconCheck className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDiscard();
+          }}
+          className="flex size-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90"
+          aria-label="Discard crop"
+        >
+          <IconX className="size-3.5" />
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-full flex-col gap-4">
       {/* Header */}
@@ -362,26 +758,31 @@ export function PdfCropEditor({
         <div className="min-w-0">
           <h2 className="truncate text-lg font-semibold">{filename}</h2>
           <p className="text-sm text-muted-foreground">
-            Draw 16:9 crop regions on each page. Each region becomes an
-            independent image.
+            Draw crop regions on each page. Confirm each crop before drawing the
+            next.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <IconCrop className="size-3.5" />
-            Click and drag to crop
-          </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={!canSubmit}>
+            <IconCrop className="size-4" />
+            Create
+          </Button>
         </div>
       </div>
 
       <div className="flex min-h-0 flex-1 gap-4">
-        {/* Page thumbnail sidebar */}
+        {/* Left panel: Page thumbnails */}
         {pages.length > 1 && (
           <div className="flex w-24 shrink-0 flex-col gap-2 overflow-y-auto">
             {pages.map((page, index) => {
-              const pageRegions = regionsByPage[page.pageNumber] ?? [];
               const isActive = index === currentPageIndex;
               const thumb = thumbnails[page.pageNumber];
+              const cropsOnPage = collectedCrops.filter(
+                (c) => c.pageNumber === page.pageNumber,
+              ).length;
               return (
                 <button
                   key={page.pageNumber}
@@ -396,7 +797,7 @@ export function PdfCropEditor({
                 >
                   <div className="aspect-[3/4] relative w-full bg-muted">
                     {thumb ? (
-                      /* eslint-disable-next-line @next/next/no-img-element -- data URL from canvas, not a remote image */
+                      /* eslint-disable-next-line @next/next/no-img-element -- data URL from canvas */
                       <img
                         src={thumb}
                         alt={`Page ${page.pageNumber}`}
@@ -411,9 +812,9 @@ export function PdfCropEditor({
                   <div className="bg-card px-1 py-0.5 text-center text-xs font-medium">
                     {page.pageNumber}
                   </div>
-                  {pageRegions.length > 0 && (
+                  {cropsOnPage > 0 && (
                     <div className="absolute top-1 right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                      {pageRegions.length}
+                      {cropsOnPage}
                     </div>
                   )}
                 </button>
@@ -422,7 +823,7 @@ export function PdfCropEditor({
           </div>
         )}
 
-        {/* Main canvas area */}
+        {/* Center panel: PDF canvas */}
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           {/* Page nav */}
           <div className="flex items-center justify-between">
@@ -449,12 +850,10 @@ export function PdfCropEditor({
                 <IconChevronRight className="size-4" />
               </Button>
             </div>
-            {currentRegions.length > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {currentRegions.length} crop
-                {currentRegions.length !== 1 ? "s" : ""} on this page
-              </span>
-            )}
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <IconCrop className="size-3.5" />
+              Click and drag to crop
+            </div>
           </div>
 
           {/* PDF canvas + crop overlay */}
@@ -463,169 +862,188 @@ export function PdfCropEditor({
             className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/50"
           >
             <div className="relative inline-block">
-              {/* Canvas container — pdfjs renders into this */}
               <div ref={canvasContainerRef} className="relative" />
 
-              {/* SVG overlay for crop regions — matches canvas size exactly */}
               {canvasSize.width > 0 && (
                 <div
                   ref={overlayRef}
-                  className="absolute inset-0 cursor-crosshair select-none"
+                  className="absolute inset-0 select-none"
                   style={{
                     width: canvasSize.width,
                     height: canvasSize.height,
+                    cursor: overlayCursor,
                   }}
                   onMouseDown={handleMouseDown}
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
                   onMouseLeave={handleMouseLeave}
                 >
-                  <svg className="absolute inset-0 h-full w-full pointer-events-none">
-                    {/* Dim mask with cutouts */}
-                    <defs>
-                      <mask id={`crop-mask-${currentPageNumber}`}>
-                        <rect width="100%" height="100%" fill="white" />
-                        {currentRegions.map((region) => {
-                          const sx = canvasSize.width / currentPage.width;
-                          const sy = canvasSize.height / currentPage.height;
-                          return (
-                            <rect
-                              key={region.id}
-                              x={region.x * sx}
-                              y={region.y * sy}
-                              width={region.width * sx}
-                              height={region.height * sy}
-                              fill="black"
-                            />
-                          );
-                        })}
-                        {draftRect && (
+                  {activeRect && (
+                    <svg className="pointer-events-none absolute inset-0 h-full w-full">
+                      <defs>
+                        <mask id={maskId}>
+                          <rect width="100%" height="100%" fill="white" />
                           <rect
-                            x={draftRect.x}
-                            y={draftRect.y}
-                            width={draftRect.width}
-                            height={draftRect.height}
+                            x={activeRect.x}
+                            y={activeRect.y}
+                            width={activeRect.width}
+                            height={activeRect.height}
                             fill="black"
                           />
-                        )}
-                      </mask>
-                    </defs>
-
-                    {(currentRegions.length > 0 || draftRect) && (
+                        </mask>
+                      </defs>
                       <rect
                         width="100%"
                         height="100%"
                         fill="rgba(0,0,0,0.4)"
-                        mask={`url(#crop-mask-${currentPageNumber})`}
+                        mask={`url(#${maskId})`}
                       />
-                    )}
-
-                    {/* Existing crop borders */}
-                    {currentRegions.map((region, index) => {
-                      const sx = canvasSize.width / currentPage.width;
-                      const sy = canvasSize.height / currentPage.height;
-                      const px = region.x * sx;
-                      const py = region.y * sy;
-                      const pw = region.width * sx;
-                      const ph = region.height * sy;
-                      return (
-                        <g key={region.id}>
-                          <rect
-                            x={px}
-                            y={py}
-                            width={pw}
-                            height={ph}
-                            fill="none"
-                            stroke="hsl(var(--primary))"
-                            strokeWidth={2}
-                          />
-                          <rect
-                            x={px + 2}
-                            y={py + 2}
-                            width={20}
-                            height={20}
-                            rx={4}
-                            fill="hsl(var(--primary))"
-                          />
-                          <text
-                            x={px + 12}
-                            y={py + 15}
-                            textAnchor="middle"
-                            fontSize={11}
-                            fontWeight="bold"
-                            fill="hsl(var(--primary-foreground))"
-                          >
-                            {index + 1}
-                          </text>
-                        </g>
-                      );
-                    })}
-
-                    {/* Draft rectangle */}
-                    {draftRect && (
                       <rect
-                        x={draftRect.x}
-                        y={draftRect.y}
-                        width={draftRect.width}
-                        height={draftRect.height}
+                        x={activeRect.x}
+                        y={activeRect.y}
+                        width={activeRect.width}
+                        height={activeRect.height}
                         fill="none"
                         stroke="hsl(var(--primary))"
                         strokeWidth={2}
-                        strokeDasharray="6 3"
+                        {...(isEditing ? {} : { strokeDasharray: "6 3" })}
                       />
-                    )}
-                  </svg>
+                    </svg>
+                  )}
 
-                  {/* Delete buttons */}
-                  {currentRegions.map((region) => {
-                    const sx = canvasSize.width / currentPage.width;
-                    const sy = canvasSize.height / currentPage.height;
-                    const px = region.x * sx;
-                    const py = region.y * sy;
-                    const pw = region.width * sx;
-                    return (
-                      <button
-                        key={`del-${region.id}`}
-                        type="button"
-                        className="absolute flex size-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow hover:bg-destructive/80 transition-colors pointer-events-auto"
-                        style={{
-                          left: px + pw - 12,
-                          top: py - 12,
-                          zIndex: 20,
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteRegion(region.id);
-                        }}
-                      >
-                        <IconTrash className="size-3" />
-                      </button>
-                    );
-                  })}
+                  {/* Corner handles in editing mode */}
+                  {isEditing &&
+                    cropMode.mode === "editing" &&
+                    (() => {
+                      const corners = getCornerPositions(cropMode.rect);
+                      return (
+                        Object.entries(corners) as [
+                          Corner,
+                          { cx: number; cy: number },
+                        ][]
+                      ).map(([corner, pos]) => (
+                        <div
+                          key={corner}
+                          className="pointer-events-auto absolute border-2 border-primary bg-white"
+                          style={{
+                            width: HANDLE_SIZE,
+                            height: HANDLE_SIZE,
+                            left: pos.cx - HANDLE_SIZE / 2,
+                            top: pos.cy - HANDLE_SIZE / 2,
+                            cursor: CORNER_CURSORS[corner],
+                          }}
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            const { anchorX, anchorY } = getAnchorForCorner(
+                              cropMode.rect,
+                              corner,
+                            );
+                            dispatch({
+                              type: "START_RESIZE",
+                              corner,
+                              anchorX,
+                              anchorY,
+                              initialAspectRatio:
+                                cropMode.rect.width / cropMode.rect.height,
+                            });
+                          }}
+                        />
+                      ));
+                    })()}
+
+                  {/* Confirm/Discard buttons in editing mode */}
+                  {isEditing &&
+                    cropMode.mode === "editing" &&
+                    renderActionButtons(cropMode.rect)}
                 </div>
               )}
             </div>
           </div>
         </div>
+
+        {/* Right panel: Cropped content */}
+        <div className="flex w-56 shrink-0 flex-col gap-3">
+          <h3 className="text-sm font-semibold">
+            Cropped Content
+            {collectedCrops.length > 0 && (
+              <span className="ml-1.5 font-normal text-muted-foreground">
+                ({collectedCrops.length})
+              </span>
+            )}
+          </h3>
+          <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
+            {collectedCrops.length === 0 ? (
+              <p className="py-8 text-center text-xs text-muted-foreground">
+                Draw a crop region on the PDF to add content items here.
+              </p>
+            ) : (
+              collectedCrops.map((crop, index) => (
+                <div
+                  key={crop.id}
+                  className="group relative cursor-pointer overflow-hidden rounded-md border border-border bg-card"
+                  onClick={() => setLightboxCropId(crop.id)}
+                >
+                  <div className="relative h-28 w-full bg-muted">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- data URL from canvas */}
+                    <img
+                      src={crop.previewDataUrl}
+                      alt={`Crop ${index + 1}`}
+                      className="absolute inset-0 h-full w-full object-contain"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between px-2 py-1">
+                    <span className="text-xs text-muted-foreground">
+                      {contentName
+                        ? `${contentName} - ${index + 1}`
+                        : `Page ${crop.pageNumber} \u00B7 Crop ${index + 1}`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteCrop(crop.id);
+                      }}
+                      className="flex items-center justify-center rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                      aria-label={`Delete crop ${index + 1}`}
+                    >
+                      <IconTrash className="size-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-sm text-muted-foreground">
-          {totalRegions === 0
-            ? "Draw at least one crop region to continue."
-            : `${totalRegions} crop region${totalRegions !== 1 ? "s" : ""} total across all pages.`}
+      {/* Lightbox */}
+      {lightboxCrop && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          onClick={() => setLightboxCropId(null)}
+        >
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- data URL from canvas */}
+            <img
+              src={lightboxCrop.previewDataUrl}
+              alt="Crop preview"
+              className="max-h-[80vh] max-w-[80vw] object-contain"
+            />
+            <button
+              ref={lightboxCloseRef}
+              type="button"
+              onClick={() => setLightboxCropId(null)}
+              className="absolute -top-3 -right-3 flex size-7 items-center justify-center rounded-full bg-card text-foreground shadow-md hover:bg-accent"
+              aria-label="Close preview"
+            >
+              <IconX className="size-4" />
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={!canSubmit}>
-            <IconCrop className="size-4" />
-            Submit Crops
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

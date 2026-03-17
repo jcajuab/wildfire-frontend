@@ -9,21 +9,28 @@ Utility libraries, API layer, Redux store, data mappers, and domain-specific hel
 
 ## Key Files
 
-| File                    | Description                                            |
-| ----------------------- | ------------------------------------------------------ |
-| `store.ts`              | Redux store configuration with RTK Query middleware    |
-| `StoreProvider.tsx`     | Redux Provider wrapper component                       |
-| `hooks.ts`              | Typed Redux hooks (`useAppSelector`, `useAppDispatch`) |
-| `api-client.ts`         | Base API client configuration                          |
-| `utils.ts`              | General utilities (`cn()` for tailwind class merging)  |
-| `auth-events.ts`        | Auth event bus (login/logout/token refresh)            |
-| `design-permissions.ts` | Permission constants for UI feature gating             |
-| `permissions.ts`        | Permission checking utilities                          |
-| `route-permissions.ts`  | Route-level permission mappings                        |
-| `formatters.ts`         | Date, number, and display formatting utilities         |
-| `slash-commands.ts`     | AI chat slash command definitions                      |
-| `playlist-paths.ts`     | Playlist URL path helpers                              |
-| `display-output.ts`     | Display output resolution utilities                    |
+| File                             | Description                                                          |
+| -------------------------------- | -------------------------------------------------------------------- |
+| `store.ts`                       | Redux store configuration with RTK Query middleware                  |
+| `StoreProvider.tsx`              | Redux Provider wrapper component                                     |
+| `hooks.ts`                       | Typed Redux hooks (`useAppSelector`, `useAppDispatch`)               |
+| `api-client.ts`                  | Base API client configuration                                        |
+| `utils.ts`                       | General utilities (`cn()` for tailwind class merging)                |
+| `auth-events.ts`                 | Auth event bus (login/logout/token refresh)                          |
+| `design-permissions.ts`          | Permission constants for UI feature gating                           |
+| `permissions.ts`                 | Permission checking utilities                                        |
+| `route-permissions.ts`           | Route-level permission mappings                                      |
+| `formatters.ts`                  | Date, number, and display formatting utilities                       |
+| `slash-commands.ts`              | AI chat slash command definitions                                    |
+| `playlist-paths.ts`              | Playlist URL path helpers                                            |
+| `display-output.ts`              | Display output resolution utilities                                  |
+| `audit-resource-types.ts`        | Audit log resource type constants, labels, and filter helpers        |
+| `content-thumbnail-preview.ts`   | Content thumbnail text extraction and HTML sanitization utilities    |
+| `display-group-colors.ts`        | Display group badge color palette and next-index selection           |
+| `display-group-normalization.ts` | Display group name whitespace normalization and deduplication        |
+| `format-permission.ts`           | Permission label, readable label, and tooltip description formatters |
+| `map-display-to-display.ts`      | Maps display API response to frontend Display model                  |
+| `role-paths.ts`                  | Role admin URL path constants and helpers                            |
 
 ## Subdirectories
 

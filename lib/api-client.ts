@@ -305,15 +305,17 @@ export async function acceptInvitation(input: {
   throw createAuthApiError(response, payload);
 }
 
-/** POST /users/:id/ban. Suspends a user's access. */
+/** PUT /users/:id/status. Suspends a user's access. */
 export async function banUser(userId: string): Promise<void> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/users/${userId}/ban`, {
-    method: "POST",
+  const response = await fetch(`${baseUrl}/users/${userId}/status`, {
+    method: "PUT",
     credentials: "include",
     headers: {
+      "Content-Type": "application/json",
       ...getDevOnlyRequestHeaders(),
     },
+    body: JSON.stringify({ banned: true }),
   });
 
   if (response.status === 204) return;
@@ -322,15 +324,17 @@ export async function banUser(userId: string): Promise<void> {
   throw createAuthApiError(response, payload);
 }
 
-/** POST /users/:id/unban. Restores a user's access. */
+/** PUT /users/:id/status. Restores a user's access. */
 export async function unbanUser(userId: string): Promise<void> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/users/${userId}/unban`, {
-    method: "POST",
+  const response = await fetch(`${baseUrl}/users/${userId}/status`, {
+    method: "PUT",
     credentials: "include",
     headers: {
+      "Content-Type": "application/json",
       ...getDevOnlyRequestHeaders(),
     },
+    body: JSON.stringify({ banned: false }),
   });
 
   if (response.status === 204) return;

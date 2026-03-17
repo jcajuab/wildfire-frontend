@@ -50,7 +50,10 @@ describe("schedule-mapper", () => {
 
   test("maps create and update payloads without recurrence fields", () => {
     const data = makeFormData();
-    const createPayload = mapCreateFormToScheduleRequest(data, "display-1");
+    const createPayload = mapCreateFormToScheduleRequest(
+      data,
+      data.targetDisplayIds[0],
+    );
     const updatePayload = mapUpdateFormToScheduleRequest("schedule-1", data);
 
     expect(createPayload).toMatchObject({

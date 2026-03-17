@@ -27,7 +27,6 @@ import {
   EditContentDialog,
   PreviewContentDialog,
 } from "./_components/content-page-dialogs";
-import { PdfCropDialog } from "./_components/pdf-crop-dialog";
 import { useContentPageController } from "./_hooks/use-content-page-controller";
 
 export default function ContentPage(): ReactElement {
@@ -209,12 +208,6 @@ export default function ContentPage(): ReactElement {
         confirmLabel="Delete content"
         errorFallback="Failed to delete content."
         onConfirm={controller.handleConfirmDelete}
-      />
-
-      <PdfCropDialog
-        session={controller.pdfCropSession}
-        onSubmit={controller.handleCropSubmit}
-        onCancel={controller.handleCropCancel}
       />
     </DashboardPage.Root>
   );

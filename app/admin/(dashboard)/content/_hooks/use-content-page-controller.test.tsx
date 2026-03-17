@@ -17,6 +17,7 @@ import { useContentCrudHandlers } from "./use-content-crud-handlers";
 
 vi.mock("next/navigation", () => ({
   useSearchParams: vi.fn(() => ({ get: vi.fn(() => null) })),
+  useRouter: vi.fn(() => ({ push: vi.fn() })),
 }));
 
 vi.mock("@/hooks/use-can", () => ({

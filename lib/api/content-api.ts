@@ -116,6 +116,7 @@ export interface PdfCropRegion {
 export interface SubmitPdfCropsRequest {
   readonly uploadId: string;
   readonly regions: readonly PdfCropRegion[];
+  readonly contentName?: string;
 }
 
 export const contentApi = createApi({
@@ -244,7 +245,7 @@ export const contentApi = createApi({
         const formData = new FormData();
         formData.append("file", file);
         return {
-          url: "content/pdf-crop",
+          url: "content/pdf-crops",
           method: "POST",
           body: formData,
         };
@@ -259,10 +260,10 @@ export const contentApi = createApi({
       readonly BackendContent[],
       SubmitPdfCropsRequest
     >({
-      query: ({ uploadId, regions }) => ({
-        url: "content/pdf-crop/submit",
+      query: ({ uploadId, regions, contentName }) => ({
+        url: `content/pdf-crops/${uploadId}/submit`,
         method: "POST",
-        body: { uploadId, regions },
+        body: { crops: regions, contentName },
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<readonly BackendContent[]>(
@@ -273,7 +274,7 @@ export const contentApi = createApi({
     }),
     cancelPdfUpload: build.mutation<void, string>({
       query: (uploadId) => ({
-        url: `content/pdf-crop/${uploadId}`,
+        url: `content/pdf-crops/${uploadId}`,
         method: "DELETE",
       }),
     }),

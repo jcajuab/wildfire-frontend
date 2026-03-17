@@ -190,9 +190,9 @@ export const displaysApi = createApi({
     }),
     activateGlobalEmergency: build.mutation<void, { reason?: string } | void>({
       query: (body) => ({
-        url: "displays/runtime-overrides/emergency/activate",
-        method: "POST",
-        body: body ?? {},
+        url: "displays/runtime-overrides/emergency",
+        method: "PUT",
+        body: { active: true, ...((body as object) ?? {}) },
       }),
       invalidatesTags: [
         { type: "RuntimeOverrides", id: "GLOBAL" },
@@ -202,9 +202,9 @@ export const displaysApi = createApi({
     deactivateGlobalEmergency: build.mutation<void, { reason?: string } | void>(
       {
         query: (body) => ({
-          url: "displays/runtime-overrides/emergency/deactivate",
-          method: "POST",
-          body: body ?? {},
+          url: "displays/runtime-overrides/emergency",
+          method: "PUT",
+          body: { active: false, ...((body as object) ?? {}) },
         }),
         invalidatesTags: [
           { type: "RuntimeOverrides", id: "GLOBAL" },

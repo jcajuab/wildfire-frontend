@@ -1,17 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCan } from "@/hooks/use-can";
 import {
   useLazyGetContentJobQuery,
   useLazyGetContentQuery,
   useListContentQuery,
   useUploadPdfMutation,
-  useSubmitPdfCropsMutation,
-  useCancelPdfUploadMutation,
-  type PdfUploadAcceptedResponse,
-  type PdfCropRegion,
 } from "@/lib/api/content-api";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
@@ -109,46 +105,25 @@ export function useContentPageController() {
     trackContentJob,
   });
 
-  // PDF crop editor state
-  const [pdfCropSession, setPdfCropSession] =
-    useState<PdfUploadAcceptedResponse | null>(null);
+  // PDF crop: upload then redirect to dedicated crop page
   const [uploadPdf] = useUploadPdfMutation();
-  const [submitPdfCrops] = useSubmitPdfCropsMutation();
-  const [cancelPdfUpload] = useCancelPdfUploadMutation();
+  const router = useRouter();
 
   const handleUploadFile = async (name: string, file: File) => {
     if (file.type === "application/pdf") {
       try {
         const session = await uploadPdf(file).unwrap();
-        setPdfCropSession(session);
+        sessionStorage.setItem(
+          `wildfire:pdf-crop:${session.uploadId}`,
+          JSON.stringify({ ...session, contentName: name }),
+        );
+        router.push(`/admin/content/pdf-crop?uploadId=${session.uploadId}`);
       } catch {
         // notifyApiError already called inside uploadPdf on failure via RTK
       }
       return;
     }
     await crudHandlers.handleUploadFile(name, file);
-  };
-
-  const handleCropSubmit = async (regions: readonly PdfCropRegion[]) => {
-    if (!pdfCropSession) return;
-    try {
-      await submitPdfCrops({
-        uploadId: pdfCropSession.uploadId,
-        regions,
-      }).unwrap();
-      setPdfCropSession(null);
-    } catch {
-      // error surfaces via toast in RTK base query
-    }
-  };
-
-  const handleCropCancel = async () => {
-    if (!pdfCropSession) return;
-    try {
-      await cancelPdfUpload(pdfCropSession.uploadId).unwrap();
-    } finally {
-      setPdfCropSession(null);
-    }
   };
 
   const visibleContents = useMemo(
@@ -205,9 +180,5 @@ export function useContentPageController() {
     handleDownload: crudHandlers.handleDownload,
     handleSaveContent: crudHandlers.handleSaveContent,
     handleConfirmDelete: crudHandlers.handleConfirmDelete,
-    // PDF crop
-    pdfCropSession,
-    handleCropSubmit,
-    handleCropCancel,
   };
 }

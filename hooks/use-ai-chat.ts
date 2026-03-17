@@ -214,14 +214,17 @@ export function useAIChat({
   const confirmAction = useCallback(
     async (action: PendingAction, approved: boolean) => {
       if (!token) return;
-      const response = await fetch(`${getBaseUrl()}/ai/confirm`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${getBaseUrl()}/ai/pending-actions/${action.token}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ conversationId, approved }),
         },
-        body: JSON.stringify({ token: action.token, conversationId, approved }),
-      });
+      );
       if (!response.ok) {
         console.error(
           `[confirmAction] failed with status ${String(response.status)}`,

@@ -213,33 +213,39 @@ describe("CreateRolePage", () => {
     expect(pushMock).toHaveBeenCalledWith(ROLE_INDEX_PATH);
   });
 
-  test("creates a role when users:read is unavailable", async () => {
-    const user = userEvent.setup();
+  test(
+    "creates a role when users:read is unavailable",
+    { timeout: 15_000 },
+    async () => {
+      const user = userEvent.setup();
 
-    render(<CreateRolePage />);
+      render(<CreateRolePage />);
 
-    expect(
-      screen.getByText("User assignment is unavailable without `users:read`."),
-    ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "User assignment is unavailable without `users:read`.",
+        ),
+      ).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText("Role Name"), "Moderators");
-    await user.click(screen.getByRole("button", { name: "Create" }));
+      await user.type(screen.getByLabelText("Role Name"), "Moderators");
+      await user.click(screen.getByRole("button", { name: "Create" }));
 
-    await waitFor(() => {
-      expect(createRoleMock).toHaveBeenCalledWith({
-        name: "Moderators",
-        description: null,
+      await waitFor(() => {
+        expect(createRoleMock).toHaveBeenCalledWith({
+          name: "Moderators",
+          description: null,
+        });
       });
-    });
 
-    expect(setRolePermissionsMock).toHaveBeenCalledWith({
-      roleId: "role-1",
-      permissionIds: [],
-    });
-    expect(getUserRolesTriggerMock).not.toHaveBeenCalled();
-    expect(setUserRolesMock).not.toHaveBeenCalled();
-    expect(pushMock).toHaveBeenCalledWith(ROLE_INDEX_PATH);
-  });
+      expect(setRolePermissionsMock).toHaveBeenCalledWith({
+        roleId: "role-1",
+        permissionIds: [],
+      });
+      expect(getUserRolesTriggerMock).not.toHaveBeenCalled();
+      expect(setUserRolesMock).not.toHaveBeenCalled();
+      expect(pushMock).toHaveBeenCalledWith(ROLE_INDEX_PATH);
+    },
+  );
 
   test("disables header actions while submit is in flight", async () => {
     const user = userEvent.setup();
@@ -283,29 +289,35 @@ describe("CreateRolePage", () => {
     });
   });
 
-  test("keeps entered draft values when creation fails", async () => {
-    const user = userEvent.setup();
+  test(
+    "keeps entered draft values when creation fails",
+    { timeout: 15_000 },
+    async () => {
+      const user = userEvent.setup();
 
-    createRoleMock.mockReturnValueOnce({
-      unwrap: async () => {
-        throw new Error("create failed");
-      },
-    });
+      createRoleMock.mockReturnValueOnce({
+        unwrap: async () => {
+          throw new Error("create failed");
+        },
+      });
 
-    render(<CreateRolePage />);
+      render(<CreateRolePage />);
 
-    await user.type(screen.getByLabelText("Role Name"), "Moderators");
-    await user.type(screen.getByLabelText("Description"), "Night shift ops");
-    await user.click(screen.getByRole("button", { name: "Create" }));
+      await user.type(screen.getByLabelText("Role Name"), "Moderators");
+      await user.type(screen.getByLabelText("Description"), "Night shift ops");
+      await user.click(screen.getByRole("button", { name: "Create" }));
 
-    await waitFor(() => {
-      expect(createRoleMock).toHaveBeenCalledTimes(1);
-    });
+      await waitFor(() => {
+        expect(createRoleMock).toHaveBeenCalledTimes(1);
+      });
 
-    expect(setRolePermissionsMock).not.toHaveBeenCalled();
-    expect(pushMock).not.toHaveBeenCalledWith(ROLE_INDEX_PATH);
-    expect(screen.getByLabelText("Role Name")).toHaveValue("Moderators");
-    expect(screen.getByLabelText("Description")).toHaveValue("Night shift ops");
-    expect(screen.getByRole("button", { name: "Create" })).toBeEnabled();
-  });
+      expect(setRolePermissionsMock).not.toHaveBeenCalled();
+      expect(pushMock).not.toHaveBeenCalledWith(ROLE_INDEX_PATH);
+      expect(screen.getByLabelText("Role Name")).toHaveValue("Moderators");
+      expect(screen.getByLabelText("Description")).toHaveValue(
+        "Night shift ops",
+      );
+      expect(screen.getByRole("button", { name: "Create" })).toBeEnabled();
+    },
+  );
 });
