@@ -13,15 +13,15 @@ import {
 import type { Role, RoleFormData } from "@/types/role";
 
 export function useRolesHandlers({
-  dialogMode,
+  mode,
   selectedRole,
   roleUsersData,
-  setDialogOpen,
+  onSuccess,
 }: {
-  dialogMode: "create" | "edit";
+  mode: "create" | "edit";
   selectedRole: Role | null;
   roleUsersData: readonly { id: string }[] | undefined;
-  setDialogOpen: (open: boolean) => void;
+  onSuccess?: () => void | Promise<void>;
 }) {
   const [createRole] = useCreateRoleMutation();
   const [updateRole] = useUpdateRoleMutation();
@@ -33,7 +33,7 @@ export function useRolesHandlers({
   const handleSubmit = useCallback(
     async (data: RoleFormData) => {
       try {
-        if (dialogMode === "create") {
+        if (mode === "create") {
           const role = await createRole({
             name: data.name,
             description: data.description ?? null,
@@ -57,7 +57,7 @@ export function useRolesHandlers({
               }).unwrap();
             }),
           );
-          setDialogOpen(false);
+          await onSuccess?.();
         } else if (selectedRole) {
           await updateRole({
             id: selectedRole.id,
@@ -105,14 +105,14 @@ export function useRolesHandlers({
               }).unwrap();
             }),
           );
-          setDialogOpen(false);
+          await onSuccess?.();
         }
       } catch (err) {
         notifyApiError(err, "Something went wrong");
       }
     },
     [
-      dialogMode,
+      mode,
       selectedRole,
       roleUsersData,
       createRole,
@@ -120,7 +120,7 @@ export function useRolesHandlers({
       setRolePermissions,
       setUserRoles,
       getUserRolesTrigger,
-      setDialogOpen,
+      onSuccess,
     ],
   );
 
