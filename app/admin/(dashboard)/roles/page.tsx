@@ -88,15 +88,17 @@ export default function RolesPage(): ReactElement {
       />
       <DashboardPage.Body>
         <DashboardPage.Content>
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
-            <h2 className="text-base font-semibold">Search Results</h2>
-            <SearchControl
-              value={search}
-              onChange={handleSearchChange}
-              ariaLabel="Search roles"
-              placeholder="Search roles…"
-              className="w-full max-w-none md:w-72"
-            />
+          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-base font-semibold">Search Results</h2>
+              <SearchControl
+                value={search}
+                onChange={handleSearchChange}
+                ariaLabel="Search roles"
+                placeholder="Search roles…"
+                className="w-full max-w-none sm:w-72"
+              />
+            </div>
           </div>
 
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">

@@ -279,7 +279,7 @@ export default function SchedulesPage(): ReactElement {
 
       <DashboardPage.Body>
         <DashboardPage.Content>
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
+          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2.5 sm:px-8">
             <CalendarHeader
               currentDate={currentDate}
               view={view}
@@ -294,7 +294,7 @@ export default function SchedulesPage(): ReactElement {
             />
           </div>
 
-          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex flex-col pt-6">
+          <div className="min-h-0 flex-1 overflow-auto px-6 pb-6 pt-4 sm:px-8 sm:pb-8 sm:pt-5 flex flex-col">
             <CalendarGrid
               currentDate={currentDate}
               view={view}

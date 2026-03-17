@@ -96,9 +96,9 @@ export default function LogsPage(): ReactElement {
 
       <DashboardPage.Body>
         <DashboardPage.Content>
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <div className="space-y-1.5">
+          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2.5 sm:px-8">
+            <div className="grid grid-cols-1 gap-x-3 gap-y-2 md:grid-cols-2 xl:grid-cols-4">
+              <div className="space-y-1">
                 <Label htmlFor="logs-filter-from">From</Label>
                 <Input
                   id="logs-filter-from"
@@ -107,7 +107,7 @@ export default function LogsPage(): ReactElement {
                   onChange={(e) => handleFromChange(e.target.value)}
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label htmlFor="logs-filter-to">To</Label>
                 <Input
                   id="logs-filter-to"
@@ -116,7 +116,7 @@ export default function LogsPage(): ReactElement {
                   onChange={(e) => handleToChange(e.target.value)}
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label htmlFor="logs-filter-action">Action</Label>
                 <Input
                   id="logs-filter-action"
@@ -125,7 +125,7 @@ export default function LogsPage(): ReactElement {
                   placeholder="e.g. auth.session or rbac.user.update"
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label htmlFor="logs-filter-request-id">Request ID</Label>
                 <Input
                   id="logs-filter-request-id"
@@ -134,7 +134,7 @@ export default function LogsPage(): ReactElement {
                   placeholder="e.g. 2be5fd5a or full UUID"
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label>Actor Type</Label>
                 <Select
                   value={filters.actorType}
@@ -154,7 +154,7 @@ export default function LogsPage(): ReactElement {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label htmlFor="logs-filter-resource-type">Resource Type</Label>
                 <Combobox
                   value={filters.selectedResourceTypeValue}
@@ -197,7 +197,7 @@ export default function LogsPage(): ReactElement {
                   </ComboboxContent>
                 </Combobox>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label htmlFor="logs-filter-status">Status</Label>
                 <Combobox
                   value={selectedStatusValue}
@@ -227,7 +227,7 @@ export default function LogsPage(): ReactElement {
                   </ComboboxContent>
                 </Combobox>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label htmlFor="logs-reset-filters">Reset Filters</Label>
                 <Button
                   id="logs-reset-filters"

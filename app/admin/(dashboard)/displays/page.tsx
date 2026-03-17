@@ -99,7 +99,7 @@ export default function DisplaysPage(): ReactElement {
 
       <DashboardPage.Body>
         <DashboardPage.Content>
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
+          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
             <DisplaysToolbar
               statusFilter={statusFilter}
               search={search}

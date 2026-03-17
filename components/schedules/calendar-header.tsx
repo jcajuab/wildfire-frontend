@@ -63,7 +63,7 @@ export function CalendarHeader({
       : `${resourcesCount} ${resourcesCount === 1 ? "display" : "displays"}`;
 
   return (
-    <div className="grid w-full grid-cols-3 items-center gap-3">
+    <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 sm:items-center sm:gap-3">
       {/* Left: Today + Navigation */}
       <div className="flex justify-start">
         <div className="flex items-center gap-1">
@@ -90,7 +90,7 @@ export function CalendarHeader({
       </div>
 
       {/* Center: Date Range + Resource Count */}
-      <div className="flex justify-center gap-2">
+      <div className="flex items-center justify-start gap-2 sm:justify-center">
         <h2 className="truncate text-base font-semibold">{label}</h2>
         <span className="shrink-0 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
           {resourcesLabel}
@@ -98,7 +98,7 @@ export function CalendarHeader({
       </div>
 
       {/* Right: Resource Mode Toggle + View Toggle */}
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-start gap-2 sm:justify-end">
         <ToggleGroup
           type="single"
           value={resourceMode}

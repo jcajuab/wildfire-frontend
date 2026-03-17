@@ -15,7 +15,7 @@ const makeFormData = (): ScheduleFormData => ({
   endTime: "17:00",
   playlistId: "playlist-1",
   contentId: null,
-  targetDisplayId: "display-1",
+  targetDisplayIds: ["display-1"],
   isActive: true,
 });
 
@@ -50,7 +50,7 @@ describe("schedule-mapper", () => {
 
   test("maps create and update payloads without recurrence fields", () => {
     const data = makeFormData();
-    const createPayload = mapCreateFormToScheduleRequest(data);
+    const createPayload = mapCreateFormToScheduleRequest(data, "display-1");
     const updatePayload = mapUpdateFormToScheduleRequest("schedule-1", data);
 
     expect(createPayload).toMatchObject({

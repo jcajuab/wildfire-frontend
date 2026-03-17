@@ -88,7 +88,9 @@ function findAncestorWithClasses(
   let current = element.parentElement;
 
   while (current) {
-    if (classNames.every((className) => current.classList.contains(className))) {
+    if (
+      classNames.every((className) => current.classList.contains(className))
+    ) {
       return current;
     }
 
@@ -234,7 +236,9 @@ describe("EditRolePage", () => {
 
     render(<EditRolePage />);
 
-    const heading = screen.getByRole("heading", { name: "Unable to load role" });
+    const heading = screen.getByRole("heading", {
+      name: "Unable to load role",
+    });
 
     expect(heading).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to Roles" })).toHaveAttribute(

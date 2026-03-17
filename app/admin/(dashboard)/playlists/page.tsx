@@ -68,7 +68,7 @@ export default function PlaylistsPage(): ReactElement {
 
       <DashboardPage.Body>
         <DashboardPage.Content>
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-3 sm:px-8">
+          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
             <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
               <PlaylistFilterPopover
                 statusFilter={statusFilter}
