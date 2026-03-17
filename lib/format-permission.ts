@@ -58,6 +58,48 @@ function formatPermissionResource(resource: string): string {
   }
 }
 
+function getPermissionActionLabel(action: string): string {
+  switch (action) {
+    case "read":
+      return "view";
+    case "create":
+      return "create";
+    case "update":
+      return "edit";
+    case "delete":
+      return "delete";
+    case "*":
+      return "manage";
+    default:
+      return action;
+  }
+}
+
+function getPermissionImpactSentence(action: string, resource: string): string {
+  if (resource === "all resources" && action === "*") {
+    return "This includes full control over every permission-protected area of the system.";
+  }
+
+  if (resource === "audit logs") {
+    return "This exposes a record of system activity for monitoring, investigations, and compliance checks.";
+  }
+
+  switch (action) {
+    case "read":
+      return `This lets them access existing ${resource} data without changing it.`;
+    case "create":
+      return `This lets them add new ${resource} records that become available to other users.`;
+    case "update":
+      return `This lets them change existing ${resource} records and alter what others see.`;
+    case "delete":
+      return `This lets them remove ${resource} records and can permanently affect availability.`;
+    case "*":
+      return `This includes viewing, creating, editing, and deleting ${resource}.`;
+    default:
+      return `This grants the ${action} operation for ${resource} in the system.`;
+  }
+}
+
 /**
  * Friendly permission description for role assignment tooltips.
  */
@@ -67,25 +109,11 @@ export function formatPermissionTooltipDescription(permission: {
 }): string {
   const action = permission.action.toLowerCase();
   const resource = formatPermissionResource(permission.resource);
+  const actionLabel = getPermissionActionLabel(action);
+  const firstSentence = `Allows users with this role to ${actionLabel} ${resource}.`;
+  const secondSentence = getPermissionImpactSentence(action, resource);
 
-  if (permission.resource === "*" && action === "*") {
-    return "Allows users with this role to manage all resources.";
-  }
-
-  switch (action) {
-    case "read":
-      return `Allows users with this role to view ${resource}.`;
-    case "create":
-      return `Allows users with this role to create ${resource}.`;
-    case "update":
-      return `Allows users with this role to edit ${resource}.`;
-    case "delete":
-      return `Allows users with this role to delete ${resource}.`;
-    case "*":
-      return `Allows users with this role to manage ${resource}.`;
-    default:
-      return `Allows users with this role to ${action} ${resource}.`;
-  }
+  return `${firstSentence} ${secondSentence}`;
 }
 
 /**
