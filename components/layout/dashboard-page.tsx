@@ -12,12 +12,12 @@ function DashboardPageRoot({
   className,
 }: DashboardPageRootProps): ReactElement {
   return (
-      <div
-        className={cn(
-          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95",
-          className,
-        )}
-      >
+    <div
+      className={cn(
+        "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95",
+        className,
+      )}
+    >
       {children}
     </div>
   );

@@ -23,7 +23,9 @@ function findAncestorWithClasses(
   let current = element.parentElement;
 
   while (current) {
-    if (classNames.every((className) => current.classList.contains(className))) {
+    if (
+      classNames.every((className) => current.classList.contains(className))
+    ) {
       return current;
     }
 
