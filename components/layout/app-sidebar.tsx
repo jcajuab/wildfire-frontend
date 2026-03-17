@@ -151,7 +151,7 @@ export function AppSidebar(): ReactElement {
       <SidebarContent>
         {coreNavItems.length > 0 ? (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-primary-foreground/70">
+            <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground/70">
               {CORE_SECTION}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -168,7 +168,7 @@ export function AppSidebar(): ReactElement {
                         asChild
                         size="default"
                         isActive={isActive}
-                        className="text-primary-foreground hover:bg-primary-foreground/14 hover:text-primary-foreground data-[active=true]:bg-primary-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-primary-foreground data-[active=true]:hover:text-primary [&_svg]:text-primary-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
+                        className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
                         tooltip={mounted ? item.title : undefined}
                       >
                         <Link href={item.href}>
@@ -186,7 +186,7 @@ export function AppSidebar(): ReactElement {
 
         {manageNavItems.length > 0 ? (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-primary-foreground/70">
+            <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground/70">
               {MANAGE_SECTION}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -203,7 +203,7 @@ export function AppSidebar(): ReactElement {
                         asChild
                         size="default"
                         isActive={isActive}
-                        className="text-primary-foreground hover:bg-primary-foreground/14 hover:text-primary-foreground data-[active=true]:bg-primary-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-primary-foreground data-[active=true]:hover:text-primary [&_svg]:text-primary-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
+                        className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
                         tooltip={mounted ? item.title : undefined}
                       >
                         <Link href={item.href}>
@@ -230,7 +230,7 @@ export function AppSidebar(): ReactElement {
                   className={
                     isEmergencyActive
                       ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
-                      : "bg-primary-foreground/10 text-primary-foreground hover:bg-destructive/80 hover:text-destructive-foreground [&_svg]:text-primary-foreground hover:[&_svg]:text-destructive-foreground"
+                      : "bg-sidebar-foreground/10 text-sidebar-foreground hover:bg-destructive/80 hover:text-destructive-foreground [&_svg]:text-sidebar-foreground hover:[&_svg]:text-destructive-foreground"
                   }
                 >
                   <IconAlertTriangle className="size-4" />
@@ -256,10 +256,10 @@ export function AppSidebar(): ReactElement {
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
                     size="lg"
-                    className="w-full justify-between text-primary-foreground hover:bg-primary-foreground/14 hover:text-primary-foreground"
+                    className="w-full justify-between text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground"
                   >
                     <div className="flex items-center gap-2">
-                      <div className="flex size-7 items-center justify-center rounded-full bg-primary-foreground/15">
+                      <div className="flex size-7 items-center justify-center rounded-full bg-sidebar-foreground/15">
                         {user?.avatarUrl &&
                         failedAvatarUrl !== user.avatarUrl ? (
                           <Image
@@ -274,19 +274,19 @@ export function AppSidebar(): ReactElement {
                             }
                           />
                         ) : (
-                          <IconUser className="size-6 text-primary-foreground/80" />
+                            <IconUser className="size-6 text-sidebar-foreground/80" />
                         )}
                       </div>
                       <div className="flex min-w-0 flex-col items-start">
                         <span className="truncate text-sm font-medium leading-5">
                           {displayName}
                         </span>
-                        <span className="truncate text-xs leading-5 text-primary-foreground/85">
+                        <span className="truncate text-xs leading-5 text-sidebar-foreground/85">
                           {displayEmail}
                         </span>
                       </div>
                     </div>
-                    <IconDotsVertical className="size-4 text-primary-foreground/90" />
+                    <IconDotsVertical className="size-4 text-sidebar-foreground/90" />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top" align="center" sideOffset={8}>
