@@ -209,7 +209,10 @@ export default function SchedulesPage(): ReactElement {
           notifyApiError(err, SCHEDULE_CONFLICT_MESSAGE);
           throw err;
         }
-        notifyApiError(err, getApiErrorMessage(err, SCHEDULE_CREATE_FALLBACK_MESSAGE));
+        notifyApiError(
+          err,
+          getApiErrorMessage(err, SCHEDULE_CREATE_FALLBACK_MESSAGE),
+        );
         throw err;
       }
     },

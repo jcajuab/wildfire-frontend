@@ -5,7 +5,6 @@ import Image from "next/image";
 import {
   IconDots,
   IconDownload,
-  IconFileTypePdf,
   IconPencil,
   IconEye,
   IconPhoto,
@@ -16,7 +15,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,24 +39,12 @@ import { FlashTonePreview } from "./flash-tone-preview";
 const CONTENT_TYPE_LABEL: Record<ContentType, string> = {
   IMAGE: "Image",
   VIDEO: "Video",
-  PDF: "PDF",
   FLASH: "Flash",
   TEXT: "Text",
 };
 
-export type ContentCardDisplayMode = "default" | "pdf-page-item";
-
 interface ContentCardProps {
   readonly content: Content;
-  readonly displayMode?: ContentCardDisplayMode;
-  readonly isPdfRootExpandable?: boolean;
-  readonly isPdfRootExpanded?: boolean;
-  readonly onTogglePdfRootExpand?: (content: Content) => void;
-  readonly isExclusionToggleDisabled?: boolean;
-  readonly onToggleExclusion?: (
-    content: Content,
-    nextIsExcluded: boolean,
-  ) => Promise<void>;
   readonly onEdit?: (content: Content) => void;
   readonly onPreview: (content: Content) => void;
   readonly onDelete?: (content: Content) => void;
@@ -67,30 +53,13 @@ interface ContentCardProps {
 
 export const ContentCard = memo(function ContentCard({
   content,
-  displayMode = "default",
-  isPdfRootExpandable = false,
-  isPdfRootExpanded = false,
-  onTogglePdfRootExpand,
-  isExclusionToggleDisabled = false,
-  onToggleExclusion,
   onEdit,
   onPreview,
   onDelete,
   onDownload,
 }: ContentCardProps): ReactElement {
-  const isPdfRoot = content.type === "PDF" && content.kind === "ROOT";
-  const isPdfPageItem = displayMode === "pdf-page-item";
-  const canTogglePdfRoot = isPdfRoot && isPdfRootExpandable;
   const canDownloadFile =
     onDownload && content.type !== "FLASH" && content.type !== "TEXT";
-  const pageLabel =
-    content.pageNumber !== null ? `Page ${content.pageNumber}` : null;
-  const rootPageCount =
-    content.pageCount === null
-      ? "Page count unknown"
-      : content.pageCount === 1
-        ? "1 page"
-        : `${content.pageCount} pages`;
   const isFlashContent = content.type === "FLASH";
   const isTextContent = content.type === "TEXT";
   const flashThumbnailText = isFlashContent
@@ -105,32 +74,14 @@ export const ContentCard = memo(function ContentCard({
   const flashTone = content.flashTone ?? "INFO";
 
   const ThumbnailFallbackIcon =
-    content.type === "PDF"
-      ? IconFileTypePdf
-      : content.type === "VIDEO"
-        ? IconVideo
-        : IconPhoto;
-
-  const handleRootToggle = () => {
-    if (!canTogglePdfRoot || !onTogglePdfRootExpand) {
-      return;
-    }
-    onTogglePdfRootExpand(content);
-  };
-
-  const cardClassName = cn(
-    "group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors duration-150",
-    canTogglePdfRoot && isPdfRootExpanded && "border-primary/60 bg-primary/5",
-  );
+    content.type === "VIDEO" ? IconVideo : IconPhoto;
 
   return (
-    <div className={cardClassName}>
+    <div className="group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors duration-150">
       {/* Zone A — Card header */}
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
-          <h3 className="truncate text-sm font-semibold">
-            {isPdfPageItem && pageLabel ? pageLabel : content.title}
-          </h3>
+          <h3 className="truncate text-sm font-semibold">{content.title}</h3>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -139,7 +90,6 @@ export const ContentCard = memo(function ContentCard({
               size="icon-sm"
               aria-label={`Actions for ${content.title}`}
               className="shrink-0"
-              data-prevent-card-toggle="true"
             >
               <IconDots className="size-4" />
             </Button>
@@ -161,7 +111,7 @@ export const ContentCard = memo(function ContentCard({
                 Download File
               </DropdownMenuItem>
             ) : null}
-            {onDelete && !isPdfPageItem ? (
+            {onDelete ? (
               <DropdownMenuItem
                 variant="destructive"
                 onClick={() => onDelete(content)}
@@ -183,31 +133,7 @@ export const ContentCard = memo(function ContentCard({
             : "items-center justify-center",
         )}
       >
-        {isPdfRoot ? (
-          <div className="relative h-full w-full p-3">
-            <div className="absolute inset-x-8 top-4 bottom-3 rotate-6 rounded-md border border-border/80 bg-card/80" />
-            <div className="absolute inset-x-7 top-3 bottom-4 -rotate-3 rounded-md border border-border/80 bg-card/90" />
-            <div className="absolute inset-x-6 top-2 bottom-5 rounded-md border border-border bg-card">
-              {content.thumbnailUrl ? (
-                <Image
-                  src={content.thumbnailUrl}
-                  alt={`${content.title} preview`}
-                  width={400}
-                  height={225}
-                  unoptimized
-                  className="h-full w-full rounded-md object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <ThumbnailFallbackIcon
-                    className="size-7 text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        ) : isFlashContent ? (
+        {isFlashContent ? (
           <FlashTonePreview
             tone={flashTone}
             message={flashThumbnailText ?? ""}
@@ -274,51 +200,6 @@ export const ContentCard = memo(function ContentCard({
             {formatDateWithTime(content.updatedAt || content.createdAt)}
           </span>
         </div>
-        {/* PDF root: page count + expand/collapse button */}
-        {canTogglePdfRoot ? (
-          <div className="flex items-center gap-2 pt-0.5">
-            <span className="text-xs text-muted-foreground">
-              {rootPageCount}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="xs"
-              onClick={handleRootToggle}
-              aria-expanded={isPdfRootExpanded}
-              aria-controls={`pdf-pages-${content.id}`}
-              aria-label={
-                isPdfRootExpanded
-                  ? `Collapse pages for ${content.title}`
-                  : `Expand pages for ${content.title}`
-              }
-            >
-              {isPdfRootExpanded ? "Collapse pages" : "Expand pages"}
-            </Button>
-          </div>
-        ) : isPdfRoot ? (
-          <p className="text-xs text-muted-foreground">{rootPageCount}</p>
-        ) : null}
-        {/* PDF page item: exclusion toggle */}
-        {isPdfPageItem && onToggleExclusion ? (
-          <div
-            className="flex items-center justify-between pt-0.5"
-            data-prevent-card-toggle="true"
-          >
-            <span className="text-xs text-muted-foreground">
-              Exclude from playback
-            </span>
-            <Switch
-              checked={content.isExcluded}
-              disabled={isExclusionToggleDisabled}
-              aria-label={`Exclude ${pageLabel ?? content.title} from playback`}
-              data-prevent-card-toggle="true"
-              onCheckedChange={(checked) => {
-                void onToggleExclusion(content, checked);
-              }}
-            />
-          </div>
-        ) : null}
       </div>
     </div>
   );

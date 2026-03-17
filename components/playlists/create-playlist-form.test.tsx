@@ -40,7 +40,6 @@ const availableContent = [
     width: 1920,
     height: 1080,
     duration: 5,
-    scrollPxPerSecond: null,
     flashMessage: null,
     flashTone: null,
     status: "READY",

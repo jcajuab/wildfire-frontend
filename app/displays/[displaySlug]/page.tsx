@@ -21,7 +21,6 @@ import {
 } from "@/lib/display-identity/registration-store";
 import { createPlayerController } from "@/lib/display-runtime/player-controller";
 import { buildRuntimeTimings } from "@/lib/display-runtime/overflow-timing";
-import { PdfRenderer } from "@/lib/display-runtime/pdf-renderer";
 import { createDisplaySseClient } from "@/lib/display-runtime/sse-client";
 import {
   buildFlashMarqueeStyle,
@@ -36,7 +35,6 @@ import { BouncingLogoScreensaver } from "@/components/displays/bouncing-logo-scr
 const POLL_MS = 60_000;
 const HEARTBEAT_MS = 30_000;
 const SNAPSHOT_UPLOAD_MS = 10_000;
-const DEFAULT_SCROLL_PX_PER_SECOND = 24;
 
 const formatRuntimeTimestamp = (timestamp: string | null): string | null => {
   if (!timestamp) {
@@ -102,8 +100,6 @@ export default function DisplayRuntimePage() {
   const emergencyPlayback = playback?.emergency ?? null;
   const isEmergencyModeActive = playback?.mode === "EMERGENCY";
   const activeFlash = playback?.mode === "SCHEDULE" ? playback.flash : null;
-  const scrollPxPerSecond =
-    manifest?.runtimeSettings.scrollPxPerSecond ?? DEFAULT_SCROLL_PX_PER_SECOND;
   const baseUrl = getBaseUrl();
 
   useEffect(() => {
@@ -124,10 +120,8 @@ export default function DisplayRuntimePage() {
     }
     return buildRuntimeTimings({
       items: manifest.items,
-      viewport,
-      config: { scrollPixelsPerSecond: scrollPxPerSecond },
     });
-  }, [manifest, scrollPxPerSecond, viewport]);
+  }, [manifest]);
 
   useEffect(() => {
     if (!registration) {
@@ -505,16 +499,7 @@ export default function DisplayRuntimePage() {
               }}
             />
           </div>
-        ) : (
-          <div className="h-full w-full overflow-hidden bg-white">
-            <PdfRenderer
-              key={currentItem.id}
-              src={currentItem.content.downloadUrl}
-              viewportWidth={viewport.width}
-              viewportHeight={viewport.height}
-            />
-          </div>
-        )}
+        ) : null}
       </div>
       <style jsx>{`
         @keyframes flash-marquee {

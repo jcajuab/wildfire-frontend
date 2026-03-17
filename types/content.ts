@@ -1,7 +1,6 @@
 import type { SortDirection } from "@/types/common";
 
-export type ContentType = "IMAGE" | "VIDEO" | "PDF" | "FLASH" | "TEXT";
-export type ContentKind = "ROOT" | "PAGE";
+export type ContentType = "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
 export type FlashTone = "INFO" | "WARNING" | "CRITICAL";
 
 export type ContentStatus = "PROCESSING" | "READY" | "FAILED";
@@ -15,19 +14,13 @@ export interface Content {
   readonly id: string;
   readonly title: string;
   readonly type: ContentType;
-  readonly kind: ContentKind;
   readonly thumbnailUrl?: string;
   readonly mimeType: string;
   readonly fileSize: number;
   readonly checksum: string;
-  readonly parentContentId: string | null;
-  readonly pageNumber: number | null;
-  readonly pageCount: number | null;
-  readonly isExcluded: boolean;
   readonly width: number | null;
   readonly height: number | null;
   readonly duration: number | null;
-  readonly scrollPxPerSecond: number | null;
   readonly flashMessage: string | null;
   readonly flashTone: FlashTone | null;
   readonly textJsonContent: string | null;
@@ -45,12 +38,7 @@ export interface ContentListResponse {
   readonly total: number;
 }
 
-export type ContentSortField =
-  | "createdAt"
-  | "title"
-  | "fileSize"
-  | "type"
-  | "pageNumber";
+export type ContentSortField = "createdAt" | "title" | "fileSize" | "type";
 
 export interface ContentFilter {
   readonly status?: ContentStatus;

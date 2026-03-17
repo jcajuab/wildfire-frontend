@@ -1,13 +1,8 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useMemo, useRef, useState } from "react";
-import {
-  IconCalendar,
-  IconCheck,
-  IconClock,
-  IconX,
-} from "@tabler/icons-react";
+import { useId, useMemo, useRef, useState } from "react";
+import { IconCalendar, IconCheck, IconClock, IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +41,7 @@ function DisplayMultiSelect({
 }: DisplayMultiSelectProps): ReactElement {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const listboxId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -73,6 +69,7 @@ function DisplayMultiSelect({
           ref={containerRef}
           role="combobox"
           aria-expanded={open}
+          aria-controls={listboxId}
           aria-haspopup="listbox"
           className={cn(
             "flex min-h-7 w-full flex-wrap items-center gap-1 rounded-md border border-input bg-input/20 px-2 py-1 text-xs/relaxed transition-colors cursor-text dark:bg-input/30",
@@ -144,6 +141,7 @@ function DisplayMultiSelect({
         }}
       >
         <div
+          id={listboxId}
           role="listbox"
           aria-multiselectable="true"
           className="no-scrollbar max-h-60 overflow-y-auto p-1"
@@ -195,7 +193,11 @@ function EmptyResourceCta({
   return (
     <p className="text-xs text-muted-foreground">
       {message}{" "}
-      <Link href={href} onClick={onNavigate} className="text-blue-500 underline underline-offset-2 hover:text-blue-600">
+      <Link
+        href={href}
+        onClick={onNavigate}
+        className="text-blue-500 underline underline-offset-2 hover:text-blue-600"
+      >
         Create one here.
       </Link>
     </p>

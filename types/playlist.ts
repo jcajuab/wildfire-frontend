@@ -10,7 +10,7 @@ export interface PlaylistOwner {
 export interface PlaylistItemContent {
   readonly id: string;
   readonly title: string;
-  readonly type: "IMAGE" | "VIDEO" | "PDF" | "TEXT";
+  readonly type: "IMAGE" | "VIDEO" | "TEXT";
   readonly checksum: string;
   readonly thumbnailUrl?: string | null;
 }

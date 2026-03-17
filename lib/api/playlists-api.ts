@@ -26,7 +26,7 @@ export interface BackendPlaylistItem {
   readonly content: {
     readonly id: string;
     readonly title: string;
-    readonly type: "IMAGE" | "VIDEO" | "PDF" | "TEXT";
+    readonly type: "IMAGE" | "VIDEO" | "TEXT";
     readonly checksum: string;
     readonly thumbnailUrl?: string | null;
   };

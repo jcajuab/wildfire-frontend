@@ -48,7 +48,6 @@ const typeOptions: readonly {
   { value: "all", label: "All Types" },
   { value: "IMAGE", label: "Images" },
   { value: "VIDEO", label: "Videos" },
-  { value: "PDF", label: "Documents" },
   { value: "FLASH", label: "Flash Text" },
   { value: "TEXT", label: "Rich Text" },
 ] as const;

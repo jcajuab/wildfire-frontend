@@ -36,11 +36,7 @@ interface CreateContentDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly mode: "upload" | "flash" | "text";
-  readonly onUploadFile: (
-    name: string,
-    file: File,
-    scrollPxPerSecond?: number,
-  ) => void;
+  readonly onUploadFile: (name: string, file: File) => void;
   readonly onCreateFlash: (input: {
     title: string;
     message: string;
@@ -234,7 +230,7 @@ export function CreateContentDialog({
           </DialogTitle>
           <DialogDescription>
             {isUploadMode
-              ? "Upload an image, video, or PDF to display on your screens."
+              ? "Upload an image or video to display on your screens."
               : isFlashMode
                 ? "Create a flash ticker message to display on your screens."
                 : "Create rich text content to display on your screens."}
@@ -254,7 +250,7 @@ export function CreateContentDialog({
               id="content-title"
               placeholder={
                 isUploadMode
-                  ? "Lobby PDF"
+                  ? "Lobby Poster"
                   : isFlashMode
                     ? "Ticker: hello world"
                     : "Announcement"
@@ -302,7 +298,7 @@ export function CreateContentDialog({
                     {SUPPORTED_CONTENT_FILE_LABELS}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Videos: max 10 MB · Images/PDFs: max 100 MB
+                    Videos: max 10 MB · Images: max 100 MB
                   </p>
                 </div>
                 {fileError ? (

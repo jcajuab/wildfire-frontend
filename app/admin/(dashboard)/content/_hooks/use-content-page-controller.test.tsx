@@ -4,13 +4,20 @@ import { useContentPageController } from "./use-content-page-controller";
 import { useCan } from "@/hooks/use-can";
 import {
   useLazyGetContentJobQuery,
+  useLazyGetContentQuery,
   useListContentQuery,
+  useUploadPdfMutation,
+  useSubmitPdfCropsMutation,
+  useCancelPdfUploadMutation,
 } from "@/lib/api/content-api";
 import { useContentJobMonitor } from "./content-job-monitor";
 import { useContentPageFilters } from "./use-content-page-filters";
-import { useContentPagePdfState } from "./use-content-page-pdf";
 import { useContentDialogState } from "./use-content-dialog-state";
 import { useContentCrudHandlers } from "./use-content-crud-handlers";
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: vi.fn(() => ({ get: vi.fn(() => null) })),
+}));
 
 vi.mock("@/hooks/use-can", () => ({
   useCan: vi.fn(() => true),
@@ -24,6 +31,10 @@ vi.mock("@/lib/api/content-api", () => ({
     error: null,
   })),
   useLazyGetContentJobQuery: vi.fn(() => [vi.fn()]),
+  useLazyGetContentQuery: vi.fn(() => [vi.fn()]),
+  useUploadPdfMutation: vi.fn(() => [vi.fn()]),
+  useSubmitPdfCropsMutation: vi.fn(() => [vi.fn()]),
+  useCancelPdfUploadMutation: vi.fn(() => [vi.fn()]),
 }));
 
 vi.mock("./content-job-monitor", () => ({
@@ -36,24 +47,12 @@ vi.mock("./use-content-page-filters", () => ({
   useContentPageFilters: vi.fn(),
 }));
 
-vi.mock("./use-content-page-pdf", () => ({
-  useContentPagePdfState: vi.fn(() => ({
-    expandedPdfParentIds: [],
-    pageCollectionsByParentId: new Map(),
-    updatingPageId: null,
-    handleTogglePdfExpand: vi.fn(),
-    handleLoadMorePages: vi.fn(),
-    handleRetryLoadPages: vi.fn(),
-    handleTogglePageExclusion: vi.fn(),
-    updatePageCollection: vi.fn(),
-    setPageCollection: vi.fn(),
-  })),
-}));
-
 vi.mock("./use-content-dialog-state", () => ({
   useContentDialogState: vi.fn(() => ({
     isCreateDialogOpen: false,
     setIsCreateDialogOpen: vi.fn(),
+    createMode: null,
+    openCreateDialog: vi.fn(),
     contentToPreview: null,
     contentToEdit: null,
     contentToDelete: null,
@@ -81,9 +80,12 @@ vi.mock("./use-content-crud-handlers", () => ({
 const useCanMock = vi.mocked(useCan);
 const useListContentQueryMock = vi.mocked(useListContentQuery);
 const useLazyGetContentJobQueryMock = vi.mocked(useLazyGetContentJobQuery);
+const useLazyGetContentQueryMock = vi.mocked(useLazyGetContentQuery);
+const useUploadPdfMutationMock = vi.mocked(useUploadPdfMutation);
+const useSubmitPdfCropsMutationMock = vi.mocked(useSubmitPdfCropsMutation);
+const useCancelPdfUploadMutationMock = vi.mocked(useCancelPdfUploadMutation);
 const useContentJobMonitorMock = vi.mocked(useContentJobMonitor);
 const useContentPageFiltersMock = vi.mocked(useContentPageFilters);
-const useContentPagePdfStateMock = vi.mocked(useContentPagePdfState);
 const useContentDialogStateMock = vi.mocked(useContentDialogState);
 const useContentCrudHandlersMock = vi.mocked(useContentCrudHandlers);
 
@@ -92,7 +94,21 @@ describe("useContentPageController", () => {
     vi.clearAllMocks();
 
     useCanMock.mockReturnValue(true);
-    useLazyGetContentJobQueryMock.mockReturnValue([vi.fn()]);
+    useLazyGetContentJobQueryMock.mockReturnValue([vi.fn()] as ReturnType<
+      typeof useLazyGetContentJobQuery
+    >);
+    useLazyGetContentQueryMock.mockReturnValue([vi.fn()] as ReturnType<
+      typeof useLazyGetContentQuery
+    >);
+    useUploadPdfMutationMock.mockReturnValue([vi.fn()] as ReturnType<
+      typeof useUploadPdfMutation
+    >);
+    useSubmitPdfCropsMutationMock.mockReturnValue([vi.fn()] as ReturnType<
+      typeof useSubmitPdfCropsMutation
+    >);
+    useCancelPdfUploadMutationMock.mockReturnValue([vi.fn()] as ReturnType<
+      typeof useCancelPdfUploadMutation
+    >);
     useContentJobMonitorMock.mockReturnValue({ trackContentJob: vi.fn() });
     useContentPageFiltersMock.mockReturnValue({
       statusFilter: "READY",
@@ -105,20 +121,11 @@ describe("useContentPageController", () => {
       handleSearchChange: vi.fn(),
       handleClearFilters: vi.fn(),
     });
-    useContentPagePdfStateMock.mockReturnValue({
-      expandedPdfParentIds: [],
-      pageCollectionsByParentId: new Map(),
-      updatingPageId: null,
-      handleTogglePdfExpand: vi.fn(),
-      handleLoadMorePages: vi.fn(),
-      handleRetryLoadPages: vi.fn(),
-      handleTogglePageExclusion: vi.fn(),
-      updatePageCollection: vi.fn(),
-      setPageCollection: vi.fn(),
-    });
     useContentDialogStateMock.mockReturnValue({
       isCreateDialogOpen: false,
       setIsCreateDialogOpen: vi.fn(),
+      createMode: null,
+      openCreateDialog: vi.fn(),
       contentToPreview: null,
       contentToEdit: null,
       contentToDelete: null,

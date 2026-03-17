@@ -8,21 +8,15 @@ import type { FlashTone } from "@/types/content";
 export interface BackendContent {
   readonly id: string;
   readonly title: string;
-  readonly type: "IMAGE" | "VIDEO" | "PDF" | "FLASH" | "TEXT";
-  readonly kind: "ROOT" | "PAGE";
+  readonly type: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
   readonly status: "PROCESSING" | "READY" | "FAILED";
   readonly thumbnailUrl?: string;
   readonly mimeType: string;
   readonly fileSize: number;
   readonly checksum: string;
-  readonly parentContentId: string | null;
-  readonly pageNumber: number | null;
-  readonly pageCount: number | null;
-  readonly isExcluded: boolean;
   readonly width: number | null;
   readonly height: number | null;
   readonly duration: number | null;
-  readonly scrollPxPerSecond: number | null;
   readonly flashMessage: string | null;
   readonly flashTone: FlashTone | null;
   readonly textJsonContent: string | null;
@@ -51,7 +45,7 @@ export interface BackendContentJob {
 export interface ContentOption {
   readonly id: string;
   readonly title: string;
-  readonly type: "IMAGE" | "VIDEO" | "PDF" | "FLASH" | "TEXT";
+  readonly type: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
 }
 
 export interface ContentIngestionAcceptedResponse {
@@ -69,18 +63,16 @@ export interface BackendContentListResponse {
 export interface ContentListQuery {
   readonly page?: number;
   readonly pageSize?: number;
-  readonly parentId?: string;
   readonly status?: "PROCESSING" | "READY" | "FAILED";
-  readonly type?: "IMAGE" | "VIDEO" | "PDF" | "FLASH" | "TEXT";
+  readonly type?: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
   readonly search?: string;
-  readonly sortBy?: "createdAt" | "title" | "fileSize" | "type" | "pageNumber";
+  readonly sortBy?: "createdAt" | "title" | "fileSize" | "type";
   readonly sortDirection?: "asc" | "desc";
 }
 
 export interface UploadContentRequest {
   readonly title: string;
   readonly file: File;
-  readonly scrollPxPerSecond?: number;
 }
 
 export interface ReplaceContentFileRequest {
@@ -101,6 +93,31 @@ export interface CreateTextContentRequest {
   readonly htmlContent: string;
 }
 
+export interface PdfUploadAcceptedResponse {
+  readonly uploadId: string;
+  readonly filename: string;
+  readonly pdfUrl: string;
+  readonly pageCount: number;
+  readonly pages: ReadonlyArray<{
+    readonly pageNumber: number;
+    readonly width: number;
+    readonly height: number;
+  }>;
+}
+
+export interface PdfCropRegion {
+  readonly pageNumber: number;
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface SubmitPdfCropsRequest {
+  readonly uploadId: string;
+  readonly regions: readonly PdfCropRegion[];
+}
+
 export const contentApi = createApi({
   reducerPath: "contentApi",
   baseQuery,
@@ -111,7 +128,7 @@ export const contentApi = createApi({
       {
         readonly q?: string;
         readonly status?: "PROCESSING" | "READY" | "FAILED";
-        readonly type?: "IMAGE" | "VIDEO" | "PDF" | "FLASH" | "TEXT";
+        readonly type?: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
       } | void
     >({
       query: (query) => ({
@@ -138,7 +155,6 @@ export const contentApi = createApi({
         params: {
           page: query?.page ?? 1,
           pageSize: query?.pageSize ?? 20,
-          parentId: query?.parentId,
           status: query?.status,
           type: query?.type,
           search: query?.search,
@@ -199,12 +215,9 @@ export const contentApi = createApi({
       ContentIngestionAcceptedResponse,
       UploadContentRequest
     >({
-      query: ({ title, file, scrollPxPerSecond }) => {
+      query: ({ title, file }) => {
         const formData = new FormData();
         formData.append("title", title);
-        if (scrollPxPerSecond !== undefined) {
-          formData.append("scrollPxPerSecond", String(scrollPxPerSecond));
-        }
         formData.append("file", file);
         return {
           url: "content",
@@ -226,6 +239,44 @@ export const contentApi = createApi({
             ]
           : [{ type: "Content", id: "LIST" }],
     }),
+    uploadPdf: build.mutation<PdfUploadAcceptedResponse, File>({
+      query: (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        return {
+          url: "content/pdf-crop",
+          method: "POST",
+          body: formData,
+        };
+      },
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<PdfUploadAcceptedResponse>(
+          response,
+          "uploadPdf",
+        ),
+    }),
+    submitPdfCrops: build.mutation<
+      readonly BackendContent[],
+      SubmitPdfCropsRequest
+    >({
+      query: ({ uploadId, regions }) => ({
+        url: "content/pdf-crop/submit",
+        method: "POST",
+        body: { uploadId, regions },
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<readonly BackendContent[]>(
+          response,
+          "submitPdfCrops",
+        ),
+      invalidatesTags: [{ type: "Content", id: "LIST" }],
+    }),
+    cancelPdfUpload: build.mutation<void, string>({
+      query: (uploadId) => ({
+        url: `content/pdf-crop/${uploadId}`,
+        method: "DELETE",
+      }),
+    }),
     deleteContent: build.mutation<void, string>({
       query: (id) => ({
         url: `content/${id}`,
@@ -243,7 +294,6 @@ export const contentApi = createApi({
         readonly title?: string;
         readonly flashMessage?: string;
         readonly flashTone?: FlashTone;
-        readonly scrollPxPerSecond?: number | null;
         readonly textJsonContent?: string;
         readonly textHtmlContent?: string;
       }
@@ -255,28 +305,6 @@ export const contentApi = createApi({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<BackendContent>(response, "updateContent"),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Content", id: "LIST" },
-        { type: "Content", id },
-      ],
-    }),
-    setContentExclusion: build.mutation<
-      BackendContent,
-      {
-        readonly id: string;
-        readonly isExcluded: boolean;
-      }
-    >({
-      query: ({ id, isExcluded }) => ({
-        url: `content/${id}/exclusion`,
-        method: "PATCH",
-        body: { isExcluded },
-      }),
-      transformResponse: (response) =>
-        parseApiResponseDataSafe<BackendContent>(
-          response,
-          "setContentExclusion",
-        ),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Content", id: "LIST" },
         { type: "Content", id },
@@ -336,9 +364,11 @@ export const {
   useCreateFlashContentMutation,
   useCreateTextContentMutation,
   useUploadContentMutation,
+  useUploadPdfMutation,
+  useSubmitPdfCropsMutation,
+  useCancelPdfUploadMutation,
   useDeleteContentMutation,
   useUpdateContentMutation,
-  useSetContentExclusionMutation,
   useReplaceContentFileMutation,
   useLazyGetContentFileUrlQuery,
   useLazyGetContentJobQuery,

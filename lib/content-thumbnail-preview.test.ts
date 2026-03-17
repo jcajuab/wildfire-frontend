@@ -24,7 +24,6 @@ const baseContent: Content = {
   width: null,
   height: null,
   duration: null,
-  scrollPxPerSecond: null,
   flashMessage: null,
   flashTone: null,
   textJsonContent: null,

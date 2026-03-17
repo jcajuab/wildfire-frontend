@@ -253,13 +253,7 @@ export function useDisplaysPage(): UseDisplaysPageResult {
   const emergencyContentOptions = useMemo(
     () =>
       (emergencyAssets?.items ?? [])
-        .filter(
-          (asset) =>
-            asset.kind === "ROOT" &&
-            (asset.type === "IMAGE" ||
-              asset.type === "VIDEO" ||
-              asset.type === "PDF"),
-        )
+        .filter((asset) => asset.type === "IMAGE" || asset.type === "VIDEO")
         .map((asset) => ({
           id: asset.id,
           title: asset.title,

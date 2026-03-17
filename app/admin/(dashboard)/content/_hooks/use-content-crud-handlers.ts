@@ -3,7 +3,6 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
 import {
-  contentApi,
   useCreateFlashContentMutation,
   useCreateTextContentMutation,
   useDeleteContentMutation,
@@ -13,18 +12,11 @@ import {
   useUploadContentMutation,
 } from "@/lib/api/content-api";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
-import { useAppDispatch } from "@/lib/hooks";
-import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import type { Content } from "@/types/content";
 import type { EditContentDialogSaveInput } from "../_components/content-page-dialogs";
-import type { PageCollectionState } from "./use-pdf-page-collection";
 
 export interface ContentCrudHandlers {
-  readonly handleUploadFile: (
-    name: string,
-    file: File,
-    scrollPxPerSecond?: number,
-  ) => Promise<void>;
+  readonly handleUploadFile: (name: string, file: File) => Promise<void>;
   readonly handleCreateFlash: (input: {
     title: string;
     message: string;
@@ -51,15 +43,6 @@ export interface UseContentCrudHandlersInput {
     successMessage: string;
     failureMessage: string;
   }) => void;
-  readonly pageCollectionsByParentId: Record<string, PageCollectionState>;
-  readonly updatePageCollection: (
-    parentId: string,
-    updater: (current: PageCollectionState) => PageCollectionState,
-  ) => void;
-  readonly setPageCollection: (
-    parentId: string,
-    nextCollection: PageCollectionState,
-  ) => void;
 }
 
 /**
@@ -69,7 +52,6 @@ export interface UseContentCrudHandlersInput {
 export function useContentCrudHandlers(
   input: UseContentCrudHandlersInput,
 ): ContentCrudHandlers {
-  const dispatch = useAppDispatch();
   const [uploadContent] = useUploadContentMutation();
   const [createFlashContent] = useCreateFlashContentMutation();
   const [createTextContent] = useCreateTextContentMutation();
@@ -79,12 +61,11 @@ export function useContentCrudHandlers(
   const [getContentFileUrl] = useLazyGetContentFileUrlQuery();
 
   const handleUploadFile = useCallback(
-    async (name: string, file: File, scrollPxPerSecond?: number) => {
+    async (name: string, file: File) => {
       try {
         const accepted = await uploadContent({
           title: name,
           file,
-          scrollPxPerSecond,
         }).unwrap();
         toast.message("Content upload queued.");
         input.trackContentJob({
@@ -157,16 +138,10 @@ export function useContentCrudHandlers(
       file,
       flashMessage,
       flashTone,
-      scrollPxPerSecond,
       textJsonContent,
       textHtmlContent,
     }: EditContentDialogSaveInput) => {
       const editedContent = input.contentToEdit;
-      const parentContentIdForRollback =
-        editedContent?.id === contentId ? editedContent.parentContentId : null;
-      const previousCollection = parentContentIdForRollback
-        ? input.pageCollectionsByParentId[parentContentIdForRollback]
-        : undefined;
 
       try {
         if (file) {
@@ -185,68 +160,23 @@ export function useContentCrudHandlers(
           return;
         }
 
-        if (parentContentIdForRollback !== null && previousCollection) {
-          input.updatePageCollection(parentContentIdForRollback, (current) => ({
-            ...current,
-            items: current.items.map((item) =>
-              item.id === contentId ? { ...item, title } : item,
-            ),
-          }));
-        }
-
-        const updated = mapBackendContentToContent(
-          await updateContent({
-            id: contentId,
-            title,
-            ...(editedContent?.type === "FLASH"
+        await updateContent({
+          id: contentId,
+          title,
+          ...(editedContent?.type === "FLASH"
+            ? {
+                flashMessage: flashMessage ?? "",
+                flashTone: flashTone ?? "INFO",
+              }
+            : editedContent?.type === "TEXT"
               ? {
-                  flashMessage: flashMessage ?? "",
-                  flashTone: flashTone ?? "INFO",
+                  textJsonContent: textJsonContent ?? "",
+                  textHtmlContent: textHtmlContent ?? "",
                 }
-              : editedContent?.type === "TEXT"
-                ? {
-                    textJsonContent: textJsonContent ?? "",
-                    textHtmlContent: textHtmlContent ?? "",
-                  }
-                : editedContent?.type === "IMAGE" ||
-                    editedContent?.type === "PDF"
-                  ? {
-                      scrollPxPerSecond,
-                    }
-                  : {}),
-          }).unwrap(),
-        );
-        const updatedParentContentId = updated.parentContentId;
-        if (updatedParentContentId) {
-          input.updatePageCollection(updatedParentContentId, (current) => ({
-            ...current,
-            items: current.items.map((item) =>
-              item.id === updated.id
-                ? {
-                    ...updated,
-                    thumbnailUrl: updated.thumbnailUrl ?? item.thumbnailUrl,
-                  }
-                : item,
-            ),
-          }));
-        }
-        dispatch(
-          contentApi.util.invalidateTags([
-            { type: "Content", id: "LIST" },
-            { type: "Content", id: updated.id },
-            ...(updatedParentContentId !== null
-              ? [{ type: "Content" as const, id: updatedParentContentId }]
-              : []),
-          ]),
-        );
+              : {}),
+        }).unwrap();
         toast.success("Content updated.");
       } catch (error) {
-        if (input.contentToEdit?.id === contentId) {
-          const parentContentId = input.contentToEdit.parentContentId;
-          if (parentContentId && previousCollection) {
-            input.setPageCollection(parentContentId, previousCollection);
-          }
-        }
         notifyApiError(
           error,
           file
@@ -256,7 +186,7 @@ export function useContentCrudHandlers(
         throw error;
       }
     },
-    [dispatch, input, replaceContentFile, updateContent],
+    [input, replaceContentFile, updateContent],
   );
 
   const handleConfirmDelete = useCallback(async () => {

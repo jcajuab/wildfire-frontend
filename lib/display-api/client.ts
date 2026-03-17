@@ -34,7 +34,7 @@ export interface ManifestItem {
   readonly duration: number;
   readonly content: {
     readonly id: string;
-    readonly type: "IMAGE" | "VIDEO" | "PDF" | "TEXT";
+    readonly type: "IMAGE" | "VIDEO" | "TEXT";
     readonly checksum: string;
     readonly downloadUrl: string;
     readonly thumbnailUrl: string | null;
@@ -42,7 +42,6 @@ export interface ManifestItem {
     readonly width: number | null;
     readonly height: number | null;
     readonly duration: number | null;
-    readonly scrollPxPerSecond: number | null;
     readonly textHtmlContent: string | null;
     readonly cropY?: number | null;
     readonly cropHeight?: number | null;
@@ -56,9 +55,7 @@ export interface DisplayManifest {
   readonly playlistId: string | null;
   readonly playlistVersion: string;
   readonly generatedAt: string;
-  readonly runtimeSettings: {
-    readonly scrollPxPerSecond: number;
-  };
+  readonly runtimeSettings: Record<string, never>;
   readonly playback: {
     readonly mode: "SCHEDULE" | "EMERGENCY";
     readonly emergency: {
@@ -253,7 +250,7 @@ const parseManifestItemContent = (
   const root = readRecord(payload, path);
   const contentType = readEnum(
     root.type,
-    ["IMAGE", "VIDEO", "PDF", "TEXT"] as const,
+    ["IMAGE", "VIDEO", "TEXT"] as const,
     `${path}.type`,
   );
   return {
@@ -272,10 +269,6 @@ const parseManifestItemContent = (
     width: readNullableInteger(root.width, `${path}.width`),
     height: readNullableInteger(root.height, `${path}.height`),
     duration: readNullableInteger(root.duration, `${path}.duration`),
-    scrollPxPerSecond: readNullableInteger(
-      root.scrollPxPerSecond,
-      `${path}.scrollPxPerSecond`,
-    ),
     textHtmlContent: readNullableString(
       root.textHtmlContent,
       `${path}.textHtmlContent`,
@@ -358,10 +351,7 @@ const parseFlashPlayback = (
 
 const parseDisplayManifest = (payload: unknown): DisplayManifest => {
   const root = readRecord(payload, "manifest");
-  const runtimeSettings = readRecord(
-    root.runtimeSettings,
-    "manifest.runtimeSettings",
-  );
+  readRecord(root.runtimeSettings, "manifest.runtimeSettings");
   const playback = readRecord(root.playback, "manifest.playback");
   const rawItems = root.items;
   if (!Array.isArray(rawItems)) {
@@ -375,12 +365,7 @@ const parseDisplayManifest = (payload: unknown): DisplayManifest => {
       "manifest.playlistVersion",
     ),
     generatedAt: readString(root.generatedAt, "manifest.generatedAt"),
-    runtimeSettings: {
-      scrollPxPerSecond: readInteger(
-        runtimeSettings.scrollPxPerSecond,
-        "manifest.runtimeSettings.scrollPxPerSecond",
-      ),
-    },
+    runtimeSettings: {},
     playback: {
       mode: readEnum(
         playback.mode,

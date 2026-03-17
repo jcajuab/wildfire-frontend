@@ -45,7 +45,6 @@ export interface EditContentDialogSaveInput {
   readonly file: File | null;
   readonly flashMessage: string | null;
   readonly flashTone: FlashTone | null;
-  readonly scrollPxPerSecond: number | null;
   readonly textJsonContent: string | null;
   readonly textHtmlContent: string | null;
 }
@@ -102,9 +101,6 @@ function EditContentDialogForm({
   const [flashTone, setFlashTone] = useState<FlashTone>(
     content.flashTone ?? "INFO",
   );
-  const [scrollPxPerSecond, setScrollPxPerSecond] = useState(
-    content.scrollPxPerSecond?.toString() ?? "",
-  );
   const [textJsonContent, setTextJsonContent] = useState(
     content.textJsonContent ?? "",
   );
@@ -122,12 +118,9 @@ function EditContentDialogForm({
     return () => window.clearTimeout(id);
   }, [flashMessage]);
 
-  const canReplaceFile =
-    content.kind === "ROOT" && content.status !== "PROCESSING";
+  const canReplaceFile = content.status !== "PROCESSING";
   const isFlashContent = content.type === "FLASH";
   const isTextContent = content.type === "TEXT";
-  const supportsScrollSpeed =
-    content.type === "IMAGE" || content.type === "PDF";
 
   const handleFileSelect = useCallback((file: File) => {
     setSelectedFile(file);
@@ -230,21 +223,6 @@ function EditContentDialogForm({
           </div>
         ) : (
           <div className="space-y-2">
-            {supportsScrollSpeed ? (
-              <div className="space-y-2">
-                <Label htmlFor="edit-content-scroll-speed">
-                  Scroll Speed (px/s)
-                </Label>
-                <Input
-                  id="edit-content-scroll-speed"
-                  type="number"
-                  min={1}
-                  value={scrollPxPerSecond}
-                  onChange={(event) => setScrollPxPerSecond(event.target.value)}
-                  placeholder="Leave empty to use default"
-                />
-              </div>
-            ) : null}
             <Label>Replace File</Label>
             <p className="text-xs text-muted-foreground">
               Current file type: {content.type} ({content.mimeType || "Unknown"}
@@ -298,9 +276,7 @@ function EditContentDialogForm({
               </>
             ) : (
               <p className="text-xs text-muted-foreground">
-                {content.kind === "PAGE"
-                  ? "Page items can be renamed but cannot replace files directly."
-                  : "Processing content cannot be replaced right now."}
+                Processing content cannot be replaced right now.
               </p>
             )}
           </div>
@@ -324,18 +300,6 @@ function EditContentDialogForm({
                 file: selectedFile,
                 flashMessage: isFlashContent ? flashMessage.trim() : null,
                 flashTone: isFlashContent ? flashTone : null,
-                scrollPxPerSecond: supportsScrollSpeed
-                  ? (() => {
-                      if (scrollPxPerSecond.trim().length === 0) {
-                        return null;
-                      }
-                      const raw = Number(scrollPxPerSecond);
-                      if (!Number.isFinite(raw) || raw <= 0) {
-                        return null;
-                      }
-                      return Math.trunc(raw);
-                    })()
-                  : null,
                 textJsonContent: isTextContent ? textJsonContent : null,
                 textHtmlContent: isTextContent ? textHtmlContent : null,
               });

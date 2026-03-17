@@ -24,7 +24,6 @@ const isPlaylistRenderableContent = (
 ): content is PlaylistSelectableContent =>
   content.type === "IMAGE" ||
   content.type === "VIDEO" ||
-  content.type === "PDF" ||
   content.type === "TEXT";
 
 export interface UseCreatePlaylistPageResult {

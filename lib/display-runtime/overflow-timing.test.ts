@@ -1,28 +1,26 @@
 import { describe, expect, test } from "vitest";
-import {
-  buildRuntimeTimings,
-  computeOverflowExtraSeconds,
-} from "@/lib/display-runtime/overflow-timing";
+import { buildRuntimeTimings } from "@/lib/display-runtime/overflow-timing";
 
 describe("overflow timing", () => {
-  test("keeps zero extra duration for overflowing image content", () => {
-    const extra = computeOverflowExtraSeconds({
-      item: {
-        id: "item-1",
-        duration: 10,
-        content: {
-          type: "IMAGE",
-          width: 100,
-          height: 1000,
+  test("uses base duration as effective duration for image content", () => {
+    const timings = buildRuntimeTimings({
+      items: [
+        {
+          id: "item-1",
+          duration: 10,
+          content: {
+            type: "IMAGE",
+            width: 100,
+            height: 1000,
+          },
         },
-      },
-      viewport: { width: 500, height: 400 },
-      config: { scrollPixelsPerSecond: 20 },
+      ],
     });
-    expect(extra).toBe(0);
+    expect(timings[0]?.effectiveDurationSeconds).toBe(10);
+    expect(timings[0]?.overflowExtraSeconds).toBe(0);
   });
 
-  test("keeps base duration for non-overflowing video", () => {
+  test("uses base duration as effective duration for video content", () => {
     const timings = buildRuntimeTimings({
       items: [
         {
@@ -35,8 +33,6 @@ describe("overflow timing", () => {
           },
         },
       ],
-      viewport: { width: 1366, height: 768 },
-      config: { scrollPixelsPerSecond: 24 },
     });
     expect(timings[0]?.effectiveDurationSeconds).toBe(12);
   });

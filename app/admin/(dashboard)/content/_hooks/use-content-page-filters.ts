@@ -12,14 +12,7 @@ import {
 } from "@/hooks/use-query-state";
 
 const CONTENT_STATUS_VALUES = ["all", "PROCESSING", "READY", "FAILED"] as const;
-const CONTENT_TYPE_VALUES = [
-  "all",
-  "IMAGE",
-  "VIDEO",
-  "PDF",
-  "FLASH",
-  "TEXT",
-] as const;
+const CONTENT_TYPE_VALUES = ["all", "IMAGE", "VIDEO", "FLASH", "TEXT"] as const;
 
 export function useContentPageFilters() {
   const [statusFilter, setStatusFilter] =

@@ -167,7 +167,7 @@ describe("display-api client contract validation", () => {
             playlistId: null,
             playlistVersion: "v1",
             generatedAt: "2026-01-01T00:00:00.000Z",
-            runtimeSettings: { scrollPxPerSecond: 24 },
+            runtimeSettings: {},
             playback: {
               mode: "SCHEDULE",
               emergency: null,
@@ -188,7 +188,6 @@ describe("display-api client contract validation", () => {
                   width: 1000,
                   height: 3000,
                   duration: null,
-                  scrollPxPerSecond: null,
                   textHtmlContent: null,
                   cropY: 1080,
                   cropHeight: 1080,
@@ -221,7 +220,6 @@ describe("display-api client contract validation", () => {
       privateKey: {} as CryptoKey,
     });
 
-    expect(result.runtimeSettings.scrollPxPerSecond).toBe(24);
     expect(result.items[0]?.content.cropY).toBe(1080);
     expect(result.items[0]?.content.sliceCount).toBe(3);
     expect(fetchMock).toHaveBeenCalledWith(

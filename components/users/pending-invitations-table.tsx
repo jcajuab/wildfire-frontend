@@ -2,11 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useState } from "react";
-import {
-  IconRefresh,
-  IconCopy,
-  IconCheck,
-} from "@tabler/icons-react";
+import { IconRefresh, IconCopy, IconCheck } from "@tabler/icons-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
