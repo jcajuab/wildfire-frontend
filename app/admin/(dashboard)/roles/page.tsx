@@ -1,17 +1,18 @@
 "use client";
 
 import type { ReactElement } from "react";
+import Link from "next/link";
 import { IconPlus } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { EmptyState } from "@/components/common/empty-state";
 import { DashboardPage } from "@/components/layout/dashboard-page";
-import { RoleDialog } from "@/components/roles/role-dialog";
 import { SearchControl } from "@/components/common/search-control";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { RolesTable } from "@/components/roles/roles-table";
 import { Button } from "@/components/ui/button";
+import { ROLE_CREATE_PATH } from "@/lib/role-paths";
 import { toast } from "sonner";
 import { PAGE_SIZE, useRolesPage } from "./use-roles-page";
 
@@ -19,33 +20,21 @@ export default function RolesPage(): ReactElement {
   const {
     canUpdateRole,
     canDeleteRole,
-    canReadUsers,
     search,
     page,
     sort,
     roles,
     rolesData,
-    permissions,
-    initialUsers,
-    rolePermissionsData,
-    editDataReady,
     rolesLoading,
     rolesError,
-    dialogOpen,
-    dialogMode,
-    selectedRole,
     roleToDelete,
     isDeleteDialogOpen,
     setPage,
-    setDialogOpen,
-    setSelectedRole,
     setRoleToDelete,
     setIsDeleteDialogOpen,
     handleSearchChange,
     handleSortChange,
-    handleCreate,
     handleEdit,
-    handleSubmit,
     handleDeleteRole,
     deleteRole,
   } = useRolesPage();
@@ -88,9 +77,11 @@ export default function RolesPage(): ReactElement {
         title="Roles"
         actions={
           <Can permission="roles:create">
-            <Button onClick={handleCreate}>
-              <IconPlus className="size-4" />
-              Create Role
+            <Button asChild>
+              <Link href={ROLE_CREATE_PATH}>
+                <IconPlus className="size-4" />
+                Create Role
+              </Link>
             </Button>
           </Can>
         }
@@ -115,9 +106,11 @@ export default function RolesPage(): ReactElement {
                 description="Create roles to group permissions and assign them to users."
                 action={
                   <Can permission="roles:create">
-                    <Button onClick={handleCreate}>
-                      <IconPlus className="size-4" />
-                      Create Role
+                    <Button asChild>
+                      <Link href={ROLE_CREATE_PATH}>
+                        <IconPlus className="size-4" />
+                        Create Role
+                      </Link>
                     </Button>
                   </Can>
                 }
@@ -148,24 +141,6 @@ export default function RolesPage(): ReactElement {
           />
         </DashboardPage.Footer>
       </DashboardPage.Body>
-
-      <RoleDialog
-        mode={dialogMode}
-        role={selectedRole}
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) setSelectedRole(null);
-        }}
-        editDataReady={editDataReady}
-        permissions={permissions}
-        initialUsers={initialUsers}
-        canReadUsers={canReadUsers}
-        initialPermissionIds={rolePermissionsData?.map(
-          (permission) => permission.id,
-        )}
-        onSubmit={handleSubmit}
-      />
 
       <ConfirmActionDialog
         open={isDeleteDialogOpen}

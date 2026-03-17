@@ -1,19 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useCan } from "@/hooks/use-can";
 import {
+  useDeleteRoleMutation,
   useGetRolesQuery,
-  useGetPermissionsQuery,
-  useGetRolePermissionsQuery,
-  useGetRoleUsersQuery,
   type RbacRolesListResponse,
-  type RbacPermission,
 } from "@/lib/api/rbac-api";
-import type { Role, RoleFormData, RoleSort } from "@/types/role";
+import { ROLE_CREATE_PATH, getRoleEditPath } from "@/lib/role-paths";
+import type { Role, RoleSort } from "@/types/role";
 import { useRolesFilters } from "./use-roles-filters";
-import { useRolesDialogs } from "./use-roles-dialogs";
-import { useRolesHandlers } from "./use-roles-handlers";
 
 export const PAGE_SIZE = 10;
 
@@ -21,7 +18,6 @@ export interface UseRolesPageResult {
   // Permissions
   canUpdateRole: boolean;
   canDeleteRole: boolean;
-  canReadUsers: boolean;
 
   // Filter state
   search: string;
@@ -31,29 +27,14 @@ export interface UseRolesPageResult {
   // Query data
   roles: Role[];
   rolesData: RbacRolesListResponse | undefined;
-  permissions: RbacPermission[];
-  initialUsers: {
-    id: string;
-    username: string;
-    name: string;
-    email: string | null;
-  }[];
-  rolePermissionsData: RbacPermission[] | undefined;
-  editDataReady: boolean;
   rolesLoading: boolean;
   rolesError: boolean;
 
-  // Dialog state
-  dialogOpen: boolean;
-  dialogMode: "create" | "edit";
-  selectedRole: Role | null;
   roleToDelete: Role | null;
   isDeleteDialogOpen: boolean;
 
   // Setters
   setPage: (page: number) => void;
-  setDialogOpen: (open: boolean) => void;
-  setSelectedRole: (role: Role | null) => void;
   setRoleToDelete: (role: Role | null) => void;
   setIsDeleteDialogOpen: (open: boolean) => void;
 
@@ -62,18 +43,19 @@ export interface UseRolesPageResult {
   handleSortChange: (nextSort: RoleSort) => void;
   handleCreate: () => void;
   handleEdit: (role: Role) => void;
-  handleSubmit: (data: RoleFormData) => Promise<void>;
   handleDeleteRole: (role: Role) => void;
   deleteRole: (id: string) => Promise<void>;
 }
 
 export function useRolesPage(): UseRolesPageResult {
+  const router = useRouter();
   const canUpdateRole = useCan("roles:update");
   const canDeleteRole = useCan("roles:delete");
-  const canReadUsers = useCan("users:read");
 
   const filters = useRolesFilters();
-  const dialogs = useRolesDialogs();
+  const [deleteRoleMutation] = useDeleteRoleMutation();
+  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const {
     data: rolesData,
@@ -87,48 +69,6 @@ export function useRolesPage(): UseRolesPageResult {
     sortDirection: filters.sortDirection,
   });
 
-  const { data: permissionsData } = useGetPermissionsQuery();
-
-  const {
-    data: rolePermissionsData,
-    isLoading: rolePermissionsLoading,
-    isFetching: rolePermissionsFetching,
-    isSuccess: rolePermissionsSuccess,
-  } = useGetRolePermissionsQuery(dialogs.selectedRole?.id ?? "", {
-    skip: !dialogs.dialogOpen || !dialogs.selectedRole,
-    refetchOnMountOrArgChange: true,
-  });
-
-  const {
-    data: roleUsersData,
-    isLoading: roleUsersLoading,
-    isFetching: roleUsersFetching,
-    isSuccess: roleUsersSuccess,
-  } = useGetRoleUsersQuery(dialogs.selectedRole?.id ?? "", {
-    skip: !dialogs.dialogOpen || !dialogs.selectedRole,
-    refetchOnMountOrArgChange: true,
-  });
-
-  const handlers = useRolesHandlers({
-    dialogMode: dialogs.dialogMode,
-    selectedRole: dialogs.selectedRole,
-    roleUsersData,
-    setDialogOpen: dialogs.setDialogOpen,
-  });
-
-  const editDataReady =
-    dialogs.dialogMode === "create" ||
-    (dialogs.dialogMode === "edit" &&
-      !rolePermissionsLoading &&
-      !rolePermissionsFetching &&
-      rolePermissionsSuccess &&
-      rolePermissionsData !== undefined &&
-      (!canReadUsers ||
-        (!roleUsersLoading &&
-          !roleUsersFetching &&
-          roleUsersSuccess &&
-          roleUsersData !== undefined)));
-
   const roles: Role[] = useMemo(
     () =>
       (rolesData?.items ?? []).map((role) => ({
@@ -141,50 +81,49 @@ export function useRolesPage(): UseRolesPageResult {
     [rolesData?.items],
   );
 
-  const permissions = useMemo(() => permissionsData ?? [], [permissionsData]);
+  const handleCreate = useCallback(() => {
+    router.push(ROLE_CREATE_PATH);
+  }, [router]);
 
-  const initialUsers = useMemo(
-    () =>
-      (roleUsersData ?? []).map((user) => ({
-        id: user.id,
-        username: user.username,
-        name: user.name,
-        email: user.email,
-      })),
-    [roleUsersData],
+  const handleEdit = useCallback(
+    (role: Role) => {
+      router.push(getRoleEditPath(role.id));
+    },
+    [router],
+  );
+
+  const handleDeleteRole = useCallback((role: Role) => {
+    setRoleToDelete(role);
+    setIsDeleteDialogOpen(true);
+  }, []);
+
+  const deleteRole = useCallback(
+    async (id: string) => {
+      await deleteRoleMutation(id).unwrap();
+    },
+    [deleteRoleMutation],
   );
 
   return {
     canUpdateRole,
     canDeleteRole,
-    canReadUsers,
     search: filters.search,
     page: filters.page,
     sort: filters.sort,
     roles,
     rolesData: rolesData as RbacRolesListResponse | undefined,
-    permissions: permissions as RbacPermission[],
-    initialUsers,
-    rolePermissionsData: rolePermissionsData as RbacPermission[] | undefined,
-    editDataReady,
     rolesLoading,
     rolesError,
-    dialogOpen: dialogs.dialogOpen,
-    dialogMode: dialogs.dialogMode,
-    selectedRole: dialogs.selectedRole,
-    roleToDelete: dialogs.roleToDelete,
-    isDeleteDialogOpen: dialogs.isDeleteDialogOpen,
+    roleToDelete,
+    isDeleteDialogOpen,
     setPage: filters.setPage,
-    setDialogOpen: dialogs.setDialogOpen,
-    setSelectedRole: dialogs.setSelectedRole,
-    setRoleToDelete: dialogs.setRoleToDelete,
-    setIsDeleteDialogOpen: dialogs.setIsDeleteDialogOpen,
+    setRoleToDelete,
+    setIsDeleteDialogOpen,
     handleSearchChange: filters.handleSearchChange,
     handleSortChange: filters.handleSortChange,
-    handleCreate: dialogs.handleCreate,
-    handleEdit: dialogs.handleEdit,
-    handleSubmit: handlers.handleSubmit,
-    handleDeleteRole: dialogs.handleDeleteRole,
-    deleteRole: handlers.deleteRole,
+    handleCreate,
+    handleEdit,
+    handleDeleteRole,
+    deleteRole,
   };
 }
