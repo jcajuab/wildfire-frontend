@@ -42,16 +42,18 @@ export default function CreateRolePage(): ReactElement {
         }
       />
       <DashboardPage.Body>
-        <DashboardPage.Content className="overflow-x-hidden overflow-y-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
-          <RoleForm
-            mode="create"
-            permissions={permissions}
-            initialUsers={initialUsers}
-            canReadUsers={canReadUsers}
-            initialPermissionIds={[]}
-            onSubmit={handleCreateRole}
-            onStateChange={setFormState}
-          />
+        <DashboardPage.Content>
+          <div className="min-h-0 flex-1 overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
+            <RoleForm
+              mode="create"
+              permissions={permissions}
+              initialUsers={initialUsers}
+              canReadUsers={canReadUsers}
+              initialPermissionIds={[]}
+              onSubmit={handleCreateRole}
+              onStateChange={setFormState}
+            />
+          </div>
         </DashboardPage.Content>
       </DashboardPage.Body>
     </DashboardPage.Root>

@@ -43,15 +43,15 @@ export default function EditRolePage(): ReactElement {
     <DashboardPage.Root>
       <DashboardPage.Header title="Edit Role" actions={headerActions} />
       <DashboardPage.Body>
-        <DashboardPage.Content className="overflow-x-hidden overflow-y-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
+        <DashboardPage.Content>
           {state.status === "loading" ? (
-            <div className="flex min-h-full items-center justify-center">
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
               <p className="text-muted-foreground">Loading role...</p>
             </div>
           ) : null}
 
           {state.status === "notFound" ? (
-            <div className="flex min-h-full">
+            <div className="flex min-h-0 flex-1 overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
               <EmptyState
                 title="Role not found"
                 description={state.message}
@@ -65,7 +65,7 @@ export default function EditRolePage(): ReactElement {
           ) : null}
 
           {state.status === "error" ? (
-            <div className="flex min-h-full">
+            <div className="flex min-h-0 flex-1 overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
               <EmptyState
                 title="Unable to load role"
                 description={state.message}
@@ -79,7 +79,7 @@ export default function EditRolePage(): ReactElement {
           ) : null}
 
           {state.status === "nonEditable" ? (
-            <div className="flex min-h-full">
+            <div className="flex min-h-0 flex-1 overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
               <EmptyState
                 title="System role cannot be edited"
                 description={state.message}
@@ -93,7 +93,7 @@ export default function EditRolePage(): ReactElement {
           ) : null}
 
           {state.status === "ready" ? (
-            <div>
+            <div className="min-h-0 flex-1 overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
               <RoleForm
                 mode="edit"
                 initialRole={state.role}

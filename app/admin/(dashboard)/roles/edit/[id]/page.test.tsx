@@ -81,6 +81,23 @@ const buildState = (
   } as EditRolePageState;
 };
 
+function findAncestorWithClasses(
+  element: HTMLElement,
+  classNames: string[],
+): HTMLElement | null {
+  let current = element.parentElement;
+
+  while (current) {
+    if (classNames.every((className) => current.classList.contains(className))) {
+      return current;
+    }
+
+    current = current.parentElement;
+  }
+
+  return null;
+}
+
 describe("EditRolePage", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -104,6 +121,36 @@ describe("EditRolePage", () => {
     expect(useEditRolePageMock).toHaveBeenCalledWith("role-123");
   });
 
+  test("uses an inner scroll wrapper for the ready state", () => {
+    render(<EditRolePage />);
+
+    const roleForm = screen.getByTestId("role-form");
+    const scrollWrapper = findAncestorWithClasses(roleForm, [
+      "min-h-0",
+      "flex-1",
+      "overflow-auto",
+      "overscroll-none",
+      "px-6",
+      "py-6",
+      "sm:px-8",
+      "sm:py-8",
+    ]);
+
+    expect(scrollWrapper).not.toBeNull();
+
+    const contentShell = findAncestorWithClasses(roleForm, [
+      "flex",
+      "min-h-0",
+      "flex-1",
+      "flex-col",
+      "overflow-hidden",
+    ]);
+
+    expect(contentShell).not.toBeNull();
+    expect(contentShell?.classList.contains("overflow-y-auto")).toBe(false);
+    expect(contentShell).toContainElement(scrollWrapper);
+  });
+
   test("renders explicit loading state", () => {
     useEditRolePageMock.mockReturnValueOnce({
       state: { status: "loading" },
@@ -115,8 +162,25 @@ describe("EditRolePage", () => {
 
     render(<EditRolePage />);
 
-    expect(screen.getByText("Loading role...")).toBeInTheDocument();
+    const loadingMessage = screen.getByText("Loading role...");
+
+    expect(loadingMessage).toBeInTheDocument();
     expect(screen.queryByTestId("role-form")).not.toBeInTheDocument();
+    expect(
+      findAncestorWithClasses(loadingMessage, [
+        "flex",
+        "min-h-0",
+        "flex-1",
+        "items-center",
+        "justify-center",
+        "overflow-auto",
+        "overscroll-none",
+        "px-6",
+        "py-6",
+        "sm:px-8",
+        "sm:py-8",
+      ]),
+    ).not.toBeNull();
   });
 
   test("renders back-to-roles empty state for missing role", () => {
@@ -133,14 +197,27 @@ describe("EditRolePage", () => {
 
     render(<EditRolePage />);
 
-    expect(
-      screen.getByRole("heading", { name: "Role not found" }),
-    ).toBeInTheDocument();
+    const heading = screen.getByRole("heading", { name: "Role not found" });
+
+    expect(heading).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to Roles" })).toHaveAttribute(
       "href",
       "/admin/roles",
     );
     expect(screen.queryByTestId("role-form")).not.toBeInTheDocument();
+    expect(
+      findAncestorWithClasses(heading, [
+        "flex",
+        "min-h-0",
+        "flex-1",
+        "overflow-auto",
+        "overscroll-none",
+        "px-6",
+        "py-6",
+        "sm:px-8",
+        "sm:py-8",
+      ]),
+    ).not.toBeNull();
   });
 
   test("renders error state with back-to-roles action", () => {
@@ -157,14 +234,27 @@ describe("EditRolePage", () => {
 
     render(<EditRolePage />);
 
-    expect(
-      screen.getByRole("heading", { name: "Unable to load role" }),
-    ).toBeInTheDocument();
+    const heading = screen.getByRole("heading", { name: "Unable to load role" });
+
+    expect(heading).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to Roles" })).toHaveAttribute(
       "href",
       "/admin/roles",
     );
     expect(screen.queryByTestId("role-form")).not.toBeInTheDocument();
+    expect(
+      findAncestorWithClasses(heading, [
+        "flex",
+        "min-h-0",
+        "flex-1",
+        "overflow-auto",
+        "overscroll-none",
+        "px-6",
+        "py-6",
+        "sm:px-8",
+        "sm:py-8",
+      ]),
+    ).not.toBeNull();
   });
 
   test("blocks editing system roles with non-editable state", () => {
@@ -185,14 +275,29 @@ describe("EditRolePage", () => {
 
     render(<EditRolePage />);
 
-    expect(
-      screen.getByRole("heading", { name: "System role cannot be edited" }),
-    ).toBeInTheDocument();
+    const heading = screen.getByRole("heading", {
+      name: "System role cannot be edited",
+    });
+
+    expect(heading).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to Roles" })).toHaveAttribute(
       "href",
       "/admin/roles",
     );
     expect(screen.queryByTestId("role-form")).not.toBeInTheDocument();
+    expect(
+      findAncestorWithClasses(heading, [
+        "flex",
+        "min-h-0",
+        "flex-1",
+        "overflow-auto",
+        "overscroll-none",
+        "px-6",
+        "py-6",
+        "sm:px-8",
+        "sm:py-8",
+      ]),
+    ).not.toBeNull();
   });
 
   test("calls handleCancel when cancel action is clicked", async () => {

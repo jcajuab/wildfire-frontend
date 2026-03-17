@@ -16,6 +16,23 @@ import {
 import { ROLE_INDEX_PATH } from "@/lib/role-paths";
 import CreateRolePage from "./page";
 
+function findAncestorWithClasses(
+  element: HTMLElement,
+  classNames: string[],
+): HTMLElement | null {
+  let current = element.parentElement;
+
+  while (current) {
+    if (classNames.every((className) => current.classList.contains(className))) {
+      return current;
+    }
+
+    current = current.parentElement;
+  }
+
+  return null;
+}
+
 const pushMock = vi.fn();
 const createRoleMock = vi.fn();
 const setRolePermissionsMock = vi.fn();
@@ -151,6 +168,37 @@ describe("CreateRolePage", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Cancel" })).toHaveLength(1);
     expect(screen.getAllByRole("button", { name: "Create" })).toHaveLength(1);
+  });
+
+  test("keeps DashboardPage.Content as the shell and uses an inner scroll wrapper", () => {
+    render(<CreateRolePage />);
+
+    const roleNameInput = screen.getByLabelText("Role Name");
+    const scrollWrapper = findAncestorWithClasses(roleNameInput, [
+      "min-h-0",
+      "flex-1",
+      "overflow-auto",
+      "overscroll-none",
+      "px-6",
+      "py-6",
+      "sm:px-8",
+      "sm:py-8",
+    ]);
+
+    expect(scrollWrapper).not.toBeNull();
+    expect(scrollWrapper?.classList.contains("overflow-y-auto")).toBe(false);
+
+    const contentShell = findAncestorWithClasses(roleNameInput, [
+      "flex",
+      "min-h-0",
+      "flex-1",
+      "flex-col",
+      "overflow-hidden",
+    ]);
+
+    expect(contentShell).not.toBeNull();
+    expect(contentShell?.classList.contains("overflow-y-auto")).toBe(false);
+    expect(contentShell).toContainElement(scrollWrapper);
   });
 
   test("navigates back to roles index on cancel", async () => {
