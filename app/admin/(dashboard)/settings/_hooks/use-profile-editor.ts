@@ -19,12 +19,16 @@ const splitName = (
 
 interface UseProfileEditorProps {
   readonly userName: string | undefined;
+  readonly userUsername: string | undefined;
+  readonly userEmail: string | null | undefined;
   readonly token: string | null;
   readonly updateSession: (response: AuthResponse) => void;
 }
 
 export function useProfileEditor({
   userName,
+  userUsername,
+  userEmail,
   token,
   updateSession,
 }: UseProfileEditorProps) {
@@ -46,6 +50,18 @@ export function useProfileEditor({
     null,
   );
 
+  const [username, setUsername] = useState(userUsername ?? "");
+  const [savedUsername, setSavedUsername] = useState(userUsername ?? "");
+  const [isSavingUsername, setIsSavingUsername] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+
+  const [email, setEmail] = useState(userEmail ?? "");
+  const [savedEmail, setSavedEmail] = useState(userEmail ?? "");
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+
   useEffect(() => {
     const nextName = splitName(userName);
     setSavedFirstName(nextName.first);
@@ -57,6 +73,20 @@ export function useProfileEditor({
       setLastName(nextName.last);
     }
   }, [editingField, userName]);
+
+  useEffect(() => {
+    if (!isEditingUsername) {
+      setUsername(userUsername ?? "");
+    }
+    setSavedUsername(userUsername ?? "");
+  }, [isEditingUsername, userUsername]);
+
+  useEffect(() => {
+    if (!isEditingEmail) {
+      setEmail(userEmail ?? "");
+    }
+    setSavedEmail(userEmail ?? "");
+  }, [isEditingEmail, userEmail]);
 
   const saveProfileName = useCallback(
     async (nextFirstName: string, nextLastName: string): Promise<boolean> => {
@@ -103,6 +133,76 @@ export function useProfileEditor({
       }
     },
     [token, savedFirstName, savedLastName, updateSession],
+  );
+
+  const saveUsername = useCallback(
+    async (nextUsername: string): Promise<boolean> => {
+      if (!token) {
+        setUsernameError("Not authenticated.");
+        return false;
+      }
+
+      const normalized = nextUsername.trim();
+      setUsername(normalized);
+
+      if (normalized === savedUsername.trim()) {
+        setUsernameError(null);
+        return true;
+      }
+
+      setIsSavingUsername(true);
+      setUsernameError(null);
+      try {
+        const response = await updateCurrentUserProfile(token, {
+          username: normalized,
+        });
+        updateSession(response);
+        setSavedUsername(normalized);
+        return true;
+      } catch (err) {
+        setUsernameError(getApiErrorMessage(err, "Failed to update username."));
+        notifyApiError(err, "Failed to update username.");
+        return false;
+      } finally {
+        setIsSavingUsername(false);
+      }
+    },
+    [token, savedUsername, updateSession],
+  );
+
+  const saveEmail = useCallback(
+    async (nextEmail: string): Promise<boolean> => {
+      if (!token) {
+        setEmailError("Not authenticated.");
+        return false;
+      }
+
+      const normalized = nextEmail.trim();
+      setEmail(normalized);
+
+      if (normalized === (savedEmail ?? "").trim()) {
+        setEmailError(null);
+        return true;
+      }
+
+      setIsSavingEmail(true);
+      setEmailError(null);
+      try {
+        const response = await updateCurrentUserProfile(token, {
+          email: normalized || null,
+        });
+        updateSession(response);
+        setSavedEmail(normalized);
+        return true;
+      } catch (err) {
+        setEmailError(getApiErrorMessage(err, "Failed to update email."));
+        notifyApiError(err, "Failed to update email.");
+        return false;
+      } finally {
+        setIsSavingEmail(false);
+      }
+    },
+    [token, savedEmail, updateSession],
   );
 
   const handleAvatarUpload = useCallback(
@@ -154,12 +254,30 @@ export function useProfileEditor({
     editingField,
     isAvatarUploading,
     profilePictureError,
+    username,
+    savedUsername,
+    isSavingUsername,
+    usernameError,
+    isEditingUsername,
+    email,
+    savedEmail,
+    isSavingEmail,
+    emailError,
+    isEditingEmail,
     setFirstName,
     setLastName,
     setProfileNameError,
     setEditingField,
     setProfilePictureError,
+    setUsername,
+    setUsernameError,
+    setIsEditingUsername,
+    setEmail,
+    setEmailError,
+    setIsEditingEmail,
     saveProfileName,
+    saveUsername,
+    saveEmail,
     handleAvatarUpload,
   };
 }

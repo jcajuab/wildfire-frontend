@@ -2,6 +2,7 @@
 
 import type { ReactElement } from "react";
 import { motion } from "framer-motion";
+import { IconPencil } from "@tabler/icons-react";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { DashboardPage } from "@/components/layout/dashboard-page";
@@ -17,6 +18,7 @@ import {
 import { AICredentialsSection } from "./_components/ai-credentials-section";
 import { AvatarUploader } from "./_components/avatar-uploader";
 import { ChangePasswordDialog } from "./_components/change-password-dialog";
+import { DirtyFieldActions } from "./_components/dirty-field-actions";
 import { ProfileNameEditor } from "./_components/profile-name-editor";
 import { SettingsField } from "./_components/settings-field";
 import { useSettingsPage } from "./_hooks/use-settings-page";
@@ -115,30 +117,190 @@ export default function SettingsPage(): ReactElement {
                   {isWildfireUser && (
                     <SettingsField label="Username">
                       <div className={controlContainerClass}>
-                        <Input
-                          disabled
-                          value={user?.username ?? "-"}
-                          className={`${controlClass} disabled:border-border disabled:bg-muted/60 disabled:text-foreground/80 disabled:opacity-100`}
-                        />
+                        {profileEditor.isEditingUsername ? (
+                          <div className="flex items-start gap-2">
+                            <Input
+                              id="username"
+                              value={profileEditor.username}
+                              onChange={(event) =>
+                                profileEditor.setUsername(event.target.value)
+                              }
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                  event.preventDefault();
+                                  void (async () => {
+                                    const didSave =
+                                      await profileEditor.saveUsername(
+                                        profileEditor.username,
+                                      );
+                                    if (didSave) {
+                                      profileEditor.setIsEditingUsername(false);
+                                    }
+                                  })();
+                                }
+                                if (event.key === "Escape") {
+                                  event.preventDefault();
+                                  profileEditor.setUsername(
+                                    profileEditor.savedUsername,
+                                  );
+                                  profileEditor.setUsernameError(null);
+                                  profileEditor.setIsEditingUsername(false);
+                                }
+                              }}
+                              aria-label="Username"
+                              className={`${controlClass} flex-1`}
+                            />
+                            <DirtyFieldActions
+                              canConfirm={
+                                profileEditor.username.trim() !==
+                                profileEditor.savedUsername.trim()
+                              }
+                              confirmLabel="Save username"
+                              cancelLabel="Cancel username changes"
+                              isSubmitting={profileEditor.isSavingUsername}
+                              onConfirm={() => {
+                                void (async () => {
+                                  const didSave =
+                                    await profileEditor.saveUsername(
+                                      profileEditor.username,
+                                    );
+                                  if (didSave) {
+                                    profileEditor.setIsEditingUsername(false);
+                                  }
+                                })();
+                              }}
+                              onCancel={() => {
+                                profileEditor.setUsername(
+                                  profileEditor.savedUsername,
+                                );
+                                profileEditor.setUsernameError(null);
+                                profileEditor.setIsEditingUsername(false);
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              profileEditor.setUsernameError(null);
+                              profileEditor.setIsEditingUsername(true);
+                            }}
+                            disabled={profileEditor.isSavingUsername}
+                            className={`${controlClass} justify-between gap-2 pr-2`}
+                            aria-label="Edit username"
+                          >
+                            <span>
+                              {profileEditor.savedUsername || "Set username"}
+                            </span>
+                            <IconPencil
+                              className="size-3.5 text-muted-foreground/80"
+                              aria-hidden="true"
+                            />
+                          </Button>
+                        )}
                       </div>
+                      {profileEditor.isEditingUsername &&
+                      profileEditor.usernameError ? (
+                        <p role="alert" className="text-xs text-destructive">
+                          {profileEditor.usernameError}
+                        </p>
+                      ) : null}
                     </SettingsField>
                   )}
 
                   {isWildfireUser && (
                     <SettingsField label="Email">
                       <div className={controlContainerClass}>
-                        {user?.email ? (
-                          <Input
-                            disabled
-                            value={user.email}
-                            className={`${controlClass} disabled:border-border disabled:bg-muted/60 disabled:text-foreground/80 disabled:opacity-100`}
-                          />
+                        {profileEditor.isEditingEmail ? (
+                          <div className="flex items-start gap-2">
+                            <Input
+                              id="email"
+                              type="email"
+                              value={profileEditor.email}
+                              onChange={(event) =>
+                                profileEditor.setEmail(event.target.value)
+                              }
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                  event.preventDefault();
+                                  void (async () => {
+                                    const didSave =
+                                      await profileEditor.saveEmail(
+                                        profileEditor.email,
+                                      );
+                                    if (didSave) {
+                                      profileEditor.setIsEditingEmail(false);
+                                    }
+                                  })();
+                                }
+                                if (event.key === "Escape") {
+                                  event.preventDefault();
+                                  profileEditor.setEmail(
+                                    profileEditor.savedEmail ?? "",
+                                  );
+                                  profileEditor.setEmailError(null);
+                                  profileEditor.setIsEditingEmail(false);
+                                }
+                              }}
+                              aria-label="Email"
+                              className={`${controlClass} flex-1`}
+                            />
+                            <DirtyFieldActions
+                              canConfirm={
+                                profileEditor.email.trim() !==
+                                (profileEditor.savedEmail ?? "").trim()
+                              }
+                              confirmLabel="Save email"
+                              cancelLabel="Cancel email changes"
+                              isSubmitting={profileEditor.isSavingEmail}
+                              onConfirm={() => {
+                                void (async () => {
+                                  const didSave = await profileEditor.saveEmail(
+                                    profileEditor.email,
+                                  );
+                                  if (didSave) {
+                                    profileEditor.setIsEditingEmail(false);
+                                  }
+                                })();
+                              }}
+                              onCancel={() => {
+                                profileEditor.setEmail(
+                                  profileEditor.savedEmail ?? "",
+                                );
+                                profileEditor.setEmailError(null);
+                                profileEditor.setIsEditingEmail(false);
+                              }}
+                            />
+                          </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground">
-                            Contact your administrator
-                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              profileEditor.setEmailError(null);
+                              profileEditor.setIsEditingEmail(true);
+                            }}
+                            disabled={profileEditor.isSavingEmail}
+                            className={`${controlClass} justify-between gap-2 pr-2`}
+                            aria-label="Edit email"
+                          >
+                            <span>
+                              {profileEditor.savedEmail || "Set email"}
+                            </span>
+                            <IconPencil
+                              className="size-3.5 text-muted-foreground/80"
+                              aria-hidden="true"
+                            />
+                          </Button>
                         )}
                       </div>
+                      {profileEditor.isEditingEmail &&
+                      profileEditor.emailError ? (
+                        <p role="alert" className="text-xs text-destructive">
+                          {profileEditor.emailError}
+                        </p>
+                      ) : null}
                     </SettingsField>
                   )}
 

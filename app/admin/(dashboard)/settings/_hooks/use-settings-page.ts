@@ -60,6 +60,8 @@ export function useSettingsPage(): UseSettingsPageResult {
 
   const profileEditor = useProfileEditor({
     userName: user?.name,
+    userUsername: user?.username,
+    userEmail: user?.email,
     token,
     updateSession,
   });

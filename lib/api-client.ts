@@ -20,7 +20,12 @@ async function parseApiPayload<T>(response: Response): Promise<T> {
 /** PATCH /auth/profile. Update current user profile (e.g. name, timezone). Returns full auth payload; use it to refresh session. */
 export async function updateCurrentUserProfile(
   token: string | null | undefined,
-  payload: { name?: string; timezone?: string | null },
+  payload: {
+    name?: string;
+    timezone?: string | null;
+    username?: string;
+    email?: string | null;
+  },
 ): Promise<AuthResponse> {
   const baseUrl = getBaseUrl();
   const headers: Record<string, string> = {
