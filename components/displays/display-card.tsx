@@ -199,17 +199,17 @@ export const DisplayCard = memo(function DisplayCard({
   );
 
   return (
-    <article className="group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors duration-200 hover:border-primary/25 motion-reduce:transition-none">
-      <header className="flex justify-between items-center gap-3">
-        <div className="min-w-0 flex gap-3 items-center">
-          <h3 className="truncate text-lg font-semibold leading-none">
+    <article className='group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors duration-200 hover:border-primary/25 motion-reduce:transition-none'>
+      <header className='flex justify-between items-center gap-3'>
+        <div className='min-w-0 flex gap-3 items-center'>
+          <h3 className='truncate text-lg font-semibold leading-none'>
             {display.name}
           </h3>
-          <div className="flex items-center gap-1.5">
+          <div className='flex items-center gap-1.5'>
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="relative inline-flex size-4 shrink-0 cursor-default items-center justify-center"
+                  className='relative inline-flex size-4 shrink-0 cursor-default items-center justify-center'
                   aria-label={statusLabel}
                 >
                   {shouldPulse ? (
@@ -219,7 +219,7 @@ export const DisplayCard = memo(function DisplayCard({
                   ) : null}
                   <span
                     className={`relative inline-flex size-2.5 rounded-full ${statusStyles.dotClassName}`}
-                    aria-hidden="true"
+                    aria-hidden='true'
                   />
                 </span>
               </TooltipTrigger>
@@ -229,44 +229,44 @@ export const DisplayCard = memo(function DisplayCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
-                    className="inline-flex size-5 items-center justify-center rounded-full text-amber-700"
-                    aria-label="Emergency not set"
+                    className='inline-flex size-5 items-center justify-center rounded-full text-amber-700'
+                    aria-label='Emergency content not set'
                   >
                     <IconAlertTriangle
-                      className="size-3.5"
-                      aria-hidden="true"
+                      className='size-3.5'
+                      aria-hidden='true'
                     />
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>Emergency not set</TooltipContent>
+                <TooltipContent>Emergency content not set</TooltipContent>
               </Tooltip>
             ) : null}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className='flex items-center gap-2'>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="ghost"
-                size="icon-sm"
+                variant='ghost'
+                size='icon-sm'
                 aria-label={`Actions for ${display.name}`}
               >
-                <IconDots className="size-4" aria-hidden="true" />
+                <IconDots className='size-4' aria-hidden='true' />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-44">
+            <DropdownMenuContent align='end' className='min-w-44'>
               <DropdownMenuItem onClick={() => onViewDetails(display)}>
-                <IconEye className="size-4" aria-hidden="true" />
+                <IconEye className='size-4' aria-hidden='true' />
                 More Details
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onViewPage(display)}>
-                <IconExternalLink className="size-4" aria-hidden="true" />
+                <IconExternalLink className='size-4' aria-hidden='true' />
                 View Page
               </DropdownMenuItem>
               {onEditDisplay ? (
                 <DropdownMenuItem onClick={() => onEditDisplay(display)}>
-                  <IconEdit className="size-4" aria-hidden="true" />
+                  <IconEdit className='size-4' aria-hidden='true' />
                   Edit Display
                 </DropdownMenuItem>
               ) : null}
@@ -274,10 +274,10 @@ export const DisplayCard = memo(function DisplayCard({
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    variant="destructive"
+                    variant='destructive'
                     onClick={() => onUnregisterDisplay(display)}
                   >
-                    <IconTrash className="size-4" aria-hidden="true" />
+                    <IconTrash className='size-4' aria-hidden='true' />
                     Unregister Display
                   </DropdownMenuItem>
                 </>
@@ -287,31 +287,31 @@ export const DisplayCard = memo(function DisplayCard({
         </div>
       </header>
 
-      <div className="flex min-h-6 min-w-0 items-center gap-1.5">
+      <div className='flex min-h-6 min-w-0 items-center gap-1.5'>
         <Badge
-          variant="outline"
+          variant='outline'
           className={`${META_BADGE_CLASSNAME} bg-background text-foreground`}
         >
           {outputLabel}
         </Badge>
         {showResolution ? (
           <Badge
-            variant="outline"
+            variant='outline'
             className={`${META_BADGE_CLASSNAME} bg-background text-foreground`}
           >
             {resolutionLabel}
           </Badge>
         ) : null}
-        <Separator orientation="vertical" className="h-4 bg-border/80" />
+        <Separator orientation='vertical' className='h-4 bg-border/80' />
         {isGlobalEmergencyActive ? (
-          <Badge variant="destructive" className={META_BADGE_CLASSNAME}>
+          <Badge variant='destructive' className={META_BADGE_CLASSNAME}>
             Emergency Active
           </Badge>
         ) : null}
         <div
           ref={groupOverflowContainerRef}
-          data-group-overflow-container="true"
-          className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden"
+          data-group-overflow-container='true'
+          className='flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden'
         >
           {display.groups.length > 0 ? (
             <>
@@ -319,7 +319,7 @@ export const DisplayCard = memo(function DisplayCard({
                 <Badge
                   key={group.name}
                   data-group-visible={group.name}
-                  variant="secondary"
+                  variant='secondary'
                   className={`${META_BADGE_CLASSNAME} max-w-full truncate border border-blue-200 bg-blue-600 text-white`}
                 >
                   {group.name}
@@ -328,7 +328,7 @@ export const DisplayCard = memo(function DisplayCard({
               {hiddenGroupCount > 0 ? (
                 <Badge
                   data-group-overflow-visible={String(hiddenGroupCount)}
-                  variant="secondary"
+                  variant='secondary'
                   className={`${META_BADGE_CLASSNAME} border border-blue-200 bg-blue-600 text-white`}
                 >
                   +{hiddenGroupCount}
@@ -336,7 +336,7 @@ export const DisplayCard = memo(function DisplayCard({
               ) : null}
             </>
           ) : (
-            <Badge variant="secondary" className={META_BADGE_CLASSNAME}>
+            <Badge variant='secondary' className={META_BADGE_CLASSNAME}>
               Ungrouped
             </Badge>
           )}
@@ -345,13 +345,13 @@ export const DisplayCard = memo(function DisplayCard({
 
       <div
         ref={groupMeasureRef}
-        className="invisible absolute -z-10 flex gap-1.5"
+        className='invisible absolute -z-10 flex gap-1.5'
       >
         {display.groups.map((group) => (
           <Badge
             key={`measure-${group.name}`}
             data-group-measure={group.name}
-            variant="secondary"
+            variant='secondary'
             className={`${META_BADGE_CLASSNAME} border border-blue-200 bg-blue-600 text-white`}
           >
             {group.name}
@@ -363,7 +363,7 @@ export const DisplayCard = memo(function DisplayCard({
             <Badge
               key={`measure-overflow-${hiddenCount}`}
               data-group-overflow-measure={String(hiddenCount)}
-              variant="secondary"
+              variant='secondary'
               className={`${META_BADGE_CLASSNAME} border border-blue-200 bg-blue-600 text-white`}
             >
               +{hiddenCount}
@@ -372,8 +372,8 @@ export const DisplayCard = memo(function DisplayCard({
         })}
       </div>
 
-      <div className="relative overflow-hidden rounded-xl border border-border/70 bg-background aspect-[16/8.5]">
-        <div className="h-full w-full">
+      <div className='relative overflow-hidden rounded-xl border border-border/70 bg-background aspect-[16/8.5]'>
+        <div className='h-full w-full'>
           <DisplayPreview displayId={display.id} displayName={display.name} />
         </div>
       </div>
