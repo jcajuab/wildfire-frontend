@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { IconSettings } from "@tabler/icons-react";
 
 import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";
@@ -116,14 +116,7 @@ function EditDisplayForm({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
-
-  const groupColorByKey = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const group of existingGroups) {
-      map.set(toDisplayGroupKey(group.name), group.colorIndex ?? 0);
-    }
-    return map;
-  }, [existingGroups]);
+  const portalContainerRef = useRef<HTMLDivElement>(null);
 
   const outputIndexNumber = Number.parseInt(formData.outputIndex, 10);
   const hasValidOutputIndex =
@@ -154,7 +147,6 @@ function EditDisplayForm({
 
     const groups = dedupeDisplayGroupNames(formData.groups).map((name) => ({
       name,
-      colorIndex: groupColorByKey.get(toDisplayGroupKey(name)) ?? 0,
     }));
 
     const output = toCanonicalDisplayOutput({
@@ -191,7 +183,6 @@ function EditDisplayForm({
     canSave,
     display,
     formData,
-    groupColorByKey,
     heightNumber,
     isResolutionPairProvided,
     isSaving,
@@ -432,7 +423,9 @@ function EditDisplayForm({
             showLabel={false}
             disabled={isSaving}
             aboveModal={true}
+            portalContainer={portalContainerRef.current}
           />
+          <div ref={portalContainerRef} />
         </div>
       </div>
 

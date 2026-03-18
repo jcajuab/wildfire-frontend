@@ -71,7 +71,6 @@ export interface UpdateDisplayRequest {
 export interface DisplayGroup {
   readonly id: string;
   readonly name: string;
-  readonly colorIndex: number;
   readonly displayIds: readonly string[];
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -216,7 +215,7 @@ export const displaysApi = createApi({
     }),
     createDisplayGroup: build.mutation<
       DisplayGroup,
-      { name: string; colorIndex?: number }
+      { name: string }
     >({
       query: (body) => ({
         url: "displays/groups",
@@ -229,12 +228,12 @@ export const displaysApi = createApi({
     }),
     updateDisplayGroup: build.mutation<
       DisplayGroup,
-      { groupId: string; name: string; colorIndex?: number }
+      { groupId: string; name: string }
     >({
-      query: ({ groupId, name, colorIndex }) => ({
+      query: ({ groupId, name }) => ({
         url: `displays/groups/${groupId}`,
         method: "PATCH",
-        body: { name, colorIndex },
+        body: { name },
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<DisplayGroup>(response, "updateDisplayGroup"),

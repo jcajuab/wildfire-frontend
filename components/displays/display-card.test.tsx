@@ -102,7 +102,6 @@ const baseDisplay: Display = {
   groups: [
     {
       name: "Lobby",
-      colorIndex: 0,
     },
   ],
   nowPlaying: null,
@@ -152,9 +151,9 @@ describe("DisplayCard", () => {
     renderDisplayCard({
       ...baseDisplay,
       groups: [
-        { name: "Lobby", colorIndex: 0 },
-        { name: "North Wing", colorIndex: 1 },
-        { name: "East Hall", colorIndex: 2 },
+        { name: "Lobby" },
+        { name: "North Wing" },
+        { name: "East Hall" },
       ],
     });
 
@@ -186,8 +185,8 @@ describe("DisplayCard", () => {
     renderDisplayCard({
       ...baseDisplay,
       groups: [
-        { name: "Lobby", colorIndex: 0 },
-        { name: "North Wing", colorIndex: 1 },
+        { name: "Lobby" },
+        { name: "North Wing" },
       ],
     });
 

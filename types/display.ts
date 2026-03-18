@@ -14,7 +14,6 @@ export interface NowPlaying {
 
 export interface DisplayGroup {
   readonly name: string;
-  readonly colorIndex: number;
 }
 
 export interface Display {
@@ -28,7 +27,6 @@ export interface Display {
   readonly output: string;
   readonly resolution: string;
   readonly emergencyContentId: string | null;
-  /** Group names with backend-provided color index for badge styling. */
   readonly groups: readonly DisplayGroup[];
   readonly nowPlaying: NowPlaying | null;
   readonly createdAt: string;

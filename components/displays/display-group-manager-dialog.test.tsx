@@ -34,7 +34,6 @@ const makeGroup = (overrides?: {
 }) => ({
   id: overrides?.id ?? "group-1",
   name: overrides?.name ?? "Lobby",
-  colorIndex: 0,
   displayIds: overrides?.displayIds ?? [],
   createdAt: "2025-01-01T00:00:00.000Z",
   updatedAt: "2025-01-01T00:00:00.000Z",
@@ -83,7 +82,6 @@ describe("DisplayGroupManagerDialog", () => {
     await waitFor(() => {
       expect(createDisplayGroup).toHaveBeenCalledWith({
         name: "Main Hall",
-        colorIndex: 0,
       });
     });
   }, 15_000);

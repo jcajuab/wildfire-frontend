@@ -26,7 +26,6 @@ Utility libraries, API layer, Redux store, data mappers, and domain-specific hel
 | `display-output.ts`              | Display output resolution utilities                                  |
 | `audit-resource-types.ts`        | Audit log resource type constants, labels, and filter helpers        |
 | `content-thumbnail-preview.ts`   | Content thumbnail text extraction and HTML sanitization utilities    |
-| `display-group-colors.ts`        | Display group badge color palette and next-index selection           |
 | `display-group-normalization.ts` | Display group name whitespace normalization and deduplication        |
 | `format-permission.ts`           | Permission label, readable label, and tooltip description formatters |
 | `map-display-to-display.ts`      | Maps display API response to frontend Display model                  |

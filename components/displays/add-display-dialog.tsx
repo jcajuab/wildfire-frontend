@@ -121,10 +121,7 @@ export function AddDisplayDialog({
   }, [step]);
 
   const handleRegister = useCallback(() => {
-    const groups = data.groups.map((name) => ({
-      name,
-      colorIndex: existingGroups.find((g) => g.name === name)?.colorIndex ?? 0,
-    }));
+    const groups = data.groups.map((name) => ({ name }));
     const normalizedSlug = data.displayName
       .trim()
       .toLowerCase()
@@ -445,18 +442,9 @@ export function AddDisplayDialog({
                   <span className="text-muted-foreground">Display Groups:</span>
                   <div className="flex flex-wrap gap-1">
                     {data.groups.length > 0 ? (
-                      data.groups.map((name) => {
-                        const colorIndex =
-                          existingGroups.find((g) => g.name === name)
-                            ?.colorIndex ?? 0;
-                        return (
-                          <GroupBadge
-                            key={name}
-                            name={name}
-                            colorIndex={colorIndex}
-                          />
-                        );
-                      })
+                      data.groups.map((name) => (
+                        <GroupBadge key={name} name={name} />
+                      ))
                     ) : (
                       <span className="text-muted-foreground">None</span>
                     )}

@@ -14,14 +14,12 @@ import {
   ComboboxList,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
-import { getGroupBadgeStyles } from "@/lib/display-group-colors";
 import {
   collapseDisplayGroupWhitespace,
   dedupeDisplayGroupNames,
   toDisplayGroupKey,
 } from "@/lib/display-group-normalization";
 import type { DisplayGroup } from "@/lib/api/displays-api";
-import { cn } from "@/lib/utils";
 
 export interface DisplayGroupsTagsInputProps {
   readonly id?: string;
@@ -46,14 +44,6 @@ export function DisplayGroupsTagsInput({
   const anchorRef = useComboboxAnchor();
 
   const trimmed = collapseDisplayGroupWhitespace(inputValue);
-
-  const nameToColorIndex = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const g of existingGroups) {
-      map.set(toDisplayGroupKey(g.name), g.colorIndex ?? 0);
-    }
-    return map;
-  }, [existingGroups]);
 
   const selectedKeys = useMemo(
     () => new Set(value.map((name) => toDisplayGroupKey(name))),
@@ -134,22 +124,13 @@ export function DisplayGroupsTagsInput({
         disabled={disabled}
       >
         <ComboboxChips ref={anchorRef} id={id}>
-          {value.map((name) => {
-            const colorIndex = nameToColorIndex.get(toDisplayGroupKey(name)) ?? 0;
-            const styles = getGroupBadgeStyles(colorIndex);
-            return (
-              <ComboboxChip key={name} value={name}>
-                <span
-                  className={cn(
-                    "inline-flex rounded px-1 text-xs font-medium",
-                    styles.fill,
-                  )}
-                >
-                  {name}
-                </span>
-              </ComboboxChip>
-            );
-          })}
+          {value.map((name) => (
+            <ComboboxChip key={name} value={name}>
+              <span className="inline-flex rounded px-1 text-xs font-medium bg-blue-600 text-white">
+                {name}
+              </span>
+            </ComboboxChip>
+          ))}
           <ComboboxChipsInput
             placeholder={value.length === 0 ? placeholder : ""}
             onKeyDown={handleKeyDown}

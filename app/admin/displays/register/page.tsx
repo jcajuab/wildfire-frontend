@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DisplayGroupsTagsInput } from "@/components/displays/display-groups-tags-input";
+import { DisplayGroupsCombobox } from "@/components/displays/display-groups-combobox";
 import {
   createRegistrationSession,
   fetchDisplayRegistrationConstraints,
@@ -42,7 +42,6 @@ import {
   dedupeDisplayGroupNames,
   toDisplayGroupKey,
 } from "@/lib/display-group-normalization";
-import { getNextDisplayGroupColorIndex } from "@/lib/display-group-colors";
 
 const PAIRING_CODE_PATTERN = /^\d{6}$/;
 const FALLBACK_DISPLAY_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -285,7 +284,6 @@ export default function RegisterDisplayPage(): ReactElement {
           try {
             const names = dedupeDisplayGroupNames(formState.displayGroups);
             const groupIds: string[] = [];
-            const createdSoFar: (typeof existingGroups)[number][] = [];
 
             for (const groupName of names) {
               const key = toDisplayGroupKey(groupName);
@@ -295,15 +293,9 @@ export default function RegisterDisplayPage(): ReactElement {
               if (existing) {
                 groupIds.push(existing.id);
               } else {
-                const colorIndex = getNextDisplayGroupColorIndex([
-                  ...existingGroups,
-                  ...createdSoFar,
-                ]);
                 const created = await createDisplayGroup({
                   name: groupName,
-                  colorIndex,
                 }).unwrap();
-                createdSoFar.push(created);
                 groupIds.push(created.id);
               }
             }
@@ -435,7 +427,7 @@ export default function RegisterDisplayPage(): ReactElement {
             </div>
 
             <div className="space-y-2">
-              <DisplayGroupsTagsInput
+              <DisplayGroupsCombobox
                 id="register-groups"
                 value={formState.displayGroups}
                 onValueChange={(names) =>

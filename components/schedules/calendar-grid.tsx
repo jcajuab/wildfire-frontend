@@ -102,7 +102,6 @@ export function CalendarGrid({
         kind: "group-header",
         id: group.id,
         name: group.name,
-        colorIndex: group.colorIndex,
         expanded: isExpanded,
         displayCount: group.displayIds.length,
       });

@@ -33,7 +33,6 @@ import {
 } from "@/lib/api/displays-api";
 import { subscribeToDisplayLifecycleEvents } from "@/lib/api/display-events";
 import { useListContentQuery } from "@/lib/api/content-api";
-import { getNextDisplayGroupColorIndex } from "@/lib/display-group-colors";
 import {
   collapseDisplayGroupWhitespace,
   dedupeDisplayGroupNames,
@@ -218,16 +217,10 @@ export function useDisplaysPage(): UseDisplaysPageResult {
   }, [canReadDisplays, refetch]);
 
   const displays: Display[] = useMemo(() => {
-    const groupsByDisplayId = new Map<
-      string,
-      Array<{ name: string; colorIndex: number }>
-    >();
+    const groupsByDisplayId = new Map<string, Array<{ name: string }>>();
 
     for (const group of displayGroupsData) {
-      const displayGroup = {
-        name: group.name,
-        colorIndex: group.colorIndex,
-      };
+      const displayGroup = { name: group.name };
       for (const displayId of group.displayIds) {
         const existingGroups = groupsByDisplayId.get(displayId) ?? [];
         existingGroups.push(displayGroup);
@@ -409,10 +402,8 @@ export function useDisplaysPage(): UseDisplaysPageResult {
       }
 
       try {
-        const workingGroups = [...displayGroupsData];
-        let nextColorIndex = getNextDisplayGroupColorIndex(workingGroups);
         const existingByKey = new Map<string, string>();
-        for (const group of workingGroups) {
+        for (const group of displayGroupsData) {
           const groupKey = toDisplayGroupKey(group.name);
           if (!existingByKey.has(groupKey)) {
             existingByKey.set(groupKey, group.id);
@@ -436,13 +427,10 @@ export function useDisplaysPage(): UseDisplaysPageResult {
 
           const created = await createDisplayGroup({
             name: normalizedName,
-            colorIndex: nextColorIndex,
           }).unwrap();
           const createdKey = toDisplayGroupKey(created.name);
           existingByKey.set(createdKey, created.id);
           nextGroupIds.add(created.id);
-          workingGroups.push(created);
-          nextColorIndex = getNextDisplayGroupColorIndex(workingGroups);
         }
 
         await setDisplayGroups({

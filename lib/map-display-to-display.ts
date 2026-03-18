@@ -30,9 +30,6 @@ export function mapDisplayApiToDisplay(display: DisplayApi): Display {
   };
 }
 
-/**
- * Attaches display groups with backend-provided colorIndex for badge styling.
- */
 export function withDisplayGroups(
   display: Display,
   groups: readonly DisplayGroup[],

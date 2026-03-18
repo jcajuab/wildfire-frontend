@@ -121,7 +121,7 @@ describe("useDisplaysPage", () => {
     });
 
     useGetDisplayGroupsQueryMock.mockReturnValue({
-      data: [{ id: "group-1", name: "Lobby", colorIndex: 0, displayIds: [] }],
+      data: [{ id: "group-1", name: "Lobby", displayIds: [] }],
     } as ReturnType<typeof useGetDisplayGroupsQuery>);
     useGetDisplayOutputOptionsQueryMock.mockReturnValue({
       data: ["hdmi-1", "hdmi-2"],

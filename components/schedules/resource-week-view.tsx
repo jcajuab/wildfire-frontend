@@ -8,7 +8,6 @@ import {
   createResourceDateKey,
   type ResourceCalendarLaneEvent,
 } from "@/lib/schedules/resource-calendar";
-import { getGroupBadgeStyles } from "@/lib/display-group-colors";
 
 const WEEK_GRID_TEMPLATE = "14rem repeat(7, minmax(0, 1fr))";
 
@@ -32,7 +31,6 @@ export type CalendarRowItem =
       readonly kind: "group-header";
       readonly id: string;
       readonly name: string;
-      readonly colorIndex: number;
       readonly expanded: boolean;
       readonly displayCount: number;
     };
@@ -85,9 +83,6 @@ export function ResourceWeekView({
 
           {resources.map((row) => {
             if (row.kind === "group-header") {
-              const dotClass = getGroupBadgeStyles(row.colorIndex).fill.split(
-                " ",
-              )[0];
               return (
                 <div
                   key={`group-${row.id}`}
@@ -104,9 +99,6 @@ export function ResourceWeekView({
                     ) : (
                       <IconChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
                     )}
-                    <span
-                      className={`size-2.5 shrink-0 rounded-full ${dotClass}`}
-                    />
                     <span className="text-sm font-semibold">{row.name}</span>
                     <span className="rounded-md border border-border bg-muted/40 px-1.5 py-0.5 text-xs text-muted-foreground">
                       {row.displayCount}

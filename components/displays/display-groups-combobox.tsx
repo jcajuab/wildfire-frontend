@@ -1,17 +1,16 @@
 "use client";
 
-import type { ReactElement } from "react";
-import { useMemo, useState, useCallback } from "react";
-import { IconCheck, IconSelector } from "@tabler/icons-react";
+import type { KeyboardEvent, ReactElement } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { IconCheck, IconPlus, IconSelector } from "@tabler/icons-react";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
-  PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { getGroupBadgeStyles } from "@/lib/display-group-colors";
 import {
+  collapseDisplayGroupWhitespace,
   dedupeDisplayGroupNames,
   toDisplayGroupKey,
 } from "@/lib/display-group-normalization";
@@ -28,11 +27,14 @@ export interface DisplayGroupsComboboxProps {
   readonly showLabel?: boolean;
   /** When true, dropdown renders above modal dialogs. Use when inside a dialog. */
   readonly aboveModal?: boolean;
+  /** Portal container element. Pass a ref'd element inside a dialog to keep the
+   *  popover within the dialog's DOM subtree, preserving scroll-lock compatibility. */
+  readonly portalContainer?: HTMLElement | null;
 }
 
 /**
- * Multi-select scrollable dropdown for display groups. No search — pick from the list.
- * Selected groups are shown as badges on the trigger.
+ * Multi-select dropdown for display groups. The trigger is an inline input
+ * that shows selected groups as badges and accepts text to search or create.
  */
 export function DisplayGroupsCombobox({
   id,
@@ -43,8 +45,14 @@ export function DisplayGroupsCombobox({
   placeholder = "Select display groups…",
   showLabel = true,
   aboveModal = false,
+  portalContainer,
 }: DisplayGroupsComboboxProps): ReactElement {
   const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const trimmed = collapseDisplayGroupWhitespace(inputValue);
 
   const existingNames = useMemo(
     () => dedupeDisplayGroupNames(existingGroups.map((g) => g.name)),
@@ -54,13 +62,32 @@ export function DisplayGroupsCombobox({
     () => new Set(value.map((name) => toDisplayGroupKey(name))),
     [value],
   );
-  const nameToColorIndex = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const g of existingGroups) {
-      map.set(toDisplayGroupKey(g.name), g.colorIndex ?? 0);
-    }
-    return map;
-  }, [existingGroups]);
+  const filteredNames = useMemo(
+    () =>
+      existingNames.filter((name) => {
+        if (trimmed === "") return true;
+        return toDisplayGroupKey(name).includes(toDisplayGroupKey(trimmed));
+      }),
+    [existingNames, trimmed],
+  );
+
+  const showCreate = useMemo(() => {
+    if (trimmed === "") return false;
+    if (selectedKeys.has(toDisplayGroupKey(trimmed))) return false;
+    return !existingNames.some(
+      (name) => toDisplayGroupKey(name) === toDisplayGroupKey(trimmed),
+    );
+  }, [trimmed, selectedKeys, existingNames]);
+
+  const handleOpenChange = useCallback((next: boolean) => {
+    setOpen(next);
+    if (!next) setInputValue("");
+  }, []);
+
+  const openAndFocus = useCallback(() => {
+    setOpen(true);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, []);
 
   const toggleGroup = useCallback(
     (name: string) => {
@@ -69,16 +96,62 @@ export function DisplayGroupsCombobox({
         ? value.filter((n) => toDisplayGroupKey(n) !== key)
         : [...value, name];
       onValueChange(dedupeDisplayGroupNames(next));
+      setInputValue("");
+      inputRef.current?.focus();
     },
     [value, selectedKeys, onValueChange],
   );
 
-  const triggerLabel =
-    value.length === 0
-      ? placeholder
-      : value.length === 1
-        ? value[0]
-        : `${value.length} groups selected`;
+  const addPendingName = useCallback(
+    (name: string) => {
+      const normalized = collapseDisplayGroupWhitespace(name);
+      if (!normalized) return;
+      if (selectedKeys.has(toDisplayGroupKey(normalized))) return;
+      onValueChange(dedupeDisplayGroupNames([...value, normalized]));
+      setInputValue("");
+      inputRef.current?.focus();
+    },
+    [value, selectedKeys, onValueChange],
+  );
+
+  const handleInputKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Escape") {
+        if (inputValue) {
+          setInputValue("");
+        } else {
+          setOpen(false);
+        }
+        return;
+      }
+      if (e.key === "Backspace" && !inputValue && value.length > 0) {
+        const last = value[value.length - 1];
+        if (last) {
+          onValueChange(value.filter((_, i) => i !== value.length - 1));
+        }
+        return;
+      }
+      if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
+      e.preventDefault();
+      if (showCreate) {
+        addPendingName(trimmed);
+        return;
+      }
+      if (filteredNames.length === 1 && filteredNames[0]) {
+        toggleGroup(filteredNames[0]);
+      }
+    },
+    [
+      inputValue,
+      value,
+      showCreate,
+      trimmed,
+      filteredNames,
+      onValueChange,
+      addPendingName,
+      toggleGroup,
+    ],
+  );
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -87,64 +160,91 @@ export function DisplayGroupsCombobox({
           Display Groups (Optional)
         </Label>
       ) : null}
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            id={id}
-            type="button"
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            aria-haspopup="listbox"
-            aria-label="Display groups"
-            disabled={disabled}
+
+      <Popover open={open} onOpenChange={handleOpenChange}>
+        <PopoverAnchor asChild>
+          <div
+            ref={anchorRef}
             className={cn(
-              "min-h-8 w-full justify-between font-normal",
-              value.length === 0 && "text-muted-foreground",
+              "flex min-h-9 w-full cursor-text flex-wrap items-center gap-1 rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background transition-colors",
+              "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+              disabled && "cursor-not-allowed opacity-50 pointer-events-none",
             )}
+            onClick={() => {
+              if (!disabled) openAndFocus();
+            }}
           >
-            <span className="flex min-w-0 flex-wrap items-center gap-1 truncate">
-              {value.length > 0
-                ? value.map((name) => {
-                    const colorIndex =
-                      nameToColorIndex.get(toDisplayGroupKey(name)) ?? 0;
-                    const styles = getGroupBadgeStyles(colorIndex);
-                    return (
-                      <span
-                        key={name}
-                        className={cn(
-                          "inline-flex rounded border px-1.5 py-0.5 text-xs font-medium",
-                          styles.fill,
-                        )}
-                      >
-                        {name}
-                      </span>
-                    );
-                  })
-                : triggerLabel}
-            </span>
-            <IconSelector className="text-muted-foreground size-4 shrink-0" />
-          </Button>
-        </PopoverTrigger>
+            {value.map((name) => (
+              <span
+                key={name}
+                className="inline-flex rounded border px-1.5 py-0.5 text-xs font-medium bg-blue-600 text-white border-blue-200"
+              >
+                {name}
+              </span>
+            ))}
+
+            <input
+              id={id}
+              ref={inputRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleInputKeyDown}
+              onFocus={() => !disabled && setOpen(true)}
+              onClick={(e) => e.stopPropagation()}
+              placeholder={value.length === 0 ? placeholder : ""}
+              disabled={disabled}
+              className="min-w-20 flex-1 bg-transparent outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
+            />
+
+            <button
+              type="button"
+              disabled={disabled}
+              aria-label="Toggle display groups dropdown"
+              className="ml-auto shrink-0 text-muted-foreground hover:text-foreground disabled:pointer-events-none"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (open) {
+                  setOpen(false);
+                } else {
+                  openAndFocus();
+                }
+              }}
+            >
+              <IconSelector className="size-4" />
+            </button>
+          </div>
+        </PopoverAnchor>
+
         <PopoverContent
           align="start"
+          container={portalContainer}
           className={cn(
-            "min-w-[var(--radix-popover-trigger-width)] max-w-sm p-0",
+            "flex w-[var(--radix-popover-anchor-width)] flex-col overflow-hidden p-0",
             aboveModal && "z-100",
           )}
+          style={{
+            maxHeight: "min(12rem, var(--radix-popover-content-available-height))",
+          }}
           onOpenAutoFocus={(e) => e.preventDefault()}
+          onInteractOutside={(e) => {
+            if (anchorRef.current?.contains(e.target as Node)) {
+              e.preventDefault();
+            }
+          }}
         >
           <ul
             role="listbox"
-            className="max-h-60 overflow-y-auto p-1"
             aria-multiselectable
+            className="overflow-y-auto p-1"
           >
-            {existingNames.length === 0 ? (
-              <li className="text-muted-foreground px-3 py-2 text-sm">
-                No display groups. Create one via Manage Groups.
+            {filteredNames.length === 0 && !showCreate ? (
+              <li className="px-3 py-2 text-sm text-muted-foreground">
+                {existingNames.length === 0
+                  ? "Type a name and press Enter to create."
+                  : "No groups match. Press Enter to create."}
               </li>
             ) : (
-              existingNames.map((name) => {
+              filteredNames.map((name) => {
                 const isSelected = selectedKeys.has(toDisplayGroupKey(name));
                 return (
                   <li key={name}>
@@ -169,6 +269,20 @@ export function DisplayGroupsCombobox({
                 );
               })
             )}
+            {showCreate ? (
+              <li>
+                <button
+                  type="button"
+                  className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => addPendingName(trimmed)}
+                >
+                  <IconPlus className="size-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 truncate">
+                    Create &ldquo;{trimmed}&rdquo;
+                  </span>
+                </button>
+              </li>
+            ) : null}
           </ul>
         </PopoverContent>
       </Popover>
