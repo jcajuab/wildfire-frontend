@@ -125,7 +125,7 @@ export function DisplayGroupsTagsInput({
       >
         <ComboboxChips ref={anchorRef} id={id}>
           {value.map((name) => (
-            <ComboboxChip key={name} value={name}>
+            <ComboboxChip key={name}>
               <span className="inline-flex rounded px-1 text-xs font-medium bg-blue-600 text-white">
                 {name}
               </span>

@@ -55,7 +55,6 @@ export interface DisplayManifest {
   readonly playlistId: string | null;
   readonly playlistVersion: string;
   readonly generatedAt: string;
-  readonly runtimeSettings: Record<string, never>;
   readonly playback: {
     readonly mode: "SCHEDULE" | "EMERGENCY";
     readonly emergency: {
@@ -351,7 +350,6 @@ const parseFlashPlayback = (
 
 const parseDisplayManifest = (payload: unknown): DisplayManifest => {
   const root = readRecord(payload, "manifest");
-  readRecord(root.runtimeSettings, "manifest.runtimeSettings");
   const playback = readRecord(root.playback, "manifest.playback");
   const rawItems = root.items;
   if (!Array.isArray(rawItems)) {
@@ -365,7 +363,6 @@ const parseDisplayManifest = (payload: unknown): DisplayManifest => {
       "manifest.playlistVersion",
     ),
     generatedAt: readString(root.generatedAt, "manifest.generatedAt"),
-    runtimeSettings: {},
     playback: {
       mode: readEnum(
         playback.mode,

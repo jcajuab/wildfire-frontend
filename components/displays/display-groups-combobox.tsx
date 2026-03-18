@@ -186,6 +186,10 @@ export function DisplayGroupsCombobox({
             <input
               id={id}
               ref={inputRef}
+              role="combobox"
+              aria-expanded={open}
+              aria-haspopup="listbox"
+              aria-autocomplete="list"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleInputKeyDown}
@@ -223,7 +227,8 @@ export function DisplayGroupsCombobox({
             aboveModal && "z-100",
           )}
           style={{
-            maxHeight: "min(12rem, var(--radix-popover-content-available-height))",
+            maxHeight:
+              "min(12rem, var(--radix-popover-content-available-height))",
           }}
           onOpenAutoFocus={(e) => e.preventDefault()}
           onInteractOutside={(e) => {

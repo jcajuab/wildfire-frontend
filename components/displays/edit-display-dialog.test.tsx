@@ -200,12 +200,12 @@ describe("EditDisplayDialog", () => {
       />,
     );
 
-    const trigger = screen.getByRole("combobox", { name: "Display groups" });
-    await user.click(trigger);
+    const combobox = screen.getByRole("combobox", { name: /display groups/i });
+    await user.click(combobox);
     await user.click(screen.getByRole("option", { name: "Lobby" }));
     expect(
-      screen.getByRole("combobox", { name: "Display groups" }),
-    ).toHaveTextContent("Lobby");
+      screen.getByText("Lobby", { selector: "span.inline-flex" }),
+    ).toBeInTheDocument();
     expect(onSave).not.toHaveBeenCalled();
   });
 

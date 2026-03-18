@@ -184,10 +184,7 @@ describe("DisplayCard", () => {
 
     renderDisplayCard({
       ...baseDisplay,
-      groups: [
-        { name: "Lobby" },
-        { name: "North Wing" },
-      ],
+      groups: [{ name: "Lobby" }, { name: "North Wing" }],
     });
 
     expect(
