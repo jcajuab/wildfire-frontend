@@ -16,6 +16,7 @@ export interface UseSettingsPageResult {
   token: ReturnType<typeof useAuth>["token"];
   logout: ReturnType<typeof useAuth>["logout"];
   isInvitedUser: boolean;
+  isWildfireUser: boolean;
 
   // Theme
   theme: string | undefined;
@@ -69,6 +70,7 @@ export function useSettingsPage(): UseSettingsPageResult {
 
   const avatarUrl = user?.avatarUrl ?? null;
   const isInvitedUser = user?.isInvitedUser ?? false;
+  const isWildfireUser = isInvitedUser || (user?.isAdmin ?? false);
 
   const sectionMotionProps = prefersReducedMotion
     ? {}
@@ -130,6 +132,7 @@ export function useSettingsPage(): UseSettingsPageResult {
     token,
     logout,
     isInvitedUser,
+    isWildfireUser,
     theme,
     setTheme,
     prefersReducedMotion: prefersReducedMotion ?? null,

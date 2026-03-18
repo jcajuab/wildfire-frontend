@@ -27,7 +27,7 @@ const controlClass = "h-10 w-full";
 export default function SettingsPage(): ReactElement {
   const {
     user,
-    isInvitedUser,
+    isWildfireUser,
     theme,
     setTheme,
     sectionMotionProps,
@@ -112,35 +112,39 @@ export default function SettingsPage(): ReactElement {
                     }}
                   />
 
-                  <SettingsField label="Username">
-                    <div className={controlContainerClass}>
-                      <Input
-                        disabled
-                        value={user?.username ?? "-"}
-                        className={`${controlClass} disabled:border-border disabled:bg-muted/60 disabled:text-foreground/80 disabled:opacity-100`}
-                      />
-                    </div>
-                  </SettingsField>
-
-                  <SettingsField label="Email">
-                    <div className={controlContainerClass}>
-                      {user?.email ? (
+                  {isWildfireUser && (
+                    <SettingsField label="Username">
+                      <div className={controlContainerClass}>
                         <Input
                           disabled
-                          value={user.email}
+                          value={user?.username ?? "-"}
                           className={`${controlClass} disabled:border-border disabled:bg-muted/60 disabled:text-foreground/80 disabled:opacity-100`}
                         />
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Contact your administrator
-                        </p>
-                      )}
-                    </div>
-                  </SettingsField>
+                      </div>
+                    </SettingsField>
+                  )}
 
-                  <SettingsField label="Password">
-                    <div className={controlContainerClass}>
-                      {isInvitedUser ? (
+                  {isWildfireUser && (
+                    <SettingsField label="Email">
+                      <div className={controlContainerClass}>
+                        {user?.email ? (
+                          <Input
+                            disabled
+                            value={user.email}
+                            className={`${controlClass} disabled:border-border disabled:bg-muted/60 disabled:text-foreground/80 disabled:opacity-100`}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            Contact your administrator
+                          </p>
+                        )}
+                      </div>
+                    </SettingsField>
+                  )}
+
+                  {isWildfireUser && (
+                    <SettingsField label="Password">
+                      <div className={controlContainerClass}>
                         <Button
                           type="button"
                           variant="outline"
@@ -149,13 +153,9 @@ export default function SettingsPage(): ReactElement {
                         >
                           Change Password
                         </Button>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Managed by your organization
-                        </p>
-                      )}
-                    </div>
-                  </SettingsField>
+                      </div>
+                    </SettingsField>
+                  )}
                 </dl>
               </motion.section>
 
@@ -245,7 +245,7 @@ export default function SettingsPage(): ReactElement {
                       </Button>
                     </div>
 
-                    {isInvitedUser && (
+                    {isWildfireUser && (
                       <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
                         <div className="max-w-2xl">
                           <p className="text-sm font-semibold">
@@ -275,7 +275,7 @@ export default function SettingsPage(): ReactElement {
         </DashboardPage.Content>
       </DashboardPage.Body>
 
-      {isInvitedUser && (
+      {isWildfireUser && (
         <ChangePasswordDialog
           open={isPasswordDialogOpen}
           onOpenChange={setIsPasswordDialogOpen}
