@@ -20,6 +20,7 @@ import {
   getDisplayRegistrationBySlug,
 } from "@/lib/display-identity/registration-store";
 import { createPlayerController } from "@/lib/display-runtime/player-controller";
+import { createScheduleBoundaryTimer } from "@/lib/display-runtime/schedule-timer";
 import { buildRuntimeTimings } from "@/lib/display-runtime/overflow-timing";
 import { createDisplaySseClient } from "@/lib/display-runtime/sse-client";
 import {
@@ -32,7 +33,7 @@ import { formatTimeOfDay } from "@/lib/formatters";
 import { useMounted } from "@/hooks/use-mounted";
 import { BouncingLogoScreensaver } from "@/components/displays/bouncing-logo-screensaver";
 
-const POLL_MS = 60_000;
+const FALLBACK_POLL_MS = 300_000;
 const HEARTBEAT_MS = 30_000;
 const SNAPSHOT_UPLOAD_MS = 10_000;
 
@@ -176,6 +177,33 @@ export default function DisplayRuntimePage() {
 
       await refreshManifest(keyPair.privateKey);
 
+      let boundaryTimer: { clear(): void } | null = null;
+
+      const restartBoundaryTimer = (): void => {
+        boundaryTimer?.clear();
+        const currentManifest = manifestRef.current;
+        if (currentManifest) {
+          boundaryTimer = createScheduleBoundaryTimer(
+            currentManifest.schedules,
+            () => {
+              void refreshManifest(keyPair.privateKey)
+                .then(() => {
+                  restartBoundaryTimer();
+                })
+                .catch((error) => {
+                  setErrorMessage(
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to refresh manifest at schedule boundary",
+                  );
+                });
+            },
+          );
+        }
+      };
+
+      restartBoundaryTimer();
+
       const streamUrl = `${baseUrl}/display-runtime/${encodeURIComponent(
         registration.slug,
       )}/stream`;
@@ -194,13 +222,17 @@ export default function DisplayRuntimePage() {
         onStateChange: setConnectionState,
         onEvent: () => {
           setLastEventAt(new Date().toISOString());
-          void refreshManifest(keyPair.privateKey).catch((error) => {
-            setErrorMessage(
-              error instanceof Error
-                ? error.message
-                : "Failed to refresh manifest",
-            );
-          });
+          void refreshManifest(keyPair.privateKey)
+            .then(() => {
+              restartBoundaryTimer();
+            })
+            .catch((error) => {
+              setErrorMessage(
+                error instanceof Error
+                  ? error.message
+                  : "Failed to refresh manifest",
+              );
+            });
         },
       });
 
@@ -210,7 +242,7 @@ export default function DisplayRuntimePage() {
             error instanceof Error ? error.message : "Failed to poll manifest",
           );
         });
-      }, POLL_MS);
+      }, FALLBACK_POLL_MS);
 
       const heartbeatTimer = setInterval(() => {
         void postSignedHeartbeat({
@@ -277,6 +309,7 @@ export default function DisplayRuntimePage() {
         clearInterval(pollTimer);
         clearInterval(heartbeatTimer);
         clearInterval(snapshotTimer);
+        boundaryTimer?.clear();
         sse.close();
       };
     };
@@ -471,7 +504,7 @@ export default function DisplayRuntimePage() {
             <video
               key={currentItem.id}
               src={currentItem.content.downloadUrl}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
               autoPlay
               muted
               playsInline
@@ -485,7 +518,7 @@ export default function DisplayRuntimePage() {
               alt="Display content image"
               fill
               sizes="100vw"
-              className="object-cover"
+              className="object-contain"
               unoptimized
             />
           </div>

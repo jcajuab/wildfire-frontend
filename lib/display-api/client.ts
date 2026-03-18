@@ -51,6 +51,15 @@ export interface ManifestItem {
   };
 }
 
+export interface ManifestScheduleWindow {
+  readonly id: string;
+  readonly kind: "PLAYLIST" | "FLASH";
+  readonly startTime: string;
+  readonly endTime: string;
+  readonly startDate: string | null;
+  readonly endDate: string | null;
+}
+
 export interface DisplayManifest {
   readonly playlistId: string | null;
   readonly playlistVersion: string;
@@ -74,6 +83,7 @@ export interface DisplayManifest {
     } | null;
   };
   readonly items: readonly ManifestItem[];
+  readonly schedules: readonly ManifestScheduleWindow[];
 }
 
 type UnknownRecord = Record<string, unknown>;
@@ -348,6 +358,21 @@ const parseFlashPlayback = (
   };
 };
 
+const parseManifestScheduleWindow = (
+  payload: unknown,
+  path: string,
+): ManifestScheduleWindow => {
+  const root = readRecord(payload, path);
+  return {
+    id: readString(root.id, `${path}.id`),
+    kind: readEnum(root.kind, ["PLAYLIST", "FLASH"] as const, `${path}.kind`),
+    startTime: readString(root.startTime, `${path}.startTime`),
+    endTime: readString(root.endTime, `${path}.endTime`),
+    startDate: readNullableString(root.startDate, `${path}.startDate`),
+    endDate: readNullableString(root.endDate, `${path}.endDate`),
+  };
+};
+
 const parseDisplayManifest = (payload: unknown): DisplayManifest => {
   const root = readRecord(payload, "manifest");
   const playback = readRecord(root.playback, "manifest.playback");
@@ -378,6 +403,11 @@ const parseDisplayManifest = (payload: unknown): DisplayManifest => {
     items: rawItems.map((item, index) =>
       parseManifestItem(item, `manifest.items[${index}]`),
     ),
+    schedules: Array.isArray(root.schedules)
+      ? root.schedules.map((schedule, index) =>
+          parseManifestScheduleWindow(schedule, `manifest.schedules[${index}]`),
+        )
+      : [],
   };
 };
 
