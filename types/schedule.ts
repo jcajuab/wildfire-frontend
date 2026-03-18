@@ -31,7 +31,6 @@ export interface Schedule {
   readonly playlist: SchedulePlaylist | null;
   readonly content: ScheduleContent | null;
   readonly targetDisplay: ScheduleDisplay;
-  readonly isActive: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -46,7 +45,6 @@ export interface ScheduleFormData {
   playlistId: string | null;
   contentId: string | null;
   targetDisplayIds: string[];
-  isActive: boolean;
 }
 
 export interface CalendarDay {

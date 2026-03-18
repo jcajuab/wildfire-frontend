@@ -33,7 +33,6 @@ export function mapBackendScheduleToSchedule(item: BackendSchedule): Schedule {
       id: item.display.id,
       name: item.display.name ?? "Unnamed display",
     },
-    isActive: item.isActive,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   };
@@ -59,7 +58,6 @@ export function mapCreateFormToScheduleRequest(
     endDate: data.endDate,
     startTime: data.startTime,
     endTime: data.endTime,
-    isActive: data.isActive,
   };
 }
 
@@ -78,6 +76,5 @@ export function mapUpdateFormToScheduleRequest(
     endDate: data.endDate,
     startTime: data.startTime,
     endTime: data.endTime,
-    isActive: data.isActive,
   };
 }

@@ -131,7 +131,6 @@ describe("server-driven list query contracts", () => {
               endDate: "2025-12-31",
               startTime: "00:00",
               endTime: "23:59",
-              isActive: true,
               createdAt: "2025-01-01T00:00:00.000Z",
               updatedAt: "2025-01-01T00:00:00.000Z",
               playlist: { id: crypto.randomUUID(), name: "Playlist" },

@@ -13,7 +13,6 @@ export interface BackendSchedule {
   readonly endDate: string;
   readonly startTime: string;
   readonly endTime: string;
-  readonly isActive: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly playlist: {
@@ -49,7 +48,6 @@ export interface CreateScheduleRequest {
   readonly endDate: string;
   readonly startTime: string;
   readonly endTime: string;
-  readonly isActive?: boolean;
 }
 
 export interface UpdateScheduleRequest {
@@ -63,7 +61,6 @@ export interface UpdateScheduleRequest {
   readonly endDate?: string;
   readonly startTime?: string;
   readonly endTime?: string;
-  readonly isActive?: boolean;
 }
 
 export const schedulesApi = createApi({

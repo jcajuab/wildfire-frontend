@@ -196,16 +196,16 @@ function EditDisplayForm({
     <>
       <DialogHeader>
         <DialogTitle>Edit Details</DialogTitle>
-        <DialogDescription className='sr-only'>
+        <DialogDescription className="sr-only">
           Update display details and grouping.
         </DialogDescription>
       </DialogHeader>
 
-      <div className='flex flex-col gap-4'>
-        <div className='flex flex-col gap-1.5'>
-          <Label htmlFor='edit-display-name'>Display Name</Label>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="edit-display-name">Display Name</Label>
           <Input
-            id='edit-display-name'
+            id="edit-display-name"
             value={formData.displayName}
             onChange={(event) =>
               setFormData((prev) => ({
@@ -217,24 +217,24 @@ function EditDisplayForm({
           />
         </div>
 
-        <div className='flex flex-col gap-1.5'>
-          <Label htmlFor='edit-display-slug'>Display Slug</Label>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="edit-display-slug">Display Slug</Label>
           <Input
-            id='edit-display-slug'
+            id="edit-display-slug"
             value={formData.slug}
             disabled={true}
             readOnly={true}
           />
-          <p className='text-xs text-muted-foreground'>
+          <p className="text-xs text-muted-foreground">
             Slug is fixed after registration and used by display runtime
             identity.
           </p>
         </div>
 
-        <div className='flex flex-col gap-1.5'>
-          <Label htmlFor='edit-location'>Physical Location</Label>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="edit-location">Physical Location</Label>
           <Input
-            id='edit-location'
+            id="edit-location"
             value={formData.location}
             onChange={(event) =>
               setFormData((prev) => ({ ...prev, location: event.target.value }))
@@ -243,10 +243,10 @@ function EditDisplayForm({
           />
         </div>
 
-        <div className='flex flex-col gap-1.5'>
-          <Label htmlFor='edit-ip'>IP Address or Hostname</Label>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="edit-ip">IP Address or Hostname</Label>
           <Input
-            id='edit-ip'
+            id="edit-ip"
             value={formData.ipAddress}
             onChange={(event) =>
               setFormData((prev) => ({
@@ -258,10 +258,10 @@ function EditDisplayForm({
           />
         </div>
 
-        <div className='flex flex-col gap-1.5'>
-          <Label htmlFor='edit-mac'>MAC Address</Label>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="edit-mac">MAC Address</Label>
           <Input
-            id='edit-mac'
+            id="edit-mac"
             value={formData.macAddress}
             onChange={(event) =>
               setFormData((prev) => ({
@@ -273,9 +273,9 @@ function EditDisplayForm({
           />
         </div>
 
-        <div className='grid gap-4 sm:grid-cols-2'>
-          <div className='flex flex-col gap-1.5'>
-            <Label htmlFor='edit-output-type'>Display Output Type</Label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-output-type">Display Output Type</Label>
             <Select
               value={formData.outputType}
               onValueChange={(value) =>
@@ -286,7 +286,7 @@ function EditDisplayForm({
               }
               disabled={isSaving}
             >
-              <SelectTrigger id='edit-output-type'>
+              <SelectTrigger id="edit-output-type">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -298,13 +298,13 @@ function EditDisplayForm({
               </SelectContent>
             </Select>
           </div>
-          <div className='flex flex-col gap-1.5'>
-            <Label htmlFor='edit-output-index'>Display Output Index</Label>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-output-index">Display Output Index</Label>
             <Input
-              id='edit-output-index'
-              type='number'
+              id="edit-output-index"
+              type="number"
               min={0}
-              inputMode='numeric'
+              inputMode="numeric"
               value={formData.outputIndex}
               onChange={(event) =>
                 setFormData((prev) => ({
@@ -316,21 +316,21 @@ function EditDisplayForm({
               disabled={isSaving}
             />
             {!hasValidOutputIndex ? (
-              <p className='text-xs text-destructive'>
+              <p className="text-xs text-destructive">
                 Output index must be a non-negative integer.
               </p>
             ) : null}
           </div>
         </div>
 
-        <div className='grid gap-4 sm:grid-cols-2'>
-          <div className='flex flex-col gap-1.5'>
-            <Label htmlFor='edit-resolution-width'>Resolution Width</Label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-resolution-width">Resolution Width</Label>
             <Input
-              id='edit-resolution-width'
-              type='number'
+              id="edit-resolution-width"
+              type="number"
               min={1}
-              inputMode='numeric'
+              inputMode="numeric"
               value={formData.resolutionWidth}
               onChange={(event) =>
                 setFormData((prev) => ({
@@ -342,13 +342,13 @@ function EditDisplayForm({
               disabled={isSaving}
             />
           </div>
-          <div className='flex flex-col gap-1.5'>
-            <Label htmlFor='edit-resolution-height'>Resolution Height</Label>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-resolution-height">Resolution Height</Label>
             <Input
-              id='edit-resolution-height'
-              type='number'
+              id="edit-resolution-height"
+              type="number"
               min={1}
-              inputMode='numeric'
+              inputMode="numeric"
               value={formData.resolutionHeight}
               onChange={(event) =>
                 setFormData((prev) => ({
@@ -362,14 +362,14 @@ function EditDisplayForm({
           </div>
         </div>
         {!hasValidResolution ? (
-          <p className='text-xs text-destructive'>
+          <p className="text-xs text-destructive">
             Resolution requires positive width and height, or leave both fields
             empty.
           </p>
         ) : null}
 
-        <div className='flex flex-col gap-1.5'>
-          <Label htmlFor='edit-emergency-content'>Emergency Content</Label>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="edit-emergency-content">Emergency Content</Label>
           <Select
             value={formData.emergencyContentId ?? "__none__"}
             onValueChange={(value) =>
@@ -380,11 +380,11 @@ function EditDisplayForm({
             }
             disabled={isSaving}
           >
-            <SelectTrigger id='edit-emergency-content'>
-              <SelectValue placeholder='Select emergency content' />
+            <SelectTrigger id="edit-emergency-content">
+              <SelectValue placeholder="Select emergency content" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='__none__'>None</SelectItem>
+              <SelectItem value="__none__">None</SelectItem>
               {emergencyContentOptions.map((asset) => (
                 <SelectItem key={asset.id} value={asset.id}>
                   {asset.title}
@@ -392,29 +392,29 @@ function EditDisplayForm({
               ))}
             </SelectContent>
           </Select>
-          <p className='text-xs text-muted-foreground'>
+          <p className="text-xs text-muted-foreground">
             Assign a READY image, video, or PDF for emergency override mode.
           </p>
         </div>
 
-        <div className='flex flex-col gap-1.5'>
-          <div className='flex items-center justify-between gap-2'>
-            <Label htmlFor='edit-groups'>Display Groups (Optional)</Label>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="edit-groups">Display Groups (Optional)</Label>
             {canManageGroups ? (
               <Button
-                type='button'
-                variant='outline'
-                size='sm'
+                type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => setIsGroupManagerOpen(true)}
                 disabled={isSaving}
               >
-                <IconSettings className='size-4' />
+                <IconSettings className="size-4" />
                 Manage Groups
               </Button>
             ) : null}
           </div>
           <DisplayGroupsCombobox
-            id='edit-groups'
+            id="edit-groups"
             value={formData.groups}
             onValueChange={(names) =>
               setFormData((prev) => ({ ...prev, groups: names }))
@@ -429,11 +429,11 @@ function EditDisplayForm({
         </div>
       </div>
 
-      <DialogFooter className='sm:justify-between'>
+      <DialogFooter className="sm:justify-between">
         <Button
-          variant='outline'
+          variant="outline"
           onClick={onClose}
-          className='flex-1'
+          className="flex-1"
           disabled={isSaving}
         >
           Cancel
@@ -441,9 +441,9 @@ function EditDisplayForm({
         <Button
           onClick={() => void handleSave()}
           disabled={!canSave}
-          className='flex-1'
+          className="flex-1"
         >
-          <IconSettings className='size-4' />
+          <IconSettings className="size-4" />
           {isSaving ? "Saving..." : "Save"}
         </Button>
       </DialogFooter>
@@ -509,7 +509,7 @@ export function EditDisplayDialog({
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent
-        className='sm:max-w-md'
+        className="sm:max-w-md"
         onPointerDownOutside={(e) => {
           const target = (e.detail?.originalEvent as PointerEvent)
             ?.target as HTMLElement | null;

@@ -213,10 +213,7 @@ export const displaysApi = createApi({
             ]
           : [{ type: "DisplayGroup", id: "LIST" }],
     }),
-    createDisplayGroup: build.mutation<
-      DisplayGroup,
-      { name: string }
-    >({
+    createDisplayGroup: build.mutation<DisplayGroup, { name: string }>({
       query: (body) => ({
         url: "displays/groups",
         method: "POST",

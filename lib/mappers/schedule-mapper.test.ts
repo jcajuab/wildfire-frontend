@@ -16,7 +16,6 @@ const makeFormData = (): ScheduleFormData => ({
   playlistId: "playlist-1",
   contentId: null,
   targetDisplayIds: ["display-1"],
-  isActive: true,
 });
 
 describe("schedule-mapper", () => {
@@ -33,7 +32,6 @@ describe("schedule-mapper", () => {
         endDate: "2026-01-31",
         startTime: "08:00",
         endTime: "17:00",
-        isActive: true,
         createdAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-01-01T00:00:00.000Z",
         playlist: { id: "playlist-1", name: "Morning" },
@@ -64,7 +62,6 @@ describe("schedule-mapper", () => {
       displayId: "display-1",
       startTime: "08:00",
       endTime: "17:00",
-      isActive: true,
     });
     expect("daysOfWeek" in createPayload).toBe(false);
     expect("dayOfWeek" in updatePayload).toBe(false);

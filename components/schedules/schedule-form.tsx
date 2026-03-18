@@ -19,7 +19,6 @@ import {
   PopoverAnchor,
   PopoverContent,
 } from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { ScheduleFormData } from "@/types/schedule";
@@ -265,17 +264,6 @@ function ScheduleFormFrame({
   return (
     <>
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Switch
-            id="schedule-active"
-            checked={formData.isActive}
-            onCheckedChange={(checked) =>
-              setFormData((prev) => ({ ...prev, isActive: checked }))
-            }
-          />
-          <Label htmlFor="schedule-active">Active</Label>
-        </div>
-
         {!lockedKind && (
           <div className="space-y-2">
             <Label>Schedule Type</Label>
@@ -560,7 +548,6 @@ export function CreateScheduleForm({
         playlistId: null,
         contentId: null,
         targetDisplayIds: [],
-        isActive: true,
       }}
       submitLabel="Create"
       isCreate={true}

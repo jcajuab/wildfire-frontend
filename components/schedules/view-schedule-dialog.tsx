@@ -14,7 +14,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { formatClockTime, formatDate } from "@/lib/formatters";
 import type { Schedule } from "@/types/schedule";
 
@@ -52,13 +51,6 @@ export function ViewScheduleDialog({
             <div className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
               <span className="text-muted-foreground">Title</span>
               <span>{schedule.name}</span>
-
-              <span className="text-muted-foreground">Status</span>
-              <span>
-                <Badge variant={schedule.isActive ? "default" : "secondary"}>
-                  {schedule.isActive ? "Active" : "Inactive"}
-                </Badge>
-              </span>
 
               <span className="text-muted-foreground">Scheduled for</span>
               <span>
