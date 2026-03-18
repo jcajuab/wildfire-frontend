@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DisplayGroupsTagsInput } from "@/components/displays/display-groups-tags-input";
 import {
   createRegistrationSession,
   fetchDisplayRegistrationConstraints,
@@ -32,6 +33,16 @@ import {
   toCanonicalDisplayOutput,
   type DisplayOutputType,
 } from "@/lib/display-output";
+import {
+  useGetDisplayGroupsQuery,
+  useCreateDisplayGroupMutation,
+  useSetDisplayGroupsMutation,
+} from "@/lib/api/displays-api";
+import {
+  dedupeDisplayGroupNames,
+  toDisplayGroupKey,
+} from "@/lib/display-group-normalization";
+import { getNextDisplayGroupColorIndex } from "@/lib/display-group-colors";
 
 const PAIRING_CODE_PATTERN = /^\d{6}$/;
 const FALLBACK_DISPLAY_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -45,6 +56,7 @@ interface RegisterFormState {
   readonly outputIndex: string;
   readonly resolutionWidth: string;
   readonly resolutionHeight: string;
+  readonly displayGroups: string[];
 }
 
 type RegisterField =
@@ -69,6 +81,7 @@ const INITIAL_REGISTER_FORM: RegisterFormState = {
   outputIndex: "0",
   resolutionWidth: "",
   resolutionHeight: "",
+  displayGroups: [],
 };
 
 const INITIAL_STATUS: RegisterStatus = { kind: "idle" };
@@ -121,6 +134,10 @@ export default function RegisterDisplayPage(): ReactElement {
     INITIAL_REGISTER_FORM,
   );
   const [status, setStatus] = useState<RegisterStatus>(INITIAL_STATUS);
+
+  const { data: existingGroups = [] } = useGetDisplayGroupsQuery();
+  const [createDisplayGroup] = useCreateDisplayGroupMutation();
+  const [setDisplayGroups] = useSetDisplayGroupsMutation();
 
   const normalizedSlug = formState.slug.trim().toLowerCase();
   const isSubmitting = status.kind === "submitting";
@@ -264,6 +281,46 @@ export default function RegisterDisplayPage(): ReactElement {
           registeredAt: new Date().toISOString(),
         });
 
+        if (formState.displayGroups.length > 0) {
+          try {
+            const names = dedupeDisplayGroupNames(formState.displayGroups);
+            const groupIds: string[] = [];
+            const createdSoFar: (typeof existingGroups)[number][] = [];
+
+            for (const groupName of names) {
+              const key = toDisplayGroupKey(groupName);
+              const existing = existingGroups.find(
+                (g) => toDisplayGroupKey(g.name) === key,
+              );
+              if (existing) {
+                groupIds.push(existing.id);
+              } else {
+                const colorIndex = getNextDisplayGroupColorIndex([
+                  ...existingGroups,
+                  ...createdSoFar,
+                ]);
+                const created = await createDisplayGroup({
+                  name: groupName,
+                  colorIndex,
+                }).unwrap();
+                createdSoFar.push(created);
+                groupIds.push(created.id);
+              }
+            }
+
+            await setDisplayGroups({
+              displayId: registration.displayId,
+              groupIds,
+            }).unwrap();
+          } catch {
+            setStatus({
+              kind: "success",
+              message: `Display ${registration.slug} registered, but display groups could not be assigned. Edit the display to add groups.`,
+            });
+            return;
+          }
+        }
+
         setStatus({
           kind: "success",
           message: `Registration complete. Display ${registration.slug} is now connected.`,
@@ -278,7 +335,13 @@ export default function RegisterDisplayPage(): ReactElement {
         });
       }
     },
-    [formState, normalizedSlug],
+    [
+      formState,
+      normalizedSlug,
+      existingGroups,
+      createDisplayGroup,
+      setDisplayGroups,
+    ],
   );
 
   return (
@@ -368,6 +431,19 @@ export default function RegisterDisplayPage(): ReactElement {
                 spellCheck={false}
                 className="h-11 rounded-lg text-sm"
                 required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <DisplayGroupsTagsInput
+                id="register-groups"
+                value={formState.displayGroups}
+                onValueChange={(names) =>
+                  setFormState((prev) => ({ ...prev, displayGroups: names }))
+                }
+                existingGroups={existingGroups}
+                disabled={isSubmitting}
+                showLabel
               />
             </div>
 
