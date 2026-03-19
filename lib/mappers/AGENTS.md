@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-16 | Updated: 2026-03-16 -->
+<!-- Generated: 2026-03-16 | Updated: 2026-03-19 -->
 
 # mappers
 
@@ -9,12 +9,13 @@ Data transformation functions that convert backend API responses into frontend-f
 
 ## Key Files
 
-| File                  | Description                                     |
-| --------------------- | ----------------------------------------------- |
-| `audit-log-mapper.ts` | Audit log API response → frontend log entry     |
-| `content-mapper.ts`   | Content API response → frontend content model   |
-| `playlist-mapper.ts`  | Playlist API response → frontend playlist model |
-| `schedule-mapper.ts`  | Schedule API response → frontend schedule model |
+| File                       | Description                                     |
+| -------------------------- | ----------------------------------------------- |
+| `audit-log-mapper.ts`      | Audit log API response → frontend log entry     |
+| `content-mapper.ts`        | Content API response → frontend content model   |
+| `playlist-mapper.ts`       | Playlist API response → frontend playlist model |
+| `schedule-mapper.ts`       | Schedule API response → frontend schedule model |
+| `schedule-mapper.test.ts`  | Schedule mapper unit tests                      |
 
 ## For AI Agents
 
@@ -23,5 +24,6 @@ Data transformation functions that convert backend API responses into frontend-f
 - Mappers are pure functions — no side effects, easily testable
 - Update mappers when backend API response shape changes
 - Used by RTK Query `transformResponse` or in component code
+- Test files collocated as `*.test.ts` next to source
 
 <!-- MANUAL: -->

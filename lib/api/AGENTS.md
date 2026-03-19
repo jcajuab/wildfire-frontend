@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-16 | Updated: 2026-03-16 -->
+<!-- Generated: 2026-03-16 | Updated: 2026-03-19 -->
 
 # api
 
@@ -39,6 +39,7 @@ RTK Query API layer. Contains all API endpoint definitions organized by domain m
 - Cache tags follow pattern: `{ type: 'Entity', id }` for targeted invalidation
 - Paginated endpoints use `paginated-query-factory.ts` for consistent behavior
 - Add new endpoints to the appropriate `*-api.ts` file, not a new file
+- Test files collocated as `*.test.ts` — cover base-query, contracts, display-events, display-registration, pagination-guards, rbac-pagination
 
 ### Common Patterns
 
