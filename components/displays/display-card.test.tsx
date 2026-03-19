@@ -204,11 +204,11 @@ describe("DisplayCard", () => {
     const user = userEvent.setup();
     renderDisplayCard();
 
-    const indicator = screen.getByLabelText("Emergency not set");
+    const indicator = screen.getByLabelText("Emergency content not set");
     expect(indicator).toBeInTheDocument();
     await user.hover(indicator);
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Emergency not set",
+      "Emergency content not set",
     );
   });
 
@@ -216,7 +216,7 @@ describe("DisplayCard", () => {
     renderDisplayCard({ ...baseDisplay, emergencyContentId: "content-1" });
 
     expect(
-      screen.queryByLabelText("Emergency not set"),
+      screen.queryByLabelText("Emergency content not set"),
     ).not.toBeInTheDocument();
   });
 
@@ -232,6 +232,6 @@ describe("DisplayCard", () => {
     renderDisplayCard(baseDisplay, { isGlobalEmergencyActive: true });
 
     expect(screen.getByText("Emergency Active")).toBeInTheDocument();
-    expect(screen.getByLabelText("Emergency not set")).toBeInTheDocument();
+    expect(screen.getByLabelText("Emergency content not set")).toBeInTheDocument();
   });
 });
