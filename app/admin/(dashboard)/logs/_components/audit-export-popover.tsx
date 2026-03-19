@@ -1,10 +1,10 @@
 import type { ReactElement } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconFileExport } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DateInput } from "@/components/ui/date-input";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -20,8 +20,6 @@ import {
 import { dateToISOEnd, dateToISOStart } from "@/lib/formatters";
 
 interface AuditExportPopoverProps {
-  readonly from: string;
-  readonly to: string;
   readonly action: string;
   readonly actionDraft: string;
   readonly actorType: "all" | "user" | "display";
@@ -30,15 +28,11 @@ interface AuditExportPopoverProps {
   readonly requestId: string;
   readonly requestIdDraft: string;
   readonly total: number;
-  readonly onFromChange: (value: string) => void;
-  readonly onToChange: (value: string) => void;
   readonly onActionSync: () => void;
   readonly onRequestIdSync: () => void;
 }
 
 export function AuditExportPopover({
-  from,
-  to,
   action,
   actionDraft,
   actorType,
@@ -47,15 +41,25 @@ export function AuditExportPopover({
   requestId,
   requestIdDraft,
   total,
-  onFromChange,
-  onToChange,
   onActionSync,
   onRequestIdSync,
 }: AuditExportPopoverProps): ReactElement {
   const [exportPopoverOpen, setExportPopoverOpen] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [localFrom, setLocalFrom] = useState("");
+  const [localTo, setLocalTo] = useState("");
 
-  const exportRangeValid = from.trim() !== "" && to.trim() !== "" && from <= to;
+  useEffect(() => {
+    if (exportPopoverOpen) {
+      setLocalFrom("");
+      setLocalTo("");
+    }
+  }, [exportPopoverOpen]);
+
+  const exportRangeValid =
+    localFrom.trim() !== "" &&
+    localTo.trim() !== "" &&
+    localFrom <= localTo;
   const canDownload = exportRangeValid;
 
   const handleExportSubmit = async (): Promise<void> => {
@@ -69,8 +73,8 @@ export function AuditExportPopover({
     setIsExporting(true);
     try {
       const query: AuditExportQuery = {
-        from: dateToISOStart(from),
-        to: dateToISOEnd(to),
+        from: dateToISOStart(localFrom),
+        to: dateToISOEnd(localTo),
         action: actionDraft || undefined,
         actorType: actorType === "all" ? undefined : actorType,
         resourceType: resourceType || undefined,
@@ -114,20 +118,18 @@ export function AuditExportPopover({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <Label htmlFor="export-from">From</Label>
-              <Input
+              <DateInput
                 id="export-from"
-                type="date"
-                value={from}
-                onChange={(e) => onFromChange(e.target.value)}
+                value={localFrom}
+                onChange={(e) => setLocalFrom(e.target.value)}
               />
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <Label htmlFor="export-to">To</Label>
-              <Input
+              <DateInput
                 id="export-to"
-                type="date"
-                value={to}
-                onChange={(e) => onToChange(e.target.value)}
+                value={localTo}
+                onChange={(e) => setLocalTo(e.target.value)}
               />
             </div>
           </div>
@@ -139,7 +141,7 @@ export function AuditExportPopover({
               Current result set may exceed backend export limits.
             </p>
           )}
-          {!exportRangeValid && from !== "" && to !== "" && (
+          {!exportRangeValid && localFrom !== "" && localTo !== "" && (
             <p className="text-destructive text-xs">
               From date must be before or equal to To date.
             </p>

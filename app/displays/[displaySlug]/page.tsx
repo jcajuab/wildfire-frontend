@@ -468,7 +468,7 @@ export default function DisplayRuntimePage() {
             >
               {activeFlash.tone}
             </div>
-            <div className="relative min-w-0 flex-1 overflow-hidden bg-white text-foreground">
+            <div className="relative min-w-0 flex-1 overflow-hidden bg-white text-black">
               <div
                 aria-hidden="true"
                 className="absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-black/25 to-transparent"

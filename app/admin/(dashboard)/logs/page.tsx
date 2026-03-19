@@ -15,6 +15,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
+import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -73,8 +74,6 @@ export default function LogsPage(): ReactElement {
         actions={
           canExport ? (
             <AuditExportPopover
-              from={filters.from}
-              to={filters.to}
               action={filters.action}
               actionDraft={filters.actionDraft}
               actorType={filters.actorType}
@@ -83,8 +82,6 @@ export default function LogsPage(): ReactElement {
               requestId={filters.requestId}
               requestIdDraft={filters.requestIdDraft}
               total={total}
-              onFromChange={handleFromChange}
-              onToChange={handleToChange}
               onActionSync={() => filters.setAction(filters.actionDraft)}
               onRequestIdSync={() =>
                 filters.setRequestId(filters.requestIdDraft)
@@ -100,18 +97,16 @@ export default function LogsPage(): ReactElement {
             <div className="grid grid-cols-1 gap-x-3 gap-y-2 md:grid-cols-2 xl:grid-cols-4">
               <div className="space-y-1">
                 <Label htmlFor="logs-filter-from">From</Label>
-                <Input
+                <DateInput
                   id="logs-filter-from"
-                  type="date"
                   value={filters.from}
                   onChange={(e) => handleFromChange(e.target.value)}
                 />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="logs-filter-to">To</Label>
-                <Input
+                <DateInput
                   id="logs-filter-to"
-                  type="date"
                   value={filters.to}
                   onChange={(e) => handleToChange(e.target.value)}
                 />
