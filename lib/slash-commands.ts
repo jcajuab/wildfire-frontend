@@ -102,6 +102,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: "List your playlists",
     toolName: "list_playlists",
   },
+  {
+    id: "list-schedules",
+    label: "List Schedules",
+    description: "List your schedules",
+    toolName: "list_schedules",
+  },
 ];
 
 export function filterCommands(query: string): SlashCommand[] {
