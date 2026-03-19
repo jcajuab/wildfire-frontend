@@ -14,6 +14,8 @@ This document describes the full flow for copying invitation links, why the curr
 
 **Remaining caveats** (see "Where Issues Might Appear" below): the URL still lives in JS memory and in the clipboard; backend and transport security are unchanged.
 
+**Backend / credentials:** Invited users are created and stored only in the application database (not in htshadow). The htshadow file is a separate, read-only source used for DCISM users; Wildfire never writes to it.
+
 ---
 
 ## Full Flow (UML-Style)

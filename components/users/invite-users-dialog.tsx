@@ -76,12 +76,13 @@ function InviteLinkActions({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex h-full items-center gap-2">
       {revealedUrl == null ? (
         <Button
           type="button"
           variant="outline"
           size="sm"
+          className="h-full"
           onClick={handleGetLink}
           disabled={isRevealing}
           aria-label="Get invite link"
@@ -103,6 +104,7 @@ function InviteLinkActions({
           type="button"
           variant="outline"
           size="sm"
+          className="h-full"
           onClick={handleCopy}
           aria-label="Copy invite link"
         >
@@ -216,12 +218,13 @@ function InviteUsersDialogContent({
           <DialogTitle>Invitation Created</DialogTitle>
           <DialogDescription>
             Share this link with the invitee. The link expires after use. The
-            full link is not shown here; use the buttons below to get and copy it.
+            full link is not shown here; use the button beside the field to get
+            and copy it.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center rounded-md border border-border bg-muted/50 px-3 py-2.5">
-            <span className="font-mono text-xs text-muted-foreground">
+        <div className="flex items-stretch gap-2">
+          <div className="flex min-w-0 flex-1 items-center rounded-md border border-border bg-muted/50 px-3 py-2.5">
+            <span className="truncate font-mono text-xs text-muted-foreground">
               {INVITE_LINK_DISPLAY_PLACEHOLDER}
             </span>
           </div>
