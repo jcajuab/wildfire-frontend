@@ -131,12 +131,34 @@ export default function ContentPage(): ReactElement {
                 description="Upload images, videos, or create flash and text content to get started."
                 action={
                   <Can permission="content:create">
-                    <Button
-                      onClick={() => controller.setIsCreateDialogOpen(true)}
-                    >
-                      <IconPlus className="size-4" />
-                      Create Content
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button>
+                          <IconPlus className="size-4" />
+                          Create Content
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="center">
+                        <DropdownMenuItem
+                          onClick={() => controller.openCreateDialog("text")}
+                        >
+                          <IconFileText className="size-4" />
+                          Text
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => controller.openCreateDialog("upload")}
+                        >
+                          <IconUpload className="size-4" />
+                          Upload
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => controller.openCreateDialog("flash")}
+                        >
+                          <IconBolt className="size-4" />
+                          Flash
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </Can>
                 }
               />

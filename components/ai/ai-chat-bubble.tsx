@@ -2,15 +2,23 @@
 
 import type { ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion } from "framer-motion";
 import { IconMessageChatbot, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAICredentials } from "@/hooks/use-ai-credentials";
 import { AIChat } from "@/components/ai/ai-chat";
 
+const PANEL_HEIGHT_MAX = 600;
+const GAP = 12; // Tailwind gap-3
+const BUTTON_H = 56; // Tailwind size-14
+const BOTTOM_M = 24; // Tailwind bottom-6
+const TOP_PAD = 16; // breathing room at top
+
 export function AIChatBubble(): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
+  const [panelHeight, setPanelHeight] = useState(PANEL_HEIGHT_MAX);
+  const y = useMotionValue(0);
   const { refetch: refetchCredentials } = useAICredentials();
   const prefersReducedMotion = useReducedMotion();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -21,15 +29,30 @@ export function AIChatBubble(): ReactElement {
   });
 
   useEffect(() => {
-    function updateConstraints() {
-      // button is size-14 = 56px, bottom-6 = 24px, keep 16px padding from top
-      const maxUp = -(window.innerHeight - 56 - 24 - 16);
-      setDragConstraints({ top: maxUp, bottom: 0 });
+    function update() {
+      const vh = window.innerHeight;
+      // Max panel height that fits on screen with zero drag
+      const available = vh - BOTTOM_M - GAP - BUTTON_H - TOP_PAD;
+      const ph = Math.max(0, Math.min(PANEL_HEIGHT_MAX, available));
+      setPanelHeight(ph);
+
+      const maxUp = isOpen
+        ? -(vh - ph - GAP - BUTTON_H - BOTTOM_M - TOP_PAD) // ≥ 0 when panel fills screen
+        : -(vh - BUTTON_H - BOTTOM_M - TOP_PAD); // full range while closed
+
+      const top = Math.min(0, maxUp); // never positive
+      setDragConstraints({ top, bottom: 0 });
+
+      // Clamp current position into new bounds (e.g. bubble was near top, chat just opened)
+      if (y.get() < top) {
+        void animate(y, top, { type: "spring", stiffness: 400, damping: 30 });
+      }
     }
-    updateConstraints();
-    window.addEventListener("resize", updateConstraints);
-    return () => window.removeEventListener("resize", updateConstraints);
-  }, []);
+
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [isOpen, y]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -73,7 +96,7 @@ export function AIChatBubble(): ReactElement {
         bounceStiffness: 400,
         bounceDamping: 25,
       }}
-      style={{ touchAction: "none" }}
+      style={{ y, touchAction: "none" }}
       onDragStart={() => {
         draggedRef.current = false;
       }}
@@ -90,7 +113,7 @@ export function AIChatBubble(): ReactElement {
         {isOpen && (
           <motion.div
             className="flex w-full flex-col overflow-hidden rounded-xl border border-border bg-background shadow-xl sm:w-[420px]"
-            style={{ height: "600px" }}
+            style={{ height: panelHeight }}
             {...panelMotionProps}
             role="dialog"
             aria-label="WILDFIRE AI"
