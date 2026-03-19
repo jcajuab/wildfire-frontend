@@ -9,7 +9,6 @@ import { contentApi } from "@/lib/api/content-api";
 import { playlistsApi } from "@/lib/api/playlists-api";
 import { schedulesApi } from "@/lib/api/schedules-api";
 import { useAppDispatch } from "@/lib/hooks";
-import { SLASH_COMMANDS, type SlashCommand } from "@/lib/slash-commands";
 
 export interface PendingAction {
   token: string;
@@ -36,7 +35,6 @@ export function useAIChat({
   const dispatch = useAppDispatch();
   const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
   const [input, setInput] = useState("");
-  const [selectedTools, setSelectedTools] = useState<SlashCommand[]>([]);
 
   const fetchPendingActions = useCallback(async () => {
     if (!token) return;
@@ -168,16 +166,6 @@ export function useAIChat({
       const trimmed = input.trim();
       if (!trimmed) return;
 
-      // Extract slash commands from the input text
-      const commandMatches = trimmed.match(/\/[\w-]+/g) ?? [];
-      const extractedToolNames = commandMatches
-        .map((cmd) => {
-          const id = cmd.slice(1);
-          const slashCmd = SLASH_COMMANDS.find((sc) => sc.id === id);
-          return slashCmd?.toolName;
-        })
-        .filter((name): name is string => name != null);
-
       // Pass dynamic values at request time — always fresh, never stale.
       void sendMessage(
         { text: trimmed },
@@ -186,30 +174,13 @@ export function useAIChat({
             conversationId,
             provider,
             model,
-            ...(extractedToolNames.length > 0
-              ? { toolNames: extractedToolNames }
-              : {}),
           },
         },
       );
       setInput("");
-      setSelectedTools([]);
     },
     [input, sendMessage, conversationId, provider, model],
   );
-
-  const addTool = useCallback(
-    (command: SlashCommand) => {
-      if (!selectedTools.some((t) => t.id === command.id)) {
-        setSelectedTools((prev) => [...prev, command]);
-      }
-    },
-    [selectedTools],
-  );
-
-  const removeTool = useCallback((commandId: string) => {
-    setSelectedTools((prev) => prev.filter((t) => t.id !== commandId));
-  }, []);
 
   const confirmAction = useCallback(
     async (action: PendingAction, approved: boolean) => {
@@ -272,8 +243,5 @@ export function useAIChat({
     pendingActions,
     confirmAction,
     cancelAction,
-    selectedTools,
-    addTool,
-    removeTool,
   };
 }
