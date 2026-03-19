@@ -97,6 +97,63 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
   "audit.event.list": "Viewed audit logs",
   "audit.event.export": "Exported audit logs",
   "authz.permission.deny": "Denied by permission policy",
+
+  // AI module
+  "ai.action.cancel": "Cancelled AI action",
+  "ai.action.confirm": "Confirmed AI action",
+  "ai.action.list": "Viewed AI actions",
+  "ai.chat.started": "Started AI chat",
+  "ai.credentials.delete": "Deleted AI credentials",
+  "ai.credentials.list": "Viewed AI credentials",
+  "ai.credentials.store": "Stored AI credentials",
+
+  // Content module
+  "content.content.options": "Viewed content options",
+  "content.flash.create": "Created flash content",
+  "content.jobs.events": "Viewed content job events",
+  "content.jobs.get": "Viewed content job",
+  "content.pdf-crop.cancel": "Cancelled PDF crop",
+  "content.pdf-crop.init": "Started PDF crop",
+  "content.pdf-crop.submit": "Submitted PDF crop",
+  "content.text.create": "Created text content",
+
+  // Display module
+  "display.auth.challenge.create": "Display auth challenge created",
+  "display.auth.challenge.verify": "Display auth challenge verified",
+  "display.snapshot.write": "Display submitted snapshot",
+  "displays.display.options": "Viewed display options",
+  "displays.display.output-options": "Viewed display output options",
+  "displays.display.preview": "Previewed display",
+  "displays.display.unregister": "Unregistered display",
+  "displays.events.stream": "Subscribed to display events",
+  "displays.registration-attempt.close": "Closed display registration",
+  "displays.registration-attempt.create": "Started display registration",
+  "displays.registration-attempt.events":
+    "Subscribed to display registration events",
+  "displays.registration-attempt.rotate": "Rotated display registration code",
+  "displays.registration-constraints.read":
+    "Viewed display registration constraints",
+  "displays.registration-session.create": "Created display registration session",
+  "displays.registration.create": "Registered display",
+  "displays.runtime-overrides.emergency.update":
+    "Updated emergency display overrides",
+  "displays.runtime-overrides.get": "Viewed display runtime overrides",
+
+  // Playlist module
+  "playlists.item.replace": "Replaced playlist items",
+  "playlists.playlist.estimate-duration": "Estimated playlist duration",
+  "playlists.playlist.options": "Viewed playlist options",
+
+  // RBAC module
+  "rbac.permission.options": "Viewed permission options",
+  "rbac.role.options": "Viewed role options",
+  "rbac.user.options": "Viewed user options",
+  "rbac.user.reset-password": "Reset user password",
+  "rbac.user.status": "Updated user status",
+
+  // Schedule module
+  "schedules.schedule.merged": "Viewed merged schedule",
+  "schedules.schedule.window": "Viewed schedule window",
 };
 
 function toResourceLabel(resourceType: string | null): string {

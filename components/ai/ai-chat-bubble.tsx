@@ -62,8 +62,9 @@ export function AIChatBubble(): ReactElement {
     <motion.div
       className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3"
       drag="y"
-      dragMomentum={false}
       dragConstraints={dragConstraints}
+      dragElastic={0.1}
+      dragTransition={{ power: 0.08, timeConstant: 120, bounceStiffness: 400, bounceDamping: 25 }}
       style={{ touchAction: "none" }}
       onDragStart={() => {
         draggedRef.current = false;
