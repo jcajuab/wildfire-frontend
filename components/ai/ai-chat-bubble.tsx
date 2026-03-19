@@ -15,7 +15,10 @@ export function AIChatBubble(): ReactElement {
   const prefersReducedMotion = useReducedMotion();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const draggedRef = useRef(false);
-  const [dragConstraints, setDragConstraints] = useState({ top: -500, bottom: 0 });
+  const [dragConstraints, setDragConstraints] = useState({
+    top: -500,
+    bottom: 0,
+  });
 
   useEffect(() => {
     function updateConstraints() {
@@ -64,7 +67,12 @@ export function AIChatBubble(): ReactElement {
       drag="y"
       dragConstraints={dragConstraints}
       dragElastic={0.1}
-      dragTransition={{ power: 0.08, timeConstant: 120, bounceStiffness: 400, bounceDamping: 25 }}
+      dragTransition={{
+        power: 0.08,
+        timeConstant: 120,
+        bounceStiffness: 400,
+        bounceDamping: 25,
+      }}
       style={{ touchAction: "none" }}
       onDragStart={() => {
         draggedRef.current = false;

@@ -78,15 +78,11 @@ function computeTableFontSize(
 ): { fontSize: number; cellPaddingV: number; cellPaddingH: number } | null {
   if (!html.includes("<table")) return null;
 
-  const firstRowContent =
-    html.match(/<tr[^>]*>([\s\S]*?)<\/tr>/i)?.[1] ?? "";
+  const firstRowContent = html.match(/<tr[^>]*>([\s\S]*?)<\/tr>/i)?.[1] ?? "";
   const colCount = (firstRowContent.match(/<(th|td)/gi) ?? []).length;
 
   let fontSize =
-    colCount <= 2 ? 36
-    : colCount <= 4 ? 24
-    : colCount <= 6 ? 18
-    : 14;
+    colCount <= 2 ? 36 : colCount <= 4 ? 24 : colCount <= 6 ? 18 : 14;
 
   const rowCount = (html.match(/<tr[^>]/gi) ?? []).length;
   const availableHeight = viewportHeight - 64;
@@ -585,7 +581,8 @@ export default function DisplayRuntimePage() {
             transform: translateX(0);
           }
         }
-        ${tableStyle ? `
+        ${tableStyle
+          ? `
         .display-text-table table {
           font-size: ${tableStyle.fontSize}px;
           line-height: 1.4;
@@ -596,7 +593,8 @@ export default function DisplayRuntimePage() {
         .display-text-table td {
           padding: ${tableStyle.cellPaddingV}px ${tableStyle.cellPaddingH}px;
         }
-        ` : ""}
+        `
+          : ""}
       `}</style>
     </main>
   );

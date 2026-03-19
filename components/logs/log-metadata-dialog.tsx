@@ -35,17 +35,18 @@ function formatMetadataValue(value: unknown): string {
 
 function formatFieldLabel(key: string): string {
   const words = key
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/[_-]/g, ' ')
+    .replace(/([A-Z])/g, " $1")
+    .replace(/[_-]/g, " ")
     .split(/\s+/)
     .filter(Boolean);
   return words
     .map((word) => {
       const lower = word.toLowerCase();
-      if (['id', 'url', 'api', 'ip', 'http', 'https'].includes(lower)) return lower.toUpperCase();
+      if (["id", "url", "api", "ip", "http", "https"].includes(lower))
+        return lower.toUpperCase();
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
-    .join(' ');
+    .join(" ");
 }
 
 export function LogMetadataDialog({
@@ -89,14 +90,14 @@ export function LogMetadataDialog({
                 </span>
               </div>
 
-              <div className="text-sm font-medium pt-1">
-                Summary details
-              </div>
+              <div className="text-sm font-medium pt-1">Summary details</div>
 
               <div className="grid grid-cols-[9rem_1fr] gap-y-2 text-sm">
                 {Object.entries(log.metadata).map(([key, value]) => (
                   <Fragment key={key}>
-                    <span className="text-muted-foreground pr-4">{formatFieldLabel(key)}</span>
+                    <span className="text-muted-foreground pr-4">
+                      {formatFieldLabel(key)}
+                    </span>
                     <span className="break-all">
                       {formatMetadataValue(value)}
                     </span>
@@ -123,7 +124,9 @@ export function LogMetadataDialog({
                   <div className="grid grid-cols-[9rem_1fr] gap-y-2 text-sm">
                     {Object.entries(log.rawMetadata).map(([key, value]) => (
                       <Fragment key={`raw-${key}`}>
-                        <span className="text-muted-foreground pr-4">{formatFieldLabel(key)}</span>
+                        <span className="text-muted-foreground pr-4">
+                          {formatFieldLabel(key)}
+                        </span>
                         <span className="break-all">
                           {formatMetadataValue(value)}
                         </span>

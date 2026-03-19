@@ -2,11 +2,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 
-interface DateInputProps
-  extends Omit<
-    React.ComponentProps<"input">,
-    "type" | "value" | "defaultValue"
-  > {
+interface DateInputProps extends Omit<
+  React.ComponentProps<"input">,
+  "type" | "value" | "defaultValue"
+> {
   value?: string;
 }
 

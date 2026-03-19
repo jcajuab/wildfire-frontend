@@ -57,9 +57,7 @@ export function AuditExportPopover({
   }, [exportPopoverOpen]);
 
   const exportRangeValid =
-    localFrom.trim() !== "" &&
-    localTo.trim() !== "" &&
-    localFrom <= localTo;
+    localFrom.trim() !== "" && localTo.trim() !== "" && localFrom <= localTo;
   const canDownload = exportRangeValid;
 
   const handleExportSubmit = async (): Promise<void> => {

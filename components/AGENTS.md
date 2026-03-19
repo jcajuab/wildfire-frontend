@@ -11,7 +11,7 @@ Reusable React components organized by feature domain. Each feature subdirectory
 
 | Directory      | Purpose                                                                   |
 | -------------- | ------------------------------------------------------------------------- |
-| `ui/`          | shadcn/ui primitives — button, dialog, table, etc. (see `ui/AGENTS.md`)  |
+| `ui/`          | shadcn/ui primitives — button, dialog, table, etc. (see `ui/AGENTS.md`)   |
 | `common/`      | Cross-feature components — permissions guard, pagination, search, dialogs |
 | `ai/`          | AI chat interface — chat bubble, pending action cards, tool chips         |
 | `ai-elements/` | AI UI building blocks — conversation, message, prompt input, code blocks  |

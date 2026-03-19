@@ -9,13 +9,13 @@ Display content player runtime. Runs on public display pages to render scheduled
 
 ## Key Files
 
-| File                   | Description                                                       |
-| ---------------------- | ----------------------------------------------------------------- |
-| `player-controller.ts` | Main playback controller — advances through playlist items        |
-| `flash-ticker.ts`      | Flash message ticker with scrolling animation timing              |
-| `overflow-timing.ts`   | Content overflow detection and timing adjustments                 |
-| `schedule-timer.ts`    | Schedule-aware timer for managing content window transitions      |
-| `sse-client.ts`        | Server-Sent Events client for real-time display updates           |
+| File                   | Description                                                  |
+| ---------------------- | ------------------------------------------------------------ |
+| `player-controller.ts` | Main playback controller — advances through playlist items   |
+| `flash-ticker.ts`      | Flash message ticker with scrolling animation timing         |
+| `overflow-timing.ts`   | Content overflow detection and timing adjustments            |
+| `schedule-timer.ts`    | Schedule-aware timer for managing content window transitions |
+| `sse-client.ts`        | Server-Sent Events client for real-time display updates      |
 
 ## For AI Agents
 

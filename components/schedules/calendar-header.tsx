@@ -5,7 +5,11 @@ import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { formatLongDate, formatMonthDay } from "@/lib/formatters";
-import type { CalendarView, DisplayGroupSortField, ResourceMode } from "@/types/schedule";
+import type {
+  CalendarView,
+  DisplayGroupSortField,
+  ResourceMode,
+} from "@/types/schedule";
 import { ScheduleFilterPopover } from "./schedule-filter-popover";
 
 interface CalendarHeaderProps {

@@ -133,7 +133,8 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
   "displays.registration-attempt.rotate": "Rotated display registration code",
   "displays.registration-constraints.read":
     "Viewed display registration constraints",
-  "displays.registration-session.create": "Created display registration session",
+  "displays.registration-session.create":
+    "Created display registration session",
   "displays.registration.create": "Registered display",
   "displays.runtime-overrides.emergency.update":
     "Updated emergency display overrides",

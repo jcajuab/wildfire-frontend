@@ -232,6 +232,8 @@ describe("DisplayCard", () => {
     renderDisplayCard(baseDisplay, { isGlobalEmergencyActive: true });
 
     expect(screen.getByText("Emergency Active")).toBeInTheDocument();
-    expect(screen.getByLabelText("Emergency content not set")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Emergency content not set"),
+    ).toBeInTheDocument();
   });
 });
