@@ -185,7 +185,7 @@ export default function UsersPage(): ReactElement {
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
+          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-6 py-6 sm:px-8 sm:py-8 pt-6">
             {users.length === 0 ? (
               <EmptyState
                 title="No users yet"
@@ -200,42 +200,46 @@ export default function UsersPage(): ReactElement {
                 }
               />
             ) : (
-              <div className="overflow-hidden rounded-md border border-border">
-                <UsersTable
-                  users={users}
-                  availableRoles={availableRoles}
-                  userRolesByUserId={userRolesByUserId}
-                  sort={sort}
-                  onSortChange={handleSortChange}
-                  onEdit={handleEdit}
-                  onRoleToggle={handleRoleToggle}
-                  onBanUser={handleRequestBanUser}
-                  onUnbanUser={handleRequestUnbanUser}
-                  onResetPassword={handleResetPassword}
-                  canUpdate={canUpdateUser}
-                  canDelete={canDeleteUser}
-                  isSuperAdmin={isAdmin}
-                  systemRoleIds={systemRoleIds}
-                  currentUserId={currentUser?.id}
-                />
+              <div className="min-h-0 flex-1 flex flex-col overflow-hidden rounded-md border border-border">
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  <UsersTable
+                    users={users}
+                    availableRoles={availableRoles}
+                    userRolesByUserId={userRolesByUserId}
+                    sort={sort}
+                    onSortChange={handleSortChange}
+                    onEdit={handleEdit}
+                    onRoleToggle={handleRoleToggle}
+                    onBanUser={handleRequestBanUser}
+                    onUnbanUser={handleRequestUnbanUser}
+                    onResetPassword={handleResetPassword}
+                    canUpdate={canUpdateUser}
+                    canDelete={canDeleteUser}
+                    isSuperAdmin={isAdmin}
+                    systemRoleIds={systemRoleIds}
+                    currentUserId={currentUser?.id}
+                  />
+                </div>
               </div>
             )}
 
             <Can permission="users:create">
-              <section className="overflow-hidden rounded-md border border-border">
-                <div className="border-b border-border px-4 py-3">
+              <section className="min-h-0 flex-1 flex flex-col overflow-hidden rounded-md border border-border">
+                <div className="shrink-0 border-b border-border px-4 py-3">
                   <h3 className="text-sm font-semibold">Invitations</h3>
                   <p className="text-xs text-muted-foreground">
                     Recent invitation status and expiration timestamps.
                   </p>
                 </div>
-                <PendingInvitationsTable
-                  invitations={invitations}
-                  isLoading={isInvitationsLoading}
-                  resendingInvitationId={resendingInvitationId}
-                  onResend={handleResendInvitation}
-                  onSendInvitation={() => setIsInviteDialogOpen(true)}
-                />
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  <PendingInvitationsTable
+                    invitations={invitations}
+                    isLoading={isInvitationsLoading}
+                    resendingInvitationId={resendingInvitationId}
+                    onResend={handleResendInvitation}
+                    onSendInvitation={() => setIsInviteDialogOpen(true)}
+                  />
+                </div>
               </section>
             </Can>
           </div>

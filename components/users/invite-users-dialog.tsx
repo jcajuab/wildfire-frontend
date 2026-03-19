@@ -9,7 +9,9 @@ import {
   IconX,
   IconCopy,
   IconCheck,
+  IconLoader2,
 } from "@tabler/icons-react";
+import { revealInviteLink } from "@/lib/api-client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,20 +29,34 @@ import { Separator } from "@/components/ui/separator";
 interface InviteUsersDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onInvite: (emails: readonly string[]) => Promise<string | null>;
+  readonly onInvite: (
+    emails: readonly string[],
+  ) => Promise<{ id: string; expiresAt: string } | null>;
 }
 
 interface InviteResult {
-  readonly inviteUrl: string;
+  readonly id: string;
+  readonly expiresAt: string;
 }
 
-function CopyButton({ text }: { readonly text: string }): ReactElement {
+function RevealCopyButton({
+  invitationId,
+}: {
+  readonly invitationId: string;
+}): ReactElement {
   const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCopy = async (): Promise<void> => {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setIsLoading(true);
+    try {
+      const { inviteUrl } = await revealInviteLink(invitationId);
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -49,9 +65,12 @@ function CopyButton({ text }: { readonly text: string }): ReactElement {
       variant="ghost"
       size="icon-sm"
       onClick={handleCopy}
+      disabled={isLoading}
       aria-label="Copy invite link"
     >
-      {copied ? (
+      {isLoading ? (
+        <IconLoader2 className="size-4 animate-spin" />
+      ) : copied ? (
         <IconCheck className="size-4 text-green-600" />
       ) : (
         <IconCopy className="size-4" />
@@ -130,9 +149,9 @@ function InviteUsersDialogContent({
     if (validEmails.length === 0) return;
     setIsSubmitting(true);
     try {
-      const inviteUrl = await onInvite(validEmails);
-      if (inviteUrl) {
-        setInviteResult({ inviteUrl });
+      const result = await onInvite(validEmails);
+      if (result) {
+        setInviteResult({ id: result.id, expiresAt: result.expiresAt });
       } else {
         onOpenChange(false);
       }
@@ -156,10 +175,10 @@ function InviteUsersDialogContent({
           </DialogDescription>
         </DialogHeader>
         <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2">
-          <span className="flex-1 truncate font-mono text-xs">
-            {inviteResult.inviteUrl}
+          <span className="flex-1 truncate font-mono text-xs text-muted-foreground">
+            /accept-invite?...
           </span>
-          <CopyButton text={inviteResult.inviteUrl} />
+          <RevealCopyButton invitationId={inviteResult.id} />
         </div>
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)}>Done</Button>

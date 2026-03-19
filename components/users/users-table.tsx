@@ -239,7 +239,7 @@ export function UsersTable({
 
   return (
     <Table>
-      <TableHeader>
+      <TableHeader className="sticky top-0 z-10 bg-background">
         <TableRow>
           <TableHead
             className="w-[250px]"

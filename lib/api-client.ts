@@ -138,7 +138,6 @@ export async function deleteCurrentUser(token?: string | null): Promise<void> {
 export interface CreateInvitationResponse {
   readonly id: string;
   readonly expiresAt: string;
-  readonly inviteUrl?: string;
 }
 
 /** POST /auth/invitations. Requires users:create permission. */
@@ -195,6 +194,20 @@ export async function resendInvitation(
   });
 
   return parseApiPayload<CreateInvitationResponse>(response);
+}
+
+/** POST /auth/invitations/:id/reveal-link. Returns actual invite URL. Requires users:create permission. */
+export async function revealInviteLink(id: string): Promise<{ inviteUrl: string }> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(
+    `${baseUrl}/auth/invitations/${encodeURIComponent(id)}/reveal-link`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: { ...getDevOnlyRequestHeaders() },
+    },
+  );
+  return parseApiPayload<{ inviteUrl: string }>(response);
 }
 
 /** POST /auth/invitations/accept. Returns 204 on success. */

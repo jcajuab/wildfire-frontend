@@ -70,7 +70,9 @@ export function useUsersHandlers({
   }, [canCreateUser, setInvitations]);
 
   const handleInvite = useCallback(
-    async (emails: readonly string[]): Promise<string | null> => {
+    async (
+      emails: readonly string[],
+    ): Promise<{ id: string; expiresAt: string } | null> => {
       try {
         const results = await Promise.allSettled(
           emails.map((email) => createInvitation({ email })),
@@ -96,12 +98,11 @@ export function useUsersHandlers({
           ): result is PromiseFulfilledResult<CreateInvitationResponse> =>
             result.status === "fulfilled",
         );
-        const inviteUrl = firstSuccess?.value.inviteUrl ?? null;
 
         const latestInvitations = await getInvitations();
         setInvitations(latestInvitations);
 
-        return inviteUrl;
+        return firstSuccess?.value ?? null;
       } catch (err) {
         if (err instanceof AuthApiError && err.status === 429) {
           notifyApiError(

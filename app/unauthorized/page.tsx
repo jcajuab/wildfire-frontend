@@ -1,8 +1,6 @@
 import type { ReactElement } from "react";
 import type { Metadata } from "next";
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
+import { UnauthorizedContent } from "./unauthorized-content";
 
 export const metadata: Metadata = {
   title: "Unauthorized",
@@ -20,11 +18,7 @@ export default function UnauthorizedPage(): ReactElement {
           Your account does not currently have access to any admin modules.
           Contact your administrator to assign the required permissions.
         </p>
-        <div className="mt-6 flex flex-col gap-3">
-          <Button asChild variant="default">
-            <Link href="/login">Back to login</Link>
-          </Button>
-        </div>
+        <UnauthorizedContent />
       </div>
     </div>
   );

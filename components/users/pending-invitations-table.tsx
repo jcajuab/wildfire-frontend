@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useState } from "react";
-import { IconRefresh, IconCopy, IconCheck } from "@tabler/icons-react";
+import { IconRefresh, IconCopy, IconCheck, IconLoader2 } from "@tabler/icons-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/formatters";
+import { revealInviteLink } from "@/lib/api-client";
 import type { InvitationRecord, InvitationStatus } from "@/types/invitation";
 
 interface PendingInvitationsTableProps {
@@ -34,6 +35,10 @@ const statusVariant: Readonly<
   expired: "destructive",
 };
 
+const statusClassName: Readonly<Partial<Record<InvitationStatus, string>>> = {
+  accepted: "bg-green-100 text-green-700 border-green-200 hover:bg-green-100",
+};
+
 const statusLabel: Readonly<Record<InvitationStatus, string>> = {
   pending: "Pending",
   accepted: "Accepted",
@@ -42,47 +47,47 @@ const statusLabel: Readonly<Record<InvitationStatus, string>> = {
 };
 
 function InviteUrlCell({
-  url,
+  invitationId,
+  status,
 }: {
-  readonly url: string | null | undefined;
+  readonly invitationId: string;
+  readonly status: InvitationStatus;
 }): ReactElement {
   const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  if (!url) {
+  if (status !== "pending") {
     return <span className="text-muted-foreground">—</span>;
   }
 
   const handleCopy = async (): Promise<void> => {
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setIsLoading(true);
+    try {
+      const { inviteUrl } = await revealInviteLink(invitationId);
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  // Show only the path portion truncated for display
-  let displayText = url;
-  try {
-    const parsed = new URL(url);
-    displayText = parsed.pathname + parsed.search;
-  } catch {
-    // keep original
-  }
 
   return (
     <div className="flex items-center gap-1">
-      <span
-        className="max-w-[160px] truncate font-mono text-xs text-muted-foreground"
-        title={url}
-      >
-        {displayText}
+      <span className="max-w-[160px] truncate font-mono text-xs text-muted-foreground">
+        /accept-invite?...
       </span>
       <Button
         type="button"
         variant="ghost"
         size="icon-sm"
         onClick={handleCopy}
+        disabled={isLoading}
         aria-label="Copy invite link"
       >
-        {copied ? (
+        {isLoading ? (
+          <IconLoader2 className="size-3.5 animate-spin" />
+        ) : copied ? (
           <IconCheck className="size-3.5 text-green-600" />
         ) : (
           <IconCopy className="size-3.5" />
@@ -125,7 +130,7 @@ export function PendingInvitationsTable({
 
   return (
     <Table>
-      <TableHeader>
+      <TableHeader className="sticky top-0 z-10 bg-background">
         <TableRow>
           <TableHead>Email</TableHead>
           <TableHead>Name</TableHead>
@@ -147,12 +152,18 @@ export function PendingInvitationsTable({
                 {invitation.name ?? "-"}
               </TableCell>
               <TableCell>
-                <Badge variant={statusVariant[invitation.status]}>
+                <Badge
+                  variant={statusVariant[invitation.status]}
+                  className={statusClassName[invitation.status]}
+                >
                   {statusLabel[invitation.status]}
                 </Badge>
               </TableCell>
               <TableCell>
-                <InviteUrlCell url={invitation.inviteUrl} />
+                <InviteUrlCell
+                  invitationId={invitation.id}
+                  status={invitation.status}
+                />
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {formatDateTime(invitation.expiresAt)}

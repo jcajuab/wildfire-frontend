@@ -68,7 +68,9 @@ export interface UseUsersPageResult {
   // Handlers
   handleSearchChange: (value: string) => void;
   handleSortChange: (nextSort: UserSort) => void;
-  handleInvite: (emails: readonly string[]) => Promise<string | null>;
+  handleInvite: (
+    emails: readonly string[],
+  ) => Promise<{ id: string; expiresAt: string } | null>;
   handleResendInvitation: (id: string) => Promise<void>;
   handleRoleToggle: (userId: string, newRoleIds: string[]) => void;
   handleEdit: (user: User) => void;
