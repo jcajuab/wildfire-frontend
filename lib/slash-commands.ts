@@ -19,6 +19,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     toolName: "create_playlist",
   },
   {
+    id: "create-flash-schedule",
+    label: "Create Flash Schedule",
+    description: "Create a schedule for flash content",
+    toolName: "create_flash_schedule",
+  },
+  {
     id: "create-schedule",
     label: "Create Schedule",
     description: "Create a schedule",
@@ -43,6 +49,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     toolName: "delete_playlist",
   },
   {
+    id: "delete-flash-schedule",
+    label: "Delete Flash Schedule",
+    description: "Delete a flash content schedule",
+    toolName: "delete_flash_schedule",
+  },
+  {
     id: "delete-schedule",
     label: "Delete Schedule",
     description: "Delete schedule",
@@ -59,6 +71,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     label: "Edit Playlist",
     description: "Edit existing playlist",
     toolName: "edit_playlist",
+  },
+  {
+    id: "edit-flash-schedule",
+    label: "Edit Flash Schedule",
+    description: "Edit a flash content schedule",
+    toolName: "edit_flash_schedule",
   },
   {
     id: "edit-schedule",
