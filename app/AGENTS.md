@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-16 | Updated: 2026-03-16 -->
+<!-- Generated: 2026-03-16 | Updated: 2026-03-19 -->
 
 # app
 
@@ -14,16 +14,16 @@ Next.js App Router directory. Contains all pages, layouts, and API routes. Organ
 | `layout.tsx`            | Root layout — providers (theme, store, auth), global styles |
 | `globals.css`           | Tailwind CSS v4 styles, CSS variables, component themes     |
 | `page.tsx`              | Home page (redirects to admin or login)                     |
-| `unauthorized/page.tsx` | 403 unauthorized page                                       |
 
 ## Subdirectories
 
-| Directory   | Purpose                                                    |
-| ----------- | ---------------------------------------------------------- |
-| `(auth)/`   | Auth route group — login, accept-invite pages              |
-| `admin/`    | Admin dashboard with nested routes (see `admin/AGENTS.md`) |
-| `api/`      | API routes (AI chat proxy)                                 |
-| `displays/` | Public display pages — renders scheduled content by slug   |
+| Directory       | Purpose                                                    |
+| --------------- | ---------------------------------------------------------- |
+| `(auth)/`       | Auth route group — login, accept-invite pages              |
+| `admin/`        | Admin dashboard with nested routes (see `admin/AGENTS.md`) |
+| `api/`          | API routes (AI chat proxy)                                 |
+| `displays/`     | Public display pages — renders scheduled content by slug   |
+| `unauthorized/` | 403 unauthorized page                                      |
 
 ## For AI Agents
 

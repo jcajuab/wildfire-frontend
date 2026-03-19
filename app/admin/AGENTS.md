@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-16 | Updated: 2026-03-16 -->
+<!-- Generated: 2026-03-16 | Updated: 2026-03-19 -->
 
 # admin
 
@@ -12,7 +12,6 @@ Admin section of the application. Contains the dashboard layout with sidebar nav
 | File                         | Description                                         |
 | ---------------------------- | --------------------------------------------------- |
 | `layout.tsx`                 | Admin layout — auth guard wrapper                   |
-| `displays/register/page.tsx` | Display registration page (separate from dashboard) |
 
 ## Subdirectories
 

@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-16 | Updated: 2026-03-16 -->
+<!-- Generated: 2026-03-16 | Updated: 2026-03-19 -->
 
 # lib
 
@@ -25,8 +25,8 @@ Utility libraries, API layer, Redux store, data mappers, and domain-specific hel
 | `playlist-paths.ts`              | Playlist URL path helpers                                            |
 | `display-output.ts`              | Display output resolution utilities                                  |
 | `audit-resource-types.ts`        | Audit log resource type constants, labels, and filter helpers        |
-| `content-thumbnail-preview.ts`   | Content thumbnail text extraction and HTML sanitization utilities    |
-| `display-group-normalization.ts` | Display group name whitespace normalization and deduplication        |
+| `content-thumbnail-preview.ts`   | Content thumbnail text extraction and HTML sanitization utilities     |
+| `display-group-normalization.ts` | Display group name whitespace normalization and deduplication         |
 | `format-permission.ts`           | Permission label, readable label, and tooltip description formatters |
 | `map-display-to-display.ts`      | Maps display API response to frontend Display model                  |
 | `role-paths.ts`                  | Role admin URL path constants and helpers                            |
@@ -41,7 +41,7 @@ Utility libraries, API layer, Redux store, data mappers, and domain-specific hel
 | `display-api/`      | Display-facing API client (used by public display pages)           |
 | `display-identity/` | Display fingerprinting and registration storage                    |
 | `display-runtime/`  | Display content player — PDF renderer, flash ticker, SSE client    |
-| `mappers/`          | API response → frontend model data mappers                         |
+| `mappers/`          | API response → frontend model data mappers (see `mappers/AGENTS.md`) |
 | `schedules/`        | Schedule/calendar computation utilities                            |
 
 ## For AI Agents
@@ -52,6 +52,7 @@ Utility libraries, API layer, Redux store, data mappers, and domain-specific hel
 - Data mappers in `mappers/` transform backend responses to frontend types
 - Display runtime code in `display-runtime/` runs on public display pages (not admin)
 - Test files collocated as `*.test.ts` next to source
+- Many utility modules have comprehensive test coverage
 
 ### Common Patterns
 

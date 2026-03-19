@@ -1,4 +1,4 @@
-<!-- Generated: 2026-03-16 | Updated: 2026-03-16 -->
+<!-- Generated: 2026-03-16 | Updated: 2026-03-19 -->
 
 # Wildfire Frontend
 
@@ -30,8 +30,8 @@ Next.js 16 frontend for the Wildfire digital signage management system. Provides
 | `components/` | Reusable React components organized by feature (see `components/AGENTS.md`) |
 | `hooks/`      | Custom React hooks (see `hooks/AGENTS.md`)                                  |
 | `lib/`        | Utilities, API client, Redux store, mappers (see `lib/AGENTS.md`)           |
-| `context/`    | React context providers (auth)                                              |
-| `types/`      | TypeScript type definitions for domain entities                             |
+| `context/`    | React context providers (auth) (see `context/AGENTS.md`)                    |
+| `types/`      | TypeScript type definitions for domain entities (see `types/AGENTS.md`)     |
 
 ## For AI Agents
 
@@ -51,6 +51,7 @@ Next.js 16 frontend for the Wildfire digital signage management system. Provides
 - `pnpm run test` — Vitest unit tests
 - `pnpm run build` — Next.js production build
 - Testing Library (React) + jsdom for component tests
+- Collocated test files (`*.test.ts` / `*.test.tsx` next to source)
 
 ### Common Patterns
 
