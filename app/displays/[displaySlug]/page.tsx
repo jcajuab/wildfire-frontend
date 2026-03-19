@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getBaseUrl } from "@/lib/api/base-query";
-import { sanitizeRichTextHtml } from "@/lib/content-thumbnail-preview";
 import {
   createAuthChallenge,
   fetchSignedManifest,
@@ -33,6 +32,7 @@ import {
 import { formatTimeOfDay } from "@/lib/formatters";
 import { useMounted } from "@/hooks/use-mounted";
 import { BouncingLogoScreensaver } from "@/components/displays/bouncing-logo-screensaver";
+import { DisplayTextContent } from "@/components/displays/display-text-content";
 
 const FALLBACK_POLL_MS = 300_000;
 const HEARTBEAT_MS = 30_000;
@@ -562,17 +562,10 @@ export default function DisplayRuntimePage() {
             />
           </div>
         ) : currentItem.content.type === "TEXT" ? (
-          <div className="flex h-full w-full items-start overflow-hidden bg-white p-8">
-            <div
-              key={currentItem.id}
-              className="display-text-table w-full text-4xl leading-relaxed text-black [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_em]:italic [&_li]:list-item [&_ol]:list-decimal [&_ol]:pl-[1.5em] [&_p]:my-2 [&_strong]:font-bold [&_u]:underline [&_ul]:list-disc [&_ul]:pl-[1.5em] [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-gray-300 [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:font-bold"
-              dangerouslySetInnerHTML={{
-                __html: sanitizeRichTextHtml(
-                  currentItem.content.textHtmlContent ?? "",
-                ),
-              }}
-            />
-          </div>
+          <DisplayTextContent
+            key={currentItem.id}
+            html={currentItem.content.textHtmlContent ?? ""}
+          />
         ) : null}
       </div>
       <style jsx>{`
