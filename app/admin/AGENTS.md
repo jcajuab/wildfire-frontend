@@ -9,9 +9,9 @@ Admin section of the application. Contains the dashboard layout with sidebar nav
 
 ## Key Files
 
-| File                         | Description                                         |
-| ---------------------------- | --------------------------------------------------- |
-| `layout.tsx`                 | Admin layout — auth guard wrapper                   |
+| File         | Description                       |
+| ------------ | --------------------------------- |
+| `layout.tsx` | Admin layout — auth guard wrapper |
 
 ## Subdirectories
 

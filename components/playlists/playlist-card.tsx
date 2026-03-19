@@ -52,7 +52,9 @@ export const PlaylistCard = memo(function PlaylistCard({
               {playlist.name}
             </h3>
             {playlist.status === "IN_USE" && (
-              <Badge variant="destructive" className="border-destructive/30">In Use</Badge>
+              <Badge variant="destructive" className="border-destructive/30">
+                In Use
+              </Badge>
             )}
           </div>
           <p className="truncate text-xs text-muted-foreground">

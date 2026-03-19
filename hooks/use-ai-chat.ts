@@ -4,19 +4,10 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useCallback, useMemo, useState } from "react";
 import { useAuth } from "@/context/auth-context";
-import { getBaseUrl } from "@/lib/api/base-query";
 import { contentApi } from "@/lib/api/content-api";
 import { playlistsApi } from "@/lib/api/playlists-api";
 import { schedulesApi } from "@/lib/api/schedules-api";
 import { useAppDispatch } from "@/lib/hooks";
-
-export interface PendingAction {
-  token: string;
-  actionType: "edit" | "delete";
-  resourceType: "content" | "playlist" | "schedule";
-  summary: string;
-  expiresAt: string;
-}
 
 interface UseAIChatOptions {
   provider: "openai" | "anthropic" | "google";
@@ -24,7 +15,7 @@ interface UseAIChatOptions {
   conversationId: string;
 }
 
-type AffectedResourceType = PendingAction["resourceType"];
+type AffectedResourceType = "content" | "playlist" | "schedule";
 
 export function useAIChat({
   provider,
@@ -33,31 +24,7 @@ export function useAIChat({
 }: UseAIChatOptions) {
   const { token } = useAuth();
   const dispatch = useAppDispatch();
-  const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
   const [input, setInput] = useState("");
-
-  const fetchPendingActions = useCallback(async () => {
-    if (!token) return;
-    try {
-      const response = await fetch(`${getBaseUrl()}/ai/pending-actions`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) return;
-      const data: unknown = await response.json();
-      if (
-        data !== null &&
-        typeof data === "object" &&
-        "data" in data &&
-        Array.isArray((data as { data: unknown }).data)
-      ) {
-        setPendingActions((data as { data: PendingAction[] }).data);
-      }
-    } catch {
-      // silently ignore fetch errors for pending actions
-    }
-  }, [token]);
 
   // Transport handles message serialization only. Dynamic values (provider,
   // model, etc.) are passed via sendMessage's request-level body options to
@@ -147,18 +114,18 @@ export function useAIChat({
     [dispatch],
   );
 
-  const { messages, status, error, sendMessage } = useChat({
-    transport,
-    onFinish: ({ messages: allMessages }) => {
-      void fetchPendingActions();
-      // Collect tool parts from ALL assistant messages (not just the last one)
-      // because multi-step chains place tool calls in intermediate messages.
-      const toolParts = allMessages
-        .filter((m) => m.role === "assistant")
-        .flatMap((m) => m.parts);
-      invalidateAffectedTags(getAffectedResourceTypesFromParts(toolParts));
-    },
-  });
+  const { messages, status, error, sendMessage, addToolApprovalResponse } =
+    useChat({
+      transport,
+      onFinish: ({ messages: allMessages }) => {
+        // Collect tool parts from ALL assistant messages (not just the last one)
+        // because multi-step chains place tool calls in intermediate messages.
+        const toolParts = allMessages
+          .filter((m) => m.role === "assistant")
+          .flatMap((m) => m.parts);
+        invalidateAffectedTags(getAffectedResourceTypesFromParts(toolParts));
+      },
+    });
 
   const handleSubmit = useCallback(
     (event?: { preventDefault?: () => void }) => {
@@ -182,57 +149,6 @@ export function useAIChat({
     [input, sendMessage, conversationId, provider, model],
   );
 
-  const confirmAction = useCallback(
-    async (action: PendingAction, approved: boolean) => {
-      if (!token) return;
-      const response = await fetch(
-        `${getBaseUrl()}/ai/pending-actions/${action.token}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ conversationId, approved }),
-        },
-      );
-      if (!response.ok) {
-        console.error(
-          `[confirmAction] failed with status ${String(response.status)}`,
-        );
-        return;
-      }
-      if (approved) {
-        invalidateAffectedTags(new Set([action.resourceType]));
-      }
-      void fetchPendingActions();
-    },
-    [conversationId, fetchPendingActions, invalidateAffectedTags, token],
-  );
-
-  const cancelAction = useCallback(
-    async (actionToken: string) => {
-      if (!token) return;
-      const response = await fetch(
-        `${getBaseUrl()}/ai/pending-actions/${actionToken}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-      if (!response.ok) {
-        console.error(
-          `[cancelAction] failed with status ${String(response.status)}`,
-        );
-        return;
-      }
-      void fetchPendingActions();
-    },
-    [fetchPendingActions, token],
-  );
-
   return {
     messages,
     input,
@@ -240,8 +156,6 @@ export function useAIChat({
     handleSubmit,
     status,
     error,
-    pendingActions,
-    confirmAction,
-    cancelAction,
+    addToolApprovalResponse,
   };
 }

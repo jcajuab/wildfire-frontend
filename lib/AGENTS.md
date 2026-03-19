@@ -25,24 +25,24 @@ Utility libraries, API layer, Redux store, data mappers, and domain-specific hel
 | `playlist-paths.ts`              | Playlist URL path helpers                                            |
 | `display-output.ts`              | Display output resolution utilities                                  |
 | `audit-resource-types.ts`        | Audit log resource type constants, labels, and filter helpers        |
-| `content-thumbnail-preview.ts`   | Content thumbnail text extraction and HTML sanitization utilities     |
-| `display-group-normalization.ts` | Display group name whitespace normalization and deduplication         |
+| `content-thumbnail-preview.ts`   | Content thumbnail text extraction and HTML sanitization utilities    |
+| `display-group-normalization.ts` | Display group name whitespace normalization and deduplication        |
 | `format-permission.ts`           | Permission label, readable label, and tooltip description formatters |
 | `map-display-to-display.ts`      | Maps display API response to frontend Display model                  |
 | `role-paths.ts`                  | Role admin URL path constants and helpers                            |
 
 ## Subdirectories
 
-| Directory           | Purpose                                                            |
-| ------------------- | ------------------------------------------------------------------ |
-| `api/`              | RTK Query API slices — one per domain module (see `api/AGENTS.md`) |
-| `ai/`               | AI provider configuration                                          |
-| `crypto/`           | Client-side cryptography (display key management, request signing) |
-| `display-api/`      | Display-facing API client (used by public display pages)           |
-| `display-identity/` | Display fingerprinting and registration storage                    |
-| `display-runtime/`  | Display content player — PDF renderer, flash ticker, SSE client    |
+| Directory           | Purpose                                                              |
+| ------------------- | -------------------------------------------------------------------- |
+| `api/`              | RTK Query API slices — one per domain module (see `api/AGENTS.md`)   |
+| `ai/`               | AI provider configuration                                            |
+| `crypto/`           | Client-side cryptography (display key management, request signing)   |
+| `display-api/`      | Display-facing API client (used by public display pages)             |
+| `display-identity/` | Display fingerprinting and registration storage                      |
+| `display-runtime/`  | Display content player — PDF renderer, flash ticker, SSE client      |
 | `mappers/`          | API response → frontend model data mappers (see `mappers/AGENTS.md`) |
-| `schedules/`        | Schedule/calendar computation utilities                            |
+| `schedules/`        | Schedule/calendar computation utilities                              |
 
 ## For AI Agents
 

@@ -27,6 +27,15 @@ import {
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 import {
+  Confirmation,
+  ConfirmationAccepted,
+  ConfirmationAction,
+  ConfirmationActions,
+  ConfirmationRejected,
+  ConfirmationRequest,
+  ConfirmationTitle,
+} from "@/components/ai-elements/confirmation";
+import {
   Tool,
   ToolContent,
   ToolHeader,
@@ -36,7 +45,6 @@ import {
 import { useAIChat } from "@/hooks/use-ai-chat";
 import { useAICredentials } from "@/hooks/use-ai-credentials";
 import { SLASH_COMMANDS, type SlashCommand } from "@/lib/slash-commands";
-import { PendingActionCard } from "./pending-action-card";
 import { SlashCommandMenu } from "./slash-command-menu";
 
 const KNOWN_COMMAND_IDS = new Set(SLASH_COMMANDS.map((c) => c.id));
@@ -121,9 +129,7 @@ export function AIChat() {
     handleSubmit,
     status,
     error,
-    pendingActions,
-    confirmAction,
-    cancelAction,
+    addToolApprovalResponse,
   } = useAIChat({ provider, model, conversationId });
 
   const handleInputChange = useCallback(
@@ -208,6 +214,11 @@ export function AIChat() {
                   );
                 }
                 if (isToolUIPart(part)) {
+                  const toolName =
+                    "toolName" in part ? part.toolName : undefined;
+                  const isDestructive =
+                    typeof toolName === "string" &&
+                    (/delete/i.test(toolName) || /edit/i.test(toolName));
                   const header =
                     part.type === "dynamic-tool" ? (
                       <ToolHeader
@@ -230,6 +241,50 @@ export function AIChat() {
                           />
                         )}
                       </ToolContent>
+                      <Confirmation approval={part.approval} state={part.state}>
+                        <ConfirmationTitle>
+                          This action requires your approval.
+                        </ConfirmationTitle>
+                        <ConfirmationRequest>
+                          <ConfirmationActions>
+                            <ConfirmationAction
+                              variant="outline"
+                              onClick={() =>
+                                void addToolApprovalResponse({
+                                  id: part.approval!.id,
+                                  approved: false,
+                                  reason: "User rejected",
+                                })
+                              }
+                            >
+                              Reject
+                            </ConfirmationAction>
+                            <ConfirmationAction
+                              variant={
+                                isDestructive ? "destructive" : "default"
+                              }
+                              onClick={() =>
+                                void addToolApprovalResponse({
+                                  id: part.approval!.id,
+                                  approved: true,
+                                })
+                              }
+                            >
+                              Approve
+                            </ConfirmationAction>
+                          </ConfirmationActions>
+                        </ConfirmationRequest>
+                        <ConfirmationAccepted>
+                          <p className="text-sm text-muted-foreground">
+                            Approved
+                          </p>
+                        </ConfirmationAccepted>
+                        <ConfirmationRejected>
+                          <p className="text-sm text-muted-foreground">
+                            Rejected
+                          </p>
+                        </ConfirmationRejected>
+                      </Confirmation>
                     </Tool>
                   );
                 }
@@ -246,23 +301,6 @@ export function AIChat() {
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
-
-      {pendingActions.length > 0 && (
-        <div className="border-t p-3">
-          <p className="mb-2 text-sm font-medium">Pending Actions</p>
-          <div className="space-y-2">
-            {pendingActions.map((action) => (
-              <PendingActionCard
-                key={action.token}
-                action={action}
-                onConfirm={() => void confirmAction(action, true)}
-                onReject={() => void confirmAction(action, false)}
-                onCancel={() => void cancelAction(action.token)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="border-t p-3">
         <div className="relative">

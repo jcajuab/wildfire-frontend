@@ -92,7 +92,9 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
       onEvent(event) {
         if (event.type === "playlist_status_changed") {
           dispatch(
-            playlistsApi.util.invalidateTags([{ type: "Playlist", id: "LIST" }]),
+            playlistsApi.util.invalidateTags([
+              { type: "Playlist", id: "LIST" },
+            ]),
           );
         }
       },
