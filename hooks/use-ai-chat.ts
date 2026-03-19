@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { contentApi } from "@/lib/api/content-api";
 import { playlistsApi } from "@/lib/api/playlists-api";
@@ -26,16 +26,42 @@ export function useAIChat({
   const dispatch = useAppDispatch();
   const [input, setInput] = useState("");
 
-  // Let the DefaultChatTransport send full UIMessage[] (including tool parts
-  // and approval responses) so the AI SDK's needsApproval round-trip works.
-  // Dynamic values (provider, model, etc.) are passed via sendMessage's
-  // request-level body options — per AI SDK's recommended pattern.
-  // See: https://ai-sdk.dev/docs/troubleshooting/use-chat-stale-body-data
+  // Refs keep dynamic values accessible to the transport's
+  // prepareSendMessagesRequest without causing stale closures.
+  const providerRef = useRef(provider);
+  providerRef.current = provider;
+  const modelRef = useRef(model);
+  modelRef.current = model;
+  const conversationIdRef = useRef(conversationId);
+  conversationIdRef.current = conversationId;
+
+  // The transport sends full UIMessage[] (including tool approval parts) so
+  // the AI SDK's needsApproval round-trip works. prepareSendMessagesRequest
+  // injects conversationId/provider/model into EVERY request (including
+  // automatic re-sends triggered by sendAutomaticallyWhen after tool approval).
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/ai/chat",
         headers: token != null ? { Authorization: `Bearer ${token}` } : {},
+        prepareSendMessagesRequest: ({
+          messages,
+          body,
+          id,
+          trigger,
+          messageId,
+        }) => ({
+          body: {
+            ...(body as Record<string, unknown>),
+            id,
+            messages,
+            trigger,
+            messageId,
+            conversationId: conversationIdRef.current,
+            provider: providerRef.current,
+            model: modelRef.current,
+          },
+        }),
       }),
     [token],
   );
