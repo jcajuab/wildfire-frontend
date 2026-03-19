@@ -5,7 +5,7 @@ import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { formatLongDate, formatMonthDay } from "@/lib/formatters";
-import type { CalendarView, ResourceMode } from "@/types/schedule";
+import type { CalendarView, DisplayGroupSortField, ResourceMode } from "@/types/schedule";
 import { ScheduleFilterPopover } from "./schedule-filter-popover";
 
 interface CalendarHeaderProps {
@@ -19,6 +19,8 @@ interface CalendarHeaderProps {
   readonly resourceMode: ResourceMode;
   readonly onResourceModeChange: (mode: ResourceMode) => void;
   readonly displayGroupsCount: number;
+  readonly displayGroupSort: DisplayGroupSortField;
+  readonly onDisplayGroupSortChange: (sort: DisplayGroupSortField) => void;
 }
 
 function formatDateRange(date: Date, view: CalendarView): string {
@@ -54,6 +56,8 @@ export function CalendarHeader({
   resourceMode,
   onResourceModeChange,
   displayGroupsCount,
+  displayGroupSort,
+  onDisplayGroupSortChange,
 }: CalendarHeaderProps): ReactElement {
   const label = formatDateRange(currentDate, view);
 
@@ -104,6 +108,8 @@ export function CalendarHeader({
           onResourceModeChange={onResourceModeChange}
           view={view}
           onViewChange={onViewChange}
+          displayGroupSort={displayGroupSort}
+          onDisplayGroupSortChange={onDisplayGroupSortChange}
         />
       </div>
     </div>

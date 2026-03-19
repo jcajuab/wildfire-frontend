@@ -101,7 +101,7 @@ export function ResourceDayView({
             {/* Current-time indicator line — only shown for today */}
             {isToday && (
               <div
-                className="pointer-events-none absolute top-0 bottom-0 z-20 w-0.5 bg-black"
+                className="pointer-events-none absolute top-0 bottom-0 z-20 w-0.5 bg-red-500"
                 style={{
                   left: `calc(16rem + (100% - 16rem) * ${nowFraction.toFixed(6)})`,
                 }}

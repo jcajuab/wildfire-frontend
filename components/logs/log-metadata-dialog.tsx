@@ -2,11 +2,6 @@
 
 import type { ReactElement } from "react";
 import { Fragment, useState } from "react";
-import {
-  IconFileText,
-  IconHistory,
-  IconListDetails,
-} from "@tabler/icons-react";
 
 import {
   Dialog,
@@ -38,6 +33,21 @@ function formatMetadataValue(value: unknown): string {
   return JSON.stringify(value);
 }
 
+function formatFieldLabel(key: string): string {
+  const words = key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/[_-]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  return words
+    .map((word) => {
+      const lower = word.toLowerCase();
+      if (['id', 'url', 'api', 'ip', 'http', 'https'].includes(lower)) return lower.toUpperCase();
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+}
+
 export function LogMetadataDialog({
   open,
   onOpenChange,
@@ -56,7 +66,7 @@ export function LogMetadataDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-hidden sm:max-w-2xl">
+      <DialogContent className="flex flex-col max-h-[85vh] overflow-hidden sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-lg">Request metadata</DialogTitle>
           <DialogDescription>
@@ -64,39 +74,30 @@ export function LogMetadataDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="min-h-0 overflow-y-auto pr-1">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1">
           <div className="flex flex-col gap-4 py-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <IconHistory className="size-4" />
-              Log entry
-            </div>
-
             <div className="flex flex-col gap-3 rounded-md border border-border p-4">
-              <div className="flex items-start gap-2">
-                <IconFileText className="size-4 text-muted-foreground" />
-                <div className="flex flex-col min-w-0">
-                  <span className="font-medium">
-                    {formatDateTime(log.timestamp)}
-                  </span>
-                  <span className="text-xs text-muted-foreground wrap-break-word">
-                    {log.description}
-                  </span>
-                  <span className="text-xs text-muted-foreground wrap-break-word">
-                    {log.technicalDescription}
-                  </span>
-                </div>
+              <div className="flex flex-col min-w-0">
+                <span className="font-medium">
+                  {formatDateTime(log.timestamp)}
+                </span>
+                <span className="text-xs text-muted-foreground wrap-break-word">
+                  {log.description}
+                </span>
+                <span className="text-xs text-muted-foreground wrap-break-word">
+                  {log.technicalDescription}
+                </span>
               </div>
 
-              <div className="flex items-center gap-2 text-sm font-medium pt-1">
-                <IconListDetails className="size-4" />
+              <div className="text-sm font-medium pt-1">
                 Summary details
               </div>
 
-              <div className="grid grid-cols-2 gap-y-2 text-sm">
+              <div className="grid grid-cols-[9rem_1fr] gap-y-2 text-sm">
                 {Object.entries(log.metadata).map(([key, value]) => (
                   <Fragment key={key}>
-                    <span className="text-muted-foreground">{key}:</span>
-                    <span className="font-mono text-xs break-all">
+                    <span className="text-muted-foreground pr-4">{formatFieldLabel(key)}</span>
+                    <span className="break-all">
                       {formatMetadataValue(value)}
                     </span>
                   </Fragment>
@@ -106,7 +107,7 @@ export function LogMetadataDialog({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-auto px-0 text-xs"
+                  className="h-auto px-0 text-xs cursor-pointer hover:text-primary hover:bg-transparent"
                   onClick={() => setShowAdvanced((prev) => !prev)}
                 >
                   {showAdvanced
@@ -116,21 +117,18 @@ export function LogMetadataDialog({
               </div>
               {showAdvanced && (
                 <>
-                  <div className="flex items-center gap-2 text-sm font-medium pt-1">
-                    <IconListDetails className="size-4" />
+                  <div className="text-sm font-medium pt-1">
                     Technical fields
                   </div>
-                  <div className="max-h-56 overflow-y-auto rounded-md border border-border p-3">
-                    <div className="grid grid-cols-2 gap-y-2 text-sm">
-                      {Object.entries(log.rawMetadata).map(([key, value]) => (
-                        <Fragment key={`raw-${key}`}>
-                          <span className="text-muted-foreground">{key}:</span>
-                          <span className="font-mono text-xs break-all">
-                            {formatMetadataValue(value)}
-                          </span>
-                        </Fragment>
-                      ))}
-                    </div>
+                  <div className="grid grid-cols-[9rem_1fr] gap-y-2 text-sm">
+                    {Object.entries(log.rawMetadata).map(([key, value]) => (
+                      <Fragment key={`raw-${key}`}>
+                        <span className="text-muted-foreground pr-4">{formatFieldLabel(key)}</span>
+                        <span className="break-all">
+                          {formatMetadataValue(value)}
+                        </span>
+                      </Fragment>
+                    ))}
                   </div>
                 </>
               )}

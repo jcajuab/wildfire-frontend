@@ -45,6 +45,7 @@ import type {
   Schedule,
   CalendarView,
   ResourceMode,
+  DisplayGroupSortField,
   ScheduleFormData,
 } from "@/types/schedule";
 
@@ -97,6 +98,8 @@ export default function SchedulesPage(): ReactElement {
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [view, setView] = useState<CalendarView>("resource-week");
   const [resourceMode, setResourceMode] = useState<ResourceMode>("display");
+  const [displayGroupSort, setDisplayGroupSort] =
+    useState<DisplayGroupSortField>("alphabetical");
   const scheduleWindow = useMemo(
     () => getScheduleWindow(currentDate, view),
     [currentDate, view],
@@ -146,6 +149,14 @@ export default function SchedulesPage(): ReactElement {
     () => mapBackendSchedulesToSchedules(schedulesData ?? []),
     [schedulesData],
   );
+
+  const sortedDisplayGroups = useMemo(() => {
+    const groups = [...(displayGroupsData ?? [])];
+    if (displayGroupSort === "alphabetical") {
+      return groups.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return groups.sort((a, b) => b.displayIds.length - a.displayIds.length);
+  }, [displayGroupsData, displayGroupSort]);
 
   const [createDialogKind, setCreateDialogKind] = useState<
     "PLAYLIST" | "FLASH" | null
@@ -291,6 +302,8 @@ export default function SchedulesPage(): ReactElement {
               resourceMode={resourceMode}
               onResourceModeChange={setResourceMode}
               displayGroupsCount={displayGroupsData?.length ?? 0}
+              displayGroupSort={displayGroupSort}
+              onDisplayGroupSortChange={setDisplayGroupSort}
             />
           </div>
 
@@ -302,7 +315,7 @@ export default function SchedulesPage(): ReactElement {
               resources={availableDisplays}
               onScheduleClick={handleScheduleClick}
               resourceMode={resourceMode}
-              displayGroups={displayGroupsData ?? []}
+              displayGroups={sortedDisplayGroups}
             />
           </div>
         </DashboardPage.Content>
