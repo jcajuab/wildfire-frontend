@@ -7,8 +7,9 @@ import { AuthProvider, useAuth } from "@/context/auth-context";
 const loginMock = vi.fn();
 const logoutMock = vi.fn();
 const refreshTokenMock = vi.fn();
+const getSessionMock = vi.fn();
 
-vi.mock("@/lib/api-client", () => ({
+vi.mock("@/lib/api/auth-api", () => ({
   AuthApiError: class AuthApiError extends Error {
     constructor(
       message: string,
@@ -21,6 +22,8 @@ vi.mock("@/lib/api-client", () => ({
   login: (...args: unknown[]) => loginMock(...args),
   logoutApi: (...args: unknown[]) => logoutMock(...args),
   refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
+  getSession: (...args: unknown[]) => getSessionMock(...args),
+  getCsrfToken: () => null,
 }));
 
 function AuthProbe(): ReactElement {
@@ -29,6 +32,9 @@ function AuthProbe(): ReactElement {
     <div>
       <div data-testid="auth-status">
         {auth.isAuthenticated ? "authenticated" : "anonymous"}
+      </div>
+      <div data-testid="initialized">
+        {auth.isInitialized ? "initialized" : "loading"}
       </div>
       <div data-testid="can-displays-read">
         {auth.can("displays:read") ? "yes" : "no"}
@@ -42,26 +48,71 @@ function AuthProbe(): ReactElement {
 
 describe("AuthProvider", () => {
   beforeEach(() => {
-    localStorage.clear();
     loginMock.mockReset();
     logoutMock.mockReset();
     refreshTokenMock.mockReset();
+    getSessionMock.mockReset();
   });
 
-  test("hydrates session and permission checks from localStorage", async () => {
-    localStorage.setItem(
-      "wildfire_session",
-      JSON.stringify({
-        user: {
-          id: "user-1",
-          username: "user",
-          email: "user@example.com",
-          name: "User",
-        },
-        expiresAt: "2099-01-01T00:00:00.000Z",
-        permissions: ["displays:read"],
+  test("shows loading until hydration completes", async () => {
+    let resolveSession: (v: unknown) => void;
+    getSessionMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveSession = resolve;
       }),
     );
+
+    render(
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>,
+    );
+
+    expect(screen.getByTestId("initialized")).toHaveTextContent("loading");
+
+    resolveSession!({
+      type: "bearer",
+      expiresAt: "2099-01-01T00:00:00.000Z",
+      user: {
+        id: "user-1",
+        username: "user",
+        email: "user@example.com",
+        name: "User",
+        isAdmin: false,
+        isInvitedUser: false,
+        timezone: null,
+        avatarUrl: null,
+      },
+      permissions: ["displays:read"],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("initialized")).toHaveTextContent(
+        "initialized",
+      );
+    });
+    expect(screen.getByTestId("auth-status")).toHaveTextContent(
+      "authenticated",
+    );
+    expect(screen.getByTestId("can-displays-read")).toHaveTextContent("yes");
+  });
+
+  test("hydrates session and permission checks from server", async () => {
+    getSessionMock.mockResolvedValueOnce({
+      type: "bearer",
+      expiresAt: "2099-01-01T00:00:00.000Z",
+      user: {
+        id: "user-1",
+        username: "user",
+        email: "user@example.com",
+        name: "User",
+        isAdmin: false,
+        isInvitedUser: false,
+        timezone: null,
+        avatarUrl: null,
+      },
+      permissions: ["displays:read"],
+    });
 
     render(
       <AuthProvider>
@@ -77,21 +128,42 @@ describe("AuthProvider", () => {
     expect(screen.getByTestId("can-displays-read")).toHaveTextContent("yes");
   });
 
-  test("clears local session on logout even if API logout fails", async () => {
-    localStorage.setItem(
-      "wildfire_session",
-      JSON.stringify({
-        user: {
-          id: "user-1",
-          username: "user",
-          email: "user@example.com",
-          name: "User",
-        },
-        expiresAt: "2099-01-01T00:00:00.000Z",
-        permissions: ["displays:read"],
-      }),
+  test("remains anonymous when session returns 401", async () => {
+    getSessionMock.mockRejectedValueOnce(
+      Object.assign(new Error("Unauthorized"), { status: 401 }),
     );
-    logoutMock.mockRejectedValueOnce(new Error("network down"));
+
+    render(
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("initialized")).toHaveTextContent(
+        "initialized",
+      );
+    });
+    expect(screen.getByTestId("auth-status")).toHaveTextContent("anonymous");
+  });
+
+  test("clears client state on logout even if API logout fails", async () => {
+    getSessionMock.mockResolvedValueOnce({
+      type: "bearer",
+      expiresAt: "2099-01-01T00:00:00.000Z",
+      user: {
+        id: "user-1",
+        username: "user",
+        email: "user@example.com",
+        name: "User",
+        isAdmin: false,
+        isInvitedUser: false,
+        timezone: null,
+        avatarUrl: null,
+      },
+      permissions: ["displays:read"],
+    });
+    logoutMock.mockResolvedValueOnce(undefined); // logoutApi never throws
 
     render(
       <AuthProvider>
@@ -109,6 +181,5 @@ describe("AuthProvider", () => {
     await waitFor(() => {
       expect(screen.getByTestId("auth-status")).toHaveTextContent("anonymous");
     });
-    expect(localStorage.getItem("wildfire_session")).toBeNull();
   });
 });

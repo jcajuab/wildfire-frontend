@@ -3,7 +3,6 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "@/context/auth-context";
 import { contentApi } from "@/lib/api/content-api";
 import { playlistsApi } from "@/lib/api/playlists-api";
 import { schedulesApi } from "@/lib/api/schedules-api";
@@ -22,7 +21,6 @@ export function useAIChat({
   model,
   conversationId,
 }: UseAIChatOptions) {
-  const { token } = useAuth();
   const dispatch = useAppDispatch();
   const [input, setInput] = useState("");
 
@@ -46,7 +44,6 @@ export function useAIChat({
     () =>
       new DefaultChatTransport({
         api: "/api/ai/chat",
-        headers: token != null ? { Authorization: `Bearer ${token}` } : {},
         prepareSendMessagesRequest: ({
           messages,
           body,
@@ -66,7 +63,7 @@ export function useAIChat({
           },
         }),
       }),
-    [token],
+    [],
   );
   /* eslint-enable react-hooks/refs */
 

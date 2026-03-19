@@ -8,6 +8,9 @@ import {
   AUTH_API_ERROR_EVENT,
   type AuthApiErrorEventDetail,
 } from "@/lib/auth-events";
+import { getCsrfToken } from "@/lib/api/auth-api";
+
+const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "DELETE", "PATCH"]);
 
 /**
  * Backend API base URL with versioned API path suffix (e.g. /api/v1).
@@ -46,7 +49,7 @@ export function getDevOnlyRequestHeaders(): Record<string, string> {
 }
 
 /**
- * Shared base query for all RTK Query APIs. Adds auth token and dev-only ngrok header.
+ * Shared base query for all RTK Query APIs. Adds dev-only ngrok header.
  */
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: getBaseUrl(),
@@ -60,7 +63,8 @@ const rawBaseQuery = fetchBaseQuery({
 });
 
 /**
- * Shared baseQuery wrapper that emits global auth events for 401.
+ * Shared baseQuery wrapper that emits global auth events for 401 and adds CSRF token
+ * for state-changing requests (POST, PUT, DELETE, PATCH).
  * AuthContext listens to this event for deterministic auth/session behavior.
  */
 export const baseQuery: BaseQueryFn<
@@ -68,7 +72,32 @@ export const baseQuery: BaseQueryFn<
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-  const result = await rawBaseQuery(args, api, extraOptions);
+  // Inject CSRF token for state-changing methods
+  const method =
+    typeof args === "string" ? "GET" : (args.method?.toUpperCase() ?? "GET");
+  let patchedArgs = args;
+  if (STATE_CHANGING_METHODS.has(method) && typeof window !== "undefined") {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      if (typeof args === "string") {
+        patchedArgs = {
+          url: args,
+          method,
+          headers: { "X-CSRF-Token": csrfToken },
+        };
+      } else {
+        patchedArgs = {
+          ...args,
+          headers: {
+            ...(args.headers as Record<string, string>),
+            "X-CSRF-Token": csrfToken,
+          },
+        };
+      }
+    }
+  }
+
+  const result = await rawBaseQuery(patchedArgs, api, extraOptions);
   const status = result.error?.status;
   if (typeof window !== "undefined" && status === 401) {
     const detail: AuthApiErrorEventDetail = {

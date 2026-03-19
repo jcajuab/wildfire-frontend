@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { useAuth } from "@/context/auth-context";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
-import { getBaseUrl } from "@/lib/api/base-query";
+import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/base-query";
 
 export interface AICredential {
   provider: string;
@@ -24,7 +23,6 @@ interface UseAICredentialsReturn {
 }
 
 export function useAICredentials(): UseAICredentialsReturn {
-  const { token } = useAuth();
   const [credentials, setCredentials] = useState<AICredential[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,12 +30,12 @@ export function useAICredentials(): UseAICredentialsReturn {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const fetchCredentials = useCallback(async (): Promise<AICredential[]> => {
-    if (!token) return [];
     setIsLoading(true);
     setError(null);
     try {
       const response = await fetch(`${getBaseUrl()}/ai/credentials`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+        headers: { ...getDevOnlyRequestHeaders() },
       });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -55,7 +53,7 @@ export function useAICredentials(): UseAICredentialsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     void fetchCredentials();
@@ -63,14 +61,14 @@ export function useAICredentials(): UseAICredentialsReturn {
 
   const saveCredential = useCallback(
     async (provider: string, apiKey: string): Promise<boolean> => {
-      if (!token) return false;
       setIsSaving(true);
       try {
         const response = await fetch(`${getBaseUrl()}/ai/credentials`, {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            ...getDevOnlyRequestHeaders(),
           },
           body: JSON.stringify({ provider, apiKey }),
         });
@@ -89,19 +87,19 @@ export function useAICredentials(): UseAICredentialsReturn {
         setIsSaving(false);
       }
     },
-    [token, fetchCredentials],
+    [fetchCredentials],
   );
 
   const deleteCredential = useCallback(
     async (provider: string): Promise<boolean> => {
-      if (!token) return false;
       setIsDeleting(provider);
       try {
         const response = await fetch(
           `${getBaseUrl()}/ai/credentials/${provider}`,
           {
             method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
+            credentials: "include",
+            headers: { ...getDevOnlyRequestHeaders() },
           },
         );
         if (!response.ok) {
@@ -119,7 +117,7 @@ export function useAICredentials(): UseAICredentialsReturn {
         setIsDeleting(null);
       }
     },
-    [token, fetchCredentials],
+    [fetchCredentials],
   );
 
   return {

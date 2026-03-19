@@ -2,7 +2,13 @@
 
 import type { ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion } from "framer-motion";
+import {
+  AnimatePresence,
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+} from "framer-motion";
 import { IconMessageChatbot, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";

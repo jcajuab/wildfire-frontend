@@ -27,3 +27,11 @@ export interface AuthResponse {
   /** Current user's permissions (resource:action). Empty if no roles. */
   readonly permissions: PermissionType[];
 }
+
+/** Success response from GET /auth/session (no token field). */
+export interface SessionResponse {
+  readonly type: "bearer";
+  readonly expiresAt: string;
+  readonly user: AuthUser;
+  readonly permissions: PermissionType[];
+}

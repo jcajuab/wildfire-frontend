@@ -1,4 +1,3 @@
-import invariant from "tiny-invariant";
 import { getBackendUrl } from "./backend-url";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -6,7 +5,8 @@ const isDev = process.env.NODE_ENV === "development";
 interface ProxyOptions {
   method: string;
   path: string;
-  authHeader: string | null;
+  cookies: string | null;
+  csrfToken: string | null;
   body?: string;
   streamResponse?: boolean;
   extraHeaders?: Record<string, string>;
@@ -14,26 +14,31 @@ interface ProxyOptions {
 
 /**
  * Proxies a request to the backend API with error handling.
+ * Forwards the session cookie and CSRF token from the incoming request.
  * In development, detailed errors are returned in the response.
  * In production, errors are generic.
  */
 export async function proxyToBackend({
   method,
   path,
-  authHeader,
+  cookies,
+  csrfToken,
   body,
   streamResponse,
   extraHeaders,
 }: ProxyOptions): Promise<Response> {
-  invariant(authHeader, "Authorization header is required");
-
   const url = `${getBackendUrl()}${path}`;
 
   try {
     const headers: Record<string, string> = {
-      Authorization: authHeader,
       ...extraHeaders,
     };
+    if (cookies) {
+      headers["Cookie"] = cookies;
+    }
+    if (csrfToken) {
+      headers["X-CSRF-Token"] = csrfToken;
+    }
     if (body) {
       headers["Content-Type"] = "application/json";
     }

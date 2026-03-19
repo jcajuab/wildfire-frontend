@@ -11,7 +11,8 @@ export async function POST(request: NextRequest): Promise<Response> {
   return proxyToBackend({
     method: "POST",
     path: "/ai/chat",
-    authHeader: request.headers.get("Authorization"),
+    cookies: request.headers.get("Cookie"),
+    csrfToken: request.headers.get("X-CSRF-Token"),
     body: await request.text(),
     streamResponse: true,
     extraHeaders,

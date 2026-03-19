@@ -21,7 +21,6 @@ interface UseProfileEditorProps {
   readonly userName: string | undefined;
   readonly userUsername: string | undefined;
   readonly userEmail: string | null | undefined;
-  readonly token: string | null;
   readonly updateSession: (response: AuthResponse) => void;
 }
 
@@ -29,7 +28,6 @@ export function useProfileEditor({
   userName,
   userUsername,
   userEmail,
-  token,
   updateSession,
 }: UseProfileEditorProps) {
   const initialName = splitName(userName);
@@ -90,11 +88,6 @@ export function useProfileEditor({
 
   const saveProfileName = useCallback(
     async (nextFirstName: string, nextLastName: string): Promise<boolean> => {
-      if (!token) {
-        setProfileNameError("Not authenticated.");
-        return false;
-      }
-
       const normalizedFirstName = nextFirstName.trim();
       const normalizedLastName = nextLastName.trim();
       const normalizedSavedFirstName = savedFirstName.trim();
@@ -117,7 +110,7 @@ export function useProfileEditor({
       setIsSavingProfileName(true);
       setProfileNameError(null);
       try {
-        const response = await updateCurrentUserProfile(token, { name });
+        const response = await updateCurrentUserProfile({ name });
         updateSession(response);
         setSavedFirstName(normalizedFirstName);
         setSavedLastName(normalizedLastName);
@@ -132,16 +125,11 @@ export function useProfileEditor({
         setIsSavingProfileName(false);
       }
     },
-    [token, savedFirstName, savedLastName, updateSession],
+    [savedFirstName, savedLastName, updateSession],
   );
 
   const saveUsername = useCallback(
     async (nextUsername: string): Promise<boolean> => {
-      if (!token) {
-        setUsernameError("Not authenticated.");
-        return false;
-      }
-
       const normalized = nextUsername.trim();
       setUsername(normalized);
 
@@ -153,7 +141,7 @@ export function useProfileEditor({
       setIsSavingUsername(true);
       setUsernameError(null);
       try {
-        const response = await updateCurrentUserProfile(token, {
+        const response = await updateCurrentUserProfile({
           username: normalized,
         });
         updateSession(response);
@@ -167,16 +155,11 @@ export function useProfileEditor({
         setIsSavingUsername(false);
       }
     },
-    [token, savedUsername, updateSession],
+    [savedUsername, updateSession],
   );
 
   const saveEmail = useCallback(
     async (nextEmail: string): Promise<boolean> => {
-      if (!token) {
-        setEmailError("Not authenticated.");
-        return false;
-      }
-
       const normalized = nextEmail.trim();
       setEmail(normalized);
 
@@ -188,7 +171,7 @@ export function useProfileEditor({
       setIsSavingEmail(true);
       setEmailError(null);
       try {
-        const response = await updateCurrentUserProfile(token, {
+        const response = await updateCurrentUserProfile({
           email: normalized || null,
         });
         updateSession(response);
@@ -202,16 +185,11 @@ export function useProfileEditor({
         setIsSavingEmail(false);
       }
     },
-    [token, savedEmail, updateSession],
+    [savedEmail, updateSession],
   );
 
   const handleAvatarUpload = useCallback(
     async (file: File): Promise<void> => {
-      if (!token) {
-        setProfilePictureError("Not authenticated.");
-        return;
-      }
-
       const allowedTypes = [
         "image/jpeg",
         "image/png",
@@ -232,7 +210,7 @@ export function useProfileEditor({
 
       setIsAvatarUploading(true);
       try {
-        const response = await uploadAvatar(token, file);
+        const response = await uploadAvatar(file);
         updateSession(response);
         toast.success("Profile picture updated.");
       } catch (err) {
@@ -241,7 +219,7 @@ export function useProfileEditor({
         setIsAvatarUploading(false);
       }
     },
-    [token, updateSession],
+    [updateSession],
   );
 
   return {

@@ -13,7 +13,6 @@ import { useProfileEditor } from "./use-profile-editor";
 export interface UseSettingsPageResult {
   // Auth
   user: ReturnType<typeof useAuth>["user"];
-  token: ReturnType<typeof useAuth>["token"];
   logout: ReturnType<typeof useAuth>["logout"];
   isInvitedUser: boolean;
   isWildfireUser: boolean;
@@ -54,7 +53,7 @@ export interface UseSettingsPageResult {
 }
 
 export function useSettingsPage(): UseSettingsPageResult {
-  const { user, token, logout, updateSession } = useAuth();
+  const { user, logout, updateSession } = useAuth();
   const { theme, setTheme } = useTheme();
   const prefersReducedMotion = useReducedMotion();
 
@@ -62,7 +61,6 @@ export function useSettingsPage(): UseSettingsPageResult {
     userName: user?.name,
     userUsername: user?.username,
     userEmail: user?.email,
-    token,
     updateSession,
   });
 
@@ -101,7 +99,7 @@ export function useSettingsPage(): UseSettingsPageResult {
     currentPassword: string;
     newPassword: string;
   }): Promise<void> => {
-    await changePassword(token, data);
+    await changePassword(data);
     toast.success("Password updated.");
     setIsPasswordDialogOpen(false);
   };
@@ -122,7 +120,7 @@ export function useSettingsPage(): UseSettingsPageResult {
 
   const handleDeleteAccountConfirm = async (): Promise<void> => {
     try {
-      await deleteCurrentUser(token);
+      await deleteCurrentUser();
       await logout();
     } catch (err) {
       notifyApiError(err, "Failed to delete account.");
@@ -131,7 +129,6 @@ export function useSettingsPage(): UseSettingsPageResult {
 
   return {
     user,
-    token,
     logout,
     isInvitedUser,
     isWildfireUser,

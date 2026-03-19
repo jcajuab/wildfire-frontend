@@ -12,6 +12,7 @@ import {
 } from "react";
 import {
   AuthApiError,
+  getSession,
   login as loginApi,
   logoutApi,
   refreshToken,
@@ -25,89 +26,12 @@ import { can as canPermission } from "@/lib/permissions";
 import type { AuthResponse, AuthUser } from "@/types/auth";
 import type { PermissionType } from "@/types/permission";
 
-const SESSION_KEY = "wildfire_session";
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes before expiry
-const REFRESH_CHECK_INTERVAL_MS = 60_000; // check every 60 seconds
+const REFRESH_CHECK_INTERVAL_MS = 30_000; // check every 30 seconds
 const AUTH_ERROR_SUPPRESSION_MS = 2_000;
-
-interface SessionData {
-  readonly user: AuthUser;
-  readonly expiresAt: string;
-  readonly permissions: PermissionType[];
-  readonly token: string | null;
-}
-
-function readSession(): SessionData | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-
-    const data = JSON.parse(raw) as unknown;
-    if (data == null || typeof data !== "object") return null;
-    const d = data as Record<string, unknown>;
-    if (typeof d.expiresAt !== "string" || d.expiresAt === "") return null;
-    const user = d.user;
-    if (user == null || typeof user !== "object") return null;
-    const u = user as Record<string, unknown>;
-    if (
-      !(
-        typeof u.id === "string" &&
-        typeof u.username === "string" &&
-        (typeof u.email === "string" || u.email === null) &&
-        typeof u.name === "string"
-      )
-    )
-      return null;
-
-    const isAdmin = typeof u.isAdmin === "boolean" ? u.isAdmin : false;
-    const isInvitedUser =
-      typeof u.isInvitedUser === "boolean" ? u.isInvitedUser : false;
-    const normalizedUser: AuthUser = {
-      id: u.id,
-      username: u.username,
-      email: u.email ?? null,
-      name: u.name,
-      isAdmin,
-      isInvitedUser,
-      timezone: typeof u.timezone === "string" ? u.timezone : null,
-      avatarUrl: typeof u.avatarUrl === "string" ? u.avatarUrl : null,
-    };
-    const rawPermissions = d.permissions;
-    if (
-      !Array.isArray(rawPermissions) ||
-      !rawPermissions.every(
-        (permission) =>
-          typeof permission === "string" && permission.includes(":"),
-      )
-    ) {
-      return null;
-    }
-    const permissions = rawPermissions as PermissionType[];
-    const token = typeof d.token === "string" ? d.token : null;
-
-    return {
-      user: normalizedUser,
-      expiresAt: d.expiresAt as string,
-      permissions,
-      token,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function writeSession(data: SessionData): void {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(data));
-}
-
-function clearSession(): void {
-  localStorage.removeItem(SESSION_KEY);
-}
 
 interface AuthContextValue {
   readonly user: AuthUser | null;
-  readonly token: string | null;
   readonly permissions: PermissionType[];
   readonly isAuthenticated: boolean;
   readonly isLoading: boolean;
@@ -129,41 +53,81 @@ export function AuthProvider({
   children: ReactNode;
 }): ReactElement {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<PermissionType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const session = readSession();
-    if (session) {
-      setUser(session.user);
-      setPermissions(session.permissions);
-      setToken(session.token);
-    }
-    setIsInitialized(true);
+    getSession()
+      .then((session) => {
+        setUser(session.user);
+        setPermissions(session.permissions as PermissionType[]);
+      })
+      .catch(() => {
+        // 401 or network error: user is not authenticated, that's fine
+      })
+      .finally(() => {
+        setIsInitialized(true);
+      });
   }, []);
 
   const inFlightRefreshPromiseRef = useRef<Promise<void> | null>(null);
   const refreshRequestedWhileRunningRef = useRef(false);
   const suppressAuthErrorUntilRef = useRef(0);
   const userRef = useRef(user);
-  const tokenRef = useRef(token);
+  const expiresAtRef = useRef<string | null>(null);
 
   useEffect(() => {
     userRef.current = user;
   }, [user]);
 
-  useEffect(() => {
-    tokenRef.current = token;
-  }, [token]);
-
   const clearAuthState = useCallback(() => {
     setUser(null);
-    setToken(null);
     setPermissions([]);
-    clearSession();
   }, []);
+
+  const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
+
+  useEffect(() => {
+    if (typeof BroadcastChannel === "undefined") return;
+    const channel = new BroadcastChannel("wildfire_auth");
+    broadcastChannelRef.current = channel;
+
+    channel.onmessage = (event: MessageEvent) => {
+      try {
+        const data = event.data as
+          | { type: "logout" }
+          | { type: "refresh"; session: AuthResponse; expiresAt: string }
+          | { type: "session_revoked" };
+
+        if (data.type === "logout") {
+          clearAuthState();
+          expiresAtRef.current = null;
+        } else if (data.type === "refresh") {
+          // Stale message guard: only apply if incoming expiresAt is later than current
+          const incomingMs = new Date(data.expiresAt).getTime();
+          const currentMs = expiresAtRef.current
+            ? new Date(expiresAtRef.current).getTime()
+            : 0;
+          if (incomingMs > currentMs) {
+            expiresAtRef.current = data.expiresAt;
+            setUser(data.session.user);
+            setPermissions(data.session.permissions);
+          }
+        } else if (data.type === "session_revoked") {
+          clearAuthState();
+          expiresAtRef.current = null;
+        }
+      } catch {
+        // ignore malformed messages
+      }
+    };
+
+    return () => {
+      channel.close();
+      broadcastChannelRef.current = null;
+    };
+  }, [clearAuthState]);
 
   useEffect(() => {
     if (!user) return;
@@ -171,10 +135,10 @@ export function AuthProvider({
     const refreshTokenCheckIntervalId = setInterval(async () => {
       if (!userRef.current) return;
 
-      const session = readSession();
-      if (!session?.expiresAt) return;
+      const expiresAt = expiresAtRef.current;
+      if (!expiresAt) return;
 
-      const expiresAtMs = new Date(session.expiresAt).getTime();
+      const expiresAtMs = new Date(expiresAt).getTime();
       const nowMs = Date.now();
       if (expiresAtMs - nowMs > REFRESH_THRESHOLD_MS) return;
 
@@ -182,23 +146,16 @@ export function AuthProvider({
     }, REFRESH_CHECK_INTERVAL_MS);
 
     return () => clearInterval(refreshTokenCheckIntervalId);
-  }, [clearAuthState, user]);
+  }, [user]);
 
   const login = useCallback(
     async (credentials: { username: string; password: string }) => {
       setIsLoading(true);
       try {
         const result = await loginApi(credentials);
-        const session: SessionData = {
-          user: result.user,
-          expiresAt: result.expiresAt,
-          permissions: result.permissions,
-          token: result.token,
-        };
-        writeSession(session);
-        setUser(session.user);
-        setPermissions(session.permissions);
-        setToken(session.token);
+        expiresAtRef.current = result.expiresAt;
+        setUser(result.user);
+        setPermissions(result.permissions);
       } finally {
         setIsLoading(false);
       }
@@ -207,12 +164,11 @@ export function AuthProvider({
   );
 
   const logout = useCallback(async () => {
+    // Best-effort server call; always clear client state regardless of outcome
+    await logoutApi();
+    broadcastChannelRef.current?.postMessage({ type: "logout" });
     clearAuthState();
-    try {
-      await logoutApi(tokenRef.current);
-    } catch {
-      // Backend no-op; ignore network errors
-    }
+    expiresAtRef.current = null;
   }, [clearAuthState]);
 
   const refreshSession = useCallback(async () => {
@@ -229,17 +185,15 @@ export function AuthProvider({
           suppressAuthErrorUntilRef.current =
             Date.now() + AUTH_ERROR_SUPPRESSION_MS;
 
-          const response = await refreshToken(tokenRef.current);
-          const session: SessionData = {
-            user: response.user,
+          const response = await refreshToken();
+          expiresAtRef.current = response.expiresAt;
+          setUser(response.user);
+          setPermissions(response.permissions);
+          broadcastChannelRef.current?.postMessage({
+            type: "refresh",
+            session: response,
             expiresAt: response.expiresAt,
-            permissions: response.permissions,
-            token: response.token,
-          };
-          writeSession(session);
-          setUser(session.user);
-          setPermissions(session.permissions);
-          setToken(session.token);
+          });
         } while (refreshRequestedWhileRunningRef.current);
       } catch (err) {
         suppressAuthErrorUntilRef.current = 0;
@@ -279,6 +233,7 @@ export function AuthProvider({
         if (isSuppressed && !isAuthSessionRequest) {
           return;
         }
+        broadcastChannelRef.current?.postMessage({ type: "session_revoked" });
         clearAuthState();
       }
     };
@@ -300,16 +255,9 @@ export function AuthProvider({
   }, [clearAuthState]);
 
   const updateSession = useCallback((response: AuthResponse) => {
-    const session: SessionData = {
-      user: response.user,
-      expiresAt: response.expiresAt,
-      permissions: response.permissions,
-      token: response.token,
-    };
-    writeSession(session);
-    setUser(session.user);
-    setPermissions(session.permissions);
-    setToken(session.token);
+    expiresAtRef.current = response.expiresAt;
+    setUser(response.user);
+    setPermissions(response.permissions);
   }, []);
 
   const can = useCallback(
@@ -321,7 +269,6 @@ export function AuthProvider({
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
-      token,
       permissions,
       isAuthenticated: user !== null,
       isLoading,
@@ -334,7 +281,6 @@ export function AuthProvider({
     }),
     [
       user,
-      token,
       permissions,
       isLoading,
       isInitialized,

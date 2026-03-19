@@ -4,7 +4,11 @@ import {
   parseApiResponseData,
   type ApiErrorResponse,
 } from "@/lib/api/contracts";
-import type { AuthResponse, LoginCredentials } from "@/types/auth";
+import type {
+  AuthResponse,
+  LoginCredentials,
+  SessionResponse,
+} from "@/types/auth";
 
 interface JsonParseFailurePayload {
   readonly __parseFailure: true;
@@ -113,39 +117,47 @@ export async function login(
   return parseApiPayload<AuthResponse>(response);
 }
 
-/** POST /auth/session/refresh. Refreshes JWT (sliding session). Returns auth payload or throws with backend error body. */
-export async function refreshToken(
-  token?: string | null,
-): Promise<AuthResponse> {
+/** GET /auth/session. Returns current session user + permissions or throws with backend error body. */
+export async function getSession(): Promise<SessionResponse> {
   const baseUrl = getBaseUrl();
-  const headers: Record<string, string> = {
-    ...getDevOnlyRequestHeaders(),
-  };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
+  const response = await fetch(`${baseUrl}/auth/session`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      ...getDevOnlyRequestHeaders(),
+    },
+  });
+
+  return parseApiPayload<SessionResponse>(response);
+}
+
+/** POST /auth/session/refresh. Refreshes JWT (sliding session). Returns auth payload or throws with backend error body. */
+export async function refreshToken(): Promise<AuthResponse> {
+  const baseUrl = getBaseUrl();
+  const csrfToken = getCsrfToken();
   const response = await fetch(`${baseUrl}/auth/session/refresh`, {
     method: "POST",
     credentials: "include",
-    headers,
+    headers: {
+      ...getDevOnlyRequestHeaders(),
+      ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+    },
   });
 
   return parseApiPayload<AuthResponse>(response);
 }
 
-/** POST /auth/logout. No-op on backend; call for consistency. Does not throw. */
-export async function logoutApi(token?: string | null): Promise<void> {
+/** POST /auth/logout. Clears server session. Does not throw. */
+export async function logoutApi(): Promise<void> {
   const baseUrl = getBaseUrl();
-  const headers: Record<string, string> = {
-    ...getDevOnlyRequestHeaders(),
-  };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
+  const csrfToken = getCsrfToken();
   const response = await fetch(`${baseUrl}/auth/logout`, {
     method: "POST",
     credentials: "include",
-    headers,
+    headers: {
+      ...getDevOnlyRequestHeaders(),
+      ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+    },
   });
   if (!response.ok) {
     // Log for observability; do not throw so UX is not blocked
@@ -154,6 +166,15 @@ export async function logoutApi(token?: string | null): Promise<void> {
       status: response.status,
     });
   }
+}
+
+/** Reads the CSRF token from the wildfire_csrf cookie (non-httpOnly, readable by JS). */
+export function getCsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("wildfire_csrf="));
+  return match ? (match.split("=")[1] ?? null) : null;
 }
 
 /** Error thrown by auth API with status and optional backend body. */
