@@ -26,48 +26,16 @@ export function useAIChat({
   const dispatch = useAppDispatch();
   const [input, setInput] = useState("");
 
-  // Transport handles message serialization only. Dynamic values (provider,
-  // model, etc.) are passed via sendMessage's request-level body options to
-  // avoid stale closures — per AI SDK's recommended pattern.
+  // Let the DefaultChatTransport send full UIMessage[] (including tool parts
+  // and approval responses) so the AI SDK's needsApproval round-trip works.
+  // Dynamic values (provider, model, etc.) are passed via sendMessage's
+  // request-level body options — per AI SDK's recommended pattern.
   // See: https://ai-sdk.dev/docs/troubleshooting/use-chat-stale-body-data
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/ai/chat",
         headers: token != null ? { Authorization: `Bearer ${token}` } : {},
-        prepareSendMessagesRequest: ({
-          messages,
-          body,
-        }): { body: Record<string, unknown> } => {
-          const serialized = messages
-            .map((msg) => {
-              const textParts = msg.parts
-                .filter(
-                  (p): p is { type: "text"; text: string } => p.type === "text",
-                )
-                .map((p) => p.text);
-              const content = textParts.join("");
-              if (content.length === 0) return null;
-              return {
-                role: msg.role as "user" | "assistant" | "system",
-                content,
-              };
-            })
-            .filter(
-              (
-                msg,
-              ): msg is {
-                role: "user" | "assistant" | "system";
-                content: string;
-              } => msg !== null,
-            );
-          return {
-            body: {
-              ...(body as Record<string, unknown>),
-              messages: serialized,
-            },
-          };
-        },
       }),
     [token],
   );
@@ -117,6 +85,22 @@ export function useAIChat({
   const { messages, status, error, sendMessage, addToolApprovalResponse } =
     useChat({
       transport,
+      // After a tool approval response, automatically re-submit so the
+      // server can execute the approved tool and continue the conversation.
+      sendAutomaticallyWhen: ({ messages: msgs }) => {
+        const lastMsg = msgs[msgs.length - 1];
+        if (!lastMsg || lastMsg.role !== "assistant") return false;
+        return lastMsg.parts.some(
+          (p) =>
+            "state" in p &&
+            p.state === "approval-responded" &&
+            "approval" in p &&
+            p.approval != null &&
+            typeof p.approval === "object" &&
+            "approved" in p.approval &&
+            p.approval.approved === true,
+        );
+      },
       onFinish: ({ messages: allMessages }) => {
         // Collect tool parts from ALL assistant messages (not just the last one)
         // because multi-step chains place tool calls in intermediate messages.
