@@ -150,22 +150,24 @@ function UserRow({
             <IconUser className="size-6 text-muted-foreground" />
           )}
           <div>
-            <span className="font-medium">
-              {user.name}
-              {isCurrentUser && (
-                <span className="text-muted-foreground font-normal">
-                  {" "}
-                  (You)
-                </span>
-              )}
-            </span>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              @{user.username}
+            <div className="flex items-center gap-1.5">
+              <span className="font-medium">
+                {user.name}
+                {isCurrentUser && (
+                  <span className="text-muted-foreground font-normal">
+                    {" "}
+                    (You)
+                  </span>
+                )}
+              </span>
               {isBanned && (
                 <Badge variant="destructive" className="border-destructive/30">
                   Banned
                 </Badge>
               )}
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              @{user.username}
             </div>
           </div>
         </div>

@@ -2,7 +2,6 @@
 
 import type { ReactElement } from "react";
 import { useState } from "react";
-import { IconAlertCircle } from "@tabler/icons-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,10 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  getApiErrorMessage,
-  notifyApiError,
-} from "@/lib/api/get-api-error-message";
+import { notifyApiError } from "@/lib/api/get-api-error-message";
 
 interface ConfirmActionDialogProps {
   readonly open: boolean;
@@ -44,19 +40,15 @@ export function ConfirmActionDialog({
   destructive = true,
 }: ConfirmActionDialogProps): ReactElement {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   async function handleConfirm(): Promise<void> {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    setActionError(null);
     try {
       await onConfirm();
       onOpenChange(false);
     } catch (error) {
-      const message = getApiErrorMessage(error, errorFallback);
-      setActionError(message);
-      notifyApiError(error, errorFallback, {
+      const message = notifyApiError(error, errorFallback, {
         dedupe: false,
         id: "wildfire:confirm-action",
       });
@@ -67,9 +59,6 @@ export function ConfirmActionDialog({
   }
 
   function handleOpenChange(nextOpen: boolean): void {
-    if (!nextOpen) {
-      setActionError(null);
-    }
     onOpenChange(nextOpen);
   }
 
@@ -80,19 +69,6 @@ export function ConfirmActionDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           {description ? (
             <AlertDialogDescription>{description}</AlertDialogDescription>
-          ) : null}
-          {actionError ? (
-            <p
-              className="mt-2 text-xs text-destructive"
-              role="alert"
-              aria-live="assertive"
-              aria-atomic="true"
-            >
-              <span className="inline-flex items-center gap-1">
-                <IconAlertCircle className="size-3" />
-                <span>{actionError}</span>
-              </span>
-            </p>
           ) : null}
         </AlertDialogHeader>
         <AlertDialogFooter>
