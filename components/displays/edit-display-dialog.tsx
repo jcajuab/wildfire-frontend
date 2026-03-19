@@ -243,36 +243,6 @@ function EditDisplayForm({
           />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-ip">IP Address or Hostname</Label>
-          <Input
-            id="edit-ip"
-            value={formData.ipAddress}
-            onChange={(event) =>
-              setFormData((prev) => ({
-                ...prev,
-                ipAddress: event.target.value,
-              }))
-            }
-            disabled={isSaving}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-mac">MAC Address</Label>
-          <Input
-            id="edit-mac"
-            value={formData.macAddress}
-            onChange={(event) =>
-              setFormData((prev) => ({
-                ...prev,
-                macAddress: event.target.value,
-              }))
-            }
-            disabled={isSaving}
-          />
-        </div>
-
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="edit-output-type">Display Output Type</Label>
@@ -286,7 +256,7 @@ function EditDisplayForm({
               }
               disabled={isSaving}
             >
-              <SelectTrigger id="edit-output-type">
+              <SelectTrigger id="edit-output-type" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -380,7 +350,7 @@ function EditDisplayForm({
             }
             disabled={isSaving}
           >
-            <SelectTrigger id="edit-emergency-content">
+            <SelectTrigger id="edit-emergency-content" className="w-full">
               <SelectValue placeholder="Select emergency content" />
             </SelectTrigger>
             <SelectContent>
