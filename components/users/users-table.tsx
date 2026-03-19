@@ -162,7 +162,7 @@ function UserRow({
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               @{user.username}
               {isBanned && (
-                <Badge variant="destructive" className="text-xs px-1 py-0">
+                <Badge variant="destructive" className="border-destructive/30">
                   Banned
                 </Badge>
               )}
