@@ -208,6 +208,9 @@ export function DisplayGroupManagerDialog({
             <Input
               value={createName}
               onChange={(event) => setCreateName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void createGroup();
+              }}
               placeholder="New group name"
               aria-label="New group name"
               disabled={isCreating}
