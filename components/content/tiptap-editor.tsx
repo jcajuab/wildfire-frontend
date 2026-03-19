@@ -34,7 +34,7 @@ import { LinkPopover } from "./tiptap-link-popover";
 import { TablePopover } from "./tiptap-table-popover";
 import { ColorPicker } from "./tiptap-color-picker";
 
-const TEXT_CONTENT_MAX_CHARS = 5000;
+const TEXT_CONTENT_MAX_CHARS = 1000;
 
 interface TiptapEditorProps {
   readonly content?: string;
@@ -115,6 +115,7 @@ export function TiptapEditor({
   }
 
   const charCount = editor.storage.characterCount.characters();
+  const wordCount = editor.storage.characterCount.words();
   const isOverLimit = charCount > TEXT_CONTENT_MAX_CHARS;
 
   return (
@@ -266,7 +267,7 @@ export function TiptapEditor({
             isOverLimit ? "text-destructive" : "text-muted-foreground",
           )}
         >
-          {charCount} / {TEXT_CONTENT_MAX_CHARS} characters
+          {charCount} / {TEXT_CONTENT_MAX_CHARS} characters · ~{wordCount} words
         </div>
       ) : null}
     </div>

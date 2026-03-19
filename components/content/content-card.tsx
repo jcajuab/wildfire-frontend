@@ -129,7 +129,7 @@ export const ContentCard = memo(function ContentCard({
         className={cn(
           "relative flex aspect-video bg-muted/50",
           isTextContent
-            ? "items-center justify-center overflow-visible"
+            ? "items-center justify-center overflow-hidden"
             : "items-center justify-center",
         )}
       >
@@ -139,12 +139,13 @@ export const ContentCard = memo(function ContentCard({
             message={flashThumbnailText ?? ""}
           />
         ) : isTextContent ? (
-          <div className="flex h-full w-full items-center justify-center overflow-visible p-2">
+          <div className="relative flex h-full w-full items-start overflow-hidden p-2">
             <div
-              className="max-w-full text-center text-xs leading-snug break-words text-foreground [&_blockquote]:my-1 [&_blockquote]:border-l [&_blockquote]:border-border [&_blockquote]:pl-2 [&_em]:italic [&_i]:italic [&_li]:list-item [&_ol]:my-1 [&_ol]:ml-4 [&_ol]:list-decimal [&_p]:my-0 [&_strong]:font-semibold [&_u]:underline [&_ul]:my-1 [&_ul]:ml-4 [&_ul]:list-disc"
+              className="w-full break-words text-xs leading-snug text-foreground [&_blockquote]:my-1 [&_blockquote]:border-l [&_blockquote]:border-border [&_blockquote]:pl-2 [&_em]:italic [&_i]:italic [&_li]:list-item [&_ol]:my-1 [&_ol]:ml-4 [&_ol]:list-decimal [&_p]:my-0 [&_s]:line-through [&_strong]:font-semibold [&_u]:underline [&_ul]:my-1 [&_ul]:ml-4 [&_ul]:list-disc [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-1 [&_td]:py-0.5 [&_th]:border [&_th]:border-border [&_th]:bg-muted/60 [&_th]:px-1 [&_th]:py-0.5 [&_th]:font-semibold"
               aria-label={textThumbnailText ?? content.title}
               dangerouslySetInnerHTML={{ __html: textThumbnailHtml ?? "" }}
             />
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-muted/90 to-transparent" />
           </div>
         ) : (
           <>

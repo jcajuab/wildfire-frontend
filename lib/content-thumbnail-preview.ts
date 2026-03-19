@@ -54,6 +54,15 @@ const SAFE_RICH_TEXT_TAGS = new Set([
   "li",
   "blockquote",
   "code",
+  "table",
+  "thead",
+  "tbody",
+  "tfoot",
+  "tr",
+  "th",
+  "td",
+  "colgroup",
+  "col",
 ]);
 const DROP_WITH_CONTENT_TAGS = new Set([
   "script",

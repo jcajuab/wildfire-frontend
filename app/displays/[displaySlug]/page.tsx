@@ -72,6 +72,40 @@ const blobToDataUrl = (blob: Blob): Promise<string> =>
     reader.readAsDataURL(blob);
   });
 
+function computeTableFontSize(
+  html: string,
+  viewportHeight: number,
+): { fontSize: number; cellPaddingV: number; cellPaddingH: number } | null {
+  if (!html.includes("<table")) return null;
+
+  const firstRowContent =
+    html.match(/<tr[^>]*>([\s\S]*?)<\/tr>/i)?.[1] ?? "";
+  const colCount = (firstRowContent.match(/<(th|td)/gi) ?? []).length;
+
+  let fontSize =
+    colCount <= 2 ? 36
+    : colCount <= 4 ? 24
+    : colCount <= 6 ? 18
+    : 14;
+
+  const rowCount = (html.match(/<tr[^>]/gi) ?? []).length;
+  const availableHeight = viewportHeight - 64;
+  const MIN_FONT = 10;
+
+  while (fontSize > MIN_FONT) {
+    const cellPaddingV = Math.max(4, Math.round(fontSize * 0.4));
+    const estimatedRowHeight = cellPaddingV * 2 + fontSize * 1.5;
+    if (rowCount * estimatedRowHeight <= availableHeight) break;
+    fontSize -= 2;
+  }
+
+  return {
+    fontSize,
+    cellPaddingV: Math.max(4, Math.round(fontSize * 0.4)),
+    cellPaddingH: Math.max(8, Math.round(fontSize * 0.6)),
+  };
+}
+
 export default function DisplayRuntimePage() {
   const params = useParams<{ displaySlug: string }>();
   const displaySlug = params.displaySlug;
@@ -102,6 +136,14 @@ export default function DisplayRuntimePage() {
   const isEmergencyModeActive = playback?.mode === "EMERGENCY";
   const activeFlash = playback?.mode === "SCHEDULE" ? playback.flash : null;
   const baseUrl = getBaseUrl();
+
+  const tableStyle = useMemo(() => {
+    if (currentItem?.content.type !== "TEXT") return null;
+    return computeTableFontSize(
+      currentItem.content.textHtmlContent ?? "",
+      viewport.height,
+    );
+  }, [currentItem, viewport.height]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -523,10 +565,10 @@ export default function DisplayRuntimePage() {
             />
           </div>
         ) : currentItem.content.type === "TEXT" ? (
-          <div className="flex h-full w-full items-center justify-center overflow-hidden bg-white p-8">
+          <div className="flex h-full w-full items-start overflow-hidden bg-white p-8">
             <div
               key={currentItem.id}
-              className="text-center text-4xl leading-relaxed text-black"
+              className="display-text-table w-full text-4xl leading-relaxed text-black [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_em]:italic [&_li]:list-item [&_ol]:list-decimal [&_ol]:pl-[1.5em] [&_p]:my-2 [&_strong]:font-bold [&_u]:underline [&_ul]:list-disc [&_ul]:pl-[1.5em] [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-gray-300 [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:font-bold"
               dangerouslySetInnerHTML={{
                 __html: currentItem.content.textHtmlContent ?? "",
               }}
@@ -543,6 +585,18 @@ export default function DisplayRuntimePage() {
             transform: translateX(0);
           }
         }
+        ${tableStyle ? `
+        .display-text-table table {
+          font-size: ${tableStyle.fontSize}px;
+          line-height: 1.4;
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .display-text-table th,
+        .display-text-table td {
+          padding: ${tableStyle.cellPaddingV}px ${tableStyle.cellPaddingH}px;
+        }
+        ` : ""}
       `}</style>
     </main>
   );

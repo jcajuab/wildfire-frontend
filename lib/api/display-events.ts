@@ -21,6 +21,12 @@ export type DisplayLifecycleEvent =
       readonly previousStatus: DisplayStatus;
       readonly status: DisplayStatus;
       readonly occurredAt: string;
+    }
+  | {
+      readonly type: "playlist_status_changed";
+      readonly playlistId: string;
+      readonly status: "DRAFT" | "IN_USE";
+      readonly occurredAt: string;
     };
 
 interface EventSourceLike {
@@ -42,9 +48,15 @@ const DISPLAY_LIFECYCLE_EVENT_TYPES = [
   "display_registered",
   "display_unregistered",
   "display_status_changed",
+  "playlist_status_changed",
 ] as const;
 
 const DISPLAY_STATUS_VALUES = ["PROCESSING", "READY", "LIVE", "DOWN"] as const;
+const PLAYLIST_STATUS_VALUES = ["DRAFT", "IN_USE"] as const;
+
+const isPlaylistStatus = (v: unknown): v is "DRAFT" | "IN_USE" =>
+  typeof v === "string" &&
+  PLAYLIST_STATUS_VALUES.includes(v as "DRAFT" | "IN_USE");
 
 type DisplayLifecycleEventType = (typeof DISPLAY_LIFECYCLE_EVENT_TYPES)[number];
 
@@ -70,6 +82,23 @@ const parseDisplayLifecycleEvent = (
   if (!isRecord(payload) || !isEventType(payload.type)) {
     return null;
   }
+
+  if (payload.type === "playlist_status_changed") {
+    if (
+      typeof payload.playlistId !== "string" ||
+      !isPlaylistStatus(payload.status) ||
+      typeof payload.occurredAt !== "string"
+    ) {
+      return null;
+    }
+    return {
+      type: "playlist_status_changed",
+      playlistId: payload.playlistId,
+      status: payload.status,
+      occurredAt: payload.occurredAt,
+    };
+  }
+
   if (
     typeof payload.displayId !== "string" ||
     typeof payload.slug !== "string" ||
