@@ -106,7 +106,7 @@ export default function PdfCropPage() {
   if (!session) return null;
 
   return (
-    <div className="flex h-full flex-col p-4">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
       <PdfCropEditor
         pdfUrl={session.pdfUrl}
         pages={[...session.pages]}

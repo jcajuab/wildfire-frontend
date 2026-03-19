@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { contentApi } from "@/lib/api/content-api";
 import { playlistsApi } from "@/lib/api/playlists-api";
@@ -29,16 +29,19 @@ export function useAIChat({
   // Refs keep dynamic values accessible to the transport's
   // prepareSendMessagesRequest without causing stale closures.
   const providerRef = useRef(provider);
-  providerRef.current = provider;
   const modelRef = useRef(model);
-  modelRef.current = model;
   const conversationIdRef = useRef(conversationId);
-  conversationIdRef.current = conversationId;
+  useEffect(() => {
+    providerRef.current = provider;
+    modelRef.current = model;
+    conversationIdRef.current = conversationId;
+  }, [provider, model, conversationId]);
 
   // The transport sends full UIMessage[] (including tool approval parts) so
   // the AI SDK's needsApproval round-trip works. prepareSendMessagesRequest
   // injects conversationId/provider/model into EVERY request (including
   // automatic re-sends triggered by sendAutomaticallyWhen after tool approval).
+  /* eslint-disable react-hooks/refs -- refs are read inside a callback at request time, not during render */
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -65,6 +68,7 @@ export function useAIChat({
       }),
     [token],
   );
+  /* eslint-enable react-hooks/refs */
 
   // Map AI tool names to affected resource types for smart cache invalidation.
   // When the AI finishes, we invalidate only the entity tags that the

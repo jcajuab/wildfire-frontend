@@ -120,16 +120,16 @@ sequenceDiagram
 
 ### 4. Function call flow (all dependencies)
 
-| Location | Function | Calls | Purpose |
-|----------|----------|--------|---------|
-| `lib/invite.ts` | (constant) | — | `INVITE_LINK_DISPLAY_PLACEHOLDER` = `"/accept-invite?..."` |
-| `lib/api-client.ts` | `revealInviteLink(id)` | `getBaseUrl()`, `fetch()`, `parseApiPayload()` | POST to backend, returns `{ inviteUrl }` |
-| `pending-invitations-table.tsx` | `InviteUrlCell` | `INVITE_LINK_DISPLAY_PLACEHOLDER`, `revealInviteLink`, `toast` | Table cell: Get link → Copy |
-| `pending-invitations-table.tsx` | `handleGetLink` | `revealInviteLink(invitationId)`, `setRevealedUrl`, `toast.error` | Fetch URL, store in state |
-| `pending-invitations-table.tsx` | `handleCopy` | `navigator.clipboard.writeText(revealedUrl)`, `toast.error` | Copy from state to clipboard |
-| `invite-users-dialog.tsx` | `InviteLinkActions` | Same pattern as above | Modal: Get link → Copy link |
-| `invite-users-dialog.tsx` | `handleGetLink` | `revealInviteLink(invitationId)`, `setRevealedUrl`, `toast.error` | Same as table |
-| `invite-users-dialog.tsx` | `handleCopy` | `navigator.clipboard.writeText(revealedUrl)`, `toast.error` | Same as table |
+| Location                        | Function               | Calls                                                             | Purpose                                                    |
+| ------------------------------- | ---------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------- |
+| `lib/invite.ts`                 | (constant)             | —                                                                 | `INVITE_LINK_DISPLAY_PLACEHOLDER` = `"/accept-invite?..."` |
+| `lib/api-client.ts`             | `revealInviteLink(id)` | `getBaseUrl()`, `fetch()`, `parseApiPayload()`                    | POST to backend, returns `{ inviteUrl }`                   |
+| `pending-invitations-table.tsx` | `InviteUrlCell`        | `INVITE_LINK_DISPLAY_PLACEHOLDER`, `revealInviteLink`, `toast`    | Table cell: Get link → Copy                                |
+| `pending-invitations-table.tsx` | `handleGetLink`        | `revealInviteLink(invitationId)`, `setRevealedUrl`, `toast.error` | Fetch URL, store in state                                  |
+| `pending-invitations-table.tsx` | `handleCopy`           | `navigator.clipboard.writeText(revealedUrl)`, `toast.error`       | Copy from state to clipboard                               |
+| `invite-users-dialog.tsx`       | `InviteLinkActions`    | Same pattern as above                                             | Modal: Get link → Copy link                                |
+| `invite-users-dialog.tsx`       | `handleGetLink`        | `revealInviteLink(invitationId)`, `setRevealedUrl`, `toast.error` | Same as table                                              |
+| `invite-users-dialog.tsx`       | `handleCopy`           | `navigator.clipboard.writeText(revealedUrl)`, `toast.error`       | Same as table                                              |
 
 **Data flow:**
 
@@ -162,13 +162,13 @@ sequenceDiagram
 
 ## Where Issues Might Appear
 
-| Risk | Why it can still happen | Mitigation / note |
-|------|-------------------------|-------------------|
-| **URL in JavaScript memory** | After "Get link", the full URL lives in React state until the component unmounts or the user leaves. | Acceptable for in-session use. No way to show "Copy" without holding the URL in memory. |
-| **URL in clipboard** | After "Copy", the full URL is in the clipboard and can be pasted elsewhere or read by other apps. | Normal for "copy link" flows. Rely on user and OS clipboard behavior. |
-| **Backend / transport** | If the reveal-link endpoint or transport is weak, the URL can be intercepted or over-exposed. | Out of scope of this flow; ensure HTTPS and proper auth on `POST .../reveal-link`. |
-| **Permissions** | If the user denies clipboard permission when Copy runs, `writeText` throws and we show `toast.error`. | Handled in code; no silent failure. |
-| **Multiple tabs / state** | If the same invitation is opened in two tabs, each has its own state; no cross-tab sync. | Acceptable; each tab has its own Get link / Copy flow. |
+| Risk                         | Why it can still happen                                                                               | Mitigation / note                                                                       |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **URL in JavaScript memory** | After "Get link", the full URL lives in React state until the component unmounts or the user leaves.  | Acceptable for in-session use. No way to show "Copy" without holding the URL in memory. |
+| **URL in clipboard**         | After "Copy", the full URL is in the clipboard and can be pasted elsewhere or read by other apps.     | Normal for "copy link" flows. Rely on user and OS clipboard behavior.                   |
+| **Backend / transport**      | If the reveal-link endpoint or transport is weak, the URL can be intercepted or over-exposed.         | Out of scope of this flow; ensure HTTPS and proper auth on `POST .../reveal-link`.      |
+| **Permissions**              | If the user denies clipboard permission when Copy runs, `writeText` throws and we show `toast.error`. | Handled in code; no silent failure.                                                     |
+| **Multiple tabs / state**    | If the same invitation is opened in two tabs, each has its own state; no cross-tab sync.              | Acceptable; each tab has its own Get link / Copy flow.                                  |
 
 ---
 

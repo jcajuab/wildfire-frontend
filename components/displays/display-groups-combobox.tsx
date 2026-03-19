@@ -188,6 +188,7 @@ export function DisplayGroupsCombobox({
               ref={inputRef}
               role="combobox"
               aria-expanded={open}
+              aria-controls={open ? `${id}-listbox` : undefined}
               aria-haspopup="listbox"
               aria-autocomplete="list"
               value={inputValue}
@@ -238,6 +239,7 @@ export function DisplayGroupsCombobox({
           }}
         >
           <ul
+            id={`${id}-listbox`}
             role="listbox"
             aria-multiselectable
             className="overflow-y-auto p-1"

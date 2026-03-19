@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { IconSettings } from "@tabler/icons-react";
 
 import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";

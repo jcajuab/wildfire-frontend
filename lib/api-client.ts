@@ -197,7 +197,9 @@ export async function resendInvitation(
 }
 
 /** POST /auth/invitations/:id/reveal-link. Returns actual invite URL. Requires users:create permission. */
-export async function revealInviteLink(id: string): Promise<{ inviteUrl: string }> {
+export async function revealInviteLink(
+  id: string,
+): Promise<{ inviteUrl: string }> {
   const baseUrl = getBaseUrl();
   const response = await fetch(
     `${baseUrl}/auth/invitations/${encodeURIComponent(id)}/reveal-link`,

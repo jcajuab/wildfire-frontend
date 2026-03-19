@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 
 interface DateInputProps extends Omit<
@@ -10,25 +10,19 @@ interface DateInputProps extends Omit<
 }
 
 export function DateInput({ value = "", onChange, ...props }: DateInputProps) {
-  const lastExternalRef = useRef(value);
-  const [remountKey, setRemountKey] = useState(0);
-
-  useEffect(() => {
-    if (value !== lastExternalRef.current) {
-      lastExternalRef.current = value;
-      setRemountKey((k) => k + 1);
-    }
-  }, [value]);
+  // Track the external value that was last used to mount the input.
+  // When the external value changes, update the seed to force a remount.
+  const [seed, setSeed] = useState(value);
+  if (value !== seed) {
+    setSeed(value);
+  }
 
   return (
     <Input
-      key={remountKey}
+      key={seed}
       type="date"
       defaultValue={value}
-      onChange={(e) => {
-        lastExternalRef.current = e.target.value;
-        onChange?.(e);
-      }}
+      onChange={onChange}
       {...props}
     />
   );

@@ -359,6 +359,7 @@ function extractCropPreview(
 
 const HANDLE_SIZE = 12;
 const HANDLE_HIT = 14; // slightly larger for easier clicking
+const CROP_PADDING = 40; // px of interactive padding around the PDF page
 
 function getCornerPositions(
   rect: Rect,
@@ -492,6 +493,7 @@ export function PdfCropEditor({
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- thumbnails is the state being set; including it would cause an infinite loop
   }, [pdfUrl, pages]);
 
   // Escape key closes lightbox
@@ -515,9 +517,17 @@ export function PdfCropEditor({
         "touches" in event ? event.touches[0].clientX : event.clientX;
       const clientY =
         "touches" in event ? event.touches[0].clientY : event.clientY;
+      // Subtract padding offset so coordinates are relative to the canvas,
+      // then clamp to valid canvas bounds.
       return {
-        x: Math.max(0, Math.min(clientX - rect.left, canvasSize.width)),
-        y: Math.max(0, Math.min(clientY - rect.top, canvasSize.height)),
+        x: Math.max(
+          0,
+          Math.min(clientX - rect.left - CROP_PADDING, canvasSize.width),
+        ),
+        y: Math.max(
+          0,
+          Math.min(clientY - rect.top - CROP_PADDING, canvasSize.height),
+        ),
       };
     },
     [canvasSize],
@@ -604,14 +614,21 @@ export function PdfCropEditor({
   }, [cropMode, canvasSize]);
 
   const handleMouseLeave = useCallback(() => {
+    // Finish the current operation instead of discarding. The padded overlay
+    // gives enough room for edge-to-edge cropping, so leaving the overlay
+    // means the user went well beyond the page — treat it like mouseup.
     if (cropMode.mode === "drawing") {
-      dispatch({ type: "DISCARD" });
+      dispatch({
+        type: "FINISH_DRAW",
+        containerWidth: canvasSize.width,
+        containerHeight: canvasSize.height,
+      });
       return;
     }
     if (cropMode.mode === "editing" && cropMode.drag) {
       dispatch({ type: "FINISH_DRAG" });
     }
-  }, [cropMode]);
+  }, [cropMode, canvasSize]);
 
   const handleConfirm = useCallback(() => {
     if (cropMode.mode !== "editing" || !currentPage) return;
@@ -712,13 +729,13 @@ export function PdfCropEditor({
     const style: React.CSSProperties = renderInside
       ? {
           position: "absolute",
-          top: rect.y + 4,
-          left: rect.x + rect.width - 60,
+          top: rect.y + 4 + CROP_PADDING,
+          left: rect.x + rect.width - 60 + CROP_PADDING,
         }
       : {
           position: "absolute",
-          top: rect.y + rect.height + 4,
-          left: rect.x + rect.width - 56,
+          top: rect.y + rect.height + 4 + CROP_PADDING,
+          left: rect.x + rect.width - 56 + CROP_PADDING,
         };
 
     return (
@@ -752,17 +769,19 @@ export function PdfCropEditor({
   };
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="flex h-full flex-col">
+      {/* Header using admin layout pattern */}
+      <header className="flex flex-col gap-2 border-b border-border bg-muted/20 px-6 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-8">
         <div className="min-w-0">
-          <h2 className="truncate text-lg font-semibold">{filename}</h2>
+          <h1 className="truncate text-xl font-semibold leading-tight tracking-tight sm:text-2xl">
+            {contentName || filename}
+          </h1>
           <p className="text-sm text-muted-foreground">
             Draw crop regions on each page. Confirm each crop before drawing the
             next.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
@@ -771,9 +790,9 @@ export function PdfCropEditor({
             Create
           </Button>
         </div>
-      </div>
+      </header>
 
-      <div className="flex min-h-0 flex-1 gap-4">
+      <div className="flex min-h-0 flex-1 gap-4 p-4">
         {/* Left panel: Page thumbnails */}
         {pages.length > 1 && (
           <div className="flex w-24 shrink-0 flex-col gap-2 overflow-y-auto">
@@ -859,7 +878,7 @@ export function PdfCropEditor({
           {/* PDF canvas + crop overlay */}
           <div
             ref={canvasAreaRef}
-            className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/50"
+            className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg border border-border bg-neutral-700"
           >
             <div className="relative inline-block">
               <div ref={canvasContainerRef} className="relative" />
@@ -867,10 +886,15 @@ export function PdfCropEditor({
               {canvasSize.width > 0 && (
                 <div
                   ref={overlayRef}
-                  className="absolute inset-0 select-none"
+                  className="absolute select-none"
                   style={{
-                    width: canvasSize.width,
-                    height: canvasSize.height,
+                    /* Extend the interactive overlay beyond the canvas by
+                       CROP_PADDING on each side so users can start cropping
+                       from outside the page for reliable edge-to-edge selection. */
+                    top: -CROP_PADDING,
+                    left: -CROP_PADDING,
+                    width: canvasSize.width + CROP_PADDING * 2,
+                    height: canvasSize.height + CROP_PADDING * 2,
                     cursor: overlayCursor,
                   }}
                   onMouseDown={handleMouseDown}
@@ -879,10 +903,19 @@ export function PdfCropEditor({
                   onMouseLeave={handleMouseLeave}
                 >
                   {activeRect && (
-                    <svg className="pointer-events-none absolute inset-0 h-full w-full">
+                    <svg
+                      className="pointer-events-none absolute inset-0 h-full w-full"
+                      viewBox={`${-CROP_PADDING} ${-CROP_PADDING} ${canvasSize.width + CROP_PADDING * 2} ${canvasSize.height + CROP_PADDING * 2}`}
+                    >
                       <defs>
                         <mask id={maskId}>
-                          <rect width="100%" height="100%" fill="white" />
+                          <rect
+                            x={-CROP_PADDING}
+                            y={-CROP_PADDING}
+                            width={canvasSize.width + CROP_PADDING * 2}
+                            height={canvasSize.height + CROP_PADDING * 2}
+                            fill="white"
+                          />
                           <rect
                             x={activeRect.x}
                             y={activeRect.y}
@@ -893,8 +926,10 @@ export function PdfCropEditor({
                         </mask>
                       </defs>
                       <rect
-                        width="100%"
-                        height="100%"
+                        x={-CROP_PADDING}
+                        y={-CROP_PADDING}
+                        width={canvasSize.width + CROP_PADDING * 2}
+                        height={canvasSize.height + CROP_PADDING * 2}
                         fill="rgba(0,0,0,0.4)"
                         mask={`url(#${maskId})`}
                       />
@@ -928,8 +963,8 @@ export function PdfCropEditor({
                           style={{
                             width: HANDLE_SIZE,
                             height: HANDLE_SIZE,
-                            left: pos.cx - HANDLE_SIZE / 2,
-                            top: pos.cy - HANDLE_SIZE / 2,
+                            left: pos.cx - HANDLE_SIZE / 2 + CROP_PADDING,
+                            top: pos.cy - HANDLE_SIZE / 2 + CROP_PADDING,
                             cursor: CORNER_CURSORS[corner],
                           }}
                           onMouseDown={(e) => {

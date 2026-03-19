@@ -146,7 +146,7 @@ export function AddDisplayDialog({
       nowPlaying: null,
     });
     handleClose();
-  }, [data, existingGroups, onRegister, handleClose]);
+  }, [data, onRegister, handleClose]);
 
   const selectOutput = useCallback((output: DisplayOutput): void => {
     setData((prev) => ({
