@@ -1,8 +1,8 @@
 "use client";
 
 import type { FormEvent, ReactElement } from "react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,14 +13,16 @@ import {
   UNAUTHORIZED_ROUTE,
 } from "@/lib/route-permissions";
 
-export default function LoginPage(): ReactElement {
+function LoginForm(): ReactElement {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, isAuthenticated, isInitialized, isLoading, can } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const redirectTo = searchParams.get("redirectTo");
   const postLoginRedirect =
-    getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE;
+    redirectTo ?? getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE;
 
   useEffect(() => {
     if (isInitialized && isAuthenticated) {
@@ -130,5 +132,21 @@ export default function LoginPage(): ReactElement {
         </Button>
       </form>
     </div>
+  );
+}
+
+export default function LoginPage(): ReactElement {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full">
+          <div className="flex items-center justify-center py-12">
+            <span className="text-sm text-muted-foreground">Loading…</span>
+          </div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -98,7 +98,7 @@ function sanitizeInlineStyle(style: string): string {
   return safeDeclarations.join(";");
 }
 
-function sanitizeRichTextHtml(html: string): string {
+export function sanitizeRichTextHtml(html: string): string {
   if (html.trim().length === 0) {
     return "";
   }

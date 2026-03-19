@@ -2,7 +2,7 @@
 
 import type { ReactElement, ReactNode } from "react";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 
 interface AuthGuardProps {
@@ -12,16 +12,21 @@ interface AuthGuardProps {
 /**
  * Client guard: redirects to /login when not authenticated.
  * Shows loading until auth state is initialized to avoid flash of dashboard.
+ * Passes the current pathname as ?redirectTo= so the login page can return the user.
  */
 export function AuthGuard({ children }: AuthGuardProps): ReactElement {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated, isInitialized } = useAuth();
 
   useEffect(() => {
     if (isInitialized && !isAuthenticated) {
-      router.replace("/login");
+      const loginUrl = pathname
+        ? `/login?redirectTo=${encodeURIComponent(pathname)}`
+        : "/login";
+      router.replace(loginUrl);
     }
-  }, [isInitialized, isAuthenticated, router]);
+  }, [isInitialized, isAuthenticated, pathname, router]);
 
   if (!isInitialized) {
     return (

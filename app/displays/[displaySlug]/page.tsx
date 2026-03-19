@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getBaseUrl } from "@/lib/api/base-query";
+import { sanitizeRichTextHtml } from "@/lib/content-thumbnail-preview";
 import {
   createAuthChallenge,
   fetchSignedManifest,
@@ -566,7 +567,9 @@ export default function DisplayRuntimePage() {
               key={currentItem.id}
               className="display-text-table w-full text-4xl leading-relaxed text-black [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_em]:italic [&_li]:list-item [&_ol]:list-decimal [&_ol]:pl-[1.5em] [&_p]:my-2 [&_strong]:font-bold [&_u]:underline [&_ul]:list-disc [&_ul]:pl-[1.5em] [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-gray-300 [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:font-bold"
               dangerouslySetInnerHTML={{
-                __html: currentItem.content.textHtmlContent ?? "",
+                __html: sanitizeRichTextHtml(
+                  currentItem.content.textHtmlContent ?? "",
+                ),
               }}
             />
           </div>

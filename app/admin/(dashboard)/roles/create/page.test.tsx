@@ -162,11 +162,11 @@ describe("CreateRolePage", () => {
     vi.unstubAllGlobals();
   });
 
-  test("renders create role page title and header actions", () => {
+  test("renders create role page title and header actions", async () => {
     render(<CreateRolePage />);
 
     expect(
-      screen.getByRole("heading", { name: "Create Role" }),
+      await screen.findByRole("heading", { name: "Create Role" }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Cancel" })).toHaveLength(1);
     expect(screen.getAllByRole("button", { name: "Create" })).toHaveLength(1);
