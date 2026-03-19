@@ -10,8 +10,11 @@ import {
   IconCopy,
   IconCheck,
   IconLoader2,
+  IconLink,
 } from "@tabler/icons-react";
+import { INVITE_LINK_DISPLAY_PLACEHOLDER } from "@/lib/invite";
 import { revealInviteLink } from "@/lib/api-client";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -39,43 +42,84 @@ interface InviteResult {
   readonly expiresAt: string;
 }
 
-function RevealCopyButton({
+function InviteLinkActions({
   invitationId,
 }: {
   readonly invitationId: string;
 }): ReactElement {
+  const [revealedUrl, setRevealedUrl] = useState<string | null>(null);
+  const [isRevealing, setIsRevealing] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCopy = async (): Promise<void> => {
-    setIsLoading(true);
+  const handleGetLink = async (): Promise<void> => {
+    if (revealedUrl) return;
+    setIsRevealing(true);
     try {
       const { inviteUrl } = await revealInviteLink(invitationId);
-      await navigator.clipboard.writeText(inviteUrl);
+      setRevealedUrl(inviteUrl);
+    } catch {
+      toast.error("Failed to get invite link");
+    } finally {
+      setIsRevealing(false);
+    }
+  };
+
+  const handleCopy = (): void => {
+    if (!revealedUrl) return;
+    try {
+      navigator.clipboard.writeText(revealedUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } finally {
-      setIsLoading(false);
+    } catch {
+      toast.error("Failed to copy link");
     }
   };
 
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      onClick={handleCopy}
-      disabled={isLoading}
-      aria-label="Copy invite link"
-    >
-      {isLoading ? (
-        <IconLoader2 className="size-4 animate-spin" />
-      ) : copied ? (
-        <IconCheck className="size-4 text-green-600" />
+    <div className="flex items-center gap-2">
+      {revealedUrl == null ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleGetLink}
+          disabled={isRevealing}
+          aria-label="Get invite link"
+        >
+          {isRevealing ? (
+            <>
+              <IconLoader2 className="size-4 animate-spin" />
+              Getting link…
+            </>
+          ) : (
+            <>
+              <IconLink className="size-4" />
+              Get link
+            </>
+          )}
+        </Button>
       ) : (
-        <IconCopy className="size-4" />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleCopy}
+          aria-label="Copy invite link"
+        >
+          {copied ? (
+            <>
+              <IconCheck className="size-4 text-green-600" />
+              Link copied
+            </>
+          ) : (
+            <>
+              <IconCopy className="size-4" />
+              Copy link
+            </>
+          )}
+        </Button>
       )}
-    </Button>
+    </div>
   );
 }
 
@@ -171,14 +215,17 @@ function InviteUsersDialogContent({
         <DialogHeader>
           <DialogTitle>Invitation Created</DialogTitle>
           <DialogDescription>
-            Share this link with the invitee. The link expires after use.
+            Share this link with the invitee. The link expires after use. The
+            full link is not shown here; use the buttons below to get and copy it.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2">
-          <span className="flex-1 truncate font-mono text-xs text-muted-foreground">
-            /accept-invite?...
-          </span>
-          <RevealCopyButton invitationId={inviteResult.id} />
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center rounded-md border border-border bg-muted/50 px-3 py-2.5">
+            <span className="font-mono text-xs text-muted-foreground">
+              {INVITE_LINK_DISPLAY_PLACEHOLDER}
+            </span>
+          </div>
+          <InviteLinkActions invitationId={inviteResult.id} />
         </div>
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)}>Done</Button>

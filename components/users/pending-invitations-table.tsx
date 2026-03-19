@@ -2,7 +2,13 @@
 
 import type { ReactElement } from "react";
 import { useState } from "react";
-import { IconRefresh, IconCopy, IconCheck, IconLoader2 } from "@tabler/icons-react";
+import {
+  IconRefresh,
+  IconCopy,
+  IconCheck,
+  IconLoader2,
+  IconLink,
+} from "@tabler/icons-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,8 +21,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/formatters";
+import { INVITE_LINK_DISPLAY_PLACEHOLDER } from "@/lib/invite";
 import { revealInviteLink } from "@/lib/api-client";
 import type { InvitationRecord, InvitationStatus } from "@/types/invitation";
+import { toast } from "sonner";
 
 interface PendingInvitationsTableProps {
   readonly invitations: readonly InvitationRecord[];
@@ -53,46 +61,74 @@ function InviteUrlCell({
   readonly invitationId: string;
   readonly status: InvitationStatus;
 }): ReactElement {
+  const [revealedUrl, setRevealedUrl] = useState<string | null>(null);
+  const [isRevealing, setIsRevealing] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   if (status !== "pending") {
     return <span className="text-muted-foreground">—</span>;
   }
 
-  const handleCopy = async (): Promise<void> => {
-    setIsLoading(true);
+  const handleGetLink = async (): Promise<void> => {
+    if (revealedUrl) return;
+    setIsRevealing(true);
     try {
       const { inviteUrl } = await revealInviteLink(invitationId);
-      await navigator.clipboard.writeText(inviteUrl);
+      setRevealedUrl(inviteUrl);
+    } catch {
+      toast.error("Failed to get invite link");
+    } finally {
+      setIsRevealing(false);
+    }
+  };
+
+  const handleCopy = (): void => {
+    if (!revealedUrl) return;
+    try {
+      navigator.clipboard.writeText(revealedUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } finally {
-      setIsLoading(false);
+    } catch {
+      toast.error("Failed to copy link");
     }
   };
 
   return (
     <div className="flex items-center gap-1">
       <span className="max-w-[160px] truncate font-mono text-xs text-muted-foreground">
-        /accept-invite?...
+        {INVITE_LINK_DISPLAY_PLACEHOLDER}
       </span>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        onClick={handleCopy}
-        disabled={isLoading}
-        aria-label="Copy invite link"
-      >
-        {isLoading ? (
-          <IconLoader2 className="size-3.5 animate-spin" />
-        ) : copied ? (
-          <IconCheck className="size-3.5 text-green-600" />
-        ) : (
-          <IconCopy className="size-3.5" />
-        )}
-      </Button>
+      {revealedUrl == null ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={handleGetLink}
+          disabled={isRevealing}
+          aria-label="Get invite link"
+          title="Get link"
+        >
+          {isRevealing ? (
+            <IconLoader2 className="size-3.5 animate-spin" />
+          ) : (
+            <IconLink className="size-3.5" />
+          )}
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={handleCopy}
+          aria-label="Copy invite link"
+        >
+          {copied ? (
+            <IconCheck className="size-3.5 text-green-600" />
+          ) : (
+            <IconCopy className="size-3.5" />
+          )}
+        </Button>
+      )}
     </div>
   );
 }
