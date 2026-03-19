@@ -234,7 +234,7 @@ export async function banUser(userId: string): Promise<void> {
     body: JSON.stringify({ banned: true }),
   });
 
-  if (response.status === 204) return;
+  if (response.ok) return;
 
   const payload = await readJsonPayload(response);
   throw createAuthApiError(response, payload);
@@ -253,7 +253,7 @@ export async function unbanUser(userId: string): Promise<void> {
     body: JSON.stringify({ banned: false }),
   });
 
-  if (response.status === 204) return;
+  if (response.ok) return;
 
   const payload = await readJsonPayload(response);
   throw createAuthApiError(response, payload);

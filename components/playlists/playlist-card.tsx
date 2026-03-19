@@ -47,9 +47,14 @@ export const PlaylistCard = memo(function PlaylistCard({
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <h3 className="text-sm font-semibold leading-tight">
-            {playlist.name}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="truncate text-sm font-semibold leading-tight">
+              {playlist.name}
+            </h3>
+            {playlist.status === "IN_USE" && (
+              <Badge variant="destructive" className="border-destructive/30">In Use</Badge>
+            )}
+          </div>
           <p className="truncate text-xs text-muted-foreground">
             @{playlist.owner.name}
           </p>

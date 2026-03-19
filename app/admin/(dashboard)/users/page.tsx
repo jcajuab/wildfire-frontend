@@ -3,6 +3,7 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { IconPlus, IconCopy, IconCheck } from "@tabler/icons-react";
+import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
@@ -120,6 +121,7 @@ export default function UsersPage(): ReactElement {
     handleResetPassword,
     banUserById,
     unbanUserById,
+    refreshUsers,
   } = useUsersPage();
 
   if (usersLoading) {
@@ -280,12 +282,16 @@ export default function UsersPage(): ReactElement {
         }
         onConfirm={async () => {
           if (!userToBan) return;
-          if (userToBan.bannedAt) {
-            await unbanUserById(userToBan.id);
+          const { id, username, bannedAt } = userToBan;
+          if (bannedAt) {
+            await unbanUserById(id);
+            toast.success(`Successfully unbanned ${username}`);
           } else {
-            await banUserById(userToBan.id);
+            await banUserById(id);
+            toast.success(`Successfully banned ${username}`);
           }
           setUserToBan(null);
+          refreshUsers();
         }}
       />
 

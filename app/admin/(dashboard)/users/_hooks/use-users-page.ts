@@ -78,6 +78,7 @@ export interface UseUsersPageResult {
   handleResetPassword: (userId: string) => Promise<void>;
   banUserById: (id: string) => Promise<void>;
   unbanUserById: (id: string) => Promise<void>;
+  refreshUsers: () => void;
 }
 
 export function useUsersPage(): UseUsersPageResult {
@@ -94,6 +95,7 @@ export function useUsersPage(): UseUsersPageResult {
     data: usersData,
     isLoading: usersLoading,
     isError: usersError,
+    refetch: refetchUsers,
   } = useGetUsersQuery({
     page: filters.page,
     pageSize: PAGE_SIZE,
@@ -213,5 +215,6 @@ export function useUsersPage(): UseUsersPageResult {
     handleResetPassword: handlers.handleResetPassword,
     banUserById: handlers.banUserById,
     unbanUserById: handlers.unbanUserById,
+    refreshUsers: refetchUsers,
   };
 }
