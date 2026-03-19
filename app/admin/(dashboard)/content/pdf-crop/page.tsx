@@ -72,7 +72,7 @@ export default function PdfCropPage() {
         // error surfaces via toast in RTK base query
       }
     },
-    [uploadId, submitPdfCrops, router],
+    [uploadId, submitPdfCrops, router, contentName],
   );
 
   const handleCancel = useCallback(async () => {
