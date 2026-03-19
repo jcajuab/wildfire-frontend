@@ -14,6 +14,19 @@ export function AIChatBubble(): ReactElement {
   const { refetch: refetchCredentials } = useAICredentials();
   const prefersReducedMotion = useReducedMotion();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const draggedRef = useRef(false);
+  const [dragConstraints, setDragConstraints] = useState({ top: -500, bottom: 0 });
+
+  useEffect(() => {
+    function updateConstraints() {
+      // button is size-14 = 56px, bottom-6 = 24px, keep 16px padding from top
+      const maxUp = -(window.innerHeight - 56 - 24 - 16);
+      setDragConstraints({ top: maxUp, bottom: 0 });
+    }
+    updateConstraints();
+    window.addEventListener("resize", updateConstraints);
+    return () => window.removeEventListener("resize", updateConstraints);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -46,7 +59,24 @@ export function AIChatBubble(): ReactElement {
       };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <motion.div
+      className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3"
+      drag="y"
+      dragMomentum={false}
+      dragConstraints={dragConstraints}
+      style={{ touchAction: "none" }}
+      onDragStart={() => {
+        draggedRef.current = false;
+      }}
+      onDrag={(_, info) => {
+        if (Math.abs(info.offset.y) > 5) draggedRef.current = true;
+      }}
+      onDragEnd={() => {
+        requestAnimationFrame(() => {
+          draggedRef.current = false;
+        });
+      }}
+    >
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -56,6 +86,7 @@ export function AIChatBubble(): ReactElement {
             role="dialog"
             aria-label="WILDFIRE AI"
             aria-modal="true"
+            onPointerDown={(e) => e.stopPropagation()}
           >
             <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
               <span className="text-sm font-semibold">WILDFIRE AI</span>
@@ -82,6 +113,7 @@ export function AIChatBubble(): ReactElement {
         aria-label="Open WILDFIRE AI"
         aria-expanded={isOpen}
         onClick={() => {
+          if (draggedRef.current) return;
           if (isOpen) {
             setIsOpen(false);
             return;
@@ -102,6 +134,6 @@ export function AIChatBubble(): ReactElement {
       >
         <IconMessageChatbot className="size-6" />
       </Button>
-    </div>
+    </motion.div>
   );
 }
