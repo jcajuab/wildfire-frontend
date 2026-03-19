@@ -4,9 +4,9 @@ import type { ReactElement } from "react";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { formatLongDate, formatMonthDay } from "@/lib/formatters";
 import type { CalendarView, ResourceMode } from "@/types/schedule";
+import { ScheduleFilterPopover } from "./schedule-filter-popover";
 
 interface CalendarHeaderProps {
   readonly currentDate: Date;
@@ -97,37 +97,14 @@ export function CalendarHeader({
         </span>
       </div>
 
-      {/* Right: Resource Mode Toggle + View Toggle */}
-      <div className="flex flex-wrap justify-start gap-2 sm:justify-end">
-        <ToggleGroup
-          type="single"
-          value={resourceMode}
-          onValueChange={(value) => {
-            if (value) {
-              onResourceModeChange(value as ResourceMode);
-            }
-          }}
-          variant="outline"
-          size="default"
-        >
-          <ToggleGroupItem value="display">Display</ToggleGroupItem>
-          <ToggleGroupItem value="display-group">Display Group</ToggleGroupItem>
-        </ToggleGroup>
-
-        <ToggleGroup
-          type="single"
-          value={view}
-          onValueChange={(value) => {
-            if (value) {
-              onViewChange(value as CalendarView);
-            }
-          }}
-          variant="outline"
-          size="default"
-        >
-          <ToggleGroupItem value="resource-week">Week</ToggleGroupItem>
-          <ToggleGroupItem value="resource-day">Day</ToggleGroupItem>
-        </ToggleGroup>
+      {/* Right: Filter Popover */}
+      <div className="flex justify-start sm:justify-end">
+        <ScheduleFilterPopover
+          resourceMode={resourceMode}
+          onResourceModeChange={onResourceModeChange}
+          view={view}
+          onViewChange={onViewChange}
+        />
       </div>
     </div>
   );
