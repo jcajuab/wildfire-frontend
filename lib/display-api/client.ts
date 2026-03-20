@@ -1,4 +1,5 @@
 import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/base-query";
+import { csrfHeaders } from "@/lib/api/auth-api";
 import { extractApiError, parseApiResponseData } from "@/lib/api/contracts";
 import { createSignedHeaders } from "@/lib/crypto/request-signer";
 import type { DisplayRegistrationRecord } from "@/lib/display-identity/registration-store";
@@ -437,6 +438,7 @@ export async function createRegistrationSession(
     headers: {
       "Content-Type": "application/json",
       ...getDevOnlyRequestHeaders(),
+      ...csrfHeaders(),
     },
     body: JSON.stringify({ registrationCode }),
   });
@@ -488,6 +490,7 @@ export async function registerDisplay(input: {
     headers: {
       "Content-Type": "application/json",
       ...getDevOnlyRequestHeaders(),
+      ...csrfHeaders(),
     },
     body: JSON.stringify(input),
   });

@@ -134,13 +134,12 @@ export async function getSession(): Promise<SessionResponse> {
 /** POST /auth/session/refresh. Refreshes JWT (sliding session). Returns auth payload or throws with backend error body. */
 export async function refreshToken(): Promise<AuthResponse> {
   const baseUrl = getBaseUrl();
-  const csrfToken = getCsrfToken();
   const response = await fetch(`${baseUrl}/auth/session/refresh`, {
     method: "POST",
     credentials: "include",
     headers: {
       ...getDevOnlyRequestHeaders(),
-      ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+      ...csrfHeaders(),
     },
   });
 
@@ -150,13 +149,12 @@ export async function refreshToken(): Promise<AuthResponse> {
 /** POST /auth/logout. Clears server session. Does not throw. */
 export async function logoutApi(): Promise<void> {
   const baseUrl = getBaseUrl();
-  const csrfToken = getCsrfToken();
   const response = await fetch(`${baseUrl}/auth/logout`, {
     method: "POST",
     credentials: "include",
     headers: {
       ...getDevOnlyRequestHeaders(),
-      ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+      ...csrfHeaders(),
     },
   });
   if (!response.ok) {
@@ -166,6 +164,12 @@ export async function logoutApi(): Promise<void> {
       status: response.status,
     });
   }
+}
+
+/** Returns the X-CSRF-Token header object for state-changing requests, or empty object if unavailable. */
+export function csrfHeaders(): Record<string, string> {
+  const token = getCsrfToken();
+  return token ? { "X-CSRF-Token": token } : {};
 }
 
 /** Reads the CSRF token from the wildfire_csrf cookie (non-httpOnly, readable by JS). */

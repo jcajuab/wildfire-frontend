@@ -3,7 +3,11 @@ import {
   parseApiListResponseDataSafe,
   parseApiResponseData,
 } from "@/lib/api/contracts";
-import { createAuthApiError, readJsonPayload } from "@/lib/api/auth-api";
+import {
+  createAuthApiError,
+  csrfHeaders,
+  readJsonPayload,
+} from "@/lib/api/auth-api";
 import type { AuthResponse } from "@/types/auth";
 import type { InvitationRecord } from "@/types/invitation";
 
@@ -50,6 +54,7 @@ export async function changePassword(payload: {
     headers: {
       "Content-Type": "application/json",
       ...getDevOnlyRequestHeaders(),
+      ...csrfHeaders(),
     },
     body: JSON.stringify(payload),
   });
@@ -80,6 +85,7 @@ export async function uploadAvatar(file: File): Promise<AuthResponse> {
       credentials: "include",
       headers: {
         ...getDevOnlyRequestHeaders(),
+        ...csrfHeaders(),
       },
       body: formData,
       signal: controller.signal,
@@ -104,6 +110,7 @@ export async function deleteCurrentUser(): Promise<void> {
     credentials: "include",
     headers: {
       ...getDevOnlyRequestHeaders(),
+      ...csrfHeaders(),
     },
   });
 
@@ -130,6 +137,7 @@ export async function createInvitation(input: {
     headers: {
       "Content-Type": "application/json",
       ...getDevOnlyRequestHeaders(),
+      ...csrfHeaders(),
     },
     body: JSON.stringify(input),
   });
@@ -168,6 +176,7 @@ export async function resendInvitation(
     credentials: "include",
     headers: {
       ...getDevOnlyRequestHeaders(),
+      ...csrfHeaders(),
     },
   });
 
@@ -184,7 +193,7 @@ export async function revealInviteLink(
     {
       method: "POST",
       credentials: "include",
-      headers: { ...getDevOnlyRequestHeaders() },
+      headers: { ...getDevOnlyRequestHeaders(), ...csrfHeaders() },
     },
   );
   return parseApiPayload<{ inviteUrl: string }>(response);
@@ -223,6 +232,7 @@ export async function banUser(userId: string): Promise<void> {
     headers: {
       "Content-Type": "application/json",
       ...getDevOnlyRequestHeaders(),
+      ...csrfHeaders(),
     },
     body: JSON.stringify({ banned: true }),
   });
@@ -242,6 +252,7 @@ export async function unbanUser(userId: string): Promise<void> {
     headers: {
       "Content-Type": "application/json",
       ...getDevOnlyRequestHeaders(),
+      ...csrfHeaders(),
     },
     body: JSON.stringify({ banned: false }),
   });
@@ -266,6 +277,7 @@ export async function adminResetPassword(
     credentials: "include",
     headers: {
       ...getDevOnlyRequestHeaders(),
+      ...csrfHeaders(),
     },
   });
 
