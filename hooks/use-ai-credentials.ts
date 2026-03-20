@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import { csrfHeaders } from "@/lib/api/auth-api";
 import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/base-query";
 
 export interface AICredential {
@@ -69,6 +70,7 @@ export function useAICredentials(): UseAICredentialsReturn {
           headers: {
             "Content-Type": "application/json",
             ...getDevOnlyRequestHeaders(),
+            ...csrfHeaders(),
           },
           body: JSON.stringify({ provider, apiKey }),
         });
@@ -99,7 +101,7 @@ export function useAICredentials(): UseAICredentialsReturn {
           {
             method: "DELETE",
             credentials: "include",
-            headers: { ...getDevOnlyRequestHeaders() },
+            headers: { ...getDevOnlyRequestHeaders(), ...csrfHeaders() },
           },
         );
         if (!response.ok) {

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { contentApi } from "@/lib/api/content-api";
 import { playlistsApi } from "@/lib/api/playlists-api";
 import { schedulesApi } from "@/lib/api/schedules-api";
+import { csrfHeaders } from "@/lib/api/auth-api";
 import { useAppDispatch } from "@/lib/hooks";
 
 interface UseAIChatOptions {
@@ -44,6 +45,7 @@ export function useAIChat({
     () =>
       new DefaultChatTransport({
         api: "/api/ai/chat",
+        headers: () => csrfHeaders(),
         prepareSendMessagesRequest: ({
           messages,
           body,

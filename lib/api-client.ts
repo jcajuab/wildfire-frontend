@@ -35,6 +35,7 @@ export async function updateCurrentUserProfile(payload: {
     headers: {
       "Content-Type": "application/json",
       ...getDevOnlyRequestHeaders(),
+      ...csrfHeaders(),
     },
     body: JSON.stringify(payload),
   });
