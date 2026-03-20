@@ -317,6 +317,7 @@ export function AIChat() {
             }}
           >
             <PromptInputBody>
+              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
               <div
                 className="grid w-full grid-cols-1 min-h-16 max-h-48 overflow-y-auto"
                 onClick={(e) => {

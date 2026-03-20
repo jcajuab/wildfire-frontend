@@ -25,6 +25,7 @@ export const waitForContentJob = async (input: {
     const source = new EventSource(streamUrl, { withCredentials: true });
     let timeout: ReturnType<typeof setTimeout> | null = null;
     let settled = false;
+    let errorCount = 0;
 
     const cleanup = () => {
       if (timeout) {
@@ -94,6 +95,7 @@ export const waitForContentJob = async (input: {
     }, CONTENT_JOB_WAIT_TIMEOUT_MS);
 
     source.addEventListener("snapshot", (event) => {
+      errorCount = 0;
       try {
         handleJobPayload(JSON.parse(event.data));
       } catch {
@@ -125,6 +127,19 @@ export const waitForContentJob = async (input: {
       }
     });
     source.onerror = () => {
+      errorCount += 1;
+      if (errorCount >= 5) {
+        source.close();
+        void input
+          .fetchJob(input.jobId)
+          .then((job) => {
+            if (!settleFromTerminalJob(job)) {
+              rejectError(new Error("SSE connection failed after 5 retries"));
+            }
+          })
+          .catch((error) => rejectError(error));
+        return;
+      }
       void input
         .fetchJob(input.jobId)
         .then((job) => {

@@ -2,16 +2,11 @@
 
 import type { ReactElement } from "react";
 import Image from "next/image";
-import {
-  IconArrowsSort,
-  IconSortAscending,
-  IconSortDescending,
-  IconAdjustmentsHorizontal,
-  IconUser,
-} from "@tabler/icons-react";
+import { IconAdjustmentsHorizontal, IconUser } from "@tabler/icons-react";
 import { UserActionsMenu } from "./user-actions-menu";
 
 import { EmptyState } from "@/components/common/empty-state";
+import { SortableHeader } from "@/components/common/sortable-header";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -22,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/formatters";
-import type { User, UserRole, UserSort, UserSortField } from "@/types/user";
+import type { User, UserRole, UserSort } from "@/types/user";
 
 interface UsersTableProps {
   readonly users: readonly User[];
@@ -43,50 +38,6 @@ interface UsersTableProps {
   readonly systemRoleIds?: readonly string[];
   /** When set, the row for this user id will show " (You)" after the name. */
   readonly currentUserId?: string | null;
-}
-
-interface SortableHeaderProps {
-  readonly label: string;
-  readonly field: UserSortField;
-  readonly currentSort: UserSort;
-  readonly onSortChange: (sort: UserSort) => void;
-}
-
-function SortableHeader({
-  label,
-  field,
-  currentSort,
-  onSortChange,
-}: SortableHeaderProps): ReactElement {
-  const isActive = currentSort.field === field;
-  const isAsc = currentSort.direction === "asc";
-
-  const handleClick = (): void => {
-    if (isActive) {
-      onSortChange({ field, direction: isAsc ? "desc" : "asc" });
-    } else {
-      onSortChange({ field, direction: "asc" });
-    }
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="focus-visible:ring-ring inline-flex items-center gap-1 rounded-sm px-0.5 py-0.5 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2"
-    >
-      {label}
-      {isActive ? (
-        isAsc ? (
-          <IconSortAscending className="size-4" />
-        ) : (
-          <IconSortDescending className="size-4" />
-        )
-      ) : (
-        <IconArrowsSort className="size-4 opacity-50" />
-      )}
-    </button>
-  );
 }
 
 interface FilterableHeaderProps {
@@ -255,7 +206,7 @@ export function UsersTable({
               label="Name"
               field="name"
               currentSort={sort}
-              onSortChange={onSortChange}
+              onSort={(field, direction) => onSortChange({ field, direction })}
             />
           </TableHead>
           <TableHead className="w-[250px]">
@@ -278,7 +229,7 @@ export function UsersTable({
               label="Last Seen"
               field="lastSeen"
               currentSort={sort}
-              onSortChange={onSortChange}
+              onSort={(field, direction) => onSortChange({ field, direction })}
             />
           </TableHead>
           <TableHead className="w-[50px]">

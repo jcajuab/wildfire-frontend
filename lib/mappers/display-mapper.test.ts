@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { mapDisplayApiToDisplay } from "@/lib/map-display-to-display";
+import { mapDisplayApiToDisplay } from "@/lib/mappers/display-mapper";
 import type { Display as ApiDisplay } from "@/lib/api/displays-api";
 
 const makeApiDisplay = (overrides?: Partial<ApiDisplay>): ApiDisplay => ({
@@ -22,7 +22,7 @@ const makeApiDisplay = (overrides?: Partial<ApiDisplay>): ApiDisplay => ({
   ...overrides,
 });
 
-describe("map-display-to-display", () => {
+describe("display-mapper", () => {
   test("maps nowPlaying playlist from backend payload", () => {
     const mapped = mapDisplayApiToDisplay(
       makeApiDisplay({

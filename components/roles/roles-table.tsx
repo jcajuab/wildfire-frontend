@@ -5,13 +5,11 @@ import {
   IconDotsVertical,
   IconEdit,
   IconTrash,
-  IconArrowsSort,
-  IconSortAscending,
-  IconSortDescending,
   IconUsers,
 } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
+import { SortableHeader } from "@/components/common/sortable-header";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -27,7 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Role, RoleSort, RoleSortField } from "@/types/role";
+import type { Role, RoleSort } from "@/types/role";
 
 interface RolesTableProps {
   readonly roles: readonly Role[];
@@ -40,50 +38,6 @@ interface RolesTableProps {
   readonly deleteLabel?: string;
   readonly getDeleteLabel?: (role: Role) => string;
   readonly isDeleteDisabled?: (role: Role) => boolean;
-}
-
-interface SortableHeaderProps {
-  readonly label: string;
-  readonly field: RoleSortField;
-  readonly currentSort: RoleSort;
-  readonly onSortChange: (sort: RoleSort) => void;
-}
-
-function SortableHeader({
-  label,
-  field,
-  currentSort,
-  onSortChange,
-}: SortableHeaderProps): ReactElement {
-  const isActive = currentSort.field === field;
-  const isAsc = currentSort.direction === "asc";
-
-  const handleClick = (): void => {
-    if (isActive) {
-      onSortChange({ field, direction: isAsc ? "desc" : "asc" });
-    } else {
-      onSortChange({ field, direction: "asc" });
-    }
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="focus-visible:ring-ring inline-flex items-center gap-1 rounded-sm px-0.5 py-0.5 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2"
-    >
-      {label}
-      {isActive ? (
-        isAsc ? (
-          <IconSortAscending className="size-4" />
-        ) : (
-          <IconSortDescending className="size-4" />
-        )
-      ) : (
-        <IconArrowsSort className="size-4 text-muted-foreground" />
-      )}
-    </button>
-  );
 }
 
 interface RoleActionsMenuProps {
@@ -188,7 +142,7 @@ export function RolesTable({
               label="Roles"
               field="name"
               currentSort={sort}
-              onSortChange={onSortChange}
+              onSort={(field, direction) => onSortChange({ field, direction })}
             />
           </TableHead>
           <TableHead>Description</TableHead>
@@ -206,7 +160,7 @@ export function RolesTable({
               label="Users"
               field="usersCount"
               currentSort={sort}
-              onSortChange={onSortChange}
+              onSort={(field, direction) => onSortChange({ field, direction })}
             />
           </TableHead>
           <TableHead className="w-[50px]">

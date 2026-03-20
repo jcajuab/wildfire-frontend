@@ -148,9 +148,15 @@ export default function DisplayRuntimePage() {
     }
     const applyViewport = () => setViewport(getViewport());
     applyViewport();
-    window.addEventListener("resize", applyViewport);
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedApplyViewport = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(applyViewport, 150);
+    };
+    window.addEventListener("resize", debouncedApplyViewport);
     return () => {
-      window.removeEventListener("resize", applyViewport);
+      window.removeEventListener("resize", debouncedApplyViewport);
+      if (debounceTimer) clearTimeout(debounceTimer);
     };
   }, []);
 

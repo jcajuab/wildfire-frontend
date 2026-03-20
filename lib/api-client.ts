@@ -264,7 +264,7 @@ export async function unbanUser(userId: string): Promise<void> {
   throw createAuthApiError(response, payload);
 }
 
-export interface AdminResetPasswordResponse {
+interface AdminResetPasswordResponse {
   readonly password: string;
 }
 

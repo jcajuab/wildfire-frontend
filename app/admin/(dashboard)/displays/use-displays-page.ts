@@ -41,7 +41,7 @@ import {
 import {
   mapDisplayApiToDisplay,
   withDisplayGroups,
-} from "@/lib/map-display-to-display";
+} from "@/lib/mappers/display-mapper";
 import type { DisplayStatusFilter } from "@/components/displays/display-filter-popover";
 import type { Display, DisplayOutputFilter } from "@/types/display";
 import type {

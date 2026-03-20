@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/auth-context";
 import StoreProvider from "@/lib/StoreProvider";
+import { DevAccessibilityChecker } from "@/components/dev-accessibility-checker";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -55,6 +56,7 @@ export default function RootLayout({
             <Toaster position="top-center" />
           </AuthProvider>
         </ThemeProvider>
+        <DevAccessibilityChecker />
       </body>
     </html>
   );

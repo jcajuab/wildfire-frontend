@@ -99,6 +99,7 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
                 <button
                   type="button"
                   onClick={() => handleMetadataClick(log)}
+                  aria-label="View full metadata"
                   className="w-full -mx-1 rounded px-1 text-left hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   {formatMetadata(log.metadata)}

@@ -87,6 +87,7 @@ function ProviderCredentialRow({
               onChange={(e) => setApiKey(e.target.value)}
               className={controlClass}
               disabled={isSaving}
+              // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
             />
             <Button

@@ -60,6 +60,7 @@ function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
 
 function PopoverTitle({ className, ...props }: React.ComponentProps<"h2">) {
   return (
+    // eslint-disable-next-line jsx-a11y/heading-has-content
     <h2
       data-slot="popover-title"
       className={cn("text-sm font-medium", className)}

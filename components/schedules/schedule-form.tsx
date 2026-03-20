@@ -64,12 +64,14 @@ function DisplayMultiSelect({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverAnchor asChild>
         {/* Pill container */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
         <div
           ref={containerRef}
           role="combobox"
           aria-expanded={open}
           aria-controls={listboxId}
           aria-haspopup="listbox"
+          tabIndex={0}
           className={cn(
             "flex min-h-7 w-full flex-wrap items-center gap-1 rounded-md border border-input bg-input/20 px-2 py-1 text-xs/relaxed transition-colors cursor-text dark:bg-input/30",
             open ? "border-ring ring-2 ring-ring/30" : "hover:border-ring/50",

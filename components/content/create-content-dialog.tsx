@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { FlashTone } from "@/types/content";
 
 const FLASH_PREVIEW_DEBOUNCE_MS = 500;
+const VIDEO_MAX_BYTES = 10 * 1024 * 1024;
 
 interface CreateContentDialogProps {
   readonly open: boolean;
@@ -66,8 +67,6 @@ export function CreateContentDialog({
   const [textHtmlContent, setTextHtmlContent] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
-
-  const VIDEO_MAX_BYTES = 10 * 1024 * 1024;
 
   const resetState = useCallback(() => {
     setTitle("");

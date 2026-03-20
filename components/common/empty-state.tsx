@@ -1,7 +1,4 @@
-"use client";
-
 import type { ReactElement, ReactNode } from "react";
-import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface EmptyStateProps {
@@ -19,17 +16,10 @@ export function EmptyState({
   action,
   className,
 }: EmptyStateProps): ReactElement {
-  const prefersReducedMotion = useReducedMotion();
-
   return (
-    <motion.div
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
-      animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-      transition={
-        prefersReducedMotion ? undefined : { duration: 0.16, ease: "easeOut" }
-      }
+    <div
       className={cn(
-        "mx-auto flex w-full max-w-xl flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border bg-muted/20 px-6 py-12 text-center",
+        "animate-in fade-in-0 slide-in-from-bottom-2 mx-auto flex w-full max-w-xl flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border bg-muted/20 px-6 py-12 text-center duration-150 ease-out",
         className,
       )}
     >
@@ -41,6 +31,6 @@ export function EmptyState({
         </p>
       ) : null}
       {action ? <div className="pt-1">{action}</div> : null}
-    </motion.div>
+    </div>
   );
 }

@@ -43,7 +43,7 @@ export const PlaylistCard = memo(function PlaylistCard({
   const updatedAtLabel = formatDateWithTime(playlist.updatedAt);
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+    <article className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -68,7 +68,7 @@ export const PlaylistCard = memo(function PlaylistCard({
               size="icon-sm"
               aria-label={`Actions for ${playlist.name}`}
             >
-              <IconDots className="size-4" />
+              <IconDots className="size-4" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
@@ -165,6 +165,6 @@ export const PlaylistCard = memo(function PlaylistCard({
         </span>
         <span className="text-xs text-muted-foreground">{updatedAtLabel}</span>
       </div>
-    </div>
+    </article>
   );
 });

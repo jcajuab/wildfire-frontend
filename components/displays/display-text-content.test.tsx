@@ -57,7 +57,8 @@ describe("DisplayTextContent", () => {
   });
 
   test("adds explicit wrapping support for long unbroken text", () => {
-    const html = "<p>SuperLongRuntimeTextWithoutNaturalSpacesToForceWrappingAcrossTheViewport</p>";
+    const html =
+      "<p>SuperLongRuntimeTextWithoutNaturalSpacesToForceWrappingAcrossTheViewport</p>";
 
     const { container } = render(<DisplayTextContent html={html} />);
 

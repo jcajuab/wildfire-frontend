@@ -322,6 +322,7 @@ export function AddDisplayDialog({
                 className="flex flex-col gap-2"
                 role="radiogroup"
                 aria-label="Display output"
+                tabIndex={0}
                 onKeyDown={handleOutputGroupKeyDown}
               >
                 {availableDisplayOutputs.map((output) => (

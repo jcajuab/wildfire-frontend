@@ -534,8 +534,8 @@ export function PdfCropEditor({
   );
 
   const handleMouseDown = useCallback(
-    (event: React.MouseEvent) => {
-      if (event.button !== 0) return;
+    (event: React.MouseEvent | React.TouchEvent) => {
+      if ("button" in event && event.button !== 0) return;
       event.preventDefault();
       const { x, y } = getRelativeCoords(event);
 
@@ -577,7 +577,7 @@ export function PdfCropEditor({
   );
 
   const handleMouseMove = useCallback(
-    (event: React.MouseEvent) => {
+    (event: React.MouseEvent | React.TouchEvent) => {
       const { x, y } = getRelativeCoords(event);
 
       if (cropMode.mode === "drawing") {
@@ -884,6 +884,7 @@ export function PdfCropEditor({
               <div ref={canvasContainerRef} className="relative" />
 
               {canvasSize.width > 0 && (
+                // eslint-disable-next-line jsx-a11y/no-static-element-interactions
                 <div
                   ref={overlayRef}
                   className="absolute select-none"
@@ -901,6 +902,9 @@ export function PdfCropEditor({
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
                   onMouseLeave={handleMouseLeave}
+                  onTouchStart={handleMouseDown}
+                  onTouchMove={handleMouseMove}
+                  onTouchEnd={handleMouseUp}
                 >
                   {activeRect && (
                     <svg
@@ -957,6 +961,7 @@ export function PdfCropEditor({
                           { cx: number; cy: number },
                         ][]
                       ).map(([corner, pos]) => (
+                        // eslint-disable-next-line jsx-a11y/no-static-element-interactions
                         <div
                           key={corner}
                           className="pointer-events-auto absolute border-2 border-primary bg-white"
@@ -1014,6 +1019,7 @@ export function PdfCropEditor({
               </p>
             ) : (
               collectedCrops.map((crop, index) => (
+                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
                 <div
                   key={crop.id}
                   className="group relative cursor-pointer overflow-hidden rounded-md border border-border bg-card"
@@ -1054,12 +1060,14 @@ export function PdfCropEditor({
 
       {/* Lightbox */}
       {lightboxCrop && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
         <div
           role="dialog"
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
           onClick={() => setLightboxCropId(null)}
         >
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             {/* eslint-disable-next-line @next/next/no-img-element -- data URL from canvas */}
             <img

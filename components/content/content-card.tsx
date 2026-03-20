@@ -77,7 +77,7 @@ export const ContentCard = memo(function ContentCard({
     content.type === "VIDEO" ? IconVideo : IconPhoto;
 
   return (
-    <div className="group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors duration-150">
+    <article className="group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors duration-150">
       {/* Zone A — Card header */}
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
@@ -91,7 +91,7 @@ export const ContentCard = memo(function ContentCard({
               aria-label={`Actions for ${content.title}`}
               className="shrink-0"
             >
-              <IconDots className="size-4" />
+              <IconDots className="size-4" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
@@ -202,6 +202,6 @@ export const ContentCard = memo(function ContentCard({
           </span>
         </div>
       </div>
-    </div>
+    </article>
   );
 });

@@ -1,4 +1,4 @@
-export interface ApiLinks {
+interface ApiLinks {
   readonly self: string;
   readonly first?: string;
   readonly prev?: string;
@@ -6,7 +6,7 @@ export interface ApiLinks {
   readonly last?: string;
 }
 
-export interface ApiMeta {
+interface ApiMeta {
   readonly total: number;
   readonly page: number;
   readonly pageSize: number;
