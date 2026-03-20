@@ -14,6 +14,7 @@ function mapBackendPlaylistItemToContent(
     type: item.content.type,
     checksum: item.content.checksum,
     thumbnailUrl: item.content.thumbnailUrl ?? null,
+    textHtmlContent: item.content.textHtmlContent ?? null,
   };
 }
 

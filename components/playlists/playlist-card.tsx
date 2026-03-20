@@ -25,6 +25,7 @@ import {
   formatDuration,
   formatItemDuration,
 } from "@/lib/formatters";
+import { sanitizeRichTextHtml } from "@/lib/content-thumbnail-preview";
 
 interface PlaylistCardProps {
   readonly playlist: PlaylistSummary;
@@ -129,6 +130,18 @@ export const PlaylistCard = memo(function PlaylistCard({
                     unoptimized
                     className="object-cover"
                   />
+                ) : item.content.type === "TEXT" &&
+                  item.content.textHtmlContent ? (
+                  <div className="flex size-full items-start overflow-hidden p-1">
+                    <div
+                      className="w-full break-words text-[6px] leading-tight text-foreground [&_p]:my-0 [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_ul]:ml-2 [&_ul]:list-disc [&_ol]:ml-2 [&_ol]:list-decimal [&_li]:list-item [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-0.5 [&_th]:border [&_th]:border-border [&_th]:bg-muted/60 [&_th]:px-0.5 [&_th]:font-semibold"
+                      dangerouslySetInnerHTML={{
+                        __html: sanitizeRichTextHtml(
+                          item.content.textHtmlContent,
+                        ),
+                      }}
+                    />
+                  </div>
                 ) : (
                   <IconPhoto
                     className="size-5 text-muted-foreground"

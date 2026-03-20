@@ -148,18 +148,15 @@ export function CreateContentDialog({
     title,
   ]);
 
-  const handleFileSelect = useCallback(
-    (file: File) => {
-      if (file.type === "video/mp4" && file.size > VIDEO_MAX_BYTES) {
-        setFileError("Video files cannot exceed 10 MB.");
-        setSelectedFile(null);
-        return;
-      }
-      setFileError(null);
-      setSelectedFile(file);
-    },
-    [VIDEO_MAX_BYTES],
-  );
+  const handleFileSelect = useCallback((file: File) => {
+    if (file.type === "video/mp4" && file.size > VIDEO_MAX_BYTES) {
+      setFileError("Video files cannot exceed 10 MB.");
+      setSelectedFile(null);
+      return;
+    }
+    setFileError(null);
+    setSelectedFile(file);
+  }, []);
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
