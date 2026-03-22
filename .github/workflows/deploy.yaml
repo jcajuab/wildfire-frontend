@@ -1,0 +1,59 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_API_VERSION: ${{ secrets.NEXT_PUBLIC_API_VERSION }}
+
+      - name: Package standalone
+        run: |
+          cp -r .next/static .next/standalone/.next/static
+          tar czf deploy.tar.gz -C .next/standalone .
+
+      - name: Upload via SFTP
+        run: |
+          sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" sftp -P ${{ secrets.DEPLOY_PORT }} \
+            -o StrictHostKeyChecking=no \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} <<SFTP
+          put deploy.tar.gz ${{ secrets.DEPLOY_PATH }}/deploy.tar.gz
+          SFTP
+
+      - name: Extract and reload
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            tar xzf deploy.tar.gz
+            rm deploy.tar.gz
+            pm2 reload ecosystem.config.cjs
