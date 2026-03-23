@@ -59,7 +59,7 @@ describe("RolesPage", () => {
 
     useRouterMock.mockReturnValue({
       push: pushMock,
-    } as ReturnType<typeof useRouter>);
+    } as unknown as ReturnType<typeof useRouter>);
 
     useCanMock.mockReturnValue(true);
 
@@ -96,7 +96,7 @@ describe("RolesPage", () => {
       },
       isLoading: false,
       isError: false,
-    } as ReturnType<typeof useGetRolesQuery>);
+    } as unknown as ReturnType<typeof useGetRolesQuery>);
 
     deleteRoleMutationMock.mockReturnValue({
       unwrap: async () => undefined,

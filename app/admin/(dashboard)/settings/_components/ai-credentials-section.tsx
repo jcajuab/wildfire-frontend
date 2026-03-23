@@ -2,7 +2,6 @@
 
 import type { ReactElement } from "react";
 import { useState } from "react";
-import { motion } from "framer-motion";
 import {
   IconKey,
   IconTrash,
@@ -191,11 +190,11 @@ function ProviderCredentialRow({
 }
 
 interface AICredentialsSectionProps {
-  readonly sectionMotionProps: Record<string, unknown>;
+  readonly prefersReducedMotion: boolean | null;
 }
 
 export function AICredentialsSection({
-  sectionMotionProps,
+  prefersReducedMotion,
 }: AICredentialsSectionProps): ReactElement {
   const {
     credentials,
@@ -207,10 +206,9 @@ export function AICredentialsSection({
   } = useAICredentials();
 
   return (
-    <motion.section
+    <section
       aria-labelledby="ai-credentials-heading"
-      className="border-b border-border pb-8"
-      {...sectionMotionProps}
+      className={`border-b border-border pb-8${!prefersReducedMotion ? " animate-in fade-in duration-150" : ""}`}
     >
       <header className="mb-4">
         <h2
@@ -253,6 +251,6 @@ export function AICredentialsSection({
               );
             })}
       </dl>
-    </motion.section>
+    </section>
   );
 }

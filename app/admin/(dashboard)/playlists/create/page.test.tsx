@@ -69,7 +69,7 @@ describe("CreatePlaylistPage", () => {
 
     useRouterMock.mockReturnValue({
       push: pushMock,
-    } as ReturnType<typeof useRouter>);
+    } as unknown as ReturnType<typeof useRouter>);
 
     useCanMock.mockImplementation(
       (permission) => permission === "content:read",
@@ -82,15 +82,10 @@ describe("CreatePlaylistPage", () => {
             id: "content-1",
             title: "Poster",
             type: "IMAGE",
-            kind: "ROOT",
             thumbnailUrl: null,
             mimeType: "image/png",
             fileSize: 100,
             checksum: "checksum-1",
-            parentContentId: null,
-            pageNumber: null,
-            pageCount: null,
-            isExcluded: false,
             width: 1920,
             height: 1080,
             duration: 5,
@@ -105,7 +100,7 @@ describe("CreatePlaylistPage", () => {
           },
         ],
       },
-    } as ReturnType<typeof useListContentQuery>);
+    } as unknown as ReturnType<typeof useListContentQuery>);
 
     createPlaylistMock.mockReturnValue({
       unwrap: async () => ({ id: "playlist-1" }),

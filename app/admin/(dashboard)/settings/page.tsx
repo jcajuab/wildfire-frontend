@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { motion } from "framer-motion";
 import { IconPencil } from "@tabler/icons-react";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
@@ -32,7 +31,7 @@ export default function SettingsPage(): ReactElement {
     isWildfireUser,
     theme,
     setTheme,
-    sectionMotionProps,
+    prefersReducedMotion,
     profileEditor,
     avatarUrl,
     accountNameForDialog,
@@ -56,10 +55,9 @@ export default function SettingsPage(): ReactElement {
         <DashboardPage.Content key={user?.id ?? "anonymous"}>
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
             <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
-              <motion.section
+              <section
                 aria-labelledby="account-information-heading"
-                className="border-b border-border pb-8"
-                {...sectionMotionProps}
+                className={`border-b border-border pb-8${!prefersReducedMotion ? " animate-in fade-in duration-150" : ""}`}
               >
                 <header className="mb-4">
                   <h2
@@ -319,12 +317,11 @@ export default function SettingsPage(): ReactElement {
                     </SettingsField>
                   )}
                 </dl>
-              </motion.section>
+              </section>
 
-              <motion.section
+              <section
                 aria-labelledby="system-settings-heading"
-                className="border-b border-border pb-8"
-                {...sectionMotionProps}
+                className={`border-b border-border pb-8${!prefersReducedMotion ? " animate-in fade-in duration-150" : ""}`}
               >
                 <header className="mb-4">
                   <h2
@@ -364,14 +361,15 @@ export default function SettingsPage(): ReactElement {
                     </div>
                   </SettingsField>
                 </dl>
-              </motion.section>
+              </section>
 
-              <AICredentialsSection sectionMotionProps={sectionMotionProps} />
+              <AICredentialsSection
+                prefersReducedMotion={prefersReducedMotion}
+              />
 
-              <motion.section
+              <section
                 aria-labelledby="danger-zone-heading"
-                className="space-y-4"
-                {...sectionMotionProps}
+                className={`space-y-4${!prefersReducedMotion ? " animate-in fade-in duration-150" : ""}`}
               >
                 <header>
                   <h2
@@ -431,7 +429,7 @@ export default function SettingsPage(): ReactElement {
                     )}
                   </div>
                 </div>
-              </motion.section>
+              </section>
             </div>
           </div>
         </DashboardPage.Content>

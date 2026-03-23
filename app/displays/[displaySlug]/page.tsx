@@ -3,26 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { getBaseUrl } from "@/lib/api/base-query";
-import {
-  createAuthChallenge,
-  fetchSignedManifest,
-  postSignedSnapshot,
-  postSignedHeartbeat,
-  verifyAuthChallenge,
-  type DisplayManifest,
-} from "@/lib/display-api/client";
-import { getStoredDisplayKeyPair, signText } from "@/lib/crypto/key-manager";
-import { createSignedHeaders } from "@/lib/crypto/request-signer";
-import {
-  type DisplayRegistrationRecord,
-  getDisplayRegistrationBySlug,
-} from "@/lib/display-identity/registration-store";
-import { createPlayerController } from "@/lib/display-runtime/player-controller";
-import { createScheduleBoundaryTimer } from "@/lib/display-runtime/schedule-timer";
-import { buildRuntimeTimings } from "@/lib/display-runtime/overflow-timing";
-import { createDisplaySseClient } from "@/lib/display-runtime/sse-client";
+import { useEffect, useMemo, useState } from "react";
 import {
   buildFlashMarqueeStyle,
   getFlashBadgeClassName,
@@ -30,13 +11,11 @@ import {
   inferFlashRepeatCount,
 } from "@/lib/display-runtime/flash-ticker";
 import { formatTimeOfDay } from "@/lib/formatters";
-import { useMounted } from "@/hooks/use-mounted";
 import { BouncingLogoScreensaver } from "@/components/displays/bouncing-logo-screensaver";
 import { DisplayTextContent } from "@/components/displays/display-text-content";
-
-const FALLBACK_POLL_MS = 300_000;
-const HEARTBEAT_MS = 30_000;
-const SNAPSHOT_UPLOAD_MS = 10_000;
+import { useDisplayRuntime } from "./_hooks/use-display-runtime";
+import { useDisplayPlayback } from "./_hooks/use-display-playback";
+import { useSnapshotUploader } from "./_hooks/use-snapshot-uploader";
 
 const formatRuntimeTimestamp = (timestamp: string | null): string | null => {
   if (!timestamp) {
@@ -49,29 +28,6 @@ const getViewport = () => ({
   width: window.innerWidth,
   height: window.innerHeight,
 });
-
-const createChallengePayload = (input: {
-  challengeToken: string;
-  slug: string;
-  keyId: string;
-}): string =>
-  ["CHALLENGE", input.challengeToken, input.slug, input.keyId].join("\n");
-
-const blobToDataUrl = (blob: Blob): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-        return;
-      }
-      reject(new Error("Failed to read snapshot blob"));
-    };
-    reader.onerror = () => {
-      reject(new Error("Failed to read snapshot blob"));
-    };
-    reader.readAsDataURL(blob);
-  });
 
 function computeTableFontSize(
   html: string,
@@ -106,42 +62,25 @@ function computeTableFontSize(
 export default function DisplayRuntimePage() {
   const params = useParams<{ displaySlug: string }>();
   const displaySlug = params.displaySlug;
-  const isMounted = useMounted();
-  const isRegistrationResolved = isMounted || !displaySlug;
-  const registration = useMemo<DisplayRegistrationRecord | null>(() => {
-    if (!isMounted || !displaySlug) {
-      return null;
-    }
-    return getDisplayRegistrationBySlug(displaySlug);
-  }, [displaySlug, isMounted]);
-  const [manifest, setManifest] = useState<DisplayManifest | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [connectionState, setConnectionState] = useState<
-    "connected" | "reconnecting" | "closed"
-  >("closed");
-  const [lastEventAt, setLastEventAt] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const {
+    manifest,
+    connectionState,
+    errorMessage,
+    lastEventAt,
+    registration,
+    isRegistrationResolved,
+    playlistVersion,
+  } = useDisplayRuntime(displaySlug);
+
+  const { currentIndex, currentItem } = useDisplayPlayback(
+    manifest,
+    playlistVersion,
+  );
+
+  useSnapshotUploader(manifest, currentIndex, registration);
+
   const [viewport, setViewport] = useState({ width: 1920, height: 1080 });
-
-  const lastPlaylistVersionRef = useRef<string | null>(null);
-  const manifestRef = useRef<DisplayManifest | null>(null);
-  const currentIndexRef = useRef(0);
-  const snapshotUploadingRef = useRef(false);
-  const lastSnapshotUrlRef = useRef<string | null>(null);
-  const currentItem = manifest?.items[currentIndex] ?? null;
-  const playback = manifest?.playback ?? null;
-  const emergencyPlayback = playback?.emergency ?? null;
-  const isEmergencyModeActive = playback?.mode === "EMERGENCY";
-  const activeFlash = playback?.mode === "SCHEDULE" ? playback.flash : null;
-  const baseUrl = getBaseUrl();
-
-  const tableStyle = useMemo(() => {
-    if (currentItem?.content.type !== "TEXT") return null;
-    return computeTableFontSize(
-      currentItem.content.textHtmlContent ?? "",
-      viewport.height,
-    );
-  }, [currentItem, viewport.height]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -161,253 +100,18 @@ export default function DisplayRuntimePage() {
     };
   }, []);
 
-  const timings = useMemo(() => {
-    if (!manifest) {
-      return [];
-    }
-    return buildRuntimeTimings({
-      items: manifest.items,
-    });
-  }, [manifest]);
+  const playback = manifest?.playback ?? null;
+  const emergencyPlayback = playback?.emergency ?? null;
+  const isEmergencyModeActive = playback?.mode === "EMERGENCY";
+  const activeFlash = playback?.mode === "SCHEDULE" ? playback.flash : null;
 
-  useEffect(() => {
-    if (!registration) {
-      return;
-    }
-
-    let disposed = false;
-
-    const refreshManifest = async (privateKey: CryptoKey): Promise<void> => {
-      const payload = await fetchSignedManifest({
-        registration,
-        privateKey,
-      });
-      const hasMaterialChange =
-        payload.playlistVersion !== lastPlaylistVersionRef.current;
-      setManifest(payload);
-      manifestRef.current = payload;
-      setErrorMessage(null);
-      if (hasMaterialChange) {
-        setCurrentIndex(0);
-      }
-      lastPlaylistVersionRef.current = payload.playlistVersion;
-    };
-
-    const connectRuntime = async (): Promise<(() => void) | null> => {
-      const keyPair = await getStoredDisplayKeyPair(registration.keyAlias);
-      if (!keyPair) {
-        throw new Error(
-          "Display keypair is unavailable. Re-register this display from /admin/displays/register.",
-        );
-      }
-
-      const challenge = await createAuthChallenge({
-        slug: registration.slug,
-        keyId: registration.keyId,
-      });
-      const challengePayload = createChallengePayload({
-        challengeToken: challenge.challengeToken,
-        slug: registration.slug,
-        keyId: registration.keyId,
-      });
-      const challengeSignature = await signText(
-        keyPair.privateKey,
-        challengePayload,
-      );
-      await verifyAuthChallenge({
-        challengeToken: challenge.challengeToken,
-        slug: registration.slug,
-        keyId: registration.keyId,
-        signature: challengeSignature,
-      });
-
-      await refreshManifest(keyPair.privateKey);
-
-      let boundaryTimer: { clear(): void } | null = null;
-
-      const restartBoundaryTimer = (): void => {
-        boundaryTimer?.clear();
-        const currentManifest = manifestRef.current;
-        if (currentManifest) {
-          boundaryTimer = createScheduleBoundaryTimer(
-            currentManifest.schedules,
-            () => {
-              void refreshManifest(keyPair.privateKey)
-                .then(() => {
-                  restartBoundaryTimer();
-                })
-                .catch((error) => {
-                  setErrorMessage(
-                    error instanceof Error
-                      ? error.message
-                      : "Failed to refresh manifest at schedule boundary",
-                  );
-                });
-            },
-          );
-        }
-      };
-
-      restartBoundaryTimer();
-
-      const streamUrl = `${baseUrl}/display-runtime/${encodeURIComponent(
-        registration.slug,
-      )}/stream`;
-
-      const sse = createDisplaySseClient({
-        streamUrl,
-        getHeaders: () =>
-          createSignedHeaders({
-            method: "GET",
-            url: streamUrl,
-            slug: registration.slug,
-            keyId: registration.keyId,
-            privateKey: keyPair.privateKey,
-            body: "",
-          }),
-        onStateChange: setConnectionState,
-        onEvent: () => {
-          setLastEventAt(new Date().toISOString());
-          void refreshManifest(keyPair.privateKey)
-            .then(() => {
-              restartBoundaryTimer();
-            })
-            .catch((error) => {
-              setErrorMessage(
-                error instanceof Error
-                  ? error.message
-                  : "Failed to refresh manifest",
-              );
-            });
-        },
-      });
-
-      const pollTimer = setInterval(() => {
-        void refreshManifest(keyPair.privateKey).catch((error) => {
-          setErrorMessage(
-            error instanceof Error ? error.message : "Failed to poll manifest",
-          );
-        });
-      }, FALLBACK_POLL_MS);
-
-      const heartbeatTimer = setInterval(() => {
-        void postSignedHeartbeat({
-          registration,
-          privateKey: keyPair.privateKey,
-        }).catch(() => {
-          // Heartbeat failures are non-fatal; manifest polling still runs.
-        });
-      }, HEARTBEAT_MS);
-
-      const uploadSnapshot = async (): Promise<void> => {
-        if (snapshotUploadingRef.current) {
-          return;
-        }
-        const currentManifest = manifestRef.current;
-        if (!currentManifest) {
-          return;
-        }
-        const activeItem =
-          currentManifest.items[currentIndexRef.current] ?? null;
-        if (!activeItem) {
-          return;
-        }
-        const snapshotSourceUrl =
-          activeItem.content.type === "IMAGE"
-            ? activeItem.content.downloadUrl
-            : activeItem.content.thumbnailUrl;
-        if (!snapshotSourceUrl) {
-          return;
-        }
-        if (snapshotSourceUrl === lastSnapshotUrlRef.current) {
-          return;
-        }
-
-        snapshotUploadingRef.current = true;
-        try {
-          const response = await fetch(snapshotSourceUrl, {
-            method: "GET",
-            cache: "no-store",
-          });
-          if (!response.ok) {
-            return;
-          }
-          const blob = await response.blob();
-          if (!blob.type.startsWith("image/")) {
-            return;
-          }
-          const imageDataUrl = await blobToDataUrl(blob);
-          await postSignedSnapshot({
-            registration,
-            privateKey: keyPair.privateKey,
-            imageDataUrl,
-          });
-          lastSnapshotUrlRef.current = snapshotSourceUrl;
-        } catch {
-          // Snapshot failures are non-fatal; runtime playback should continue.
-        } finally {
-          snapshotUploadingRef.current = false;
-        }
-      };
-
-      const snapshotTimer = setInterval(() => {
-        void uploadSnapshot();
-      }, SNAPSHOT_UPLOAD_MS);
-      void uploadSnapshot();
-
-      return () => {
-        clearInterval(pollTimer);
-        clearInterval(heartbeatTimer);
-        clearInterval(snapshotTimer);
-        boundaryTimer?.clear();
-        sse.close();
-      };
-    };
-
-    let cleanup: (() => void) | null = null;
-
-    void connectRuntime()
-      .then((fn) => {
-        if (disposed) {
-          fn?.();
-          return;
-        }
-        cleanup = fn;
-      })
-      .catch((error) => {
-        setErrorMessage(
-          error instanceof Error ? error.message : "Runtime startup failed",
-        );
-      });
-
-    return () => {
-      disposed = true;
-      cleanup?.();
-    };
-  }, [baseUrl, registration]);
-
-  useEffect(() => {
-    currentIndexRef.current = currentIndex;
-  }, [currentIndex]);
-
-  useEffect(() => {
-    if (timings.length === 0) {
-      return;
-    }
-
-    const controller = createPlayerController({
-      timings,
-      initialIndex: Math.min(currentIndexRef.current, timings.length - 1),
-      onTick: ({ index }) => {
-        currentIndexRef.current = index;
-        setCurrentIndex(index);
-      },
-    });
-    controller.start();
-    return () => {
-      controller.stop();
-    };
-  }, [timings]);
+  const tableStyle = useMemo(() => {
+    if (currentItem?.content.type !== "TEXT") return null;
+    return computeTableFontSize(
+      currentItem.content.textHtmlContent ?? "",
+      viewport.height,
+    );
+  }, [currentItem, viewport.height]);
 
   const flashMarqueeText = useMemo(() => {
     if (!activeFlash) {

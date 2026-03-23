@@ -24,7 +24,7 @@ function findAncestorWithClasses(
 
   while (current) {
     if (
-      classNames.every((className) => current.classList.contains(className))
+      classNames.every((className) => current!.classList.contains(className))
     ) {
       return current;
     }
@@ -96,7 +96,7 @@ describe("CreateRolePage", () => {
 
     useRouterMock.mockReturnValue({
       push: pushMock,
-    } as ReturnType<typeof useRouter>);
+    } as unknown as ReturnType<typeof useRouter>);
 
     useCanMock.mockImplementation((permission) => permission !== "users:read");
 
@@ -108,11 +108,11 @@ describe("CreateRolePage", () => {
           action: "read",
         },
       ],
-    } as ReturnType<typeof useGetPermissionsQuery>);
+    } as unknown as ReturnType<typeof useGetPermissionsQuery>);
 
     useGetUserOptionsQueryMock.mockReturnValue({
       data: [],
-    } as ReturnType<typeof useGetUserOptionsQuery>);
+    } as unknown as ReturnType<typeof useGetUserOptionsQuery>);
 
     createRoleMock.mockReturnValue({
       unwrap: async () => ({
@@ -277,7 +277,7 @@ describe("CreateRolePage", () => {
     });
     expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
 
-    resolveCreate?.({
+    resolveCreate!({
       id: "role-1",
       name: "Moderators",
       description: null,

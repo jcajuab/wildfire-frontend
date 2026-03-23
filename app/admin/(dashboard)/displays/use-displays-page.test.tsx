@@ -122,10 +122,10 @@ describe("useDisplaysPage", () => {
 
     useGetDisplayGroupsQueryMock.mockReturnValue({
       data: [{ id: "group-1", name: "Lobby", displayIds: [] }],
-    } as ReturnType<typeof useGetDisplayGroupsQuery>);
+    } as unknown as ReturnType<typeof useGetDisplayGroupsQuery>);
     useGetDisplayOutputOptionsQueryMock.mockReturnValue({
       data: ["hdmi-1", "hdmi-2"],
-    } as ReturnType<typeof useGetDisplayOutputOptionsQuery>);
+    } as unknown as ReturnType<typeof useGetDisplayOutputOptionsQuery>);
     useGetDisplaysQueryMock.mockReturnValue({
       data: { items: [], total: 0 },
       isLoading: false,
@@ -135,15 +135,25 @@ describe("useDisplaysPage", () => {
     } as ReturnType<typeof useGetDisplaysQuery>);
     useGetRuntimeOverridesQueryMock.mockReturnValue({
       data: undefined,
-    } as ReturnType<typeof useGetRuntimeOverridesQuery>);
-    useLazyGetDisplayQueryMock.mockReturnValue([vi.fn()]);
-    useCreateDisplayGroupMutationMock.mockReturnValue([vi.fn()]);
-    useSetDisplayGroupsMutationMock.mockReturnValue([vi.fn()]);
-    useUnregisterDisplayMutationMock.mockReturnValue([vi.fn()]);
-    useUpdateDisplayMutationMock.mockReturnValue([vi.fn()]);
+    } as unknown as ReturnType<typeof useGetRuntimeOverridesQuery>);
+    useLazyGetDisplayQueryMock.mockReturnValue([
+      vi.fn(),
+    ] as unknown as ReturnType<typeof useLazyGetDisplayQuery>);
+    useCreateDisplayGroupMutationMock.mockReturnValue([
+      vi.fn(),
+    ] as unknown as ReturnType<typeof useCreateDisplayGroupMutation>);
+    useSetDisplayGroupsMutationMock.mockReturnValue([
+      vi.fn(),
+    ] as unknown as ReturnType<typeof useSetDisplayGroupsMutation>);
+    useUnregisterDisplayMutationMock.mockReturnValue([
+      vi.fn(),
+    ] as unknown as ReturnType<typeof useUnregisterDisplayMutation>);
+    useUpdateDisplayMutationMock.mockReturnValue([
+      vi.fn(),
+    ] as unknown as ReturnType<typeof useUpdateDisplayMutation>);
     useGetContentOptionsQueryMock.mockReturnValue({
       data: [],
-    } as ReturnType<typeof useGetContentOptionsQuery>);
+    } as unknown as ReturnType<typeof useGetContentOptionsQuery>);
     subscribeToDisplayLifecycleEventsMock.mockReturnValue({
       close: vi.fn(),
     });

@@ -89,7 +89,7 @@ function findAncestorWithClasses(
 
   while (current) {
     if (
-      classNames.every((className) => current.classList.contains(className))
+      classNames.every((className) => current!.classList.contains(className))
     ) {
       return current;
     }

@@ -22,7 +22,6 @@ export interface UseSettingsPageResult {
 
   // Motion
   prefersReducedMotion: boolean | null;
-  sectionMotionProps: Record<string, unknown>;
 
   // Profile editor
   profileEditor: ReturnType<typeof useProfileEditor>;
@@ -82,14 +81,6 @@ export function useSettingsPage(): UseSettingsPageResult {
   const isInvitedUser = user?.isInvitedUser ?? false;
   const isWildfireUser = isInvitedUser || (user?.isAdmin ?? false);
 
-  const sectionMotionProps = prefersReducedMotion
-    ? {}
-    : {
-        initial: { opacity: 0, y: 6 },
-        animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.16, ease: "easeOut" as const },
-      };
-
   const accountDisplayName = [
     profileEditor.firstName.trim(),
     profileEditor.lastName.trim(),
@@ -145,7 +136,6 @@ export function useSettingsPage(): UseSettingsPageResult {
     theme,
     setTheme,
     prefersReducedMotion: prefersReducedMotion ?? null,
-    sectionMotionProps,
     profileEditor,
     avatarUrl,
     accountNameForDialog,

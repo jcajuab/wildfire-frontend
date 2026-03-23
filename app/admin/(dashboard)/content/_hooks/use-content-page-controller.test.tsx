@@ -95,21 +95,21 @@ describe("useContentPageController", () => {
     vi.clearAllMocks();
 
     useCanMock.mockReturnValue(true);
-    useLazyGetContentJobQueryMock.mockReturnValue([vi.fn()] as ReturnType<
-      typeof useLazyGetContentJobQuery
-    >);
-    useLazyGetContentQueryMock.mockReturnValue([vi.fn()] as ReturnType<
-      typeof useLazyGetContentQuery
-    >);
-    useUploadPdfMutationMock.mockReturnValue([vi.fn()] as ReturnType<
+    useLazyGetContentJobQueryMock.mockReturnValue([
+      vi.fn(),
+    ] as unknown as ReturnType<typeof useLazyGetContentJobQuery>);
+    useLazyGetContentQueryMock.mockReturnValue([
+      vi.fn(),
+    ] as unknown as ReturnType<typeof useLazyGetContentQuery>);
+    useUploadPdfMutationMock.mockReturnValue([vi.fn()] as unknown as ReturnType<
       typeof useUploadPdfMutation
     >);
-    useSubmitPdfCropsMutationMock.mockReturnValue([vi.fn()] as ReturnType<
-      typeof useSubmitPdfCropsMutation
-    >);
-    useCancelPdfUploadMutationMock.mockReturnValue([vi.fn()] as ReturnType<
-      typeof useCancelPdfUploadMutation
-    >);
+    useSubmitPdfCropsMutationMock.mockReturnValue([
+      vi.fn(),
+    ] as unknown as ReturnType<typeof useSubmitPdfCropsMutation>);
+    useCancelPdfUploadMutationMock.mockReturnValue([
+      vi.fn(),
+    ] as unknown as ReturnType<typeof useCancelPdfUploadMutation>);
     useContentJobMonitorMock.mockReturnValue({ trackContentJob: vi.fn() });
     useContentPageFiltersMock.mockReturnValue({
       statusFilter: "READY",

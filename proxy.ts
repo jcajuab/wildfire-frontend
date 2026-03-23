@@ -20,14 +20,52 @@ function isJwtExpired(token: string): boolean {
   }
 }
 
+const isDev = process.env.NODE_ENV === "development";
+
+function buildCspHeader(nonce: string): string {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
+    `style-src 'self' 'nonce-${nonce}'`,
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    `connect-src 'self'${process.env.NEXT_PUBLIC_API_URL ? ` ${process.env.NEXT_PUBLIC_API_URL}` : ""} wss:`,
+    "media-src 'self' blob:",
+    "worker-src 'self' blob:",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+}
+
 export function proxy(request: NextRequest): NextResponse {
-  const sessionCookie = request.cookies.get("wildfire_session_token");
-  if (!sessionCookie || isJwtExpired(sessionCookie.value)) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  const isAdminPath = request.nextUrl.pathname.startsWith("/admin");
+
+  if (isAdminPath) {
+    const sessionCookie = request.cookies.get("wildfire_session_token");
+    if (!sessionCookie || isJwtExpired(sessionCookie.value)) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
   }
-  return NextResponse.next();
+
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const csp = buildCspHeader(nonce);
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+  response.headers.set("Content-Security-Policy", csp);
+
+  return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };
