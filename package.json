@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
+    "build": "next build && mv .next/static .next/standalone/.next/static",
     "dev": "next dev",
     "format": "prettier --write .",
     "lint": "eslint",

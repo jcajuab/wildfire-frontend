@@ -30,9 +30,7 @@ jobs:
           NEXT_PUBLIC_API_VERSION: ${{ secrets.NEXT_PUBLIC_API_VERSION }}
 
       - name: Package standalone
-        run: |
-          cp -r .next/static .next/standalone/.next/static
-          tar czf deploy.tar.gz -C .next/standalone .
+        run: tar czf deploy.tar.gz -C .next/standalone .
 
       - name: Upload via SFTP
         run: |
