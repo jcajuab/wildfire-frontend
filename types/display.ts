@@ -12,7 +12,7 @@ export interface NowPlaying {
   readonly duration: number;
 }
 
-export interface DisplayGroup {
+export interface DisplayGroupLabel {
   readonly name: string;
 }
 
@@ -27,7 +27,7 @@ export interface Display {
   readonly output: string;
   readonly resolution: string;
   readonly emergencyContentId: string | null;
-  readonly groups: readonly DisplayGroup[];
+  readonly groups: readonly DisplayGroupLabel[];
   readonly nowPlaying: NowPlaying | null;
   readonly createdAt: string;
 }

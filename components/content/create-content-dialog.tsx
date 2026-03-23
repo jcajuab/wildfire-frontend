@@ -337,7 +337,7 @@ export function CreateContentDialog({
                 <Label htmlFor="flash-tone">Tone</Label>
                 <Select
                   value={flashTone}
-                  onValueChange={(value) => setFlashTone(value as FlashTone)}
+                  onValueChange={(value: FlashTone) => setFlashTone(value)}
                 >
                   <SelectTrigger id="flash-tone">
                     <SelectValue />

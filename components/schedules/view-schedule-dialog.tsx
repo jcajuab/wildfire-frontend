@@ -14,6 +14,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { formatClockTime, formatDate } from "@/lib/formatters";
 import type { Schedule } from "@/types/schedule";
 
@@ -100,7 +101,7 @@ export function ViewScheduleDialog({
               ) : null}
 
               <span className="text-muted-foreground">Target display</span>
-              <span>{schedule.targetDisplay.name}</span>
+              <span>{schedule.display.name}</span>
             </div>
           </div>
 
@@ -129,34 +130,17 @@ export function ViewScheduleDialog({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Delete schedule?</DialogTitle>
-            <DialogDescription>
-              This action removes the schedule from the calendar.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col gap-2 sm:flex-col sm:justify-start">
-            <Button
-              variant="destructive"
-              onClick={() => {
-                onDelete?.(schedule);
-                setConfirmDeleteOpen(false);
-                onOpenChange(false);
-              }}
-            >
-              Delete schedule
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmDeleteOpen(false)}
-            >
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmActionDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        title="Delete schedule?"
+        description="This action removes the schedule from the calendar."
+        confirmLabel="Delete schedule"
+        onConfirm={() => {
+          onDelete?.(schedule);
+          onOpenChange(false);
+        }}
+      />
     </>
   );
 }

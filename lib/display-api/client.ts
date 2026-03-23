@@ -424,14 +424,10 @@ const parseErrorMessage = async (response: Response): Promise<string> => {
   }
 };
 
-const getRequiredBaseUrl = (): string => {
-  return getBaseUrl();
-};
-
 export async function createRegistrationSession(
   registrationCode: string,
 ): Promise<RegistrationSessionResponse> {
-  const baseUrl = getRequiredBaseUrl();
+  const baseUrl = getBaseUrl();
   const response = await fetch(`${baseUrl}/displays/registration-sessions`, {
     method: "POST",
     credentials: "include",
@@ -453,7 +449,7 @@ export async function createRegistrationSession(
 }
 
 export async function fetchDisplayRegistrationConstraints(): Promise<DisplayRegistrationConstraints> {
-  const baseUrl = getRequiredBaseUrl();
+  const baseUrl = getBaseUrl();
   const response = await fetch(`${baseUrl}/displays/registration-constraints`, {
     method: "GET",
     credentials: "include",
@@ -483,7 +479,7 @@ export async function registerDisplay(input: {
   keyAlgorithm: "ed25519";
   registrationSignature: string;
 }): Promise<RegisterDisplayResponse> {
-  const baseUrl = getRequiredBaseUrl();
+  const baseUrl = getBaseUrl();
   const response = await fetch(`${baseUrl}/displays/registrations`, {
     method: "POST",
     credentials: "include",
@@ -508,7 +504,7 @@ export async function createAuthChallenge(input: {
   slug: string;
   keyId: string;
 }): Promise<AuthChallengeResponse> {
-  const baseUrl = getRequiredBaseUrl();
+  const baseUrl = getBaseUrl();
   const response = await fetch(`${baseUrl}/display-runtime/auth/challenges`, {
     method: "POST",
     headers: {
@@ -533,7 +529,7 @@ export async function verifyAuthChallenge(input: {
   keyId: string;
   signature: string;
 }): Promise<void> {
-  const baseUrl = getRequiredBaseUrl();
+  const baseUrl = getBaseUrl();
   const response = await fetch(
     `${baseUrl}/display-runtime/auth/challenges/${encodeURIComponent(input.challengeToken)}/verify`,
     {
@@ -559,7 +555,7 @@ export async function fetchSignedManifest(input: {
   registration: DisplayRegistrationRecord;
   privateKey: CryptoKey;
 }): Promise<DisplayManifest> {
-  const baseUrl = getRequiredBaseUrl();
+  const baseUrl = getBaseUrl();
   const url = `${baseUrl}/display-runtime/${encodeURIComponent(input.registration.slug)}/manifest`;
   const signedHeaders = await createSignedHeaders({
     method: "GET",
@@ -586,7 +582,7 @@ export async function postSignedHeartbeat(input: {
   registration: DisplayRegistrationRecord;
   privateKey: CryptoKey;
 }): Promise<void> {
-  const baseUrl = getRequiredBaseUrl();
+  const baseUrl = getBaseUrl();
   const url = `${baseUrl}/display-runtime/${encodeURIComponent(input.registration.slug)}/heartbeat`;
   const signedHeaders = await createSignedHeaders({
     method: "POST",
@@ -612,7 +608,7 @@ export async function postSignedSnapshot(input: {
   imageDataUrl: string;
   capturedAt?: string;
 }): Promise<void> {
-  const baseUrl = getRequiredBaseUrl();
+  const baseUrl = getBaseUrl();
   const url = `${baseUrl}/display-runtime/${encodeURIComponent(input.registration.slug)}/snapshot`;
   const body = JSON.stringify({
     imageDataUrl: input.imageDataUrl,

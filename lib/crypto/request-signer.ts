@@ -1,17 +1,7 @@
 import { getDevOnlyRequestHeaders } from "@/lib/api/base-query";
+import { toBase64Url } from "@/lib/crypto/encoding";
 
 const textEncoder = new TextEncoder();
-
-const toBase64 = (bytes: Uint8Array): string => {
-  let raw = "";
-  bytes.forEach((byte) => {
-    raw += String.fromCharCode(byte);
-  });
-  return btoa(raw);
-};
-
-const toBase64Url = (bytes: Uint8Array): string =>
-  toBase64(bytes).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/g, "");
 
 const digestSha256Base64Url = async (value: string): Promise<string> => {
   const digest = await crypto.subtle.digest(

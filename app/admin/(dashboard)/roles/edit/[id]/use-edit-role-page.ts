@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { useCan } from "@/hooks/use-can";
+import { isNotFoundError } from "@/lib/api/error-guards";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   useGetPermissionsQuery,
@@ -67,19 +68,6 @@ const toRoleUsers = (
     name: user.name,
     email: user.email,
   }));
-
-const isNotFoundError = (error: unknown): boolean => {
-  if (typeof error !== "object" || error === null) {
-    return false;
-  }
-
-  const candidate = error as {
-    status?: number | string;
-    originalStatus?: number | string;
-  };
-
-  return candidate.status === 404 || candidate.originalStatus === 404;
-};
 
 const hasValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value.trim().length > 0;

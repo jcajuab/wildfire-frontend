@@ -5,11 +5,6 @@ import { useRouter } from "next/navigation";
 
 import { useCan } from "@/hooks/use-can";
 import {
-  useQueryEnumState,
-  useQueryNumberState,
-  useQueryStringState,
-} from "@/hooks/use-query-state";
-import {
   type PlaylistListQuery,
   useDeletePlaylistMutation,
   useListPlaylistsQuery,
@@ -18,8 +13,8 @@ import { mapBackendPlaylistSummary } from "@/lib/mappers/playlist-mapper";
 import { getPlaylistEditPath } from "@/lib/playlist-paths";
 import type { PlaylistStatusFilter } from "@/components/playlists/playlist-filter-popover";
 import type { PlaylistSummary } from "@/types/playlist";
+import { usePlaylistsFilters } from "./use-playlists-filters";
 
-const PLAYLIST_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
 export const PAGE_SIZE = 12;
 
 export interface UsePlaylistsPageResult {
@@ -58,14 +53,15 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   const canUpdatePlaylist = useCan("playlists:update");
   const canDeletePlaylist = useCan("playlists:delete");
 
-  const [statusFilter, setStatusFilter] =
-    useQueryEnumState<PlaylistStatusFilter>(
-      "status",
-      "all",
-      PLAYLIST_STATUS_VALUES,
-    );
-  const [search, setSearch] = useQueryStringState("q", "");
-  const [page, setPage] = useQueryNumberState("page", 1);
+  const {
+    statusFilter,
+    search,
+    page,
+    setPage,
+    handleStatusFilterChange,
+    handleClearFilters,
+    handleSearchChange,
+  } = usePlaylistsFilters();
 
   const [playlistToDelete, setPlaylistToDelete] =
     useState<PlaylistSummary | null>(null);
@@ -95,27 +91,6 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   );
 
   const totalPlaylists = playlistsData?.total ?? 0;
-
-  const handleStatusFilterChange = useCallback(
-    (value: PlaylistStatusFilter) => {
-      setStatusFilter(value);
-      setPage(1);
-    },
-    [setStatusFilter, setPage],
-  );
-
-  const handleClearFilters = useCallback(() => {
-    setStatusFilter("all");
-    setPage(1);
-  }, [setStatusFilter, setPage]);
-
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      setSearch(value);
-      setPage(1);
-    },
-    [setSearch, setPage],
-  );
 
   const handleEditPlaylist = useCallback(
     (playlist: PlaylistSummary) => {

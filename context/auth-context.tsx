@@ -61,7 +61,7 @@ export function AuthProvider({
     getSession()
       .then((session) => {
         setUser(session.user);
-        setPermissions(session.permissions as PermissionType[]);
+        setPermissions(session.permissions);
       })
       .catch(() => {
         // 401 or network error: user is not authenticated, that's fine

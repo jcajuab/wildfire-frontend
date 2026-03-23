@@ -42,7 +42,7 @@ vi.mock("@dnd-kit/utilities", () => ({
 const baseItem = {
   id: "draft-1",
   duration: 5,
-  order: 0,
+  sequence: 0,
   content: {
     id: "content-1",
     title: "Poster",

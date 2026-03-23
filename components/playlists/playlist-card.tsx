@@ -26,6 +26,8 @@ import {
   formatItemDuration,
 } from "@/lib/formatters";
 import { sanitizeRichTextHtml } from "@/lib/content-thumbnail-preview";
+import { cn } from "@/lib/utils";
+import { RICH_TEXT_PREVIEW_CLASSES } from "@/lib/rich-text-preview-classes";
 
 interface PlaylistCardProps {
   readonly playlist: PlaylistSummary;
@@ -134,7 +136,10 @@ export const PlaylistCard = memo(function PlaylistCard({
                   item.content.textHtmlContent ? (
                   <div className="flex size-full items-start overflow-hidden p-1">
                     <div
-                      className="w-full break-words text-[6px] leading-tight text-foreground [&_p]:my-0 [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_ul]:ml-2 [&_ul]:list-disc [&_ol]:ml-2 [&_ol]:list-decimal [&_li]:list-item [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-0.5 [&_th]:border [&_th]:border-border [&_th]:bg-muted/60 [&_th]:px-0.5 [&_th]:font-semibold"
+                      className={cn(
+                        RICH_TEXT_PREVIEW_CLASSES,
+                        "text-[6px] leading-tight [&_ol]:ml-2 [&_td]:px-0.5 [&_th]:px-0.5 [&_ul]:ml-2",
+                      )}
                       dangerouslySetInnerHTML={{
                         __html: sanitizeRichTextHtml(
                           item.content.textHtmlContent,

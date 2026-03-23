@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useSchedulesPage } from "./use-schedules-page";
+import { useSchedulesPage } from "./_hooks/use-schedules-page";
 
 export default function SchedulesPage(): ReactElement {
   const {

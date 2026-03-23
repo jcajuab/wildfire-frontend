@@ -80,7 +80,7 @@ export function LogMetadataDialog({
             <div className="flex flex-col gap-3 rounded-md border border-border p-4">
               <div className="flex flex-col min-w-0">
                 <span className="font-medium">
-                  {formatDateTime(log.timestamp)}
+                  {formatDateTime(log.occurredAt)}
                 </span>
                 <span className="text-xs text-muted-foreground wrap-break-word">
                   {log.description}

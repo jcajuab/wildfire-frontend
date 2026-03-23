@@ -190,7 +190,7 @@ function EditContentDialogForm({
               <Label htmlFor="edit-flash-tone">Tone</Label>
               <Select
                 value={flashTone}
-                onValueChange={(value) => setFlashTone(value as FlashTone)}
+                onValueChange={(value: FlashTone) => setFlashTone(value)}
               >
                 <SelectTrigger id="edit-flash-tone">
                   <SelectValue />

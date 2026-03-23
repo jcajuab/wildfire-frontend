@@ -5,7 +5,7 @@ import { transformPaginatedListResponse } from "@/lib/api/response-transformers"
 import { createProvidesTags } from "@/lib/api/provide-tags";
 
 /** Backend display shape (matches GET /displays and GET /displays/:id). */
-export interface Display {
+export interface BackendDisplay {
   readonly id: string;
   readonly slug: string;
   readonly fingerprint?: string | null;
@@ -31,7 +31,7 @@ export interface Display {
 }
 
 export interface DisplaysListResponse {
-  readonly items: readonly Display[];
+  readonly items: readonly BackendDisplay[];
   readonly total: number;
   readonly page: number;
   readonly pageSize: number;
@@ -118,7 +118,7 @@ export const displaysApi = createApi({
         return `displays?${params.toString()}`;
       },
       transformResponse: (response) =>
-        transformPaginatedListResponse<Display>(response, "getDisplays"),
+        transformPaginatedListResponse<BackendDisplay>(response, "getDisplays"),
       providesTags: createProvidesTags("Display"),
     }),
     getDisplayOptions: build.query<
@@ -146,20 +146,20 @@ export const displaysApi = createApi({
           "getDisplayOutputOptions",
         ),
     }),
-    getDisplay: build.query<Display, string>({
+    getDisplay: build.query<BackendDisplay, string>({
       query: (id) => `displays/${id}`,
       transformResponse: (response) =>
-        parseApiResponseDataSafe<Display>(response, "getDisplay"),
+        parseApiResponseDataSafe<BackendDisplay>(response, "getDisplay"),
       providesTags: (_result, _error, id) => [{ type: "Display", id }],
     }),
-    updateDisplay: build.mutation<Display, UpdateDisplayRequest>({
+    updateDisplay: build.mutation<BackendDisplay, UpdateDisplayRequest>({
       query: ({ id, ...body }) => ({
         url: `displays/${id}`,
         method: "PATCH",
         body,
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<Display>(response, "updateDisplay"),
+        parseApiResponseDataSafe<BackendDisplay>(response, "updateDisplay"),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Display", id: "LIST" },
         { type: "Display", id },

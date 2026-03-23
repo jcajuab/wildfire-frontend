@@ -23,7 +23,7 @@ export interface DraftItem {
   readonly id: string;
   readonly content: PlaylistSelectableContent | PlaylistItemContent;
   duration: number;
-  order: number;
+  sequence: number;
 }
 
 export interface SortableItemRowProps {

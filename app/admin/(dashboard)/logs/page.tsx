@@ -37,7 +37,7 @@ import {
   PAGE_SIZE,
   useLogsPage,
   type ActorTypeFilter,
-} from "./use-logs-page";
+} from "./_hooks/use-logs-page";
 
 const COMMON_STATUS_CODES = ["200", "401", "403", "404", "500"] as const;
 const STATUS_CODE_LABELS: Record<(typeof COMMON_STATUS_CODES)[number], string> =

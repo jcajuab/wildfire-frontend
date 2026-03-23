@@ -29,7 +29,7 @@ export function mapBackendScheduleToSchedule(item: BackendSchedule): Schedule {
           flashTone: item.content.flashTone,
         }
       : null,
-    targetDisplay: {
+    display: {
       id: item.display.id,
       name: item.display.name ?? "Unnamed display",
     },

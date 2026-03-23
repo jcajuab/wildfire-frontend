@@ -1,7 +1,10 @@
-import type { Display as DisplayApi } from "@/lib/api/displays-api";
-import type { Display, DisplayGroup } from "@/types/display";
+import type { BackendDisplay } from "@/lib/api/displays-api";
+import type { Display, DisplayGroupLabel } from "@/types/display";
 
-export function mapDisplayApiToDisplay(display: DisplayApi): Display {
+export function mapDisplayApiToDisplay(
+  display: BackendDisplay,
+  groups: readonly DisplayGroupLabel[] = [],
+): Display {
   const resolution =
     display.screenWidth != null && display.screenHeight != null
       ? `${display.screenWidth}x${display.screenHeight}`
@@ -18,7 +21,7 @@ export function mapDisplayApiToDisplay(display: DisplayApi): Display {
     output: display.output ?? "Not available",
     resolution,
     emergencyContentId: display.emergencyContentId ?? null,
-    groups: [],
+    groups: [...groups],
     nowPlaying: display.nowPlaying
       ? {
           title: display.nowPlaying.title,
@@ -32,7 +35,7 @@ export function mapDisplayApiToDisplay(display: DisplayApi): Display {
 
 export function withDisplayGroups(
   display: Display,
-  groups: readonly DisplayGroup[],
+  groups: readonly DisplayGroupLabel[],
 ): Display {
   return {
     ...display,

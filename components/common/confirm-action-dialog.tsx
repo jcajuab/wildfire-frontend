@@ -58,12 +58,8 @@ export function ConfirmActionDialog({
     }
   }
 
-  function handleOpenChange(nextOpen: boolean): void {
-    onOpenChange(nextOpen);
-  }
-
   return (
-    <AlertDialog open={open} onOpenChange={handleOpenChange}>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

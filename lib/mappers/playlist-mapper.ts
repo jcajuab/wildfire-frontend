@@ -25,7 +25,7 @@ export function mapBackendPlaylistItem(
     id: item.id,
     content: mapBackendPlaylistItemToContent(item),
     duration: item.duration,
-    order: item.sequence,
+    sequence: item.sequence,
   };
 }
 

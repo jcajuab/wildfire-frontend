@@ -15,7 +15,7 @@ import { PlaylistFilterPopover } from "@/components/playlists/playlist-filter-po
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { Button } from "@/components/ui/button";
 import { getPlaylistEditPath } from "@/lib/playlist-paths";
-import { PAGE_SIZE, usePlaylistsPage } from "./use-playlists-page";
+import { PAGE_SIZE, usePlaylistsPage } from "./_hooks/use-playlists-page";
 
 export default function PlaylistsPage(): ReactElement {
   const router = useRouter();

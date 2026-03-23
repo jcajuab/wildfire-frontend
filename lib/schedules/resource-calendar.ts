@@ -127,15 +127,15 @@ export function projectResourceEvents({
       }
 
       const dateKey = toDateKey(date);
-      const targetDisplay = schedule.targetDisplay;
-      if (!resourceIds.has(targetDisplay.id)) {
+      const display = schedule.display;
+      if (!resourceIds.has(display.id)) {
         continue;
       }
 
       events.push({
-        id: `${schedule.id}:${targetDisplay.id}:${dateKey}`,
+        id: `${schedule.id}:${display.id}:${dateKey}`,
         scheduleId: schedule.id,
-        resourceId: targetDisplay.id,
+        resourceId: display.id,
         dateKey,
         startMinutes,
         endMinutes,

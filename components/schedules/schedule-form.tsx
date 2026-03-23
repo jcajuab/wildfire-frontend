@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import type { ScheduleFormData } from "@/types/schedule";
+import type { ScheduleFormData, ScheduleKind } from "@/types/schedule";
 
 // ---------------------------------------------------------------------------
 // DisplayMultiSelect — pill input with searchable dropdown
@@ -274,7 +274,7 @@ function ScheduleFormFrame({
               onValueChange={(value) =>
                 setFormData((prev) => ({
                   ...prev,
-                  kind: value as "PLAYLIST" | "FLASH",
+                  kind: value as ScheduleKind,
                   playlistId: value === "PLAYLIST" ? prev.playlistId : null,
                   contentId: value === "FLASH" ? prev.contentId : null,
                 }))

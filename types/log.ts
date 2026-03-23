@@ -1,10 +1,10 @@
 export interface LogEntry {
   readonly id: string;
-  readonly timestamp: string;
-  readonly authorId: string;
-  readonly authorName: string;
+  readonly occurredAt: string;
+  readonly actorId: string;
+  readonly actorName: string;
   /** Presigned avatar URL when the author is a user with a profile picture. */
-  readonly authorAvatarUrl?: string | null;
+  readonly actorAvatarUrl?: string | null;
   /** Human-readable summary for non-technical admins. */
   readonly description: string;
   /** Technical request descriptor retained for advanced troubleshooting. */

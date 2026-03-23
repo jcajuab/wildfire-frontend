@@ -29,8 +29,7 @@ export function useDisplayPlayback(
       return;
     }
 
-    const versionChanged =
-      playlistVersion !== lastPlaylistVersionRef.current;
+    const versionChanged = playlistVersion !== lastPlaylistVersionRef.current;
     lastPlaylistVersionRef.current = playlistVersion;
     const startIndex = versionChanged
       ? 0

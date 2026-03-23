@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Combobox,
@@ -15,11 +15,11 @@ import {
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import {
-  collapseDisplayGroupWhitespace,
   dedupeDisplayGroupNames,
   toDisplayGroupKey,
 } from "@/lib/display-group-normalization";
 import type { DisplayGroup } from "@/lib/api/displays-api";
+import { useGroupSelector } from "@/hooks/use-group-selector";
 
 export interface DisplayGroupsTagsInputProps {
   readonly id?: string;
@@ -40,49 +40,22 @@ export function DisplayGroupsTagsInput({
   placeholder = "Add display groups…",
   showLabel = true,
 }: DisplayGroupsTagsInputProps): ReactElement {
-  const [inputValue, setInputValue] = useState("");
   const anchorRef = useComboboxAnchor();
 
-  const trimmed = collapseDisplayGroupWhitespace(inputValue);
-
-  const selectedKeys = useMemo(
-    () => new Set(value.map((name) => toDisplayGroupKey(name))),
-    [value],
-  );
-
-  const existingNames = useMemo(
-    () => dedupeDisplayGroupNames(existingGroups.map((g) => g.name)),
-    [existingGroups],
-  );
-
-  const filteredItems = useMemo(
-    () =>
-      existingNames.filter((name) => {
-        if (selectedKeys.has(toDisplayGroupKey(name))) return false;
-        if (trimmed === "") return true;
-        return toDisplayGroupKey(name).includes(toDisplayGroupKey(trimmed));
-      }),
-    [existingNames, selectedKeys, trimmed],
-  );
-
-  const showCreate = useMemo(() => {
-    if (trimmed === "") return false;
-    if (selectedKeys.has(toDisplayGroupKey(trimmed))) return false;
-    return !existingNames.some(
-      (name) => toDisplayGroupKey(name) === toDisplayGroupKey(trimmed),
-    );
-  }, [trimmed, selectedKeys, existingNames]);
-
-  const addPendingName = useCallback(
-    (name: string) => {
-      const normalized = collapseDisplayGroupWhitespace(name);
-      if (!normalized) return;
-      if (selectedKeys.has(toDisplayGroupKey(normalized))) return;
-      onValueChange(dedupeDisplayGroupNames([...value, normalized]));
-      setInputValue("");
-    },
-    [value, selectedKeys, onValueChange],
-  );
+  const {
+    inputValue,
+    setInputValue,
+    trimmed,
+    filteredNames,
+    selectedKeys,
+    showCreate,
+    addPendingName,
+  } = useGroupSelector({
+    value,
+    onValueChange,
+    existingGroups,
+    excludeSelected: true,
+  });
 
   const handleValueChange = useCallback(
     (next: unknown) => {
@@ -96,7 +69,7 @@ export function DisplayGroupsTagsInput({
       onValueChange(dedupeDisplayGroupNames(nextArr));
       setInputValue("");
     },
-    [trimmed, addPendingName, onValueChange],
+    [trimmed, addPendingName, onValueChange, setInputValue],
   );
 
   const handleKeyDown = useCallback(
@@ -138,7 +111,7 @@ export function DisplayGroupsTagsInput({
         </ComboboxChips>
         <ComboboxContent anchor={anchorRef}>
           <ComboboxList>
-            {filteredItems.map((name) => (
+            {filteredNames.map((name) => (
               <ComboboxItem key={name} value={name}>
                 {name}
               </ComboboxItem>

@@ -250,10 +250,10 @@ export function mapAuditEventToLogEntry(
   }
   return {
     id: event.id,
-    timestamp: event.occurredAt,
-    authorId: actorId,
-    authorName,
-    authorAvatarUrl:
+    occurredAt: event.occurredAt,
+    actorId,
+    actorName: authorName,
+    actorAvatarUrl:
       options?.getActorAvatarUrl?.(actorId, event.actorType) ?? null,
     description: humanizeAuditAction(event),
     technicalDescription: `${event.action} (${event.method} ${

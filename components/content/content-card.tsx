@@ -33,6 +33,7 @@ import {
   getTextThumbnailHtml,
   getTextThumbnailText,
 } from "@/lib/content-thumbnail-preview";
+import { RICH_TEXT_PREVIEW_CLASSES } from "@/lib/rich-text-preview-classes";
 import type { Content, ContentType } from "@/types/content";
 import { FlashTonePreview } from "./flash-tone-preview";
 
@@ -141,7 +142,10 @@ export const ContentCard = memo(function ContentCard({
         ) : isTextContent ? (
           <div className="relative flex h-full w-full items-start overflow-hidden p-2">
             <div
-              className="w-full break-words text-xs leading-snug text-foreground [&_blockquote]:my-1 [&_blockquote]:border-l [&_blockquote]:border-border [&_blockquote]:pl-2 [&_em]:italic [&_i]:italic [&_li]:list-item [&_ol]:my-1 [&_ol]:ml-4 [&_ol]:list-decimal [&_p]:my-0 [&_s]:line-through [&_strong]:font-semibold [&_u]:underline [&_ul]:my-1 [&_ul]:ml-4 [&_ul]:list-disc [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-1 [&_td]:py-0.5 [&_th]:border [&_th]:border-border [&_th]:bg-muted/60 [&_th]:px-1 [&_th]:py-0.5 [&_th]:font-semibold"
+              className={cn(
+                RICH_TEXT_PREVIEW_CLASSES,
+                "text-xs leading-snug [&_blockquote]:my-1 [&_blockquote]:border-l [&_blockquote]:border-border [&_blockquote]:pl-2 [&_ol]:my-1 [&_ol]:ml-4 [&_td]:px-1 [&_td]:py-0.5 [&_th]:px-1 [&_th]:py-0.5 [&_ul]:my-1 [&_ul]:ml-4",
+              )}
               aria-label={textThumbnailText ?? content.title}
               dangerouslySetInnerHTML={{ __html: textThumbnailHtml ?? "" }}
             />

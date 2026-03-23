@@ -27,10 +27,10 @@ interface Position {
 
 export function BouncingLogoScreensaver() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLDivElement>(null);
   const positionRef = useRef<Position | null>(null);
   const animationRef = useRef<number | null>(null);
   const [colorIndex, setColorIndex] = useState(0);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const container = containerRef.current;
@@ -45,7 +45,10 @@ export function BouncingLogoScreensaver() {
       dx: Math.random() > 0.5 ? SPEED : -SPEED,
       dy: Math.random() > 0.5 ? SPEED : -SPEED,
     };
-    setPosition({ x: positionRef.current.x, y: positionRef.current.y });
+
+    if (logoRef.current && positionRef.current) {
+      logoRef.current.style.transform = `translate(${positionRef.current.x}px, ${positionRef.current.y}px)`;
+    }
 
     const animate = () => {
       const pos = positionRef.current;
@@ -76,11 +79,14 @@ export function BouncingLogoScreensaver() {
       pos.x = nextX;
       pos.y = nextY;
 
+      if (logoRef.current) {
+        logoRef.current.style.transform = `translate(${nextX}px, ${nextY}px)`;
+      }
+
       if (bounced) {
         setColorIndex((prev) => (prev + 1) % COLORS.length);
       }
 
-      setPosition({ x: nextX, y: nextY });
       animationRef.current = requestAnimationFrame(animate);
     };
 
@@ -94,7 +100,9 @@ export function BouncingLogoScreensaver() {
       const resizeMaxY = container.clientHeight - LOGO_HEIGHT;
       pos.x = Math.min(pos.x, Math.max(0, resizeMaxX));
       pos.y = Math.min(pos.y, Math.max(0, resizeMaxY));
-      setPosition({ x: pos.x, y: pos.y });
+      if (logoRef.current) {
+        logoRef.current.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
+      }
     };
 
     window.addEventListener("resize", handleResize);
@@ -116,11 +124,11 @@ export function BouncingLogoScreensaver() {
       aria-hidden="true"
     >
       <div
+        ref={logoRef}
         className="absolute flex items-center justify-center transition-colors duration-300"
         style={{
           width: LOGO_WIDTH,
           height: LOGO_HEIGHT,
-          transform: `translate(${position.x}px, ${position.y}px)`,
           color: currentColor,
         }}
       >

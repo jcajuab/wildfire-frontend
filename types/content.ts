@@ -7,6 +7,7 @@ export type ContentStatus = "PROCESSING" | "READY" | "FAILED";
 
 export interface ContentOwner {
   readonly id: string;
+  /** Display name of the owner. Coerced from null to "Unknown" in content-mapper.ts. */
   readonly name: string;
 }
 

@@ -68,14 +68,14 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
           {logs.map((log) => (
             <TableRow key={log.id}>
               <TableCell className="text-muted-foreground">
-                {formatDateTime(log.timestamp)}
+                {formatDateTime(log.occurredAt)}
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  {log.authorAvatarUrl ? (
+                  {log.actorAvatarUrl ? (
                     <Image
-                      src={log.authorAvatarUrl}
-                      alt={`${log.authorName} avatar`}
+                      src={log.actorAvatarUrl}
+                      alt={`${log.actorName} avatar`}
                       width={28}
                       height={28}
                       className="size-7 rounded-full object-cover"
@@ -84,7 +84,7 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
                   ) : (
                     <IconUser className="size-4 text-muted-foreground" />
                   )}
-                  <span>{log.authorName}</span>
+                  <span>{log.actorName}</span>
                 </div>
               </TableCell>
               <TableCell>

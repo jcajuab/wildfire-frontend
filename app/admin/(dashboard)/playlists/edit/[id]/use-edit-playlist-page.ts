@@ -19,10 +19,11 @@ import {
   useSavePlaylistItemsAtomicMutation,
   useUpdatePlaylistMutation,
 } from "@/lib/api/playlists-api";
+import { isNotFoundError } from "@/lib/api/error-guards";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import { mapBackendPlaylistWithItems } from "@/lib/mappers/playlist-mapper";
 import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
-import type { Content } from "@/types/content";
+import { isPlaylistContentType } from "@/types/playlist";
 import type { Playlist } from "@/types/playlist";
 
 export type EditPlaylistPageState =
@@ -38,26 +39,6 @@ export interface UseEditPlaylistPageResult {
   handleCancel: () => void;
   handleSave: (payload: PlaylistEditorSavePayload) => Promise<void>;
 }
-
-const isPlaylistRenderableContent = (
-  content: Content,
-): content is PlaylistSelectableContent =>
-  content.type === "IMAGE" ||
-  content.type === "VIDEO" ||
-  content.type === "TEXT";
-
-const isNotFoundError = (error: unknown): boolean => {
-  if (typeof error !== "object" || error === null) {
-    return false;
-  }
-
-  const candidate = error as {
-    status?: number | string;
-    originalStatus?: number | string;
-  };
-
-  return candidate.status === 404 || candidate.originalStatus === 404;
-};
 
 export function useEditPlaylistPage(
   playlistId: string | null | undefined,
@@ -84,7 +65,9 @@ export function useEditPlaylistPage(
     () =>
       (contentData?.items ?? [])
         .map(mapBackendContentToContent)
-        .filter(isPlaylistRenderableContent),
+        .filter((c): c is PlaylistSelectableContent =>
+          isPlaylistContentType(c.type),
+        ),
     [contentData?.items],
   );
 

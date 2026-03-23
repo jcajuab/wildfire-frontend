@@ -42,7 +42,7 @@ describe("schedule-mapper", () => {
 
     expect(schedules).toHaveLength(1);
     expect(schedules[0]?.id).toBe("schedule-1");
-    expect(schedules[0]?.targetDisplay.id).toBe("display-1");
+    expect(schedules[0]?.display.id).toBe("display-1");
     expect(schedules[0]?.playlist?.name).toBe("Morning");
   });
 

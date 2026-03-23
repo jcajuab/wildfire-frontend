@@ -23,9 +23,9 @@ import type {
   DisplayGroup,
   DisplaysListResponse,
 } from "@/lib/api/displays-api";
-import { useDisplayFilters } from "./_hooks/use-display-filters";
-import { useDisplayDialogState } from "./_hooks/use-display-dialog-state";
-import { useDisplayCrudHandlers } from "./_hooks/use-display-crud-handlers";
+import { useDisplayFilters } from "./use-display-filters";
+import { useDisplayDialogState } from "./use-display-dialog-state";
+import { useDisplayCrudHandlers } from "./use-display-crud-handlers";
 
 export const PAGE_SIZE = 20;
 

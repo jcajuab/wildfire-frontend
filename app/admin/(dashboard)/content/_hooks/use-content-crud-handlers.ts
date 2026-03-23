@@ -52,6 +52,8 @@ export interface UseContentCrudHandlersInput {
 export function useContentCrudHandlers(
   input: UseContentCrudHandlersInput,
 ): ContentCrudHandlers {
+  const { contentToEdit, contentToDelete, trackContentJob } = input;
+
   const [uploadContent] = useUploadContentMutation();
   const [createFlashContent] = useCreateFlashContentMutation();
   const [createTextContent] = useCreateTextContentMutation();
@@ -68,7 +70,7 @@ export function useContentCrudHandlers(
           file,
         }).unwrap();
         toast.message("Content upload queued.");
-        input.trackContentJob({
+        trackContentJob({
           jobId: accepted.job.id,
           contentId: accepted.content.id,
           successMessage: "Content uploaded.",
@@ -78,7 +80,7 @@ export function useContentCrudHandlers(
         notifyApiError(error, "Failed to upload content.");
       }
     },
-    [input, uploadContent],
+    [trackContentJob, uploadContent],
   );
 
   const handleCreateFlash = useCallback(
@@ -141,8 +143,6 @@ export function useContentCrudHandlers(
       textJsonContent,
       textHtmlContent,
     }: EditContentDialogSaveInput) => {
-      const editedContent = input.contentToEdit;
-
       try {
         if (file) {
           const accepted = await replaceContentFile({
@@ -151,7 +151,7 @@ export function useContentCrudHandlers(
             title,
           }).unwrap();
           toast.message("Content replacement queued.");
-          input.trackContentJob({
+          trackContentJob({
             jobId: accepted.job.id,
             contentId: accepted.content.id,
             successMessage: "Content file replaced.",
@@ -163,12 +163,12 @@ export function useContentCrudHandlers(
         await updateContent({
           id: contentId,
           title,
-          ...(editedContent?.type === "FLASH"
+          ...(contentToEdit?.type === "FLASH"
             ? {
                 flashMessage: flashMessage ?? "",
                 flashTone: flashTone ?? "INFO",
               }
-            : editedContent?.type === "TEXT"
+            : contentToEdit?.type === "TEXT"
               ? {
                   textJsonContent: textJsonContent ?? "",
                   textHtmlContent: textHtmlContent ?? "",
@@ -186,16 +186,20 @@ export function useContentCrudHandlers(
         throw error;
       }
     },
-    [input, replaceContentFile, updateContent],
+    [contentToEdit, trackContentJob, replaceContentFile, updateContent],
   );
 
   const handleConfirmDelete = useCallback(async () => {
-    if (!input.contentToDelete) {
+    if (!contentToDelete) {
       return;
     }
-    await deleteContent(input.contentToDelete.id).unwrap();
-    toast.success("Content deleted.");
-  }, [deleteContent, input.contentToDelete]);
+    try {
+      await deleteContent(contentToDelete.id).unwrap();
+      toast.success("Content deleted.");
+    } catch (error) {
+      notifyApiError(error, "Failed to delete content.");
+    }
+  }, [contentToDelete, deleteContent]);
 
   return {
     handleUploadFile,

@@ -31,21 +31,21 @@ export interface Schedule {
   readonly endTime: string;
   readonly playlist: SchedulePlaylist | null;
   readonly content: ScheduleContent | null;
-  readonly targetDisplay: ScheduleDisplay;
+  readonly display: ScheduleDisplay;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
 
 export interface ScheduleFormData {
-  name: string;
-  kind: ScheduleKind;
-  startDate: string;
-  endDate: string;
-  startTime: string;
-  endTime: string;
-  playlistId: string | null;
-  contentId: string | null;
-  targetDisplayIds: string[];
+  readonly name: string;
+  readonly kind: ScheduleKind;
+  readonly startDate: string;
+  readonly endDate: string;
+  readonly startTime: string;
+  readonly endTime: string;
+  readonly playlistId: string | null;
+  readonly contentId: string | null;
+  readonly targetDisplayIds: string[];
 }
 
 export interface CalendarDay {

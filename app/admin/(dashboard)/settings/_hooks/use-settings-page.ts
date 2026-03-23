@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
@@ -92,20 +92,23 @@ export function useSettingsPage(): UseSettingsPageResult {
       ? accountDisplayName
       : (user?.name ?? "this account");
 
-  const handleChangePassword = (): void => {
+  const handleChangePassword = useCallback((): void => {
     setIsPasswordDialogOpen(true);
-  };
+  }, []);
 
-  const handlePasswordSubmit = async (data: {
-    currentPassword: string;
-    newPassword: string;
-  }): Promise<void> => {
-    await changePassword(data);
-    toast.success("Password updated.");
-    setIsPasswordDialogOpen(false);
-  };
+  const handlePasswordSubmit = useCallback(
+    async (data: {
+      currentPassword: string;
+      newPassword: string;
+    }): Promise<void> => {
+      await changePassword(data);
+      toast.success("Password updated.");
+      setIsPasswordDialogOpen(false);
+    },
+    [changePassword],
+  );
 
-  const handleLogOut = async (): Promise<void> => {
+  const handleLogOut = useCallback(async (): Promise<void> => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
     try {
@@ -113,20 +116,20 @@ export function useSettingsPage(): UseSettingsPageResult {
     } finally {
       setIsLoggingOut(false);
     }
-  };
+  }, [isLoggingOut, logout]);
 
-  const handleDeleteAccount = (): void => {
+  const handleDeleteAccount = useCallback((): void => {
     setIsDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleDeleteAccountConfirm = async (): Promise<void> => {
+  const handleDeleteAccountConfirm = useCallback(async (): Promise<void> => {
     try {
       await deleteCurrentUser();
       await logout();
     } catch (err) {
       notifyApiError(err, "Failed to delete account.");
     }
-  };
+  }, [deleteCurrentUser, logout]);
 
   return {
     user,

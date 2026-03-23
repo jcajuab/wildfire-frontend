@@ -16,7 +16,7 @@ import { ViewDisplayDialog } from "@/components/displays/view-display-dialog";
 import { DashboardPage } from "@/components/layout/dashboard-page";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PAGE_SIZE, useDisplaysPage } from "./use-displays-page";
+import { PAGE_SIZE, useDisplaysPage } from "./_hooks/use-displays-page";
 
 export default function DisplaysPage(): ReactElement {
   const {

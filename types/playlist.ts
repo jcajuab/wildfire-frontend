@@ -20,7 +20,7 @@ export interface PlaylistItem {
   readonly id: string;
   readonly content: PlaylistItemContent;
   readonly duration: number;
-  readonly order: number;
+  readonly sequence: number;
 }
 
 export interface PlaylistBase {
@@ -50,6 +50,14 @@ export interface PlaylistListResponse {
   readonly page: number;
   readonly pageSize: number;
   readonly total: number;
+}
+
+export type PlaylistContentType = "IMAGE" | "VIDEO" | "TEXT";
+
+export function isPlaylistContentType(
+  type: string,
+): type is PlaylistContentType {
+  return type === "IMAGE" || type === "VIDEO" || type === "TEXT";
 }
 
 export type PlaylistSortField = "recent" | "name";

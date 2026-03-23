@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { mapDisplayApiToDisplay } from "@/lib/mappers/display-mapper";
-import type { Display as ApiDisplay } from "@/lib/api/displays-api";
+import type { BackendDisplay } from "@/lib/api/displays-api";
 
-const makeApiDisplay = (overrides?: Partial<ApiDisplay>): ApiDisplay => ({
+const makeBackendDisplay = (
+  overrides?: Partial<BackendDisplay>,
+): BackendDisplay => ({
   id: "display-1",
   slug: "lobby-display",
   fingerprint: null,
@@ -25,7 +27,7 @@ const makeApiDisplay = (overrides?: Partial<ApiDisplay>): ApiDisplay => ({
 describe("display-mapper", () => {
   test("maps nowPlaying playlist from backend payload", () => {
     const mapped = mapDisplayApiToDisplay(
-      makeApiDisplay({
+      makeBackendDisplay({
         nowPlaying: {
           title: null,
           playlist: "Morning Loop",
@@ -45,7 +47,7 @@ describe("display-mapper", () => {
 
   test("clamps negative playback values to zero", () => {
     const mapped = mapDisplayApiToDisplay(
-      makeApiDisplay({
+      makeBackendDisplay({
         nowPlaying: {
           title: null,
           playlist: "Morning Loop",

@@ -1,7 +1,7 @@
 "use client";
 
 import type { KeyboardEvent, ReactElement } from "react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { IconCheck, IconPlus, IconSelector } from "@tabler/icons-react";
 import { Label } from "@/components/ui/label";
 import {
@@ -9,13 +9,10 @@ import {
   PopoverAnchor,
   PopoverContent,
 } from "@/components/ui/popover";
-import {
-  collapseDisplayGroupWhitespace,
-  dedupeDisplayGroupNames,
-  toDisplayGroupKey,
-} from "@/lib/display-group-normalization";
+import { toDisplayGroupKey } from "@/lib/display-group-normalization";
 import type { DisplayGroup } from "@/lib/api/displays-api";
 import { cn } from "@/lib/utils";
+import { useGroupSelector } from "@/hooks/use-group-selector";
 
 export interface DisplayGroupsComboboxProps {
   readonly id?: string;
@@ -48,71 +45,33 @@ export function DisplayGroupsCombobox({
   portalContainer,
 }: DisplayGroupsComboboxProps): ReactElement {
   const [open, setOpen] = useState(false);
-  const [inputValue, setInputValue] = useState("");
   const anchorRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const trimmed = collapseDisplayGroupWhitespace(inputValue);
+  const {
+    inputValue,
+    setInputValue,
+    trimmed,
+    filteredNames,
+    selectedKeys,
+    showCreate,
+    toggleGroup,
+    addPendingName,
+    removeLastGroup,
+  } = useGroupSelector({ value, onValueChange, existingGroups });
 
-  const existingNames = useMemo(
-    () => dedupeDisplayGroupNames(existingGroups.map((g) => g.name)),
-    [existingGroups],
+  const handleOpenChange = useCallback(
+    (next: boolean) => {
+      setOpen(next);
+      if (!next) setInputValue("");
+    },
+    [setInputValue],
   );
-  const selectedKeys = useMemo(
-    () => new Set(value.map((name) => toDisplayGroupKey(name))),
-    [value],
-  );
-  const filteredNames = useMemo(
-    () =>
-      existingNames.filter((name) => {
-        if (trimmed === "") return true;
-        return toDisplayGroupKey(name).includes(toDisplayGroupKey(trimmed));
-      }),
-    [existingNames, trimmed],
-  );
-
-  const showCreate = useMemo(() => {
-    if (trimmed === "") return false;
-    if (selectedKeys.has(toDisplayGroupKey(trimmed))) return false;
-    return !existingNames.some(
-      (name) => toDisplayGroupKey(name) === toDisplayGroupKey(trimmed),
-    );
-  }, [trimmed, selectedKeys, existingNames]);
-
-  const handleOpenChange = useCallback((next: boolean) => {
-    setOpen(next);
-    if (!next) setInputValue("");
-  }, []);
 
   const openAndFocus = useCallback(() => {
     setOpen(true);
     requestAnimationFrame(() => inputRef.current?.focus());
   }, []);
-
-  const toggleGroup = useCallback(
-    (name: string) => {
-      const key = toDisplayGroupKey(name);
-      const next = selectedKeys.has(key)
-        ? value.filter((n) => toDisplayGroupKey(n) !== key)
-        : [...value, name];
-      onValueChange(dedupeDisplayGroupNames(next));
-      setInputValue("");
-      inputRef.current?.focus();
-    },
-    [value, selectedKeys, onValueChange],
-  );
-
-  const addPendingName = useCallback(
-    (name: string) => {
-      const normalized = collapseDisplayGroupWhitespace(name);
-      if (!normalized) return;
-      if (selectedKeys.has(toDisplayGroupKey(normalized))) return;
-      onValueChange(dedupeDisplayGroupNames([...value, normalized]));
-      setInputValue("");
-      inputRef.current?.focus();
-    },
-    [value, selectedKeys, onValueChange],
-  );
 
   const handleInputKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
@@ -125,10 +84,7 @@ export function DisplayGroupsCombobox({
         return;
       }
       if (e.key === "Backspace" && !inputValue && value.length > 0) {
-        const last = value[value.length - 1];
-        if (last) {
-          onValueChange(value.filter((_, i) => i !== value.length - 1));
-        }
+        removeLastGroup();
         return;
       }
       if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
@@ -143,11 +99,12 @@ export function DisplayGroupsCombobox({
     },
     [
       inputValue,
-      value,
+      value.length,
       showCreate,
       trimmed,
       filteredNames,
-      onValueChange,
+      setInputValue,
+      removeLastGroup,
       addPendingName,
       toggleGroup,
     ],
@@ -247,7 +204,7 @@ export function DisplayGroupsCombobox({
           >
             {filteredNames.length === 0 && !showCreate ? (
               <li className="px-3 py-2 text-sm text-muted-foreground">
-                {existingNames.length === 0
+                {existingGroups.length === 0
                   ? "Type a name and press Enter to create."
                   : "No groups match. Press Enter to create."}
               </li>

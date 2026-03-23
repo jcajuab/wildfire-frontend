@@ -17,14 +17,7 @@ import {
 } from "@/components/playlists/create-playlist-form";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
-import type { Content } from "@/types/content";
-
-const isPlaylistRenderableContent = (
-  content: Content,
-): content is PlaylistSelectableContent =>
-  content.type === "IMAGE" ||
-  content.type === "VIDEO" ||
-  content.type === "TEXT";
+import { isPlaylistContentType } from "@/types/playlist";
 
 export interface UseCreatePlaylistPageResult {
   readonly availableContent: readonly PlaylistSelectableContent[];
@@ -48,7 +41,9 @@ export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
     () =>
       (contentData?.items ?? [])
         .map(mapBackendContentToContent)
-        .filter(isPlaylistRenderableContent),
+        .filter((c): c is PlaylistSelectableContent =>
+          isPlaylistContentType(c.type),
+        ),
     [contentData?.items],
   );
 

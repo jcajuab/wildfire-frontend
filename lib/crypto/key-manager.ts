@@ -1,3 +1,5 @@
+import { toBase64, toBase64Url } from "@/lib/crypto/encoding";
+
 const DB_NAME = "wildfire-display-crypto";
 const STORE_NAME = "ed25519_keypairs";
 
@@ -54,21 +56,6 @@ const writeStoredKeyPair = async (value: StoredKeyPair): Promise<void> => {
       reject(transaction.error ?? new Error("Failed to write keypair"));
   });
 };
-
-const encodeBase64 = (data: ArrayBuffer): string => {
-  const bytes = new Uint8Array(data);
-  let raw = "";
-  bytes.forEach((byte) => {
-    raw += String.fromCharCode(byte);
-  });
-  return btoa(raw);
-};
-
-const toBase64Url = (data: ArrayBuffer): string =>
-  encodeBase64(data)
-    .replaceAll("+", "-")
-    .replaceAll("/", "_")
-    .replace(/=+$/g, "");
 
 export function assertDisplayCryptoSupport(): void {
   if (typeof window === "undefined") {
@@ -139,7 +126,7 @@ export async function exportPublicKeyPem(
   } catch {
     throw new Error("Failed to export display public key.");
   }
-  const base64 = encodeBase64(spki);
+  const base64 = toBase64(new Uint8Array(spki));
   const wrapped = base64.match(/.{1,64}/g)?.join("\n") ?? base64;
   return `-----BEGIN PUBLIC KEY-----\n${wrapped}\n-----END PUBLIC KEY-----`;
 }
