@@ -1,28 +1,16 @@
-# Dependencies
 node_modules/
-
-# Build Output
 .next/
+out/
 build/
 coverage/
-out/
 deploy.tar.gz
 
-# Environment Variables
 .env*
 !.env.example
-!.envrc
 
-# TypeScript
 *.tsbuildinfo
 next-env.d.ts
 
-# Vercel
-.vercel/
-
-# Miscellaneous
-.DS_Store
-Thumbs.db
-
-# omc state
 .omc/
+.vercel/
+.DS_Store
