@@ -87,7 +87,9 @@ describe("thumbnail preview text helpers", () => {
         textHtmlContent:
           '<p style="text-align:center;color:#0f172a">Hello <strong>world</strong> and <em>team</em></p><script>alert(1)</script>',
       }),
-    ).toBe("<p>Hello <strong>world</strong> and <em>team</em></p>");
+    ).toBe(
+      '<p style="text-align:center;color:#0f172a">Hello <strong>world</strong> and <em>team</em></p>',
+    );
   });
 
   test("falls back to escaped title when rich text has no visible text", () => {

@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: [
+      "@tiptap/react",
+      "@tiptap/starter-kit",
+      "@tiptap/extension-text-align",
+      "@tiptap/extension-text-style",
+      "@tiptap/extension-underline",
       "@dnd-kit/core",
       "@dnd-kit/sortable",
       "@dnd-kit/utilities",

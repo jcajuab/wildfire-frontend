@@ -7,8 +7,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
-import { TextStyle } from "@tiptap/extension-text-style";
-import { Color } from "@tiptap/extension-color";
+import { TextStyleKit } from "@tiptap/extension-text-style";
 import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
@@ -29,7 +28,7 @@ import {
   IconAlignJustified,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
-import { ToolbarButton, ToolbarDivider } from "./tiptap-toolbar";
+import { ToolbarButton, ToolbarGroup, ToolbarDivider } from "./tiptap-toolbar";
 import { LinkPopover } from "./tiptap-link-popover";
 import { TablePopover } from "./tiptap-table-popover";
 import { ColorPicker } from "./tiptap-color-picker";
@@ -65,8 +64,11 @@ export function TiptapEditor({
       TextAlign.configure({
         types: ["paragraph"],
       }),
-      TextStyle,
-      Color,
+      TextStyleKit.configure({
+        fontFamily: false,
+        fontSize: false,
+        lineHeight: false,
+      }),
       Table.configure({
         resizable: true,
       }),
@@ -88,7 +90,7 @@ export function TiptapEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[200px] p-4",
+          "prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[200px] p-4 [&_strong]:text-inherit [&_a]:text-inherit [&_em]:text-inherit",
       },
     },
   });
@@ -121,140 +123,156 @@ export function TiptapEditor({
   return (
     <div className="rounded-md border border-input bg-background">
       {editable ? (
-        <div className="flex flex-wrap gap-1 border-b border-input p-2">
-          {/* Text formatting */}
-          <ToolbarButton
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            active={editor.isActive("bold")}
-            title="Bold"
-          >
-            <IconBold className="size-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            active={editor.isActive("italic")}
-            title="Italic"
-          >
-            <IconItalic className="size-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-            active={editor.isActive("underline")}
-            title="Underline"
-          >
-            <IconUnderline className="size-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => editor.chain().focus().toggleStrike().run()}
-            active={editor.isActive("strike")}
-            title="Strikethrough"
-          >
-            <IconStrikethrough className="size-4" />
-          </ToolbarButton>
+        <div className="flex flex-wrap items-center gap-1.5 border-b border-input px-2 py-1.5">
+          <ToolbarGroup>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              active={editor.isActive("bold")}
+              title="Bold"
+            >
+              <IconBold className="size-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              active={editor.isActive("italic")}
+              title="Italic"
+            >
+              <IconItalic className="size-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              active={editor.isActive("underline")}
+              title="Underline"
+            >
+              <IconUnderline className="size-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+              active={editor.isActive("strike")}
+              title="Strikethrough"
+            >
+              <IconStrikethrough className="size-4" />
+            </ToolbarButton>
+          </ToolbarGroup>
 
-          <ToolbarDivider />
+          <ToolbarGroup>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              active={editor.isActive("bulletList")}
+              title="Bullet List"
+            >
+              <IconList className="size-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              active={editor.isActive("orderedList")}
+              title="Numbered List"
+            >
+              <IconListNumbers className="size-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              active={editor.isActive("blockquote")}
+              title="Quote"
+            >
+              <IconQuote className="size-4" />
+            </ToolbarButton>
+          </ToolbarGroup>
 
-          {/* Lists */}
-          <ToolbarButton
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            active={editor.isActive("bulletList")}
-            title="Bullet List"
-          >
-            <IconList className="size-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            active={editor.isActive("orderedList")}
-            title="Numbered List"
-          >
-            <IconListNumbers className="size-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            active={editor.isActive("blockquote")}
-            title="Quote"
-          >
-            <IconQuote className="size-4" />
-          </ToolbarButton>
+          <ToolbarGroup>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().setTextAlign("left").run()}
+              active={editor.isActive({ textAlign: "left" })}
+              title="Align Left"
+            >
+              <IconAlignLeft className="size-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() =>
+                editor.chain().focus().setTextAlign("center").run()
+              }
+              active={editor.isActive({ textAlign: "center" })}
+              title="Align Center"
+            >
+              <IconAlignCenter className="size-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().setTextAlign("right").run()}
+              active={editor.isActive({ textAlign: "right" })}
+              title="Align Right"
+            >
+              <IconAlignRight className="size-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() =>
+                editor.chain().focus().setTextAlign("justify").run()
+              }
+              active={editor.isActive({ textAlign: "justify" })}
+              title="Justify"
+            >
+              <IconAlignJustified className="size-4" />
+            </ToolbarButton>
+          </ToolbarGroup>
 
-          <ToolbarDivider />
+          <ToolbarGroup>
+            <LinkPopover
+              isActive={editor.isActive("link")}
+              currentUrl={editor.getAttributes("link").href || ""}
+              onSetLink={setLink}
+              onUnsetLink={() =>
+                editor.chain().focus().extendMarkRange("link").unsetLink().run()
+              }
+            />
+            <TablePopover
+              onInsertTable={() =>
+                editor
+                  .chain()
+                  .focus()
+                  .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                  .run()
+              }
+              onAddRowBefore={() =>
+                editor.chain().focus().addRowBefore().run()
+              }
+              onAddRowAfter={() =>
+                editor.chain().focus().addRowAfter().run()
+              }
+              onAddColumnBefore={() =>
+                editor.chain().focus().addColumnBefore().run()
+              }
+              onAddColumnAfter={() =>
+                editor.chain().focus().addColumnAfter().run()
+              }
+              onDeleteRow={() => editor.chain().focus().deleteRow().run()}
+              onDeleteColumn={() =>
+                editor.chain().focus().deleteColumn().run()
+              }
+              onDeleteTable={() => editor.chain().focus().deleteTable().run()}
+              isInTable={editor.isActive("table")}
+            />
+          </ToolbarGroup>
 
-          {/* Alignment */}
-          <ToolbarButton
-            onClick={() => editor.chain().focus().setTextAlign("left").run()}
-            active={editor.isActive({ textAlign: "left" })}
-            title="Align Left"
-          >
-            <IconAlignLeft className="size-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => editor.chain().focus().setTextAlign("center").run()}
-            active={editor.isActive({ textAlign: "center" })}
-            title="Align Center"
-          >
-            <IconAlignCenter className="size-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => editor.chain().focus().setTextAlign("right").run()}
-            active={editor.isActive({ textAlign: "right" })}
-            title="Align Right"
-          >
-            <IconAlignRight className="size-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => editor.chain().focus().setTextAlign("justify").run()}
-            active={editor.isActive({ textAlign: "justify" })}
-            title="Justify"
-          >
-            <IconAlignJustified className="size-4" />
-          </ToolbarButton>
-
-          <ToolbarDivider />
-
-          {/* Link */}
-          <LinkPopover
-            isActive={editor.isActive("link")}
-            currentUrl={editor.getAttributes("link").href || ""}
-            onSetLink={setLink}
-            onUnsetLink={() =>
-              editor.chain().focus().extendMarkRange("link").unsetLink().run()
-            }
-          />
-
-          <ToolbarDivider />
-
-          {/* Table */}
-          <TablePopover
-            onInsertTable={() =>
-              editor
-                .chain()
-                .focus()
-                .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-                .run()
-            }
-            onAddRowBefore={() => editor.chain().focus().addRowBefore().run()}
-            onAddRowAfter={() => editor.chain().focus().addRowAfter().run()}
-            onAddColumnBefore={() =>
-              editor.chain().focus().addColumnBefore().run()
-            }
-            onAddColumnAfter={() =>
-              editor.chain().focus().addColumnAfter().run()
-            }
-            onDeleteRow={() => editor.chain().focus().deleteRow().run()}
-            onDeleteColumn={() => editor.chain().focus().deleteColumn().run()}
-            onDeleteTable={() => editor.chain().focus().deleteTable().run()}
-            isInTable={editor.isActive("table")}
-          />
-
-          <ToolbarDivider />
-
-          {/* Color */}
-          <ColorPicker
-            currentColor={editor.getAttributes("textStyle").color || "#000000"}
-            onColorChange={(color) =>
-              editor.chain().focus().setColor(color).run()
-            }
-          />
+          <ToolbarGroup>
+            <ColorPicker
+              currentColor={
+                editor.getAttributes("textStyle").color || "#000000"
+              }
+              onColorChange={(color) =>
+                editor.chain().focus().setColor(color).run()
+              }
+            />
+            <ToolbarDivider />
+            <ColorPicker
+              currentColor={
+                editor.getAttributes("textStyle").backgroundColor ||
+                "transparent"
+              }
+              onColorChange={(color) =>
+                editor.chain().focus().setBackgroundColor(color).run()
+              }
+              variant="background"
+            />
+          </ToolbarGroup>
         </div>
       ) : null}
 

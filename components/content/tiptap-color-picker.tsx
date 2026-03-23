@@ -12,10 +12,12 @@ import { cn } from "@/lib/utils";
 interface ColorPickerProps {
   currentColor: string;
   onColorChange: (color: string) => void;
+  variant?: "text" | "background";
 }
 
 const colors = [
   "#000000",
+  "#FFFFFF",
   "#374151",
   "#6B7280",
   "#9CA3AF",
@@ -27,12 +29,15 @@ const colors = [
   "#3B82F6",
   "#8B5CF6",
   "#EC4899",
+  "#F472B6",
 ];
 
 export function ColorPicker({
   currentColor,
   onColorChange,
+  variant = "text",
 }: ColorPickerProps): ReactElement {
+  const isBackground = variant === "background";
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -40,14 +45,26 @@ export function ColorPicker({
           type="button"
           variant="ghost"
           size="icon-sm"
-          title="Text Color"
+          title={isBackground ? "Background Color" : "Text Color"}
           className="relative"
         >
-          <span className="text-sm font-bold">A</span>
-          <span
-            className="absolute bottom-1 left-1/2 h-1 w-4 -translate-x-1/2 rounded-full"
-            style={{ backgroundColor: currentColor }}
-          />
+          {isBackground ? (
+            <span
+              className="block size-4 rounded-sm border border-border"
+              style={{
+                backgroundColor:
+                  currentColor === "transparent" ? undefined : currentColor,
+              }}
+            />
+          ) : (
+            <span className="text-sm font-bold">A</span>
+          )}
+          {!isBackground && (
+            <span
+              className="absolute bottom-1 left-1/2 h-1 w-4 -translate-x-1/2 rounded-full"
+              style={{ backgroundColor: currentColor }}
+            />
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-2">

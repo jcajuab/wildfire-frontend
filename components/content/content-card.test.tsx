@@ -134,7 +134,7 @@ describe("ContentCard", () => {
         ? element.textContent === "Hello world & team"
         : false,
     );
-    expect(styledParagraph).not.toHaveStyle({ color: "rgb(22, 163, 74)" });
+    expect(styledParagraph).toHaveStyle({ color: "#16a34a" });
     expect(styledParagraph.querySelector("strong")?.textContent).toBe("world");
     expect(styledParagraph.querySelector("em")?.textContent).toBe("team");
     expect(

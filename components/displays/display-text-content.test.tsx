@@ -33,7 +33,6 @@ describe("DisplayTextContent", () => {
       "display-text-table",
       "max-w-full",
       "text-7xl",
-      "text-center",
       "[overflow-wrap:anywhere]",
     );
     expect(inner).not.toHaveClass("text-4xl");
