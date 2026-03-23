@@ -85,7 +85,7 @@ export function MobileHeader(): ReactElement {
                   onError={() => setFailedAvatarUrl(user?.avatarUrl ?? null)}
                 />
               ) : (
-                <IconUser className="size-4 text-sidebar-foreground/80" />
+                <IconUser className="size-4 text-sidebar-foreground/90" />
               )}
             </div>
           </Button>

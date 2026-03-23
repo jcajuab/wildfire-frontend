@@ -82,7 +82,7 @@ export const ContentCard = memo(function ContentCard({
       {/* Zone A — Card header */}
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
-          <h3 className="truncate text-sm font-semibold">{content.title}</h3>
+          <h2 className="truncate text-sm font-semibold">{content.title}</h2>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

@@ -50,12 +50,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
-        <a
-          href="#main-content"
-          className="focus-visible:ring-ring focus-visible:ring-offset-background sr-only z-[70] rounded-md bg-background px-3 py-2 text-sm font-medium text-foreground transition focus-visible:not-sr-only focus-visible:fixed focus-visible:left-3 focus-visible:top-3 focus-visible:ring-2 focus-visible:ring-offset-2"
-        >
-          Skip to main content
-        </a>
+        <nav aria-label="Skip navigation">
+          <a
+            href="#main-content"
+            className="focus-visible:ring-ring focus-visible:ring-offset-background sr-only z-[70] rounded-md bg-background px-3 py-2 text-sm font-medium text-foreground transition focus-visible:not-sr-only focus-visible:fixed focus-visible:left-3 focus-visible:top-3 focus-visible:ring-2 focus-visible:ring-offset-2"
+          >
+            Skip to main content
+          </a>
+        </nav>
         <ThemeProvider>
           <AuthProvider>
             {children}

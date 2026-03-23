@@ -202,9 +202,9 @@ export const DisplayCard = memo(function DisplayCard({
     <article className="group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors duration-200 hover:border-primary/25 motion-reduce:transition-none">
       <header className="flex justify-between items-center gap-3">
         <div className="min-w-0 flex gap-3 items-center">
-          <h3 className="truncate text-lg font-semibold leading-none">
+          <h2 className="truncate text-lg font-semibold leading-none">
             {display.name}
-          </h3>
+          </h2>
           <div className="flex items-center gap-1.5">
             <Tooltip>
               <TooltipTrigger asChild>

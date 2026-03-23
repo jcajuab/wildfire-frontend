@@ -24,7 +24,7 @@ export function EmptyState({
       )}
     >
       {icon ? <div className="text-muted-foreground">{icon}</div> : null}
-      <h3 className="text-xl font-semibold text-balance">{title}</h3>
+      <h2 className="text-xl font-semibold text-balance">{title}</h2>
       {description ? (
         <p className="max-w-md text-sm leading-relaxed text-muted-foreground text-pretty">
           {description}

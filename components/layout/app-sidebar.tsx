@@ -152,7 +152,7 @@ export function AppSidebar(): ReactElement {
         <nav aria-label="Main navigation">
           {coreNavItems.length > 0 ? (
             <SidebarGroup>
-              <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground/70">
+              <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground/90">
                 {CORE_SECTION}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -187,7 +187,7 @@ export function AppSidebar(): ReactElement {
 
           {manageNavItems.length > 0 ? (
             <SidebarGroup>
-              <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground/70">
+              <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground/90">
                 {MANAGE_SECTION}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -275,14 +275,14 @@ export function AppSidebar(): ReactElement {
                             }
                           />
                         ) : (
-                          <IconUser className="size-6 text-sidebar-foreground/80" />
+                          <IconUser className="size-6 text-sidebar-foreground/90" />
                         )}
                       </div>
                       <div className="flex min-w-0 flex-col items-start">
                         <span className="truncate text-sm font-medium leading-5">
                           {displayName}
                         </span>
-                        <span className="truncate text-xs leading-5 text-sidebar-foreground/85">
+                        <span className="truncate text-xs leading-5 text-sidebar-foreground/90">
                           {displayEmail}
                         </span>
                       </div>

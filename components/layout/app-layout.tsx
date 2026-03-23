@@ -31,7 +31,9 @@ export function AppLayout({ children }: AppLayoutProps): ReactElement {
         >
           {children}
         </main>
-        <AIChatBubble />
+        <aside aria-label="AI assistant">
+          <AIChatBubble />
+        </aside>
       </SidebarProvider>
     </TooltipProvider>
   );
