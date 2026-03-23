@@ -25,12 +25,13 @@ export interface Role {
   readonly usersCount?: number;
 }
 
+import type { SortDirection } from "@/types/common";
+
 export type RoleSortField = "name" | "usersCount";
-export type RoleSortDirection = "asc" | "desc";
 
 export interface RoleSort {
   readonly field: RoleSortField;
-  readonly direction: RoleSortDirection;
+  readonly direction: SortDirection;
 }
 
 export interface RoleFormData {

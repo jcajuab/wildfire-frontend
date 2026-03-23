@@ -4,23 +4,6 @@ function capitalizeResource(resource: string): string {
 }
 
 /**
- * Human-readable label for a permission (resource:action).
- * E.g. "content:read" → "Content: Read".
- */
-export function formatPermissionLabel(permission: {
-  readonly resource: string;
-  readonly action: string;
-}): string {
-  const resource = capitalizeResource(permission.resource);
-  const action =
-    permission.action === "*"
-      ? "Manage"
-      : permission.action.charAt(0).toUpperCase() +
-        permission.action.slice(1).toLowerCase();
-  return `${resource}: ${action}`;
-}
-
-/**
  * Readable label for UI display (action-first, verb form).
  * E.g. "content:read" → "View Content", "content:create" → "Create Content".
  */

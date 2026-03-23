@@ -20,11 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { PlaylistSummary } from "@/types/playlist";
-import {
-  formatDateWithTime,
-  formatDuration,
-  formatItemDuration,
-} from "@/lib/formatters";
+import { formatDateWithTime, formatDuration } from "@/lib/formatters";
 import { sanitizeRichTextHtml } from "@/lib/content-thumbnail-preview";
 import { cn } from "@/lib/utils";
 import { RICH_TEXT_PREVIEW_CLASSES } from "@/lib/rich-text-preview-classes";
@@ -153,7 +149,7 @@ export const PlaylistCard = memo(function PlaylistCard({
                   />
                 )}
                 <span className="absolute right-1 top-1 rounded bg-black/60 px-1 py-0.5 text-xs text-white">
-                  {formatItemDuration(item.duration)}
+                  {formatDuration(item.duration)}
                 </span>
               </div>
               {/* Title bar */}

@@ -5,7 +5,7 @@ export interface DisplayOutput {
   readonly resolution: string;
 }
 
-export interface NowPlaying {
+interface NowPlaying {
   readonly title: string | null;
   readonly playlist: string | null;
   readonly progress: number;
@@ -32,14 +32,5 @@ export interface Display {
   readonly createdAt: string;
 }
 
-export type DisplaySortField = "alphabetical" | "status" | "location";
 /** "all" is the sentinel for no filter; any other string is an output name. */
 export type DisplayOutputFilter = string;
-
-export interface DisplayFilter {
-  readonly status?: DisplayStatus | "all";
-  readonly search?: string;
-  readonly sortBy?: DisplaySortField;
-  readonly groups?: readonly string[];
-  readonly output?: DisplayOutputFilter;
-}

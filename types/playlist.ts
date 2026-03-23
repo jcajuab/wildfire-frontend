@@ -1,8 +1,6 @@
-import type { SortDirection } from "@/types/common";
-
 export type PlaylistStatus = "DRAFT" | "IN_USE";
 
-export interface PlaylistOwner {
+interface PlaylistOwner {
   readonly id: string;
   readonly name: string;
 }
@@ -43,28 +41,10 @@ export interface PlaylistDetail extends PlaylistBase {
   readonly items: readonly PlaylistItem[];
 }
 
-export type Playlist = PlaylistDetail;
-
-export interface PlaylistListResponse {
-  readonly items: readonly PlaylistSummary[];
-  readonly page: number;
-  readonly pageSize: number;
-  readonly total: number;
-}
-
-export type PlaylistContentType = "IMAGE" | "VIDEO" | "TEXT";
+type PlaylistContentType = "IMAGE" | "VIDEO" | "TEXT";
 
 export function isPlaylistContentType(
   type: string,
 ): type is PlaylistContentType {
   return type === "IMAGE" || type === "VIDEO" || type === "TEXT";
-}
-
-export type PlaylistSortField = "recent" | "name";
-
-export interface PlaylistFilter {
-  readonly status?: PlaylistStatus;
-  readonly search?: string;
-  readonly sortBy?: PlaylistSortField;
-  readonly sortDirection?: SortDirection;
 }

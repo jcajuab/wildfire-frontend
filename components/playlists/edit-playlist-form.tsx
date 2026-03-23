@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDuration } from "@/lib/formatters";
 import type { Content } from "@/types/content";
 import type {
-  Playlist,
+  PlaylistDetail,
   PlaylistItem,
   PlaylistItemContent,
 } from "@/types/playlist";
@@ -48,7 +48,7 @@ export interface EditPlaylistFormState {
 }
 
 export interface EditPlaylistFormProps {
-  readonly playlist: Playlist;
+  readonly playlist: PlaylistDetail;
   readonly availableContent: readonly PlaylistSelectableContent[];
   readonly onSave: (payload: PlaylistEditorSavePayload) => void;
   readonly onCancel?: () => void;

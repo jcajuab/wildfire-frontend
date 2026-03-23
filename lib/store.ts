@@ -8,7 +8,7 @@ import { playlistsApi } from "@/lib/api/playlists-api";
 import { rbacApi } from "@/lib/api/rbac-api";
 import { schedulesApi } from "@/lib/api/schedules-api";
 
-export const adminApiReducers = {
+const adminApiReducers = {
   [aiCredentialsApi.reducerPath]: aiCredentialsApi.reducer,
   [auditApi.reducerPath]: auditApi.reducer,
   [contentApi.reducerPath]: contentApi.reducer,
@@ -18,7 +18,7 @@ export const adminApiReducers = {
   [schedulesApi.reducerPath]: schedulesApi.reducer,
 };
 
-export const adminApiMiddleware = [
+const adminApiMiddleware = [
   aiCredentialsApi.middleware,
   auditApi.middleware,
   contentApi.middleware,

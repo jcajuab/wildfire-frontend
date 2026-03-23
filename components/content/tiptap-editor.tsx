@@ -231,12 +231,8 @@ export function TiptapEditor({
                   .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
                   .run()
               }
-              onAddRowBefore={() =>
-                editor.chain().focus().addRowBefore().run()
-              }
-              onAddRowAfter={() =>
-                editor.chain().focus().addRowAfter().run()
-              }
+              onAddRowBefore={() => editor.chain().focus().addRowBefore().run()}
+              onAddRowAfter={() => editor.chain().focus().addRowAfter().run()}
               onAddColumnBefore={() =>
                 editor.chain().focus().addColumnBefore().run()
               }
@@ -244,9 +240,7 @@ export function TiptapEditor({
                 editor.chain().focus().addColumnAfter().run()
               }
               onDeleteRow={() => editor.chain().focus().deleteRow().run()}
-              onDeleteColumn={() =>
-                editor.chain().focus().deleteColumn().run()
-              }
+              onDeleteColumn={() => editor.chain().focus().deleteColumn().run()}
               onDeleteTable={() => editor.chain().focus().deleteTable().run()}
               isInTable={editor.isActive("table")}
             />

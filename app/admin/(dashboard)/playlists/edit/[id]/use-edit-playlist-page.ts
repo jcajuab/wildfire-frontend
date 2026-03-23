@@ -24,11 +24,11 @@ import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import { mapBackendPlaylistWithItems } from "@/lib/mappers/playlist-mapper";
 import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
 import { isPlaylistContentType } from "@/types/playlist";
-import type { Playlist } from "@/types/playlist";
+import type { PlaylistDetail } from "@/types/playlist";
 
 export type EditPlaylistPageState =
   | { readonly status: "loading" }
-  | { readonly status: "ready"; readonly playlist: Playlist }
+  | { readonly status: "ready"; readonly playlist: PlaylistDetail }
   | { readonly status: "notFound"; readonly message: string }
   | { readonly status: "error"; readonly message: string };
 

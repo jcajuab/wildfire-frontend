@@ -6,7 +6,8 @@ import {
   useQueryNumberState,
   useQueryStringState,
 } from "@/hooks/use-query-state";
-import type { RoleSort, RoleSortDirection, RoleSortField } from "@/types/role";
+import type { SortDirection } from "@/types/common";
+import type { RoleSort, RoleSortField } from "@/types/role";
 
 const ROLE_SORT_FIELDS = ["name", "usersCount"] as const;
 const ROLE_SORT_DIRECTIONS = ["asc", "desc"] as const;
@@ -18,12 +19,11 @@ export function useRolesFilters() {
     "name",
     ROLE_SORT_FIELDS,
   );
-  const [sortDirection, setSortDirection] =
-    useQueryEnumState<RoleSortDirection>(
-      "sortDir",
-      "asc",
-      ROLE_SORT_DIRECTIONS,
-    );
+  const [sortDirection, setSortDirection] = useQueryEnumState<SortDirection>(
+    "sortDir",
+    "asc",
+    ROLE_SORT_DIRECTIONS,
+  );
   const [page, setPage] = useQueryNumberState("page", 1);
 
   const sort = useMemo<RoleSort>(

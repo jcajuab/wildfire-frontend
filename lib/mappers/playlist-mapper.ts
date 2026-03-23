@@ -3,7 +3,11 @@ import type {
   BackendPlaylistSummary,
   BackendPlaylistWithItems,
 } from "@/lib/api/playlists-api";
-import type { Playlist, PlaylistItem, PlaylistSummary } from "@/types/playlist";
+import type {
+  PlaylistDetail,
+  PlaylistItem,
+  PlaylistSummary,
+} from "@/types/playlist";
 
 function mapBackendPlaylistItemToContent(
   item: BackendPlaylistItem,
@@ -18,9 +22,7 @@ function mapBackendPlaylistItemToContent(
   };
 }
 
-export function mapBackendPlaylistItem(
-  item: BackendPlaylistItem,
-): PlaylistItem {
+function mapBackendPlaylistItem(item: BackendPlaylistItem): PlaylistItem {
   return {
     id: item.id,
     content: mapBackendPlaylistItemToContent(item),
@@ -55,7 +57,7 @@ export function mapBackendPlaylistSummary(
 
 export function mapBackendPlaylistWithItems(
   item: BackendPlaylistWithItems,
-): Playlist {
+): PlaylistDetail {
   const mappedItems = [...item.items]
     .sort((a, b) => a.sequence - b.sequence)
     .map(mapBackendPlaylistItem);

@@ -47,15 +47,3 @@ export interface ScheduleFormData {
   readonly contentId: string | null;
   readonly targetDisplayIds: string[];
 }
-
-export interface CalendarDay {
-  readonly date: Date;
-  readonly isCurrentMonth: boolean;
-  readonly isToday: boolean;
-  readonly isFriday: boolean;
-  readonly dayOfMonth: number;
-}
-
-export interface CalendarWeek {
-  readonly days: readonly CalendarDay[];
-}

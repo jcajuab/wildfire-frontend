@@ -23,10 +23,11 @@ export interface User {
   readonly lastSeenAt?: string | null;
 }
 
+import type { SortDirection } from "@/types/common";
+
 export type UserSortField = "name" | "lastSeen";
-export type UserSortDirection = "asc" | "desc";
 
 export interface UserSort {
   readonly field: UserSortField;
-  readonly direction: UserSortDirection;
+  readonly direction: SortDirection;
 }

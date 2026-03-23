@@ -6,7 +6,8 @@ import {
   useQueryNumberState,
   useQueryStringState,
 } from "@/hooks/use-query-state";
-import type { UserSort, UserSortDirection, UserSortField } from "@/types/user";
+import type { SortDirection } from "@/types/common";
+import type { UserSort, UserSortField } from "@/types/user";
 
 const USER_SORT_FIELDS = ["name", "lastSeen"] as const;
 const USER_SORT_DIRECTIONS = ["asc", "desc"] as const;
@@ -18,12 +19,11 @@ export function useUsersFilters() {
     "name",
     USER_SORT_FIELDS,
   );
-  const [sortDirection, setSortDirection] =
-    useQueryEnumState<UserSortDirection>(
-      "sortDir",
-      "asc",
-      USER_SORT_DIRECTIONS,
-    );
+  const [sortDirection, setSortDirection] = useQueryEnumState<SortDirection>(
+    "sortDir",
+    "asc",
+    USER_SORT_DIRECTIONS,
+  );
   const [page, setPage] = useQueryNumberState("page", 1);
 
   const sort = useMemo<UserSort>(

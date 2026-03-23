@@ -9,7 +9,10 @@ import {
   type PdfUploadAcceptedResponse,
   type PdfCropRegion,
 } from "@/lib/api/content-api";
-import { PdfCropEditor, type CropRegion } from "@/components/content";
+import {
+  PdfCropEditor,
+  type CropRegion,
+} from "@/components/content/pdf-crop-editor";
 import { Button } from "@/components/ui/button";
 
 const SESSION_KEY_PREFIX = "wildfire:pdf-crop:";

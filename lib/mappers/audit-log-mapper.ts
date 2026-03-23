@@ -18,7 +18,7 @@ function safeParseMetadata(
   }
 }
 
-export interface MapAuditEventOptions {
+interface MapAuditEventOptions {
   getActorName?: (actorId: string, actorType: string | null) => string;
   getActorAvatarUrl?: (
     actorId: string,
