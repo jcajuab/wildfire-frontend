@@ -62,7 +62,7 @@ describe("display-api client contract validation", () => {
       maxSlugLength: 120,
     });
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://example.test/api/v1/displays/registration-constraints",
+      "http://example.test/v1/displays/registration-constraints",
       expect.objectContaining({
         method: "GET",
         credentials: "include",
@@ -222,7 +222,7 @@ describe("display-api client contract validation", () => {
     expect(result.items[0]?.content.cropY).toBe(1080);
     expect(result.items[0]?.content.sliceCount).toBe(3);
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://example.test/api/v1/display-runtime/lobby-display/manifest",
+      "http://example.test/v1/display-runtime/lobby-display/manifest",
       expect.objectContaining({
         method: "GET",
       }),

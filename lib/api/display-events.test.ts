@@ -51,7 +51,7 @@ describe("subscribeToDisplayLifecycleEvents", () => {
     const onEvent = vi.fn<(event: DisplayLifecycleEvent) => void>();
 
     const subscription = subscribeToDisplayLifecycleEvents({
-      baseUrl: "http://example.test/api/v1",
+      baseUrl: "http://example.test/v1",
       eventSource: MockEventSource as unknown as new (
         url: string,
         eventSourceInitDict?: EventSourceInit,
@@ -60,7 +60,7 @@ describe("subscribeToDisplayLifecycleEvents", () => {
     });
 
     const source = MockEventSource.instances[0];
-    expect(source?.url).toBe("http://example.test/api/v1/displays/events");
+    expect(source?.url).toBe("http://example.test/v1/displays/events");
     expect(source?.options).toEqual({ withCredentials: true });
 
     source?.emit("display_registered", {

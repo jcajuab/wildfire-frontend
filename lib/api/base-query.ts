@@ -13,7 +13,7 @@ import { getCsrfToken } from "@/lib/api/auth-api";
 const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "DELETE", "PATCH"]);
 
 /**
- * Backend API base URL with versioned API path suffix (e.g. /api/v1).
+ * Backend API base URL with versioned API path suffix (e.g. /v1).
  * Falls back to same-origin path if NEXT_PUBLIC_API_URL is not set.
  */
 export function getBaseUrl(): string {
@@ -22,7 +22,7 @@ export function getBaseUrl(): string {
     typeof rawVersion === "string" && rawVersion.trim() !== ""
       ? rawVersion.trim().replace(/^\//, "")
       : "v1";
-  const apiPath = `/api/${apiVersion}`;
+  const apiPath = `/${apiVersion}`;
   const rawUrl = process.env.NEXT_PUBLIC_API_URL;
   if (typeof rawUrl !== "string" || rawUrl === "") {
     return apiPath;

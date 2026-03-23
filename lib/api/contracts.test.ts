@@ -54,7 +54,7 @@ describe("parseApiResponse", () => {
         statusText: "Internal Server Error",
         contentType: "text/plain",
         bodyPreview: "<html><body>oops</body></html>",
-        url: "/api/v1/schedules",
+        url: "/v1/schedules",
       }),
     ).toThrow("Response body is not valid JSON");
   });
