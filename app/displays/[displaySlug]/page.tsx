@@ -182,6 +182,7 @@ export default function DisplayRuntimePage() {
 
   return (
     <main className="relative flex h-screen min-h-screen flex-col overflow-hidden bg-black text-white">
+      <h1 className="sr-only">Display content</h1>
       <div className="absolute left-2 top-2 z-10 rounded bg-black/60 px-2 py-1 text-xs">
         {connectionState}
         {lastEventAt ? ` • ${formatTimeOfDay(lastEventAt)}` : ""}
@@ -273,7 +274,6 @@ export default function DisplayRuntimePage() {
               fill
               sizes="100vw"
               className="object-contain"
-              unoptimized
             />
           </div>
         ) : currentItem.content.type === "TEXT" ? (

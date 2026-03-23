@@ -56,6 +56,7 @@ export function MobileHeader(): ReactElement {
 
       <Link
         href={homeRoute}
+        aria-label="Home"
         className="flex items-center text-sidebar-foreground"
       >
         <WildfireLogo className="h-5" />
@@ -81,7 +82,6 @@ export function MobileHeader(): ReactElement {
                   width={28}
                   height={28}
                   className="size-7 rounded-full object-cover"
-                  unoptimized
                   onError={() => setFailedAvatarUrl(user?.avatarUrl ?? null)}
                 />
               ) : (

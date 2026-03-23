@@ -159,7 +159,6 @@ export const ContentCard = memo(function ContentCard({
                 alt={`${content.title} preview`}
                 width={400}
                 height={225}
-                unoptimized
                 className="h-full w-full object-cover"
               />
             ) : (

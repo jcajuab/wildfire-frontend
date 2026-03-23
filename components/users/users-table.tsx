@@ -95,7 +95,6 @@ function UserRow({
               width={48}
               height={48}
               className="size-7 rounded-full object-cover"
-              unoptimized
             />
           ) : (
             <IconUser className="size-6 text-muted-foreground" />

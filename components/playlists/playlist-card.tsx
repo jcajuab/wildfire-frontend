@@ -129,7 +129,6 @@ export const PlaylistCard = memo(function PlaylistCard({
                     src={item.content.thumbnailUrl}
                     alt={`${item.content.title} thumbnail`}
                     fill
-                    unoptimized
                     className="object-cover"
                   />
                 ) : item.content.type === "TEXT" &&

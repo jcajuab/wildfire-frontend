@@ -19,17 +19,24 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Wildfire",
-    template: "%s | Wildfire",
+    default: "WILDFIRE",
+    template: "%s | WILDFIRE",
   },
   description:
     "Digital signage management dashboard for scheduling, managing displays, and organizing content.",
-  robots: {
-    index: false,
-    follow: false,
+  robots: { index: false, follow: false },
+  openGraph: {
+    type: "website",
+    siteName: "WILDFIRE",
+    title: { default: "WILDFIRE", template: "%s | WILDFIRE" },
+    description:
+      "Digital signage management dashboard for scheduling, managing displays, and organizing content.",
   },
-  icons: {
-    icon: "/favicon.ico",
+  twitter: {
+    card: "summary",
+    title: { default: "WILDFIRE", template: "%s | WILDFIRE" },
+    description:
+      "Digital signage management dashboard for scheduling, managing displays, and organizing content.",
   },
 };
 

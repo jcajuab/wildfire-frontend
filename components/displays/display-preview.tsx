@@ -87,7 +87,6 @@ export function DisplayPreview({
       <Image
         src={imageUrl}
         alt={`${displayName} live preview`}
-        unoptimized={true}
         width={1280}
         height={720}
         className="h-full w-full object-cover"

@@ -143,81 +143,83 @@ export function AppSidebar(): ReactElement {
   return (
     <Sidebar variant="floating" collapsible="offcanvas" className="pr-0">
       <SidebarHeader>
-        <Link href={homeRoute}>
+        <Link href={homeRoute} aria-label="Home">
           <WildfireLogo className="h-6" />
         </Link>
       </SidebarHeader>
 
       <SidebarContent>
-        {coreNavItems.length > 0 ? (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground/70">
-              {CORE_SECTION}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-1">
-                {coreNavItems.map((item) => {
-                  const isActive = isActiveRoute(
-                    pathname,
-                    item.href,
-                    item.match,
-                  );
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        asChild
-                        size="default"
-                        isActive={isActive}
-                        className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
-                        tooltip={mounted ? item.title : undefined}
-                      >
-                        <Link href={item.href}>
-                          <item.icon className="size-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ) : null}
+        <nav aria-label="Main navigation">
+          {coreNavItems.length > 0 ? (
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground/70">
+                {CORE_SECTION}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-1">
+                  {coreNavItems.map((item) => {
+                    const isActive = isActiveRoute(
+                      pathname,
+                      item.href,
+                      item.match,
+                    );
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          asChild
+                          size="default"
+                          isActive={isActive}
+                          className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
+                          tooltip={mounted ? item.title : undefined}
+                        >
+                          <Link href={item.href}>
+                            <item.icon className="size-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ) : null}
 
-        {manageNavItems.length > 0 ? (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground/70">
-              {MANAGE_SECTION}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-1">
-                {manageNavItems.map((item) => {
-                  const isActive = isActiveRoute(
-                    pathname,
-                    item.href,
-                    item.match,
-                  );
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        asChild
-                        size="default"
-                        isActive={isActive}
-                        className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
-                        tooltip={mounted ? item.title : undefined}
-                      >
-                        <Link href={item.href}>
-                          <item.icon className="size-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ) : null}
+          {manageNavItems.length > 0 ? (
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground/70">
+                {MANAGE_SECTION}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-1">
+                  {manageNavItems.map((item) => {
+                    const isActive = isActiveRoute(
+                      pathname,
+                      item.href,
+                      item.match,
+                    );
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          asChild
+                          size="default"
+                          isActive={isActive}
+                          className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
+                          tooltip={mounted ? item.title : undefined}
+                        >
+                          <Link href={item.href}>
+                            <item.icon className="size-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ) : null}
+        </nav>
 
         {canReadEmergency && !isMobile ? (
           <SidebarGroup className="mt-auto">
@@ -268,7 +270,6 @@ export function AppSidebar(): ReactElement {
                             width={48}
                             height={48}
                             className="size-7 rounded-full object-cover"
-                            unoptimized
                             onError={() =>
                               setFailedAvatarUrl(user?.avatarUrl ?? null)
                             }

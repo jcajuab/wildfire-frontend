@@ -234,7 +234,6 @@ export function PlaylistFormBody({
                       src={content.thumbnailUrl}
                       alt={`${content.title} thumbnail`}
                       fill
-                      unoptimized
                       className="object-cover"
                     />
                   ) : (

@@ -5,6 +5,7 @@ import { UnauthorizedContent } from "./unauthorized-content";
 export const metadata: Metadata = {
   title: "Unauthorized",
   description: "You do not have permission to access this page.",
+  robots: { index: false, follow: false },
 };
 
 export default function UnauthorizedPage(): ReactElement {

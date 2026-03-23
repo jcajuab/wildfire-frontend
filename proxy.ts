@@ -23,14 +23,17 @@ function isJwtExpired(token: string): boolean {
 const isDev = process.env.NODE_ENV === "development";
 
 function buildCspHeader(nonce: string): string {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
+  const storageUrl = process.env.NEXT_PUBLIC_STORAGE_URL ?? "";
+
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
-    `style-src 'self' 'nonce-${nonce}'`,
-    "img-src 'self' data: blob: https:",
+    `style-src 'self' 'unsafe-inline' 'nonce-${nonce}'`,
+    `img-src 'self' data: blob: https:${storageUrl ? ` ${storageUrl}` : ""}`,
     "font-src 'self' data:",
-    `connect-src 'self'${process.env.NEXT_PUBLIC_API_URL ? ` ${process.env.NEXT_PUBLIC_API_URL}` : ""} wss:`,
-    "media-src 'self' blob:",
+    `connect-src 'self'${apiUrl ? ` ${apiUrl}` : ""}${storageUrl ? ` ${storageUrl}` : ""} wss:`,
+    `media-src 'self' blob:${storageUrl ? ` ${storageUrl}` : ""}`,
     "worker-src 'self' blob:",
     "object-src 'none'",
     "frame-ancestors 'none'",

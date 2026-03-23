@@ -79,7 +79,6 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
                       width={28}
                       height={28}
                       className="size-7 rounded-full object-cover"
-                      unoptimized
                     />
                   ) : (
                     <IconUser className="size-4 text-muted-foreground" />

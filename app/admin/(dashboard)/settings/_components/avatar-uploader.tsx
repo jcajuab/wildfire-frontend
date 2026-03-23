@@ -71,7 +71,6 @@ export function AvatarUploader({
               width={56}
               height={56}
               className="size-14 object-cover"
-              unoptimized
               onError={() => setFailedAvatarUrl(avatarUrl)}
             />
           ) : (

@@ -107,6 +107,7 @@ export default function PdfCropPage() {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+      <h1 className="sr-only">Crop PDF</h1>
       <PdfCropEditor
         pdfUrl={session.pdfUrl}
         pages={[...session.pages]}
