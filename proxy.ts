@@ -22,15 +22,15 @@ function isJwtExpired(token: string): boolean {
 
 const isDev = process.env.NODE_ENV === "development";
 
-function buildCspHeader(nonce: string): string {
+function buildCspHeader(): string {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
   const storageUrl = process.env.NEXT_PUBLIC_STORAGE_URL ?? "";
 
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
-    `style-src 'self' 'unsafe-inline' 'nonce-${nonce}'`,
-    `img-src 'self' data: blob: https:${storageUrl ? ` ${storageUrl}` : ""}`,
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+    "style-src 'self' 'unsafe-inline'",
+    `img-src 'self' data: blob:${storageUrl ? ` ${storageUrl}` : ""}`,
     "font-src 'self' data:",
     `connect-src 'self'${apiUrl ? ` ${apiUrl}` : ""}${storageUrl ? ` ${storageUrl}` : ""} wss:`,
     `media-src 'self' blob:${storageUrl ? ` ${storageUrl}` : ""}`,
@@ -52,11 +52,9 @@ export function proxy(request: NextRequest): NextResponse {
     }
   }
 
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
-  const csp = buildCspHeader(nonce);
+  const csp = buildCspHeader();
 
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", csp);
 
   const response = NextResponse.next({
