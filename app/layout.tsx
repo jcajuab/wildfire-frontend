@@ -61,7 +61,9 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             {children}
-            <Toaster position="top-center" />
+            <aside aria-label="Notifications">
+              <Toaster position="top-center" />
+            </aside>
           </AuthProvider>
         </ThemeProvider>
         <DevAccessibilityChecker />
