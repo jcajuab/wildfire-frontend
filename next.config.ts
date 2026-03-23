@@ -1,22 +1,10 @@
 import type { NextConfig } from "next";
 
-const storageUrl = process.env.NEXT_PUBLIC_STORAGE_URL
-  ? new URL(process.env.NEXT_PUBLIC_STORAGE_URL)
-  : null;
-
 const nextConfig: NextConfig = {
   output: "standalone",
   trailingSlash: false,
   images: {
-    remotePatterns: storageUrl
-      ? [
-          {
-            protocol: storageUrl.protocol.replace(":", "") as "http" | "https",
-            hostname: storageUrl.hostname,
-          },
-        ]
-      : [],
-    dangerouslyAllowLocalIP: !storageUrl || storageUrl.hostname === "localhost",
+    unoptimized: true,
   },
   experimental: {
     optimizePackageImports: [
