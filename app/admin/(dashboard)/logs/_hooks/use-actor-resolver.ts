@@ -1,12 +1,21 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import type { User } from "@/types/user";
-import type { Display } from "@/lib/api/displays-api";
+
+interface ActorUser {
+  readonly id: string;
+  readonly name: string;
+  readonly avatarUrl?: string | null;
+}
+
+interface ActorDisplay {
+  readonly id: string;
+  readonly name: string;
+}
 
 interface UseActorResolverProps {
-  readonly users: readonly User[];
-  readonly displays: readonly Display[];
+  readonly users: readonly ActorUser[];
+  readonly displays: readonly ActorDisplay[];
 }
 
 export function useActorResolver({ users, displays }: UseActorResolverProps) {
@@ -21,7 +30,7 @@ export function useActorResolver({ users, displays }: UseActorResolverProps) {
   );
 
   const displayMap = useMemo(
-    () => new Map(displays.map((d) => [d.id, d.name || d.slug])),
+    () => new Map(displays.map((d) => [d.id, d.name])),
     [displays],
   );
 

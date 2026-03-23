@@ -66,7 +66,7 @@ export function useEditPlaylistPage(
   const canReadContent = useCan("content:read");
 
   const { data: contentData } = useListContentQuery(
-    { page: 1, pageSize: 100 },
+    { page: 1, pageSize: 100, status: "READY" },
     { skip: !canReadContent },
   );
 

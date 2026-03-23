@@ -4,8 +4,8 @@ import { useCallback, useMemo } from "react";
 
 import { useCan } from "@/hooks/use-can";
 import { useListAuditEventsQuery } from "@/lib/api/audit-api";
-import { useGetDisplaysQuery } from "@/lib/api/displays-api";
-import { useGetUsersQuery } from "@/lib/api/rbac-api";
+import { useGetDisplayOptionsQuery } from "@/lib/api/displays-api";
+import { useGetUserOptionsQuery } from "@/lib/api/rbac-api";
 import {
   getResourceTypeLabel,
   getResourceTypeValueFromInput,
@@ -57,17 +57,15 @@ export function useLogsPage(): UseLogsPageResult {
   const { data } = useListAuditEventsQuery(filters.listQuery);
   const canReadUsers = useCan("users:read");
   const canReadDisplays = useCan("displays:read");
-  const { data: usersData } = useGetUsersQuery(
-    { page: 1, pageSize: 100 },
-    { skip: !canReadUsers },
-  );
-  const { data: displaysData } = useGetDisplaysQuery(
-    { page: 1, pageSize: 100 },
-    { skip: !canReadDisplays },
-  );
+  const { data: usersData } = useGetUserOptionsQuery(undefined, {
+    skip: !canReadUsers,
+  });
+  const { data: displaysData } = useGetDisplayOptionsQuery(undefined, {
+    skip: !canReadDisplays,
+  });
 
-  const users = usersData?.items ?? [];
-  const displays = displaysData?.items ?? [];
+  const users = usersData ?? [];
+  const displays = displaysData ?? [];
 
   const actorResolver = useActorResolver({ users, displays });
 
@@ -82,52 +80,66 @@ export function useLogsPage(): UseLogsPageResult {
 
   const total = data?.total ?? 0;
 
+  const { page, setPage } = filters;
+  const {
+    setFrom,
+    setTo,
+    setActionDraft,
+    setActorType,
+    setResourceType,
+    setResourceTypeInput,
+    setStatusRaw,
+    setRequestIdDraft,
+    setAction,
+    setRequestId,
+  } = filters;
+
   const resetToFirstPage = useCallback((): void => {
-    if (filters.page !== 1) {
-      filters.setPage(1);
+    if (page !== 1) {
+      setPage(1);
     }
-  }, [filters]);
+  }, [page, setPage]);
 
   const handleFromChange = useCallback(
     (nextValue: string): void => {
-      filters.setFrom(nextValue);
+      setFrom(nextValue);
       resetToFirstPage();
     },
-    [resetToFirstPage, filters],
+    [resetToFirstPage, setFrom],
   );
 
   const handleToChange = useCallback(
     (nextValue: string): void => {
-      filters.setTo(nextValue);
+      setTo(nextValue);
       resetToFirstPage();
     },
-    [resetToFirstPage, filters],
+    [resetToFirstPage, setTo],
   );
 
   const handleActionChange = useCallback(
     (nextValue: string): void => {
-      filters.setActionDraft(nextValue);
+      setActionDraft(nextValue);
     },
-    [filters],
+    [setActionDraft],
   );
 
   const handleActorTypeChange = useCallback(
     (nextValue: ActorTypeFilter): void => {
-      filters.setActorType(nextValue);
+      setActorType(nextValue);
       resetToFirstPage();
     },
-    [resetToFirstPage, filters],
+    [resetToFirstPage, setActorType],
   );
 
   const handleResourceTypeChange = useCallback(
     (nextValue: ResourceTypeFilter): void => {
-      filters.setResourceType(nextValue);
-      filters.setResourceTypeInput(
+      setResourceType(nextValue);
+      setResourceTypeInput(
         nextValue === "" ? "" : getResourceTypeLabel(nextValue),
       );
       resetToFirstPage();
     },
-    [resetToFirstPage, filters],
+    [resetToFirstPage, setResourceType, setResourceTypeInput],
   );
 
   const handleResourceTypeInputChange = useCallback(
@@ -135,27 +147,27 @@ export function useLogsPage(): UseLogsPageResult {
       const resolvedValue = getResourceTypeValueFromInput(nextInputValue);
 
       if (resolvedValue !== null && resolvedValue !== "") {
-        filters.setResourceType(resolvedValue);
-        filters.setResourceTypeInput(getResourceTypeLabel(resolvedValue));
+        setResourceType(resolvedValue);
+        setResourceTypeInput(getResourceTypeLabel(resolvedValue));
         resetToFirstPage();
         return;
       }
 
-      filters.setResourceTypeInput(nextInputValue);
+      setResourceTypeInput(nextInputValue);
       if (nextInputValue === "") {
-        filters.setResourceType("");
+        setResourceType("");
         resetToFirstPage();
       }
     },
-    [resetToFirstPage, filters],
+    [resetToFirstPage, setResourceType, setResourceTypeInput],
   );
 
   const handleStatusChange = useCallback(
     (nextValue: string): void => {
-      filters.setStatusRaw(nextValue);
+      setStatusRaw(nextValue);
       resetToFirstPage();
     },
-    [resetToFirstPage, filters],
+    [resetToFirstPage, setStatusRaw],
   );
 
   const selectedStatusValue = useMemo<string | null>(() => {
@@ -168,24 +180,36 @@ export function useLogsPage(): UseLogsPageResult {
 
   const handleRequestIdChange = useCallback(
     (nextValue: string): void => {
-      filters.setRequestIdDraft(nextValue);
+      setRequestIdDraft(nextValue);
     },
-    [filters],
+    [setRequestIdDraft],
   );
 
   const handleResetFilters = useCallback((): void => {
-    filters.setFrom("");
-    filters.setTo("");
-    filters.setAction("");
-    filters.setActionDraft("");
-    filters.setActorType("all");
-    filters.setResourceType("");
-    filters.setResourceTypeInput("");
-    filters.setStatusRaw("");
-    filters.setRequestId("");
-    filters.setRequestIdDraft("");
-    filters.setPage(1);
-  }, [filters]);
+    setFrom("");
+    setTo("");
+    setAction("");
+    setActionDraft("");
+    setActorType("all");
+    setResourceType("");
+    setResourceTypeInput("");
+    setStatusRaw("");
+    setRequestId("");
+    setRequestIdDraft("");
+    setPage(1);
+  }, [
+    setFrom,
+    setTo,
+    setAction,
+    setActionDraft,
+    setActorType,
+    setResourceType,
+    setResourceTypeInput,
+    setStatusRaw,
+    setRequestId,
+    setRequestIdDraft,
+    setPage,
+  ]);
 
   return {
     canExport,

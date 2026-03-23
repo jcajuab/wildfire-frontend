@@ -4,7 +4,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/auth-context";
-import StoreProvider from "@/lib/StoreProvider";
 import { DevAccessibilityChecker } from "@/components/dev-accessibility-checker";
 import "./globals.css";
 
@@ -52,7 +51,7 @@ export default function RootLayout({
         </a>
         <ThemeProvider>
           <AuthProvider>
-            <StoreProvider>{children}</StoreProvider>
+            {children}
             <Toaster position="top-center" />
           </AuthProvider>
         </ThemeProvider>

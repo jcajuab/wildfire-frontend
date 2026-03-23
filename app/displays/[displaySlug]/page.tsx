@@ -127,6 +127,7 @@ export default function DisplayRuntimePage() {
   const manifestRef = useRef<DisplayManifest | null>(null);
   const currentIndexRef = useRef(0);
   const snapshotUploadingRef = useRef(false);
+  const lastSnapshotUrlRef = useRef<string | null>(null);
   const currentItem = manifest?.items[currentIndex] ?? null;
   const playback = manifest?.playback ?? null;
   const emergencyPlayback = playback?.emergency ?? null;
@@ -318,6 +319,9 @@ export default function DisplayRuntimePage() {
         if (!snapshotSourceUrl) {
           return;
         }
+        if (snapshotSourceUrl === lastSnapshotUrlRef.current) {
+          return;
+        }
 
         snapshotUploadingRef.current = true;
         try {
@@ -338,6 +342,7 @@ export default function DisplayRuntimePage() {
             privateKey: keyPair.privateKey,
             imageDataUrl,
           });
+          lastSnapshotUrlRef.current = snapshotSourceUrl;
         } catch {
           // Snapshot failures are non-fatal; runtime playback should continue.
         } finally {

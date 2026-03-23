@@ -49,16 +49,22 @@ export function useContentPageController() {
   const scrollTargetRef = useRef<string | null>(null);
   const [loadContent] = useLazyGetContentQuery();
 
+  const {
+    handlePreview: dialogHandlePreview,
+    handleEdit: dialogHandleEdit,
+    openCreateDialog,
+  } = dialogState;
+
   useEffect(() => {
     if (previewId && handledPreviewRef.current !== previewId) {
       handledPreviewRef.current = previewId;
       void loadContent(previewId).then((result) => {
         if (result.data) {
-          dialogState.handlePreview(mapBackendContentToContent(result.data));
+          dialogHandlePreview(mapBackendContentToContent(result.data));
         }
       });
     }
-  }, [previewId, loadContent, dialogState]);
+  }, [previewId, loadContent, dialogHandlePreview]);
 
   const { handleClearFilters, handleSearchChange } = filters;
 
@@ -68,11 +74,11 @@ export function useContentPageController() {
       scrollTargetRef.current = editId;
       void loadContent(editId).then((result) => {
         if (result.data) {
-          dialogState.handleEdit(mapBackendContentToContent(result.data));
+          dialogHandleEdit(mapBackendContentToContent(result.data));
         }
       });
     }
-  }, [editId, loadContent, dialogState]);
+  }, [editId, loadContent, dialogHandleEdit]);
 
   useEffect(() => {
     if (editId) {
@@ -90,9 +96,9 @@ export function useContentPageController() {
       handledCreateRef.current !== createMode
     ) {
       handledCreateRef.current = createMode;
-      dialogState.openCreateDialog(createMode as "text" | "upload" | "flash");
+      openCreateDialog(createMode as "text" | "upload" | "flash");
     }
-  }, [createMode, dialogState]);
+  }, [createMode, openCreateDialog]);
 
   const [getContentJob] = useLazyGetContentJobQuery();
   const { trackContentJob } = useContentJobMonitor({

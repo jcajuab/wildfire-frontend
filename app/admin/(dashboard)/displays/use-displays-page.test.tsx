@@ -19,7 +19,7 @@ import {
   useUnregisterDisplayMutation,
   useUpdateDisplayMutation,
 } from "@/lib/api/displays-api";
-import { useListContentQuery } from "@/lib/api/content-api";
+import { useGetContentOptionsQuery } from "@/lib/api/content-api";
 import { subscribeToDisplayLifecycleEvents } from "@/lib/api/display-events";
 
 vi.mock("@/hooks/use-can", () => ({
@@ -52,7 +52,7 @@ vi.mock("@/lib/api/displays-api", () => ({
 }));
 
 vi.mock("@/lib/api/content-api", () => ({
-  useListContentQuery: vi.fn(() => ({ data: { items: [] } })),
+  useGetContentOptionsQuery: vi.fn(() => ({ data: [] })),
 }));
 
 vi.mock("@/lib/api/display-events", () => ({
@@ -81,7 +81,7 @@ const useUnregisterDisplayMutationMock = vi.mocked(
   useUnregisterDisplayMutation,
 );
 const useUpdateDisplayMutationMock = vi.mocked(useUpdateDisplayMutation);
-const useListContentQueryMock = vi.mocked(useListContentQuery);
+const useGetContentOptionsQueryMock = vi.mocked(useGetContentOptionsQuery);
 const subscribeToDisplayLifecycleEventsMock = vi.mocked(
   subscribeToDisplayLifecycleEvents,
 );
@@ -141,9 +141,9 @@ describe("useDisplaysPage", () => {
     useSetDisplayGroupsMutationMock.mockReturnValue([vi.fn()]);
     useUnregisterDisplayMutationMock.mockReturnValue([vi.fn()]);
     useUpdateDisplayMutationMock.mockReturnValue([vi.fn()]);
-    useListContentQueryMock.mockReturnValue({
-      data: { items: [] },
-    } as ReturnType<typeof useListContentQuery>);
+    useGetContentOptionsQueryMock.mockReturnValue({
+      data: [],
+    } as ReturnType<typeof useGetContentOptionsQuery>);
     subscribeToDisplayLifecycleEventsMock.mockReturnValue({
       close: vi.fn(),
     });

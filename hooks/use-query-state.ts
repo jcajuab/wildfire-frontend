@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface QueryStateOptions<T> {
@@ -10,6 +10,8 @@ interface QueryStateOptions<T> {
   readonly serialize: (value: T) => string;
   readonly isEqual?: (left: T, right: T) => boolean;
 }
+
+const DEBOUNCE_MS = 300;
 
 export function useQueryState<T>({
   key,
@@ -21,6 +23,15 @@ export function useQueryState<T>({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current != null) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   const rawValue = searchParams.get(key);
   const parsedValue = useMemo(() => parse(rawValue), [parse, rawValue]);
@@ -52,7 +63,14 @@ export function useQueryState<T>({
         return;
       }
       const nextPath = query.length > 0 ? `${pathname}?${query}` : pathname;
-      router.replace(nextPath, { scroll: false });
+
+      if (debounceRef.current != null) {
+        clearTimeout(debounceRef.current);
+      }
+      debounceRef.current = setTimeout(() => {
+        debounceRef.current = null;
+        router.replace(nextPath, { scroll: false });
+      }, DEBOUNCE_MS);
     },
     [
       defaultValue,

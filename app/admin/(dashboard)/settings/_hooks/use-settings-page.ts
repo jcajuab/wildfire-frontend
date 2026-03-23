@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
 
 import { useAuth } from "@/context/auth-context";
@@ -55,7 +54,18 @@ export interface UseSettingsPageResult {
 export function useSettingsPage(): UseSettingsPageResult {
   const { user, logout, updateSession } = useAuth();
   const { theme, setTheme } = useTheme();
-  const prefersReducedMotion = useReducedMotion();
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState<
+    boolean | null
+  >(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mql.matches);
+    const handler = (e: MediaQueryListEvent) =>
+      setPrefersReducedMotion(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
 
   const profileEditor = useProfileEditor({
     userName: user?.name,

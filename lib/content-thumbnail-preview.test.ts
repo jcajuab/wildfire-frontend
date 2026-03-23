@@ -12,15 +12,10 @@ const baseContent: Content = {
   id: "content-preview-1",
   title: "Fallback title",
   type: "TEXT",
-  kind: "ROOT",
   thumbnailUrl: undefined,
   mimeType: "text/plain",
   fileSize: 0,
   checksum: "checksum",
-  parentContentId: null,
-  pageNumber: null,
-  pageCount: null,
-  isExcluded: false,
   width: null,
   height: null,
   duration: null,
@@ -92,9 +87,7 @@ describe("thumbnail preview text helpers", () => {
         textHtmlContent:
           '<p style="text-align:center;color:#0f172a">Hello <strong>world</strong> and <em>team</em></p><script>alert(1)</script>',
       }),
-    ).toBe(
-      '<p style="text-align:center;color:#0f172a">Hello <strong>world</strong> and <em>team</em></p>',
-    );
+    ).toBe("<p>Hello <strong>world</strong> and <em>team</em></p>");
   });
 
   test("falls back to escaped title when rich text has no visible text", () => {

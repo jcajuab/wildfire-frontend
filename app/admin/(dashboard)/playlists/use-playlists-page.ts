@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useCan } from "@/hooks/use-can";
@@ -11,12 +11,9 @@ import {
 } from "@/hooks/use-query-state";
 import {
   type PlaylistListQuery,
-  playlistsApi,
   useDeletePlaylistMutation,
   useListPlaylistsQuery,
 } from "@/lib/api/playlists-api";
-import { useAppDispatch } from "@/lib/hooks";
-import { subscribeToDisplayLifecycleEvents } from "@/lib/api/display-events";
 import { mapBackendPlaylistSummary } from "@/lib/mappers/playlist-mapper";
 import { getPlaylistEditPath } from "@/lib/playlist-paths";
 import type { PlaylistStatusFilter } from "@/components/playlists/playlist-filter-popover";
@@ -54,9 +51,10 @@ export interface UsePlaylistsPageResult {
   deletePlaylistMutation: (id: string) => Promise<void>;
 }
 
+const POLLING_INTERVAL_MS = 30_000;
+
 export function usePlaylistsPage(): UsePlaylistsPageResult {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const canUpdatePlaylist = useCan("playlists:update");
   const canDeletePlaylist = useCan("playlists:delete");
 
@@ -84,25 +82,10 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     [page, search, statusFilter],
   );
 
-  const { data: playlistsData } = useListPlaylistsQuery(playlistQuery);
+  const { data: playlistsData } = useListPlaylistsQuery(playlistQuery, {
+    pollingInterval: POLLING_INTERVAL_MS,
+  });
   const [deletePlaylist] = useDeletePlaylistMutation();
-
-  useEffect(() => {
-    const subscription = subscribeToDisplayLifecycleEvents({
-      onEvent(event) {
-        if (event.type === "playlist_status_changed") {
-          dispatch(
-            playlistsApi.util.invalidateTags([
-              { type: "Playlist", id: "LIST" },
-            ]),
-          );
-        }
-      },
-    });
-    return () => {
-      subscription.close();
-    };
-  }, [dispatch]);
 
   const deleteDialogOpen = playlistToDelete !== null;
 

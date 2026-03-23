@@ -36,7 +36,7 @@ export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
   const router = useRouter();
   const canReadContent = useCan("content:read");
   const { data: contentData } = useListContentQuery(
-    { page: 1, pageSize: 100 },
+    { page: 1, pageSize: 100, status: "READY" },
     { skip: !canReadContent },
   );
 
@@ -84,10 +84,9 @@ export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
         if (createdPlaylistId) {
           try {
             await deletePlaylist(createdPlaylistId).unwrap();
-          } catch (rollbackError) {
-            console.error(
+          } catch {
+            toast.error(
               "Failed to roll back playlist creation after item-save failure.",
-              rollbackError,
             );
           }
         }
