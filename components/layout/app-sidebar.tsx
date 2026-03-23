@@ -152,7 +152,7 @@ export function AppSidebar(): ReactElement {
         <nav aria-label="Main navigation">
           {coreNavItems.length > 0 ? (
             <SidebarGroup>
-              <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground/90">
+              <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground">
                 {CORE_SECTION}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -187,7 +187,7 @@ export function AppSidebar(): ReactElement {
 
           {manageNavItems.length > 0 ? (
             <SidebarGroup>
-              <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground/90">
+              <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground">
                 {MANAGE_SECTION}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -275,19 +275,19 @@ export function AppSidebar(): ReactElement {
                             }
                           />
                         ) : (
-                          <IconUser className="size-6 text-sidebar-foreground/90" />
+                          <IconUser className="size-6 text-sidebar-foreground" />
                         )}
                       </div>
                       <div className="flex min-w-0 flex-col items-start">
                         <span className="truncate text-sm font-medium leading-5">
                           {displayName}
                         </span>
-                        <span className="truncate text-xs leading-5 text-sidebar-foreground/90">
+                        <span className="truncate text-xs leading-5 text-sidebar-foreground">
                           {displayEmail}
                         </span>
                       </div>
                     </div>
-                    <IconDotsVertical className="size-4 text-sidebar-foreground/90" />
+                    <IconDotsVertical className="size-4 text-sidebar-foreground" />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top" align="center" sideOffset={8}>

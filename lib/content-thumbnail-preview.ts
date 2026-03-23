@@ -76,7 +76,7 @@ export function sanitizeRichTextHtml(html: string): string {
 
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: [...SAFE_RICH_TEXT_TAGS],
-    ALLOWED_ATTR: ["colspan", "rowspan"],
+    ALLOWED_ATTR: ["style", "colspan", "rowspan"],
   });
 }
 
