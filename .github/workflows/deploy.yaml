@@ -29,9 +29,6 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_API_VERSION: ${{ secrets.NEXT_PUBLIC_API_VERSION }}
 
-      - name: Package standalone
-        run: tar czf deploy.tar.gz -C .next/standalone .
-
       - name: Upload via SFTP
         run: |
           sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" sftp -P ${{ secrets.DEPLOY_PORT }} \

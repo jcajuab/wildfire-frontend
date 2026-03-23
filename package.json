@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "NODE_ENV=production next build && mv .next/static .next/standalone/.next/static",
+    "build": "NODE_ENV=production next build && mv .next/static .next/standalone/.next/static && tar czf deploy.tar.gz -C .next/standalone .",
     "dev": "next dev",
     "format": "prettier --write .",
     "lint": "eslint",
