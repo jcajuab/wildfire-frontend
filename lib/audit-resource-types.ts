@@ -34,6 +34,8 @@ export const RESOURCE_TYPE_FILTER_OPTIONS: readonly ResourceTypeFilter[] = [
   ...RESOURCE_TYPES,
 ];
 
+export const RESOURCE_TYPE_ALL_LABEL = "All";
+
 /** Human-readable labels for resource types (dropdown and table display). */
 export const RESOURCE_TYPE_LABELS: Readonly<Record<string, string>> = {
   user: "User",
@@ -63,12 +65,23 @@ export function getResourceTypeLabel(value: string): string {
   return RESOURCE_TYPE_LABELS[value] ?? titleCaseLabel(value);
 }
 
+export function getResourceTypeFilterLabel(value: ResourceTypeFilter): string {
+  return value === "" ? RESOURCE_TYPE_ALL_LABEL : getResourceTypeLabel(value);
+}
+
 /** Resolve typed/select input into canonical resource type value. */
 export function getResourceTypeValueFromInput(
   input: string,
 ): ResourceTypeFilter | null {
   const normalizedInput = input.trim().toLowerCase();
   if (normalizedInput.length === 0) {
+    return "";
+  }
+
+  if (
+    normalizedInput === RESOURCE_TYPE_SELECT_ALL_VALUE ||
+    normalizedInput === RESOURCE_TYPE_ALL_LABEL.toLowerCase()
+  ) {
     return "";
   }
 
