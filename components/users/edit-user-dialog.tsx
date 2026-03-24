@@ -50,6 +50,7 @@ function EditUserForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.isAdmin === true;
+  const isSelf = currentUser?.id === user.id;
 
   const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
@@ -96,7 +97,13 @@ function EditUserForm({
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="username"
+            disabled={isSelf}
           />
+          {isSelf ? (
+            <p className="text-sm text-muted-foreground">
+              You cannot change your own username.
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="edit-user-email">Email</Label>
@@ -119,7 +126,7 @@ function EditUserForm({
             id="edit-user-active"
             checked={isActive}
             onCheckedChange={setIsActive}
-            disabled={!isAdmin}
+            disabled={!isAdmin || isSelf}
           />
         </div>
       </div>
