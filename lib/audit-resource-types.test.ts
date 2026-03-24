@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  getResourceTypeFilterLabel,
   getResourceTypeLabel,
   getResourceTypeValueFromInput,
 } from "@/lib/audit-resource-types";
@@ -13,7 +14,18 @@ describe("getResourceTypeLabel", () => {
   });
 });
 
+describe("getResourceTypeFilterLabel", () => {
+  test('returns "All" for the empty filter value', () => {
+    expect(getResourceTypeFilterLabel("")).toBe("All");
+  });
+});
+
 describe("getResourceTypeValueFromInput", () => {
+  test('resolves "All" and sentinel input to the empty filter value', () => {
+    expect(getResourceTypeValueFromInput("All")).toBe("");
+    expect(getResourceTypeValueFromInput("__all__")).toBe("");
+  });
+
   test("resolves label input to canonical value", () => {
     expect(getResourceTypeValueFromInput("Audit Event")).toBe("audit-event");
     expect(getResourceTypeValueFromInput("Content Item")).toBe("content");

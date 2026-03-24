@@ -7,7 +7,7 @@ import { useListAuditEventsQuery } from "@/lib/api/audit-api";
 import { useGetDisplayOptionsQuery } from "@/lib/api/displays-api";
 import { useGetUserOptionsQuery } from "@/lib/api/rbac-api";
 import {
-  getResourceTypeLabel,
+  getResourceTypeFilterLabel,
   getResourceTypeValueFromInput,
   type ResourceTypeFilter,
 } from "@/lib/audit-resource-types";
@@ -134,9 +134,7 @@ export function useLogsPage(): UseLogsPageResult {
   const handleResourceTypeChange = useCallback(
     (nextValue: ResourceTypeFilter): void => {
       setResourceType(nextValue);
-      setResourceTypeInput(
-        nextValue === "" ? "" : getResourceTypeLabel(nextValue),
-      );
+      setResourceTypeInput(getResourceTypeFilterLabel(nextValue));
       resetToFirstPage();
     },
     [resetToFirstPage, setResourceType, setResourceTypeInput],
@@ -146,9 +144,9 @@ export function useLogsPage(): UseLogsPageResult {
     (nextInputValue: string): void => {
       const resolvedValue = getResourceTypeValueFromInput(nextInputValue);
 
-      if (resolvedValue !== null && resolvedValue !== "") {
+      if (resolvedValue !== null) {
         setResourceType(resolvedValue);
-        setResourceTypeInput(getResourceTypeLabel(resolvedValue));
+        setResourceTypeInput(getResourceTypeFilterLabel(resolvedValue));
         resetToFirstPage();
         return;
       }

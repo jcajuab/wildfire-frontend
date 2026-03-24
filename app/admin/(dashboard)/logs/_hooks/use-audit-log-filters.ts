@@ -8,8 +8,8 @@ import {
 } from "@/hooks/use-query-state";
 import type { AuditListQuery } from "@/lib/api/audit-api";
 import {
+  getResourceTypeFilterLabel,
   getResourceTypeValueFromInput,
-  getResourceTypeLabel,
   type ResourceTypeFilter,
   RESOURCE_TYPE_FILTER_OPTIONS,
   RESOURCE_TYPE_SELECT_ALL_VALUE,
@@ -42,9 +42,7 @@ export function useAuditLogFilters(pageSize: number) {
   );
 
   useEffect(() => {
-    setResourceTypeInput(
-      resourceType === "" ? "" : getResourceTypeLabel(resourceType),
-    );
+    setResourceTypeInput(getResourceTypeFilterLabel(resourceType));
   }, [resourceType]);
 
   useEffect(() => {
