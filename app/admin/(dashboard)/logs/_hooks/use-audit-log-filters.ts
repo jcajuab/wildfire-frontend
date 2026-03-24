@@ -17,7 +17,11 @@ import {
   RESOURCE_TYPE_FILTER_OPTIONS,
   RESOURCE_TYPE_SELECT_ALL_VALUE,
 } from "@/lib/audit-resource-types";
-import { dateToISOEnd, dateToISOStart, isValidYyyyMmDd } from "@/lib/formatters";
+import {
+  dateToISOEnd,
+  dateToISOStart,
+  isValidYyyyMmDd,
+} from "@/lib/formatters";
 
 export const ACTOR_TYPE_FILTERS = ["all", "user", "display"] as const;
 export type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];

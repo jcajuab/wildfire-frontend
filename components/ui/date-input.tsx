@@ -9,7 +9,5 @@ interface DateInputProps extends Omit<
 }
 
 export function DateInput({ value = "", onChange, ...props }: DateInputProps) {
-  return (
-    <Input type="date" value={value} onChange={onChange} {...props} />
-  );
+  return <Input type="date" value={value} onChange={onChange} {...props} />;
 }

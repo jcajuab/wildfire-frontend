@@ -17,7 +17,11 @@ import {
   getApiErrorMessage,
   notifyApiError,
 } from "@/lib/api/get-api-error-message";
-import { dateToISOEnd, dateToISOStart, isValidYyyyMmDd } from "@/lib/formatters";
+import {
+  dateToISOEnd,
+  dateToISOStart,
+  isValidYyyyMmDd,
+} from "@/lib/formatters";
 
 interface AuditExportPopoverProps {
   readonly action: string;
@@ -139,9 +143,9 @@ export function AuditExportPopover({
           {!exportRangeValid &&
             isValidYyyyMmDd(localFrom.trim()) &&
             isValidYyyyMmDd(localTo.trim()) && (
-            <p className="text-destructive text-xs">
-              From date must be before or equal to To date.
-            </p>
+              <p className="text-destructive text-xs">
+                From date must be before or equal to To date.
+              </p>
             )}
           <Button
             onClick={handleExportSubmit}
