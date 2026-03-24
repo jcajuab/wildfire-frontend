@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-16 | Updated: 2026-03-19 -->
+<!-- Generated: 2026-03-16 | Updated: 2026-03-24 -->
 
 # types
 
@@ -11,8 +11,8 @@ TypeScript type definitions for domain entities used across the frontend. Each f
 
 | File            | Description                                           |
 | --------------- | ----------------------------------------------------- |
-| `auth.ts`       | Auth types — user session, login request/response     |
-| `common.ts`     | Shared types — paginated response, API error          |
+| `auth.ts`       | Auth types -- user session, login request/response     |
+| `common.ts`     | Shared types -- paginated response, API error          |
 | `content.ts`    | Content entity types (text, flash, image, video, PDF) |
 | `display.ts`    | Display entity and group types                        |
 | `invitation.ts` | User invitation types                                 |
@@ -27,7 +27,7 @@ TypeScript type definitions for domain entities used across the frontend. Each f
 
 ### Working In This Directory
 
-- Types must match backend API contracts — update when backend changes
+- Types must match backend API contracts -- update when backend changes
 - These are frontend-facing types, not 1:1 copies of DB schemas
 - Mappers in `lib/mappers/` transform API responses into these types
 

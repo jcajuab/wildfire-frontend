@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-16 | Updated: 2026-03-19 -->
+<!-- Generated: 2026-03-16 | Updated: 2026-03-24 -->
 
 # components
 
@@ -11,34 +11,35 @@ Reusable React components organized by feature domain. Each feature subdirectory
 
 | Directory      | Purpose                                                                   |
 | -------------- | ------------------------------------------------------------------------- |
-| `ui/`          | shadcn/ui primitives — button, dialog, table, etc. (see `ui/AGENTS.md`)   |
-| `common/`      | Cross-feature components — permissions guard, pagination, search, dialogs |
-| `ai/`          | AI chat interface — chat bubble, pending action cards, tool chips         |
-| `ai-elements/` | AI UI building blocks — conversation, message, prompt input, code blocks  |
-| `content/`     | Content management — cards, grid, create dialog, TipTap editor, filters   |
-| `displays/`    | Display management — cards, grid, registration, groups, preview           |
-| `playlists/`   | Playlist management — cards, grid, create/edit forms, sortable items      |
-| `schedules/`   | Schedule management — calendar grid, resource views, create/edit dialogs  |
-| `roles/`       | Role management — role dialog, table, pagination                          |
-| `users/`       | User management — invite dialog, edit dialog, actions menu, table         |
-| `logs/`        | Audit log — table, pagination, metadata dialog                            |
-| `layout/`      | App layout — sidebar, header, dashboard page wrapper, auth guard          |
+| `ui/`          | shadcn/ui primitives -- button, dialog, table, etc. (see `ui/AGENTS.md`) |
+| `common/`      | Cross-feature components -- permissions guard, pagination, search, dialogs |
+| `ai/`          | AI chat interface -- chat bubble, chat panel, slash command menu           |
+| `ai-elements/` | AI UI building blocks -- conversation, message, prompt input, code blocks |
+| `content/`     | Content management -- cards, grid, create dialog, TipTap editor, filters  |
+| `displays/`    | Display management -- cards, grid, registration, groups, preview          |
+| `playlists/`   | Playlist management -- cards, grid, create/edit forms, sortable items     |
+| `schedules/`   | Schedule management -- calendar grid, resource views, create/edit dialogs |
+| `roles/`       | Role management -- role form, roles table                                 |
+| `users/`       | User management -- invite dialog, edit dialog, actions menu, table        |
+| `logs/`        | Audit log -- table, metadata dialog                                       |
+| `layout/`      | App layout -- sidebar, header, dashboard page wrapper, auth guard         |
 
 ## Key Files
 
-| File                 | Description                              |
-| -------------------- | ---------------------------------------- |
-| `theme-provider.tsx` | next-themes provider for dark/light mode |
+| File                            | Description                                    |
+| ------------------------------- | ---------------------------------------------- |
+| `theme-provider.tsx`            | next-themes provider for dark/light mode       |
+| `dev-accessibility-checker.tsx` | Development-only axe-core accessibility checker |
 
 ## For AI Agents
 
 ### Working In This Directory
 
 - Feature components import from `@/components/ui/` for primitives
-- Each feature directory has an `index.ts` barrel export
 - Components use `"use client"` directive when they need interactivity
-- Styling via Tailwind CSS utility classes — no CSS modules
+- Styling via Tailwind CSS utility classes -- no CSS modules
 - Icons from `@tabler/icons-react` for feature icons, `lucide-react` used by shadcn/ui internals
+- No barrel exports (`index.ts`) -- import components directly by file path
 
 ### Testing Requirements
 

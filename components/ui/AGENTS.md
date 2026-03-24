@@ -1,11 +1,11 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-16 | Updated: 2026-03-19 -->
+<!-- Generated: 2026-03-16 | Updated: 2026-03-24 -->
 
 # ui
 
 ## Purpose
 
-shadcn/ui component library. 33 headless UI primitives built on Radix UI with Tailwind CSS styling. These are the base building blocks used by all feature components.
+shadcn/ui component library. 32 headless UI primitives built on Radix UI with Tailwind CSS styling. These are the base building blocks used by all feature components.
 
 ## Key Files
 
@@ -13,7 +13,6 @@ shadcn/ui component library. 33 headless UI primitives built on Radix UI with Ta
 | ------------------- | -------------------------------------------------------------------- |
 | `alert-dialog.tsx`  | Modal alert dialog with confirm/cancel actions (Radix AlertDialog)   |
 | `alert.tsx`         | Inline alert banner with title and description variants              |
-| `avatar.tsx`        | User avatar with image and fallback initials (Radix Avatar)          |
 | `badge.tsx`         | Status badge with color variants                                     |
 | `button-group.tsx`  | Grouped button container                                             |
 | `button.tsx`        | Button with variants (default, destructive, outline, ghost, link)    |
@@ -22,9 +21,9 @@ shadcn/ui component library. 33 headless UI primitives built on Radix UI with Ta
 | `collapsible.tsx`   | Collapsible expand/collapse container (Radix Collapsible)            |
 | `combobox.tsx`      | Searchable combobox                                                  |
 | `command.tsx`       | Command palette / combobox (cmdk)                                    |
+| `date-input.tsx`    | Date input field                                                     |
 | `dialog.tsx`        | Modal dialog (Radix Dialog)                                          |
 | `dropdown-menu.tsx` | Context/dropdown menu (Radix DropdownMenu)                           |
-| `field.tsx`         | Form field wrapper with label and error                              |
 | `hover-card.tsx`    | Hover-triggered card popup (Radix HoverCard)                         |
 | `input-group.tsx`   | Input with prefix/suffix addons                                      |
 | `input.tsx`         | Text input field                                                     |
@@ -49,7 +48,7 @@ shadcn/ui component library. 33 headless UI primitives built on Radix UI with Ta
 
 ### Working In This Directory
 
-- **Do not manually edit** — these are managed by shadcn CLI (`pnpm dlx shadcn@latest add <name>`)
+- **Do not manually edit** -- these are managed by shadcn CLI (`pnpm dlx shadcn@latest add <name>`)
 - Style: `radix-mira` with `slate` base color and CSS variables
 - Icon library: `@tabler/icons-react` (configured in `components.json`)
 - Customization is acceptable but prefer extending via composition over modifying primitives

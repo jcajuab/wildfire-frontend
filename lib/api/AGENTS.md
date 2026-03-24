@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-16 | Updated: 2026-03-19 -->
+<!-- Generated: 2026-03-16 | Updated: 2026-03-24 -->
 
 # api
 
@@ -13,6 +13,7 @@ RTK Query API layer. Contains all API endpoint definitions organized by domain m
 | ---------------------------- | ---------------------------------------------------------------- |
 | `base-query.ts`              | Custom base query with auth token injection and refresh handling |
 | `contracts.ts`               | Shared API request/response type contracts                       |
+| `ai-credentials-api.ts`     | AI provider credential management endpoints                      |
 | `audit-api.ts`               | Audit log endpoints (list, export)                               |
 | `auth-api.ts`                | Authentication endpoints (login, logout, session, profile)       |
 | `content-api.ts`             | Content CRUD endpoints                                           |
@@ -27,6 +28,7 @@ RTK Query API layer. Contains all API endpoint definitions organized by domain m
 | `proxy.ts`                   | API proxy configuration                                          |
 | `response-transformers.ts`   | Response transformation utilities                                |
 | `get-api-error-message.ts`   | Error message extraction from API responses                      |
+| `error-guards.ts`            | API error type guard utilities                                   |
 | `auth-refresh.helpers.ts`    | Token refresh logic and retry queue                              |
 | `backend-url.ts`             | Backend API URL resolution                                       |
 
@@ -34,12 +36,12 @@ RTK Query API layer. Contains all API endpoint definitions organized by domain m
 
 ### Working In This Directory
 
-- All API calls go through RTK Query — no manual `fetch()` in components
+- All API calls go through RTK Query -- no manual `fetch()` in components
 - `base-query.ts` handles auth token injection and automatic refresh on 401
 - Cache tags follow pattern: `{ type: 'Entity', id }` for targeted invalidation
 - Paginated endpoints use `paginated-query-factory.ts` for consistent behavior
 - Add new endpoints to the appropriate `*-api.ts` file, not a new file
-- Test files collocated as `*.test.ts` — cover base-query, contracts, display-events, display-registration, pagination-guards, rbac-pagination
+- Test files collocated as `*.test.ts` -- cover base-query, contracts, display-events, display-registration, pagination-guards, rbac-pagination
 
 ### Common Patterns
 

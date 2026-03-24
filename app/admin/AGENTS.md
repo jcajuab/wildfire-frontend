@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-16 | Updated: 2026-03-19 -->
+<!-- Generated: 2026-03-16 | Updated: 2026-03-24 -->
 
 # admin
 
@@ -11,7 +11,7 @@ Admin section of the application. Contains the dashboard layout with sidebar nav
 
 | File         | Description                       |
 | ------------ | --------------------------------- |
-| `layout.tsx` | Admin layout — auth guard wrapper |
+| `layout.tsx` | Admin layout -- auth guard wrapper |
 
 ## Subdirectories
 
@@ -24,7 +24,7 @@ Admin section of the application. Contains the dashboard layout with sidebar nav
 
 ### Working In This Directory
 
-- Admin pages require authentication — `layout.tsx` wraps with auth guard
+- Admin pages require authentication -- `layout.tsx` wraps with auth guard
 - Dashboard pages are nested under `(dashboard)/` with shared sidebar layout
 - Display registration (`displays/register/`) has its own layout (no sidebar)
 
