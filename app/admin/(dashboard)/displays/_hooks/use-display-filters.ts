@@ -1,79 +1,73 @@
 "use client";
 
-import { useCallback, useDeferredValue } from "react";
+import { useCallback } from "react";
 import {
-  useQueryEnumState,
-  useQueryListState,
-  useQueryNumberState,
-  useQueryStringState,
-} from "@/hooks/use-query-state";
+  parseAsArrayOf,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryStates,
+} from "nuqs";
 import type { DisplayStatusFilter } from "@/components/displays/display-filter-popover";
 import type { DisplayOutputFilter } from "@/types/display";
 
 const DISPLAY_STATUS_VALUES = ["all", "READY", "LIVE", "DOWN"] as const;
 
+const displayFiltersSchema = {
+  q: parseAsString.withDefault(""),
+  status: parseAsStringLiteral(DISPLAY_STATUS_VALUES).withDefault("all"),
+  page: parseAsInteger.withDefault(1),
+  groups: parseAsArrayOf(parseAsString, ",").withDefault([]),
+  output: parseAsString.withDefault("all"),
+};
+
 export function useDisplayFilters() {
-  const [statusFilter, setStatusFilter] =
-    useQueryEnumState<DisplayStatusFilter>(
-      "status",
-      "all",
-      DISPLAY_STATUS_VALUES,
-    );
-  const [search, setSearch] = useQueryStringState("q", "");
-  const [page, setPage] = useQueryNumberState("page", 1);
-  const [groupFilters, setGroupFilters] = useQueryListState("groups", []);
-  const [outputFilter, setOutputFilter] = useQueryStringState("output", "all");
-  const deferredSearch = useDeferredValue(search);
+  const [filters, setFilters] = useQueryStates(displayFiltersSchema);
 
   const normalizedOutputFilter: DisplayOutputFilter =
-    outputFilter.length > 0 ? outputFilter : "all";
+    filters.output.length > 0 ? filters.output : "all";
 
   const handleStatusFilterChange = useCallback(
     (value: DisplayStatusFilter) => {
-      setStatusFilter(value);
-      setPage(1);
+      setFilters({
+        status: value as (typeof DISPLAY_STATUS_VALUES)[number],
+        page: 1,
+      });
     },
-    [setStatusFilter, setPage],
+    [setFilters],
   );
 
   const handleSearchChange = useCallback(
     (value: string) => {
-      setSearch(value);
-      setPage(1);
+      setFilters({ q: value, page: 1 });
     },
-    [setSearch, setPage],
+    [setFilters],
   );
 
   const handleGroupFilterChange = useCallback(
     (value: readonly string[]) => {
-      setGroupFilters(value);
-      setPage(1);
+      setFilters({ groups: [...value], page: 1 });
     },
-    [setGroupFilters, setPage],
+    [setFilters],
   );
 
   const handleOutputFilterChange = useCallback(
     (value: DisplayOutputFilter) => {
-      setOutputFilter(value);
-      setPage(1);
+      setFilters({ output: value, page: 1 });
     },
-    [setOutputFilter, setPage],
+    [setFilters],
   );
 
   const handleClearFilters = useCallback(() => {
-    setStatusFilter("all");
-    setGroupFilters([]);
-    setOutputFilter("all");
-    setPage(1);
-  }, [setStatusFilter, setGroupFilters, setOutputFilter, setPage]);
+    setFilters({ status: "all", groups: [], output: "all", page: 1 });
+  }, [setFilters]);
 
   return {
-    statusFilter,
-    search,
-    deferredSearch,
-    page,
-    setPage,
-    groupFilters,
+    statusFilter: filters.status,
+    search: filters.q,
+    page: filters.page,
+    setPage: (page: number) => setFilters({ page }),
+    groupFilters: filters.groups,
     normalizedOutputFilter,
     handleStatusFilterChange,
     handleSearchChange,

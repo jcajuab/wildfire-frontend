@@ -2,62 +2,60 @@
 
 import { useCallback, useMemo } from "react";
 import {
-  useQueryEnumState,
-  useQueryNumberState,
-  useQueryStringState,
-} from "@/hooks/use-query-state";
+  parseAsInteger,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryStates,
+} from "nuqs";
 import type { SortDirection } from "@/types/common";
 import type { UserSort, UserSortField } from "@/types/user";
 
 const USER_SORT_FIELDS = ["name", "lastSeen"] as const;
 const USER_SORT_DIRECTIONS = ["asc", "desc"] as const;
 
+const usersFiltersSchema = {
+  q: parseAsString.withDefault(""),
+  sortField: parseAsStringLiteral(USER_SORT_FIELDS).withDefault("name"),
+  sortDir: parseAsStringLiteral(USER_SORT_DIRECTIONS).withDefault("asc"),
+  page: parseAsInteger.withDefault(1),
+};
+
 export function useUsersFilters() {
-  const [search, setSearch] = useQueryStringState("q", "");
-  const [sortField, setSortField] = useQueryEnumState<UserSortField>(
-    "sortField",
-    "name",
-    USER_SORT_FIELDS,
-  );
-  const [sortDirection, setSortDirection] = useQueryEnumState<SortDirection>(
-    "sortDir",
-    "asc",
-    USER_SORT_DIRECTIONS,
-  );
-  const [page, setPage] = useQueryNumberState("page", 1);
+  const [filters, setFilters] = useQueryStates(usersFiltersSchema);
 
   const sort = useMemo<UserSort>(
     () => ({
-      field: sortField,
-      direction: sortDirection,
+      field: filters.sortField as UserSortField,
+      direction: filters.sortDir as SortDirection,
     }),
-    [sortField, sortDirection],
+    [filters.sortField, filters.sortDir],
   );
 
   const handleSearchChange = useCallback(
     (value: string) => {
-      setSearch(value);
-      setPage(1);
+      setFilters({ q: value, page: 1 });
     },
-    [setSearch, setPage],
+    [setFilters],
   );
 
   const handleSortChange = useCallback(
     (nextSort: UserSort) => {
-      setSortField(nextSort.field);
-      setSortDirection(nextSort.direction);
-      setPage(1);
+      setFilters({
+        sortField: nextSort.field,
+        sortDir: nextSort.direction,
+        page: 1,
+      });
     },
-    [setSortField, setSortDirection, setPage],
+    [setFilters],
   );
 
   return {
-    search,
-    page,
-    setPage,
+    search: filters.q,
+    page: filters.page,
+    setPage: (page: number) => setFilters({ page }),
     sort,
-    sortField,
-    sortDirection,
+    sortField: filters.sortField,
+    sortDirection: filters.sortDir,
     handleSearchChange,
     handleSortChange,
   };

@@ -75,17 +75,11 @@ export default function LogsPage(): ReactElement {
           canExport ? (
             <AuditExportPopover
               action={filters.action}
-              actionDraft={filters.actionDraft}
               actorType={filters.actorType}
               resourceType={filters.resourceType}
               parsedStatus={filters.parsedStatus}
               requestId={filters.requestId}
-              requestIdDraft={filters.requestIdDraft}
               total={total}
-              onActionSync={() => filters.setAction(filters.actionDraft)}
-              onRequestIdSync={() =>
-                filters.setRequestId(filters.requestIdDraft)
-              }
             />
           ) : null
         }
@@ -115,7 +109,7 @@ export default function LogsPage(): ReactElement {
                 <Label htmlFor="logs-filter-action">Action</Label>
                 <Input
                   id="logs-filter-action"
-                  value={filters.actionDraft}
+                  value={filters.action}
                   onChange={(e) => handleActionChange(e.target.value)}
                   placeholder="e.g. auth.session or rbac.user.update"
                 />
@@ -124,7 +118,7 @@ export default function LogsPage(): ReactElement {
                 <Label htmlFor="logs-filter-request-id">Request ID</Label>
                 <Input
                   id="logs-filter-request-id"
-                  value={filters.requestIdDraft}
+                  value={filters.requestId}
                   onChange={(e) => handleRequestIdChange(e.target.value)}
                   placeholder="e.g. 2be5fd5a or full UUID"
                 />

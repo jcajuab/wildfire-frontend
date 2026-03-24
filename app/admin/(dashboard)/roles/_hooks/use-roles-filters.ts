@@ -2,36 +2,58 @@
 
 import { useCallback, useMemo } from "react";
 import {
-  useQueryEnumState,
-  useQueryNumberState,
-  useQueryStringState,
-} from "@/hooks/use-query-state";
+  parseAsInteger,
+  parseAsStringLiteral,
+  useQueryStates,
+  debounce,
+  parseAsString,
+} from "nuqs";
 import type { SortDirection } from "@/types/common";
 import type { RoleSort, RoleSortField } from "@/types/role";
 
 const ROLE_SORT_FIELDS = ["name", "usersCount"] as const;
 const ROLE_SORT_DIRECTIONS = ["asc", "desc"] as const;
 
+const rolesFiltersParsers = {
+  q: parseAsString
+    .withDefault("")
+    .withOptions({ limitUrlUpdates: debounce(500) }),
+  sortField: parseAsStringLiteral(ROLE_SORT_FIELDS).withDefault("name"),
+  sortDir: parseAsStringLiteral(ROLE_SORT_DIRECTIONS).withDefault("asc"),
+  page: parseAsInteger.withDefault(1),
+};
+
 export function useRolesFilters() {
-  const [search, setSearch] = useQueryStringState("q", "");
-  const [sortField, setSortField] = useQueryEnumState<RoleSortField>(
-    "sortField",
-    "name",
-    ROLE_SORT_FIELDS,
-  );
-  const [sortDirection, setSortDirection] = useQueryEnumState<SortDirection>(
-    "sortDir",
-    "asc",
-    ROLE_SORT_DIRECTIONS,
-  );
-  const [page, setPage] = useQueryNumberState("page", 1);
+  const [filters, setFilters] = useQueryStates(rolesFiltersParsers);
+
+  const { q: search, sortField, sortDir: sortDirection, page } = filters;
 
   const sort = useMemo<RoleSort>(
     () => ({
-      field: sortField,
-      direction: sortDirection,
+      field: sortField as RoleSortField,
+      direction: sortDirection as SortDirection,
     }),
     [sortField, sortDirection],
+  );
+
+  const setSearch = useCallback(
+    (value: string) => setFilters({ q: value }),
+    [setFilters],
+  );
+
+  const setPage = useCallback(
+    (value: number) => setFilters({ page: value }),
+    [setFilters],
+  );
+
+  const setSortField = useCallback(
+    (value: RoleSortField) => setFilters({ sortField: value }),
+    [setFilters],
+  );
+
+  const setSortDirection = useCallback(
+    (value: SortDirection) => setFilters({ sortDir: value }),
+    [setFilters],
   );
 
   const handleSearchChange = useCallback(
@@ -56,8 +78,8 @@ export function useRolesFilters() {
     page,
     setPage,
     sort,
-    sortField,
-    sortDirection,
+    sortField: sortField as RoleSortField,
+    sortDirection: sortDirection as SortDirection,
     handleSearchChange,
     handleSortChange,
   };

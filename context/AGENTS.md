@@ -9,10 +9,10 @@ React context providers for cross-cutting application state that doesn't belong 
 
 ## Key Files
 
-| File                    | Description                                                  |
-| ----------------------- | ------------------------------------------------------------ |
+| File                    | Description                                                   |
+| ----------------------- | ------------------------------------------------------------- |
 | `auth-context.tsx`      | Auth context -- current user, permissions, login/logout state |
-| `auth-context.test.tsx` | Auth context unit tests                                      |
+| `auth-context.test.tsx` | Auth context unit tests                                       |
 
 ## For AI Agents
 

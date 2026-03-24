@@ -9,26 +9,26 @@ Reusable React components organized by feature domain. Each feature subdirectory
 
 ## Subdirectories
 
-| Directory      | Purpose                                                                   |
-| -------------- | ------------------------------------------------------------------------- |
-| `ui/`          | shadcn/ui primitives -- button, dialog, table, etc. (see `ui/AGENTS.md`) |
+| Directory      | Purpose                                                                    |
+| -------------- | -------------------------------------------------------------------------- |
+| `ui/`          | shadcn/ui primitives -- button, dialog, table, etc. (see `ui/AGENTS.md`)   |
 | `common/`      | Cross-feature components -- permissions guard, pagination, search, dialogs |
 | `ai/`          | AI chat interface -- chat bubble, chat panel, slash command menu           |
-| `ai-elements/` | AI UI building blocks -- conversation, message, prompt input, code blocks |
-| `content/`     | Content management -- cards, grid, create dialog, TipTap editor, filters  |
-| `displays/`    | Display management -- cards, grid, registration, groups, preview          |
-| `playlists/`   | Playlist management -- cards, grid, create/edit forms, sortable items     |
-| `schedules/`   | Schedule management -- calendar grid, resource views, create/edit dialogs |
-| `roles/`       | Role management -- role form, roles table                                 |
-| `users/`       | User management -- invite dialog, edit dialog, actions menu, table        |
-| `logs/`        | Audit log -- table, metadata dialog                                       |
-| `layout/`      | App layout -- sidebar, header, dashboard page wrapper, auth guard         |
+| `ai-elements/` | AI UI building blocks -- conversation, message, prompt input, code blocks  |
+| `content/`     | Content management -- cards, grid, create dialog, TipTap editor, filters   |
+| `displays/`    | Display management -- cards, grid, registration, groups, preview           |
+| `playlists/`   | Playlist management -- cards, grid, create/edit forms, sortable items      |
+| `schedules/`   | Schedule management -- calendar grid, resource views, create/edit dialogs  |
+| `roles/`       | Role management -- role form, roles table                                  |
+| `users/`       | User management -- invite dialog, edit dialog, actions menu, table         |
+| `logs/`        | Audit log -- table, metadata dialog                                        |
+| `layout/`      | App layout -- sidebar, header, dashboard page wrapper, auth guard          |
 
 ## Key Files
 
-| File                            | Description                                    |
-| ------------------------------- | ---------------------------------------------- |
-| `theme-provider.tsx`            | next-themes provider for dark/light mode       |
+| File                            | Description                                     |
+| ------------------------------- | ----------------------------------------------- |
+| `theme-provider.tsx`            | next-themes provider for dark/light mode        |
 | `dev-accessibility-checker.tsx` | Development-only axe-core accessibility checker |
 
 ## For AI Agents

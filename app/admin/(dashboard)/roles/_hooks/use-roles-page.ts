@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCan } from "@/hooks/use-can";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
   useDeleteRoleMutation,
   useGetRolesQuery,
@@ -53,6 +54,7 @@ export function useRolesPage(): UseRolesPageResult {
   const canDeleteRole = useCan("roles:delete");
 
   const filters = useRolesFilters();
+  const debouncedSearch = useDebounce(filters.search, 500);
   const [deleteRoleMutation] = useDeleteRoleMutation();
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -64,7 +66,7 @@ export function useRolesPage(): UseRolesPageResult {
   } = useGetRolesQuery({
     page: filters.page,
     pageSize: PAGE_SIZE,
-    q: filters.search || undefined,
+    q: debouncedSearch || undefined,
     sortBy: filters.sortField,
     sortDirection: filters.sortDirection,
   });

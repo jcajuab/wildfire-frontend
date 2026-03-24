@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useCan } from "@/hooks/use-can";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
   type PlaylistListQuery,
   useDeletePlaylistMutation,
@@ -62,6 +63,7 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     handleClearFilters,
     handleSearchChange,
   } = usePlaylistsFilters();
+  const debouncedSearch = useDebounce(search, 500);
 
   const [playlistToDelete, setPlaylistToDelete] =
     useState<PlaylistSummary | null>(null);
@@ -71,11 +73,11 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
       page,
       pageSize: PAGE_SIZE,
       status: statusFilter === "all" ? undefined : statusFilter,
-      search: search.length > 0 ? search : undefined,
+      search: debouncedSearch.length > 0 ? debouncedSearch : undefined,
       sortBy: "updatedAt",
       sortDirection: "desc",
     }),
-    [page, search, statusFilter],
+    [page, debouncedSearch, statusFilter],
   );
 
   const { data: playlistsData } = useListPlaylistsQuery(playlistQuery, {

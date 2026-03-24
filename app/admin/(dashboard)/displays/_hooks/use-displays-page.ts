@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 
 import { useCan } from "@/hooks/use-can";
+import { useDebounce } from "@/hooks/use-debounce";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   useGetRuntimeOverridesQuery,
@@ -94,6 +95,7 @@ export function useDisplaysPage(): UseDisplaysPageResult {
 
   const filters = useDisplayFilters();
   const dialogState = useDisplayDialogState();
+  const debouncedSearch = useDebounce(filters.search, 500);
 
   const { data: displayGroupsData = [] } = useGetDisplayGroupsQuery();
   const { data: displayOutputOptions = [] } = useGetDisplayOutputOptionsQuery();
@@ -116,7 +118,7 @@ export function useDisplaysPage(): UseDisplaysPageResult {
     {
       page: filters.page,
       pageSize: PAGE_SIZE,
-      q: filters.deferredSearch || undefined,
+      q: debouncedSearch || undefined,
       status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
       groupIds: selectedGroupIds.length > 0 ? selectedGroupIds : undefined,
       output:

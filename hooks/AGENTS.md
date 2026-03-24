@@ -9,16 +9,15 @@ Custom React hooks shared across the application. Provides reusable stateful log
 
 ## Key Files
 
-| File                      | Description                                                             |
-| ------------------------- | ----------------------------------------------------------------------- |
-| `use-ai-chat.ts`          | AI chat hook -- wraps `@ai-sdk/react` useChat with custom config        |
-| `use-ai-credentials.ts`   | AI provider credential management hook                                  |
+| File                      | Description                                                              |
+| ------------------------- | ------------------------------------------------------------------------ |
+| `use-ai-chat.ts`          | AI chat hook -- wraps `@ai-sdk/react` useChat with custom config         |
+| `use-ai-credentials.ts`   | AI provider credential management hook                                   |
 | `use-can.ts`              | Permission check hook -- checks if current user has specific permissions |
-| `use-global-emergency.ts` | Global emergency mode toggle hook                                       |
+| `use-global-emergency.ts` | Global emergency mode toggle hook                                        |
 | `use-group-selector.ts`   | Display group selection with normalization and deduplication             |
-| `use-mobile.ts`           | Mobile viewport detection hook                                          |
-| `use-mounted.ts`          | SSR-safe mounted state hook                                             |
-| `use-query-state.ts`      | URL query string state management hook                                  |
+| `use-mobile.ts`           | Mobile viewport detection hook                                           |
+| `use-mounted.ts`          | SSR-safe mounted state hook                                              |
 
 ## For AI Agents
 

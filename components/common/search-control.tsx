@@ -1,8 +1,6 @@
 "use client";
-
 import type { ReactElement } from "react";
 import { IconSearch, IconX } from "@tabler/icons-react";
-
 import {
   InputGroup,
   InputGroupAddon,
@@ -42,9 +40,7 @@ export function SearchControl({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={(event) => {
-          if (event.key === "Escape" && value !== "") {
-            onChange("");
-          }
+          if (event.key === "Escape" && value !== "") onChange("");
         }}
       />
       {value !== "" ? (

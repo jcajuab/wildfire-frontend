@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useGetUsersQuery, useGetRoleOptionsQuery } from "@/lib/api/rbac-api";
 import type { RbacUsersListResponse } from "@/lib/api/rbac-api";
 import type { User, UserRole, UserSort } from "@/types/user";
@@ -92,6 +93,7 @@ export function useUsersPage(): UseUsersPageResult {
   const isAdmin = currentUser?.isAdmin === true;
 
   const filters = useUsersFilters();
+  const debouncedSearch = useDebounce(filters.search, 500);
 
   const {
     data: usersData,
@@ -101,7 +103,7 @@ export function useUsersPage(): UseUsersPageResult {
   } = useGetUsersQuery({
     page: filters.page,
     pageSize: PAGE_SIZE,
-    q: filters.search || undefined,
+    q: debouncedSearch || undefined,
     sortBy: filters.sortField === "lastSeen" ? "lastSeenAt" : "name",
     sortDirection: filters.sortDirection,
   });

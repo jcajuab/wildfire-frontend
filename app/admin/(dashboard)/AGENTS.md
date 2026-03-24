@@ -9,10 +9,10 @@ Dashboard route group with shared sidebar layout. Contains all admin management 
 
 ## Key Files
 
-| File         | Description                                       |
-| ------------ | ------------------------------------------------- |
-| `layout.tsx` | Dashboard layout -- wraps children with AppLayout |
-| `loading.tsx`| Dashboard loading skeleton                        |
+| File          | Description                                       |
+| ------------- | ------------------------------------------------- |
+| `layout.tsx`  | Dashboard layout -- wraps children with AppLayout |
+| `loading.tsx` | Dashboard loading skeleton                        |
 
 ## Subdirectories
 

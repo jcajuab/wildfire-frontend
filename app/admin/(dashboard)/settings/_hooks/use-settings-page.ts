@@ -105,7 +105,7 @@ export function useSettingsPage(): UseSettingsPageResult {
       toast.success("Password updated.");
       setIsPasswordDialogOpen(false);
     },
-    [changePassword],
+    [],
   );
 
   const handleLogOut = useCallback(async (): Promise<void> => {
@@ -129,7 +129,7 @@ export function useSettingsPage(): UseSettingsPageResult {
     } catch (err) {
       notifyApiError(err, "Failed to delete account.");
     }
-  }, [deleteCurrentUser, logout]);
+  }, [logout]);
 
   return {
     user,

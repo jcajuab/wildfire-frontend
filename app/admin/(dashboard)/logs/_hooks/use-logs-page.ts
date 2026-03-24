@@ -84,13 +84,11 @@ export function useLogsPage(): UseLogsPageResult {
   const {
     setFrom,
     setTo,
-    setActionDraft,
+    setAction,
     setActorType,
     setResourceType,
     setResourceTypeInput,
     setStatusRaw,
-    setRequestIdDraft,
-    setAction,
     setRequestId,
   } = filters;
 
@@ -118,9 +116,9 @@ export function useLogsPage(): UseLogsPageResult {
 
   const handleActionChange = useCallback(
     (nextValue: string): void => {
-      setActionDraft(nextValue);
+      setAction(nextValue);
     },
-    [setActionDraft],
+    [setAction],
   );
 
   const handleActorTypeChange = useCallback(
@@ -178,34 +176,30 @@ export function useLogsPage(): UseLogsPageResult {
 
   const handleRequestIdChange = useCallback(
     (nextValue: string): void => {
-      setRequestIdDraft(nextValue);
+      setRequestId(nextValue);
     },
-    [setRequestIdDraft],
+    [setRequestId],
   );
 
   const handleResetFilters = useCallback((): void => {
     setFrom("");
     setTo("");
     setAction("");
-    setActionDraft("");
     setActorType("all");
     setResourceType("");
     setResourceTypeInput("");
     setStatusRaw("");
     setRequestId("");
-    setRequestIdDraft("");
     setPage(1);
   }, [
     setFrom,
     setTo,
     setAction,
-    setActionDraft,
     setActorType,
     setResourceType,
     setResourceTypeInput,
     setStatusRaw,
     setRequestId,
-    setRequestIdDraft,
     setPage,
   ]);
 

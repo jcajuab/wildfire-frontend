@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AuthProvider } from "@/context/auth-context";
 import { DevAccessibilityChecker } from "@/components/dev-accessibility-checker";
 import "./globals.css";
@@ -60,7 +61,7 @@ export default function RootLayout({
         </nav>
         <ThemeProvider>
           <AuthProvider>
-            {children}
+            <NuqsAdapter>{children}</NuqsAdapter>
             <aside aria-label="Notifications">
               <Toaster position="top-center" />
             </aside>

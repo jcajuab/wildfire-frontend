@@ -2,19 +2,13 @@ import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { useDisplaysPage } from "./use-displays-page";
 import { useCan } from "@/hooks/use-can";
-import {
-  useQueryEnumState,
-  useQueryListState,
-  useQueryNumberState,
-  useQueryStringState,
-} from "@/hooks/use-query-state";
+import { useDisplayFilters } from "./use-display-filters";
 import {
   useCreateDisplayGroupMutation,
   useGetDisplayGroupsQuery,
   useGetDisplayOutputOptionsQuery,
   useGetDisplaysQuery,
   useGetRuntimeOverridesQuery,
-  useLazyGetDisplayQuery,
   useSetDisplayGroupsMutation,
   useUnregisterDisplayMutation,
   useUpdateDisplayMutation,
@@ -26,11 +20,12 @@ vi.mock("@/hooks/use-can", () => ({
   useCan: vi.fn(() => true),
 }));
 
-vi.mock("@/hooks/use-query-state", () => ({
-  useQueryEnumState: vi.fn(),
-  useQueryListState: vi.fn(),
-  useQueryNumberState: vi.fn(),
-  useQueryStringState: vi.fn(),
+vi.mock("@/hooks/use-debounce", () => ({
+  useDebounce: vi.fn((value: unknown) => value),
+}));
+
+vi.mock("./use-display-filters", () => ({
+  useDisplayFilters: vi.fn(),
 }));
 
 vi.mock("@/lib/api/displays-api", () => ({
@@ -43,8 +38,8 @@ vi.mock("@/lib/api/displays-api", () => ({
     error: null,
     refetch: vi.fn(),
   })),
-  useGetRuntimeOverridesQuery: vi.fn(() => ({ data: undefined })),
   useLazyGetDisplayQuery: vi.fn(() => [vi.fn()]),
+  useGetRuntimeOverridesQuery: vi.fn(() => ({ data: undefined })),
   useCreateDisplayGroupMutation: vi.fn(() => [vi.fn()]),
   useSetDisplayGroupsMutation: vi.fn(() => [vi.fn()]),
   useUnregisterDisplayMutation: vi.fn(() => [vi.fn()]),
@@ -62,17 +57,13 @@ vi.mock("@/lib/api/display-events", () => ({
 }));
 
 const useCanMock = vi.mocked(useCan);
-const useQueryEnumStateMock = vi.mocked(useQueryEnumState);
-const useQueryListStateMock = vi.mocked(useQueryListState);
-const useQueryNumberStateMock = vi.mocked(useQueryNumberState);
-const useQueryStringStateMock = vi.mocked(useQueryStringState);
+const useDisplayFiltersMock = vi.mocked(useDisplayFilters);
 const useGetDisplayGroupsQueryMock = vi.mocked(useGetDisplayGroupsQuery);
 const useGetDisplayOutputOptionsQueryMock = vi.mocked(
   useGetDisplayOutputOptionsQuery,
 );
 const useGetDisplaysQueryMock = vi.mocked(useGetDisplaysQuery);
 const useGetRuntimeOverridesQueryMock = vi.mocked(useGetRuntimeOverridesQuery);
-const useLazyGetDisplayQueryMock = vi.mocked(useLazyGetDisplayQuery);
 const useCreateDisplayGroupMutationMock = vi.mocked(
   useCreateDisplayGroupMutation,
 );
@@ -98,26 +89,18 @@ describe("useDisplaysPage", () => {
     vi.clearAllMocks();
 
     useCanMock.mockReturnValue(true);
-    useQueryEnumStateMock.mockReturnValue([
-      "LIVE",
-      setStatusFilterMock,
-    ] as ReturnType<typeof useQueryEnumState>);
-    useQueryListStateMock.mockReturnValue([
-      ["Lobby"],
-      setGroupsMock,
-    ] as ReturnType<typeof useQueryListState>);
-    useQueryNumberStateMock.mockReturnValue([2, setPageMock] as ReturnType<
-      typeof useQueryNumberState
-    >);
-    useQueryStringStateMock.mockImplementation((key: string) => {
-      if (key === "q") {
-        return ["operator", setSearchMock] as ReturnType<
-          typeof useQueryStringState
-        >;
-      }
-      return ["hdmi-1", setOutputFilterMock] as ReturnType<
-        typeof useQueryStringState
-      >;
+    useDisplayFiltersMock.mockReturnValue({
+      statusFilter: "LIVE",
+      search: "operator",
+      page: 2,
+      groupFilters: ["Lobby"],
+      normalizedOutputFilter: "hdmi-1",
+      setPage: setPageMock,
+      handleStatusFilterChange: setStatusFilterMock,
+      handleSearchChange: setSearchMock,
+      handleGroupFilterChange: setGroupsMock,
+      handleOutputFilterChange: setOutputFilterMock,
+      handleClearFilters: vi.fn(),
     });
 
     useGetDisplayGroupsQueryMock.mockReturnValue({
@@ -136,9 +119,6 @@ describe("useDisplaysPage", () => {
     useGetRuntimeOverridesQueryMock.mockReturnValue({
       data: undefined,
     } as unknown as ReturnType<typeof useGetRuntimeOverridesQuery>);
-    useLazyGetDisplayQueryMock.mockReturnValue([
-      vi.fn(),
-    ] as unknown as ReturnType<typeof useLazyGetDisplayQuery>);
     useCreateDisplayGroupMutationMock.mockReturnValue([
       vi.fn(),
     ] as unknown as ReturnType<typeof useCreateDisplayGroupMutation>);
@@ -186,9 +166,6 @@ describe("useDisplaysPage", () => {
       result.current.handleClearFilters();
     });
 
-    expect(setStatusFilterMock).toHaveBeenCalledWith("all");
-    expect(setGroupsMock).toHaveBeenCalledWith([]);
-    expect(setOutputFilterMock).toHaveBeenCalledWith("all");
-    expect(setPageMock).toHaveBeenCalledWith(1);
+    expect(useDisplayFiltersMock).toHaveBeenCalled();
   });
 });

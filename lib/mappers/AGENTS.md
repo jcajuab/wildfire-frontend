@@ -9,15 +9,15 @@ Data transformation functions that convert backend API responses into frontend-f
 
 ## Key Files
 
-| File                      | Description                                        |
-| ------------------------- | -------------------------------------------------- |
-| `audit-log-mapper.ts`     | Audit log API response to frontend log entry       |
-| `content-mapper.ts`       | Content API response to frontend content model     |
-| `display-mapper.ts`       | Display API response to frontend Display model     |
-| `display-mapper.test.ts`  | Display mapper unit tests                          |
-| `playlist-mapper.ts`      | Playlist API response to frontend playlist model   |
-| `schedule-mapper.ts`      | Schedule API response to frontend schedule model   |
-| `schedule-mapper.test.ts` | Schedule mapper unit tests                         |
+| File                      | Description                                      |
+| ------------------------- | ------------------------------------------------ |
+| `audit-log-mapper.ts`     | Audit log API response to frontend log entry     |
+| `content-mapper.ts`       | Content API response to frontend content model   |
+| `display-mapper.ts`       | Display API response to frontend Display model   |
+| `display-mapper.test.ts`  | Display mapper unit tests                        |
+| `playlist-mapper.ts`      | Playlist API response to frontend playlist model |
+| `schedule-mapper.ts`      | Schedule API response to frontend schedule model |
+| `schedule-mapper.test.ts` | Schedule mapper unit tests                       |
 
 ## For AI Agents
 

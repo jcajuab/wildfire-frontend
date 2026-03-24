@@ -9,14 +9,14 @@ Next.js App Router directory. Contains all pages, layouts, and API routes. Organ
 
 ## Key Files
 
-| File           | Description                                                       |
-| -------------- | ----------------------------------------------------------------- |
-| `layout.tsx`   | Root layout -- providers (theme, auth), toaster, skip-nav, a11y   |
-| `globals.css`  | Tailwind CSS v4 styles, CSS variables, component themes           |
-| `page.tsx`     | Home page (redirects to admin or login)                           |
-| `not-found.tsx`| Custom 404 page                                                  |
-| `robots.ts`    | Robots.txt generation                                             |
-| `icon.svg`     | App favicon                                                       |
+| File            | Description                                                     |
+| --------------- | --------------------------------------------------------------- |
+| `layout.tsx`    | Root layout -- providers (theme, auth), toaster, skip-nav, a11y |
+| `globals.css`   | Tailwind CSS v4 styles, CSS variables, component themes         |
+| `page.tsx`      | Home page (redirects to admin or login)                         |
+| `not-found.tsx` | Custom 404 page                                                 |
+| `robots.ts`     | Robots.txt generation                                           |
+| `icon.svg`      | App favicon                                                     |
 
 ## Subdirectories
 

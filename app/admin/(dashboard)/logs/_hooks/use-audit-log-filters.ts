@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
-  useQueryEnumState,
-  useQueryNumberState,
-  useQueryStringState,
-} from "@/hooks/use-query-state";
+  debounce,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryStates,
+} from "nuqs";
 import type { AuditListQuery } from "@/lib/api/audit-api";
 import {
   getResourceTypeFilterLabel,
@@ -16,74 +19,57 @@ import {
 } from "@/lib/audit-resource-types";
 import { dateToISOEnd, dateToISOStart } from "@/lib/formatters";
 
-const LOG_FILTER_DEBOUNCE_MS = 250;
 export const ACTOR_TYPE_FILTERS = ["all", "user", "display"] as const;
 export type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
 
-export function useAuditLogFilters(pageSize: number) {
-  const [page, setPage] = useQueryNumberState("page", 1);
-  const [from, setFrom] = useQueryStringState("from", "");
-  const [to, setTo] = useQueryStringState("to", "");
-  const [action, setAction] = useQueryStringState("action", "");
-  const [actionDraft, setActionDraft] = useState(action);
-  const [requestId, setRequestId] = useQueryStringState("requestId", "");
-  const [requestIdDraft, setRequestIdDraft] = useState(requestId);
-  const [resourceType, setResourceType] = useQueryEnumState<ResourceTypeFilter>(
-    "resourceType",
+const auditLogFiltersParsers = {
+  page: parseAsInteger.withDefault(1),
+  from: parseAsString.withDefault(""),
+  to: parseAsString.withDefault(""),
+  action: parseAsString
+    .withDefault("")
+    .withOptions({ limitUrlUpdates: debounce(500) }),
+  requestId: parseAsString
+    .withDefault("")
+    .withOptions({ limitUrlUpdates: debounce(500) }),
+  resourceType: parseAsStringLiteral(RESOURCE_TYPE_FILTER_OPTIONS).withDefault(
     "",
-    RESOURCE_TYPE_FILTER_OPTIONS,
+  ),
+  status: parseAsString.withDefault(""),
+  actorType: parseAsStringLiteral(ACTOR_TYPE_FILTERS).withDefault("all"),
+};
+
+export function useAuditLogFilters(pageSize: number) {
+  const [filters, setFilters] = useQueryStates(auditLogFiltersParsers);
+
+  const {
+    page,
+    from,
+    to,
+    action,
+    requestId,
+    resourceType,
+    status: statusRaw,
+    actorType,
+  } = filters;
+
+  const debouncedAction = useDebounce(action, 500);
+  const debouncedRequestId = useDebounce(requestId, 500);
+
+  const [resourceTypeInput, setResourceTypeInput] = useState<string>(() =>
+    resourceType === "" ? "" : getResourceTypeFilterLabel(resourceType),
   );
-  const [resourceTypeInput, setResourceTypeInput] = useState<string>("");
-  const [statusRaw, setStatusRaw] = useQueryStringState("status", "");
-  const [actorType, setActorType] = useQueryEnumState<ActorTypeFilter>(
-    "actorType",
-    "all",
-    ACTOR_TYPE_FILTERS,
-  );
 
-  useEffect(() => {
-    setResourceTypeInput(getResourceTypeFilterLabel(resourceType));
-  }, [resourceType]);
-
-  useEffect(() => {
-    setActionDraft(action);
-  }, [action]);
-
-  useEffect(() => {
-    setRequestIdDraft(requestId);
-  }, [requestId]);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      if (actionDraft === action) {
-        return;
-      }
-      setAction(actionDraft);
-      if (page !== 1) {
-        setPage(1);
-      }
-    }, LOG_FILTER_DEBOUNCE_MS);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [action, actionDraft, page, setAction, setPage]);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      if (requestIdDraft === requestId) {
-        return;
-      }
-      setRequestId(requestIdDraft);
-      if (page !== 1) {
-        setPage(1);
-      }
-    }, LOG_FILTER_DEBOUNCE_MS);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [page, requestId, requestIdDraft, setPage, setRequestId]);
+  const setPage = (value: number) => setFilters({ page: value });
+  const setFrom = (value: string) => setFilters({ from: value });
+  const setTo = (value: string) => setFilters({ to: value });
+  const setAction = (value: string) => setFilters({ action: value });
+  const setRequestId = (value: string) => setFilters({ requestId: value });
+  const setResourceType = (value: ResourceTypeFilter) =>
+    setFilters({ resourceType: value });
+  const setStatusRaw = (value: string) => setFilters({ status: value });
+  const setActorType = (value: ActorTypeFilter) =>
+    setFilters({ actorType: value });
 
   const parsedStatus = useMemo<number | undefined>(() => {
     const parsed = Number.parseInt(statusRaw, 10);
@@ -99,20 +85,20 @@ export function useAuditLogFilters(pageSize: number) {
       pageSize,
       from: from ? dateToISOStart(from) : undefined,
       to: to ? dateToISOEnd(to) : undefined,
-      action: action || undefined,
+      action: debouncedAction || undefined,
       actorType: actorType === "all" ? undefined : actorType,
       resourceType: resourceType || undefined,
       status: parsedStatus,
-      requestId: requestId || undefined,
+      requestId: debouncedRequestId || undefined,
     }),
     [
-      action,
+      debouncedAction,
       actorType,
       from,
       page,
       pageSize,
       parsedStatus,
-      requestId,
+      debouncedRequestId,
       resourceType,
       to,
     ],
@@ -136,12 +122,8 @@ export function useAuditLogFilters(pageSize: number) {
     setTo,
     action,
     setAction,
-    actionDraft,
-    setActionDraft,
     requestId,
     setRequestId,
-    requestIdDraft,
-    setRequestIdDraft,
     resourceType,
     setResourceType,
     resourceTypeInput,

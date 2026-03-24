@@ -2,10 +2,12 @@
 
 import { useCallback } from "react";
 import {
-  useQueryEnumState,
-  useQueryNumberState,
-  useQueryStringState,
-} from "@/hooks/use-query-state";
+  useQueryStates,
+  parseAsString,
+  parseAsInteger,
+  parseAsStringLiteral,
+  debounce,
+} from "nuqs";
 import type { PlaylistStatusFilter } from "@/components/playlists/playlist-filter-popover";
 
 const PLAYLIST_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
@@ -21,34 +23,39 @@ export interface UsePlaylistsFiltersResult {
 }
 
 export function usePlaylistsFilters(): UsePlaylistsFiltersResult {
-  const [statusFilter, setStatusFilter] =
-    useQueryEnumState<PlaylistStatusFilter>(
-      "status",
-      "all",
-      PLAYLIST_STATUS_VALUES,
-    );
-  const [search, setSearch] = useQueryStringState("q", "");
-  const [page, setPage] = useQueryNumberState("page", 1);
+  const [filters, setFilters] = useQueryStates({
+    q: parseAsString
+      .withDefault("")
+      .withOptions({ limitUrlUpdates: debounce(500) }),
+    status: parseAsStringLiteral(PLAYLIST_STATUS_VALUES).withDefault("all"),
+    page: parseAsInteger.withDefault(1),
+  });
+
+  const search = filters.q;
+  const statusFilter = filters.status as PlaylistStatusFilter;
+  const page = filters.page;
+
+  const setPage = useCallback(
+    (p: number) => setFilters({ page: p }),
+    [setFilters],
+  );
 
   const handleStatusFilterChange = useCallback(
     (value: PlaylistStatusFilter) => {
-      setStatusFilter(value);
-      setPage(1);
+      setFilters({ status: value, page: 1 });
     },
-    [setStatusFilter, setPage],
+    [setFilters],
   );
 
   const handleClearFilters = useCallback(() => {
-    setStatusFilter("all");
-    setPage(1);
-  }, [setStatusFilter, setPage]);
+    setFilters({ status: "all", page: 1 });
+  }, [setFilters]);
 
   const handleSearchChange = useCallback(
     (value: string) => {
-      setSearch(value);
-      setPage(1);
+      setFilters({ q: value, page: 1 });
     },
-    [setSearch, setPage],
+    [setFilters],
   );
 
   return {

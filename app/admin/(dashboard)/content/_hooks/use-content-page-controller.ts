@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCan } from "@/hooks/use-can";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
   useLazyGetContentJobQuery,
   useLazyGetContentQuery,
@@ -28,13 +29,14 @@ export function useContentPageController() {
   const canDownloadContent = useCan("content:read");
   const filters = useContentPageFilters();
   const dialogState = useContentDialogState();
+  const debouncedSearch = useDebounce(filters.search, 500);
 
   const { data, isLoading, isError, error } = useListContentQuery({
     page: filters.page,
     pageSize: PAGE_SIZE,
     status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
     type: filters.typeFilter === "all" ? undefined : filters.typeFilter,
-    search: filters.search.trim().length > 0 ? filters.search : undefined,
+    search: debouncedSearch.trim().length > 0 ? debouncedSearch : undefined,
     sortBy: "createdAt",
     sortDirection: "desc",
   });

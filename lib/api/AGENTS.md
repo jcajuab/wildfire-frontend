@@ -13,7 +13,7 @@ RTK Query API layer. Contains all API endpoint definitions organized by domain m
 | ---------------------------- | ---------------------------------------------------------------- |
 | `base-query.ts`              | Custom base query with auth token injection and refresh handling |
 | `contracts.ts`               | Shared API request/response type contracts                       |
-| `ai-credentials-api.ts`     | AI provider credential management endpoints                      |
+| `ai-credentials-api.ts`      | AI provider credential management endpoints                      |
 | `audit-api.ts`               | Audit log endpoints (list, export)                               |
 | `auth-api.ts`                | Authentication endpoints (login, logout, session, profile)       |
 | `content-api.ts`             | Content CRUD endpoints                                           |

@@ -11,8 +11,8 @@ TypeScript type definitions for domain entities used across the frontend. Each f
 
 | File            | Description                                           |
 | --------------- | ----------------------------------------------------- |
-| `auth.ts`       | Auth types -- user session, login request/response     |
-| `common.ts`     | Shared types -- paginated response, API error          |
+| `auth.ts`       | Auth types -- user session, login request/response    |
+| `common.ts`     | Shared types -- paginated response, API error         |
 | `content.ts`    | Content entity types (text, flash, image, video, PDF) |
 | `display.ts`    | Display entity and group types                        |
 | `invitation.ts` | User invitation types                                 |

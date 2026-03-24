@@ -21,28 +21,20 @@ import { dateToISOEnd, dateToISOStart } from "@/lib/formatters";
 
 interface AuditExportPopoverProps {
   readonly action: string;
-  readonly actionDraft: string;
   readonly actorType: "all" | "user" | "display";
   readonly resourceType: string;
   readonly parsedStatus: number | undefined;
   readonly requestId: string;
-  readonly requestIdDraft: string;
   readonly total: number;
-  readonly onActionSync: () => void;
-  readonly onRequestIdSync: () => void;
 }
 
 export function AuditExportPopover({
   action,
-  actionDraft,
   actorType,
   resourceType,
   parsedStatus,
   requestId,
-  requestIdDraft,
   total,
-  onActionSync,
-  onRequestIdSync,
 }: AuditExportPopoverProps): ReactElement {
   const [exportPopoverOpen, setExportPopoverOpen] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
@@ -61,23 +53,16 @@ export function AuditExportPopover({
   const canDownload = exportRangeValid;
 
   const handleExportSubmit = async (): Promise<void> => {
-    if (actionDraft !== action) {
-      onActionSync();
-    }
-    if (requestIdDraft !== requestId) {
-      onRequestIdSync();
-    }
-
     setIsExporting(true);
     try {
       const query: AuditExportQuery = {
         from: dateToISOStart(localFrom),
         to: dateToISOEnd(localTo),
-        action: actionDraft || undefined,
+        action: action || undefined,
         actorType: actorType === "all" ? undefined : actorType,
         resourceType: resourceType || undefined,
         status: parsedStatus,
-        requestId: requestIdDraft || undefined,
+        requestId: requestId || undefined,
       };
       const blob = await exportAuditEventsCsv(query);
       const url = URL.createObjectURL(blob);
