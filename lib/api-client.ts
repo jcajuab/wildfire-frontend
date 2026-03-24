@@ -214,6 +214,7 @@ export async function acceptInvitation(input: {
     headers: {
       "Content-Type": "application/json",
       ...getDevOnlyRequestHeaders(),
+      ...csrfHeaders(),
     },
     body: JSON.stringify(input),
   });
