@@ -1,6 +1,10 @@
 import DOMPurify from "dompurify";
 import type { Content } from "@/types/content";
 
+type TextThumbnailContent = Pick<Content, "title"> & {
+  readonly textHtmlContent?: string | null;
+};
+
 const HTML_ENTITY_MAP: Readonly<Record<string, string>> = {
   amp: "&",
   lt: "<",
@@ -108,12 +112,12 @@ export function getFlashThumbnailText(content: Content): string {
   return message.length > 0 ? message : content.title;
 }
 
-export function getTextThumbnailText(content: Content): string {
-  const textContent = extractPlainTextFromHtml(content.textHtmlContent);
+export function getTextThumbnailText(content: TextThumbnailContent): string {
+  const textContent = extractPlainTextFromHtml(content.textHtmlContent ?? null);
   return textContent.length > 0 ? textContent : content.title;
 }
 
-export function getTextThumbnailHtml(content: Content): string {
+export function getTextThumbnailHtml(content: TextThumbnailContent): string {
   const htmlContent = content.textHtmlContent ?? "";
   const sanitized = sanitizeRichTextHtml(htmlContent);
   if (extractPlainTextFromHtml(sanitized).length > 0) {

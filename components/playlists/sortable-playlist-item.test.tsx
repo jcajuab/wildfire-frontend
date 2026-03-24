@@ -88,4 +88,32 @@ describe("SortableItemRow", () => {
       screen.getByTestId("playlist-item-thumbnail").querySelector("svg"),
     ).toBeTruthy();
   });
+
+  test("renders a rich text preview when text content has html but no thumbnail", () => {
+    render(
+      <SortableItemRow
+        item={{
+          ...baseItem,
+          content: {
+            ...baseItem.content,
+            title: "Announcement",
+            type: "TEXT",
+            textHtmlContent: "<p><strong>Breaking</strong> News</p>",
+          },
+        }}
+        onRemove={vi.fn()}
+        onUpdateDuration={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByAltText("Announcement thumbnail"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("playlist-item-thumbnail").textContent).toContain(
+      "Breaking News",
+    );
+    expect(
+      screen.getByTestId("playlist-item-thumbnail").querySelector("svg"),
+    ).toBeFalsy();
+  });
 });

@@ -26,6 +26,9 @@ import {
 import { useCallback, useMemo, useState } from "react";
 
 import { SearchControl } from "@/components/common/search-control";
+import { getTextThumbnailHtml } from "@/lib/content-thumbnail-preview";
+import { RICH_TEXT_PREVIEW_CLASSES } from "@/lib/rich-text-preview-classes";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -221,6 +224,7 @@ export function PlaylistFormBody({
               <button
                 key={content.id}
                 type="button"
+                aria-label={content.title}
                 onClick={() => handleAddContent(content)}
                 disabled={isOverDurationLimit}
                 className={`focus-visible:ring-ring flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 ${isOverDurationLimit ? "cursor-not-allowed opacity-50" : ""}`}
@@ -236,6 +240,18 @@ export function PlaylistFormBody({
                       fill
                       className="object-cover"
                     />
+                  ) : content.type === "TEXT" && content.textHtmlContent ? (
+                    <div className="flex size-full items-start overflow-hidden p-1">
+                      <div
+                        className={cn(
+                          RICH_TEXT_PREVIEW_CLASSES,
+                          "text-[6px] leading-tight [&_ol]:ml-2 [&_td]:px-0.5 [&_th]:px-0.5 [&_ul]:ml-2",
+                        )}
+                        dangerouslySetInnerHTML={{
+                          __html: getTextThumbnailHtml(content),
+                        }}
+                      />
+                    </div>
                   ) : (
                     <IconPhoto
                       className="size-4 text-muted-foreground"

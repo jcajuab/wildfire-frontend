@@ -161,6 +161,37 @@ describe("CreatePlaylistForm", () => {
     ).toBeTruthy();
   });
 
+  test("renders a rich text preview in the content library when text content has html but no thumbnail", () => {
+    render(
+      <CreatePlaylistForm
+        onCreate={vi.fn()}
+        availableContent={[
+          {
+            ...availableContent[0],
+            id: "content-text-1",
+            title: "Announcement",
+            type: "TEXT",
+            thumbnailUrl: null,
+            textHtmlContent: "<p><strong>Breaking</strong> News</p>",
+          },
+        ]}
+      />,
+    );
+
+    expect(
+      screen.queryByAltText("Announcement thumbnail"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("content-library-thumbnail-content-text-1")
+        .textContent,
+    ).toContain("Breaking News");
+    expect(
+      screen
+        .getByTestId("content-library-thumbnail-content-text-1")
+        .querySelector("svg"),
+    ).toBeFalsy();
+  });
+
   test("adds and removes content from the playlist", async () => {
     const user = userEvent.setup();
 
