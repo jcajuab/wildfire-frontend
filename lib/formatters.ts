@@ -127,6 +127,27 @@ export function formatLongDate(value: string | Date): string {
   });
 }
 
+const YYYY_MM_DD_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** True when `value` is a real calendar day in `YYYY-MM-DD` form. */
+export function isValidYyyyMmDd(value: string): boolean {
+  const match = YYYY_MM_DD_RE.exec(value);
+  if (match == null) {
+    return false;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(year, month - 1, day);
+
+  return (
+    parsed.getFullYear() === year &&
+    parsed.getMonth() === month - 1 &&
+    parsed.getDate() === day
+  );
+}
+
 /**
  * Converts a YYYY-MM-DD date string to ISO 8601 start-of-day in UTC.
  * Interprets the date as the user's local calendar day (e.g. "today" = midnight to end of day in user's timezone).

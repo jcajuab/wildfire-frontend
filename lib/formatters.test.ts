@@ -1,5 +1,26 @@
 import { describe, expect, test } from "vitest";
-import { dateToISOStart, dateToISOEnd, formatFileSize } from "@/lib/formatters";
+import {
+  dateToISOStart,
+  dateToISOEnd,
+  formatFileSize,
+  isValidYyyyMmDd,
+} from "@/lib/formatters";
+
+describe("isValidYyyyMmDd", () => {
+  test("accepts valid calendar days", () => {
+    expect(isValidYyyyMmDd("2026-02-21")).toBe(true);
+    expect(isValidYyyyMmDd("2020-02-29")).toBe(true);
+  });
+
+  test("rejects invalid dates and malformed values", () => {
+    expect(isValidYyyyMmDd("2023-02-29")).toBe(false);
+    expect(isValidYyyyMmDd("2024-13-01")).toBe(false);
+    expect(isValidYyyyMmDd("2024-01-32")).toBe(false);
+    expect(isValidYyyyMmDd("2024-1-2")).toBe(false);
+    expect(isValidYyyyMmDd("not-a-date")).toBe(false);
+    expect(isValidYyyyMmDd("")).toBe(false);
+  });
+});
 
 describe("dateToISOStart", () => {
   test("returns valid ISO string for YYYY-MM-DD", () => {

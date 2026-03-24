@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   debounce,
@@ -17,7 +17,7 @@ import {
   RESOURCE_TYPE_FILTER_OPTIONS,
   RESOURCE_TYPE_SELECT_ALL_VALUE,
 } from "@/lib/audit-resource-types";
-import { dateToISOEnd, dateToISOStart } from "@/lib/formatters";
+import { dateToISOEnd, dateToISOStart, isValidYyyyMmDd } from "@/lib/formatters";
 
 export const ACTOR_TYPE_FILTERS = ["all", "user", "display"] as const;
 export type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
@@ -53,6 +53,43 @@ export function useAuditLogFilters(pageSize: number) {
     actorType,
   } = filters;
 
+  const setPage = useCallback(
+    (value: number) => setFilters({ page: value }),
+    [setFilters],
+  );
+  const setFrom = useCallback(
+    (value: string) => setFilters({ from: value }),
+    [setFilters],
+  );
+  const setTo = useCallback(
+    (value: string) => setFilters({ to: value }),
+    [setFilters],
+  );
+  const setAction = useCallback(
+    (value: string) => setFilters({ action: value }),
+    [setFilters],
+  );
+  const setRequestId = useCallback(
+    (value: string) => setFilters({ requestId: value }),
+    [setFilters],
+  );
+  const setResourceType = useCallback(
+    (value: ResourceTypeFilter) => setFilters({ resourceType: value }),
+    [setFilters],
+  );
+  const setStatusRaw = useCallback(
+    (value: string) => setFilters({ status: value }),
+    [setFilters],
+  );
+  const setActorType = useCallback(
+    (value: ActorTypeFilter) => setFilters({ actorType: value }),
+    [setFilters],
+  );
+
+  const [fromDraft, setFromDraft] = useState(from);
+  const [toDraft, setToDraft] = useState(to);
+  const debouncedFromDraft = useDebounce(fromDraft, 250);
+  const debouncedToDraft = useDebounce(toDraft, 250);
   const debouncedAction = useDebounce(action, 500);
   const debouncedRequestId = useDebounce(requestId, 500);
 
@@ -60,16 +97,63 @@ export function useAuditLogFilters(pageSize: number) {
     resourceType === "" ? "" : getResourceTypeFilterLabel(resourceType),
   );
 
-  const setPage = (value: number) => setFilters({ page: value });
-  const setFrom = (value: string) => setFilters({ from: value });
-  const setTo = (value: string) => setFilters({ to: value });
-  const setAction = (value: string) => setFilters({ action: value });
-  const setRequestId = (value: string) => setFilters({ requestId: value });
-  const setResourceType = (value: ResourceTypeFilter) =>
-    setFilters({ resourceType: value });
-  const setStatusRaw = (value: string) => setFilters({ status: value });
-  const setActorType = (value: ActorTypeFilter) =>
-    setFilters({ actorType: value });
+  useEffect(() => {
+    setFromDraft(from);
+  }, [from]);
+
+  useEffect(() => {
+    setToDraft(to);
+  }, [to]);
+
+  useEffect(() => {
+    const normalized = from.trim();
+    if (normalized !== from) {
+      setFrom(normalized);
+      return;
+    }
+    if (normalized !== "" && !isValidYyyyMmDd(normalized)) {
+      setFrom("");
+    }
+  }, [from, setFrom]);
+
+  useEffect(() => {
+    const normalized = to.trim();
+    if (normalized !== to) {
+      setTo(normalized);
+      return;
+    }
+    if (normalized !== "" && !isValidYyyyMmDd(normalized)) {
+      setTo("");
+    }
+  }, [setTo, to]);
+
+  useEffect(() => {
+    if (debouncedFromDraft === from) {
+      return;
+    }
+    const nextFrom = debouncedFromDraft.trim();
+    if (nextFrom !== "" && !isValidYyyyMmDd(nextFrom)) {
+      return;
+    }
+    setFrom(nextFrom);
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [debouncedFromDraft, from, page, setFrom, setPage]);
+
+  useEffect(() => {
+    if (debouncedToDraft === to) {
+      return;
+    }
+    const nextTo = debouncedToDraft.trim();
+    if (nextTo !== "" && !isValidYyyyMmDd(nextTo)) {
+      return;
+    }
+    setTo(nextTo);
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [debouncedToDraft, page, setPage, setTo, to]);
 
   const parsedStatus = useMemo<number | undefined>(() => {
     const parsed = Number.parseInt(statusRaw, 10);
@@ -83,8 +167,8 @@ export function useAuditLogFilters(pageSize: number) {
     () => ({
       page,
       pageSize,
-      from: from ? dateToISOStart(from) : undefined,
-      to: to ? dateToISOEnd(to) : undefined,
+      from: from && isValidYyyyMmDd(from) ? dateToISOStart(from) : undefined,
+      to: to && isValidYyyyMmDd(to) ? dateToISOEnd(to) : undefined,
       action: debouncedAction || undefined,
       actorType: actorType === "all" ? undefined : actorType,
       resourceType: resourceType || undefined,
@@ -118,8 +202,12 @@ export function useAuditLogFilters(pageSize: number) {
     setPage,
     from,
     setFrom,
+    fromDraft,
+    setFromDraft,
     to,
     setTo,
+    toDraft,
+    setToDraft,
     action,
     setAction,
     requestId,

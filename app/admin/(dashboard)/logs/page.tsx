@@ -93,7 +93,7 @@ export default function LogsPage(): ReactElement {
                 <Label htmlFor="logs-filter-from">From</Label>
                 <DateInput
                   id="logs-filter-from"
-                  value={filters.from}
+                  value={filters.fromDraft}
                   onChange={(e) => handleFromChange(e.target.value)}
                 />
               </div>
@@ -101,7 +101,7 @@ export default function LogsPage(): ReactElement {
                 <Label htmlFor="logs-filter-to">To</Label>
                 <DateInput
                   id="logs-filter-to"
-                  value={filters.to}
+                  value={filters.toDraft}
                   onChange={(e) => handleToChange(e.target.value)}
                 />
               </div>

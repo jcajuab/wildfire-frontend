@@ -17,7 +17,7 @@ import {
   getApiErrorMessage,
   notifyApiError,
 } from "@/lib/api/get-api-error-message";
-import { dateToISOEnd, dateToISOStart } from "@/lib/formatters";
+import { dateToISOEnd, dateToISOStart, isValidYyyyMmDd } from "@/lib/formatters";
 
 interface AuditExportPopoverProps {
   readonly action: string;
@@ -49,15 +49,27 @@ export function AuditExportPopover({
   }, [exportPopoverOpen]);
 
   const exportRangeValid =
-    localFrom.trim() !== "" && localTo.trim() !== "" && localFrom <= localTo;
+    isValidYyyyMmDd(localFrom.trim()) &&
+    isValidYyyyMmDd(localTo.trim()) &&
+    localFrom.trim() <= localTo.trim();
   const canDownload = exportRangeValid;
 
   const handleExportSubmit = async (): Promise<void> => {
+    const fromTrimmed = localFrom.trim();
+    const toTrimmed = localTo.trim();
+    if (
+      !isValidYyyyMmDd(fromTrimmed) ||
+      !isValidYyyyMmDd(toTrimmed) ||
+      fromTrimmed > toTrimmed
+    ) {
+      return;
+    }
+
     setIsExporting(true);
     try {
       const query: AuditExportQuery = {
-        from: dateToISOStart(localFrom),
-        to: dateToISOEnd(localTo),
+        from: dateToISOStart(fromTrimmed),
+        to: dateToISOEnd(toTrimmed),
         action: action || undefined,
         actorType: actorType === "all" ? undefined : actorType,
         resourceType: resourceType || undefined,
@@ -124,11 +136,13 @@ export function AuditExportPopover({
               Current result set may exceed backend export limits.
             </p>
           )}
-          {!exportRangeValid && localFrom !== "" && localTo !== "" && (
+          {!exportRangeValid &&
+            isValidYyyyMmDd(localFrom.trim()) &&
+            isValidYyyyMmDd(localTo.trim()) && (
             <p className="text-destructive text-xs">
               From date must be before or equal to To date.
             </p>
-          )}
+            )}
           <Button
             onClick={handleExportSubmit}
             disabled={!canDownload || isExporting}

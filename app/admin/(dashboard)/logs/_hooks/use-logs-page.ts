@@ -84,6 +84,8 @@ export function useLogsPage(): UseLogsPageResult {
   const {
     setFrom,
     setTo,
+    setFromDraft,
+    setToDraft,
     setAction,
     setActorType,
     setResourceType,
@@ -100,18 +102,16 @@ export function useLogsPage(): UseLogsPageResult {
 
   const handleFromChange = useCallback(
     (nextValue: string): void => {
-      setFrom(nextValue);
-      resetToFirstPage();
+      setFromDraft(nextValue);
     },
-    [resetToFirstPage, setFrom],
+    [setFromDraft],
   );
 
   const handleToChange = useCallback(
     (nextValue: string): void => {
-      setTo(nextValue);
-      resetToFirstPage();
+      setToDraft(nextValue);
     },
-    [resetToFirstPage, setTo],
+    [setToDraft],
   );
 
   const handleActionChange = useCallback(
@@ -182,6 +182,8 @@ export function useLogsPage(): UseLogsPageResult {
   );
 
   const handleResetFilters = useCallback((): void => {
+    setFromDraft("");
+    setToDraft("");
     setFrom("");
     setTo("");
     setAction("");
@@ -192,6 +194,8 @@ export function useLogsPage(): UseLogsPageResult {
     setRequestId("");
     setPage(1);
   }, [
+    setFromDraft,
+    setToDraft,
     setFrom,
     setTo,
     setAction,
