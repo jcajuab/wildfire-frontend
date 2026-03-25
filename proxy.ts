@@ -20,8 +20,6 @@ function isJwtExpired(token: string): boolean {
   }
 }
 
-const isDev = process.env.NODE_ENV === "development";
-
 function buildCspHeader(): string {
   const apiOrigin = process.env.NEXT_PUBLIC_API_URL
     ? new URL(process.env.NEXT_PUBLIC_API_URL).origin
@@ -30,7 +28,7 @@ function buildCspHeader(): string {
 
   return [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob:${storageUrl ? ` ${storageUrl}` : ""}`,
     "font-src 'self' data:",
