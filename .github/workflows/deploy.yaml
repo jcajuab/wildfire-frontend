@@ -43,4 +43,4 @@ jobs:
             -o StrictHostKeyChecking=no \
             -p ${{ secrets.DEPLOY_PORT }} \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            "cd ${{ secrets.DEPLOY_PATH }} && tar xzf deploy.tar.gz && rm deploy.tar.gz && pm2 reload ecosystem.config.cjs"
+            "cd ${{ secrets.DEPLOY_PATH }} && rm -rf node_modules && tar xzf deploy.tar.gz && rm deploy.tar.gz && pm2 reload ecosystem.config.cjs"
