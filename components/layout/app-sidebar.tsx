@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  IconAlertTriangle,
   IconCalendarEvent,
   IconDeviceTv,
   IconDotsVertical,
@@ -39,8 +38,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { GlobalEmergencyButton } from "@/components/layout/global-emergency-button";
 import { useMounted } from "@/hooks/use-mounted";
-import { useGlobalEmergency } from "@/hooks/use-global-emergency";
 import { useAuth } from "@/context/auth-context";
 import {
   getRoutesBySection,
@@ -109,14 +108,6 @@ export function AppSidebar(): ReactElement {
   const { isMobile } = useSidebar();
   const mounted = useMounted();
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
-  const {
-    isActive: isEmergencyActive,
-    isBusy: isEmergencyBusy,
-    canRead: canReadEmergency,
-    canUpdate: canUpdateEmergency,
-    handleToggle: handleEmergencyToggle,
-  } = useGlobalEmergency();
-
   const coreNavItems = useMemo(() => {
     return isInitialized
       ? resolveNavItems(getRoutesBySection("core"), can)
@@ -221,33 +212,7 @@ export function AppSidebar(): ReactElement {
           ) : null}
         </nav>
 
-        {canReadEmergency && !isMobile ? (
-          <SidebarGroup className="mt-auto">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  size="default"
-                  onClick={handleEmergencyToggle}
-                  disabled={!canUpdateEmergency || isEmergencyBusy}
-                  className={
-                    isEmergencyActive
-                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
-                      : "bg-sidebar-foreground/10 text-sidebar-foreground hover:bg-destructive/80 hover:text-destructive-foreground [&_svg]:text-sidebar-foreground hover:[&_svg]:text-destructive-foreground"
-                  }
-                >
-                  <IconAlertTriangle className="size-4" />
-                  <span>
-                    {isEmergencyBusy
-                      ? "Updating..."
-                      : isEmergencyActive
-                        ? "Stop Emergency"
-                        : "Start Emergency"}
-                  </span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
-        ) : null}
+        {!isMobile ? <GlobalEmergencyButton variant="sidebar" /> : null}
       </SidebarContent>
 
       {!isMobile ? (
