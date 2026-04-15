@@ -47,7 +47,7 @@ export interface UsePlaylistsPageResult {
   deletePlaylistMutation: (id: string) => Promise<void>;
 }
 
-const POLLING_INTERVAL_MS = 30_000;
+const POLLING_INTERVAL_MS = 120_000;
 
 export function usePlaylistsPage(): UsePlaylistsPageResult {
   const router = useRouter();

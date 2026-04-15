@@ -154,8 +154,8 @@ describe("useDisplaysPage", () => {
         sortDirection: "asc",
       },
       {
-        refetchOnFocus: true,
-        refetchOnReconnect: true,
+        refetchOnFocus: false,
+        refetchOnReconnect: false,
       },
     );
 

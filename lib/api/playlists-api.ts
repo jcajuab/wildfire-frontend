@@ -137,6 +137,7 @@ export interface PlaylistDurationEstimate {
 export const playlistsApi = createApi({
   reducerPath: "playlistsApi",
   baseQuery,
+  keepUnusedDataFor: 120,
   tagTypes: ["Playlist"],
   endpoints: (build) => ({
     getPlaylistOptions: build.query<

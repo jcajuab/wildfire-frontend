@@ -66,6 +66,7 @@ export interface UpdateScheduleRequest {
 export const schedulesApi = createApi({
   reducerPath: "schedulesApi",
   baseQuery,
+  keepUnusedDataFor: 120,
   tagTypes: ["Schedule"],
   endpoints: (build) => ({
     listSchedules: build.query<readonly BackendSchedule[], ScheduleWindowQuery>(

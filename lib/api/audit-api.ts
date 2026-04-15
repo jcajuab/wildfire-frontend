@@ -108,6 +108,7 @@ export async function exportAuditEventsCsv(
 export const auditApi = createApi({
   reducerPath: "auditApi",
   baseQuery,
+  keepUnusedDataFor: 120,
   tagTypes: ["AuditEvent"],
   endpoints: (build) => ({
     listAuditEvents: build.query<

@@ -10,6 +10,7 @@ export interface AICredential {
 export const aiCredentialsApi = createApi({
   reducerPath: "aiCredentialsApi",
   baseQuery,
+  keepUnusedDataFor: 120,
   tagTypes: ["AICredential"],
   endpoints: (build) => ({
     getAICredentials: build.query<AICredential[], void>({

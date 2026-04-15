@@ -97,6 +97,7 @@ export interface DisplayRuntimeOverrides {
 export const displaysApi = createApi({
   reducerPath: "displaysApi",
   baseQuery,
+  keepUnusedDataFor: 120,
   tagTypes: ["Display", "DisplayGroup", "RuntimeOverrides"],
   endpoints: (build) => ({
     getDisplays: build.query<DisplaysListResponse, DisplaysListQuery | void>({

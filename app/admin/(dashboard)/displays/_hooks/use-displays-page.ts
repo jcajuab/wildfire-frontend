@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { useCan } from "@/hooks/use-can";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -129,8 +129,8 @@ export function useDisplaysPage(): UseDisplaysPageResult {
       sortDirection: "asc",
     },
     {
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
     },
   );
 
@@ -152,15 +152,20 @@ export function useDisplaysPage(): UseDisplaysPageResult {
 
   const crudHandlers = useDisplayCrudHandlers({ displayGroupsData });
 
+  const sseRefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!canReadDisplays) return;
     const subscription = subscribeToDisplayLifecycleEvents({
       onEvent: () => {
-        void refetch();
+        if (sseRefetchTimerRef.current) clearTimeout(sseRefetchTimerRef.current);
+        sseRefetchTimerRef.current = setTimeout(() => {
+          void refetch();
+        }, 1_000);
       },
     });
 
     return () => {
+      if (sseRefetchTimerRef.current) clearTimeout(sseRefetchTimerRef.current);
       subscription.close();
     };
   }, [canReadDisplays, refetch]);

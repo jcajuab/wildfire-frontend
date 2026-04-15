@@ -122,6 +122,7 @@ export interface SubmitPdfCropsRequest {
 export const contentApi = createApi({
   reducerPath: "contentApi",
   baseQuery,
+  keepUnusedDataFor: 120,
   tagTypes: ["Content", "ContentJob"],
   endpoints: (build) => ({
     getContentOptions: build.query<

@@ -75,6 +75,7 @@ export interface RbacUserListQuery {
 export const rbacApi = createApi({
   reducerPath: "rbacApi",
   baseQuery,
+  keepUnusedDataFor: 120,
   tagTypes: ["Role", "User", "Permission"],
   endpoints: (build) => ({
     getRoles: build.query<RbacRolesListResponse, RbacRoleListQuery | void>({

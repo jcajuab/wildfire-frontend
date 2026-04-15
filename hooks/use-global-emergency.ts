@@ -24,7 +24,7 @@ export function useGlobalEmergency(): UseGlobalEmergencyReturn {
   const canUpdate = isInitialized && can("displays:update");
 
   const { data: runtimeOverrides } = useGetRuntimeOverridesQuery(undefined, {
-    pollingInterval: 5_000,
+    pollingInterval: 30_000,
     skip: !canRead,
   });
 

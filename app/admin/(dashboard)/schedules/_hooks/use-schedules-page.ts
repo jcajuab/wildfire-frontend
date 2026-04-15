@@ -57,8 +57,8 @@ export function useSchedulesPage() {
   });
   const { data: displayGroupsData } = useGetDisplayGroupsQuery();
   const { data: schedulesData } = useListSchedulesQuery(scheduleWindow, {
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
   });
   const { data: playlistsData } = useGetPlaylistOptionsQuery(undefined, {
     skip: !canReadPlaylists,
