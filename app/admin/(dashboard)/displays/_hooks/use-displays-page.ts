@@ -5,14 +5,8 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useCan } from "@/hooks/use-can";
 import { useDebounce } from "@/hooks/use-debounce";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
-import {
-  useGetRuntimeOverridesQuery,
-  useGetDisplayOutputOptionsQuery,
-  useGetDisplayGroupsQuery,
-  useGetDisplaysQuery,
-} from "@/lib/api/displays-api";
+import { useGetDisplaysBootstrapQuery } from "@/lib/api/displays-api";
 import { subscribeToDisplayLifecycleEvents } from "@/lib/api/display-events";
-import { useGetContentOptionsQuery } from "@/lib/api/content-api";
 import { dedupeDisplayGroupNames } from "@/lib/display-group-normalization";
 import {
   mapDisplayApiToDisplay,
@@ -97,30 +91,20 @@ export function useDisplaysPage(): UseDisplaysPageResult {
   const dialogState = useDisplayDialogState();
   const debouncedSearch = useDebounce(filters.search, 500);
 
-  const { data: displayGroupsData = [] } = useGetDisplayGroupsQuery();
-  const { data: displayOutputOptions = [] } = useGetDisplayOutputOptionsQuery();
-
-  const selectedGroupIds = useMemo(
-    () =>
-      displayGroupsData
-        .filter((group) => filters.groupFilters.includes(group.name))
-        .map((group) => group.id),
-    [displayGroupsData, filters.groupFilters],
-  );
-
   const {
-    data: displaysData,
+    data: bootstrapData,
     isLoading,
     isError,
     error,
     refetch,
-  } = useGetDisplaysQuery(
+  } = useGetDisplaysBootstrapQuery(
     {
       page: filters.page,
       pageSize: PAGE_SIZE,
       q: debouncedSearch || undefined,
       status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
-      groupIds: selectedGroupIds.length > 0 ? selectedGroupIds : undefined,
+      groupNames:
+        filters.groupFilters.length > 0 ? filters.groupFilters : undefined,
       output:
         filters.normalizedOutputFilter === "all"
           ? undefined
@@ -134,16 +118,13 @@ export function useDisplaysPage(): UseDisplaysPageResult {
     },
   );
 
-  const { data: runtimeOverrides } = useGetRuntimeOverridesQuery(undefined, {
-    skip: !canReadDisplays,
-  });
+  const displaysData = bootstrapData?.displays;
+  const displayGroupsData = bootstrapData?.displayGroups ?? [];
+  const displayOutputOptions = bootstrapData?.displayOutputOptions ?? [];
+  const runtimeOverrides = bootstrapData?.runtimeOverrides;
   const globalEmergencyActive =
     runtimeOverrides?.globalEmergency.active ?? false;
-
-  const { data: emergencyAssets } = useGetContentOptionsQuery(
-    { status: "READY" },
-    { skip: !canUpdateDisplay },
-  );
+  const emergencyAssets = bootstrapData?.emergencyContentOptions ?? [];
 
   const loadErrorMessage = getApiErrorMessage(
     error,

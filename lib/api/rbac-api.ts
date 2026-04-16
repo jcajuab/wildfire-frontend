@@ -72,10 +72,30 @@ export interface RbacUserListQuery {
   readonly sortDirection?: "asc" | "desc";
 }
 
+export interface UsersBootstrapResponse {
+  readonly users: RbacUsersListResponse;
+  readonly roleOptions: RbacRoleSummary[];
+  readonly invitations: Array<{
+    readonly id: string;
+    readonly email: string;
+    readonly name: string | null;
+    readonly status: "pending" | "accepted" | "revoked" | "expired";
+    readonly expiresAt: string;
+    readonly createdAt: string;
+  }>;
+}
+
+export interface RoleEditBootstrapResponse {
+  readonly role: RbacRoleSummary;
+  readonly permissions: RbacPermission[];
+  readonly rolePermissions: RbacPermission[];
+  readonly roleUsers: RbacUser[];
+}
+
 export const rbacApi = createApi({
   reducerPath: "rbacApi",
   baseQuery,
-  keepUnusedDataFor: 120,
+  keepUnusedDataFor: 300,
   tagTypes: ["Role", "User", "Permission"],
   endpoints: (build) => ({
     getRoles: build.query<RbacRolesListResponse, RbacRoleListQuery | void>({
@@ -112,6 +132,19 @@ export const rbacApi = createApi({
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacRoleSummary>(response, "getRole"),
       providesTags: (_result, _error, id) => [{ type: "Role", id }],
+    }),
+    getRoleEditBootstrap: build.query<RoleEditBootstrapResponse, string>({
+      query: (id) => `roles/${id}/bootstrap`,
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<RoleEditBootstrapResponse>(
+          response,
+          "getRoleEditBootstrap",
+        ),
+      providesTags: (_result, _error, id) => [
+        { type: "Role", id },
+        { type: "Permission", id: "LIST" },
+        { type: "User", id: "LIST" },
+      ],
     }),
     createRole: build.mutation<
       RbacRoleSummary,
@@ -225,6 +258,30 @@ export const rbacApi = createApi({
         transformPaginatedListResponse<RbacUser>(response, "getUsers"),
       providesTags: createProvidesTags("User"),
     }),
+    getUsersBootstrap: build.query<
+      UsersBootstrapResponse,
+      RbacUserListQuery | void
+    >({
+      query: (query) => ({
+        url: "users/bootstrap",
+        params: {
+          page: query?.page ?? 1,
+          pageSize: query?.pageSize ?? 10,
+          q: query?.q,
+          sortBy: query?.sortBy ?? "name",
+          sortDirection: query?.sortDirection ?? "asc",
+        },
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<UsersBootstrapResponse>(
+          response,
+          "getUsersBootstrap",
+        ),
+      providesTags: [
+        { type: "User", id: "LIST" },
+        { type: "Role", id: "LIST" },
+      ],
+    }),
     getUserOptions: build.query<
       RbacUser[],
       { q?: string; limit?: number } | void
@@ -332,6 +389,7 @@ export const {
   useGetRolesQuery,
   useGetRoleOptionsQuery,
   useGetRoleQuery,
+  useGetRoleEditBootstrapQuery,
   useCreateRoleMutation,
   useUpdateRoleMutation,
   useDeleteRoleMutation,
@@ -340,6 +398,7 @@ export const {
   useGetRoleUsersQuery,
   useGetPermissionsQuery,
   useGetUsersQuery,
+  useGetUsersBootstrapQuery,
   useGetUserOptionsQuery,
   useGetUserQuery,
   useCreateUserMutation,

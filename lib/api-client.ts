@@ -1,13 +1,13 @@
-import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/base-query";
+import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/config";
 import {
   parseApiListResponseDataSafe,
   parseApiResponseData,
 } from "@/lib/api/contracts";
 import {
   createAuthApiError,
-  csrfHeaders,
   readJsonPayload,
 } from "@/lib/api/auth-api";
+import { authFetch } from "@/lib/auth-session";
 import type { AuthResponse } from "@/types/auth";
 import type { InvitationRecord } from "@/types/invitation";
 
@@ -21,7 +21,7 @@ async function parseApiPayload<T>(response: Response): Promise<T> {
   return parseApiResponseData<T>(payload);
 }
 
-/** PATCH /auth/profile. Update current user profile (e.g. name, timezone). Returns full auth payload; use it to refresh session. */
+/** PATCH /auth/profile. Update current user profile and return a replacement auth payload. */
 export async function updateCurrentUserProfile(payload: {
   name?: string;
   timezone?: string | null;
@@ -29,13 +29,10 @@ export async function updateCurrentUserProfile(payload: {
   email?: string | null;
 }): Promise<AuthResponse> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/profile`, {
+  const response = await authFetch(`${baseUrl}/auth/profile`, {
     method: "PATCH",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...getDevOnlyRequestHeaders(),
-      ...csrfHeaders(),
     },
     body: JSON.stringify(payload),
   });
@@ -49,13 +46,10 @@ export async function changePassword(payload: {
   newPassword: string;
 }): Promise<void> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/password/change`, {
+  const response = await authFetch(`${baseUrl}/auth/password/change`, {
     method: "POST",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...getDevOnlyRequestHeaders(),
-      ...csrfHeaders(),
     },
     body: JSON.stringify(payload),
   });
@@ -81,13 +75,8 @@ export async function uploadAvatar(file: File): Promise<AuthResponse> {
   );
 
   try {
-    const response = await fetch(`${baseUrl}/auth/me/avatar`, {
+    const response = await authFetch(`${baseUrl}/auth/me/avatar`, {
       method: "PUT",
-      credentials: "include",
-      headers: {
-        ...getDevOnlyRequestHeaders(),
-        ...csrfHeaders(),
-      },
       body: formData,
       signal: controller.signal,
     });
@@ -106,13 +95,8 @@ export async function uploadAvatar(file: File): Promise<AuthResponse> {
 /** DELETE /auth/profile. Deletes the current user (self-deletion). Returns on 204; throws AuthApiError on error. */
 export async function deleteCurrentUser(): Promise<void> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/profile`, {
+  const response = await authFetch(`${baseUrl}/auth/profile`, {
     method: "DELETE",
-    credentials: "include",
-    headers: {
-      ...getDevOnlyRequestHeaders(),
-      ...csrfHeaders(),
-    },
   });
 
   if (response.status === 204) return;
@@ -132,13 +116,10 @@ export async function createInvitation(input: {
   name?: string;
 }): Promise<CreateInvitationResponse> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/invitations`, {
+  const response = await authFetch(`${baseUrl}/auth/invitations`, {
     method: "POST",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...getDevOnlyRequestHeaders(),
-      ...csrfHeaders(),
     },
     body: JSON.stringify(input),
   });
@@ -149,12 +130,8 @@ export async function createInvitation(input: {
 /** GET /auth/invitations. Returns recent invitation records. */
 export async function getInvitations(): Promise<readonly InvitationRecord[]> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/invitations`, {
+  const response = await authFetch(`${baseUrl}/auth/invitations`, {
     method: "GET",
-    credentials: "include",
-    headers: {
-      ...getDevOnlyRequestHeaders(),
-    },
   });
 
   const payload = await readJsonPayload(response);
@@ -172,13 +149,8 @@ export async function resendInvitation(
   id: string,
 ): Promise<CreateInvitationResponse> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/invitations/${id}/resend`, {
+  const response = await authFetch(`${baseUrl}/auth/invitations/${id}/resend`, {
     method: "POST",
-    credentials: "include",
-    headers: {
-      ...getDevOnlyRequestHeaders(),
-      ...csrfHeaders(),
-    },
   });
 
   return parseApiPayload<CreateInvitationResponse>(response);
@@ -189,12 +161,10 @@ export async function revealInviteLink(
   id: string,
 ): Promise<{ inviteUrl: string }> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(
+  const response = await authFetch(
     `${baseUrl}/auth/invitations/${encodeURIComponent(id)}/reveal-link`,
     {
       method: "POST",
-      credentials: "include",
-      headers: { ...getDevOnlyRequestHeaders(), ...csrfHeaders() },
     },
   );
   return parseApiPayload<{ inviteUrl: string }>(response);
@@ -214,7 +184,6 @@ export async function acceptInvitation(input: {
     headers: {
       "Content-Type": "application/json",
       ...getDevOnlyRequestHeaders(),
-      ...csrfHeaders(),
     },
     body: JSON.stringify(input),
   });
@@ -228,13 +197,10 @@ export async function acceptInvitation(input: {
 /** PUT /users/:id/status. Suspends a user's access. */
 export async function banUser(userId: string): Promise<void> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/users/${userId}/status`, {
+  const response = await authFetch(`${baseUrl}/users/${userId}/status`, {
     method: "PUT",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...getDevOnlyRequestHeaders(),
-      ...csrfHeaders(),
     },
     body: JSON.stringify({ banned: true }),
   });
@@ -248,13 +214,10 @@ export async function banUser(userId: string): Promise<void> {
 /** PUT /users/:id/status. Restores a user's access. */
 export async function unbanUser(userId: string): Promise<void> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/users/${userId}/status`, {
+  const response = await authFetch(`${baseUrl}/users/${userId}/status`, {
     method: "PUT",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...getDevOnlyRequestHeaders(),
-      ...csrfHeaders(),
     },
     body: JSON.stringify({ banned: false }),
   });
@@ -274,13 +237,8 @@ export async function adminResetPassword(
   userId: string,
 ): Promise<AdminResetPasswordResponse> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/users/${userId}/reset-password`, {
+  const response = await authFetch(`${baseUrl}/users/${userId}/reset-password`, {
     method: "POST",
-    credentials: "include",
-    headers: {
-      ...getDevOnlyRequestHeaders(),
-      ...csrfHeaders(),
-    },
   });
 
   return parseApiPayload<AdminResetPasswordResponse>(response);

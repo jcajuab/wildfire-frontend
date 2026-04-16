@@ -47,8 +47,6 @@ export interface UsePlaylistsPageResult {
   deletePlaylistMutation: (id: string) => Promise<void>;
 }
 
-const POLLING_INTERVAL_MS = 120_000;
-
 export function usePlaylistsPage(): UsePlaylistsPageResult {
   const router = useRouter();
   const canUpdatePlaylist = useCan("playlists:update");
@@ -81,7 +79,8 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   );
 
   const { data: playlistsData } = useListPlaylistsQuery(playlistQuery, {
-    pollingInterval: POLLING_INTERVAL_MS,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
   });
   const [deletePlaylist] = useDeletePlaylistMutation();
 

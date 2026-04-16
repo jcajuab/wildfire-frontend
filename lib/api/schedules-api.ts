@@ -63,10 +63,28 @@ export interface UpdateScheduleRequest {
   readonly endTime?: string;
 }
 
+export interface SchedulesBootstrapResponse {
+  readonly schedules: readonly BackendSchedule[];
+  readonly displayOptions: readonly { id: string; name: string }[];
+  readonly displayGroups: readonly {
+    id: string;
+    name: string;
+    displayIds: readonly string[];
+    createdAt: string;
+    updatedAt: string;
+  }[];
+  readonly playlistOptions: readonly { id: string; name: string }[];
+  readonly flashContentOptions: readonly {
+    id: string;
+    title: string;
+    type: "FLASH";
+  }[];
+}
+
 export const schedulesApi = createApi({
   reducerPath: "schedulesApi",
   baseQuery,
-  keepUnusedDataFor: 120,
+  keepUnusedDataFor: 300,
   tagTypes: ["Schedule"],
   endpoints: (build) => ({
     listSchedules: build.query<readonly BackendSchedule[], ScheduleWindowQuery>(
@@ -96,6 +114,25 @@ export const schedulesApi = createApi({
             : [{ type: "Schedule", id: "LIST" }],
       },
     ),
+    getSchedulesBootstrap: build.query<
+      SchedulesBootstrapResponse,
+      ScheduleWindowQuery
+    >({
+      query: (query) => ({
+        url: "schedules/bootstrap",
+        params: {
+          from: query.from,
+          to: query.to,
+          displayIds: query.displayIds,
+        },
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<SchedulesBootstrapResponse>(
+          response,
+          "getSchedulesBootstrap",
+        ),
+      providesTags: [{ type: "Schedule", id: "LIST" }],
+    }),
     getSchedule: build.query<BackendSchedule, string>({
       query: (id) => `schedules/${id}`,
       transformResponse: (response) =>
@@ -140,6 +177,7 @@ export const schedulesApi = createApi({
 
 export const {
   useListSchedulesQuery,
+  useGetSchedulesBootstrapQuery,
   useGetScheduleQuery,
   useCreateScheduleMutation,
   useUpdateScheduleMutation,

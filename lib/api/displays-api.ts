@@ -43,6 +43,7 @@ export interface DisplaysListQuery {
   readonly q?: string;
   readonly status?: "PROCESSING" | "READY" | "LIVE" | "DOWN";
   readonly groupIds?: readonly string[];
+  readonly groupNames?: readonly string[];
   readonly output?: string;
   readonly sortBy?: "name" | "status" | "location";
   readonly sortDirection?: "asc" | "desc";
@@ -94,10 +95,22 @@ export interface DisplayRuntimeOverrides {
   };
 }
 
+export interface DisplaysBootstrapResponse {
+  readonly displays: DisplaysListResponse;
+  readonly displayGroups: DisplayGroup[];
+  readonly displayOutputOptions: DisplayOutputOption[];
+  readonly runtimeOverrides: DisplayRuntimeOverrides;
+  readonly emergencyContentOptions: Array<{
+    readonly id: string;
+    readonly title: string;
+    readonly type: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
+  }>;
+}
+
 export const displaysApi = createApi({
   reducerPath: "displaysApi",
   baseQuery,
-  keepUnusedDataFor: 120,
+  keepUnusedDataFor: 300,
   tagTypes: ["Display", "DisplayGroup", "RuntimeOverrides"],
   endpoints: (build) => ({
     getDisplays: build.query<DisplaysListResponse, DisplaysListQuery | void>({
@@ -121,6 +134,44 @@ export const displaysApi = createApi({
       transformResponse: (response) =>
         transformPaginatedListResponse<BackendDisplay>(response, "getDisplays"),
       providesTags: createProvidesTags("Display"),
+    }),
+    getDisplaysBootstrap: build.query<
+      DisplaysBootstrapResponse,
+      DisplaysListQuery | void
+    >({
+      query: (query) => {
+        const params = new URLSearchParams();
+        params.set("page", String(query?.page ?? 1));
+        params.set("pageSize", String(query?.pageSize ?? 20));
+        if (query?.q) params.set("q", query.q);
+        if (query?.status) params.set("status", query.status);
+        if (query?.output) params.set("output", query.output);
+        if (query?.sortBy) params.set("sortBy", query.sortBy);
+        if (query?.sortDirection) {
+          params.set("sortDirection", query.sortDirection);
+        }
+        if (query?.groupIds) {
+          for (const groupId of query.groupIds) {
+            params.append("groupIds", groupId);
+          }
+        }
+        if (query?.groupNames) {
+          for (const groupName of query.groupNames) {
+            params.append("groupNames", groupName);
+          }
+        }
+        return `displays/bootstrap?${params.toString()}`;
+      },
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<DisplaysBootstrapResponse>(
+          response,
+          "getDisplaysBootstrap",
+        ),
+      providesTags: [
+        { type: "Display", id: "LIST" },
+        { type: "DisplayGroup", id: "LIST" },
+        { type: "RuntimeOverrides", id: "GLOBAL" },
+      ],
     }),
     getDisplayOptions: build.query<
       DisplayOption[],
@@ -316,6 +367,7 @@ export const displaysApi = createApi({
 
 export const {
   useGetDisplaysQuery,
+  useGetDisplaysBootstrapQuery,
   useGetDisplayOptionsQuery,
   useGetDisplayOutputOptionsQuery,
   useGetDisplayQuery,

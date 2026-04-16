@@ -8,10 +8,7 @@ import { useCan } from "@/hooks/use-can";
 import { isNotFoundError } from "@/lib/api/error-guards";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
-  useGetPermissionsQuery,
-  useGetRolePermissionsQuery,
-  useGetRoleQuery,
-  useGetRoleUsersQuery,
+  useGetRoleEditBootstrapQuery,
 } from "@/lib/api/rbac-api";
 import { ROLE_INDEX_PATH } from "@/lib/role-paths";
 import type { Permission, Role, RoleFormData, RoleUser } from "@/types/role";
@@ -81,42 +78,12 @@ export function useEditRolePage(
   const resolvedRoleId = hasRoleId ? roleId : "";
 
   const {
-    data: roleData,
-    error: roleError,
-    isLoading: roleLoading,
-    isFetching: roleFetching,
-  } = useGetRoleQuery(resolvedRoleId, {
+    data: bootstrapData,
+    error: bootstrapError,
+    isLoading: bootstrapLoading,
+    isFetching: bootstrapFetching,
+  } = useGetRoleEditBootstrapQuery(resolvedRoleId, {
     skip: !hasRoleId,
-    refetchOnMountOrArgChange: true,
-  });
-
-  const {
-    data: permissionsData,
-    error: permissionsError,
-    isLoading: permissionsLoading,
-    isFetching: permissionsFetching,
-  } = useGetPermissionsQuery(undefined, {
-    refetchOnMountOrArgChange: true,
-  });
-
-  const {
-    data: rolePermissionsData,
-    error: rolePermissionsError,
-    isLoading: rolePermissionsLoading,
-    isFetching: rolePermissionsFetching,
-  } = useGetRolePermissionsQuery(resolvedRoleId, {
-    skip: !hasRoleId,
-    refetchOnMountOrArgChange: true,
-  });
-
-  const {
-    data: roleUsersData,
-    error: roleUsersError,
-    isLoading: roleUsersLoading,
-    isFetching: roleUsersFetching,
-  } = useGetRoleUsersQuery(resolvedRoleId, {
-    skip: !hasRoleId || !canReadUsers,
-    refetchOnMountOrArgChange: true,
   });
 
   const [isSaving, setIsSaving] = useState(false);
@@ -131,22 +98,15 @@ export function useEditRolePage(
     }
 
     if (
-      roleLoading ||
-      roleFetching ||
-      permissionsLoading ||
-      permissionsFetching ||
-      rolePermissionsLoading ||
-      rolePermissionsFetching ||
-      (canReadUsers && (roleUsersLoading || roleUsersFetching))
+      bootstrapLoading ||
+      bootstrapFetching
     ) {
       return { status: "loading" };
     }
 
-    const notFoundError = [
-      roleError,
-      rolePermissionsError,
-      roleUsersError,
-    ].find((error) => isNotFoundError(error));
+    const notFoundError = isNotFoundError(bootstrapError)
+      ? bootstrapError
+      : undefined;
 
     if (notFoundError !== undefined) {
       return {
@@ -158,12 +118,7 @@ export function useEditRolePage(
       };
     }
 
-    const genericError = [
-      roleError,
-      permissionsError,
-      rolePermissionsError,
-      roleUsersError,
-    ].find((error) => error !== undefined);
+    const genericError = bootstrapError;
 
     if (genericError !== undefined) {
       return {
@@ -176,18 +131,12 @@ export function useEditRolePage(
     }
 
     if (
-      roleData === undefined ||
-      permissionsData === undefined ||
-      rolePermissionsData === undefined
+      bootstrapData === undefined
     ) {
       return { status: "loading" };
     }
 
-    if (canReadUsers && roleUsersData === undefined) {
-      return { status: "loading" };
-    }
-
-    const role = toRole(roleData);
+    const role = toRole(bootstrapData.role);
     if (role.isSystem) {
       return {
         status: "nonEditable",
@@ -199,31 +148,19 @@ export function useEditRolePage(
     return {
       status: "ready",
       role,
-      permissions: permissionsData,
-      initialPermissionIds: rolePermissionsData.map(
+      permissions: bootstrapData.permissions,
+      initialPermissionIds: bootstrapData.rolePermissions.map(
         (permission) => permission.id,
       ),
-      initialUsers: canReadUsers ? toRoleUsers(roleUsersData ?? []) : [],
+      initialUsers: canReadUsers ? toRoleUsers(bootstrapData.roleUsers ?? []) : [],
     };
   }, [
     canReadUsers,
     hasRoleId,
-    permissionsData,
-    permissionsError,
-    permissionsFetching,
-    permissionsLoading,
-    roleData,
-    roleError,
-    roleFetching,
-    roleLoading,
-    rolePermissionsData,
-    rolePermissionsError,
-    rolePermissionsFetching,
-    rolePermissionsLoading,
-    roleUsersData,
-    roleUsersError,
-    roleUsersFetching,
-    roleUsersLoading,
+    bootstrapData,
+    bootstrapError,
+    bootstrapFetching,
+    bootstrapLoading,
   ]);
 
   const handleCancel = useCallback(() => {
@@ -233,7 +170,8 @@ export function useEditRolePage(
   const { handleSubmit } = useRolesHandlers({
     mode: "edit",
     selectedRole: state.status === "ready" ? state.role : null,
-    roleUsersData: canReadUsers ? roleUsersData : undefined,
+    roleUsersData:
+      canReadUsers && state.status === "ready" ? state.initialUsers : undefined,
     onSuccess: () => {
       toast.success("Role updated.");
       handleCancel();

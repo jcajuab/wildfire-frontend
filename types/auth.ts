@@ -18,20 +18,21 @@ export interface AuthUser {
   readonly avatarUrl: string | null;
 }
 
-/** Success response from POST /auth/login and POST /auth/session/refresh. */
+export interface AuthSnapshot {
+  readonly accessToken: string | null;
+  readonly accessTokenExpiresAt: string | null;
+  readonly user: AuthUser | null;
+  readonly permissions: PermissionType[];
+}
+
+/** Success response from POST /auth/login and POST /auth/refresh. */
 export interface AuthResponse {
   readonly type: "bearer";
-  readonly token: string;
-  readonly expiresAt: string;
+  readonly accessToken: string;
+  readonly accessTokenExpiresAt: string;
   readonly user: AuthUser;
   /** Current user's permissions (resource:action). Empty if no roles. */
   readonly permissions: PermissionType[];
 }
 
-/** Success response from GET /auth/session (no token field). */
-export interface SessionResponse {
-  readonly type: "bearer";
-  readonly expiresAt: string;
-  readonly user: AuthUser;
-  readonly permissions: PermissionType[];
-}
+export type SessionResponse = AuthResponse;

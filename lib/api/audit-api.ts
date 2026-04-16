@@ -4,7 +4,8 @@ import {
   getBaseUrl,
   getDevOnlyRequestHeaders,
 } from "@/lib/api/base-query";
-import { extractApiError } from "@/lib/api/contracts";
+import { extractApiError, parseApiResponseDataSafe } from "@/lib/api/contracts";
+import { authFetch } from "@/lib/auth-session";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
 
@@ -61,6 +62,20 @@ export interface AuditExportQuery {
   readonly requestId?: string;
 }
 
+export interface AuditBootstrapResponse {
+  readonly events: BackendAuditListResponse;
+  readonly users: Array<{
+    readonly id: string;
+    readonly username: string;
+    readonly email: string | null;
+    readonly name: string;
+  }>;
+  readonly displays: Array<{
+    readonly id: string;
+    readonly name: string;
+  }>;
+}
+
 /** Downloads audit CSV bytes from backend export route. */
 export async function exportAuditEventsCsv(
   query: AuditExportQuery = {},
@@ -79,12 +94,9 @@ export async function exportAuditEventsCsv(
       ? `${baseUrl}/audit/events/export?${queryString}`
       : `${baseUrl}/audit/events/export`;
 
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "GET",
-    credentials: "include",
-    headers: {
-      ...getDevOnlyRequestHeaders(),
-    },
+    headers: getDevOnlyRequestHeaders(),
   });
 
   if (!response.ok) {
@@ -108,9 +120,35 @@ export async function exportAuditEventsCsv(
 export const auditApi = createApi({
   reducerPath: "auditApi",
   baseQuery,
-  keepUnusedDataFor: 120,
+  keepUnusedDataFor: 300,
   tagTypes: ["AuditEvent"],
   endpoints: (build) => ({
+    getAuditBootstrap: build.query<AuditBootstrapResponse, AuditListQuery | void>(
+      {
+        query: (query) => ({
+          url: "audit/events/bootstrap",
+          params: {
+            page: query?.page ?? 1,
+            pageSize: query?.pageSize ?? 20,
+            from: query?.from,
+            to: query?.to,
+            action: query?.action,
+            actorId: query?.actorId,
+            actorType: query?.actorType,
+            resourceId: query?.resourceId,
+            resourceType: query?.resourceType,
+            status: query?.status,
+            requestId: query?.requestId,
+          },
+        }),
+        transformResponse: (response) =>
+          parseApiResponseDataSafe<AuditBootstrapResponse>(
+            response,
+            "getAuditBootstrap",
+          ),
+        providesTags: [{ type: "AuditEvent", id: "LIST" }],
+      },
+    ),
     listAuditEvents: build.query<
       BackendAuditListResponse,
       AuditListQuery | void
@@ -141,4 +179,4 @@ export const auditApi = createApi({
   }),
 });
 
-export const { useListAuditEventsQuery } = auditApi;
+export const { useGetAuditBootstrapQuery, useListAuditEventsQuery } = auditApi;

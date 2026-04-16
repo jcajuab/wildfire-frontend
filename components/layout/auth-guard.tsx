@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement, ReactNode } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 
@@ -9,26 +9,48 @@ interface AuthGuardProps {
   readonly children: ReactNode;
 }
 
-/**
- * Client guard: redirects to /login when not authenticated.
- * Shows loading until auth state is initialized to avoid flash of dashboard.
- * Passes the current pathname as ?redirectTo= so the login page can return the user.
- */
 export function AuthGuard({ children }: AuthGuardProps): ReactElement {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isInitialized } = useAuth();
+  const { bootstrapSession, isAuthenticated } = useAuth();
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    if (isInitialized && !isAuthenticated) {
+    let cancelled = false;
+
+    async function runBootstrap(): Promise<void> {
+      if (!isAuthenticated) {
+        try {
+          await bootstrapSession();
+        } finally {
+          if (!cancelled) {
+            setIsChecking(false);
+          }
+        }
+        return;
+      }
+
+      if (!cancelled) {
+        setIsChecking(false);
+      }
+    }
+
+    void runBootstrap();
+    return () => {
+      cancelled = true;
+    };
+  }, [bootstrapSession, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isChecking && !isAuthenticated) {
       const loginUrl = pathname
         ? `/login?redirectTo=${encodeURIComponent(pathname)}`
         : "/login";
       router.replace(loginUrl);
     }
-  }, [isInitialized, isAuthenticated, pathname, router]);
+  }, [isChecking, isAuthenticated, pathname, router]);
 
-  if (!isInitialized) {
+  if (isChecking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <span className="text-sm text-muted-foreground">Loading…</span>

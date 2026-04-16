@@ -5,8 +5,7 @@ const isDev = process.env.NODE_ENV === "development";
 interface ProxyOptions {
   method: string;
   path: string;
-  cookies: string | null;
-  csrfToken: string | null;
+  authorization: string | null;
   body?: string;
   streamResponse?: boolean;
   extraHeaders?: Record<string, string>;
@@ -14,15 +13,14 @@ interface ProxyOptions {
 
 /**
  * Proxies a request to the backend API with error handling.
- * Forwards the session cookie and CSRF token from the incoming request.
+ * Forwards the bearer token from the incoming request when present.
  * In development, detailed errors are returned in the response.
  * In production, errors are generic.
  */
 export async function proxyToBackend({
   method,
   path,
-  cookies,
-  csrfToken,
+  authorization,
   body,
   streamResponse,
   extraHeaders,
@@ -33,11 +31,8 @@ export async function proxyToBackend({
     const headers: Record<string, string> = {
       ...extraHeaders,
     };
-    if (cookies) {
-      headers["Cookie"] = cookies;
-    }
-    if (csrfToken) {
-      headers["X-CSRF-Token"] = csrfToken;
+    if (authorization) {
+      headers.Authorization = authorization;
     }
     if (body) {
       headers["Content-Type"] = "application/json";
@@ -46,12 +41,9 @@ export async function proxyToBackend({
     const response = await fetch(url, { method, headers, body });
 
     if (streamResponse && response.ok) {
-      // Forward all backend headers so AI SDK protocol headers
-      // (e.g. x-vercel-ai-ui-message-stream) reach the client transport.
       const streamHeaders = new Headers(response.headers);
       streamHeaders.set("Cache-Control", "no-cache");
       streamHeaders.set("Connection", "keep-alive");
-      // Remove hop-by-hop headers that must not be forwarded
       streamHeaders.delete("transfer-encoding");
       return new Response(response.body, {
         status: response.status,
@@ -59,9 +51,6 @@ export async function proxyToBackend({
       });
     }
 
-    // When streamResponse is true but response is not ok (e.g. 429 Too Many
-    // Requests), fall through to the error path below so the client receives
-    // a well-formed JSON error body that useChat can surface via its error state.
     if (!response.ok && isDev) {
       const text = await response.text();
       console.error(

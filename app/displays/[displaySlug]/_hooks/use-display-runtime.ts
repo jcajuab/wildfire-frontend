@@ -57,10 +57,19 @@ export function useDisplayRuntime(displaySlug: string) {
     let disposed = false;
 
     const refreshManifest = async (privateKey: CryptoKey): Promise<void> => {
-      const payload = await fetchSignedManifest({
+      const result = await fetchSignedManifest({
         registration,
         privateKey,
+        ifNoneMatch: lastPlaylistVersionRef.current,
       });
+      if (result.kind === "not-modified") {
+        setErrorMessage(null);
+        if (result.playlistVersion) {
+          lastPlaylistVersionRef.current = result.playlistVersion;
+        }
+        return;
+      }
+      const payload = result.manifest;
       const hasMaterialChange =
         payload.playlistVersion !== lastPlaylistVersionRef.current;
       setManifest(payload);
@@ -132,6 +141,8 @@ export function useDisplayRuntime(displaySlug: string) {
       const streamUrl = `${baseUrl}/display-runtime/${encodeURIComponent(
         registration.slug,
       )}/stream`;
+      let latestConnectionState: "connected" | "reconnecting" | "closed" =
+        "closed";
 
       const sse = createDisplaySseClient({
         streamUrl,
@@ -144,7 +155,10 @@ export function useDisplayRuntime(displaySlug: string) {
             privateKey: keyPair.privateKey,
             body: "",
           }),
-        onStateChange: setConnectionState,
+        onStateChange: (nextState) => {
+          latestConnectionState = nextState;
+          setConnectionState(nextState);
+        },
         onEvent: () => {
           setLastEventAt(new Date().toISOString());
           void refreshManifest(keyPair.privateKey)
@@ -162,6 +176,9 @@ export function useDisplayRuntime(displaySlug: string) {
       });
 
       const pollTimer = setInterval(() => {
+        if (latestConnectionState === "connected") {
+          return;
+        }
         void refreshManifest(keyPair.privateKey).catch((error) => {
           setErrorMessage(
             error instanceof Error ? error.message : "Failed to poll manifest",

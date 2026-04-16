@@ -1,6 +1,6 @@
-import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/base-query";
-import { csrfHeaders } from "@/lib/api/auth-api";
+import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/config";
 import { extractApiError, parseApiResponseData } from "@/lib/api/contracts";
+import { authFetch } from "@/lib/auth-session";
 import { createSignedHeaders } from "@/lib/crypto/request-signer";
 import type { DisplayRegistrationRecord } from "@/lib/display-identity/registration-store";
 
@@ -86,6 +86,10 @@ export interface DisplayManifest {
   readonly items: readonly ManifestItem[];
   readonly schedules: readonly ManifestScheduleWindow[];
 }
+
+export type DisplayManifestFetchResult =
+  | { readonly kind: "not-modified"; readonly playlistVersion: string | null }
+  | { readonly kind: "ok"; readonly manifest: DisplayManifest };
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -428,13 +432,10 @@ export async function createRegistrationSession(
   registrationCode: string,
 ): Promise<RegistrationSessionResponse> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/displays/registration-sessions`, {
+  const response = await authFetch(`${baseUrl}/displays/registration-sessions`, {
     method: "POST",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...getDevOnlyRequestHeaders(),
-      ...csrfHeaders(),
     },
     body: JSON.stringify({ registrationCode }),
   });
@@ -480,13 +481,10 @@ export async function registerDisplay(input: {
   registrationSignature: string;
 }): Promise<RegisterDisplayResponse> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/displays/registrations`, {
+  const response = await authFetch(`${baseUrl}/displays/registrations`, {
     method: "POST",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...getDevOnlyRequestHeaders(),
-      ...csrfHeaders(),
     },
     body: JSON.stringify(input),
   });
@@ -554,7 +552,8 @@ export async function verifyAuthChallenge(input: {
 export async function fetchSignedManifest(input: {
   registration: DisplayRegistrationRecord;
   privateKey: CryptoKey;
-}): Promise<DisplayManifest> {
+  ifNoneMatch?: string | null;
+}): Promise<DisplayManifestFetchResult> {
   const baseUrl = getBaseUrl();
   const url = `${baseUrl}/display-runtime/${encodeURIComponent(input.registration.slug)}/manifest`;
   const signedHeaders = await createSignedHeaders({
@@ -568,14 +567,30 @@ export async function fetchSignedManifest(input: {
 
   const response = await fetch(url, {
     method: "GET",
-    headers: signedHeaders,
+    headers: {
+      ...signedHeaders,
+      ...(input.ifNoneMatch
+        ? { "If-None-Match": `"${input.ifNoneMatch}"` }
+        : {}),
+    },
   });
+  if (response.status === 304) {
+    const etag = response.headers.get("etag");
+    return {
+      kind: "not-modified",
+      playlistVersion:
+        etag?.replace(/^W\//, "").replace(/^"+|"+$/g, "") ?? null,
+    };
+  }
   if (!response.ok) {
     throw new Error(await parseErrorMessage(response));
   }
-  return parseDisplayManifest(
-    parseApiResponseData<unknown>(await response.json()),
-  );
+  return {
+    kind: "ok",
+    manifest: parseDisplayManifest(
+      parseApiResponseData<unknown>(await response.json()),
+    ),
+  };
 }
 
 export async function postSignedHeartbeat(input: {

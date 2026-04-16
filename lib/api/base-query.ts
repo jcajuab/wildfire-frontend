@@ -4,118 +4,70 @@ import {
   type FetchArgs,
   type FetchBaseQueryError,
 } from "@reduxjs/toolkit/query/react";
+import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/config";
 import {
-  AUTH_API_ERROR_EVENT,
-  type AuthApiErrorEventDetail,
-} from "@/lib/auth-events";
-import { getCsrfToken } from "@/lib/api/auth-api";
+  getAuthorizationHeaderValue,
+  refreshAccessToken,
+  shouldRefreshAccessToken,
+} from "@/lib/auth-session";
 
-const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "DELETE", "PATCH"]);
+export { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/config";
 
-/**
- * Backend API base URL with versioned API path suffix (e.g. /v1).
- * Falls back to same-origin path if NEXT_PUBLIC_API_URL is not set.
- */
-export function getBaseUrl(): string {
-  const rawVersion = process.env.NEXT_PUBLIC_API_VERSION;
-  const apiVersion =
-    typeof rawVersion === "string" && rawVersion.trim() !== ""
-      ? rawVersion.trim().replace(/^\//, "")
-      : "v1";
-  const apiPath = `/${apiVersion}`;
-  const rawUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (typeof rawUrl !== "string" || rawUrl === "") {
-    return apiPath;
-  }
-  const trimmedUrl = rawUrl.replace(/\/$/, "");
-  return `${trimmedUrl}${apiPath}`;
-}
-
-/**
- * True when NEXT_PUBLIC_API_URL points at an ngrok tunnel (local dev only).
- */
-function isNgrokApiUrl(): boolean {
-  const url = process.env.NEXT_PUBLIC_API_URL;
-  return typeof url === "string" && url.includes("ngrok");
-}
-
-/**
- * Headers to add only in development when using ngrok (e.g. ngrok-skip-browser-warning).
- * Returns empty object in production so it's safe to spread.
- */
-export function getDevOnlyRequestHeaders(): Record<string, string> {
-  if (!isNgrokApiUrl()) return {};
-  return { "ngrok-skip-browser-warning": "true" };
-}
-
-/**
- * Shared base query for all RTK Query APIs. Adds dev-only ngrok header.
- */
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: getBaseUrl(),
-  credentials: "include",
-  prepareHeaders(headers) {
-    Object.entries(getDevOnlyRequestHeaders()).forEach(([key, value]) => {
-      headers.set(key, value);
-    });
-    return headers;
-  },
+  credentials: "same-origin",
 });
 
-/**
- * Shared baseQuery wrapper that emits global auth events for 401 and adds CSRF token
- * for state-changing requests (POST, PUT, DELETE, PATCH).
- * AuthContext listens to this event for deterministic auth/session behavior.
- */
+function withAuthHeaders(args: string | FetchArgs): FetchArgs {
+  const headers = new Headers(
+    typeof args === "string" ? undefined : (args.headers as HeadersInit),
+  );
+
+  Object.entries(getDevOnlyRequestHeaders()).forEach(([key, value]) => {
+    headers.set(key, value);
+  });
+
+  const authorization = getAuthorizationHeaderValue();
+  if (authorization != null) {
+    headers.set("Authorization", authorization);
+  }
+
+  if (typeof args === "string") {
+    return { url: args, headers };
+  }
+
+  return {
+    ...args,
+    headers,
+  };
+}
+
 export const baseQuery: BaseQueryFn<
   string | FetchArgs,
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-  // Inject CSRF token for state-changing methods
-  const method =
-    typeof args === "string" ? "GET" : (args.method?.toUpperCase() ?? "GET");
-  let patchedArgs = args;
-  if (STATE_CHANGING_METHODS.has(method) && typeof window !== "undefined") {
-    const csrfToken = getCsrfToken();
-    if (csrfToken) {
-      if (typeof args === "string") {
-        patchedArgs = {
-          url: args,
-          method,
-          headers: { "X-CSRF-Token": csrfToken },
-        };
-      } else {
-        patchedArgs = {
-          ...args,
-          headers: {
-            ...(args.headers as Record<string, string>),
-            "X-CSRF-Token": csrfToken,
-          },
-        };
-      }
+  if (shouldRefreshAccessToken()) {
+    try {
+      await refreshAccessToken();
+    } catch {
+      // Fall through and let the request try with the current in-memory token.
     }
   }
 
-  const result = await rawBaseQuery(patchedArgs, api, extraOptions);
-  const status = result.error?.status;
-  if (typeof window !== "undefined" && status === 401) {
-    const detail: AuthApiErrorEventDetail = {
-      status,
-      url:
-        typeof args === "string"
-          ? args
-          : typeof args.url === "string"
-            ? args.url
-            : "",
-      method:
-        typeof args === "string"
-          ? "GET"
-          : typeof args.method === "string"
-            ? args.method
-            : "GET",
-    };
-    window.dispatchEvent(new CustomEvent(AUTH_API_ERROR_EVENT, { detail }));
+  const execute = () => rawBaseQuery(withAuthHeaders(args), api, extraOptions);
+
+  let result = await execute();
+  if (result.error?.status !== 401) {
+    return result;
   }
+
+  try {
+    await refreshAccessToken();
+  } catch {
+    return result;
+  }
+
+  result = await execute();
   return result;
 };

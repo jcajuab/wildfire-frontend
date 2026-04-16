@@ -114,7 +114,6 @@ export function RoleForm({
       q: deferredUserSearch.length > 0 ? deferredUserSearch : undefined,
     },
     {
-      refetchOnMountOrArgChange: true,
       skip: !canReadUsers,
     },
   );

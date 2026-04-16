@@ -1,14 +1,10 @@
-import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/base-query";
+import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/config";
 import {
   extractApiError,
   parseApiResponseData,
   type ApiErrorResponse,
 } from "@/lib/api/contracts";
-import type {
-  AuthResponse,
-  LoginCredentials,
-  SessionResponse,
-} from "@/types/auth";
+import type { AuthResponse, LoginCredentials } from "@/types/auth";
 
 interface JsonParseFailurePayload {
   readonly __parseFailure: true;
@@ -117,36 +113,21 @@ export async function login(
   return parseApiPayload<AuthResponse>(response);
 }
 
-/** GET /auth/session. Returns current session user + permissions or throws with backend error body. */
-export async function getSession(): Promise<SessionResponse> {
-  const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/session`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      ...getDevOnlyRequestHeaders(),
-    },
-  });
-
-  return parseApiPayload<SessionResponse>(response);
-}
-
-/** POST /auth/session/refresh. Refreshes JWT (sliding session). Returns auth payload or throws with backend error body. */
+/** POST /auth/refresh. Refreshes access auth from the refresh cookie. */
 export async function refreshToken(): Promise<AuthResponse> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/session/refresh`, {
+  const response = await fetch(`${baseUrl}/auth/refresh`, {
     method: "POST",
     credentials: "include",
     headers: {
       ...getDevOnlyRequestHeaders(),
-      ...csrfHeaders(),
     },
   });
 
   return parseApiPayload<AuthResponse>(response);
 }
 
-/** POST /auth/logout. Clears server session. Does not throw. */
+/** POST /auth/logout. Clears server refresh state. Does not throw. */
 export async function logoutApi(): Promise<void> {
   const baseUrl = getBaseUrl();
   const response = await fetch(`${baseUrl}/auth/logout`, {
@@ -154,31 +135,14 @@ export async function logoutApi(): Promise<void> {
     credentials: "include",
     headers: {
       ...getDevOnlyRequestHeaders(),
-      ...csrfHeaders(),
     },
   });
   if (!response.ok) {
-    // Log for observability; do not throw so UX is not blocked
     console.warn("[auth] logout request failed", {
       route: "/auth/logout",
       status: response.status,
     });
   }
-}
-
-/** Returns the X-CSRF-Token header object for state-changing requests, or empty object if unavailable. */
-export function csrfHeaders(): Record<string, string> {
-  const token = getCsrfToken();
-  return token ? { "X-CSRF-Token": token } : {};
-}
-
-/** Reads the CSRF token from the wildfire_csrf cookie (non-httpOnly, readable by JS). */
-export function getCsrfToken(): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("wildfire_csrf="));
-  return match ? (match.split("=")[1] ?? null) : null;
 }
 
 /** Error thrown by auth API with status and optional backend body. */

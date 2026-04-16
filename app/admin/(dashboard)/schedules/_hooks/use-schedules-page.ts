@@ -3,13 +3,7 @@
 import { useMemo } from "react";
 
 import { useCan } from "@/hooks/use-can";
-import { useGetContentOptionsQuery } from "@/lib/api/content-api";
-import {
-  useGetDisplayOptionsQuery,
-  useGetDisplayGroupsQuery,
-} from "@/lib/api/displays-api";
-import { useListSchedulesQuery } from "@/lib/api/schedules-api";
-import { useGetPlaylistOptionsQuery } from "@/lib/api/playlists-api";
+import { useGetSchedulesBootstrapQuery } from "@/lib/api/schedules-api";
 import { mapBackendSchedulesToSchedules } from "@/lib/mappers/schedule-mapper";
 import type { Schedule } from "@/types/schedule";
 import { useScheduleFilters } from "./use-schedule-filters";
@@ -52,21 +46,17 @@ export function useSchedulesPage() {
   const { handleCreateSchedule, handleDeleteSchedule, handleSaveSchedule } =
     useScheduleHandlers();
 
-  const { data: displaysData } = useGetDisplayOptionsQuery(undefined, {
-    skip: !canReadDisplays,
-  });
-  const { data: displayGroupsData } = useGetDisplayGroupsQuery();
-  const { data: schedulesData } = useListSchedulesQuery(scheduleWindow, {
+  const { data: bootstrapData } = useGetSchedulesBootstrapQuery(scheduleWindow, {
     refetchOnFocus: false,
     refetchOnReconnect: false,
   });
-  const { data: playlistsData } = useGetPlaylistOptionsQuery(undefined, {
-    skip: !canReadPlaylists,
-  });
-  const { data: flashContentData } = useGetContentOptionsQuery(
-    { type: "FLASH", status: "READY" },
-    { skip: !canReadContent },
-  );
+  const displaysData = canReadDisplays ? bootstrapData?.displayOptions : [];
+  const displayGroupsData = canReadDisplays ? bootstrapData?.displayGroups : [];
+  const schedulesData = bootstrapData?.schedules;
+  const playlistsData = canReadPlaylists ? bootstrapData?.playlistOptions : [];
+  const flashContentData = canReadContent
+    ? bootstrapData?.flashContentOptions
+    : [];
 
   const availablePlaylists: readonly { id: string; name: string }[] = useMemo(
     () =>

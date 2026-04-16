@@ -3,9 +3,7 @@
 import { useCallback, useMemo } from "react";
 
 import { useCan } from "@/hooks/use-can";
-import { useListAuditEventsQuery } from "@/lib/api/audit-api";
-import { useGetDisplayOptionsQuery } from "@/lib/api/displays-api";
-import { useGetUserOptionsQuery } from "@/lib/api/rbac-api";
+import { useGetAuditBootstrapQuery } from "@/lib/api/audit-api";
 import {
   getResourceTypeFilterLabel,
   getResourceTypeValueFromInput,
@@ -54,31 +52,24 @@ export function useLogsPage(): UseLogsPageResult {
   const canExport = useCan("audit:read");
   const filters = useAuditLogFilters(PAGE_SIZE);
 
-  const { data } = useListAuditEventsQuery(filters.listQuery);
+  const { data } = useGetAuditBootstrapQuery(filters.listQuery);
   const canReadUsers = useCan("users:read");
   const canReadDisplays = useCan("displays:read");
-  const { data: usersData } = useGetUserOptionsQuery(undefined, {
-    skip: !canReadUsers,
-  });
-  const { data: displaysData } = useGetDisplayOptionsQuery(undefined, {
-    skip: !canReadDisplays,
-  });
-
-  const users = usersData ?? [];
-  const displays = displaysData ?? [];
+  const users = canReadUsers ? (data?.users ?? []) : [];
+  const displays = canReadDisplays ? (data?.displays ?? []) : [];
 
   const actorResolver = useActorResolver({ users, displays });
 
   const logs = useMemo<LogEntry[]>(() => {
-    return (data?.items ?? []).map((event) =>
+    return (data?.events.items ?? []).map((event) =>
       mapAuditEventToLogEntry(event, {
         getActorName: actorResolver.getActorName,
         getActorAvatarUrl: actorResolver.getActorAvatarUrl,
       }),
     );
-  }, [data?.items, actorResolver]);
+  }, [data?.events.items, actorResolver]);
 
-  const total = data?.total ?? 0;
+  const total = data?.events.total ?? 0;
 
   const { page, setPage } = filters;
   const {

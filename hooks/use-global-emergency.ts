@@ -25,7 +25,10 @@ export function useGlobalEmergency(): UseGlobalEmergencyReturn {
 
   const { data: runtimeOverrides } = useGetRuntimeOverridesQuery(undefined, {
     pollingInterval: 30_000,
+    skipPollingIfUnfocused: true,
     skip: !canRead,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
   });
 
   const [activateGlobalEmergency, { isLoading: isActivatingEmergency }] =
