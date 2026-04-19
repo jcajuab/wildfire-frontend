@@ -1,6 +1,5 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
+import { api } from "@/lib/api/api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
-import { baseQuery } from "@/lib/api/base-query";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
 
@@ -134,11 +133,7 @@ export interface PlaylistDurationEstimate {
   }[];
 }
 
-export const playlistsApi = createApi({
-  reducerPath: "playlistsApi",
-  baseQuery,
-  keepUnusedDataFor: 300,
-  tagTypes: ["Playlist"],
+export const playlistsApi = api.injectEndpoints({
   endpoints: (build) => ({
     getPlaylistOptions: build.query<
       PlaylistOption[],

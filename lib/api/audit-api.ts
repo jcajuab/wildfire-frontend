@@ -1,9 +1,5 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
-import {
-  baseQuery,
-  getBaseUrl,
-  getDevOnlyRequestHeaders,
-} from "@/lib/api/base-query";
+import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/base-query";
+import { api } from "@/lib/api/api";
 import { extractApiError } from "@/lib/api/contracts";
 import { authFetch } from "@/lib/auth-session";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
@@ -103,11 +99,7 @@ export async function exportAuditEventsCsv(
   return await response.blob();
 }
 
-export const auditApi = createApi({
-  reducerPath: "auditApi",
-  baseQuery,
-  keepUnusedDataFor: 300,
-  tagTypes: ["AuditEvent"],
+export const auditApi = api.injectEndpoints({
   endpoints: (build) => ({
     listAuditEvents: build.query<
       BackendAuditListResponse,

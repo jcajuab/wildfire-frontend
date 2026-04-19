@@ -1,17 +1,12 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
-import { baseQuery } from "@/lib/api/base-query";
+import { api } from "@/lib/api/api";
 
 export interface AICredential {
   readonly provider: string;
   readonly keyHint: string;
 }
 
-export const aiCredentialsApi = createApi({
-  reducerPath: "aiCredentialsApi",
-  baseQuery,
-  keepUnusedDataFor: 120,
-  tagTypes: ["AICredential"],
+export const aiCredentialsApi = api.injectEndpoints({
   endpoints: (build) => ({
     getAICredentials: build.query<AICredential[], void>({
       query: () => "ai/credentials",

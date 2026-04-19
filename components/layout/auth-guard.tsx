@@ -23,15 +23,7 @@ export function AuthGuard({ children }: AuthGuardProps): ReactElement {
     }
   }, [isInitialized, isAuthenticated, pathname, router]);
 
-  if (!isInitialized) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <span className="text-sm text-muted-foreground">Loading…</span>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
+  if (isInitialized && !isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <span className="text-sm text-muted-foreground">Redirecting…</span>

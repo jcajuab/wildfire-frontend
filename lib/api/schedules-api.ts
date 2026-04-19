@@ -1,6 +1,5 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
+import { api } from "@/lib/api/api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
-import { baseQuery } from "@/lib/api/base-query";
 
 export interface BackendSchedule {
   readonly id: string;
@@ -81,11 +80,7 @@ export interface SchedulesBootstrapResponse {
   }[];
 }
 
-export const schedulesApi = createApi({
-  reducerPath: "schedulesApi",
-  baseQuery,
-  keepUnusedDataFor: 300,
-  tagTypes: ["Schedule"],
+export const schedulesApi = api.injectEndpoints({
   endpoints: (build) => ({
     listSchedules: build.query<readonly BackendSchedule[], ScheduleWindowQuery>(
       {

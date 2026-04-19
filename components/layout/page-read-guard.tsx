@@ -27,24 +27,11 @@ export function PageReadGuard({ children }: PageReadGuardProps): ReactElement {
   const { can, isInitialized } = useAuth();
   const fallbackRoute = getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE;
 
-  if (!isInitialized) {
-    return (
-      <div className="flex flex-1 items-center justify-center p-8">
-        <EmptyState
-          title="Checking access"
-          description="Verifying permissions for this page."
-          icon={null}
-          action={null}
-        />
-      </div>
-    );
-  }
-
   const requiredPermission = getRequiredReadPermission(pathname ?? "");
   const hasAccess =
     requiredPermission === null ? true : can(requiredPermission);
 
-  if (!hasAccess && requiredPermission !== null) {
+  if (isInitialized && !hasAccess && requiredPermission !== null) {
     return (
       <div className="flex flex-1 items-center justify-center p-8">
         <EmptyState

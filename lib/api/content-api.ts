@@ -1,6 +1,5 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
+import { api } from "@/lib/api/api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
-import { baseQuery } from "@/lib/api/base-query";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
 import type { FlashTone } from "@/types/content";
@@ -119,11 +118,7 @@ export interface SubmitPdfCropsRequest {
   readonly contentName?: string;
 }
 
-export const contentApi = createApi({
-  reducerPath: "contentApi",
-  baseQuery,
-  keepUnusedDataFor: 300,
-  tagTypes: ["Content", "ContentJob"],
+export const contentApi = api.injectEndpoints({
   endpoints: (build) => ({
     getContentOptions: build.query<
       ContentOption[],

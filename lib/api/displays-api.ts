@@ -1,5 +1,4 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
-import { baseQuery } from "@/lib/api/base-query";
+import { api } from "@/lib/api/api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
@@ -107,11 +106,7 @@ export interface DisplaysBootstrapResponse {
   }>;
 }
 
-export const displaysApi = createApi({
-  reducerPath: "displaysApi",
-  baseQuery,
-  keepUnusedDataFor: 300,
-  tagTypes: ["Display", "DisplayGroup", "RuntimeOverrides"],
+export const displaysApi = api.injectEndpoints({
   endpoints: (build) => ({
     getDisplays: build.query<DisplaysListResponse, DisplaysListQuery | void>({
       query: (query) => {

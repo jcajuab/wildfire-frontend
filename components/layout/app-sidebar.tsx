@@ -109,17 +109,19 @@ export function AppSidebar(): ReactElement {
   const mounted = useMounted();
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const coreNavItems = useMemo(() => {
-    return isInitialized
-      ? resolveNavItems(getRoutesBySection("core"), can)
-      : [];
+    return resolveNavItems(
+      getRoutesBySection("core"),
+      isInitialized ? can : () => true,
+    );
   }, [can, isInitialized]);
 
   const manageNavItems = useMemo(() => {
-    return isInitialized
-      ? resolveNavItems(getRoutesBySection("manage"), can)
-      : [];
+    return resolveNavItems(
+      getRoutesBySection("manage"),
+      isInitialized ? can : () => true,
+    );
   }, [can, isInitialized]);
-  const canAccessSettings = isInitialized;
+  const canAccessSettings = true;
   const homeRoute = useMemo(
     () =>
       isInitialized

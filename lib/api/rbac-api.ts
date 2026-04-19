@@ -1,6 +1,5 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
+import { api } from "@/lib/api/api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
-import { baseQuery } from "@/lib/api/base-query";
 import type { PermissionAction, PermissionResource } from "@/types/permission";
 import { createPaginatedQueryFn } from "@/lib/api/paginated-query-factory";
 import { refreshAuthAfterMutation } from "@/lib/api/auth-refresh.helpers";
@@ -79,11 +78,7 @@ export interface RoleEditBootstrapResponse {
   readonly roleUsers: RbacUser[];
 }
 
-export const rbacApi = createApi({
-  reducerPath: "rbacApi",
-  baseQuery,
-  keepUnusedDataFor: 300,
-  tagTypes: ["Role", "User", "Permission"],
+export const rbacApi = api.injectEndpoints({
   endpoints: (build) => ({
     getRoles: build.query<RbacRolesListResponse, RbacRoleListQuery | void>({
       query: (query) => ({
