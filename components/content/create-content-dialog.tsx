@@ -8,7 +8,18 @@ import {
   SUPPORTED_CONTENT_FILE_LABELS,
   SUPPORTED_CONTENT_FILE_MIME_TYPES,
 } from "@/components/content/content-file-types";
-import { TiptapEditor } from "@/components/content/tiptap-editor";
+import dynamic from "next/dynamic";
+
+const TiptapEditor = dynamic(
+  () =>
+    import("@/components/content/tiptap-editor").then((m) => m.TiptapEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-48 animate-pulse rounded-md bg-muted" />
+    ),
+  },
+);
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

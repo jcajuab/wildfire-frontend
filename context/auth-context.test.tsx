@@ -3,28 +3,44 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthProvider, useAuth } from "@/context/auth-context";
+import type { AuthSnapshot } from "@/types/auth";
 
-const loginMock = vi.fn();
-const logoutMock = vi.fn();
-const refreshTokenMock = vi.fn();
-const getSessionMock = vi.fn();
+const bootstrapAccessTokenMock = vi.fn();
+const loginWithPasswordMock = vi.fn();
+const logoutAuthMock = vi.fn();
+const setAuthSessionMock = vi.fn();
 
-vi.mock("@/lib/api/auth-api", () => ({
-  AuthApiError: class AuthApiError extends Error {
-    constructor(
-      message: string,
-      public readonly status: number,
-    ) {
-      super(message);
-      this.name = "AuthApiError";
-    }
+let storeSnapshot: AuthSnapshot = {
+  accessToken: null,
+  accessTokenExpiresAt: null,
+  user: null,
+  permissions: [],
+  isBootstrapped: false,
+};
+
+const listeners = new Set<(snapshot: AuthSnapshot) => void>();
+
+vi.mock("@/lib/auth-session", () => ({
+  bootstrapAccessToken: (...args: unknown[]) =>
+    bootstrapAccessTokenMock(...args),
+  loginWithPassword: (...args: unknown[]) => loginWithPasswordMock(...args),
+  logoutAuth: (...args: unknown[]) => logoutAuthMock(...args),
+  setAuthSession: (...args: unknown[]) => setAuthSessionMock(...args),
+  getAuthSnapshot: () => storeSnapshot,
+  subscribeToAuthState: (listener: (snapshot: AuthSnapshot) => void) => {
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
   },
-  login: (...args: unknown[]) => loginMock(...args),
-  logoutApi: (...args: unknown[]) => logoutMock(...args),
-  refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
-  getSession: (...args: unknown[]) => getSessionMock(...args),
-  getCsrfToken: () => null,
 }));
+
+function updateSnapshot(partial: Partial<AuthSnapshot>): void {
+  storeSnapshot = { ...storeSnapshot, ...partial };
+  for (const listener of listeners) {
+    listener(storeSnapshot);
+  }
+}
 
 function AuthProbe(): ReactElement {
   const auth = useAuth();
@@ -48,17 +64,25 @@ function AuthProbe(): ReactElement {
 
 describe("AuthProvider", () => {
   beforeEach(() => {
-    loginMock.mockReset();
-    logoutMock.mockReset();
-    refreshTokenMock.mockReset();
-    getSessionMock.mockReset();
+    bootstrapAccessTokenMock.mockReset();
+    loginWithPasswordMock.mockReset();
+    logoutAuthMock.mockReset();
+    setAuthSessionMock.mockReset();
+    listeners.clear();
+    storeSnapshot = {
+      accessToken: null,
+      accessTokenExpiresAt: null,
+      user: null,
+      permissions: [],
+      isBootstrapped: false,
+    };
   });
 
-  test("shows loading until hydration completes", async () => {
-    let resolveSession: (v: unknown) => void;
-    getSessionMock.mockReturnValue(
-      new Promise((resolve) => {
-        resolveSession = resolve;
+  test("shows loading until bootstrap completes", async () => {
+    let resolveBootstrap: () => void;
+    bootstrapAccessTokenMock.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveBootstrap = resolve;
       }),
     );
 
@@ -70,9 +94,11 @@ describe("AuthProvider", () => {
 
     expect(screen.getByTestId("initialized")).toHaveTextContent("loading");
 
-    resolveSession!({
-      type: "bearer",
-      expiresAt: "2099-01-01T00:00:00.000Z",
+    // Simulate bootstrap completing and updating the store
+    resolveBootstrap!();
+    updateSnapshot({
+      accessToken: "test-token",
+      accessTokenExpiresAt: "2099-01-01T00:00:00.000Z",
       user: {
         id: "user-1",
         username: "user",
@@ -84,6 +110,7 @@ describe("AuthProvider", () => {
         avatarUrl: null,
       },
       permissions: ["displays:read"],
+      isBootstrapped: true,
     });
 
     await waitFor(() => {
@@ -97,21 +124,24 @@ describe("AuthProvider", () => {
     expect(screen.getByTestId("can-displays-read")).toHaveTextContent("yes");
   });
 
-  test("hydrates session and permission checks from server", async () => {
-    getSessionMock.mockResolvedValueOnce({
-      type: "bearer",
-      expiresAt: "2099-01-01T00:00:00.000Z",
-      user: {
-        id: "user-1",
-        username: "user",
-        email: "user@example.com",
-        name: "User",
-        isAdmin: false,
-        isInvitedUser: false,
-        timezone: null,
-        avatarUrl: null,
-      },
-      permissions: ["displays:read"],
+  test("hydrates session and permission checks from store", async () => {
+    bootstrapAccessTokenMock.mockImplementation(async () => {
+      updateSnapshot({
+        accessToken: "test-token",
+        accessTokenExpiresAt: "2099-01-01T00:00:00.000Z",
+        user: {
+          id: "user-1",
+          username: "user",
+          email: "user@example.com",
+          name: "User",
+          isAdmin: false,
+          isInvitedUser: false,
+          timezone: null,
+          avatarUrl: null,
+        },
+        permissions: ["displays:read"],
+        isBootstrapped: true,
+      });
     });
 
     render(
@@ -128,10 +158,10 @@ describe("AuthProvider", () => {
     expect(screen.getByTestId("can-displays-read")).toHaveTextContent("yes");
   });
 
-  test("remains anonymous when session returns 401", async () => {
-    getSessionMock.mockRejectedValueOnce(
-      Object.assign(new Error("Unauthorized"), { status: 401 }),
-    );
+  test("remains anonymous when bootstrap fails with 401", async () => {
+    bootstrapAccessTokenMock.mockImplementation(async () => {
+      updateSnapshot({ isBootstrapped: true });
+    });
 
     render(
       <AuthProvider>
@@ -147,23 +177,34 @@ describe("AuthProvider", () => {
     expect(screen.getByTestId("auth-status")).toHaveTextContent("anonymous");
   });
 
-  test("clears client state on logout even if API logout fails", async () => {
-    getSessionMock.mockResolvedValueOnce({
-      type: "bearer",
-      expiresAt: "2099-01-01T00:00:00.000Z",
-      user: {
-        id: "user-1",
-        username: "user",
-        email: "user@example.com",
-        name: "User",
-        isAdmin: false,
-        isInvitedUser: false,
-        timezone: null,
-        avatarUrl: null,
-      },
-      permissions: ["displays:read"],
+  test("clears client state on logout", async () => {
+    bootstrapAccessTokenMock.mockImplementation(async () => {
+      updateSnapshot({
+        accessToken: "test-token",
+        accessTokenExpiresAt: "2099-01-01T00:00:00.000Z",
+        user: {
+          id: "user-1",
+          username: "user",
+          email: "user@example.com",
+          name: "User",
+          isAdmin: false,
+          isInvitedUser: false,
+          timezone: null,
+          avatarUrl: null,
+        },
+        permissions: ["displays:read"],
+        isBootstrapped: true,
+      });
     });
-    logoutMock.mockResolvedValueOnce(undefined); // logoutApi never throws
+
+    logoutAuthMock.mockImplementation(async () => {
+      updateSnapshot({
+        accessToken: null,
+        accessTokenExpiresAt: null,
+        user: null,
+        permissions: [],
+      });
+    });
 
     render(
       <AuthProvider>

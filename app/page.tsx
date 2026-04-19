@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   getFirstPermittedAdminRoute,
@@ -11,39 +11,15 @@ import { useAuth } from "@/context/auth-context";
 
 export default function Page(): ReactElement {
   const router = useRouter();
-  const { bootstrapSession, can, isAuthenticated } = useAuth();
-  const [isChecking, setIsChecking] = useState(true);
+  const { can, isAuthenticated, isInitialized } = useAuth();
   const redirectRoute = isAuthenticated
     ? (getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE)
     : "/login";
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function runBootstrap(): Promise<void> {
-      if (!isAuthenticated) {
-        try {
-          await bootstrapSession();
-        } catch {
-          // Redirect below will fall back to /login.
-        }
-      }
-
-      if (!cancelled) {
-        setIsChecking(false);
-      }
-    }
-
-    void runBootstrap();
-    return () => {
-      cancelled = true;
-    };
-  }, [bootstrapSession, isAuthenticated]);
-
-  useEffect(() => {
-    if (isChecking) return;
+    if (!isInitialized) return;
     router.replace(redirectRoute);
-  }, [isChecking, redirectRoute, router]);
+  }, [isInitialized, redirectRoute, router]);
 
   return (
     <div className="flex min-h-svh items-center justify-center">

@@ -23,6 +23,7 @@ export interface AuthSnapshot {
   readonly accessTokenExpiresAt: string | null;
   readonly user: AuthUser | null;
   readonly permissions: PermissionType[];
+  readonly isBootstrapped: boolean;
 }
 
 /** Success response from POST /auth/login and POST /auth/refresh. */
@@ -34,5 +35,3 @@ export interface AuthResponse {
   /** Current user's permissions (resource:action). Empty if no roles. */
   readonly permissions: PermissionType[];
 }
-
-export type SessionResponse = AuthResponse;

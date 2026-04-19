@@ -1,10 +1,7 @@
-import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/config";
 import {
   extractApiError,
-  parseApiResponseData,
   type ApiErrorResponse,
 } from "@/lib/api/contracts";
-import type { AuthResponse, LoginCredentials } from "@/types/auth";
 
 interface JsonParseFailurePayload {
   readonly __parseFailure: true;
@@ -85,85 +82,6 @@ export function createAuthApiError(
     parseFailureText ??
     `Request failed with status ${response.status}`;
   return new AuthApiError(message, response.status, parsedError);
-}
-
-async function parseApiPayload<T>(response: Response): Promise<T> {
-  const payload = await readJsonPayload(response);
-  if (!response.ok) {
-    throw createAuthApiError(response, payload);
-  }
-  return parseApiResponseData<T>(payload);
-}
-
-/** POST /auth/login. Returns auth payload or throws with backend error body. */
-export async function login(
-  credentials: LoginCredentials,
-): Promise<AuthResponse> {
-  const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/login`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...getDevOnlyRequestHeaders(),
-    },
-    body: JSON.stringify(credentials),
-  });
-
-  return parseApiPayload<AuthResponse>(response);
-}
-
-/** POST /auth/refresh. Refreshes access auth from the refresh cookie. */
-export async function refreshToken(): Promise<AuthResponse> {
-  const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/refresh`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      ...getDevOnlyRequestHeaders(),
-    },
-  });
-
-  return parseApiPayload<AuthResponse>(response);
-}
-
-export interface SessionData {
-  readonly type: string;
-  readonly expiresAt: string;
-  readonly user: import("@/types/auth").AuthUser;
-  readonly permissions: import("@/types/permission").PermissionType[];
-}
-
-/** GET /auth/session. Returns current session or throws AuthApiError on 401. */
-export async function getSession(): Promise<SessionData> {
-  const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/session`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      ...getDevOnlyRequestHeaders(),
-    },
-  });
-
-  return parseApiPayload<SessionData>(response);
-}
-
-/** POST /auth/logout. Clears server refresh state. Does not throw. */
-export async function logoutApi(): Promise<void> {
-  const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/auth/logout`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      ...getDevOnlyRequestHeaders(),
-    },
-  });
-  if (!response.ok) {
-    console.warn("[auth] logout request failed", {
-      route: "/auth/logout",
-      status: response.status,
-    });
-  }
 }
 
 /** Error thrown by auth API with status and optional backend body. */

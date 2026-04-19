@@ -24,11 +24,11 @@ export function useGlobalEmergency(): UseGlobalEmergencyReturn {
   const canUpdate = isInitialized && can("displays:update");
 
   const { data: runtimeOverrides } = useGetRuntimeOverridesQuery(undefined, {
-    pollingInterval: 30_000,
+    pollingInterval: 120_000,
     skipPollingIfUnfocused: true,
     skip: !canRead,
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
   });
 
   const [activateGlobalEmergency, { isLoading: isActivatingEmergency }] =

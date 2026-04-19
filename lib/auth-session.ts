@@ -34,6 +34,10 @@ let state: InternalAuthState = {
   permissions: [],
 };
 
+let isBootstrapped = false;
+let snapshotVersion = 0;
+let cachedSnapshot: AuthSnapshot | null = null;
+
 let refreshPromise: Promise<AuthResponse> | null = null;
 let broadcastChannel: BroadcastChannel | null = null;
 
@@ -110,6 +114,8 @@ function applyAuthResponse(
     user: response.user,
     permissions: clonePermissions(response.permissions),
   };
+  snapshotVersion += 1;
+  cachedSnapshot = null;
   notifyListeners();
 
   if (shouldBroadcast) {
@@ -128,6 +134,8 @@ export function clearAuthSession(shouldBroadcast = true): void {
     user: null,
     permissions: [],
   };
+  snapshotVersion += 1;
+  cachedSnapshot = null;
   notifyListeners();
 
   if (shouldBroadcast) {
@@ -136,12 +144,17 @@ export function clearAuthSession(shouldBroadcast = true): void {
 }
 
 export function getAuthSnapshot(): AuthSnapshot {
-  return {
+  if (cachedSnapshot !== null) {
+    return cachedSnapshot;
+  }
+  cachedSnapshot = {
     accessToken: state.accessToken,
     accessTokenExpiresAt: state.accessTokenExpiresAt,
     user: state.user,
     permissions: clonePermissions(state.permissions),
+    isBootstrapped,
   };
+  return cachedSnapshot;
 }
 
 export function subscribeToAuthState(
@@ -229,6 +242,10 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
 
 export async function bootstrapAccessToken(): Promise<void> {
   if (state.accessToken != null && state.accessToken.length > 0) {
+    isBootstrapped = true;
+    snapshotVersion += 1;
+    cachedSnapshot = null;
+    notifyListeners();
     return;
   }
 
@@ -239,6 +256,11 @@ export async function bootstrapAccessToken(): Promise<void> {
       return;
     }
     throw error;
+  } finally {
+    isBootstrapped = true;
+    snapshotVersion += 1;
+    cachedSnapshot = null;
+    notifyListeners();
   }
 }
 

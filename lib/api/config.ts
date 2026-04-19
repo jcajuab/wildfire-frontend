@@ -1,6 +1,9 @@
 /**
  * Backend API base URL with versioned API path suffix (e.g. /v1).
- * Falls back to same-origin path if NEXT_PUBLIC_API_URL is not set.
+ *
+ * In development with a cross-origin API URL, requests are routed through
+ * Next.js rewrites (`/api/proxy/*`) to avoid CORS preflight overhead.
+ * In production (same-origin), the versioned path is returned directly.
  */
 export function getBaseUrl(): string {
   const rawVersion = process.env.NEXT_PUBLIC_API_VERSION;
@@ -8,13 +11,30 @@ export function getBaseUrl(): string {
     typeof rawVersion === "string" && rawVersion.trim() !== ""
       ? rawVersion.trim().replace(/^\//, "")
       : "v1";
-  const apiPath = `/${apiVersion}`;
+
   const rawUrl = process.env.NEXT_PUBLIC_API_URL;
   if (typeof rawUrl !== "string" || rawUrl === "") {
-    return apiPath;
+    return `/${apiVersion}`;
   }
+
+  if (shouldUseDevProxy(rawUrl)) {
+    return `/api/proxy/${apiVersion}`;
+  }
+
   const trimmedUrl = rawUrl.replace(/\/$/, "");
-  return `${trimmedUrl}${apiPath}`;
+  return `${trimmedUrl}/${apiVersion}`;
+}
+
+function shouldUseDevProxy(apiUrl: string): boolean {
+  if (typeof window === "undefined") return false;
+  // Test environments (jsdom/happy-dom) have window but no Next.js rewrite layer.
+  if (process.env.NODE_ENV === "test") return false;
+  try {
+    const target = new URL(apiUrl);
+    return target.origin !== window.location.origin;
+  } catch {
+    return false;
+  }
 }
 
 function isNgrokApiUrl(): boolean {

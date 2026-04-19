@@ -6,9 +6,16 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useState,
+  useSyncExternalStore,
 } from "react";
-import { getSession, login as loginApi, logoutApi } from "@/lib/api/auth-api";
+import {
+  bootstrapAccessToken,
+  getAuthSnapshot,
+  loginWithPassword,
+  logoutAuth,
+  setAuthSession,
+  subscribeToAuthState,
+} from "@/lib/auth-session";
 import { can as canPermission } from "@/lib/permissions";
 import type { AuthResponse, AuthUser } from "@/types/auth";
 import type { PermissionType } from "@/types/permission";
@@ -28,79 +35,54 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function getServerSnapshot() {
+  return getAuthSnapshot();
+}
+
 export function AuthProvider({
   children,
 }: {
   children: ReactNode;
 }): ReactElement {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [permissions, setPermissions] = useState<PermissionType[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const snapshot = useSyncExternalStore(
+    subscribeToAuthState,
+    getAuthSnapshot,
+    getServerSnapshot,
+  );
 
   useEffect(() => {
-    getSession()
-      .then((session) => {
-        setUser(session.user);
-        setPermissions(session.permissions);
-      })
-      .catch(() => {
-        setUser(null);
-        setPermissions([]);
-      })
-      .finally(() => {
-        setIsInitialized(true);
-      });
+    void bootstrapAccessToken();
   }, []);
 
   const login = useCallback(
     async (credentials: { username: string; password: string }) => {
-      setIsLoading(true);
-      try {
-        const response = await loginApi(credentials);
-        setUser(response.user);
-        setPermissions(response.permissions);
-      } finally {
-        setIsLoading(false);
-      }
+      await loginWithPassword(credentials);
     },
     [],
   );
 
   const logout = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      await logoutApi();
-    } finally {
-      setUser(null);
-      setPermissions([]);
-      setIsLoading(false);
-    }
+    await logoutAuth();
   }, []);
 
   const bootstrapSession = useCallback(async () => {
-    try {
-      const session = await getSession();
-      setUser(session.user);
-      setPermissions(session.permissions);
-    } catch {
-      setUser(null);
-      setPermissions([]);
-    } finally {
-      setIsInitialized(true);
-    }
+    await bootstrapAccessToken();
   }, []);
 
   const updateSession = useCallback((response: AuthResponse) => {
-    setUser(response.user);
-    setPermissions(response.permissions);
+    setAuthSession(response);
   }, []);
+
+  const user = snapshot.user;
+  const permissions = snapshot.permissions;
+  const isAuthenticated = user !== null;
+  const isInitialized = snapshot.isBootstrapped;
 
   const value: AuthContextValue = {
     user,
     permissions,
-    isAuthenticated: user !== null,
-    isLoading,
+    isAuthenticated,
+    isLoading: false,
     isInitialized,
     can: (permission: PermissionType) =>
       canPermission(permission, permissions, user?.isAdmin ?? false),

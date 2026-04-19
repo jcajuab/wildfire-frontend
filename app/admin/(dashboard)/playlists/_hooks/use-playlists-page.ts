@@ -79,8 +79,8 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   );
 
   const { data: playlistsData } = useListPlaylistsQuery(playlistQuery, {
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
   });
   const [deletePlaylist] = useDeletePlaylistMutation();
 

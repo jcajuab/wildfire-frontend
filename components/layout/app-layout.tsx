@@ -5,7 +5,13 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AIChatBubble } from "@/components/ai/ai-chat-bubble";
+import dynamic from "next/dynamic";
+
+const AIChatBubble = dynamic(
+  () =>
+    import("@/components/ai/ai-chat-bubble").then((m) => m.AIChatBubble),
+  { ssr: false },
+);
 
 interface AppLayoutProps {
   readonly children: ReactNode;
