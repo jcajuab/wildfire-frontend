@@ -23,7 +23,7 @@ function buildCspHeader(): string {
   ].join("; ");
 }
 
-export function middleware(request: NextRequest): NextResponse {
+export function proxy(request: NextRequest): NextResponse {
   const csp = buildCspHeader();
 
   const requestHeaders = new Headers(request.headers);

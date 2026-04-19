@@ -11,9 +11,21 @@ import {
 } from "framer-motion";
 import { IconMessageChatbot, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { useAICredentials } from "@/hooks/use-ai-credentials";
-import { AIChat } from "@/components/ai/ai-chat";
+
+const AIChat = dynamic(
+  () => import("@/components/ai/ai-chat").then((m) => m.AIChat),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center">
+        <span className="text-sm text-muted-foreground">Loading chat…</span>
+      </div>
+    ),
+  },
+);
 
 const PANEL_HEIGHT_MAX = 600;
 const GAP = 12; // Tailwind gap-3
