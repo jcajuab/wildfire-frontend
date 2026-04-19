@@ -5,19 +5,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AuthProvider } from "@/context/auth-context";
-import dynamic from "next/dynamic";
+import { DevAccessibilityChecker } from "@/components/dev-accessibility-checker";
 import "./globals.css";
-
-const DevAccessibilityChecker =
-  process.env.NODE_ENV === "development"
-    ? dynamic(
-        () =>
-          import("@/components/dev-accessibility-checker").then(
-            (m) => m.DevAccessibilityChecker,
-          ),
-        { ssr: false },
-      )
-    : () => null;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
