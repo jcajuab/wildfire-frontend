@@ -46,17 +46,30 @@ export function useSchedulesPage() {
   const { handleCreateSchedule, handleDeleteSchedule, handleSaveSchedule } =
     useScheduleHandlers();
 
-  const { data: bootstrapData } = useGetSchedulesBootstrapQuery(scheduleWindow, {
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
-  });
-  const displaysData = canReadDisplays ? bootstrapData?.displayOptions : [];
-  const displayGroupsData = canReadDisplays ? bootstrapData?.displayGroups : [];
+  const { data: bootstrapData } = useGetSchedulesBootstrapQuery(
+    scheduleWindow,
+    {
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
+    },
+  );
+  const displaysData = useMemo(
+    () => (canReadDisplays ? bootstrapData?.displayOptions : []),
+    [canReadDisplays, bootstrapData?.displayOptions],
+  );
+  const displayGroupsData = useMemo(
+    () => (canReadDisplays ? bootstrapData?.displayGroups : []),
+    [canReadDisplays, bootstrapData?.displayGroups],
+  );
   const schedulesData = bootstrapData?.schedules;
-  const playlistsData = canReadPlaylists ? bootstrapData?.playlistOptions : [];
-  const flashContentData = canReadContent
-    ? bootstrapData?.flashContentOptions
-    : [];
+  const playlistsData = useMemo(
+    () => (canReadPlaylists ? bootstrapData?.playlistOptions : []),
+    [canReadPlaylists, bootstrapData?.playlistOptions],
+  );
+  const flashContentData = useMemo(
+    () => (canReadContent ? bootstrapData?.flashContentOptions : []),
+    [canReadContent, bootstrapData?.flashContentOptions],
+  );
 
   const availablePlaylists: readonly { id: string; name: string }[] = useMemo(
     () =>

@@ -72,19 +72,6 @@ export interface RbacUserListQuery {
   readonly sortDirection?: "asc" | "desc";
 }
 
-export interface UsersBootstrapResponse {
-  readonly users: RbacUsersListResponse;
-  readonly roleOptions: RbacRoleSummary[];
-  readonly invitations: Array<{
-    readonly id: string;
-    readonly email: string;
-    readonly name: string | null;
-    readonly status: "pending" | "accepted" | "revoked" | "expired";
-    readonly expiresAt: string;
-    readonly createdAt: string;
-  }>;
-}
-
 export interface RoleEditBootstrapResponse {
   readonly role: RbacRoleSummary;
   readonly permissions: RbacPermission[];
@@ -258,30 +245,6 @@ export const rbacApi = createApi({
         transformPaginatedListResponse<RbacUser>(response, "getUsers"),
       providesTags: createProvidesTags("User"),
     }),
-    getUsersBootstrap: build.query<
-      UsersBootstrapResponse,
-      RbacUserListQuery | void
-    >({
-      query: (query) => ({
-        url: "users/bootstrap",
-        params: {
-          page: query?.page ?? 1,
-          pageSize: query?.pageSize ?? 10,
-          q: query?.q,
-          sortBy: query?.sortBy ?? "name",
-          sortDirection: query?.sortDirection ?? "asc",
-        },
-      }),
-      transformResponse: (response) =>
-        parseApiResponseDataSafe<UsersBootstrapResponse>(
-          response,
-          "getUsersBootstrap",
-        ),
-      providesTags: [
-        { type: "User", id: "LIST" },
-        { type: "Role", id: "LIST" },
-      ],
-    }),
     getUserOptions: build.query<
       RbacUser[],
       { q?: string; limit?: number } | void
@@ -398,7 +361,6 @@ export const {
   useGetRoleUsersQuery,
   useGetPermissionsQuery,
   useGetUsersQuery,
-  useGetUsersBootstrapQuery,
   useGetUserOptionsQuery,
   useGetUserQuery,
   useCreateUserMutation,

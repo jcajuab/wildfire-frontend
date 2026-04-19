@@ -7,9 +7,7 @@ import { toast } from "sonner";
 import { useCan } from "@/hooks/use-can";
 import { isNotFoundError } from "@/lib/api/error-guards";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
-import {
-  useGetRoleEditBootstrapQuery,
-} from "@/lib/api/rbac-api";
+import { useGetRoleEditBootstrapQuery } from "@/lib/api/rbac-api";
 import { ROLE_INDEX_PATH } from "@/lib/role-paths";
 import type { Permission, Role, RoleFormData, RoleUser } from "@/types/role";
 import { useRolesHandlers } from "../../_hooks/use-roles-handlers";
@@ -97,10 +95,7 @@ export function useEditRolePage(
       };
     }
 
-    if (
-      bootstrapLoading ||
-      bootstrapFetching
-    ) {
+    if (bootstrapLoading || bootstrapFetching) {
       return { status: "loading" };
     }
 
@@ -130,9 +125,7 @@ export function useEditRolePage(
       };
     }
 
-    if (
-      bootstrapData === undefined
-    ) {
+    if (bootstrapData === undefined) {
       return { status: "loading" };
     }
 
@@ -152,7 +145,9 @@ export function useEditRolePage(
       initialPermissionIds: bootstrapData.rolePermissions.map(
         (permission) => permission.id,
       ),
-      initialUsers: canReadUsers ? toRoleUsers(bootstrapData.roleUsers ?? []) : [],
+      initialUsers: canReadUsers
+        ? toRoleUsers(bootstrapData.roleUsers ?? [])
+        : [],
     };
   }, [
     canReadUsers,

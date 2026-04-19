@@ -219,8 +219,10 @@ describe("display-api client contract validation", () => {
       privateKey: {} as CryptoKey,
     });
 
-    expect(result.items[0]?.content.cropY).toBe(1080);
-    expect(result.items[0]?.content.sliceCount).toBe(3);
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") throw new Error("Expected ok result");
+    expect(result.manifest.items[0]?.content.cropY).toBe(1080);
+    expect(result.manifest.items[0]?.content.sliceCount).toBe(3);
     expect(fetchMock).toHaveBeenCalledWith(
       "http://example.test/v1/display-runtime/lobby-display/manifest",
       expect.objectContaining({

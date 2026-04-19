@@ -127,6 +127,27 @@ export async function refreshToken(): Promise<AuthResponse> {
   return parseApiPayload<AuthResponse>(response);
 }
 
+export interface SessionData {
+  readonly type: string;
+  readonly expiresAt: string;
+  readonly user: import("@/types/auth").AuthUser;
+  readonly permissions: import("@/types/permission").PermissionType[];
+}
+
+/** GET /auth/session. Returns current session or throws AuthApiError on 401. */
+export async function getSession(): Promise<SessionData> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/session`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      ...getDevOnlyRequestHeaders(),
+    },
+  });
+
+  return parseApiPayload<SessionData>(response);
+}
+
 /** POST /auth/logout. Clears server refresh state. Does not throw. */
 export async function logoutApi(): Promise<void> {
   const baseUrl = getBaseUrl();

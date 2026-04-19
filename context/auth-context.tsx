@@ -1,22 +1,17 @@
 "use client";
 
 import type { ReactElement, ReactNode } from "react";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import {
-  bootstrapAccessToken,
-  getAuthSnapshot,
-  loginWithPassword,
-  logoutAuth,
-  refreshAccessToken,
-  setAuthSession,
-  subscribeToAuthState,
-} from "@/lib/auth-session";
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { getSession, login as loginApi, logoutApi } from "@/lib/api/auth-api";
 import { can as canPermission } from "@/lib/permissions";
 import type { AuthResponse, AuthUser } from "@/types/auth";
 import type { PermissionType } from "@/types/permission";
-
-const REFRESH_THRESHOLD_MS = 60_000;
-const REFRESH_CHECK_INTERVAL_MS = 30_000;
 
 interface AuthContextValue {
   readonly user: AuthUser | null;
@@ -28,7 +23,6 @@ interface AuthContextValue {
   login: (credentials: { username: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   bootstrapSession: () => Promise<void>;
-  refreshSession: () => Promise<void>;
   updateSession: (response: AuthResponse) => void;
 }
 
@@ -39,46 +33,33 @@ export function AuthProvider({
 }: {
   children: ReactNode;
 }): ReactElement {
-  const snapshot = getAuthSnapshot();
-  const [user, setUser] = useState<AuthUser | null>(snapshot.user);
-  const [permissions, setPermissions] = useState<PermissionType[]>(
-    snapshot.permissions,
-  );
-  const [accessTokenExpiresAt, setAccessTokenExpiresAt] = useState<
-    string | null
-  >(snapshot.accessTokenExpiresAt);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [permissions, setPermissions] = useState<PermissionType[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    return subscribeToAuthState((nextSnapshot) => {
-      setUser(nextSnapshot.user);
-      setPermissions(nextSnapshot.permissions);
-      setAccessTokenExpiresAt(nextSnapshot.accessTokenExpiresAt);
-    });
+    getSession()
+      .then((session) => {
+        setUser(session.user);
+        setPermissions(session.permissions);
+      })
+      .catch(() => {
+        setUser(null);
+        setPermissions([]);
+      })
+      .finally(() => {
+        setIsInitialized(true);
+      });
   }, []);
-
-  useEffect(() => {
-    if (!user || !accessTokenExpiresAt) {
-      return;
-    }
-
-    const refreshTokenCheckIntervalId = setInterval(() => {
-      const expiresAtMs = new Date(accessTokenExpiresAt).getTime();
-      if (expiresAtMs - Date.now() > REFRESH_THRESHOLD_MS) {
-        return;
-      }
-
-      void refreshAccessToken().catch(() => undefined);
-    }, REFRESH_CHECK_INTERVAL_MS);
-
-    return () => clearInterval(refreshTokenCheckIntervalId);
-  }, [user, accessTokenExpiresAt]);
 
   const login = useCallback(
     async (credentials: { username: string; password: string }) => {
       setIsLoading(true);
       try {
-        await loginWithPassword(credentials);
+        const response = await loginApi(credentials);
+        setUser(response.user);
+        setPermissions(response.permissions);
       } finally {
         setIsLoading(false);
       }
@@ -89,36 +70,43 @@ export function AuthProvider({
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
-      await logoutAuth();
+      await logoutApi();
     } finally {
+      setUser(null);
+      setPermissions([]);
       setIsLoading(false);
     }
   }, []);
 
   const bootstrapSession = useCallback(async () => {
-    await bootstrapAccessToken();
-  }, []);
-
-  const refreshSession = useCallback(async () => {
-    await refreshAccessToken();
+    try {
+      const session = await getSession();
+      setUser(session.user);
+      setPermissions(session.permissions);
+    } catch {
+      setUser(null);
+      setPermissions([]);
+    } finally {
+      setIsInitialized(true);
+    }
   }, []);
 
   const updateSession = useCallback((response: AuthResponse) => {
-    setAuthSession(response);
+    setUser(response.user);
+    setPermissions(response.permissions);
   }, []);
 
-  const value = {
+  const value: AuthContextValue = {
     user,
     permissions,
     isAuthenticated: user !== null,
     isLoading,
-    isInitialized: true,
+    isInitialized,
     can: (permission: PermissionType) =>
       canPermission(permission, permissions, user?.isAdmin ?? false),
     login,
     logout,
     bootstrapSession,
-    refreshSession,
     updateSession,
   };
 

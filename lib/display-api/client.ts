@@ -432,13 +432,16 @@ export async function createRegistrationSession(
   registrationCode: string,
 ): Promise<RegistrationSessionResponse> {
   const baseUrl = getBaseUrl();
-  const response = await authFetch(`${baseUrl}/displays/registration-sessions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  const response = await authFetch(
+    `${baseUrl}/displays/registration-sessions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ registrationCode }),
     },
-    body: JSON.stringify({ registrationCode }),
-  });
+  );
 
   if (!response.ok) {
     throw new Error(await parseErrorMessage(response));

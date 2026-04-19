@@ -3,10 +3,7 @@ import {
   parseApiListResponseDataSafe,
   parseApiResponseData,
 } from "@/lib/api/contracts";
-import {
-  createAuthApiError,
-  readJsonPayload,
-} from "@/lib/api/auth-api";
+import { createAuthApiError, readJsonPayload } from "@/lib/api/auth-api";
 import { authFetch } from "@/lib/auth-session";
 import type { AuthResponse } from "@/types/auth";
 import type { InvitationRecord } from "@/types/invitation";
@@ -237,9 +234,12 @@ export async function adminResetPassword(
   userId: string,
 ): Promise<AdminResetPasswordResponse> {
   const baseUrl = getBaseUrl();
-  const response = await authFetch(`${baseUrl}/users/${userId}/reset-password`, {
-    method: "POST",
-  });
+  const response = await authFetch(
+    `${baseUrl}/users/${userId}/reset-password`,
+    {
+      method: "POST",
+    },
+  );
 
   return parseApiPayload<AdminResetPasswordResponse>(response);
 }

@@ -119,12 +119,18 @@ export function useDisplaysPage(): UseDisplaysPageResult {
   );
 
   const displaysData = bootstrapData?.displays;
-  const displayGroupsData = bootstrapData?.displayGroups ?? [];
+  const displayGroupsData = useMemo(
+    () => bootstrapData?.displayGroups ?? [],
+    [bootstrapData?.displayGroups],
+  );
   const displayOutputOptions = bootstrapData?.displayOutputOptions ?? [];
   const runtimeOverrides = bootstrapData?.runtimeOverrides;
   const globalEmergencyActive =
     runtimeOverrides?.globalEmergency.active ?? false;
-  const emergencyAssets = bootstrapData?.emergencyContentOptions ?? [];
+  const emergencyAssets = useMemo(
+    () => bootstrapData?.emergencyContentOptions ?? [],
+    [bootstrapData?.emergencyContentOptions],
+  );
 
   const loadErrorMessage = getApiErrorMessage(
     error,
@@ -138,7 +144,8 @@ export function useDisplaysPage(): UseDisplaysPageResult {
     if (!canReadDisplays) return;
     const subscription = subscribeToDisplayLifecycleEvents({
       onEvent: () => {
-        if (sseRefetchTimerRef.current) clearTimeout(sseRefetchTimerRef.current);
+        if (sseRefetchTimerRef.current)
+          clearTimeout(sseRefetchTimerRef.current);
         sseRefetchTimerRef.current = setTimeout(() => {
           void refetch();
         }, 1_000);

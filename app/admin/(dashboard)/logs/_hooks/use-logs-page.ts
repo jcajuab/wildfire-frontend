@@ -3,7 +3,9 @@
 import { useCallback, useMemo } from "react";
 
 import { useCan } from "@/hooks/use-can";
-import { useGetAuditBootstrapQuery } from "@/lib/api/audit-api";
+import { useListAuditEventsQuery } from "@/lib/api/audit-api";
+import { useGetUserOptionsQuery } from "@/lib/api/rbac-api";
+import { useGetDisplayOptionsQuery } from "@/lib/api/displays-api";
 import {
   getResourceTypeFilterLabel,
   getResourceTypeValueFromInput,
@@ -52,24 +54,39 @@ export function useLogsPage(): UseLogsPageResult {
   const canExport = useCan("audit:read");
   const filters = useAuditLogFilters(PAGE_SIZE);
 
-  const { data } = useGetAuditBootstrapQuery(filters.listQuery);
+  const { data: eventsData } = useListAuditEventsQuery(filters.listQuery, {
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+  });
   const canReadUsers = useCan("users:read");
   const canReadDisplays = useCan("displays:read");
-  const users = canReadUsers ? (data?.users ?? []) : [];
-  const displays = canReadDisplays ? (data?.displays ?? []) : [];
+
+  const { data: usersData } = useGetUserOptionsQuery(undefined, {
+    skip: !canReadUsers,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+  });
+  const { data: displaysData } = useGetDisplayOptionsQuery(undefined, {
+    skip: !canReadDisplays,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  const users = usersData ?? [];
+  const displays = displaysData ?? [];
 
   const actorResolver = useActorResolver({ users, displays });
 
   const logs = useMemo<LogEntry[]>(() => {
-    return (data?.events.items ?? []).map((event) =>
+    return (eventsData?.items ?? []).map((event) =>
       mapAuditEventToLogEntry(event, {
         getActorName: actorResolver.getActorName,
         getActorAvatarUrl: actorResolver.getActorAvatarUrl,
       }),
     );
-  }, [data?.events.items, actorResolver]);
+  }, [eventsData?.items, actorResolver]);
 
-  const total = data?.events.total ?? 0;
+  const total = eventsData?.total ?? 0;
 
   const { page, setPage } = filters;
   const {

@@ -5,15 +5,11 @@ import { useCan } from "@/hooks/use-can";
 import { useDisplayFilters } from "./use-display-filters";
 import {
   useCreateDisplayGroupMutation,
-  useGetDisplayGroupsQuery,
-  useGetDisplayOutputOptionsQuery,
-  useGetDisplaysQuery,
-  useGetRuntimeOverridesQuery,
+  useGetDisplaysBootstrapQuery,
   useSetDisplayGroupsMutation,
   useUnregisterDisplayMutation,
   useUpdateDisplayMutation,
 } from "@/lib/api/displays-api";
-import { useGetContentOptionsQuery } from "@/lib/api/content-api";
 import { subscribeToDisplayLifecycleEvents } from "@/lib/api/display-events";
 
 vi.mock("@/hooks/use-can", () => ({
@@ -29,25 +25,18 @@ vi.mock("./use-display-filters", () => ({
 }));
 
 vi.mock("@/lib/api/displays-api", () => ({
-  useGetDisplayGroupsQuery: vi.fn(() => ({ data: [] })),
-  useGetDisplayOutputOptionsQuery: vi.fn(() => ({ data: [] })),
-  useGetDisplaysQuery: vi.fn(() => ({
-    data: { items: [], total: 0 },
+  useGetDisplaysBootstrapQuery: vi.fn(() => ({
+    data: undefined,
     isLoading: false,
     isError: false,
     error: null,
     refetch: vi.fn(),
   })),
   useLazyGetDisplayQuery: vi.fn(() => [vi.fn()]),
-  useGetRuntimeOverridesQuery: vi.fn(() => ({ data: undefined })),
   useCreateDisplayGroupMutation: vi.fn(() => [vi.fn()]),
   useSetDisplayGroupsMutation: vi.fn(() => [vi.fn()]),
   useUnregisterDisplayMutation: vi.fn(() => [vi.fn()]),
   useUpdateDisplayMutation: vi.fn(() => [vi.fn()]),
-}));
-
-vi.mock("@/lib/api/content-api", () => ({
-  useGetContentOptionsQuery: vi.fn(() => ({ data: [] })),
 }));
 
 vi.mock("@/lib/api/display-events", () => ({
@@ -58,12 +47,9 @@ vi.mock("@/lib/api/display-events", () => ({
 
 const useCanMock = vi.mocked(useCan);
 const useDisplayFiltersMock = vi.mocked(useDisplayFilters);
-const useGetDisplayGroupsQueryMock = vi.mocked(useGetDisplayGroupsQuery);
-const useGetDisplayOutputOptionsQueryMock = vi.mocked(
-  useGetDisplayOutputOptionsQuery,
+const useGetDisplaysBootstrapQueryMock = vi.mocked(
+  useGetDisplaysBootstrapQuery,
 );
-const useGetDisplaysQueryMock = vi.mocked(useGetDisplaysQuery);
-const useGetRuntimeOverridesQueryMock = vi.mocked(useGetRuntimeOverridesQuery);
 const useCreateDisplayGroupMutationMock = vi.mocked(
   useCreateDisplayGroupMutation,
 );
@@ -72,7 +58,6 @@ const useUnregisterDisplayMutationMock = vi.mocked(
   useUnregisterDisplayMutation,
 );
 const useUpdateDisplayMutationMock = vi.mocked(useUpdateDisplayMutation);
-const useGetContentOptionsQueryMock = vi.mocked(useGetContentOptionsQuery);
 const subscribeToDisplayLifecycleEventsMock = vi.mocked(
   subscribeToDisplayLifecycleEvents,
 );
@@ -103,22 +88,13 @@ describe("useDisplaysPage", () => {
       handleClearFilters: vi.fn(),
     });
 
-    useGetDisplayGroupsQueryMock.mockReturnValue({
-      data: [{ id: "group-1", name: "Lobby", displayIds: [] }],
-    } as unknown as ReturnType<typeof useGetDisplayGroupsQuery>);
-    useGetDisplayOutputOptionsQueryMock.mockReturnValue({
-      data: ["hdmi-1", "hdmi-2"],
-    } as unknown as ReturnType<typeof useGetDisplayOutputOptionsQuery>);
-    useGetDisplaysQueryMock.mockReturnValue({
-      data: { items: [], total: 0 },
+    useGetDisplaysBootstrapQueryMock.mockReturnValue({
+      data: undefined,
       isLoading: false,
       isError: false,
       error: null,
       refetch: refetchMock,
-    } as ReturnType<typeof useGetDisplaysQuery>);
-    useGetRuntimeOverridesQueryMock.mockReturnValue({
-      data: undefined,
-    } as unknown as ReturnType<typeof useGetRuntimeOverridesQuery>);
+    } as unknown as ReturnType<typeof useGetDisplaysBootstrapQuery>);
     useCreateDisplayGroupMutationMock.mockReturnValue([
       vi.fn(),
     ] as unknown as ReturnType<typeof useCreateDisplayGroupMutation>);
@@ -131,9 +107,6 @@ describe("useDisplaysPage", () => {
     useUpdateDisplayMutationMock.mockReturnValue([
       vi.fn(),
     ] as unknown as ReturnType<typeof useUpdateDisplayMutation>);
-    useGetContentOptionsQueryMock.mockReturnValue({
-      data: [],
-    } as unknown as ReturnType<typeof useGetContentOptionsQuery>);
     subscribeToDisplayLifecycleEventsMock.mockReturnValue({
       close: vi.fn(),
     });
@@ -142,13 +115,13 @@ describe("useDisplaysPage", () => {
   test("uses fixed alphabetical sorting and clears status in filter reset", () => {
     const { result } = renderHook(() => useDisplaysPage());
 
-    expect(useGetDisplaysQueryMock).toHaveBeenCalledWith(
+    expect(useGetDisplaysBootstrapQueryMock).toHaveBeenCalledWith(
       {
         page: 2,
         pageSize: 20,
         q: "operator",
         status: "LIVE",
-        groupIds: ["group-1"],
+        groupNames: ["Lobby"],
         output: "hdmi-1",
         sortBy: "name",
         sortDirection: "asc",
