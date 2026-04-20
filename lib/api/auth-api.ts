@@ -1,7 +1,4 @@
-import {
-  extractApiError,
-  type ApiErrorResponse,
-} from "@/lib/api/contracts";
+import { extractApiError, type ApiErrorResponse } from "@/lib/api/contracts";
 
 interface JsonParseFailurePayload {
   readonly __parseFailure: true;

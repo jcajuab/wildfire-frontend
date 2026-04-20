@@ -35,7 +35,6 @@ let state: InternalAuthState = {
 };
 
 let isBootstrapped = false;
-let snapshotVersion = 0;
 let cachedSnapshot: AuthSnapshot | null = null;
 
 let refreshPromise: Promise<AuthResponse> | null = null;
@@ -114,7 +113,6 @@ function applyAuthResponse(
     user: response.user,
     permissions: clonePermissions(response.permissions),
   };
-  snapshotVersion += 1;
   cachedSnapshot = null;
   notifyListeners();
 
@@ -134,7 +132,6 @@ export function clearAuthSession(shouldBroadcast = true): void {
     user: null,
     permissions: [],
   };
-  snapshotVersion += 1;
   cachedSnapshot = null;
   notifyListeners();
 
@@ -216,7 +213,7 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
     return refreshPromise;
   }
 
-  refreshPromise = (async () => {
+  const promise = (async () => {
     const response = await fetch(`${getBaseUrl()}/auth/refresh`, {
       method: "POST",
       credentials: "include",
@@ -226,24 +223,33 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
     const auth = await parseAuthResponse(response);
     applyAuthResponse(auth, true);
     return auth;
-  })()
+  })();
+
+  refreshPromise = promise;
+
+  promise
+    .then(() => {
+      setTimeout(() => {
+        if (refreshPromise === promise) {
+          refreshPromise = null;
+        }
+      }, 1000);
+    })
     .catch((error) => {
+      if (refreshPromise === promise) {
+        refreshPromise = null;
+      }
       if (error instanceof AuthApiError && error.status === 401) {
         clearAuthSession(true);
       }
-      throw error;
-    })
-    .finally(() => {
-      refreshPromise = null;
     });
 
-  return refreshPromise;
+  return promise;
 }
 
 export async function bootstrapAccessToken(): Promise<void> {
   if (state.accessToken != null && state.accessToken.length > 0) {
     isBootstrapped = true;
-    snapshotVersion += 1;
     cachedSnapshot = null;
     notifyListeners();
     return;
@@ -258,7 +264,6 @@ export async function bootstrapAccessToken(): Promise<void> {
     throw error;
   } finally {
     isBootstrapped = true;
-    snapshotVersion += 1;
     cachedSnapshot = null;
     notifyListeners();
   }

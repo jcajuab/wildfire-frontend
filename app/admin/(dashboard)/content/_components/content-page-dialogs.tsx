@@ -14,9 +14,7 @@ const TiptapEditor = dynamic(
     import("@/components/content/tiptap-editor").then((m) => m.TiptapEditor),
   {
     ssr: false,
-    loading: () => (
-      <div className="h-48 animate-pulse rounded-md bg-muted" />
-    ),
+    loading: () => <div className="h-48 animate-pulse rounded-md bg-muted" />,
   },
 );
 import { Badge } from "@/components/ui/badge";

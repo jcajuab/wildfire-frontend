@@ -18,9 +18,11 @@ const nextConfig: NextConfig = {
       ...(process.env.NEXT_PUBLIC_STORAGE_URL
         ? [
             {
-              protocol: new URL(process.env.NEXT_PUBLIC_STORAGE_URL)
-                .protocol.replace(":", "") as "http" | "https",
+              protocol: new URL(
+                process.env.NEXT_PUBLIC_STORAGE_URL,
+              ).protocol.replace(":", "") as "http" | "https",
               hostname: new URL(process.env.NEXT_PUBLIC_STORAGE_URL).hostname,
+              pathname: "/media/**",
             },
           ]
         : []),

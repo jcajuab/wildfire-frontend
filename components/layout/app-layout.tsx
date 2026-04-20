@@ -8,8 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import dynamic from "next/dynamic";
 
 const AIChatBubble = dynamic(
-  () =>
-    import("@/components/ai/ai-chat-bubble").then((m) => m.AIChatBubble),
+  () => import("@/components/ai/ai-chat-bubble").then((m) => m.AIChatBubble),
   { ssr: false },
 );
 
