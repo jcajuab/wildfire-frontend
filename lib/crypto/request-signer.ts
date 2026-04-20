@@ -37,7 +37,10 @@ export async function createSignedHeaders(input: {
   const nonce = crypto.randomUUID();
 
   const url = new URL(input.url, globalThis.location?.origin ?? "http://localhost");
-  const pathWithQuery = `${url.pathname}${url.search}`;
+  // Strip the dev-proxy prefix so the signed path matches what the
+  // backend actually sees (e.g. /v1/... instead of /api/proxy/v1/...).
+  const pathname = url.pathname.replace(/^\/api\/proxy\//, "/");
+  const pathWithQuery = `${pathname}${url.search}`;
   const payload = [
     input.method.toUpperCase(),
     pathWithQuery,
