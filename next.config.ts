@@ -10,23 +10,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   trailingSlash: false,
   images: {
-    remotePatterns: [
-      {
-        protocol: "http",
-        hostname: "localhost",
-      },
-      ...(process.env.NEXT_PUBLIC_STORAGE_URL
-        ? [
-            {
-              protocol: new URL(
-                process.env.NEXT_PUBLIC_STORAGE_URL,
-              ).protocol.replace(":", "") as "http" | "https",
-              hostname: new URL(process.env.NEXT_PUBLIC_STORAGE_URL).hostname,
-              pathname: "/media/**",
-            },
-          ]
-        : []),
-    ],
+    unoptimized: true,
   },
   async rewrites() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
