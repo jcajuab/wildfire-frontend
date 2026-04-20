@@ -20,9 +20,9 @@ async function parseApiPayload<T>(response: Response): Promise<T> {
 
 /** PATCH /auth/profile. Update current user profile and return a replacement auth payload.
  *
- * Disables the automatic 401 retry in authFetch because the backend may rotate
- * the session on profile changes, which would invalidate the refresh token and
- * cause a cascading 401 → clearAuthSession → redirect to login.
+ * For safe fields (name, timezone) we disable the 401→refresh→clearSession
+ * cascade so the user stays logged in even if the backend rejects the update.
+ * For identity fields (username, email) a 401 is expected to revoke the session.
  */
 export async function updateCurrentUserProfile(payload: {
   name?: string;
@@ -30,6 +30,9 @@ export async function updateCurrentUserProfile(payload: {
   username?: string;
   email?: string | null;
 }): Promise<AuthResponse> {
+  const isSafeFieldOnly =
+    payload.username === undefined && payload.email === undefined;
+
   const baseUrl = getBaseUrl();
   const response = await authFetch(
     `${baseUrl}/auth/profile`,
@@ -40,7 +43,7 @@ export async function updateCurrentUserProfile(payload: {
       },
       body: JSON.stringify(payload),
     },
-    { retryOn401: false },
+    { retryOn401: !isSafeFieldOnly },
   );
 
   return parseApiPayload<AuthResponse>(response);
@@ -70,7 +73,8 @@ const AVATAR_UPLOAD_TIMEOUT_MS = 30_000;
 
 /** PUT /auth/me/avatar. Upload or replace current user avatar. Returns full auth payload; use updateSession to refresh.
  *
- * Disables 401 retry — same rationale as updateCurrentUserProfile.
+ * Disables 401 retry — avatar upload is a safe operation that should never
+ * revoke the session. If the backend returns 401, show an error instead of logging out.
  */
 export async function uploadAvatar(file: File): Promise<AuthResponse> {
   const baseUrl = getBaseUrl();

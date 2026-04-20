@@ -322,11 +322,20 @@ export async function ensureFreshAccessToken(): Promise<string | null> {
     return state.accessToken;
   }
 
+  // Snapshot the full auth state before refresh. If the refresh fails,
+  // refreshAccessToken() calls clearAuthSession() which wipes everything.
+  // We restore the pre-refresh state so the caller can still attempt its
+  // request with the old (possibly still valid) token.
+  const stateBeforeRefresh = { ...state };
   try {
     const refreshed = await refreshAccessToken();
     return refreshed.accessToken;
   } catch {
-    return state.accessToken;
+    // Restore the auth state that was wiped by the failed refresh.
+    state = stateBeforeRefresh;
+    cachedSnapshot = null;
+    notifyListeners();
+    return stateBeforeRefresh.accessToken;
   }
 }
 
