@@ -3,13 +3,14 @@
 import Image from "next/image";
 import { type ReactElement, useEffect, useMemo, useState } from "react";
 import { getBaseUrl } from "@/lib/api/base-query";
+import { authFetch } from "@/lib/auth-session";
 
 interface DisplayPreviewProps {
   readonly displayId: string;
   readonly displayName: string;
 }
 
-const REFRESH_MS = 10_000;
+const REFRESH_MS = 30_000;
 
 export function DisplayPreview({
   displayId,
@@ -35,11 +36,12 @@ export function DisplayPreview({
       setImageUrl(nextImageUrl);
     };
 
+    let consecutiveFailures = 0;
+
     const fetchPreview = async () => {
       try {
-        const response = await fetch(endpointUrl, {
+        const response = await authFetch(endpointUrl, {
           method: "GET",
-          credentials: "include",
           cache: "no-store",
         });
         if (cancelled) {
@@ -47,10 +49,12 @@ export function DisplayPreview({
         }
 
         if (response.status === 204 || !response.ok) {
+          consecutiveFailures++;
           applyImage(null);
           return;
         }
 
+        consecutiveFailures = 0;
         const blob = await response.blob();
         if (cancelled) {
           return;
@@ -70,6 +74,10 @@ export function DisplayPreview({
 
     void fetchPreview();
     const timer = setInterval(() => {
+      // Back off when the preview is consistently unavailable.
+      if (consecutiveFailures >= 3) {
+        return;
+      }
       void fetchPreview();
     }, REFRESH_MS);
 

@@ -12,16 +12,9 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (!apiUrl || apiUrl === "") return [];
-    return [
-      {
-        source: "/api/proxy/:path*",
-        destination: `${apiUrl}/:path*`,
-      },
-    ];
-  },
+  // API proxy is handled by app/api/proxy/[...path]/route.ts which
+  // rewrites Set-Cookie paths so refresh-token cookies survive the
+  // /api/proxy prefix.
   experimental: {
     optimizePackageImports: [
       "@tabler/icons-react",

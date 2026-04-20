@@ -36,7 +36,7 @@ export async function createSignedHeaders(input: {
   const timestamp = new Date().toISOString();
   const nonce = crypto.randomUUID();
 
-  const url = new URL(input.url);
+  const url = new URL(input.url, globalThis.location?.origin ?? "http://localhost");
   const pathWithQuery = `${url.pathname}${url.search}`;
   const payload = [
     input.method.toUpperCase(),

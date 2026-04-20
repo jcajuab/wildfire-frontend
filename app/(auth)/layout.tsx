@@ -22,7 +22,7 @@ export default function AuthLayout({
           <p className="max-w-md text-4xl font-semibold leading-tight">
             WILDFIRE is your campus digital signage platform
           </p>
-          <p className="max-w-md text-lg text-primary-foreground/80">
+          <p className="max-w-md text-lg text-primary-foreground/90">
             Plan content, publish schedules, and keep every screen in sync
           </p>
         </div>
