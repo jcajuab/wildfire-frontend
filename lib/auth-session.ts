@@ -17,6 +17,7 @@ import type { PermissionType } from "@/types/permission";
 
 const AUTH_CHANNEL_NAME = "wildfire_auth";
 const ACCESS_TOKEN_REFRESH_THRESHOLD_MS = 60_000;
+const SESSION_HINT_KEY = "wildfire_has_session";
 
 interface InternalAuthState {
   accessToken: string | null;
@@ -114,6 +115,13 @@ function applyAuthResponse(
     permissions: clonePermissions(response.permissions),
   };
   cachedSnapshot = null;
+
+  try {
+    sessionStorage.setItem(SESSION_HINT_KEY, "1");
+  } catch {
+    // sessionStorage may be unavailable (SSR, private browsing quota).
+  }
+
   notifyListeners();
 
   if (shouldBroadcast) {
@@ -133,6 +141,13 @@ export function clearAuthSession(shouldBroadcast = true): void {
     permissions: [],
   };
   cachedSnapshot = null;
+
+  try {
+    sessionStorage.removeItem(SESSION_HINT_KEY);
+  } catch {
+    // sessionStorage may be unavailable.
+  }
+
   notifyListeners();
 
   if (shouldBroadcast) {
@@ -249,6 +264,23 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
 
 export async function bootstrapAccessToken(): Promise<void> {
   if (state.accessToken != null && state.accessToken.length > 0) {
+    isBootstrapped = true;
+    cachedSnapshot = null;
+    notifyListeners();
+    return;
+  }
+
+  // Skip the refresh attempt if we have no evidence of a prior session.
+  // This avoids a wasted 401 on the login page for first-time visitors.
+  let hasSessionHint = false;
+  try {
+    hasSessionHint = sessionStorage.getItem(SESSION_HINT_KEY) === "1";
+  } catch {
+    // sessionStorage may be unavailable — fall through to refresh attempt.
+    hasSessionHint = true;
+  }
+
+  if (!hasSessionHint) {
     isBootstrapped = true;
     cachedSnapshot = null;
     notifyListeners();

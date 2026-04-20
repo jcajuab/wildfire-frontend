@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   AuthApiError,
@@ -52,8 +52,11 @@ export function useUsersHandlers({
   const [updateUser] = useUpdateUserMutation();
   const [setUserRoles] = useSetUserRolesMutation();
 
+  const canCreateUserRef = useRef(canCreateUser);
+  canCreateUserRef.current = canCreateUser;
+
   const loadInvitations = useCallback(async (): Promise<void> => {
-    if (!canCreateUser) {
+    if (!canCreateUserRef.current) {
       setInvitations([]);
       return;
     }
@@ -67,7 +70,7 @@ export function useUsersHandlers({
     } finally {
       setIsInvitationsLoading(false);
     }
-  }, [canCreateUser, setInvitations]);
+  }, [setInvitations]);
 
   const handleInvite = useCallback(
     async (

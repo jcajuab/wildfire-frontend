@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -176,7 +176,10 @@ export function useUsersPage(): UseUsersPageResult {
   });
 
   const { loadInvitations } = handlers;
+  const invitationsLoadedRef = useRef(false);
   useEffect(() => {
+    if (invitationsLoadedRef.current) return;
+    invitationsLoadedRef.current = true;
     void loadInvitations();
   }, [loadInvitations]);
 

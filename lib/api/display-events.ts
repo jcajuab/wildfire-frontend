@@ -1,4 +1,8 @@
 import { getBaseUrl } from "@/lib/api/base-query";
+import {
+  ensureFreshAccessToken,
+  getAuthorizationHeaders,
+} from "@/lib/auth-session";
 import type { DisplayStatus } from "@/types/display";
 
 export type DisplayLifecycleEvent =
@@ -133,28 +137,120 @@ const parseDisplayLifecycleEvent = (
   };
 };
 
+/**
+ * Parse a single SSE line buffer into event type + data pairs, then dispatch.
+ */
+function parseSseChunk(
+  buffer: string,
+  onParsed: (eventType: string, data: string) => void,
+): string {
+  const lines = buffer.split("\n");
+  // Last element may be an incomplete line — keep it for the next chunk.
+  const remainder = lines.pop() ?? "";
+
+  let currentEvent = "";
+  let currentData = "";
+
+  for (const line of lines) {
+    if (line.startsWith("event:")) {
+      currentEvent = line.slice(6).trim();
+    } else if (line.startsWith("data:")) {
+      currentData += (currentData ? "\n" : "") + line.slice(5).trim();
+    } else if (line === "") {
+      // Empty line = end of an SSE message.
+      if (currentData) {
+        onParsed(currentEvent || "message", currentData);
+      }
+      currentEvent = "";
+      currentData = "";
+    }
+  }
+
+  return remainder;
+}
+
 export function subscribeToDisplayLifecycleEvents(input: {
   readonly onEvent: (event: DisplayLifecycleEvent) => void;
   readonly baseUrl?: string;
   readonly eventSource?: EventSourceConstructor;
 }): DisplayLifecycleSubscription {
-  const EventSourceImpl = input.eventSource ?? globalThis.EventSource;
-  if (typeof EventSourceImpl !== "function") {
-    throw new Error("EventSource is not available in this environment.");
+  // When an EventSource constructor is explicitly provided (tests), use it.
+  if (input.eventSource) {
+    return subscribeViaEventSource(input as {
+      onEvent: (event: DisplayLifecycleEvent) => void;
+      baseUrl?: string;
+      eventSource: EventSourceConstructor;
+    });
   }
 
-  const stream = new EventSourceImpl(
-    `${input.baseUrl ?? getBaseUrl()}/displays/events`,
-    {
-      withCredentials: true,
+  // Otherwise use fetch-based SSE so we can attach Authorization headers.
+  const controller = new AbortController();
+
+  void (async () => {
+    try {
+      await ensureFreshAccessToken();
+      const url = `${input.baseUrl ?? getBaseUrl()}/displays/events`;
+      const response = await fetch(url, {
+        headers: { ...getAuthorizationHeaders() },
+        credentials: "same-origin",
+        signal: controller.signal,
+      });
+
+      if (!response.ok || !response.body) return;
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (!controller.signal.aborted) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        buffer = parseSseChunk(buffer, (eventType, data) => {
+          try {
+            const parsed = parseDisplayLifecycleEvent(JSON.parse(data));
+            if (
+              parsed &&
+              DISPLAY_LIFECYCLE_EVENT_TYPES.includes(
+                eventType as DisplayLifecycleEventType,
+              )
+            ) {
+              input.onEvent(parsed);
+            }
+          } catch {
+            // Ignore malformed SSE payloads to keep the stream resilient.
+          }
+        });
+      }
+    } catch {
+      // Stream ended or was aborted — silently exit.
+    }
+  })();
+
+  return {
+    close() {
+      controller.abort();
     },
+  };
+}
+
+/**
+ * Legacy EventSource path — used only by tests that inject a mock constructor.
+ */
+function subscribeViaEventSource(input: {
+  readonly onEvent: (event: DisplayLifecycleEvent) => void;
+  readonly baseUrl?: string;
+  readonly eventSource: EventSourceConstructor;
+}): DisplayLifecycleSubscription {
+  const stream = new input.eventSource(
+    `${input.baseUrl ?? getBaseUrl()}/displays/events`,
+    { withCredentials: true },
   );
 
   const handleEvent = (event: Event) => {
     const rawData = readEventData(event);
-    if (rawData == null) {
-      return;
-    }
+    if (rawData == null) return;
 
     try {
       const parsed = parseDisplayLifecycleEvent(JSON.parse(rawData));

@@ -11,6 +11,12 @@ vi.mock("@/lib/crypto/request-signer", () => ({
   createSignedHeaders: vi.fn(),
 }));
 
+vi.mock("@/lib/auth-session", () => ({
+  authFetch: vi.fn((...args: Parameters<typeof fetch>) => fetch(...args)),
+  ensureFreshAccessToken: vi.fn().mockResolvedValue(null),
+  getAuthorizationHeaders: vi.fn().mockReturnValue({}),
+}));
+
 describe("display-api client contract validation", () => {
   const originalFetch = global.fetch;
   const originalApiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -61,11 +67,11 @@ describe("display-api client contract validation", () => {
       minSlugLength: 3,
       maxSlugLength: 120,
     });
-    expect(fetchMock).toHaveBeenCalledWith(
+    const { authFetch: authFetchMock } = await import("@/lib/auth-session");
+    expect(authFetchMock).toHaveBeenCalledWith(
       "http://example.test/v1/displays/registration-constraints",
       expect.objectContaining({
         method: "GET",
-        credentials: "include",
       }),
     );
   });

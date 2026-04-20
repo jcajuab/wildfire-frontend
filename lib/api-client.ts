@@ -18,7 +18,12 @@ async function parseApiPayload<T>(response: Response): Promise<T> {
   return parseApiResponseData<T>(payload);
 }
 
-/** PATCH /auth/profile. Update current user profile and return a replacement auth payload. */
+/** PATCH /auth/profile. Update current user profile and return a replacement auth payload.
+ *
+ * Disables the automatic 401 retry in authFetch because the backend may rotate
+ * the session on profile changes, which would invalidate the refresh token and
+ * cause a cascading 401 → clearAuthSession → redirect to login.
+ */
 export async function updateCurrentUserProfile(payload: {
   name?: string;
   timezone?: string | null;
@@ -26,13 +31,17 @@ export async function updateCurrentUserProfile(payload: {
   email?: string | null;
 }): Promise<AuthResponse> {
   const baseUrl = getBaseUrl();
-  const response = await authFetch(`${baseUrl}/auth/profile`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
+  const response = await authFetch(
+    `${baseUrl}/auth/profile`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     },
-    body: JSON.stringify(payload),
-  });
+    { retryOn401: false },
+  );
 
   return parseApiPayload<AuthResponse>(response);
 }
@@ -59,7 +68,10 @@ export async function changePassword(payload: {
 
 const AVATAR_UPLOAD_TIMEOUT_MS = 30_000;
 
-/** PUT /auth/me/avatar. Upload or replace current user avatar. Returns full auth payload; use updateSession to refresh. */
+/** PUT /auth/me/avatar. Upload or replace current user avatar. Returns full auth payload; use updateSession to refresh.
+ *
+ * Disables 401 retry — same rationale as updateCurrentUserProfile.
+ */
 export async function uploadAvatar(file: File): Promise<AuthResponse> {
   const baseUrl = getBaseUrl();
   const formData = new FormData();
@@ -72,11 +84,15 @@ export async function uploadAvatar(file: File): Promise<AuthResponse> {
   );
 
   try {
-    const response = await authFetch(`${baseUrl}/auth/me/avatar`, {
-      method: "PUT",
-      body: formData,
-      signal: controller.signal,
-    });
+    const response = await authFetch(
+      `${baseUrl}/auth/me/avatar`,
+      {
+        method: "PUT",
+        body: formData,
+        signal: controller.signal,
+      },
+      { retryOn401: false },
+    );
 
     return parseApiPayload<AuthResponse>(response);
   } catch (err) {

@@ -13,6 +13,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { getBaseUrl } from "@/lib/api/base-query";
+import {
+  ensureFreshAccessToken,
+  getAuthorizationHeaders,
+} from "@/lib/auth-session";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   useCloseRegistrationAttemptMutation,
@@ -113,31 +117,68 @@ export function DisplayRegistrationInfoDialog({
     const baseUrl = getBaseUrl();
     if (!baseUrl) return;
 
-    const stream = new EventSource(
-      `${baseUrl}/displays/registration-attempts/${attemptId}/events`,
-      { withCredentials: true },
-    );
+    const controller = new AbortController();
 
-    const onSucceeded = (event: Event): void => {
-      if (!(event instanceof MessageEvent)) return;
+    void (async () => {
       try {
-        const payload = JSON.parse(String(event.data)) as unknown;
-        if (!isRegistrationSucceededEvent(payload)) return;
-        setSuccessMessage(
-          `Device "${payload.slug}" has been registered successfully.`,
-        );
-        onRegistrationSucceeded?.();
-        void rotateCode(attemptId);
-      } catch {
-        // Ignore malformed events to keep stream resilient.
-      }
-    };
+        await ensureFreshAccessToken();
+        const url = `${baseUrl}/displays/registration-attempts/${attemptId}/events`;
+        const response = await fetch(url, {
+          headers: { ...getAuthorizationHeaders() },
+          credentials: "same-origin",
+          signal: controller.signal,
+        });
 
-    stream.addEventListener("registration_succeeded", onSucceeded);
+        if (!response.ok || !response.body) return;
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (!controller.signal.aborted) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          let currentEvent = "";
+          let currentData = "";
+
+          for (const line of lines) {
+            if (line.startsWith("event:")) {
+              currentEvent = line.slice(6).trim();
+            } else if (line.startsWith("data:")) {
+              currentData +=
+                (currentData ? "\n" : "") + line.slice(5).trim();
+            } else if (line === "") {
+              if (currentEvent === "registration_succeeded" && currentData) {
+                try {
+                  const payload = JSON.parse(currentData) as unknown;
+                  if (isRegistrationSucceededEvent(payload)) {
+                    setSuccessMessage(
+                      `Device "${payload.slug}" has been registered successfully.`,
+                    );
+                    onRegistrationSucceeded?.();
+                    void rotateCode(attemptId);
+                  }
+                } catch {
+                  // Ignore malformed events to keep stream resilient.
+                }
+              }
+              currentEvent = "";
+              currentData = "";
+            }
+          }
+        }
+      } catch {
+        // Stream ended or was aborted — silently exit.
+      }
+    })();
 
     return () => {
-      stream.removeEventListener("registration_succeeded", onSucceeded);
-      stream.close();
+      controller.abort();
     };
   }, [open, attemptId, onRegistrationSucceeded, rotateCode]);
 

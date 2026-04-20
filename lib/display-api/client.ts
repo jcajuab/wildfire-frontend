@@ -454,12 +454,8 @@ export async function createRegistrationSession(
 
 export async function fetchDisplayRegistrationConstraints(): Promise<DisplayRegistrationConstraints> {
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/displays/registration-constraints`, {
+  const response = await authFetch(`${baseUrl}/displays/registration-constraints`, {
     method: "GET",
-    credentials: "include",
-    headers: {
-      ...getDevOnlyRequestHeaders(),
-    },
   });
 
   if (!response.ok) {

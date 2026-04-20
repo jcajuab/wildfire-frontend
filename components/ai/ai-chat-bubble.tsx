@@ -13,7 +13,7 @@ import { IconMessageChatbot, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { useAICredentials } from "@/hooks/use-ai-credentials";
+import { useGetAICredentialsQuery } from "@/lib/api/ai-credentials-api";
 
 const AIChat = dynamic(
   () => import("@/components/ai/ai-chat").then((m) => m.AIChat),
@@ -35,9 +35,12 @@ const TOP_PAD = 16; // breathing room at top
 
 export function AIChatBubble(): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
+  const [hasRequestedOpen, setHasRequestedOpen] = useState(false);
   const [panelHeight, setPanelHeight] = useState(PANEL_HEIGHT_MAX);
   const y = useMotionValue(0);
-  const { refetch: refetchCredentials } = useAICredentials();
+  const { refetch: refetchCredentials } = useGetAICredentialsQuery(undefined, {
+    skip: !hasRequestedOpen,
+  });
   const prefersReducedMotion = useReducedMotion();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const draggedRef = useRef(false);
@@ -168,17 +171,20 @@ export function AIChatBubble(): ReactElement {
             setIsOpen(false);
             return;
           }
-          void refetchCredentials().then((fresh) => {
-            if (fresh.length === 0) {
-              toast.error("Please provide an API key in Settings first.", {
-                description:
-                  "Go to Settings > AI Provider Credentials to configure.",
-                duration: 5000,
-              });
-              return;
-            }
-            setIsOpen(true);
-          });
+          setHasRequestedOpen(true);
+          void refetchCredentials()
+            .unwrap()
+            .then((fresh) => {
+              if (fresh.length === 0) {
+                toast.error("Please provide an API key in Settings first.", {
+                  description:
+                    "Go to Settings > AI Provider Credentials to configure.",
+                  duration: 5000,
+                });
+                return;
+              }
+              setIsOpen(true);
+            });
         }}
         className="size-14 rounded-full shadow-lg"
       >
