@@ -38,7 +38,7 @@ export function useAIChat({
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
-        api: "/api/ai/chat",
+        api: "/api/v1/ai/chat",
         headers: () => getAuthorizationHeaders(),
         prepareSendMessagesRequest: ({
           messages,
