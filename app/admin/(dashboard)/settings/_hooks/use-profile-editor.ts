@@ -22,6 +22,7 @@ interface UseProfileEditorProps {
   readonly userUsername: string | undefined;
   readonly userEmail: string | null | undefined;
   readonly updateSession: (response: AuthResponse) => void;
+  readonly logout: () => Promise<void>;
 }
 
 export function useProfileEditor({
@@ -29,6 +30,7 @@ export function useProfileEditor({
   userUsername,
   userEmail,
   updateSession,
+  logout,
 }: UseProfileEditorProps) {
   const initialName = splitName(userName);
   const [firstName, setFirstName] = useState(initialName.first);
@@ -114,6 +116,7 @@ export function useProfileEditor({
         updateSession(response);
         setSavedFirstName(normalizedFirstName);
         setSavedLastName(normalizedLastName);
+        toast.success("Name updated.");
         return true;
       } catch (err) {
         setProfileNameError(
@@ -141,11 +144,10 @@ export function useProfileEditor({
       setIsSavingUsername(true);
       setUsernameError(null);
       try {
-        const response = await updateCurrentUserProfile({
-          username: normalized,
-        });
-        updateSession(response);
+        await updateCurrentUserProfile({ username: normalized });
         setSavedUsername(normalized);
+        toast.success("Username updated. Logging out...");
+        setTimeout(() => void logout(), 1500);
         return true;
       } catch (err) {
         setUsernameError(getApiErrorMessage(err, "Failed to update username."));
@@ -155,7 +157,7 @@ export function useProfileEditor({
         setIsSavingUsername(false);
       }
     },
-    [savedUsername, updateSession],
+    [savedUsername, logout],
   );
 
   const saveEmail = useCallback(
@@ -171,11 +173,10 @@ export function useProfileEditor({
       setIsSavingEmail(true);
       setEmailError(null);
       try {
-        const response = await updateCurrentUserProfile({
-          email: normalized || null,
-        });
-        updateSession(response);
+        await updateCurrentUserProfile({ email: normalized || null });
         setSavedEmail(normalized);
+        toast.success("Email updated. Logging out...");
+        setTimeout(() => void logout(), 1500);
         return true;
       } catch (err) {
         setEmailError(getApiErrorMessage(err, "Failed to update email."));
@@ -185,7 +186,7 @@ export function useProfileEditor({
         setIsSavingEmail(false);
       }
     },
-    [savedEmail, updateSession],
+    [savedEmail, logout],
   );
 
   const handleAvatarUpload = useCallback(

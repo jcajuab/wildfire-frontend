@@ -66,6 +66,7 @@ export function AvatarUploader({
         >
           {avatarUrl && failedAvatarUrl !== avatarUrl ? (
             <Image
+              key={avatarUrl}
               src={avatarUrl}
               alt="Profile picture"
               width={56}

@@ -232,6 +232,7 @@ export function AppSidebar(): ReactElement {
                         {user?.avatarUrl &&
                         failedAvatarUrl !== user.avatarUrl ? (
                           <Image
+                            key={user.avatarUrl}
                             src={user.avatarUrl}
                             alt={`${displayName} avatar`}
                             width={48}

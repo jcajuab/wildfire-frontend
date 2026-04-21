@@ -71,6 +71,7 @@ export function useSettingsPage(): UseSettingsPageResult {
     userUsername: user?.username,
     userEmail: user?.email,
     updateSession,
+    logout,
   });
 
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -102,10 +103,11 @@ export function useSettingsPage(): UseSettingsPageResult {
       newPassword: string;
     }): Promise<void> => {
       await changePassword(data);
-      toast.success("Password updated.");
       setIsPasswordDialogOpen(false);
+      toast.success("Password updated. Logging out...");
+      setTimeout(() => void logout(), 1500);
     },
-    [],
+    [logout],
   );
 
   const handleLogOut = useCallback(async (): Promise<void> => {
