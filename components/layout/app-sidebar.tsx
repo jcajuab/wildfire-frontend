@@ -17,7 +17,7 @@ import {
 } from "@tabler/icons-react";
 import Image from "next/image";
 import type { ComponentType, ReactElement } from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import {
   Sidebar,
@@ -108,6 +108,16 @@ export function AppSidebar(): ReactElement {
   const { isMobile } = useSidebar();
   const mounted = useMounted();
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = useCallback(async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }, [logout]);
   const coreNavItems = useMemo(() => {
     return resolveNavItems(
       getRoutesBySection("core"),
@@ -269,13 +279,14 @@ export function AppSidebar(): ReactElement {
                   ) : null}
                   <DropdownMenuItem
                     variant="destructive"
+                    disabled={isLoggingOut}
                     onSelect={(event) => {
                       event.preventDefault();
-                      void logout();
+                      void handleLogout();
                     }}
                   >
                     <IconLogout className="size-4" />
-                    Log Out
+                    {isLoggingOut ? "Logging out…" : "Log Out"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

@@ -102,7 +102,7 @@ export const PlaylistCard = memo(function PlaylistCard({
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <Badge variant="secondary" className="gap-1">
           <IconPlaylist className="size-4" />
-          {playlist.itemsCount} items
+          {playlist.itemsCount} {playlist.itemsCount === 1 ? "item" : "items"}
         </Badge>
         <Badge variant="secondary" className="gap-1">
           <IconClock className="size-4" />

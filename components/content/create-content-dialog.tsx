@@ -2,7 +2,13 @@
 
 import type { ChangeEvent, ReactElement } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { IconBolt, IconFileText, IconUpload, IconX } from "@tabler/icons-react";
+import {
+  IconBolt,
+  IconFileText,
+  IconLoader2,
+  IconUpload,
+  IconX,
+} from "@tabler/icons-react";
 import { FlashTonePreview } from "@/components/content/flash-tone-preview";
 import {
   SUPPORTED_CONTENT_FILE_LABELS,
@@ -46,17 +52,17 @@ interface CreateContentDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly mode: "upload" | "flash" | "text";
-  readonly onUploadFile: (name: string, file: File) => void;
+  readonly onUploadFile: (name: string, file: File) => void | Promise<void>;
   readonly onCreateFlash: (input: {
     title: string;
     message: string;
     tone: FlashTone;
-  }) => void;
+  }) => void | Promise<void>;
   readonly onCreateText: (input: {
     title: string;
     jsonContent: string;
     htmlContent: string;
-  }) => void;
+  }) => void | Promise<void>;
 }
 
 export function CreateContentDialog({
@@ -76,6 +82,7 @@ export function CreateContentDialog({
   const [textHtmlContent, setTextHtmlContent] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetState = useCallback(() => {
     setTitle("");
@@ -87,6 +94,7 @@ export function CreateContentDialog({
     setTextHtmlContent("");
     setIsDragging(false);
     setFileError(null);
+    setIsSubmitting(false);
   }, []);
 
   const handleClose = useCallback(() => {
@@ -120,26 +128,31 @@ export function CreateContentDialog({
     title,
   ]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (!canSubmit) return;
 
-    if (isUploadMode && selectedFile) {
-      onUploadFile(title.trim(), selectedFile);
-    } else if (isFlashMode) {
-      onCreateFlash({
-        title: title.trim(),
-        message: flashMessage.trim(),
-        tone: flashTone,
-      });
-    } else if (isTextMode) {
-      onCreateText({
-        title: title.trim(),
-        jsonContent: textJsonContent,
-        htmlContent: textHtmlContent,
-      });
-    }
+    setIsSubmitting(true);
+    try {
+      if (isUploadMode && selectedFile) {
+        await onUploadFile(title.trim(), selectedFile);
+      } else if (isFlashMode) {
+        await onCreateFlash({
+          title: title.trim(),
+          message: flashMessage.trim(),
+          tone: flashTone,
+        });
+      } else if (isTextMode) {
+        await onCreateText({
+          title: title.trim(),
+          jsonContent: textJsonContent,
+          htmlContent: textHtmlContent,
+        });
+      }
 
-    handleClose();
+      handleClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [
     canSubmit,
     flashMessage,
@@ -378,15 +391,20 @@ export function CreateContentDialog({
         </div>
 
         <DialogFooter className="sm:justify-between">
-          <Button variant="outline" onClick={handleClose} className="flex-1">
+          <Button variant="outline" onClick={handleClose} disabled={isSubmitting} className="flex-1">
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!canSubmit}
+            disabled={!canSubmit || isSubmitting}
             className="flex-1"
           >
-            {isUploadMode ? (
+            {isSubmitting ? (
+              <>
+                <IconLoader2 className="size-4 animate-spin" />
+                {isUploadMode ? "Uploading…" : "Creating…"}
+              </>
+            ) : isUploadMode ? (
               <>
                 <IconUpload className="size-4" />
                 Upload file

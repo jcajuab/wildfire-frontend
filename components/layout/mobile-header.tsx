@@ -9,7 +9,7 @@ import {
 } from "@tabler/icons-react";
 import Image from "next/image";
 import type { ReactElement } from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +31,16 @@ export function MobileHeader(): ReactElement {
   const { toggleSidebar } = useSidebar();
   const { user, logout, can, isInitialized } = useAuth();
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = useCallback(async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }, [logout]);
 
   const canAccessSettings = isInitialized;
   const homeRoute = useMemo(
@@ -101,13 +111,14 @@ export function MobileHeader(): ReactElement {
           ) : null}
           <DropdownMenuItem
             variant="destructive"
+            disabled={isLoggingOut}
             onSelect={(event) => {
               event.preventDefault();
-              void logout();
+              void handleLogout();
             }}
           >
             <IconLogout className="size-4" />
-            Log Out
+            {isLoggingOut ? "Logging out…" : "Log Out"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

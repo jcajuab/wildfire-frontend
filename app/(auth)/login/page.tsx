@@ -16,9 +16,10 @@ import {
 function LoginForm(): ReactElement {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, isAuthenticated, isInitialized, isLoading, can } = useAuth();
+  const { login, isAuthenticated, isInitialized, can } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const redirectTo = searchParams.get("redirectTo");
   const postLoginRedirect =
@@ -33,6 +34,7 @@ function LoginForm(): ReactElement {
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     setErrorMessage(null);
+    setIsLoggingIn(true);
     const credentials = { username, password };
     try {
       await login(credentials);
@@ -47,6 +49,8 @@ function LoginForm(): ReactElement {
         }
       }
       setErrorMessage(message);
+    } finally {
+      setIsLoggingIn(false);
     }
   }
 
@@ -126,9 +130,9 @@ function LoginForm(): ReactElement {
         <Button
           type="submit"
           className="h-11 w-full rounded-lg text-sm"
-          disabled={isLoading}
+          disabled={isLoggingIn}
         >
-          {isLoading ? "Logging in…" : "Login"}
+          {isLoggingIn ? "Logging in…" : "Login"}
         </Button>
       </form>
     </div>
