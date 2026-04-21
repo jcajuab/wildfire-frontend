@@ -209,6 +209,7 @@ export const DisplayCard = memo(function DisplayCard({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
+                  role="img"
                   className="relative inline-flex size-4 shrink-0 cursor-default items-center justify-center"
                   aria-label={statusLabel}
                 >
@@ -229,6 +230,7 @@ export const DisplayCard = memo(function DisplayCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
+                    role="img"
                     className="inline-flex size-5 items-center justify-center rounded-full text-amber-700"
                     aria-label="Emergency content not set"
                   >

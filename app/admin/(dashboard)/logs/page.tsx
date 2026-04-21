@@ -133,7 +133,7 @@ export default function LogsPage(): ReactElement {
                     }
                   }}
                 >
-                  <SelectTrigger className="w-full justify-between">
+                  <SelectTrigger aria-label="Actor Type" className="w-full justify-between">
                     <SelectValue placeholder="All actor types" />
                   </SelectTrigger>
                   <SelectContent>

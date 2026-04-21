@@ -37,8 +37,18 @@ let state: InternalAuthState = {
 
 let isBootstrapped = false;
 let cachedSnapshot: AuthSnapshot | null = null;
+let bootstrapResolvers: Array<() => void> = [];
 
 let refreshPromise: Promise<AuthResponse> | null = null;
+
+function markBootstrapped(): void {
+  isBootstrapped = true;
+  const resolvers = bootstrapResolvers;
+  bootstrapResolvers = [];
+  for (const resolve of resolvers) {
+    resolve();
+  }
+}
 let broadcastChannel: BroadcastChannel | null = null;
 
 type BroadcastMessage =
@@ -197,6 +207,15 @@ export function getAuthorizationHeaderValue(): string | null {
   return `Bearer ${state.accessToken}`;
 }
 
+export function waitForBootstrap(): Promise<void> {
+  if (isBootstrapped) {
+    return Promise.resolve();
+  }
+  return new Promise<void>((resolve) => {
+    bootstrapResolvers.push(resolve);
+  });
+}
+
 export function getAuthorizationHeaders(): Record<string, string> {
   const authorization = getAuthorizationHeaderValue();
   return authorization == null ? {} : { Authorization: authorization };
@@ -261,7 +280,7 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
 
 export async function bootstrapAccessToken(): Promise<void> {
   if (state.accessToken != null && state.accessToken.length > 0) {
-    isBootstrapped = true;
+    markBootstrapped();
     cachedSnapshot = null;
     notifyListeners();
     return;
@@ -278,7 +297,7 @@ export async function bootstrapAccessToken(): Promise<void> {
   }
 
   if (!hasSessionHint) {
-    isBootstrapped = true;
+    markBootstrapped();
     cachedSnapshot = null;
     notifyListeners();
     return;
@@ -293,7 +312,7 @@ export async function bootstrapAccessToken(): Promise<void> {
     }
     throw error;
   } finally {
-    isBootstrapped = true;
+    markBootstrapped();
     cachedSnapshot = null;
     notifyListeners();
   }

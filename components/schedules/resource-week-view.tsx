@@ -154,7 +154,7 @@ export function ResourceWeekView({
                             <span className="block truncate text-xs font-medium">
                               {schedule.name}
                             </span>
-                            <span className="block truncate text-xs text-muted-foreground">
+                            <span className="block truncate text-xs text-foreground/60">
                               {event.timeLabel}
                             </span>
                           </button>

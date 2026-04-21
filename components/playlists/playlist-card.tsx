@@ -133,7 +133,7 @@ export const PlaylistCard = memo(function PlaylistCard({
                     <div
                       className={cn(
                         RICH_TEXT_PREVIEW_CLASSES,
-                        "text-[6px] leading-tight [&_ol]:ml-2 [&_td]:px-0.5 [&_th]:px-0.5 [&_ul]:ml-2",
+                        "text-[6px] leading-tight [&_ol]:ml-2 [&_td]:px-0.5 [&_th]:px-0.5 [&_ul]:ml-2 [&_*]:!text-inherit",
                       )}
                       dangerouslySetInnerHTML={{
                         __html: sanitizeRichTextHtml(

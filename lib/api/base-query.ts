@@ -9,6 +9,7 @@ import {
   getAuthorizationHeaderValue,
   refreshAccessToken,
   shouldRefreshAccessToken,
+  waitForBootstrap,
 } from "@/lib/auth-session";
 
 export { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/config";
@@ -47,6 +48,8 @@ export const baseQuery: BaseQueryFn<
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
+  await waitForBootstrap();
+
   if (shouldRefreshAccessToken()) {
     try {
       await refreshAccessToken();

@@ -46,7 +46,7 @@ export function GlobalEmergencyButton({
               className={
                 isActive
                   ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
-                  : "bg-sidebar-foreground/10 text-sidebar-foreground hover:bg-destructive/80 hover:text-destructive-foreground [&_svg]:text-sidebar-foreground hover:[&_svg]:text-destructive-foreground"
+                  : "bg-black/5 text-sidebar-foreground hover:bg-destructive/80 hover:text-destructive-foreground [&_svg]:text-sidebar-foreground hover:[&_svg]:text-destructive-foreground"
               }
             >
               <IconAlertTriangle className="size-4" />

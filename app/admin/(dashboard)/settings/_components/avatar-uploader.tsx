@@ -69,9 +69,8 @@ export function AvatarUploader({
               key={avatarUrl}
               src={avatarUrl}
               alt="Profile picture"
-              width={56}
-              height={56}
-              className="size-14 object-cover"
+              fill
+              className="object-cover"
               onError={() => setFailedAvatarUrl(avatarUrl)}
             />
           ) : (
