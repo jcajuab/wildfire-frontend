@@ -70,6 +70,7 @@ export default function DisplayRuntimePage() {
     lastEventAt,
     registration,
     isRegistrationResolved,
+    isViewerMode,
     playlistVersion,
   } = useDisplayRuntime(displaySlug);
 
@@ -165,16 +166,26 @@ export default function DisplayRuntimePage() {
     );
   }
 
-  if (!registration) {
+  if (!registration && !isViewerMode && !manifest) {
+    if (errorMessage) {
+      return (
+        <main className="relative min-h-screen bg-black text-white">
+          <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-black px-4 text-white">
+            <p className="text-sm text-white/80">
+              Unable to load display content. Log in as an admin or register
+              this display.
+            </p>
+            <Link className="underline" href="/admin/displays/register">
+              Open /admin/displays/register to complete registration
+            </Link>
+          </div>
+        </main>
+      );
+    }
     return (
       <main className="relative min-h-screen bg-black text-white">
-        <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-black px-4 text-white">
-          <p className="text-sm text-white/80">
-            This display slug is not registered on this display.
-          </p>
-          <Link className="underline" href="/admin/displays/register">
-            Open /admin/displays/register to complete registration
-          </Link>
+        <div className="absolute left-2 top-2 z-10 rounded bg-black/60 px-2 py-1 text-xs">
+          Loading display
         </div>
       </main>
     );
@@ -184,7 +195,7 @@ export default function DisplayRuntimePage() {
     <main className="relative flex h-screen min-h-screen flex-col overflow-hidden bg-black text-white">
       <h1 className="sr-only">Display content</h1>
       <div className="absolute left-2 top-2 z-10 rounded bg-black/60 px-2 py-1 text-xs">
-        {connectionState}
+        {isViewerMode ? "viewer" : connectionState}
         {lastEventAt ? ` • ${formatTimeOfDay(lastEventAt)}` : ""}
       </div>
       {errorMessage ? (

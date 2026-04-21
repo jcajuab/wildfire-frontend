@@ -616,6 +616,40 @@ export async function postSignedHeartbeat(input: {
   }
 }
 
+export async function fetchViewerManifest(input: {
+  slug: string;
+  ifNoneMatch?: string | null;
+}): Promise<DisplayManifestFetchResult> {
+  const baseUrl = getBaseUrl();
+  const url = `${baseUrl}/displays/by-slug/${encodeURIComponent(input.slug)}/manifest`;
+
+  const response = await authFetch(url, {
+    method: "GET",
+    headers: {
+      ...(input.ifNoneMatch
+        ? { "If-None-Match": `"${input.ifNoneMatch}"` }
+        : {}),
+    },
+  });
+  if (response.status === 304) {
+    const etag = response.headers.get("etag");
+    return {
+      kind: "not-modified",
+      playlistVersion:
+        etag?.replace(/^W\//, "").replace(/^"+|"+$/g, "") ?? null,
+    };
+  }
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response));
+  }
+  return {
+    kind: "ok",
+    manifest: parseDisplayManifest(
+      parseApiResponseData<unknown>(await response.json()),
+    ),
+  };
+}
+
 export async function postSignedSnapshot(input: {
   registration: DisplayRegistrationRecord;
   privateKey: CryptoKey;

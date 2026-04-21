@@ -3,6 +3,7 @@ import { getBaseUrl } from "@/lib/api/base-query";
 import {
   createAuthChallenge,
   fetchSignedManifest,
+  fetchViewerManifest,
   postSignedHeartbeat,
   verifyAuthChallenge,
   type DisplayManifest,
@@ -19,6 +20,7 @@ import { useMounted } from "@/hooks/use-mounted";
 
 const FALLBACK_POLL_MS = 300_000;
 const HEARTBEAT_MS = 30_000;
+const VIEWER_POLL_MS = 30_000;
 
 const createChallengePayload = (input: {
   challengeToken: string;
@@ -44,11 +46,13 @@ export function useDisplayRuntime(displaySlug: string) {
   const [lastEventAt, setLastEventAt] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [playlistVersion, setPlaylistVersion] = useState<string | null>(null);
+  const [isViewerMode, setIsViewerMode] = useState(false);
 
   const lastPlaylistVersionRef = useRef<string | null>(null);
   const manifestRef = useRef<DisplayManifest | null>(null);
   const baseUrl = getBaseUrl();
 
+  // Registered display mode — full crypto auth, SSE, heartbeat
   useEffect(() => {
     if (!registration) {
       return;
@@ -225,6 +229,107 @@ export function useDisplayRuntime(displaySlug: string) {
     };
   }, [baseUrl, registration]);
 
+  // Viewer mode — JWT auth, polling only, no heartbeat/SSE/snapshots
+  useEffect(() => {
+    if (!isRegistrationResolved || registration || !displaySlug) {
+      return;
+    }
+
+    let disposed = false;
+
+    const refreshViewerManifest = async (): Promise<void> => {
+      const result = await fetchViewerManifest({
+        slug: displaySlug,
+        ifNoneMatch: lastPlaylistVersionRef.current,
+      });
+      if (result.kind === "not-modified") {
+        if (result.playlistVersion) {
+          lastPlaylistVersionRef.current = result.playlistVersion;
+        }
+        return;
+      }
+      const payload = result.manifest;
+      const hasMaterialChange =
+        payload.playlistVersion !== lastPlaylistVersionRef.current;
+      setManifest(payload);
+      manifestRef.current = payload;
+      setErrorMessage(null);
+      if (hasMaterialChange) {
+        setPlaylistVersion(payload.playlistVersion);
+      }
+      lastPlaylistVersionRef.current = payload.playlistVersion;
+    };
+
+    const startViewerMode = async (): Promise<(() => void) | null> => {
+      await refreshViewerManifest();
+      setIsViewerMode(true);
+      setConnectionState("connected");
+
+      const pollTimer = setInterval(() => {
+        void refreshViewerManifest().catch((error) => {
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "Failed to poll manifest",
+          );
+        });
+      }, VIEWER_POLL_MS);
+
+      let boundaryTimer: { clear(): void } | null = null;
+
+      const restartBoundaryTimer = (): void => {
+        boundaryTimer?.clear();
+        const currentManifest = manifestRef.current;
+        if (currentManifest) {
+          boundaryTimer = createScheduleBoundaryTimer(
+            currentManifest.schedules,
+            () => {
+              void refreshViewerManifest()
+                .then(() => {
+                  restartBoundaryTimer();
+                })
+                .catch((error) => {
+                  setErrorMessage(
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to refresh manifest at schedule boundary",
+                  );
+                });
+            },
+          );
+        }
+      };
+
+      restartBoundaryTimer();
+
+      return () => {
+        clearInterval(pollTimer);
+        boundaryTimer?.clear();
+      };
+    };
+
+    let cleanup: (() => void) | null = null;
+
+    void startViewerMode()
+      .then((fn) => {
+        if (disposed) {
+          fn?.();
+          return;
+        }
+        cleanup = fn;
+      })
+      .catch((error) => {
+        setErrorMessage(
+          error instanceof Error ? error.message : "Viewer mode unavailable",
+        );
+      });
+
+    return () => {
+      disposed = true;
+      cleanup?.();
+    };
+  }, [isRegistrationResolved, registration, displaySlug]);
+
   return {
     manifest,
     connectionState,
@@ -232,6 +337,7 @@ export function useDisplayRuntime(displaySlug: string) {
     lastEventAt,
     registration,
     isRegistrationResolved,
+    isViewerMode,
     playlistVersion,
   };
 }
