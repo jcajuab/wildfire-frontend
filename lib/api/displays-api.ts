@@ -166,6 +166,7 @@ export const displaysApi = api.injectEndpoints({
         { type: "Display", id: "LIST" },
         { type: "DisplayGroup", id: "LIST" },
         { type: "RuntimeOverrides", id: "GLOBAL" },
+        { type: "Content", id: "LIST" },
       ],
     }),
     getDisplayOptions: build.query<

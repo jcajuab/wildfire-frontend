@@ -13,7 +13,7 @@ import { IconMessageChatbot, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { useGetAICredentialsQuery } from "@/lib/api/ai-credentials-api";
+import { useLazyGetAICredentialsQuery } from "@/lib/api/ai-credentials-api";
 
 const AIChat = dynamic(
   () => import("@/components/ai/ai-chat").then((m) => m.AIChat),
@@ -35,12 +35,9 @@ const TOP_PAD = 16; // breathing room at top
 
 export function AIChatBubble(): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
-  const [hasRequestedOpen, setHasRequestedOpen] = useState(false);
   const [panelHeight, setPanelHeight] = useState(PANEL_HEIGHT_MAX);
   const y = useMotionValue(0);
-  const { refetch: refetchCredentials } = useGetAICredentialsQuery(undefined, {
-    skip: !hasRequestedOpen,
-  });
+  const [triggerGetCredentials] = useLazyGetAICredentialsQuery();
   const prefersReducedMotion = useReducedMotion();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const draggedRef = useRef(false);
@@ -171,8 +168,7 @@ export function AIChatBubble(): ReactElement {
             setIsOpen(false);
             return;
           }
-          setHasRequestedOpen(true);
-          void refetchCredentials()
+          void triggerGetCredentials()
             .unwrap()
             .then((fresh) => {
               if (fresh.length === 0) {
@@ -184,6 +180,9 @@ export function AIChatBubble(): ReactElement {
                 return;
               }
               setIsOpen(true);
+            })
+            .catch(() => {
+              toast.error("Failed to check AI credentials.");
             });
         }}
         className="size-14 rounded-full shadow-lg"

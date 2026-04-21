@@ -206,10 +206,10 @@ describe("refreshAccessToken singleton", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Test 4: 401 on refresh triggers clearAuthSession(true)
+  // Test 4: 401 on refresh does NOT clear session (callers handle it)
   // ---------------------------------------------------------------------------
 
-  test("revoked refresh token (401 on refresh) triggers clearAuthSession(true)", async () => {
+  test("revoked refresh token (401 on refresh) does not clear session — callers decide", async () => {
     vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes("/auth/refresh")) {
@@ -221,13 +221,44 @@ describe("refreshAccessToken singleton", () => {
     const { refreshAccessToken, setAuthSession, getAuthSnapshot } =
       await import("@/lib/auth-session");
 
-    // Seed a valid access token so there is session state to clear.
+    // Seed a valid access token so there is session state to check.
     setAuthSession(makeAuthResponse("old-tok"));
     expect(getAuthSnapshot().accessToken).toBe("old-tok");
 
     await expect(refreshAccessToken()).rejects.toThrow();
 
-    // clearAuthSession(true) should have nulled out the access token.
+    // refreshAccessToken no longer clears the session on 401.
+    // Callers (e.g. bootstrapAccessToken) are responsible for clearing.
+    expect(getAuthSnapshot().accessToken).toBe("old-tok");
+  });
+
+  // ---------------------------------------------------------------------------
+  // Test 5: bootstrapAccessToken clears session on 401
+  // ---------------------------------------------------------------------------
+
+  test("bootstrapAccessToken clears session when refresh returns 401", async () => {
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/auth/refresh")) {
+        return makeErrorResponse(401, "refresh token revoked");
+      }
+      return makeJsonResponse({ ok: true });
+    });
+
+    // Provide a session hint so bootstrapAccessToken attempts a refresh.
+    vi.stubGlobal("sessionStorage", {
+      getItem: (key: string) => (key === "wildfire_has_session" ? "1" : null),
+      setItem: () => {},
+      removeItem: () => {},
+    });
+
+    const { bootstrapAccessToken, getAuthSnapshot } = await import(
+      "@/lib/auth-session"
+    );
+
+    await bootstrapAccessToken();
+
+    // bootstrapAccessToken should have cleared the session on 401.
     expect(getAuthSnapshot().accessToken).toBeNull();
   });
 });

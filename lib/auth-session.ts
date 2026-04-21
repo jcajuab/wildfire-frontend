@@ -250,12 +250,9 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
         }
       }, 1000);
     })
-    .catch((error) => {
+    .catch(() => {
       if (refreshPromise === promise) {
         refreshPromise = null;
-      }
-      if (error instanceof AuthApiError && error.status === 401) {
-        clearAuthSession(true);
       }
     });
 
@@ -291,6 +288,7 @@ export async function bootstrapAccessToken(): Promise<void> {
     await refreshAccessToken();
   } catch (error) {
     if (error instanceof AuthApiError && error.status === 401) {
+      clearAuthSession(true);
       return;
     }
     throw error;
@@ -322,9 +320,8 @@ export async function ensureFreshAccessToken(): Promise<string | null> {
     return state.accessToken;
   }
 
-  // Snapshot the full auth state before refresh. If the refresh fails,
-  // refreshAccessToken() calls clearAuthSession() which wipes everything.
-  // We restore the pre-refresh state so the caller can still attempt its
+  // Snapshot the full auth state before refresh. If the refresh fails we
+  // restore the pre-refresh state so the caller can still attempt its
   // request with the old (possibly still valid) token.
   const stateBeforeRefresh = { ...state };
   try {
