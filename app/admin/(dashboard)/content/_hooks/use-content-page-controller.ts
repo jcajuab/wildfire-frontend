@@ -31,15 +31,18 @@ export function useContentPageController() {
   const dialogState = useContentDialogState();
   const debouncedSearch = useDebounce(filters.search, 500);
 
-  const { data, isLoading, isError, error } = useListContentQuery({
-    page: filters.page,
-    pageSize: PAGE_SIZE,
-    status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
-    type: filters.typeFilter === "all" ? undefined : filters.typeFilter,
-    search: debouncedSearch.trim().length > 0 ? debouncedSearch : undefined,
-    sortBy: "createdAt",
-    sortDirection: "desc",
-  });
+  const { data, isLoading, isError, error } = useListContentQuery(
+    {
+      page: filters.page,
+      pageSize: PAGE_SIZE,
+      status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
+      type: filters.typeFilter === "all" ? undefined : filters.typeFilter,
+      search: debouncedSearch.trim().length > 0 ? debouncedSearch : undefined,
+      sortBy: "createdAt",
+      sortDirection: "desc",
+    },
+    { pollingInterval: 15_000 },
+  );
 
   const searchParams = useSearchParams();
   const previewId = searchParams.get("preview");
