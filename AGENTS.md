@@ -73,7 +73,6 @@ Next.js 16 frontend for the Wildfire digital signage management system. Provides
 - `tailwindcss` v4 -- Utility-first CSS
 - `radix-ui` -- Headless UI primitives (via shadcn/ui)
 - `@base-ui/react` -- Base UI components
-- `framer-motion` -- Animations
 - `pdfjs-dist` -- PDF rendering for display content
 - `shiki` -- Code syntax highlighting
 - `streamdown` + `@streamdown/*` -- Streaming markdown rendering (AI chat)

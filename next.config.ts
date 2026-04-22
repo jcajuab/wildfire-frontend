@@ -31,7 +31,6 @@ const nextConfig: NextConfig = {
       "radix-ui",
       "sonner",
       "cmdk",
-      "framer-motion",
       "lucide-react",
       "nuqs",
       "shiki",
