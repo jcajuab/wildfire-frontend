@@ -14,17 +14,14 @@ shadcn/ui component library. 32 headless UI primitives built on Radix UI with Ta
 | `alert-dialog.tsx`  | Modal alert dialog with confirm/cancel actions (Radix AlertDialog)   |
 | `alert.tsx`         | Inline alert banner with title and description variants              |
 | `badge.tsx`         | Status badge with color variants                                     |
-| `button-group.tsx`  | Grouped button container                                             |
 | `button.tsx`        | Button with variants (default, destructive, outline, ghost, link)    |
 | `card.tsx`          | Card container with header, content, footer                          |
 | `checkbox.tsx`      | Checkbox input (Radix Checkbox)                                      |
 | `collapsible.tsx`   | Collapsible expand/collapse container (Radix Collapsible)            |
 | `combobox.tsx`      | Searchable combobox                                                  |
-| `command.tsx`       | Command palette / combobox (cmdk)                                    |
 | `date-input.tsx`    | Date input field                                                     |
 | `dialog.tsx`        | Modal dialog (Radix Dialog)                                          |
 | `dropdown-menu.tsx` | Context/dropdown menu (Radix DropdownMenu)                           |
-| `hover-card.tsx`    | Hover-triggered card popup (Radix HoverCard)                         |
 | `input-group.tsx`   | Input with prefix/suffix addons                                      |
 | `input.tsx`         | Text input field                                                     |
 | `label.tsx`         | Form label with htmlFor association (Radix Label)                    |
