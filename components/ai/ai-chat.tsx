@@ -112,7 +112,6 @@ export function AIChat() {
   const [conversationId] = useState(() => crypto.randomUUID());
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
-  const [isComposing, setIsComposing] = useState(false);
 
   // Derive effective provider: use selected if available, otherwise first configured
   const provider = configuredProviders.some((p) => p.value === selectedProvider)
@@ -366,8 +365,6 @@ export function AIChat() {
                   style={{ wordBreak: "break-word" }}
                   value={input}
                   onChange={(e) => handleInputChange(e.currentTarget.value)}
-                  onCompositionStart={() => setIsComposing(true)}
-                  onCompositionEnd={() => setIsComposing(false)}
                   onKeyDown={(e) => {
                     if (
                       (e.key === "Enter" || e.key === "Tab") &&
@@ -379,7 +376,6 @@ export function AIChat() {
                     if (
                       e.key === "Enter" &&
                       !e.shiftKey &&
-                      !isComposing &&
                       !e.nativeEvent.isComposing
                     ) {
                       e.preventDefault();

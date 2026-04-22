@@ -2,6 +2,7 @@
 
 import type { DynamicToolUIPart, ToolUIPart } from "ai";
 import type { ComponentProps, ReactNode } from "react";
+import type { BundledLanguage } from "shiki";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -150,7 +151,7 @@ export const ToolOutput = ({
       <CodeBlock code={JSON.stringify(output, null, 2)} language="json" />
     );
   } else if (typeof output === "string") {
-    Output = <CodeBlock code={output} language="json" />;
+    Output = <CodeBlock code={output} language={"text" as BundledLanguage} />;
   }
 
   return (

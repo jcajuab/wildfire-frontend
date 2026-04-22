@@ -8,36 +8,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { createContext, useContext } from "react";
 
-type ToolUIPartApproval =
-  | {
-      id: string;
-      approved?: never;
-      reason?: never;
-    }
-  | {
-      id: string;
-      approved: boolean;
-      reason?: string;
-    }
-  | {
-      id: string;
-      approved: true;
-      reason?: string;
-    }
-  | {
-      id: string;
-      approved: true;
-      reason?: string;
-    }
-  | {
-      id: string;
-      approved: false;
-      reason?: string;
-    }
-  | undefined;
-
 interface ConfirmationContextValue {
-  approval: ToolUIPartApproval;
+  approval: ToolUIPart["approval"];
   state: ToolUIPart["state"];
 }
 
@@ -56,7 +28,7 @@ const useConfirmation = () => {
 };
 
 export type ConfirmationProps = ComponentProps<typeof Alert> & {
-  approval?: ToolUIPartApproval;
+  approval?: ToolUIPart["approval"];
   state: ToolUIPart["state"];
 };
 
@@ -93,13 +65,17 @@ export interface ConfirmationRequestProps {
 export const ConfirmationRequest = ({ children }: ConfirmationRequestProps) => {
   const { state } = useConfirmation();
 
-  // Only show when approval is requested
   if (state !== "approval-requested") {
     return null;
   }
 
   return children;
 };
+
+const isResolvedState = (state: ToolUIPart["state"]) =>
+  state === "approval-responded" ||
+  state === "output-denied" ||
+  state === "output-available";
 
 export interface ConfirmationAcceptedProps {
   children?: ReactNode;
@@ -110,13 +86,7 @@ export const ConfirmationAccepted = ({
 }: ConfirmationAcceptedProps) => {
   const { approval, state } = useConfirmation();
 
-  // Only show when approved and in response states
-  if (
-    !approval?.approved ||
-    (state !== "approval-responded" &&
-      state !== "output-denied" &&
-      state !== "output-available")
-  ) {
+  if (!approval?.approved || !isResolvedState(state)) {
     return null;
   }
 
@@ -132,13 +102,7 @@ export const ConfirmationRejected = ({
 }: ConfirmationRejectedProps) => {
   const { approval, state } = useConfirmation();
 
-  // Only show when rejected and in response states
-  if (
-    approval?.approved !== false ||
-    (state !== "approval-responded" &&
-      state !== "output-denied" &&
-      state !== "output-available")
-  ) {
+  if (approval?.approved !== false || !isResolvedState(state)) {
     return null;
   }
 
@@ -153,7 +117,6 @@ export const ConfirmationActions = ({
 }: ConfirmationActionsProps) => {
   const { state } = useConfirmation();
 
-  // Only show when approval is requested
   if (state !== "approval-requested") {
     return null;
   }
