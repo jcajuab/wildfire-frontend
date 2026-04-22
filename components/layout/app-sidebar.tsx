@@ -9,15 +9,11 @@ import {
   IconPhoto,
   IconList,
   IconPlaylist,
-  IconLogout,
-  IconSettings,
   IconShield,
-  IconUser,
   IconUsers,
 } from "@tabler/icons-react";
-import Image from "next/image";
 import type { ComponentType, ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import {
   Sidebar,
@@ -32,14 +28,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { GlobalEmergencyButton } from "@/components/layout/global-emergency-button";
-import { useMounted } from "@/hooks/use-mounted";
+import { UserMenu } from "@/components/layout/user-menu";
 import { useAuth } from "@/context/auth-context";
 import {
   getRoutesBySection,
@@ -104,34 +94,27 @@ function isActiveRoute(
 
 export function AppSidebar(): ReactElement {
   const pathname = usePathname();
-  const { user, logout, can, isInitialized } = useAuth();
+  const { user, can, isInitialized } = useAuth();
   const { isMobile } = useSidebar();
-  const mounted = useMounted();
-  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = useCallback(async () => {
-    setIsLoggingOut(true);
-    try {
-      await logout();
-    } finally {
-      setIsLoggingOut(false);
-    }
-  }, [logout]);
-  const coreNavItems = useMemo(() => {
-    return resolveNavItems(
-      getRoutesBySection("core"),
-      isInitialized ? can : () => true,
-    );
-  }, [can, isInitialized]);
+  const coreNavItems = useMemo(
+    () =>
+      resolveNavItems(
+        getRoutesBySection("core"),
+        isInitialized ? can : () => true,
+      ),
+    [can, isInitialized],
+  );
 
-  const manageNavItems = useMemo(() => {
-    return resolveNavItems(
-      getRoutesBySection("manage"),
-      isInitialized ? can : () => true,
-    );
-  }, [can, isInitialized]);
-  const canAccessSettings = true;
+  const manageNavItems = useMemo(
+    () =>
+      resolveNavItems(
+        getRoutesBySection("manage"),
+        isInitialized ? can : () => true,
+      ),
+    [can, isInitialized],
+  );
+
   const homeRoute = useMemo(
     () =>
       isInitialized
@@ -160,29 +143,22 @@ export function AppSidebar(): ReactElement {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="gap-1">
-                  {coreNavItems.map((item) => {
-                    const isActive = isActiveRoute(
-                      pathname,
-                      item.href,
-                      item.match,
-                    );
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          asChild
-                          size="default"
-                          isActive={isActive}
-                          className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
-                          tooltip={mounted ? item.title : undefined}
-                        >
-                          <Link href={item.href}>
-                            <item.icon className="size-4" />
-                            <span>{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
+                  {coreNavItems.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        size="default"
+                        isActive={isActiveRoute(pathname, item.href, item.match)}
+                        className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
+                        tooltip={item.title}
+                      >
+                        <Link href={item.href}>
+                          <item.icon className="size-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -195,29 +171,22 @@ export function AppSidebar(): ReactElement {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="gap-1">
-                  {manageNavItems.map((item) => {
-                    const isActive = isActiveRoute(
-                      pathname,
-                      item.href,
-                      item.match,
-                    );
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          asChild
-                          size="default"
-                          isActive={isActive}
-                          className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
-                          tooltip={mounted ? item.title : undefined}
-                        >
-                          <Link href={item.href}>
-                            <item.icon className="size-4" />
-                            <span>{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
+                  {manageNavItems.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        size="default"
+                        isActive={isActiveRoute(pathname, item.href, item.match)}
+                        className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
+                        tooltip={item.title}
+                      >
+                        <Link href={item.href}>
+                          <item.icon className="size-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -231,31 +200,19 @@ export function AppSidebar(): ReactElement {
         <SidebarFooter>
           <SidebarMenu className="gap-1">
             <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+              <UserMenu
+                menuSide="top"
+                menuAlign="center"
+                avatarSize={28}
+                avatarWrapperClassName="size-7"
+                fallbackIconClassName="size-6 text-sidebar-foreground"
+                trigger={({ avatar }) => (
                   <SidebarMenuButton
                     size="lg"
                     className="w-full justify-between text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground"
                   >
                     <div className="flex items-center gap-2">
-                      <div className="flex size-7 items-center justify-center rounded-full bg-sidebar-foreground/15">
-                        {user?.avatarUrl &&
-                        failedAvatarUrl !== user.avatarUrl ? (
-                          <Image
-                            key={user.avatarUrl}
-                            src={user.avatarUrl}
-                            alt={`${displayName} avatar`}
-                            width={48}
-                            height={48}
-                            className="size-7 rounded-full object-cover"
-                            onError={() =>
-                              setFailedAvatarUrl(user?.avatarUrl ?? null)
-                            }
-                          />
-                        ) : (
-                          <IconUser className="size-6 text-sidebar-foreground" />
-                        )}
-                      </div>
+                      {avatar}
                       <div className="flex min-w-0 flex-col items-start">
                         <span className="truncate text-sm font-medium leading-5">
                           {displayName}
@@ -267,29 +224,8 @@ export function AppSidebar(): ReactElement {
                     </div>
                     <IconDotsVertical className="size-4 text-sidebar-foreground" />
                   </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" align="center" sideOffset={8}>
-                  {canAccessSettings ? (
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin/settings">
-                        <IconSettings className="size-4" />
-                        Settings
-                      </Link>
-                    </DropdownMenuItem>
-                  ) : null}
-                  <DropdownMenuItem
-                    variant="destructive"
-                    disabled={isLoggingOut}
-                    onSelect={(event) => {
-                      event.preventDefault();
-                      void handleLogout();
-                    }}
-                  >
-                    <IconLogout className="size-4" />
-                    {isLoggingOut ? "Logging out…" : "Log Out"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                )}
+              />
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>

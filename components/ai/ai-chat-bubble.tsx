@@ -13,7 +13,7 @@ import { IconMessageChatbot, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { useLazyGetAICredentialsQuery } from "@/lib/api/ai-credentials-api";
+import { useAICredentials } from "@/hooks/use-ai-credentials";
 
 const AIChat = dynamic(
   () => import("@/components/ai/ai-chat").then((m) => m.AIChat),
@@ -37,7 +37,7 @@ export function AIChatBubble(): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
   const [panelHeight, setPanelHeight] = useState(PANEL_HEIGHT_MAX);
   const y = useMotionValue(0);
-  const [triggerGetCredentials] = useLazyGetAICredentialsQuery();
+  const { credentials } = useAICredentials();
   const prefersReducedMotion = useReducedMotion();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const draggedRef = useRef(false);
@@ -168,22 +168,15 @@ export function AIChatBubble(): ReactElement {
             setIsOpen(false);
             return;
           }
-          void triggerGetCredentials()
-            .unwrap()
-            .then((fresh) => {
-              if (fresh.length === 0) {
-                toast.error("Please provide an API key in Settings first.", {
-                  description:
-                    "Go to Settings > AI Provider Credentials to configure.",
-                  duration: 5000,
-                });
-                return;
-              }
-              setIsOpen(true);
-            })
-            .catch(() => {
-              toast.error("Failed to check AI credentials.");
+          if (credentials.length === 0) {
+            toast.error("Please provide an API key in Settings first.", {
+              description:
+                "Go to Settings > AI Provider Credentials to configure.",
+              duration: 5000,
             });
+            return;
+          }
+          setIsOpen(true);
         }}
         className="size-14 rounded-full shadow-lg"
       >

@@ -9,7 +9,7 @@ import { CalendarHeader } from "@/components/schedules/calendar-header";
 import { CreateScheduleDialog } from "@/components/schedules/create-schedule-dialog";
 import { EditScheduleDialog } from "@/components/schedules/edit-schedule-dialog";
 import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog";
-import { DashboardPage } from "@/components/layout/dashboard-page";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -54,11 +54,9 @@ export default function SchedulesPage(): ReactElement {
   } = useSchedulesPage();
 
   return (
-    <DashboardPage.Root>
-      <DashboardPage.Header
-        title="Schedules"
-        actions={
-          <Can permission="schedules:create">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+      <PageHeader title="Schedules">
+        <Can permission="schedules:create">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button>
@@ -80,11 +78,10 @@ export default function SchedulesPage(): ReactElement {
               </DropdownMenuContent>
             </DropdownMenu>
           </Can>
-        }
-      />
+      </PageHeader>
 
-      <DashboardPage.Body>
-        <DashboardPage.Content>
+      <section className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2.5 sm:px-8">
             <CalendarHeader
               currentDate={currentDate}
@@ -113,10 +110,12 @@ export default function SchedulesPage(): ReactElement {
               displayGroups={sortedDisplayGroups}
             />
           </div>
-        </DashboardPage.Content>
+        </div>
 
-        <DashboardPage.Footer>{null}</DashboardPage.Footer>
-      </DashboardPage.Body>
+        <footer className="empty:hidden border-t border-border bg-background/80">
+          {null}
+        </footer>
+      </section>
 
       {/* Create Schedule Dialog */}
       <CreateScheduleDialog
@@ -150,6 +149,6 @@ export default function SchedulesPage(): ReactElement {
         availableFlashContents={availableFlashContents}
         availableDisplays={availableDisplays}
       />
-    </DashboardPage.Root>
+    </div>
   );
 }

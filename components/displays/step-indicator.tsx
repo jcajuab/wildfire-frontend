@@ -20,17 +20,16 @@ export function StepIndicator({
         const stepNumber = (index + 1) as WizardStep;
         const isCompleted = stepNumber < currentStep;
         const isCurrent = stepNumber === currentStep;
+        const isActive = isCompleted || isCurrent;
 
         return (
           <div key={label} className="flex items-center">
             <div className="flex flex-col items-center gap-1">
               <div
                 className={`flex size-7 items-center justify-center rounded-full text-xs font-medium ${
-                  isCompleted
+                  isActive
                     ? "bg-primary text-primary-foreground"
-                    : isCurrent
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 {isCompleted ? <IconCheck className="size-4" /> : stepNumber}

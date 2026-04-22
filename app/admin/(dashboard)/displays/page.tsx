@@ -13,7 +13,7 @@ import { DisplayGrid } from "@/components/displays/display-grid";
 import { DisplaysToolbar } from "@/components/displays/displays-toolbar";
 import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
 import { ViewDisplayDialog } from "@/components/displays/view-display-dialog";
-import { DashboardPage } from "@/components/layout/dashboard-page";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PAGE_SIZE, useDisplaysPage } from "./_hooks/use-displays-page";
@@ -66,12 +66,10 @@ export default function DisplaysPage(): ReactElement {
   } = useDisplaysPage();
 
   return (
-    <DashboardPage.Root>
-      <DashboardPage.Header
-        title="Displays"
-        actions={
-          <>
-            <Can permission="displays:update">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+      <PageHeader title="Displays">
+        <>
+          <Can permission="displays:update">
               <Button
                 variant="outline"
                 onClick={() => setIsGroupManagerOpen(true)}
@@ -81,24 +79,23 @@ export default function DisplaysPage(): ReactElement {
                 Add Display Group
               </Button>
             </Can>
-            <Can permission="displays:create">
-              <Button onClick={() => setIsAddInfoDialogOpen(true)}>
-                <IconPlus className="size-4" aria-hidden="true" />
-                Register Display
-              </Button>
-            </Can>
-          </>
-        }
-      />
+          <Can permission="displays:create">
+            <Button onClick={() => setIsAddInfoDialogOpen(true)}>
+              <IconPlus className="size-4" aria-hidden="true" />
+              Register Display
+            </Button>
+          </Can>
+        </>
+      </PageHeader>
 
       {isError ? (
-        <DashboardPage.Banner tone="danger">
+        <div className="mx-6 mt-3 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-2.5 text-sm text-destructive sm:mx-8">
           {loadErrorMessage}
-        </DashboardPage.Banner>
+        </div>
       ) : null}
 
-      <DashboardPage.Body>
-        <DashboardPage.Content>
+      <section className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
             <DisplaysToolbar
               statusFilter={statusFilter}
@@ -149,9 +146,9 @@ export default function DisplaysPage(): ReactElement {
               />
             )}
           </div>
-        </DashboardPage.Content>
+        </div>
 
-        <DashboardPage.Footer>
+        <footer className="empty:hidden border-t border-border bg-background/80">
           <PaginationFooter
             page={page}
             pageSize={PAGE_SIZE}
@@ -159,8 +156,8 @@ export default function DisplaysPage(): ReactElement {
             onPageChange={setPage}
             variant="compact"
           />
-        </DashboardPage.Footer>
-      </DashboardPage.Body>
+        </footer>
+      </section>
 
       <DisplayRegistrationInfoDialog
         open={isAddInfoDialogOpen}
@@ -205,6 +202,6 @@ export default function DisplaysPage(): ReactElement {
         errorFallback="Failed to unregister display."
         onConfirm={handleConfirmUnregisterDisplay}
       />
-    </DashboardPage.Root>
+    </div>
   );
 }

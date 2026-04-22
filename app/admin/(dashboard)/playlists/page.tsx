@@ -8,7 +8,7 @@ import { IconPlus } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
-import { DashboardPage } from "@/components/layout/dashboard-page";
+import { PageHeader } from "@/components/layout/page-header";
 import { PlaylistGrid } from "@/components/playlists/playlist-grid";
 import { SearchControl } from "@/components/common/search-control";
 import { PlaylistFilterPopover } from "@/components/playlists/playlist-filter-popover";
@@ -51,23 +51,20 @@ export default function PlaylistsPage(): ReactElement {
   }, [manageId, router]);
 
   return (
-    <DashboardPage.Root>
-      <DashboardPage.Header
-        title="Playlists"
-        actions={
-          <Can permission="playlists:create">
-            <Button asChild>
-              <Link href="/admin/playlists/create">
-                <IconPlus className="size-4" />
-                Create Playlist
-              </Link>
-            </Button>
-          </Can>
-        }
-      />
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+      <PageHeader title="Playlists">
+        <Can permission="playlists:create">
+          <Button asChild>
+            <Link href="/admin/playlists/create">
+              <IconPlus className="size-4" />
+              Create Playlist
+            </Link>
+          </Button>
+        </Can>
+      </PageHeader>
 
-      <DashboardPage.Body>
-        <DashboardPage.Content>
+      <section className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
             <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
               <PlaylistFilterPopover
@@ -93,9 +90,9 @@ export default function PlaylistsPage(): ReactElement {
               onDelete={canDeletePlaylist ? handleDeletePlaylist : undefined}
             />
           </div>
-        </DashboardPage.Content>
+        </div>
 
-        <DashboardPage.Footer>
+        <footer className="empty:hidden border-t border-border bg-background/80">
           <PaginationFooter
             page={page}
             pageSize={PAGE_SIZE}
@@ -103,8 +100,8 @@ export default function PlaylistsPage(): ReactElement {
             onPageChange={setPage}
             variant="compact"
           />
-        </DashboardPage.Footer>
-      </DashboardPage.Body>
+        </footer>
+      </section>
 
       <ConfirmActionDialog
         open={deleteDialogOpen}
@@ -125,6 +122,6 @@ export default function PlaylistsPage(): ReactElement {
           setPlaylistToDelete(null);
         }}
       />
-    </DashboardPage.Root>
+    </div>
   );
 }

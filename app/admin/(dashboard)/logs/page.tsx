@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react";
 
-import { DashboardPage } from "@/components/layout/dashboard-page";
+import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { LogsTable } from "@/components/logs/logs-table";
 import { PaginationFooter } from "@/components/common/pagination-footer";
@@ -68,25 +68,22 @@ export default function LogsPage(): ReactElement {
   } = useLogsPage();
 
   return (
-    <DashboardPage.Root>
-      <DashboardPage.Header
-        title="Logs"
-        actions={
-          canExport ? (
-            <AuditExportPopover
-              action={filters.action}
-              actorType={filters.actorType}
-              resourceType={filters.resourceType}
-              parsedStatus={filters.parsedStatus}
-              requestId={filters.requestId}
-              total={total}
-            />
-          ) : null
-        }
-      />
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+      <PageHeader title="Logs">
+        {canExport ? (
+          <AuditExportPopover
+            action={filters.action}
+            actorType={filters.actorType}
+            resourceType={filters.resourceType}
+            parsedStatus={filters.parsedStatus}
+            requestId={filters.requestId}
+            total={total}
+          />
+        ) : null}
+      </PageHeader>
 
-      <DashboardPage.Body>
-        <DashboardPage.Content>
+      <section className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2.5 sm:px-8">
             <div className="grid grid-cols-1 gap-x-3 gap-y-2 md:grid-cols-2 xl:grid-cols-4">
               <div className="space-y-1">
@@ -242,9 +239,9 @@ export default function LogsPage(): ReactElement {
               </div>
             )}
           </div>
-        </DashboardPage.Content>
+        </div>
 
-        <DashboardPage.Footer>
+        <footer className="empty:hidden border-t border-border bg-background/80">
           <PaginationFooter
             page={filters.page}
             pageSize={PAGE_SIZE}
@@ -252,8 +249,8 @@ export default function LogsPage(): ReactElement {
             onPageChange={filters.setPage}
             variant="numbered"
           />
-        </DashboardPage.Footer>
-      </DashboardPage.Body>
-    </DashboardPage.Root>
+        </footer>
+      </section>
+    </div>
   );
 }

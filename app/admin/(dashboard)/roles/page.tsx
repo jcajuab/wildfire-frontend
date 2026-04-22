@@ -7,7 +7,7 @@ import { IconPlus } from "@tabler/icons-react";
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { EmptyState } from "@/components/common/empty-state";
-import { DashboardPage } from "@/components/layout/dashboard-page";
+import { PageHeader } from "@/components/layout/page-header";
 import { SearchControl } from "@/components/common/search-control";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { RolesTable } from "@/components/roles/roles-table";
@@ -41,53 +41,50 @@ export default function RolesPage(): ReactElement {
 
   if (rolesLoading) {
     return (
-      <DashboardPage.Root>
-        <DashboardPage.Header title="Roles" />
-        <DashboardPage.Body>
-          <DashboardPage.Content>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+        <PageHeader title="Roles" />
+        <section className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
               <p className="text-muted-foreground">Loading roles…</p>
             </div>
-          </DashboardPage.Content>
-        </DashboardPage.Body>
-      </DashboardPage.Root>
+          </div>
+        </section>
+      </div>
     );
   }
 
   if (rolesError) {
     return (
-      <DashboardPage.Root>
-        <DashboardPage.Header title="Roles" />
-        <DashboardPage.Body>
-          <DashboardPage.Content>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+        <PageHeader title="Roles" />
+        <section className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
               <p className="text-destructive">
                 Failed to load roles. Check the API and try again.
               </p>
             </div>
-          </DashboardPage.Content>
-        </DashboardPage.Body>
-      </DashboardPage.Root>
+          </div>
+        </section>
+      </div>
     );
   }
 
   return (
-    <DashboardPage.Root>
-      <DashboardPage.Header
-        title="Roles"
-        actions={
-          <Can permission="roles:create">
-            <Button asChild>
-              <Link href={ROLE_CREATE_PATH}>
-                <IconPlus className="size-4" />
-                Create Role
-              </Link>
-            </Button>
-          </Can>
-        }
-      />
-      <DashboardPage.Body>
-        <DashboardPage.Content>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+      <PageHeader title="Roles">
+        <Can permission="roles:create">
+          <Button asChild>
+            <Link href={ROLE_CREATE_PATH}>
+              <IconPlus className="size-4" />
+              Create Role
+            </Link>
+          </Button>
+        </Can>
+      </PageHeader>
+      <section className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
             <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-base font-semibold">Search Results</h2>
@@ -131,9 +128,9 @@ export default function RolesPage(): ReactElement {
               </div>
             )}
           </div>
-        </DashboardPage.Content>
+        </div>
 
-        <DashboardPage.Footer>
+        <footer className="empty:hidden border-t border-border bg-background/80">
           <PaginationFooter
             page={page}
             pageSize={PAGE_SIZE}
@@ -141,8 +138,8 @@ export default function RolesPage(): ReactElement {
             onPageChange={setPage}
             variant="numbered"
           />
-        </DashboardPage.Footer>
-      </DashboardPage.Body>
+        </footer>
+      </section>
 
       <ConfirmActionDialog
         open={isDeleteDialogOpen}
@@ -176,6 +173,6 @@ export default function RolesPage(): ReactElement {
           setRoleToDelete(null);
         }}
       />
-    </DashboardPage.Root>
+    </div>
   );
 }

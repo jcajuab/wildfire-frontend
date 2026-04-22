@@ -19,75 +19,6 @@ class ResizeObserverMock {
 
 globalThis.ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
 
-const originalClientWidth = Object.getOwnPropertyDescriptor(
-  HTMLElement.prototype,
-  "clientWidth",
-);
-const originalGetBoundingClientRect =
-  HTMLElement.prototype.getBoundingClientRect;
-
-function mockGroupOverflowLayout({
-  containerWidth,
-  groupWidths,
-  overflowWidths,
-}: {
-  containerWidth: number;
-  groupWidths: Record<string, number>;
-  overflowWidths: Record<string, number>;
-}) {
-  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
-    configurable: true,
-    get() {
-      const element = this as HTMLElement;
-      if (element.dataset.groupOverflowContainer === "true") {
-        return containerWidth;
-      }
-
-      return originalClientWidth?.get?.call(this) ?? 0;
-    },
-  });
-
-  HTMLElement.prototype.getBoundingClientRect = function () {
-    const element = this as HTMLElement;
-    const groupWidth = element.dataset.groupMeasure
-      ? groupWidths[element.dataset.groupMeasure]
-      : undefined;
-    const overflowWidth = element.dataset.groupOverflowMeasure
-      ? overflowWidths[element.dataset.groupOverflowMeasure]
-      : undefined;
-    const width = groupWidth ?? overflowWidth;
-
-    if (width !== undefined) {
-      return {
-        width,
-        height: 20,
-        top: 0,
-        left: 0,
-        right: width,
-        bottom: 20,
-        x: 0,
-        y: 0,
-        toJSON() {
-          return {};
-        },
-      } as DOMRect;
-    }
-
-    return originalGetBoundingClientRect.call(this);
-  };
-}
-
-function restoreGroupOverflowLayoutMocks() {
-  if (originalClientWidth) {
-    Object.defineProperty(
-      HTMLElement.prototype,
-      "clientWidth",
-      originalClientWidth,
-    );
-  }
-  HTMLElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
-}
-
 const baseDisplay: Display = {
   id: "display-1",
   slug: "lobby-display",
@@ -135,19 +66,6 @@ describe("DisplayCard", () => {
   });
 
   test("collapses extra groups into a +N badge", () => {
-    mockGroupOverflowLayout({
-      containerWidth: 120,
-      groupWidths: {
-        Lobby: 48,
-        "North Wing": 86,
-        "East Hall": 72,
-      },
-      overflowWidths: {
-        "1": 36,
-        "2": 36,
-      },
-    });
-
     renderDisplayCard({
       ...baseDisplay,
       groups: [
@@ -161,27 +79,17 @@ describe("DisplayCard", () => {
       document.querySelector('[data-group-visible="Lobby"]'),
     ).toBeInTheDocument();
     expect(
-      document.querySelector('[data-group-overflow-visible="2"]'),
+      document.querySelector('[data-group-visible="North Wing"]'),
     ).toBeInTheDocument();
     expect(
-      document.querySelector('[data-group-visible="North Wing"]'),
+      document.querySelector('[data-group-visible="East Hall"]'),
     ).not.toBeInTheDocument();
-
-    restoreGroupOverflowLayoutMocks();
+    expect(
+      document.querySelector('[data-group-overflow-visible="1"]'),
+    ).toBeInTheDocument();
   });
 
   test("shows groups that fit without a +N badge", () => {
-    mockGroupOverflowLayout({
-      containerWidth: 220,
-      groupWidths: {
-        Lobby: 48,
-        "North Wing": 86,
-      },
-      overflowWidths: {
-        "1": 36,
-      },
-    });
-
     renderDisplayCard({
       ...baseDisplay,
       groups: [{ name: "Lobby" }, { name: "North Wing" }],
@@ -196,8 +104,6 @@ describe("DisplayCard", () => {
     expect(
       document.querySelector('[data-group-overflow-visible="1"]'),
     ).not.toBeInTheDocument();
-
-    restoreGroupOverflowLayoutMocks();
   });
 
   test("shows missing emergency warning indicator when emergency content is not set", async () => {

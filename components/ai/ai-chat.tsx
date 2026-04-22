@@ -164,11 +164,15 @@ export function AIChat() {
       <Conversation className="flex-1">
         <ConversationContent>
           {messages.length === 0 ? (
-            <ConversationEmptyState
-              icon={<WildfireLogo className="h-8 w-auto" />}
-              title=""
-              description="Ask me to create content, playlists, or schedules. Type / to see available commands."
-            />
+            <ConversationEmptyState>
+              <div className="text-muted-foreground">
+                <WildfireLogo className="h-8 w-auto" />
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Ask me to create content, playlists, or schedules. Type / to see
+                available commands.
+              </p>
+            </ConversationEmptyState>
           ) : (
             messages.map((message) => {
               const parts = message.parts.map((part, i) => {

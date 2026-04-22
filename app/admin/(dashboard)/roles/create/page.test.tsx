@@ -172,7 +172,7 @@ describe("CreateRolePage", () => {
     expect(screen.getAllByRole("button", { name: "Create" })).toHaveLength(1);
   });
 
-  test("keeps DashboardPage.Content as the shell and uses an inner scroll wrapper", () => {
+  test("keeps the page content as the shell and uses an inner scroll wrapper", () => {
     render(<CreateRolePage />);
 
     const roleNameInput = screen.getByLabelText("Role Name");

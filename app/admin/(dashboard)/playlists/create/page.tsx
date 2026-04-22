@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useState } from "react";
-import { DashboardPage } from "@/components/layout/dashboard-page";
+import { PageHeader } from "@/components/layout/page-header";
 import { CreatePlaylistForm } from "@/components/playlists/create-playlist-form";
 import { Button } from "@/components/ui/button";
 import { useCreatePlaylistPage } from "./use-create-playlist-page";
@@ -20,31 +20,28 @@ export default function CreatePlaylistPage(): ReactElement {
   const createLabel = formState?.isSubmitting ? "Creating..." : "Create";
 
   return (
-    <DashboardPage.Root>
-      <DashboardPage.Header
-        title="Create Playlist"
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => formState?.handleCancel()}
-              disabled={formState?.isSubmitting ?? false}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                void formState?.handleCreate();
-              }}
-              disabled={!formState?.canCreate || formState.isSubmitting}
-            >
-              {createLabel}
-            </Button>
-          </div>
-        }
-      />
-      <DashboardPage.Body>
-        <DashboardPage.Content>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+      <PageHeader title="Create Playlist">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => formState?.handleCancel()}
+            disabled={formState?.isSubmitting ?? false}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              void formState?.handleCreate();
+            }}
+            disabled={!formState?.canCreate || formState.isSubmitting}
+          >
+            {createLabel}
+          </Button>
+        </div>
+      </PageHeader>
+      <section className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <CreatePlaylistForm
             availableContent={availableContent}
             onCreate={handleCreatePlaylist}
@@ -54,8 +51,8 @@ export default function CreatePlaylistPage(): ReactElement {
             surface="page"
             onStateChange={setFormState}
           />
-        </DashboardPage.Content>
-      </DashboardPage.Body>
-    </DashboardPage.Root>
+        </div>
+      </section>
+    </div>
   );
 }

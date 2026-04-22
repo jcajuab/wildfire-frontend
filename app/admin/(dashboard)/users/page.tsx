@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { EmptyState } from "@/components/common/empty-state";
-import { DashboardPage } from "@/components/layout/dashboard-page";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -126,52 +126,49 @@ export default function UsersPage(): ReactElement {
 
   if (usersLoading) {
     return (
-      <DashboardPage.Root>
-        <DashboardPage.Header title="Users" />
-        <DashboardPage.Body>
-          <DashboardPage.Content>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+        <PageHeader title="Users" />
+        <section className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
               <p className="text-muted-foreground">Loading users…</p>
             </div>
-          </DashboardPage.Content>
-        </DashboardPage.Body>
-      </DashboardPage.Root>
+          </div>
+        </section>
+      </div>
     );
   }
 
   if (usersError) {
     return (
-      <DashboardPage.Root>
-        <DashboardPage.Header title="Users" />
-        <DashboardPage.Body>
-          <DashboardPage.Content>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+        <PageHeader title="Users" />
+        <section className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
               <p className="text-destructive">
                 Failed to load users. Check the API and try again.
               </p>
             </div>
-          </DashboardPage.Content>
-        </DashboardPage.Body>
-      </DashboardPage.Root>
+          </div>
+        </section>
+      </div>
     );
   }
 
   return (
-    <DashboardPage.Root>
-      <DashboardPage.Header
-        title="Users"
-        actions={
-          <Can permission="users:create">
-            <Button onClick={() => setIsInviteDialogOpen(true)}>
-              <IconPlus className="size-4" />
-              Invite User
-            </Button>
-          </Can>
-        }
-      />
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+      <PageHeader title="Users">
+        <Can permission="users:create">
+          <Button onClick={() => setIsInviteDialogOpen(true)}>
+            <IconPlus className="size-4" />
+            Invite User
+          </Button>
+        </Can>
+      </PageHeader>
 
-      <DashboardPage.Body>
-        <DashboardPage.Content>
+      <section className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
             <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-base font-semibold">Search Results</h2>
@@ -243,9 +240,9 @@ export default function UsersPage(): ReactElement {
               </section>
             </Can>
           </div>
-        </DashboardPage.Content>
+        </div>
 
-        <DashboardPage.Footer>
+        <footer className="empty:hidden border-t border-border bg-background/80">
           <PaginationFooter
             page={page}
             pageSize={PAGE_SIZE}
@@ -253,8 +250,8 @@ export default function UsersPage(): ReactElement {
             onPageChange={setPage}
             variant="numbered"
           />
-        </DashboardPage.Footer>
-      </DashboardPage.Body>
+        </footer>
+      </section>
 
       <InviteUsersDialog
         open={isInviteDialogOpen}
@@ -304,6 +301,6 @@ export default function UsersPage(): ReactElement {
         password={resetPasswordResult?.password ?? ""}
         onOpenChange={setIsResetPasswordDialogOpen}
       />
-    </DashboardPage.Root>
+    </div>
   );
 }

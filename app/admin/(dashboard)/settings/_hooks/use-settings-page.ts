@@ -33,7 +33,6 @@ export interface UseSettingsPageResult {
   // Dialog state
   isPasswordDialogOpen: boolean;
   isDeleteDialogOpen: boolean;
-  isLoggingOut: boolean;
 
   // Handlers
   handleChangePassword: () => void;
@@ -41,7 +40,6 @@ export interface UseSettingsPageResult {
     currentPassword: string;
     newPassword: string;
   }) => Promise<void>;
-  handleLogOut: () => Promise<void>;
   handleDeleteAccount: () => void;
   handleDeleteAccountConfirm: () => Promise<void>;
 
@@ -76,7 +74,6 @@ export function useSettingsPage(): UseSettingsPageResult {
 
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const avatarUrl = user?.avatarUrl ?? null;
   const isInvitedUser = user?.isInvitedUser ?? false;
@@ -110,16 +107,6 @@ export function useSettingsPage(): UseSettingsPageResult {
     [logout],
   );
 
-  const handleLogOut = useCallback(async (): Promise<void> => {
-    if (isLoggingOut) return;
-    setIsLoggingOut(true);
-    try {
-      await logout();
-    } finally {
-      setIsLoggingOut(false);
-    }
-  }, [isLoggingOut, logout]);
-
   const handleDeleteAccount = useCallback((): void => {
     setIsDeleteDialogOpen(true);
   }, []);
@@ -146,10 +133,8 @@ export function useSettingsPage(): UseSettingsPageResult {
     accountNameForDialog,
     isPasswordDialogOpen,
     isDeleteDialogOpen,
-    isLoggingOut,
     handleChangePassword,
     handlePasswordSubmit,
-    handleLogOut,
     handleDeleteAccount,
     handleDeleteAccountConfirm,
     setIsPasswordDialogOpen,

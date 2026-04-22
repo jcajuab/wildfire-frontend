@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { EmptyState } from "@/components/common/empty-state";
-import { DashboardPage } from "@/components/layout/dashboard-page";
+import { PageHeader } from "@/components/layout/page-header";
 import { RoleForm, type RoleFormState } from "@/components/roles/role-form";
 import { Button } from "@/components/ui/button";
 import { ROLE_INDEX_PATH } from "@/lib/role-paths";
@@ -40,10 +40,10 @@ export default function EditRolePage(): ReactElement {
     ) : null;
 
   return (
-    <DashboardPage.Root>
-      <DashboardPage.Header title="Edit Role" actions={headerActions} />
-      <DashboardPage.Body>
-        <DashboardPage.Content>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+      <PageHeader title="Edit Role">{headerActions}</PageHeader>
+      <section className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {state.status === "loading" ? (
             <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
               <p className="text-muted-foreground">Loading role...</p>
@@ -106,8 +106,8 @@ export default function EditRolePage(): ReactElement {
               />
             </div>
           ) : null}
-        </DashboardPage.Content>
-      </DashboardPage.Body>
-    </DashboardPage.Root>
+        </div>
+      </section>
+    </div>
   );
 }

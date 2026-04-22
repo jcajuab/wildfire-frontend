@@ -4,8 +4,9 @@ import type { ReactElement } from "react";
 import { IconPencil } from "@tabler/icons-react";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
-import { DashboardPage } from "@/components/layout/dashboard-page";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { useLogout } from "@/hooks/use-logout";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -37,22 +38,24 @@ export default function SettingsPage(): ReactElement {
     accountNameForDialog,
     isPasswordDialogOpen,
     isDeleteDialogOpen,
-    isLoggingOut,
     handleChangePassword,
     handlePasswordSubmit,
-    handleLogOut,
     handleDeleteAccount,
     handleDeleteAccountConfirm,
     setIsPasswordDialogOpen,
     setIsDeleteDialogOpen,
   } = useSettingsPage();
+  const { pending: isLogoutPending, logout: handleLogOut } = useLogout();
 
   return (
-    <DashboardPage.Root>
-      <DashboardPage.Header title="Settings" />
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+      <PageHeader title="Settings" />
 
-      <DashboardPage.Body>
-        <DashboardPage.Content key={user?.id ?? "anonymous"}>
+      <section className="flex min-h-0 flex-1 flex-col">
+        <div
+          key={user?.id ?? "anonymous"}
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        >
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
             <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
               <section
@@ -398,10 +401,10 @@ export default function SettingsPage(): ReactElement {
                         variant="outline"
                         className="h-10 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={handleLogOut}
-                        disabled={isLoggingOut}
-                        aria-busy={isLoggingOut}
+                        disabled={isLogoutPending}
+                        aria-busy={isLogoutPending}
                       >
-                        {isLoggingOut ? "Logging out..." : "Log Out"}
+                        {isLogoutPending ? "Logging out..." : "Log Out"}
                       </Button>
                     </div>
 
@@ -421,7 +424,7 @@ export default function SettingsPage(): ReactElement {
                           variant="destructive"
                           onClick={handleDeleteAccount}
                           className="h-10 w-full sm:w-auto"
-                          disabled={isLoggingOut}
+                          disabled={isLogoutPending}
                         >
                           Delete Account
                         </Button>
@@ -432,8 +435,8 @@ export default function SettingsPage(): ReactElement {
               </section>
             </div>
           </div>
-        </DashboardPage.Content>
-      </DashboardPage.Body>
+        </div>
+      </section>
 
       {isWildfireUser && (
         <ChangePasswordDialog
@@ -452,6 +455,6 @@ export default function SettingsPage(): ReactElement {
         errorFallback="Failed to delete account."
         onConfirm={handleDeleteAccountConfirm}
       />
-    </DashboardPage.Root>
+    </div>
   );
 }

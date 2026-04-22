@@ -15,7 +15,7 @@ import { ContentGrid } from "@/components/content/content-grid";
 import { CreateContentDialog } from "@/components/content/create-content-dialog";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { SearchControl } from "@/components/common/search-control";
-import { DashboardPage } from "@/components/layout/dashboard-page";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -34,40 +34,38 @@ export default function ContentPage(): ReactElement {
 
   if (controller.isLoading) {
     return (
-      <DashboardPage.Root>
-        <DashboardPage.Header title="Content" />
-        <DashboardPage.Body>
-          <DashboardPage.Content>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+        <PageHeader title="Content" />
+        <section className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
               <p className="text-muted-foreground">Loading content...</p>
             </div>
-          </DashboardPage.Content>
-        </DashboardPage.Body>
-      </DashboardPage.Root>
+          </div>
+        </section>
+      </div>
     );
   }
 
   if (controller.isError) {
     return (
-      <DashboardPage.Root>
-        <DashboardPage.Header title="Content" />
-        <DashboardPage.Body>
-          <DashboardPage.Content>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+        <PageHeader title="Content" />
+        <section className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
               <p className="text-destructive">{controller.errorMessage}</p>
             </div>
-          </DashboardPage.Content>
-        </DashboardPage.Body>
-      </DashboardPage.Root>
+          </div>
+        </section>
+      </div>
     );
   }
 
   return (
-    <DashboardPage.Root>
-      <DashboardPage.Header
-        title="Content"
-        actions={
-          <Can permission="content:create">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+      <PageHeader title="Content">
+        <Can permission="content:create">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button>
@@ -97,11 +95,10 @@ export default function ContentPage(): ReactElement {
               </DropdownMenuContent>
             </DropdownMenu>
           </Can>
-        }
-      />
+      </PageHeader>
 
-      <DashboardPage.Body>
-        <DashboardPage.Content>
+      <section className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
             <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
               <ContentFilterPopover
@@ -184,17 +181,17 @@ export default function ContentPage(): ReactElement {
               />
             )}
           </div>
-        </DashboardPage.Content>
+        </div>
 
-        <DashboardPage.Footer>
+        <footer className="empty:hidden border-t border-border bg-background/80">
           <PaginationFooter
             page={controller.filters.page}
             pageSize={controller.pageSize}
             total={controller.data?.total ?? 0}
             onPageChange={controller.filters.setPage}
           />
-        </DashboardPage.Footer>
-      </DashboardPage.Body>
+        </footer>
+      </section>
 
       <CreateContentDialog
         open={controller.isCreateDialogOpen}
@@ -231,6 +228,6 @@ export default function ContentPage(): ReactElement {
         errorFallback="Failed to delete content."
         onConfirm={controller.handleConfirmDelete}
       />
-    </DashboardPage.Root>
+    </div>
   );
 }
