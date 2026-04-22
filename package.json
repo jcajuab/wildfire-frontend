@@ -80,6 +80,7 @@
     "eslint-config-next": "16.1.7",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "jsdom": "^28.1.0",
+    "knip": "^6.6.0",
     "prettier": "^3.8.1",
     "shadcn": "^4.0.8",
     "tailwindcss": "^4",

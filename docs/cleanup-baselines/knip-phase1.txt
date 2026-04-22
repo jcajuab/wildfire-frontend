@@ -1,0 +1,104 @@
+Unused files (1)
+components/displays/display-groups-tags-input.tsx: components/displays/display-groups-tags-input.tsx
+Unused dependencies (1)
+package.json: @dnd-kit/modifiers, @tiptap/extension-color, lucide-react, tiny-invariant
+Unused devDependencies (1)
+package.json: @types/dompurify
+Unlisted dependencies (1)
+postcss.config.js: postcss
+Unlisted binaries (1)
+package.json: tar
+Unused exports (41)
+components/ai-elements/code-block.tsx: highlightCode, CodeBlockContainer, CodeBlockHeader, CodeBlockTitle, CodeBlockFilename, CodeBlockActions, CodeBlockContent, CodeBlockCopyButton, CodeBlockLanguageSelector, CodeBlockLanguageSelectorTrigger, CodeBlockLanguageSelectorValue, CodeBlockLanguageSelectorContent, CodeBlockLanguageSelectorItem
+components/ai-elements/conversation.tsx: messagesToMarkdown, ConversationDownload
+components/ai-elements/message.tsx: MessageActions, MessageAction, MessageBranch, MessageBranchContent, MessageBranchSelector, MessageBranchPrevious, MessageBranchNext, MessageBranchPage, MessageToolbar
+components/ai-elements/prompt-input.tsx: usePromptInputController, useProviderAttachments, PromptInputProvider, usePromptInputAttachments, LocalReferencedSourcesContext, usePromptInputReferencedSources, PromptInputActionAddAttachments, PromptInputTextarea, PromptInputHeader, PromptInputButton, PromptInputActionMenu, PromptInputActionMenuTrigger, PromptInputActionMenuContent, PromptInputActionMenuItem, PromptInputHoverCard, PromptInputHoverCardTrigger, PromptInputHoverCardContent, PromptInputTabsList, PromptInputTab, PromptInputTabLabel, PromptInputTabBody, PromptInputTabItem, PromptInputCommand, PromptInputCommandInput, PromptInputCommandList, PromptInputCommandEmpty, PromptInputCommandGroup, PromptInputCommandItem, PromptInputCommandSeparator
+components/ai-elements/tool.tsx: getStatusBadge
+components/playlists/create-playlist-form.tsx: MAX_BASE_DURATION_SECONDS
+components/ui/alert-dialog.tsx: AlertDialogMedia, AlertDialogOverlay, AlertDialogPortal, AlertDialogTrigger
+components/ui/alert.tsx: AlertTitle, AlertAction
+components/ui/badge.tsx: badgeVariants
+components/ui/button-group.tsx: ButtonGroupSeparator, buttonGroupVariants
+components/ui/button.tsx: buttonVariants
+components/ui/card.tsx: CardFooter, CardAction
+components/ui/combobox.tsx: ComboboxGroup, ComboboxLabel, ComboboxCollection, ComboboxSeparator, ComboboxChips, ComboboxChip, ComboboxChipsInput, ComboboxTrigger, ComboboxValue, useComboboxAnchor
+components/ui/command.tsx: CommandDialog, CommandShortcut
+components/ui/dialog.tsx: DialogClose, DialogOverlay, DialogPortal, DialogTrigger
+components/ui/dropdown-menu.tsx: DropdownMenuPortal, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuCheckboxItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuShortcut
+components/ui/input-group.tsx: InputGroupText
+components/ui/popover.tsx: PopoverDescription, PopoverHeader, PopoverTitle
+components/ui/select.tsx: SelectGroup, SelectLabel, SelectScrollDownButton, SelectScrollUpButton, SelectSeparator
+components/ui/sheet.tsx: SheetTrigger, SheetClose, SheetFooter
+components/ui/sidebar.tsx: SidebarGroupAction, SidebarInput, SidebarInset, SidebarMenuAction, SidebarMenuBadge, SidebarMenuSkeleton, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, SidebarRail, SidebarSeparator, SidebarTrigger
+components/ui/table.tsx: TableFooter, TableCaption
+components/ui/tabs.tsx: TabsContent, tabsListVariants
+components/ui/toggle.tsx: Toggle
+lib/api/ai-credentials-api.ts: aiCredentialsApi
+lib/api/audit-api.ts: auditApi
+lib/api/auth-api.ts: buildParseFailurePayload
+lib/api/content-api.ts: useGetContentOptionsQuery, useLazyListContentQuery, useGetContentJobQuery
+lib/api/contracts.ts: parseApiListResponseData
+lib/api/displays-api.ts: useGetDisplaysQuery, useGetDisplayOutputOptionsQuery, useGetDisplayQuery
+lib/api/pagination-collector.ts: PAGE_SIZE, MAX_PAGES, paginationLimitError, buildResponseParseError
+lib/api/playlists-api.ts: useGetPlaylistOptionsQuery, useGetPlaylistQuery, useAddPlaylistItemMutation, useUpdatePlaylistItemMutation, useDeletePlaylistItemMutation, useReorderPlaylistItemsMutation, useEstimatePlaylistDurationMutation
+lib/api/rbac-api.ts: useGetRoleQuery, useGetRolePermissionsQuery, useGetRoleUsersQuery, useGetUserQuery, useCreateUserMutation, useDeleteUserMutation, useGetUserRolesQuery
+lib/api/schedules-api.ts: useListSchedulesQuery, useGetScheduleQuery
+lib/audit-resource-types.ts: RESOURCE_TYPE_ALL_LABEL, RESOURCE_TYPE_LABELS
+lib/auth-events.ts: AUTH_API_ERROR_EVENT, AUTH_REFRESH_REQUEST_EVENT
+lib/auth-session.ts: clearAuthSession
+lib/display-identity/registration-store.ts: removeDisplayRegistration
+lib/mappers/schedule-mapper.ts: mapBackendScheduleToSchedule
+lib/route-permissions.ts: DASHBOARD_ROUTE_READ_ENTRIES, ROUTE_READ_PERMISSION_ENTRIES, ROUTE_READ_ENTRIES_BY_SECTION
+lib/schedules/resource-calendar.ts: toDateOnly, parseISODateOnly, toDateKey, parseTimeToMinutes, formatTimeRange
+Unused exported types (51)
+app/admin/(dashboard)/content/_hooks/content-job-monitor.ts: UseContentJobMonitorInput, ContentJobMonitor
+app/admin/(dashboard)/content/_hooks/use-content-crud-handlers.ts: ContentCrudHandlers, UseContentCrudHandlersInput
+app/admin/(dashboard)/content/_hooks/use-content-dialog-state.ts: ContentDialogState
+app/admin/(dashboard)/displays/_hooks/use-displays-page.ts: UseDisplaysPageResult
+app/admin/(dashboard)/logs/_hooks/use-logs-page.ts: UseLogsPageResult
+app/admin/(dashboard)/playlists/_hooks/use-playlists-filters.ts: UsePlaylistsFiltersResult
+app/admin/(dashboard)/playlists/_hooks/use-playlists-page.ts: UsePlaylistsPageResult
+app/admin/(dashboard)/playlists/create/use-create-playlist-page.ts: UseCreatePlaylistPageResult
+app/admin/(dashboard)/playlists/edit/[id]/use-edit-playlist-page.ts: EditPlaylistPageState, UseEditPlaylistPageResult
+app/admin/(dashboard)/roles/_hooks/use-roles-page.ts: UseRolesPageResult
+app/admin/(dashboard)/roles/create/use-create-role-page.ts: UseCreateRolePageResult
+app/admin/(dashboard)/roles/edit/[id]/use-edit-role-page.ts: UseEditRolePageResult
+app/admin/(dashboard)/schedules/_hooks/use-schedule-dialogs.ts: UseScheduleDialogsResult
+app/admin/(dashboard)/schedules/_hooks/use-schedule-filters.ts: UseScheduleFiltersResult
+app/admin/(dashboard)/schedules/_hooks/use-schedule-handlers.ts: UseScheduleHandlersResult
+app/admin/(dashboard)/settings/_hooks/use-settings-page.ts: UseSettingsPageResult
+app/admin/(dashboard)/users/_hooks/use-users-page.ts: UseUsersPageResult
+components/ai-elements/code-block.tsx: CodeBlockCopyButtonProps, CodeBlockLanguageSelectorProps, CodeBlockLanguageSelectorTriggerProps, CodeBlockLanguageSelectorValueProps, CodeBlockLanguageSelectorContentProps, CodeBlockLanguageSelectorItemProps
+components/ai-elements/confirmation.tsx: ConfirmationProps, ConfirmationTitleProps, ConfirmationRequestProps, ConfirmationAcceptedProps, ConfirmationRejectedProps, ConfirmationActionsProps, ConfirmationActionProps
+components/ai-elements/conversation.tsx: ConversationProps, ConversationContentProps, ConversationEmptyStateProps, ConversationScrollButtonProps, ConversationMessage, ConversationDownloadProps
+components/ai-elements/message.tsx: MessageProps, MessageContentProps, MessageActionsProps, MessageActionProps, MessageBranchProps, MessageBranchContentProps, MessageBranchSelectorProps, MessageBranchPreviousProps, MessageBranchNextProps, MessageBranchPageProps, MessageResponseProps, MessageToolbarProps
+components/ai-elements/prompt-input.tsx: AttachmentsContext, TextInputContext, PromptInputControllerProps, PromptInputProviderProps, ReferencedSourcesContext, PromptInputActionAddAttachmentsProps, PromptInputMessage, PromptInputProps, PromptInputBodyProps, PromptInputTextareaProps, PromptInputHeaderProps, PromptInputFooterProps, PromptInputToolsProps, PromptInputButtonTooltip, PromptInputButtonProps, PromptInputActionMenuProps, PromptInputActionMenuTriggerProps, PromptInputActionMenuContentProps, PromptInputActionMenuItemProps, PromptInputSubmitProps, PromptInputSelectProps, PromptInputSelectTriggerProps, PromptInputSelectContentProps, PromptInputSelectItemProps, PromptInputSelectValueProps, PromptInputHoverCardProps, PromptInputHoverCardTriggerProps, PromptInputHoverCardContentProps, PromptInputTabsListProps, PromptInputTabProps, PromptInputTabLabelProps, PromptInputTabBodyProps, PromptInputTabItemProps, PromptInputCommandProps, PromptInputCommandInputProps, PromptInputCommandListProps, PromptInputCommandEmptyProps, PromptInputCommandGroupProps, PromptInputCommandItemProps, PromptInputCommandSeparatorProps
+components/ai-elements/tool.tsx: ToolProps, ToolPart, ToolHeaderProps, ToolContentProps, ToolInputProps, ToolOutputProps
+components/content/pdf-crop-editor.tsx: PdfPageMeta, PdfCropEditorProps
+components/content/tiptap-toolbar.tsx: ToolbarButtonProps
+components/displays/display-groups-combobox.tsx: DisplayGroupsComboboxProps
+components/playlists/create-playlist-form.tsx: CreatePlaylistFormProps
+components/playlists/edit-playlist-form.tsx: EditPlaylistFormState, EditPlaylistFormProps
+components/playlists/playlist-form-body.tsx: PlaylistFormBodyProps
+components/playlists/sortable-item-row.tsx: SortableItemRowProps
+components/users/user-actions-menu.tsx: UserActionsMenuProps
+hooks/use-ai-credentials.ts: AICredential
+lib/ai/providers.ts: AIProviderId
+lib/api/audit-api.ts: BackendAuditListResponse
+lib/api/content-api.ts: ContentOption, ContentIngestionAcceptedResponse, BackendContentListResponse, ContentListQuery, UploadContentRequest, ReplaceContentFileRequest, CreateFlashContentRequest, CreateTextContentRequest, SubmitPdfCropsRequest
+lib/api/contracts.ts: ApiResponse, ApiListResponse
+lib/api/display-events.ts: DisplayLifecycleSubscription
+lib/api/displays-api.ts: DisplaysListQuery, DisplayOption, DisplayOutputOption, UpdateDisplayRequest, DisplayRegistrationAttemptResponse, DisplayRegistrationAttemptRotateResponse, DisplayRuntimeOverrides, DisplaysBootstrapResponse
+lib/api/playlists-api.ts: BackendPlaylistListResponse, PlaylistOption, CreatePlaylistRequest, UpdatePlaylistRequest, AddPlaylistItemRequest, UpdatePlaylistItemRequest, DeletePlaylistItemRequest, ReorderPlaylistItemsRequest, SavePlaylistItemsAtomicRequest, EstimatePlaylistDurationRequest, PlaylistDurationEstimate
+lib/api/rbac-api.ts: RbacPermission, RbacRoleListQuery, RbacUserListQuery, RoleEditBootstrapResponse
+lib/api/response-transformers.ts: PaginatedListResponse
+lib/api/schedules-api.ts: ScheduleWindowQuery, SchedulesBootstrapResponse
+lib/auth-events.ts: AuthApiErrorEventDetail
+lib/display-api/client.ts: RegistrationSessionResponse, RegisterDisplayResponse, AuthChallengeResponse, DisplayManifestFetchResult
+lib/display-runtime/flash-ticker.ts: FlashTone
+lib/display-runtime/overflow-timing.ts: RuntimeContent, RuntimeManifestItem
+lib/display-runtime/player-controller.ts: PlayerTick, PlayerController
+lib/display-runtime/sse-client.ts: DisplaySseClientOptions, DisplaySseClient
+lib/route-permissions.ts: AdminRoutePermissionPredicate
+lib/schedules/resource-calendar.ts: CalendarResource
+lib/store.ts: RootState
