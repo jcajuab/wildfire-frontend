@@ -216,18 +216,29 @@ export function useProfileEditor({
         const newAvatarUrl = response.user?.avatarUrl;
 
         // Preload the image so the UI update is instant when we swap URLs.
+        let preloadFailed = false;
         if (newAvatarUrl) {
           await new Promise<void>((resolve) => {
             const img = new window.Image();
             img.onload = () => resolve();
-            img.onerror = () => resolve();
+            img.onerror = () => {
+              preloadFailed = true;
+              resolve();
+            };
             img.src = newAvatarUrl;
             setTimeout(resolve, 8000);
           });
         }
 
         updateSession(response);
-        toast.success("Profile picture updated.", { id: toastId });
+        if (preloadFailed) {
+          toast.warning(
+            "Profile picture saved but could not be displayed. Try refreshing the page.",
+            { id: toastId },
+          );
+        } else {
+          toast.success("Profile picture updated.", { id: toastId });
+        }
       } catch (err) {
         toast.dismiss(toastId);
         notifyApiError(err, "Failed to upload profile picture.");
