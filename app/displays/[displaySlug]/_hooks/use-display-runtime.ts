@@ -18,7 +18,7 @@ import { createScheduleBoundaryTimer } from "@/lib/display-runtime/schedule-time
 import { createDisplaySseClient } from "@/lib/display-runtime/sse-client";
 import { useMounted } from "@/hooks/use-mounted";
 
-const FALLBACK_POLL_MS = 300_000;
+const FALLBACK_POLL_MS = 30_000;
 const HEARTBEAT_MS = 30_000;
 const VIEWER_POLL_MS = 30_000;
 
