@@ -5,7 +5,7 @@ import { useCallback, useRef, useState } from "react";
 import { IconSettings } from "@tabler/icons-react";
 
 import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";
-import { DisplayGroupsCombobox } from "@/components/displays/display-groups-combobox";
+import { DisplayGroupsTagsInput } from "@/components/displays/display-groups-tags-input";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -383,7 +383,7 @@ function EditDisplayForm({
               </Button>
             ) : null}
           </div>
-          <DisplayGroupsCombobox
+          <DisplayGroupsTagsInput
             id="edit-groups"
             value={formData.groups}
             onValueChange={(names) =>
@@ -392,8 +392,7 @@ function EditDisplayForm({
             existingGroups={existingGroups}
             showLabel={false}
             disabled={isSaving}
-            aboveModal={true}
-            portalContainer={portalContainerRef.current}
+            portalContainer={portalContainerRef}
           />
           <div ref={portalContainerRef} />
         </div>

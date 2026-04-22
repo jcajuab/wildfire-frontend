@@ -1,7 +1,7 @@
 "use client";
 
-import type { ReactElement } from "react";
-import { useCallback } from "react";
+import type { ReactElement, RefObject } from "react";
+import { useCallback, useState } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Combobox,
@@ -29,6 +29,10 @@ export interface DisplayGroupsTagsInputProps {
   readonly disabled?: boolean;
   readonly placeholder?: string;
   readonly showLabel?: boolean;
+  readonly portalContainer?:
+    | HTMLElement
+    | null
+    | RefObject<HTMLElement | null>;
 }
 
 export function DisplayGroupsTagsInput({
@@ -39,8 +43,10 @@ export function DisplayGroupsTagsInput({
   disabled = false,
   placeholder = "Add display groups…",
   showLabel = true,
+  portalContainer,
 }: DisplayGroupsTagsInputProps): ReactElement {
   const anchorRef = useComboboxAnchor();
+  const [open, setOpen] = useState(false);
 
   const {
     inputValue,
@@ -94,9 +100,11 @@ export function DisplayGroupsTagsInput({
         onValueChange={handleValueChange}
         inputValue={inputValue}
         onInputValueChange={(v) => setInputValue(v ?? "")}
+        open={open}
+        onOpenChange={(next) => setOpen(next)}
         disabled={disabled}
       >
-        <ComboboxChips ref={anchorRef} id={id}>
+        <ComboboxChips ref={anchorRef}>
           {value.map((name) => (
             <ComboboxChip key={name}>
               <span className="inline-flex rounded px-1 text-xs font-medium bg-blue-600 text-white">
@@ -105,11 +113,14 @@ export function DisplayGroupsTagsInput({
             </ComboboxChip>
           ))}
           <ComboboxChipsInput
+            id={id}
             placeholder={value.length === 0 ? placeholder : ""}
             onKeyDown={handleKeyDown}
+            onFocus={() => setOpen(true)}
+            onClick={() => setOpen(true)}
           />
         </ComboboxChips>
-        <ComboboxContent anchor={anchorRef}>
+        <ComboboxContent anchor={anchorRef} container={portalContainer}>
           <ComboboxList>
             {filteredNames.map((name) => (
               <ComboboxItem key={name} value={name}>

@@ -1,8 +1,15 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 type PaginationVariant = "compact" | "numbered";
 type PaginationToken = number | "start-ellipsis" | "end-ellipsis";
@@ -62,65 +69,68 @@ export function PaginationFooter({
   const endItem = Math.min(page * pageSize, total);
   const canGoPrevious = page > 1;
   const canGoNext = page < totalPages;
-  const numberedPageTokens = getNumberedPageTokens(page, totalPages);
 
   if (total <= pageSize || totalPages <= 1) {
     return null;
   }
+
+  const handleGo = (nextPage: number) => (event: React.MouseEvent) => {
+    event.preventDefault();
+    onPageChange(nextPage);
+  };
 
   return (
     <div className="flex flex-col gap-2 border-t border-border px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-muted-foreground sm:text-left">
         Showing {startItem} to {endItem} of {total} results
       </p>
-      <div className="flex w-full flex-wrap items-center justify-end gap-1 sm:w-auto sm:flex-nowrap">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => onPageChange(page - 1)}
-          disabled={!canGoPrevious}
-          aria-label="Previous page"
-        >
-          <IconChevronLeft className="size-4" />
-        </Button>
-        {variant === "numbered" ? (
-          numberedPageTokens.map((token, index) =>
-            typeof token === "number" ? (
-              <Button
-                key={token}
-                variant={token === page ? "default" : "ghost"}
-                size="icon-sm"
-                onClick={() => onPageChange(token)}
-                aria-label={`Go to page ${token}`}
-                aria-current={token === page ? "page" : undefined}
-              >
-                {token}
-              </Button>
-            ) : (
-              <span
-                key={`${token}-${index}`}
-                className="text-muted-foreground inline-flex size-6 items-center justify-center text-xs"
-                aria-hidden="true"
-              >
-                …
-              </span>
-            ),
-          )
-        ) : (
-          <div className="flex h-6 min-w-6 items-center justify-center rounded-md bg-primary px-2 text-xs font-medium text-primary-foreground">
-            {page}
-          </div>
-        )}
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => onPageChange(page + 1)}
-          disabled={!canGoNext}
-          aria-label="Next page"
-        >
-          <IconChevronRight className="size-4" />
-        </Button>
-      </div>
+      <Pagination className="w-full justify-end sm:w-auto">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              href="#"
+              aria-disabled={!canGoPrevious}
+              tabIndex={canGoPrevious ? undefined : -1}
+              className={!canGoPrevious ? "pointer-events-none opacity-50" : ""}
+              onClick={handleGo(page - 1)}
+            />
+          </PaginationItem>
+          {variant === "numbered" ? (
+            getNumberedPageTokens(page, totalPages).map((token, index) =>
+              typeof token === "number" ? (
+                <PaginationItem key={token}>
+                  <PaginationLink
+                    href="#"
+                    isActive={token === page}
+                    onClick={handleGo(token)}
+                  >
+                    {token}
+                  </PaginationLink>
+                </PaginationItem>
+              ) : (
+                <PaginationItem key={`${token}-${index}`}>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              ),
+            )
+          ) : (
+            <PaginationItem>
+              <PaginationLink href="#" isActive aria-current="page">
+                {page}
+              </PaginationLink>
+            </PaginationItem>
+          )}
+          <PaginationItem>
+            <PaginationNext
+              href="#"
+              aria-disabled={!canGoNext}
+              tabIndex={canGoNext ? undefined : -1}
+              className={!canGoNext ? "pointer-events-none opacity-50" : ""}
+              onClick={handleGo(page + 1)}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   );
 }

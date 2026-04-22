@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DisplayGroupsCombobox } from "@/components/displays/display-groups-combobox";
+import { DisplayGroupsTagsInput } from "@/components/displays/display-groups-tags-input";
 import {
   createRegistrationSession,
   fetchDisplayRegistrationConstraints,
@@ -427,7 +427,7 @@ export default function RegisterDisplayPage(): ReactElement {
             </div>
 
             <div className="space-y-2">
-              <DisplayGroupsCombobox
+              <DisplayGroupsTagsInput
                 id="register-groups"
                 value={formState.displayGroups}
                 onValueChange={(names) =>

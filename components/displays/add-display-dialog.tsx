@@ -1,7 +1,7 @@
 "use client";
 
 import type { KeyboardEvent, ReactElement } from "react";
-import { useState, useCallback } from "react";
+import { useRef, useState, useCallback } from "react";
 import {
   IconCheck,
   IconChevronRight,
@@ -24,7 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DisplayGroupsCombobox } from "@/components/displays/display-groups-combobox";
+import { DisplayGroupsTagsInput } from "@/components/displays/display-groups-tags-input";
 import { GroupBadge } from "@/components/displays/group-badge";
 import type { DisplayGroup } from "@/lib/api/displays-api";
 import type { Display, DisplayOutput } from "@/types/display";
@@ -78,6 +78,7 @@ export function AddDisplayDialog({
 }: AddDisplayDialogProps): ReactElement {
   const [step, setStep] = useState<WizardStep>(1);
   const [data, setData] = useState<WizardData>(initialWizardData);
+  const portalContainerRef = useRef<HTMLDivElement>(null);
 
   const resetWizard = useCallback(() => {
     setStep(1);
@@ -398,15 +399,16 @@ export function AddDisplayDialog({
                 />
               </div>
 
-              <DisplayGroupsCombobox
+              <DisplayGroupsTagsInput
                 id="groups"
                 value={data.groups}
                 onValueChange={(names) =>
                   setData((prev) => ({ ...prev, groups: names }))
                 }
                 existingGroups={existingGroups}
-                aboveModal={true}
+                portalContainer={portalContainerRef}
               />
+              <div ref={portalContainerRef} />
             </>
           )}
 

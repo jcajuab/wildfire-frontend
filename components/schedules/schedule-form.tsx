@@ -1,10 +1,21 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useId, useMemo, useRef, useState } from "react";
-import { IconCalendar, IconCheck, IconClock, IconX } from "@tabler/icons-react";
+import { useMemo, useState } from "react";
+import { IconCalendar, IconClock } from "@tabler/icons-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  useComboboxAnchor,
+} from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -14,167 +25,66 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-} from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
 import type { ScheduleFormData, ScheduleKind } from "@/types/schedule";
 
-// ---------------------------------------------------------------------------
-// DisplayMultiSelect — pill input with searchable dropdown
-// ---------------------------------------------------------------------------
-
-interface DisplayMultiSelectProps {
+interface DisplayPickerProps {
   value: string[];
   onChange: (ids: string[]) => void;
   options: readonly { id: string; name: string }[];
 }
 
-function DisplayMultiSelect({
+function DisplayPicker({
   value,
   onChange,
   options,
-}: DisplayMultiSelectProps): ReactElement {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const listboxId = useId();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+}: DisplayPickerProps): ReactElement {
+  const [inputValue, setInputValue] = useState("");
+  const anchorRef = useComboboxAnchor();
 
+  const optionsById = useMemo(
+    () => new Map(options.map((option) => [option.id, option])),
+    [options],
+  );
+
+  const trimmed = inputValue.trim().toLowerCase();
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return options;
-    return options.filter((d) => d.name.toLowerCase().includes(q));
-  }, [options, search]);
-
-  function toggle(id: string) {
-    if (value.includes(id)) {
-      onChange(value.filter((v) => v !== id));
-    } else {
-      onChange([...value, id]);
-    }
-    setSearch("");
-    inputRef.current?.focus();
-  }
+    if (!trimmed) return options;
+    return options.filter((option) =>
+      option.name.toLowerCase().includes(trimmed),
+    );
+  }, [options, trimmed]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverAnchor asChild>
-        {/* Pill container */}
-        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
-        <div
-          ref={containerRef}
-          role="combobox"
-          aria-expanded={open}
-          aria-controls={listboxId}
-          aria-haspopup="listbox"
-          tabIndex={0}
-          className={cn(
-            "flex min-h-7 w-full flex-wrap items-center gap-1 rounded-md border border-input bg-input/20 px-2 py-1 text-xs/relaxed transition-colors cursor-text dark:bg-input/30",
-            open ? "border-ring ring-2 ring-ring/30" : "hover:border-ring/50",
-          )}
-          onClick={() => {
-            setOpen(true);
-            inputRef.current?.focus();
-          }}
-        >
-          {value.map((id) => {
-            const display = options.find((d) => d.id === id);
-            return (
-              <span
-                key={id}
-                className="inline-flex h-[1.125rem] items-center gap-0.5 rounded-sm bg-muted-foreground/10 pl-1.5 pr-0.5 text-xs font-medium text-foreground whitespace-nowrap"
-              >
-                {display?.name ?? id}
-                <button
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onChange(value.filter((v) => v !== id));
-                  }}
-                  className="flex items-center justify-center rounded-sm p-0.5 opacity-50 hover:opacity-100 focus:outline-none"
-                  aria-label={`Remove ${display?.name ?? id}`}
-                >
-                  <IconX className="size-2.5" />
-                </button>
-              </span>
-            );
-          })}
-          <input
-            ref={inputRef}
-            type="text"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setOpen(true);
-            }}
-            onFocus={() => setOpen(true)}
-            onKeyDown={(e) => {
-              if (e.key === "Backspace" && !search && value.length > 0) {
-                onChange(value.slice(0, -1));
-              }
-              if (e.key === "Escape") {
-                setOpen(false);
-                setSearch("");
-              }
-            }}
-            placeholder={value.length === 0 ? "Search displays…" : ""}
-            className="min-w-24 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
-          />
-        </div>
-      </PopoverAnchor>
-
-      {/* Portal dropdown — renders at document.body, never clipped by the dialog */}
-      <PopoverContent
-        className="w-[var(--radix-popover-anchor-width)] p-0"
-        align="start"
-        sideOffset={4}
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onInteractOutside={(e) => {
-          // Don't close when the interaction is on the pill container itself
-          if (containerRef.current?.contains(e.target as Node)) {
-            e.preventDefault();
-          }
-        }}
-      >
-        <div
-          id={listboxId}
-          role="listbox"
-          aria-multiselectable="true"
-          className="no-scrollbar max-h-60 overflow-y-auto p-1"
-        >
-          {filtered.length === 0 ? (
-            <p className="py-6 text-center text-xs/relaxed text-muted-foreground">
-              No displays found.
-            </p>
-          ) : (
-            filtered.map((display) => {
-              const selected = value.includes(display.id);
-              return (
-                <button
-                  key={display.id}
-                  type="button"
-                  role="option"
-                  aria-selected={selected}
-                  onMouseDown={(e) => {
-                    e.preventDefault(); // keep search input focused
-                    toggle(display.id);
-                  }}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs/relaxed select-none cursor-default hover:bg-accent hover:text-accent-foreground"
-                >
-                  {selected && <IconCheck className="size-3.5 shrink-0" />}
-                  {display.name}
-                </button>
-              );
-            })
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
+    <Combobox
+      multiple
+      value={value}
+      onValueChange={(next) => {
+        onChange(Array.isArray(next) ? (next as string[]) : []);
+        setInputValue("");
+      }}
+      inputValue={inputValue}
+      onInputValueChange={(v) => setInputValue(v ?? "")}
+    >
+      <ComboboxChips ref={anchorRef}>
+        {value.map((id) => (
+          <ComboboxChip key={id}>{optionsById.get(id)?.name ?? id}</ComboboxChip>
+        ))}
+        <ComboboxChipsInput
+          placeholder={value.length === 0 ? "Search displays…" : ""}
+        />
+      </ComboboxChips>
+      <ComboboxContent anchor={anchorRef}>
+        <ComboboxList>
+          {filtered.map((option) => (
+            <ComboboxItem key={option.id} value={option.id}>
+              {option.name}
+            </ComboboxItem>
+          ))}
+        </ComboboxList>
+        <ComboboxEmpty>No displays found.</ComboboxEmpty>
+      </ComboboxContent>
+    </Combobox>
   );
 }
 
@@ -455,7 +365,7 @@ function ScheduleFormFrame({
         <div className="space-y-2">
           <Label>Target Display</Label>
           {isCreate ? (
-            <DisplayMultiSelect
+            <DisplayPicker
               value={formData.targetDisplayIds}
               onChange={(ids) =>
                 setFormData((prev) => ({ ...prev, targetDisplayIds: ids }))

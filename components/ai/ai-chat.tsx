@@ -24,6 +24,7 @@ import {
   PromptInputSelectTrigger,
   PromptInputSelectValue,
   PromptInputSubmit,
+  PromptInputTextarea,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 import {
@@ -113,7 +114,6 @@ export function AIChat() {
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
 
-  // Derive effective provider: use selected if available, otherwise first configured
   const provider = configuredProviders.some((p) => p.value === selectedProvider)
     ? selectedProvider
     : (configuredProviders[0]?.value ?? selectedProvider);
@@ -148,10 +148,7 @@ export function AIChat() {
 
   const handleCommandSelect = useCallback(
     (cmd: SlashCommand) => {
-      setInput((prev) => {
-        const replaced = prev.replace(/\/\S*$/, `/${cmd.id} `);
-        return replaced;
-      });
+      setInput((prev) => prev.replace(/\/\S*$/, `/${cmd.id} `));
       setShowSlashMenu(false);
       setSlashQuery("");
     },
@@ -316,85 +313,24 @@ export function AIChat() {
             }}
           >
             <PromptInputBody>
-              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-              <div
-                className="grid w-full grid-cols-1 min-h-16 max-h-48 overflow-y-auto"
-                onClick={(e) => {
-                  if (!(e.target as HTMLElement).closest("button")) {
-                    (
-                      e.currentTarget.querySelector(
-                        "textarea",
-                      ) as HTMLTextAreaElement | null
-                    )?.focus();
+              <PromptInputTextarea
+                disabled={!hasCredentials}
+                value={input}
+                onChange={(e) => handleInputChange(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (
+                    (e.key === "Enter" || e.key === "Tab") &&
+                    showSlashMenu
+                  ) {
+                    e.preventDefault();
                   }
                 }}
-              >
-                {/* Mirror div for highlighting — grid-stacked behind textarea.
-                    Both occupy the same grid cell so the mirror tracks height exactly. */}
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none col-start-1 row-start-1 w-full whitespace-pre-wrap break-words px-3 py-2 text-sm"
-                  style={{ wordBreak: "break-word" }}
-                >
-                  {input
-                    ? input.split(/(\s+)/).map((segment, idx) => {
-                        const isCommand =
-                          /^\/[\w-]+$/.test(segment) &&
-                          KNOWN_COMMAND_IDS.has(segment.slice(1));
-                        return isCommand ? (
-                          <span
-                            key={idx}
-                            className="rounded bg-primary/15 px-0.5 text-transparent"
-                          >
-                            {segment}
-                          </span>
-                        ) : (
-                          <span key={idx} className="text-transparent">
-                            {segment}
-                          </span>
-                        );
-                      })
-                    : /* empty placeholder to maintain min-height */ "\u00A0"}
-                </div>
-                <textarea
-                  data-slot="input-group-control"
-                  name="message"
-                  rows={1}
-                  disabled={!hasCredentials}
-                  className="col-start-1 row-start-1 w-full min-w-0 resize-none border-0 bg-transparent px-3 py-2 text-sm caret-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                  style={{ wordBreak: "break-word" }}
-                  value={input}
-                  onChange={(e) => handleInputChange(e.currentTarget.value)}
-                  onKeyDown={(e) => {
-                    if (
-                      (e.key === "Enter" || e.key === "Tab") &&
-                      showSlashMenu
-                    ) {
-                      e.preventDefault();
-                      return;
-                    }
-                    if (
-                      e.key === "Enter" &&
-                      !e.shiftKey &&
-                      !e.nativeEvent.isComposing
-                    ) {
-                      e.preventDefault();
-                      const form = e.currentTarget.form;
-                      const submitBtn = form?.querySelector(
-                        'button[type="submit"]',
-                      ) as HTMLButtonElement | null;
-                      if (!submitBtn?.disabled) {
-                        form?.requestSubmit();
-                      }
-                    }
-                  }}
-                  placeholder={
-                    !hasCredentials
-                      ? "Configure an API key in Settings to start..."
-                      : "Type a message or / for commands..."
-                  }
-                />
-              </div>
+                placeholder={
+                  !hasCredentials
+                    ? "Configure an API key in Settings to start..."
+                    : "Type a message or / for commands..."
+                }
+              />
             </PromptInputBody>
             <PromptInputFooter>
               <PromptInputTools>
