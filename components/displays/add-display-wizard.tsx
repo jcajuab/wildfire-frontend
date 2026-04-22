@@ -55,7 +55,7 @@ const availableDisplayOutputs: DisplayOutput[] = [
   { name: "HDMI-1", resolution: "Auto-detect" },
 ];
 
-export interface AddDisplayWizardProps {
+interface AddDisplayWizardProps {
   readonly onRegister: (display: Omit<Display, "id" | "createdAt">) => void;
   readonly onClose: () => void;
   readonly existingGroups: readonly DisplayGroup[];

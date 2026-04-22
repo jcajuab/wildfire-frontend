@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 
-export interface UseLogoutResult {
+interface UseLogoutResult {
   readonly pending: boolean;
   logout: () => Promise<void>;
 }

@@ -76,7 +76,7 @@ function createInitialFormData(display: Display): EditFormData {
   };
 }
 
-export interface EditDisplayFormProps {
+interface EditDisplayFormProps {
   readonly display: Display;
   readonly existingGroups: readonly DisplayGroup[];
   readonly emergencyContentOptions?: readonly {
