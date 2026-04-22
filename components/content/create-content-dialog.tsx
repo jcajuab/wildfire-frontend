@@ -171,6 +171,14 @@ export function CreateContentDialog({
   ]);
 
   const handleFileSelect = useCallback((file: File) => {
+    const supportedMimes = SUPPORTED_CONTENT_FILE_MIME_TYPES.split(",");
+    if (!supportedMimes.includes(file.type)) {
+      setFileError(
+        `File type not supported. Accepted: ${SUPPORTED_CONTENT_FILE_LABELS}`,
+      );
+      setSelectedFile(null);
+      return;
+    }
     if (file.type === "video/mp4" && file.size > VIDEO_MAX_BYTES) {
       setFileError("Video files cannot exceed 10 MB.");
       setSelectedFile(null);
