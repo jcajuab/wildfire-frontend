@@ -55,6 +55,7 @@ export default function LogsPage(): ReactElement {
     filters,
     logs,
     total,
+    isFetching,
     handleFromChange,
     handleToChange,
     handleActionChange,
@@ -227,12 +228,27 @@ export default function LogsPage(): ReactElement {
               </div>
             </div>
           </div>
-          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
-            {logs.length === 0 ? (
+          <div className="relative min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+            {isFetching && logs.length > 0 ? (
+              <div className="pointer-events-none absolute inset-x-0 top-6 z-10 flex justify-center">
+                <div className="flex items-center gap-2 rounded-full border border-border bg-background/95 px-4 py-1.5 shadow-sm backdrop-blur-sm">
+                  <span className="size-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <span className="text-xs text-muted-foreground">Fetching...</span>
+                </div>
+              </div>
+            ) : null}
+            {logs.length === 0 && !isFetching ? (
               <EmptyState
                 title="No logs found"
                 description="No audit log entries match the current filters. Try adjusting or resetting your filters."
               />
+            ) : logs.length === 0 && isFetching ? (
+              <div className="flex h-full items-center justify-center">
+                <div className="flex items-center gap-2">
+                  <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <span className="text-sm text-muted-foreground">Loading logs...</span>
+                </div>
+              </div>
             ) : (
               <div className="overflow-hidden rounded-md border border-border">
                 <LogsTable logs={logs} />

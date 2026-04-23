@@ -34,6 +34,7 @@ export interface UseLogsPageResult {
   // Query data
   logs: LogEntry[];
   total: number;
+  isFetching: boolean;
 
   // Handlers
   handleFromChange: (nextValue: string) => void;
@@ -54,10 +55,13 @@ export function useLogsPage(): UseLogsPageResult {
   const canExport = useCan("audit:read");
   const filters = useAuditLogFilters(PAGE_SIZE);
 
-  const { data: eventsData } = useListAuditEventsQuery(filters.listQuery, {
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
-  });
+  const { data: eventsData, isFetching } = useListAuditEventsQuery(
+    filters.listQuery,
+    {
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
+    },
+  );
   const canReadUsers = useCan("users:read");
   const canReadDisplays = useCan("displays:read");
 
@@ -220,6 +224,7 @@ export function useLogsPage(): UseLogsPageResult {
     filters,
     logs,
     total,
+    isFetching,
     handleFromChange,
     handleToChange,
     handleActionChange,
