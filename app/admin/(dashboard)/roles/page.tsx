@@ -46,7 +46,10 @@ export default function RolesPage(): ReactElement {
         <section className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
-              <p className="text-muted-foreground">Loading roles…</p>
+              <div className="flex items-center gap-2">
+                <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                <span className="text-sm text-muted-foreground">Loading roles...</span>
+              </div>
             </div>
           </div>
         </section>
