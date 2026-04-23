@@ -30,7 +30,7 @@ export function SearchControl({
         <IconSearch className="size-4" aria-hidden="true" />
       </InputGroupAddon>
       <InputGroupInput
-        type="search"
+        type="text"
         name="search"
         autoComplete="off"
         spellCheck={false}
