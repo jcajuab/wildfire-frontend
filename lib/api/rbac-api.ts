@@ -244,6 +244,7 @@ export const rbacApi = api.injectEndpoints({
       RbacUser[],
       { q?: string; limit?: number } | void
     >({
+      keepUnusedDataFor: 600,
       query: (query) => ({
         url: "users/options",
         params: {

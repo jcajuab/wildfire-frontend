@@ -173,6 +173,7 @@ export const displaysApi = api.injectEndpoints({
       DisplayOption[],
       { q?: string; limit?: number } | void
     >({
+      keepUnusedDataFor: 600,
       query: (query) => ({
         url: "displays/options",
         params: {
