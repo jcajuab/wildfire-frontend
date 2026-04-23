@@ -5,15 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCan } from "@/hooks/use-can";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
-  contentApi,
   useLazyGetContentJobQuery,
   useLazyGetContentQuery,
   useListContentQuery,
   useUploadPdfMutation,
 } from "@/lib/api/content-api";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
-import { subscribeToDisplayLifecycleEvents } from "@/lib/api/display-events";
-import { useAppDispatch } from "@/lib/hooks";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import { useContentJobMonitor } from "./content-job-monitor";
 import { useContentPageFilters } from "./use-content-page-filters";
@@ -28,14 +25,12 @@ const POLLING_FALLBACK_INTERVAL_MS = 60_000;
  * Composes dialog state, CRUD handlers, filters, and job monitoring.
  */
 export function useContentPageController() {
-  const canReadContent = useCan("content:read");
   const canUpdateContent = useCan("content:update");
   const canDeleteContent = useCan("content:delete");
   const canDownloadContent = useCan("content:read");
   const filters = useContentPageFilters();
   const dialogState = useContentDialogState();
   const debouncedSearch = useDebounce(filters.search, 500);
-  const dispatch = useAppDispatch();
 
   const { data, isLoading, isError, error } = useListContentQuery(
     {
@@ -50,32 +45,9 @@ export function useContentPageController() {
     { pollingInterval: POLLING_FALLBACK_INTERVAL_MS },
   );
 
-  // SSE-based real-time content status updates (primary mechanism).
+  // SSE-driven cache invalidation is handled by AdminEventProvider in the
+  // layout, which invalidates Content tags on content_status_changed events.
   // Polling above is a fallback only.
-  const sseRefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (!canReadContent) return;
-    const subscription = subscribeToDisplayLifecycleEvents({
-      onEvent: (event) => {
-        if (event.type !== "content_status_changed") return;
-        if (sseRefetchTimerRef.current)
-          clearTimeout(sseRefetchTimerRef.current);
-        sseRefetchTimerRef.current = setTimeout(() => {
-          dispatch(
-            contentApi.util.invalidateTags([
-              { type: "Content", id: "LIST" },
-              { type: "Content", id: event.contentId },
-            ]),
-          );
-        }, 1_000);
-      },
-    });
-
-    return () => {
-      if (sseRefetchTimerRef.current) clearTimeout(sseRefetchTimerRef.current);
-      subscription.close();
-    };
-  }, [canReadContent, dispatch]);
 
   const searchParams = useSearchParams();
   const previewId = searchParams.get("preview");

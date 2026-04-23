@@ -4,6 +4,7 @@ import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { MobileHeader } from "@/components/layout/mobile-header";
+import { AdminEventProvider } from "@/components/layout/admin-event-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import dynamic from "next/dynamic";
 
@@ -18,6 +19,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps): ReactElement {
   return (
+    <AdminEventProvider>
     <TooltipProvider>
       <SidebarProvider
         open
@@ -41,5 +43,6 @@ export function AppLayout({ children }: AppLayoutProps): ReactElement {
         </aside>
       </SidebarProvider>
     </TooltipProvider>
+    </AdminEventProvider>
   );
 }

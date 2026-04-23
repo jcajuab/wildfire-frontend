@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
 
 import { useCan } from "@/hooks/use-can";
 import { useDebounce } from "@/hooks/use-debounce";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { useGetDisplaysBootstrapQuery } from "@/lib/api/displays-api";
-import { subscribeToDisplayLifecycleEvents } from "@/lib/api/display-events";
+
 import { dedupeDisplayGroupNames } from "@/lib/display-group-normalization";
 import {
   mapDisplayApiToDisplay,
@@ -139,24 +139,9 @@ export function useDisplaysPage(): UseDisplaysPageResult {
 
   const crudHandlers = useDisplayCrudHandlers({ displayGroupsData });
 
-  const sseRefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (!canReadDisplays) return;
-    const subscription = subscribeToDisplayLifecycleEvents({
-      onEvent: () => {
-        if (sseRefetchTimerRef.current)
-          clearTimeout(sseRefetchTimerRef.current);
-        sseRefetchTimerRef.current = setTimeout(() => {
-          void refetch();
-        }, 1_000);
-      },
-    });
-
-    return () => {
-      if (sseRefetchTimerRef.current) clearTimeout(sseRefetchTimerRef.current);
-      subscription.close();
-    };
-  }, [canReadDisplays, refetch]);
+  // SSE-driven cache invalidation is handled by AdminEventProvider in the
+  // layout, which invalidates the Display LIST tag. RTK Query automatically
+  // refetches this component's query when the tag is invalidated.
 
   const displays: Display[] = useMemo(() => {
     const groupsByDisplayId = new Map<string, Array<{ name: string }>>();
