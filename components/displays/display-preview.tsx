@@ -5,9 +5,17 @@ import { type ReactElement, useEffect, useMemo, useState } from "react";
 import { getBaseUrl } from "@/lib/api/base-query";
 import { authFetch } from "@/lib/auth-session";
 
+interface NowPlaying {
+  readonly title: string | null;
+  readonly playlist: string | null;
+  readonly progress: number;
+  readonly duration: number;
+}
+
 interface DisplayPreviewProps {
   readonly displayId: string;
   readonly displayName: string;
+  readonly nowPlaying?: NowPlaying | null;
 }
 
 const REFRESH_MS = 30_000;
@@ -15,6 +23,7 @@ const REFRESH_MS = 30_000;
 export function DisplayPreview({
   displayId,
   displayName,
+  nowPlaying,
 }: DisplayPreviewProps): ReactElement {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,9 +111,30 @@ export function DisplayPreview({
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center bg-muted/30 text-xs text-muted-foreground">
+        Loading preview...
+      </div>
+    );
+  }
+
+  if (nowPlaying?.playlist) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-1.5 bg-muted/30 px-4 text-center">
+        <span className="text-xs font-medium text-foreground/80 truncate max-w-full">
+          {nowPlaying.playlist}
+        </span>
+        <span className="text-[10px] text-muted-foreground">
+          Scheduled &middot; Preview unavailable
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full items-center justify-center bg-muted/30 text-xs text-muted-foreground">
-      {isLoading ? "Loading preview..." : "No playlist scheduled"}
+      No playlist scheduled
     </div>
   );
 }

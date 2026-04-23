@@ -260,7 +260,7 @@ export const DisplayCard = memo(function DisplayCard({
 
       <div className="relative overflow-hidden rounded-xl border border-border/70 bg-background aspect-[16/8.5]">
         <div className="h-full w-full">
-          <DisplayPreview displayId={display.id} displayName={display.name} />
+          <DisplayPreview displayId={display.id} displayName={display.name} nowPlaying={display.nowPlaying} />
         </div>
       </div>
     </article>
