@@ -31,6 +31,12 @@ export type DisplayLifecycleEvent =
       readonly playlistId: string;
       readonly status: "DRAFT" | "IN_USE";
       readonly occurredAt: string;
+    }
+  | {
+      readonly type: "content_status_changed";
+      readonly contentId: string;
+      readonly status: "PROCESSING" | "READY" | "FAILED";
+      readonly occurredAt: string;
     };
 
 interface EventSourceLike {
@@ -53,14 +59,20 @@ const DISPLAY_LIFECYCLE_EVENT_TYPES = [
   "display_unregistered",
   "display_status_changed",
   "playlist_status_changed",
+  "content_status_changed",
 ] as const;
 
 const DISPLAY_STATUS_VALUES = ["PROCESSING", "READY", "LIVE", "DOWN"] as const;
 const PLAYLIST_STATUS_VALUES = ["DRAFT", "IN_USE"] as const;
+const CONTENT_STATUS_VALUES = ["PROCESSING", "READY", "FAILED"] as const;
 
 const isPlaylistStatus = (v: unknown): v is "DRAFT" | "IN_USE" =>
   typeof v === "string" &&
   PLAYLIST_STATUS_VALUES.includes(v as "DRAFT" | "IN_USE");
+
+const isContentStatus = (v: unknown): v is "PROCESSING" | "READY" | "FAILED" =>
+  typeof v === "string" &&
+  CONTENT_STATUS_VALUES.includes(v as "PROCESSING" | "READY" | "FAILED");
 
 type DisplayLifecycleEventType = (typeof DISPLAY_LIFECYCLE_EVENT_TYPES)[number];
 
@@ -85,6 +97,22 @@ const parseDisplayLifecycleEvent = (
 ): DisplayLifecycleEvent | null => {
   if (!isRecord(payload) || !isEventType(payload.type)) {
     return null;
+  }
+
+  if (payload.type === "content_status_changed") {
+    if (
+      typeof payload.contentId !== "string" ||
+      !isContentStatus(payload.status) ||
+      typeof payload.occurredAt !== "string"
+    ) {
+      return null;
+    }
+    return {
+      type: "content_status_changed",
+      contentId: payload.contentId,
+      status: payload.status,
+      occurredAt: payload.occurredAt,
+    };
   }
 
   if (payload.type === "playlist_status_changed") {
