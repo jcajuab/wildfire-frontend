@@ -64,21 +64,21 @@ export function useContentCrudHandlers(
 
   const handleUploadFile = useCallback(
     async (name: string, file: File) => {
-      try {
-        const accepted = await uploadContent({
-          title: name,
-          file,
-        }).unwrap();
-        toast.message("Content upload queued.");
-        trackContentJob({
-          jobId: accepted.job.id,
-          contentId: accepted.content.id,
-          successMessage: "Content uploaded.",
-          failureMessage: "Content ingestion failed.",
+      toast.message("Upload in progress. Please wait as the server processes your request.");
+      uploadContent({ title: name, file })
+        .unwrap()
+        .then((accepted) => {
+          toast.message("Content upload queued for processing.");
+          trackContentJob({
+            jobId: accepted.job.id,
+            contentId: accepted.content.id,
+            successMessage: "Content uploaded.",
+            failureMessage: "Content ingestion failed.",
+          });
+        })
+        .catch((error) => {
+          notifyApiError(error, "Failed to upload content.");
         });
-      } catch (error) {
-        notifyApiError(error, "Failed to upload content.");
-      }
     },
     [trackContentJob, uploadContent],
   );
