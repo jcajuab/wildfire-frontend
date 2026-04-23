@@ -6,7 +6,7 @@ import { IconMessageChatbot, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { useAICredentials } from "@/hooks/use-ai-credentials";
+import { useGetAICredentialsQuery } from "@/lib/api/ai-credentials-api";
 
 const AIChat = dynamic(
   () => import("@/components/ai/ai-chat").then((m) => m.AIChat),
@@ -28,9 +28,28 @@ const TOP_PAD = 16;
 
 export function AIChatBubble(): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
+  const [shouldFetch, setShouldFetch] = useState(false);
+  const [pendingOpen, setPendingOpen] = useState(false);
   const [panelHeight, setPanelHeight] = useState(PANEL_HEIGHT_MAX);
-  const { credentials } = useAICredentials();
+  const { data: credentials = [], isFetching } = useGetAICredentialsQuery(
+    undefined,
+    { skip: !shouldFetch },
+  );
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-open after credentials load on first click
+  useEffect(() => {
+    if (!pendingOpen || isFetching) return;
+    setPendingOpen(false);
+    if (credentials.length === 0) {
+      toast.error("Please provide an API key in Settings first.", {
+        description: "Go to Settings > AI Provider Credentials to configure.",
+        duration: 5000,
+      });
+      return;
+    }
+    setIsOpen(true);
+  }, [pendingOpen, isFetching, credentials]);
 
   useEffect(() => {
     function update() {
@@ -92,6 +111,11 @@ export function AIChatBubble(): ReactElement {
         onClick={() => {
           if (isOpen) {
             setIsOpen(false);
+            return;
+          }
+          if (!shouldFetch) {
+            setShouldFetch(true);
+            setPendingOpen(true);
             return;
           }
           if (credentials.length === 0) {
