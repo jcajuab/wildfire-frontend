@@ -125,13 +125,11 @@ export const ContentCard = memo(function ContentCard({
         </DropdownMenu>
       </div>
 
-      {/* Zone B — Thumbnail (16:9) */}
+      {/* Zone B — Thumbnail (fixed 16:9) */}
       <div
         className={cn(
-          "relative flex aspect-video bg-muted/50",
-          isTextContent
-            ? "items-center justify-center overflow-hidden"
-            : "items-center justify-center",
+          "relative flex aspect-video overflow-hidden bg-muted/50",
+          "items-center justify-center",
         )}
       >
         {isFlashContent ? (
@@ -157,9 +155,9 @@ export const ContentCard = memo(function ContentCard({
               <Image
                 src={content.thumbnailUrl}
                 alt={`${content.title} preview`}
-                width={400}
-                height={225}
-                className="h-full w-full object-cover"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                className="object-cover"
               />
             ) : (
               <ThumbnailFallbackIcon
