@@ -29,6 +29,8 @@ export interface UsePlaylistsPageResult {
   page: number;
 
   // Query data
+  isLoading: boolean;
+  isFetching: boolean;
   playlists: PlaylistSummary[];
   totalPlaylists: number;
   playlistToDelete: PlaylistSummary | null;
@@ -78,10 +80,11 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     [page, debouncedSearch, statusFilter],
   );
 
-  const { data: playlistsData } = useListPlaylistsQuery(playlistQuery, {
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
-  });
+  const { data: playlistsData, isLoading, isFetching } =
+    useListPlaylistsQuery(playlistQuery, {
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
+    });
   const [deletePlaylist] = useDeletePlaylistMutation();
 
   const deleteDialogOpen = playlistToDelete !== null;
@@ -114,6 +117,8 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   return {
     canUpdatePlaylist,
     canDeletePlaylist,
+    isLoading,
+    isFetching,
     statusFilter,
     search,
     page,

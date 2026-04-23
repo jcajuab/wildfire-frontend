@@ -26,6 +26,8 @@ export default function PlaylistsPage(): ReactElement {
   const {
     canUpdatePlaylist,
     canDeletePlaylist,
+    isLoading,
+    isFetching,
     statusFilter,
     search,
     page,
@@ -83,12 +85,29 @@ export default function PlaylistsPage(): ReactElement {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
-            <PlaylistGrid
-              playlists={playlists}
-              onEdit={canUpdatePlaylist ? handleEditPlaylist : undefined}
-              onDelete={canDeletePlaylist ? handleDeletePlaylist : undefined}
-            />
+          <div className="relative min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
+            {isFetching && !isLoading && playlists.length > 0 ? (
+              <div className="pointer-events-none absolute inset-x-0 top-6 z-10 flex justify-center">
+                <div className="flex items-center gap-2 rounded-full border border-border bg-background/95 px-4 py-1.5 shadow-sm backdrop-blur-sm">
+                  <span className="size-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <span className="text-xs text-muted-foreground">Fetching...</span>
+                </div>
+              </div>
+            ) : null}
+            {isLoading ? (
+              <div className="flex h-full items-center justify-center">
+                <div className="flex items-center gap-2">
+                  <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <span className="text-sm text-muted-foreground">Loading playlists...</span>
+                </div>
+              </div>
+            ) : (
+              <PlaylistGrid
+                playlists={playlists}
+                onEdit={canUpdatePlaylist ? handleEditPlaylist : undefined}
+                onDelete={canDeletePlaylist ? handleDeletePlaylist : undefined}
+              />
+            )}
           </div>
         </div>
 

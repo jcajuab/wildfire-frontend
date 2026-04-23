@@ -21,6 +21,8 @@ import { useSchedulesPage } from "./_hooks/use-schedules-page";
 
 export default function SchedulesPage(): ReactElement {
   const {
+    isLoading,
+    isFetching,
     canEditSchedule,
     canDeleteSchedule,
     currentDate,
@@ -99,16 +101,33 @@ export default function SchedulesPage(): ReactElement {
             />
           </div>
 
-          <div className="min-h-0 flex-1 overflow-auto px-6 pb-6 pt-4 sm:px-8 sm:pb-8 sm:pt-5 flex flex-col">
-            <CalendarGrid
-              currentDate={currentDate}
-              view={view}
-              schedules={schedules}
-              resources={availableDisplays}
-              onScheduleClick={handleScheduleClick}
-              resourceMode={resourceMode}
-              displayGroups={sortedDisplayGroups}
-            />
+          <div className="relative min-h-0 flex-1 overflow-auto px-6 pb-6 pt-4 sm:px-8 sm:pb-8 sm:pt-5 flex flex-col">
+            {isFetching && !isLoading ? (
+              <div className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center">
+                <div className="flex items-center gap-2 rounded-full border border-border bg-background/95 px-4 py-1.5 shadow-sm backdrop-blur-sm">
+                  <span className="size-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <span className="text-xs text-muted-foreground">Fetching...</span>
+                </div>
+              </div>
+            ) : null}
+            {isLoading ? (
+              <div className="flex flex-1 items-center justify-center">
+                <div className="flex items-center gap-2">
+                  <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <span className="text-sm text-muted-foreground">Loading schedules...</span>
+                </div>
+              </div>
+            ) : (
+              <CalendarGrid
+                currentDate={currentDate}
+                view={view}
+                schedules={schedules}
+                resources={availableDisplays}
+                onScheduleClick={handleScheduleClick}
+                resourceMode={resourceMode}
+                displayGroups={sortedDisplayGroups}
+              />
+            )}
           </div>
         </div>
 

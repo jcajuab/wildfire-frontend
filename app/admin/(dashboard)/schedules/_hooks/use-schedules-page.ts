@@ -46,13 +46,11 @@ export function useSchedulesPage() {
   const { handleCreateSchedule, handleDeleteSchedule, handleSaveSchedule } =
     useScheduleHandlers();
 
-  const { data: bootstrapData } = useGetSchedulesBootstrapQuery(
-    scheduleWindow,
-    {
+  const { data: bootstrapData, isLoading, isFetching } =
+    useGetSchedulesBootstrapQuery(scheduleWindow, {
       refetchOnFocus: false,
       refetchOnReconnect: false,
-    },
-  );
+    });
   const displaysData = useMemo(
     () => (canReadDisplays ? bootstrapData?.displayOptions : []),
     [canReadDisplays, bootstrapData?.displayOptions],
@@ -107,6 +105,8 @@ export function useSchedulesPage() {
   }, [displayGroupsData, displayGroupSort]);
 
   return {
+    isLoading,
+    isFetching,
     canEditSchedule,
     canDeleteSchedule,
     currentDate,
