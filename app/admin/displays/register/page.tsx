@@ -272,7 +272,7 @@ export default function RegisterDisplayPage(): ReactElement {
 
         saveDisplayRegistration({
           displayId: registration.displayId,
-          slug: registration.slug,
+          slug: normalizedSlug,
           keyId: registration.keyId,
           keyAlias,
           fingerprint,
@@ -307,7 +307,7 @@ export default function RegisterDisplayPage(): ReactElement {
           } catch {
             setStatus({
               kind: "success",
-              message: `Display ${registration.slug} registered, but display groups could not be assigned. Edit the display to add groups.`,
+              message: `Display ${normalizedSlug} registered, but display groups could not be assigned. Edit the display to add groups.`,
             });
             return;
           }
@@ -315,7 +315,7 @@ export default function RegisterDisplayPage(): ReactElement {
 
         setStatus({
           kind: "success",
-          message: `Registration complete. Display ${registration.slug} is now connected.`,
+          message: `Registration complete. Display ${normalizedSlug} is now connected.`,
         });
       } catch (error) {
         setStatus({
