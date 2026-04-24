@@ -9,7 +9,7 @@ import {
   type ResourceCalendarLaneEvent,
 } from "@/lib/schedules/resource-calendar";
 
-const WEEK_GRID_TEMPLATE = "14rem repeat(7, minmax(0, 1fr))";
+const WEEK_GRID_TEMPLATE = "minmax(6rem, 14rem) repeat(7, minmax(0, 1fr))";
 
 function formatDayHeader(date: Date): string {
   return formatWeekdayShort(date);
@@ -58,7 +58,7 @@ export function ResourceWeekView({
   return (
     <div className="flex max-h-[min(70dvh,calc(100dvh-14rem))] flex-col overflow-hidden rounded-md border border-border">
       <div className="overflow-auto">
-        <div className="w-full min-w-0">
+        <div className="w-full min-w-0 max-[52rem]:min-w-[56rem]">
           <div
             className="sticky top-0 z-30 grid border-b border-border bg-muted/30 backdrop-blur-sm"
             style={{ gridTemplateColumns: WEEK_GRID_TEMPLATE }}
@@ -151,10 +151,10 @@ export function ResourceWeekView({
                             }`}
                             aria-label={`View schedule ${schedule.name} on ${row.name}, ${event.timeLabel}`}
                           >
-                            <span className="block truncate text-xs font-medium">
+                            <span className="block truncate text-xs font-medium max-[52rem]:line-clamp-2 max-[52rem]:overflow-hidden max-[52rem]:whitespace-normal">
                               {schedule.name}
                             </span>
-                            <span className="block truncate text-xs text-foreground/60">
+                            <span className="block truncate text-xs text-foreground/60 max-[52rem]:whitespace-normal">
                               {event.timeLabel}
                             </span>
                           </button>

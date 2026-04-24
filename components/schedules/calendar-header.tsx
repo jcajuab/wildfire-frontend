@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ interface CalendarHeaderProps {
   readonly onDisplayGroupSortChange: (sort: DisplayGroupSortField) => void;
 }
 
-function formatDateRange(date: Date, view: CalendarView): string {
+function formatDateRange(date: Date, view: CalendarView): ReactNode {
   if (view === "resource-day") {
     return formatLongDate(date);
   }
@@ -41,9 +41,22 @@ function formatDateRange(date: Date, view: CalendarView): string {
     const endStr = formatMonthDay(end);
 
     if (start.getFullYear() !== end.getFullYear()) {
-      return `${startStr}, ${start.getFullYear()} - ${endStr}, ${end.getFullYear()}`;
+      return (
+        <>
+          {startStr}
+          <span className="max-[52rem]:hidden">, {start.getFullYear()}</span>
+          {" - "}
+          {endStr}
+          <span className="max-[52rem]:hidden">, {end.getFullYear()}</span>
+        </>
+      );
     }
-    return `${startStr} - ${endStr}, ${start.getFullYear()}`;
+    return (
+      <>
+        {startStr} - {endStr}
+        <span className="max-[52rem]:hidden">, {start.getFullYear()}</span>
+      </>
+    );
   }
 
   return "";
