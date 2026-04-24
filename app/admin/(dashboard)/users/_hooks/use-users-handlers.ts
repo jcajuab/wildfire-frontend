@@ -85,6 +85,9 @@ export function useUsersHandlers({
 
         if (failedInvites.length > 0) {
           const firstError = failedInvites[0]?.reason;
+          if (failedInvites.length === 1 && emails.length === 1 && firstError instanceof Error) {
+            throw firstError;
+          }
           const details =
             firstError instanceof Error ? `: ${firstError.message}` : "";
           throw new Error(
