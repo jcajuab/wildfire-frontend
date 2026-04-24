@@ -20,7 +20,7 @@ import type { User } from "@/types/user";
 
 export interface EditUserFormData {
   readonly id: string;
-  readonly username: string;
+  readonly username?: string;
   readonly name: string;
   readonly email: string | null;
   readonly isActive: boolean;
@@ -51,6 +51,9 @@ function EditUserForm({
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.isAdmin === true;
   const isSelf = currentUser?.id === user.id;
+  const isDcismUser =
+    !user.isInvitedUser &&
+    !(user.roles ?? []).some((r) => r.name === "Admin");
 
   const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
@@ -59,7 +62,7 @@ function EditUserForm({
     try {
       await onSubmit({
         id: user.id,
-        username: username.trim(),
+        ...(isDcismUser ? {} : { username: username.trim() }),
         name: name.trim(),
         email: email.trim().length > 0 ? email.trim() : null,
         isActive,
@@ -97,11 +100,15 @@ function EditUserForm({
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="username"
-            disabled={isSelf}
+            disabled={isSelf || isDcismUser}
           />
           {isSelf ? (
             <p className="text-sm text-muted-foreground">
               You cannot change your own username.
+            </p>
+          ) : isDcismUser ? (
+            <p className="text-sm text-muted-foreground">
+              Username is managed by DCISM and cannot be changed.
             </p>
           ) : null}
         </div>
