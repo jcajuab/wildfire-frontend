@@ -71,6 +71,7 @@ export default function DisplayRuntimePage() {
     registration,
     isRegistrationResolved,
     isViewerMode,
+    isUnregistered,
     playlistVersion,
   } = useDisplayRuntime(displaySlug);
 
@@ -161,6 +162,19 @@ export default function DisplayRuntimePage() {
       <main className="relative min-h-screen bg-black text-white">
         <div className="absolute left-2 top-2 z-10 rounded bg-black/60 px-2 py-1 text-xs">
           Initializing display
+        </div>
+      </main>
+    );
+  }
+
+  if (isUnregistered) {
+    return (
+      <main className="relative min-h-screen bg-black text-white">
+        <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-black px-4 text-white">
+          <p className="text-lg font-semibold">Display Disconnected</p>
+          <p className="text-sm text-white/70">
+            This display has been unregistered by an administrator.
+          </p>
         </div>
       </main>
     );
