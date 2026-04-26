@@ -7,7 +7,7 @@ import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { EmptyState } from "@/components/common/empty-state";
 import { PaginationFooter } from "@/components/common/pagination-footer";
-import { DisplayRegistrationInfoDialog } from "@/components/displays/display-registration-info-dialog";
+import { DisplayRegistrationLinkDialog } from "@/components/displays/display-registration-link-dialog";
 import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";
 import { DisplayGrid } from "@/components/displays/display-grid";
 import { DisplaysToolbar } from "@/components/displays/displays-toolbar";
@@ -159,7 +159,7 @@ export default function DisplaysPage(): ReactElement {
         </footer>
       </section>
 
-      <DisplayRegistrationInfoDialog
+      <DisplayRegistrationLinkDialog
         open={isAddInfoDialogOpen}
         onOpenChange={setIsAddInfoDialogOpen}
         onRegistrationSucceeded={refetch}

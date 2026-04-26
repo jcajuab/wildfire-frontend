@@ -90,13 +90,6 @@ const MANAGE_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
 const NON_NAV_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
   [
     {
-      path: "/admin/displays/register",
-      permission: "displays:create",
-      title: "Display Registration",
-      match: "exact",
-      section: "core",
-    },
-    {
       path: "/admin/playlists/create",
       permission: "playlists:create",
       title: "Create Playlist",

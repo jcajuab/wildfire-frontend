@@ -650,6 +650,111 @@ export async function fetchViewerManifest(input: {
   };
 }
 
+export interface RegistrationLinkMetadata {
+  readonly slug: string;
+  readonly output: string;
+  readonly challengeNonce: string;
+  readonly expiresAt: string;
+}
+
+export interface ClaimRegistrationLinkResponse {
+  readonly displayId: string;
+  readonly slug: string;
+  readonly keyId: string;
+  readonly state: "registered";
+}
+
+const parseRegistrationLinkMetadata = (
+  payload: unknown,
+): RegistrationLinkMetadata => {
+  const root = readRecord(payload, "registrationLinkMetadata");
+  return {
+    slug: readString(root.slug, "registrationLinkMetadata.slug"),
+    output: readString(root.output, "registrationLinkMetadata.output"),
+    challengeNonce: readString(
+      root.challengeNonce,
+      "registrationLinkMetadata.challengeNonce",
+    ),
+    expiresAt: readString(
+      root.expiresAt,
+      "registrationLinkMetadata.expiresAt",
+    ),
+  };
+};
+
+const parseClaimRegistrationLinkResponse = (
+  payload: unknown,
+): ClaimRegistrationLinkResponse => {
+  const root = readRecord(payload, "claimRegistrationLink");
+  return {
+    displayId: readString(root.displayId, "claimRegistrationLink.displayId"),
+    slug: readString(root.slug, "claimRegistrationLink.slug"),
+    keyId: readString(root.keyId, "claimRegistrationLink.keyId"),
+    state: readEnum(
+      root.state,
+      ["registered"] as const,
+      "claimRegistrationLink.state",
+    ),
+  };
+};
+
+export async function fetchRegistrationLinkMetadata(
+  token: string,
+): Promise<RegistrationLinkMetadata> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(
+    `${baseUrl}/displays/registration-links/${encodeURIComponent(token)}`,
+    {
+      method: "GET",
+      headers: {
+        ...getDevOnlyRequestHeaders(),
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response));
+  }
+
+  return parseRegistrationLinkMetadata(
+    parseApiResponseData<unknown>(await response.json()),
+  );
+}
+
+export async function claimRegistrationLink(input: {
+  token: string;
+  fingerprint: string;
+  publicKey: string;
+  keyAlgorithm: "ed25519";
+  registrationSignature: string;
+}): Promise<ClaimRegistrationLinkResponse> {
+  const baseUrl = getBaseUrl();
+  const response = await fetch(
+    `${baseUrl}/displays/registration-links/${encodeURIComponent(input.token)}/claim`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getDevOnlyRequestHeaders(),
+      },
+      body: JSON.stringify({
+        fingerprint: input.fingerprint,
+        publicKey: input.publicKey,
+        keyAlgorithm: input.keyAlgorithm,
+        registrationSignature: input.registrationSignature,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response));
+  }
+
+  return parseClaimRegistrationLinkResponse(
+    parseApiResponseData<unknown>(await response.json()),
+  );
+}
+
 export async function postSignedSnapshot(input: {
   registration: DisplayRegistrationRecord;
   privateKey: CryptoKey;

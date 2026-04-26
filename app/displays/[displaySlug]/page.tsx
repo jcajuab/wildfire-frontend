@@ -175,8 +175,8 @@ export default function DisplayRuntimePage() {
               Unable to load display content. Log in as an admin or register
               this display.
             </p>
-            <Link className="underline" href="/admin/displays/register">
-              Open /admin/displays/register to complete registration
+            <Link className="underline" href="/admin/displays">
+              Open the admin dashboard to register this display
             </Link>
           </div>
         </main>

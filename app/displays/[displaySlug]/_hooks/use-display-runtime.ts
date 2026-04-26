@@ -89,7 +89,7 @@ export function useDisplayRuntime(displaySlug: string) {
       const keyPair = await getStoredDisplayKeyPair(registration.keyAlias);
       if (!keyPair) {
         throw new Error(
-          "Display keypair is unavailable. Re-register this display from /admin/displays/register.",
+          "Display keypair is unavailable. Re-register this display from the admin dashboard.",
         );
       }
 

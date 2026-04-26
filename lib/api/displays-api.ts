@@ -87,6 +87,22 @@ export interface DisplayRegistrationAttemptRotateResponse {
   readonly expiresAt: string;
 }
 
+export interface CreateRegistrationLinkRequest {
+  readonly slug: string;
+  readonly displayName: string;
+  readonly outputType: string;
+  readonly outputIndex: number;
+  readonly resolutionWidth: number;
+  readonly resolutionHeight: number;
+  readonly displayGroups: string[];
+}
+
+export interface CreateRegistrationLinkResponse {
+  readonly token: string;
+  readonly attemptId: string;
+  readonly expiresAt: string;
+}
+
 export interface DisplayRuntimeOverrides {
   readonly globalEmergency: {
     readonly active: boolean;
@@ -359,6 +375,21 @@ export const displaysApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    createRegistrationLink: build.mutation<
+      CreateRegistrationLinkResponse,
+      CreateRegistrationLinkRequest
+    >({
+      query: (body) => ({
+        url: "displays/registration-links",
+        method: "POST",
+        body,
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<CreateRegistrationLinkResponse>(
+          response,
+          "createRegistrationLink",
+        ),
+    }),
   }),
 });
 
@@ -382,4 +413,5 @@ export const {
   useCreateRegistrationAttemptMutation,
   useRotateRegistrationAttemptMutation,
   useCloseRegistrationAttemptMutation,
+  useCreateRegistrationLinkMutation,
 } = displaysApi;
