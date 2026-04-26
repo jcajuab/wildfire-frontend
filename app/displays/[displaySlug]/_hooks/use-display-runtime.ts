@@ -47,6 +47,7 @@ export function useDisplayRuntime(displaySlug: string) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [playlistVersion, setPlaylistVersion] = useState<string | null>(null);
   const [isViewerMode, setIsViewerMode] = useState(false);
+  const [isUnregistered, setIsUnregistered] = useState(false);
 
   const lastPlaylistVersionRef = useRef<string | null>(null);
   const manifestRef = useRef<DisplayManifest | null>(null);
@@ -147,6 +148,15 @@ export function useDisplayRuntime(displaySlug: string) {
       )}/stream`;
       let latestConnectionState: "connected" | "reconnecting" | "closed" =
         "closed";
+      let pollTimerId: ReturnType<typeof setInterval> | null = null;
+      let heartbeatTimerId: ReturnType<typeof setInterval> | null = null;
+
+      const teardownAll = () => {
+        if (pollTimerId) clearInterval(pollTimerId);
+        if (heartbeatTimerId) clearInterval(heartbeatTimerId);
+        boundaryTimer?.clear();
+        sse.close();
+      };
 
       const sse = createDisplaySseClient({
         streamUrl,
@@ -163,8 +173,18 @@ export function useDisplayRuntime(displaySlug: string) {
           latestConnectionState = nextState;
           setConnectionState(nextState);
         },
-        onEvent: () => {
+        onEvent: (eventType) => {
           setLastEventAt(new Date().toISOString());
+
+          if (eventType === "display_unregistered") {
+            setManifest(null);
+            manifestRef.current = null;
+            setIsUnregistered(true);
+            setConnectionState("closed");
+            teardownAll();
+            return;
+          }
+
           void refreshManifest(keyPair.privateKey)
             .then(() => {
               restartBoundaryTimer();
@@ -179,7 +199,7 @@ export function useDisplayRuntime(displaySlug: string) {
         },
       });
 
-      const pollTimer = setInterval(() => {
+      pollTimerId = setInterval(() => {
         if (latestConnectionState === "connected") {
           return;
         }
@@ -190,7 +210,7 @@ export function useDisplayRuntime(displaySlug: string) {
         });
       }, FALLBACK_POLL_MS);
 
-      const heartbeatTimer = setInterval(() => {
+      heartbeatTimerId = setInterval(() => {
         void postSignedHeartbeat({
           registration,
           privateKey: keyPair.privateKey,
@@ -199,12 +219,7 @@ export function useDisplayRuntime(displaySlug: string) {
         });
       }, HEARTBEAT_MS);
 
-      return () => {
-        clearInterval(pollTimer);
-        clearInterval(heartbeatTimer);
-        boundaryTimer?.clear();
-        sse.close();
-      };
+      return teardownAll;
     };
 
     let cleanup: (() => void) | null = null;
@@ -338,6 +353,7 @@ export function useDisplayRuntime(displaySlug: string) {
     registration,
     isRegistrationResolved,
     isViewerMode,
+    isUnregistered,
     playlistVersion,
   };
 }
