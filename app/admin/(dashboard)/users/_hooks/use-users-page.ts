@@ -73,7 +73,7 @@ export interface UseUsersPageResult {
     emails: readonly string[],
   ) => Promise<{ id: string; expiresAt: string } | null>;
   handleResendInvitation: (id: string) => Promise<void>;
-  handleRoleToggle: (userId: string, newRoleIds: string[]) => void;
+  handleRoleToggle: (userId: string, newRoleIds: string[]) => Promise<string[]>;
   handleEdit: (user: User) => void;
   handleEditSubmit: (data: EditUserFormData) => Promise<void>;
   handleRequestBanUser: (user: User) => void;

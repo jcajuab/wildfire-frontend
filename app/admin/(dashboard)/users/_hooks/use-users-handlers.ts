@@ -138,15 +138,8 @@ export function useUsersHandlers({
     [setInvitations],
   );
 
-  const applyUserRoles = useCallback(
-    async (payload: { userId: string; roleIds: string[] }): Promise<void> => {
-      await setUserRoles(payload).unwrap();
-    },
-    [setUserRoles],
-  );
-
   const handleRoleToggle = useCallback(
-    (userId: string, newRoleIds: string[]) => {
+    async (userId: string, newRoleIds: string[]): Promise<string[]> => {
       const roleIdsToSend = isAdmin
         ? newRoleIds
         : (() => {
@@ -158,14 +151,13 @@ export function useUsersHandlers({
             return [...new Set([...newRoleIds, ...preservedSystem])];
           })();
 
-      void applyUserRoles({
+      const confirmedRoles = await setUserRoles({
         userId,
         roleIds: roleIdsToSend,
-      }).catch((err) => {
-        notifyApiError(err, "Failed to update user roles");
-      });
+      }).unwrap();
+      return confirmedRoles.map((r) => r.id);
     },
-    [applyUserRoles, isAdmin, systemRoleIds, userRolesByUserId],
+    [setUserRoles, isAdmin, systemRoleIds, userRolesByUserId],
   );
 
   const handleEditSubmit = useCallback(

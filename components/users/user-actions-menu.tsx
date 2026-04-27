@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
+import { useState } from "react";
 import {
   IconDotsVertical,
   IconCircle,
@@ -9,6 +10,7 @@ import {
   IconCircleCheck,
   IconKey,
   IconCheck,
+  IconLoader2,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +23,8 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import { notifyApiError } from "@/lib/api/get-api-error-message";
 import type { User, UserRole } from "@/types/user";
 
 export interface UserActionsMenuProps {
@@ -28,7 +32,10 @@ export interface UserActionsMenuProps {
   readonly userRoleIds: string[];
   readonly availableRoles: readonly UserRole[];
   readonly onEdit: (user: User) => void;
-  readonly onRoleToggle: (userId: string, roleIds: string[]) => void;
+  readonly onRoleToggle: (
+    userId: string,
+    roleIds: string[],
+  ) => Promise<string[]>;
   readonly onBanUser: (user: User) => void;
   readonly onUnbanUser: (user: User) => void;
   readonly onResetPassword: (userId: string) => Promise<void>;
@@ -48,6 +55,16 @@ export function UserActionsMenu({
   canUpdate,
   canDelete,
 }: UserActionsMenuProps): ReactElement | null {
+  const [loadingRoleId, setLoadingRoleId] = useState<string | null>(null);
+  // Server-confirmed role IDs — set from the mutation response so the UI
+  // reflects the server's truth immediately, before RTK Query refetch lands.
+  const [confirmedRoleIds, setConfirmedRoleIds] = useState<string[] | null>(
+    null,
+  );
+
+  // Use server-confirmed state if available, otherwise fall back to props.
+  const effectiveRoleIds = confirmedRoleIds ?? userRoleIds;
+
   if (!canUpdate && !canDelete) return null;
 
   const isBanned = Boolean(user.bannedAt);
@@ -78,21 +95,45 @@ export function UserActionsMenu({
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
                 {availableRoles.map((role) => {
-                  const isChecked = userRoleIds.includes(role.id);
+                  const isChecked = effectiveRoleIds.includes(role.id);
+                  const isLoading = loadingRoleId === role.id;
                   return (
                     <DropdownMenuItem
                       key={role.id}
+                      disabled={isLoading}
                       onClick={(e) => {
                         e.preventDefault();
+                        if (loadingRoleId != null) return;
                         const newRoleIds = isChecked
-                          ? userRoleIds.filter((id) => id !== role.id)
-                          : [...userRoleIds, role.id];
-                        onRoleToggle(user.id, newRoleIds);
+                          ? effectiveRoleIds.filter((id) => id !== role.id)
+                          : [...effectiveRoleIds, role.id];
+
+                        // Show spinner only — no checkmark change until server confirms.
+                        setLoadingRoleId(role.id);
+
+                        onRoleToggle(user.id, newRoleIds)
+                          .then((serverRoleIds) => {
+                            // Batch: confirmed roles + clear spinner + toast — single re-render.
+                            setConfirmedRoleIds(serverRoleIds);
+                            setLoadingRoleId(null);
+                            toast.success(
+                              `Successfully updated ${user.name}'s roles`,
+                            );
+                          })
+                          .catch((err) => {
+                            // Batch: clear spinner + error toast — no state change to roles.
+                            setLoadingRoleId(null);
+                            notifyApiError(err, "Failed to update user roles");
+                          });
                       }}
                       className="flex items-center justify-between gap-2"
                     >
                       <span>{role.name}</span>
-                      {isChecked && <IconCheck className="size-4" />}
+                      {isLoading ? (
+                        <IconLoader2 className="size-4 animate-spin" />
+                      ) : (
+                        isChecked && <IconCheck className="size-4" />
+                      )}
                     </DropdownMenuItem>
                   );
                 })}

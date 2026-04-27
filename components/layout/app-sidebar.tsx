@@ -1,19 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   IconCalendarEvent,
   IconDeviceTv,
   IconDotsVertical,
+  IconLoader2,
   IconPhoto,
   IconList,
   IconPlaylist,
   IconShield,
   IconUsers,
 } from "@tabler/icons-react";
-import type { ComponentType, ReactElement } from "react";
-import { useMemo } from "react";
+import type { ComponentType, MouseEvent, ReactElement } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import {
   Sidebar,
@@ -94,8 +95,22 @@ function isActiveRoute(
 
 export function AppSidebar(): ReactElement {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, can, isInitialized } = useAuth();
   const { isMobile } = useSidebar();
+  const [isPending, startTransition] = useTransition();
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
+  /** Intercept link click: keep <Link> for prefetch, but use startTransition
+   *  for navigation so we get isPending state for spinner / disabled. */
+  function handleNavClick(e: MouseEvent, href: string): void {
+    e.preventDefault();
+    if (isPending) return;
+    setPendingHref(href);
+    startTransition(() => {
+      router.push(href);
+    });
+  }
 
   const coreNavItems = useMemo(
     () =>
@@ -143,22 +158,45 @@ export function AppSidebar(): ReactElement {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="gap-1">
-                  {coreNavItems.map((item) => (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        asChild
-                        size="default"
-                        isActive={isActiveRoute(pathname, item.href, item.match)}
-                        className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
-                        tooltip={item.title}
-                      >
-                        <Link href={item.href} prefetch>
-                          <item.icon className="size-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {coreNavItems.map((item) => {
+                    const isNavPending =
+                      isPending && pendingHref === item.href;
+                    const isDisabled =
+                      isPending && pendingHref !== item.href;
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          asChild
+                          size="default"
+                          isActive={isActiveRoute(
+                            pathname,
+                            item.href,
+                            item.match,
+                          )}
+                          className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
+                          tooltip={item.title}
+                        >
+                          <Link
+                            href={item.href}
+                            prefetch
+                            aria-disabled={isDisabled || undefined}
+                            className={
+                              isDisabled
+                                ? "pointer-events-none opacity-50"
+                                : undefined
+                            }
+                            onClick={(e) => handleNavClick(e, item.href)}
+                          >
+                            <item.icon className="size-4" />
+                            <span>{item.title}</span>
+                            {isNavPending && (
+                              <IconLoader2 className="ml-auto size-3.5 animate-spin" />
+                            )}
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -171,22 +209,45 @@ export function AppSidebar(): ReactElement {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="gap-1">
-                  {manageNavItems.map((item) => (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        asChild
-                        size="default"
-                        isActive={isActiveRoute(pathname, item.href, item.match)}
-                        className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
-                        tooltip={item.title}
-                      >
-                        <Link href={item.href} prefetch>
-                          <item.icon className="size-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {manageNavItems.map((item) => {
+                    const isNavPending =
+                      isPending && pendingHref === item.href;
+                    const isDisabled =
+                      isPending && pendingHref !== item.href;
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          asChild
+                          size="default"
+                          isActive={isActiveRoute(
+                            pathname,
+                            item.href,
+                            item.match,
+                          )}
+                          className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
+                          tooltip={item.title}
+                        >
+                          <Link
+                            href={item.href}
+                            prefetch
+                            aria-disabled={isDisabled || undefined}
+                            className={
+                              isDisabled
+                                ? "pointer-events-none opacity-50"
+                                : undefined
+                            }
+                            onClick={(e) => handleNavClick(e, item.href)}
+                          >
+                            <item.icon className="size-4" />
+                            <span>{item.title}</span>
+                            {isNavPending && (
+                              <IconLoader2 className="ml-auto size-3.5 animate-spin" />
+                            )}
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

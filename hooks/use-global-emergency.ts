@@ -3,6 +3,7 @@
 import { toast } from "sonner";
 
 import { useAuth } from "@/context/auth-context";
+import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   useActivateGlobalEmergencyMutation,
   useDeactivateGlobalEmergencyMutation,
@@ -52,11 +53,7 @@ export function useGlobalEmergency(): UseGlobalEmergencyReturn {
         toast.success("Global emergency mode activated.");
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to update global emergency mode.",
-      );
+      notifyApiError(error, "Failed to update global emergency mode.");
     }
   };
 
