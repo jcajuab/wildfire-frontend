@@ -30,7 +30,6 @@ const nextConfig: NextConfig = {
       "@base-ui/react",
       "radix-ui",
       "sonner",
-      "lucide-react",
       "nuqs",
       "shiki",
       "streamdown",

@@ -90,6 +90,7 @@ export function ViewDisplayDialog({
               <Link
                 href={`/admin/content?edit=${display.emergencyContentId}`}
                 onClick={() => onOpenChange(false)}
+                prefetch
                 className="flex items-center gap-1 text-primary hover:underline"
               >
                 {emergencyContent?.title ?? display.emergencyContentId}

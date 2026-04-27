@@ -78,6 +78,7 @@ export function ViewScheduleDialog({
                   <Link
                     href={`/admin/playlists?manage=${schedule.playlist.id}`}
                     onClick={() => onOpenChange(false)}
+                    prefetch
                     className="flex items-center gap-1 text-primary hover:underline"
                   >
                     {schedule.playlist.name}
@@ -92,6 +93,7 @@ export function ViewScheduleDialog({
                   <Link
                     href={`/admin/content?edit=${schedule.content.id}`}
                     onClick={() => onOpenChange(false)}
+                    prefetch
                     className="flex items-center gap-1 text-primary hover:underline"
                   >
                     {schedule.content.title}

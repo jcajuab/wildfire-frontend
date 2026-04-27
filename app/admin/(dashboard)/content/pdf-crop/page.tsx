@@ -9,10 +9,23 @@ import {
   type PdfUploadAcceptedResponse,
   type PdfCropRegion,
 } from "@/lib/api/content-api";
-import {
-  PdfCropEditor,
-  type CropRegion,
-} from "@/components/content/pdf-crop-editor";
+import dynamic from "next/dynamic";
+import type { CropRegion } from "@/components/content/pdf-crop-editor";
+
+const PdfCropEditor = dynamic(
+  () =>
+    import("@/components/content/pdf-crop-editor").then(
+      (m) => m.PdfCropEditor,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-1 items-center justify-center">
+        <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    ),
+  },
+);
 import { Button } from "@/components/ui/button";
 
 const SESSION_KEY_PREFIX = "wildfire:pdf-crop:";

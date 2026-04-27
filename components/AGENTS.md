@@ -38,7 +38,7 @@ Reusable React components organized by feature domain. Each feature subdirectory
 - Feature components import from `@/components/ui/` for primitives
 - Components use `"use client"` directive when they need interactivity
 - Styling via Tailwind CSS utility classes -- no CSS modules
-- Icons from `@tabler/icons-react` for feature icons, `lucide-react` used by shadcn/ui internals
+- Icons from `@tabler/icons-react` for feature icons and shadcn/ui components
 - No barrel exports (`index.ts`) -- import components directly by file path
 
 ### Testing Requirements

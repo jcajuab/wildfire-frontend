@@ -102,7 +102,7 @@ export function UserMenu({
       <DropdownMenuContent side={menuSide} align={menuAlign} sideOffset={8}>
         {canAccessSettings ? (
           <DropdownMenuItem asChild>
-            <Link href="/admin/settings">
+            <Link href="/admin/settings" prefetch>
               <IconSettings className="size-4" />
               Settings
             </Link>

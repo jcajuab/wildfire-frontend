@@ -129,7 +129,7 @@ export function AppSidebar(): ReactElement {
   return (
     <Sidebar variant="floating" collapsible="offcanvas" className="pr-0">
       <SidebarHeader>
-        <Link href={homeRoute} aria-label="Home">
+        <Link href={homeRoute} aria-label="Home" prefetch>
           <WildfireLogo className="h-6" />
         </Link>
       </SidebarHeader>
@@ -152,7 +152,7 @@ export function AppSidebar(): ReactElement {
                         className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
                         tooltip={item.title}
                       >
-                        <Link href={item.href}>
+                        <Link href={item.href} prefetch>
                           <item.icon className="size-4" />
                           <span>{item.title}</span>
                         </Link>
@@ -180,7 +180,7 @@ export function AppSidebar(): ReactElement {
                         className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
                         tooltip={item.title}
                       >
-                        <Link href={item.href}>
+                        <Link href={item.href} prefetch>
                           <item.icon className="size-4" />
                           <span>{item.title}</span>
                         </Link>

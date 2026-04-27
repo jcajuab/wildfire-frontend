@@ -23,7 +23,32 @@ function buildCspHeader(): string {
   ].join("; ");
 }
 
+/**
+ * Session cookie set by the backend on login/refresh (HTTP-only, path=/).
+ * Presence is a heuristic — it does not guarantee a valid session, but it
+ * eliminates the visible "skeleton → auth check → redirect" flash for:
+ *   1. Unauthenticated user visits /admin/* → instant redirect to /login
+ *   2. Authenticated user visits /login   → instant redirect to /admin
+ * The client-side AuthGuard remains the authoritative check.
+ */
+const SESSION_COOKIE = "wildfire_session_token";
+
 export function proxy(request: NextRequest): NextResponse {
+  const { pathname } = request.nextUrl;
+  const hasSession = request.cookies.has(SESSION_COOKIE);
+
+  // Unauthenticated user trying to access admin → redirect to login.
+  // This eliminates the "skeleton → auth check → redirect" flash.
+  // NOTE: we intentionally do NOT redirect /login → /admin when a cookie
+  // exists, because the cookie may be stale/expired and the client-side
+  // AuthGuard would redirect back to /login, creating a loop.
+  if (!hasSession && pathname.startsWith("/admin")) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    loginUrl.searchParams.set("redirectTo", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
   const csp = buildCspHeader();
 
   const requestHeaders = new Headers(request.headers);
