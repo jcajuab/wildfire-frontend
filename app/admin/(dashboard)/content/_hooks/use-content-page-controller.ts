@@ -32,7 +32,7 @@ export function useContentPageController() {
   const dialogState = useContentDialogState();
   const debouncedSearch = useDebounce(filters.search, 500);
 
-  const { data, isLoading, isError, error } = useListContentQuery(
+  const { data, isLoading, isFetching, isError, error } = useListContentQuery(
     {
       page: filters.page,
       pageSize: PAGE_SIZE,
@@ -175,6 +175,7 @@ export function useContentPageController() {
     visibleContents,
     pageSize: PAGE_SIZE,
     isLoading,
+    isFetching,
     isError,
     isCreateDialogOpen: dialogState.isCreateDialogOpen,
     setIsCreateDialogOpen: dialogState.setIsCreateDialogOpen,

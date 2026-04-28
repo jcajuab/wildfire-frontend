@@ -92,6 +92,7 @@ export default function UsersPage(): ReactElement {
     userRolesByUserId,
     systemRoleIds,
     usersLoading,
+    usersFetching,
     usersError,
     invitations,
     isInvitationsLoading,
@@ -185,7 +186,12 @@ export default function UsersPage(): ReactElement {
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-6 py-6 sm:px-8 sm:py-8 pt-6">
+          <div className="relative flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-6 py-6 sm:px-8 sm:py-8 pt-6">
+            {usersFetching && !usersLoading ? (
+              <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-end p-4">
+                <span className="size-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </div>
+            ) : null}
             {users.length === 0 ? (
               <EmptyState
                 title="No users yet"

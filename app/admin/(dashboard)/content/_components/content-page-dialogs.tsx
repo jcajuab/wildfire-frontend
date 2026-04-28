@@ -2,7 +2,7 @@
 
 import type { ChangeEvent, DragEvent, ReactElement } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { IconUpload } from "@tabler/icons-react";
+import { IconLoader2, IconUpload } from "@tabler/icons-react";
 import {
   SUPPORTED_CONTENT_FILE_LABELS,
   SUPPORTED_CONTENT_FILE_MIME_TYPES,
@@ -323,7 +323,14 @@ function EditContentDialogForm({
             isSaving
           }
         >
-          Save
+          {isSaving ? (
+            <>
+              Saving
+              <IconLoader2 className="size-4 animate-spin" />
+            </>
+          ) : (
+            "Save"
+          )}
         </Button>
       </DialogFooter>
     </>

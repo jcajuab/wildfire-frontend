@@ -1,0 +1,22 @@
+{
+  "label": "baseline",
+  "timestamp": "2026-04-27T07:25:00Z",
+  "note": "Measured via Playwright MCP against production (https://wildfire.dcism.org). Cold start = first visit to /login (no cache). Warm = authenticated session, full page reload per route.",
+  "coldStart": {
+    "route": "/login",
+    "ttfb_ms": 156,
+    "fcp_ms": 19644,
+    "jsResources": 17,
+    "totalResources": 17
+  },
+  "warmRoutes": [
+    { "route": "/admin/displays",  "ttfb_ms": 87,  "fcp_ms": 224,  "jsCount": 29, "totalCount": 41 },
+    { "route": "/admin/content",   "ttfb_ms": 181, "fcp_ms": 228,  "jsCount": 28, "totalCount": 42 },
+    { "route": "/admin/playlists", "ttfb_ms": 219, "fcp_ms": 264,  "jsCount": 37, "totalCount": 69 },
+    { "route": "/admin/schedules", "ttfb_ms": 650, "fcp_ms": 1844, "jsCount": 30, "totalCount": 48 },
+    { "route": "/admin/users",     "ttfb_ms": 256, "fcp_ms": 300,  "jsCount": 41, "totalCount": 83 },
+    { "route": "/admin/settings",  "ttfb_ms": 140, "fcp_ms": 184,  "jsCount": 42, "totalCount": 78 },
+    { "route": "/admin/logs",      "ttfb_ms": 125, "fcp_ms": 176,  "jsCount": 41, "totalCount": 80 },
+    { "route": "/admin/roles",     "ttfb_ms": 84,  "fcp_ms": 116,  "jsCount": 42, "totalCount": 82 }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "label": "optimized",
+  "timestamp": "2026-04-27T08:02:00Z",
+  "note": "Post-optimization. Changes: removed lucide-react, dynamic import pdfjs-dist, prefetch on all Links, proxy auth middleware. Roles TTFB 1779ms is a network anomaly.",
+  "warmRoutes": [
+    { "route": "/admin/displays",  "ttfb_ms": 84,   "fcp_ms": 132,  "jsCount": 41, "totalCount": 64 },
+    { "route": "/admin/content",   "ttfb_ms": 125,  "fcp_ms": 168,  "jsCount": 41, "totalCount": 65 },
+    { "route": "/admin/playlists", "ttfb_ms": 152,  "fcp_ms": 196,  "jsCount": 43, "totalCount": 66 },
+    { "route": "/admin/schedules", "ttfb_ms": 108,  "fcp_ms": 168,  "jsCount": 41, "totalCount": 59 },
+    { "route": "/admin/users",     "ttfb_ms": 101,  "fcp_ms": 152,  "jsCount": 41, "totalCount": 65 },
+    { "route": "/admin/settings",  "ttfb_ms": 74,   "fcp_ms": 128,  "jsCount": 43, "totalCount": 63 },
+    { "route": "/admin/logs",      "ttfb_ms": 90,   "fcp_ms": 132,  "jsCount": 41, "totalCount": 62 },
+    { "route": "/admin/roles",     "ttfb_ms": 1779, "fcp_ms": 1832, "jsCount": 42, "totalCount": 65, "note": "network anomaly" }
+  ]
+}

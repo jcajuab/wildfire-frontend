@@ -46,6 +46,7 @@ export interface UseDisplaysPageResult {
   emergencyContentOptions: readonly { id: string; title: string }[];
   globalEmergencyActive: boolean;
   isLoading: boolean;
+  isFetching: boolean;
   isError: boolean;
   loadErrorMessage: string;
 
@@ -94,6 +95,7 @@ export function useDisplaysPage(): UseDisplaysPageResult {
   const {
     data: bootstrapData,
     isLoading,
+    isFetching,
     isError,
     error,
     refetch,
@@ -210,6 +212,7 @@ export function useDisplaysPage(): UseDisplaysPageResult {
     emergencyContentOptions,
     globalEmergencyActive,
     isLoading,
+    isFetching,
     isError,
     loadErrorMessage,
     isAddInfoDialogOpen: dialogState.isAddInfoDialogOpen,

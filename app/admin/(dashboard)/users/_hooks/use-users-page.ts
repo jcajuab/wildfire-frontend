@@ -98,6 +98,7 @@ export function useUsersPage(): UseUsersPageResult {
   const {
     data: usersData,
     isLoading: usersQueryLoading,
+    isFetching: usersQueryFetching,
     isError: usersError,
     refetch: refetchUsers,
   } = useGetUsersQuery(
@@ -195,6 +196,7 @@ export function useUsersPage(): UseUsersPageResult {
     userRolesByUserId,
     systemRoleIds,
     usersLoading,
+    usersFetching: usersQueryFetching,
     usersError,
     invitations,
     isInvitationsLoading: handlers.isInvitationsLoading,
