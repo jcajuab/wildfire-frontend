@@ -115,9 +115,9 @@ export function DisplayGroupManagerDialog({
         name: nextName,
       }).unwrap();
       setCreateName("");
-      toast.success(`Created \"${nextName}\".`);
+      toast.success(`Successfully created "${nextName}" display group`);
     } catch (error) {
-      notifyApiError(error, "Failed to create group.");
+      notifyApiError(error, `Failed to create "${nextName}" display group`);
     }
   }, [createName, createDisplayGroup, groups]);
 
