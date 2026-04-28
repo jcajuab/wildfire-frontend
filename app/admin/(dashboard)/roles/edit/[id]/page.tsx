@@ -42,16 +42,16 @@ export default function EditRolePage(): ReactElement {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
       <PageHeader title="Edit Role">{headerActions}</PageHeader>
-      <section className="flex min-h-0 flex-1 flex-col">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <section className="min-h-0 flex-1 overflow-auto">
+        <div className="flex flex-col">
           {state.status === "loading" ? (
-            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
+            <div className="flex items-center justify-center px-6 py-16 sm:px-8">
               <p className="text-muted-foreground">Loading role...</p>
             </div>
           ) : null}
 
           {state.status === "notFound" ? (
-            <div className="flex min-h-0 flex-1 overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
+            <div className="px-6 py-6 sm:px-8 sm:py-8">
               <EmptyState
                 title="Role not found"
                 description={state.message}
@@ -65,7 +65,7 @@ export default function EditRolePage(): ReactElement {
           ) : null}
 
           {state.status === "error" ? (
-            <div className="flex min-h-0 flex-1 overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
+            <div className="px-6 py-6 sm:px-8 sm:py-8">
               <EmptyState
                 title="Unable to load role"
                 description={state.message}
@@ -79,7 +79,7 @@ export default function EditRolePage(): ReactElement {
           ) : null}
 
           {state.status === "nonEditable" ? (
-            <div className="flex min-h-0 flex-1 overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
+            <div className="px-6 py-6 sm:px-8 sm:py-8">
               <EmptyState
                 title="System role cannot be edited"
                 description={state.message}
@@ -93,7 +93,7 @@ export default function EditRolePage(): ReactElement {
           ) : null}
 
           {state.status === "ready" ? (
-            <div className="min-h-0 overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
+            <div className="px-6 py-6 sm:px-8 sm:py-8">
               <RoleForm
                 mode="edit"
                 initialRole={state.role}
