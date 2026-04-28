@@ -292,7 +292,7 @@ export function CreateContentDialog({
                 isUploadMode
                   ? "Lobby Poster"
                   : isFlashMode
-                    ? "Ticker: hello world"
+                    ? "Enter flash title"
                     : "Announcement"
               }
               value={title}
