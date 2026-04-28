@@ -355,7 +355,7 @@ export function RoleForm({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex max-h-[480px] flex-col gap-3 overflow-y-auto overscroll-contain pr-1">
+              <div className="flex flex-col gap-3">
                 {PERMISSION_RESOURCE_ORDER.map((resource) => {
                   const resourcePermissions =
                     permissionsByResource.get(resource) ?? [];
@@ -494,7 +494,7 @@ export function RoleForm({
               )}
 
               {assignedUsers.length > 0 ? (
-                <div className="flex max-h-72 flex-col gap-2 overflow-y-auto overscroll-contain pr-1">
+                <div className="flex flex-col gap-2">
                   {visibleAssignedUsers.map((user) => (
                     <div
                       key={user.id}
