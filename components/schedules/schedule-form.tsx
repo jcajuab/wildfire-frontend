@@ -146,8 +146,16 @@ function ScheduleFormFrame({
   const [formData, setFormData] = useState<ScheduleFormData>(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isEndTimeBeforeStartTime = useMemo(() => {
+    if (!formData.startTime || !formData.endTime) return false;
+    return formData.endTime <= formData.startTime;
+  }, [formData.startTime, formData.endTime]);
+
   const canSubmit = useMemo(() => {
     if (!formData.name.trim() || formData.targetDisplayIds.length === 0) {
+      return false;
+    }
+    if (isEndTimeBeforeStartTime) {
       return false;
     }
     if (isCreate && formData.startDate && formData.startTime) {
@@ -162,7 +170,7 @@ function ScheduleFormFrame({
       return Boolean(formData.playlistId);
     }
     return Boolean(formData.contentId);
-  }, [formData, isCreate]);
+  }, [formData, isCreate, isEndTimeBeforeStartTime]);
 
   async function handleSubmit(): Promise<void> {
     if (!canSubmit || isSubmitting) return;
@@ -290,10 +298,16 @@ function ScheduleFormFrame({
                   }))
                 }
                 className="pl-8"
+                aria-invalid={isEndTimeBeforeStartTime}
               />
             </div>
           </div>
         </div>
+        {isEndTimeBeforeStartTime ? (
+          <p className="text-xs text-destructive">
+            End time must be later than start time.
+          </p>
+        ) : null}
 
         {formData.kind === "PLAYLIST" ? (
           <div className="space-y-2">
