@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   debounce,
@@ -92,6 +92,7 @@ export function useAuditLogFilters(pageSize: number) {
 
   const [fromDraft, setFromDraft] = useState(from);
   const [toDraft, setToDraft] = useState(to);
+  const isResettingRef = useRef(false);
   const debouncedFromDraft = useDebounce(fromDraft, 250);
   const debouncedToDraft = useDebounce(toDraft, 250);
   const debouncedAction = useDebounce(action, 500);
@@ -132,6 +133,9 @@ export function useAuditLogFilters(pageSize: number) {
   }, [setTo, to]);
 
   useEffect(() => {
+    if (isResettingRef.current) {
+      return;
+    }
     if (debouncedFromDraft === from) {
       return;
     }
@@ -146,6 +150,9 @@ export function useAuditLogFilters(pageSize: number) {
   }, [debouncedFromDraft, from, page, setFrom, setPage]);
 
   useEffect(() => {
+    if (isResettingRef.current) {
+      return;
+    }
     if (debouncedToDraft === to) {
       return;
     }
@@ -202,6 +209,7 @@ export function useAuditLogFilters(pageSize: number) {
   }, [resourceTypeInput, resourceType]);
 
   const resetAll = useCallback(() => {
+    isResettingRef.current = true;
     setFromDraft("");
     setToDraft("");
     setResourceTypeInput("");
@@ -215,6 +223,10 @@ export function useAuditLogFilters(pageSize: number) {
       status: null,
       actorType: null,
     });
+    // Allow debounce effects to settle before re-enabling sync
+    setTimeout(() => {
+      isResettingRef.current = false;
+    }, 500);
   }, [setFilters]);
 
   return {
