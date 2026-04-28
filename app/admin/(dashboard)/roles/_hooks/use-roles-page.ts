@@ -29,6 +29,7 @@ export interface UseRolesPageResult {
   roles: Role[];
   rolesData: RbacRolesListResponse | undefined;
   rolesLoading: boolean;
+  rolesFetching: boolean;
   rolesError: boolean;
 
   roleToDelete: Role | null;
@@ -62,6 +63,7 @@ export function useRolesPage(): UseRolesPageResult {
   const {
     data: rolesData,
     isLoading: rolesLoading,
+    isFetching: rolesFetching,
     isError: rolesError,
   } = useGetRolesQuery({
     page: filters.page,
@@ -115,6 +117,7 @@ export function useRolesPage(): UseRolesPageResult {
     roles,
     rolesData: rolesData as RbacRolesListResponse | undefined,
     rolesLoading,
+    rolesFetching,
     rolesError,
     roleToDelete,
     isDeleteDialogOpen,

@@ -299,9 +299,25 @@ export const rbacApi = api.injectEndpoints({
         parseApiResponseDataSafe<RbacUser>(response, "updateUser"),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "User", id },
-        { type: "User", id: "LIST" },
       ],
-      onQueryStarted: refreshAuthAfterMutation,
+      async onQueryStarted(arg, api) {
+        try {
+          const { data: updatedUser } = await api.queryFulfilled;
+          api.dispatch(
+            rbacApi.util.updateQueryData("getUsers", undefined as never, (draft) => {
+              const items = (draft as { items?: { id: string }[] })?.items;
+              if (!items) return;
+              const idx = items.findIndex((u) => u.id === arg.id);
+              if (idx !== -1) {
+                Object.assign(items[idx], updatedUser);
+              }
+            }),
+          );
+          void refreshAuthAfterMutation(arg, api);
+        } catch {
+          // mutation failed, no cache update needed
+        }
+      },
     }),
     deleteUser: build.mutation<void, string>({
       query: (id) => ({ url: `users/${id}`, method: "DELETE" }),

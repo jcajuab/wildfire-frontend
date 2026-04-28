@@ -26,6 +26,7 @@ export default function RolesPage(): ReactElement {
     roles,
     rolesData,
     rolesLoading,
+    rolesFetching,
     rolesError,
     roleToDelete,
     isDeleteDialogOpen,
@@ -118,7 +119,15 @@ export default function RolesPage(): ReactElement {
                 }
               />
             ) : (
-              <div className="overflow-hidden rounded-md border border-border">
+              <div className="relative overflow-hidden rounded-md border border-border">
+                {rolesFetching && !rolesLoading ? (
+                  <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-background/60">
+                    <div className="flex items-center gap-2">
+                      <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      <span className="text-sm text-muted-foreground">Searching for roles...</span>
+                    </div>
+                  </div>
+                ) : null}
                 <RolesTable
                   roles={roles}
                   sort={sort}
