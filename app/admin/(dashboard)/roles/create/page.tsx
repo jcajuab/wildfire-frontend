@@ -40,7 +40,7 @@ export default function CreateRolePage(): ReactElement {
       </PageHeader>
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="min-h-0 flex-1 overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
+          <div className="min-h-0 overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
             <RoleForm
               mode="create"
               permissions={permissions}

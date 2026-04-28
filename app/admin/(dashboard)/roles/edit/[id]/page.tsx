@@ -93,7 +93,7 @@ export default function EditRolePage(): ReactElement {
           ) : null}
 
           {state.status === "ready" ? (
-            <div className="min-h-0 flex-1 overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
+            <div className="min-h-0 overflow-auto overscroll-none px-6 py-6 sm:px-8 sm:py-8">
               <RoleForm
                 mode="edit"
                 initialRole={state.role}
