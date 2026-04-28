@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/context/auth-context";
@@ -32,30 +33,44 @@ export function useGlobalEmergency(): UseGlobalEmergencyReturn {
     refetchOnReconnect: false,
   });
 
-  const [activateGlobalEmergency, { isLoading: isActivatingEmergency }] =
-    useActivateGlobalEmergencyMutation();
-  const [deactivateGlobalEmergency, { isLoading: isDeactivatingEmergency }] =
-    useDeactivateGlobalEmergencyMutation();
+  const [activateGlobalEmergency] = useActivateGlobalEmergencyMutation();
+  const [deactivateGlobalEmergency] = useDeactivateGlobalEmergencyMutation();
 
-  const isActive = runtimeOverrides?.globalEmergency.active ?? false;
-  const isBusy = isActivatingEmergency || isDeactivatingEmergency;
+  const serverActive = runtimeOverrides?.globalEmergency.active ?? false;
+  const [optimisticActive, setOptimisticActive] = useState<boolean | null>(
+    null,
+  );
+  const [isBusy, setIsBusy] = useState(false);
 
-  const handleToggle = async () => {
-    if (!canUpdate || isBusy) {
-      return;
-    }
+  const isActive = optimisticActive ?? serverActive;
+
+  const handleToggle = useCallback(async () => {
+    if (!canUpdate || isBusy) return;
+    setIsBusy(true);
     try {
       if (isActive) {
         await deactivateGlobalEmergency({}).unwrap();
+        setOptimisticActive(false);
         toast.success("Global emergency mode stopped.");
       } else {
         await activateGlobalEmergency({}).unwrap();
+        setOptimisticActive(true);
         toast.success("Global emergency mode activated.");
       }
     } catch (error) {
       notifyApiError(error, "Failed to update global emergency mode.");
+    } finally {
+      setIsBusy(false);
+      // Clear optimistic state after a short delay to let the cache refetch
+      setTimeout(() => setOptimisticActive(null), 3000);
     }
-  };
+  }, [
+    canUpdate,
+    isBusy,
+    isActive,
+    activateGlobalEmergency,
+    deactivateGlobalEmergency,
+  ]);
 
   return { isActive, isBusy, canRead, canUpdate, handleToggle };
 }

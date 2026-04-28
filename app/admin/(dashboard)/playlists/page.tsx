@@ -72,6 +72,7 @@ export default function PlaylistsPage(): ReactElement {
               <PlaylistFilterPopover
                 statusFilter={statusFilter}
                 filteredResultsCount={totalPlaylists}
+                isFetching={isFetching && !isLoading}
                 onStatusFilterChange={handleStatusFilterChange}
                 onClearFilters={handleClearFilters}
               />
@@ -85,12 +86,7 @@ export default function PlaylistsPage(): ReactElement {
             </div>
           </div>
 
-          <div className="relative min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
-            {isFetching && !isLoading ? (
-              <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-end p-4">
-                <span className="size-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              </div>
-            ) : null}
+          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
             {isLoading ? (
               <div className="flex h-full items-center justify-center">
                 <div className="flex items-center gap-2">

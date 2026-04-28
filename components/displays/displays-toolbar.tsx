@@ -19,6 +19,7 @@ interface DisplaysToolbarProps {
   readonly onSearchChange: (value: string) => void;
   readonly onGroupFilterChange: (value: readonly string[]) => void;
   readonly onOutputFilterChange: (value: DisplayOutputFilter) => void;
+  readonly isFetching?: boolean;
   readonly onClearFilters: () => void;
 }
 
@@ -30,6 +31,7 @@ export function DisplaysToolbar({
   filteredResultsCount,
   availableGroups,
   availableOutputs,
+  isFetching = false,
   onStatusFilterChange,
   onSearchChange,
   onGroupFilterChange,
@@ -45,6 +47,7 @@ export function DisplaysToolbar({
         filteredResultsCount={filteredResultsCount}
         availableGroups={availableGroups}
         availableOutputs={availableOutputs}
+        isFetching={isFetching}
         onStatusChange={onStatusFilterChange}
         onGroupsChange={onGroupFilterChange}
         onOutputChange={onOutputFilterChange}

@@ -26,6 +26,7 @@ interface ContentFilterPopoverProps {
   readonly statusFilter: ContentStatusFilter;
   readonly typeFilter: TypeFilter;
   readonly filteredResultsCount: number;
+  readonly isFetching?: boolean;
   readonly onStatusFilterChange: (value: ContentStatusFilter) => void;
   readonly onTypeFilterChange: (value: TypeFilter) => void;
   readonly onClearFilters: () => void;
@@ -56,6 +57,7 @@ export function ContentFilterPopover({
   statusFilter,
   typeFilter,
   filteredResultsCount,
+  isFetching = false,
   onStatusFilterChange,
   onTypeFilterChange,
   onClearFilters,
@@ -70,7 +72,9 @@ export function ContentFilterPopover({
         <Button variant="outline" size="default" className="gap-2">
           <IconFilter className="size-4" />
           Filter
-          {hasActiveFilters ? (
+          {isFetching ? (
+            <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          ) : hasActiveFilters ? (
             <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground tabular-nums">
               {filteredResultsCount}
             </span>

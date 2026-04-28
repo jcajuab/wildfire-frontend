@@ -106,6 +106,7 @@ export default function DisplaysPage(): ReactElement {
               filteredResultsCount={displaysData?.total ?? 0}
               availableGroups={availableGroupFilters}
               availableOutputs={availableOutputFilters}
+              isFetching={isFetching && !isLoading}
               onStatusFilterChange={handleStatusFilterChange}
               onSearchChange={handleSearchChange}
               onGroupFilterChange={handleGroupFilterChange}
@@ -114,19 +115,14 @@ export default function DisplaysPage(): ReactElement {
             />
           </div>
 
-          <div className="relative min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-5">
-            {isFetching && !isLoading ? (
-              <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-end p-4">
-                <span className="size-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              </div>
-            ) : null}
+          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-5">
             {isLoading ? (
               <div className="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
                 {Array.from({ length: 6 }).map((_, index) => (
                   <Skeleton key={index} className="h-[220px] rounded-md" />
                 ))}
               </div>
-            ) : displays.length === 0 && !isFetching ? (
+            ) : displays.length === 0 ? (
               <EmptyState
                 title="No displays yet"
                 description="Register a display to start showing content on your screens."

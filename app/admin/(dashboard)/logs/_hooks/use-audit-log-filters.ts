@@ -202,19 +202,19 @@ export function useAuditLogFilters(pageSize: number) {
   }, [resourceTypeInput, resourceType]);
 
   const resetAll = useCallback(() => {
-    setFilters({
-      page: 1,
-      from: "",
-      to: "",
-      action: "",
-      requestId: "",
-      resourceType: "",
-      status: "",
-      actorType: "all",
-    });
     setFromDraft("");
     setToDraft("");
     setResourceTypeInput("");
+    void setFilters({
+      page: null,
+      from: null,
+      to: null,
+      action: null,
+      requestId: null,
+      resourceType: null,
+      status: null,
+      actorType: null,
+    });
   }, [setFilters]);
 
   return {

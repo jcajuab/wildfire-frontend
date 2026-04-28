@@ -30,6 +30,7 @@ interface DisplayFilterPopoverProps {
   readonly filteredResultsCount: number;
   readonly availableGroups: readonly string[];
   readonly availableOutputs: readonly string[];
+  readonly isFetching?: boolean;
   readonly onStatusChange: (nextStatus: DisplayStatusFilter) => void;
   readonly onGroupsChange: (nextGroups: readonly string[]) => void;
   readonly onOutputChange: (nextOutput: DisplayOutputFilter) => void;
@@ -53,6 +54,7 @@ export function DisplayFilterPopover({
   filteredResultsCount,
   availableGroups,
   availableOutputs,
+  isFetching = false,
   onStatusChange,
   onGroupsChange,
   onOutputChange,
@@ -80,7 +82,9 @@ export function DisplayFilterPopover({
         <Button variant="outline" size="default" className="gap-2">
           <IconFilter className="size-4" aria-hidden="true" />
           <span>Filter</span>
-          {hasActiveFilters ? (
+          {isFetching ? (
+            <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          ) : hasActiveFilters ? (
             <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground tabular-nums">
               {filteredResultsCount}
             </span>
