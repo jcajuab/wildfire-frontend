@@ -71,20 +71,32 @@ export function EditContentDialog({
   onOpenChange,
   onSave,
 }: EditContentDialogProps): ReactElement | null {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   if (!content) {
     return null;
   }
 
   const dialogWidth = content.type === "TEXT" ? "sm:max-w-2xl" : "sm:max-w-md";
 
+  const guardedOnOpenChange = (nextOpen: boolean) => {
+    if (isSubmitting) return;
+    onOpenChange(nextOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={dialogWidth}>
+    <Dialog open={open} onOpenChange={guardedOnOpenChange}>
+      <DialogContent
+        className={dialogWidth}
+        onInteractOutside={(e) => { if (isSubmitting) e.preventDefault(); }}
+        onEscapeKeyDown={(e) => { if (isSubmitting) e.preventDefault(); }}
+      >
         <EditContentDialogForm
           key={content.id}
           content={content}
-          onOpenChange={onOpenChange}
+          onOpenChange={guardedOnOpenChange}
           onSave={onSave}
+          onSubmittingChange={setIsSubmitting}
         />
       </DialogContent>
     </Dialog>
@@ -95,12 +107,14 @@ interface EditContentDialogFormProps {
   readonly content: Content;
   readonly onOpenChange: (open: boolean) => void;
   readonly onSave: (input: EditContentDialogSaveInput) => Promise<void>;
+  readonly onSubmittingChange?: (submitting: boolean) => void;
 }
 
 function EditContentDialogForm({
   content,
   onOpenChange,
   onSave,
+  onSubmittingChange,
 }: EditContentDialogFormProps): ReactElement {
   const [title, setTitle] = useState(content.title);
   const [flashMessage, setFlashMessage] = useState(content.flashMessage ?? "");
@@ -302,6 +316,7 @@ function EditContentDialogForm({
         <Button
           onClick={async () => {
             setIsSaving(true);
+            onSubmittingChange?.(true);
             try {
               await onSave({
                 contentId: content.id,
@@ -315,6 +330,7 @@ function EditContentDialogForm({
               onOpenChange(false);
             } finally {
               setIsSaving(false);
+              onSubmittingChange?.(false);
             }
           }}
           disabled={

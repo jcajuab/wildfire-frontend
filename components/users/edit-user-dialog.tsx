@@ -38,10 +38,12 @@ function EditUserForm({
   user,
   onOpenChange,
   onSubmit,
+  onSubmittingChange,
 }: {
   user: User;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: EditUserFormData) => Promise<void> | void;
+  onSubmittingChange?: (submitting: boolean) => void;
 }): ReactElement {
   const [name, setName] = useState(user.name);
   const [username, setUsername] = useState(user.username);
@@ -59,6 +61,7 @@ function EditUserForm({
     e.preventDefault();
     if (!name.trim() || !username.trim() || isSubmitting) return;
     setIsSubmitting(true);
+    onSubmittingChange?.(true);
     try {
       await onSubmit({
         id: user.id,
@@ -69,6 +72,7 @@ function EditUserForm({
       });
     } finally {
       setIsSubmitting(false);
+      onSubmittingChange?.(false);
     }
   };
 
@@ -160,15 +164,27 @@ export function EditUserDialog({
   onOpenChange,
   onSubmit,
 }: EditUserDialogProps): ReactElement {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const guardedOnOpenChange = (nextOpen: boolean) => {
+    if (isSubmitting) return;
+    onOpenChange(nextOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={guardedOnOpenChange}>
+      <DialogContent
+        className="sm:max-w-md"
+        onInteractOutside={(e) => { if (isSubmitting) e.preventDefault(); }}
+        onEscapeKeyDown={(e) => { if (isSubmitting) e.preventDefault(); }}
+      >
         {open && user ? (
           <EditUserForm
             key={user.id}
             user={user}
-            onOpenChange={onOpenChange}
+            onOpenChange={guardedOnOpenChange}
             onSubmit={onSubmit}
+            onSubmittingChange={setIsSubmitting}
           />
         ) : null}
       </DialogContent>
