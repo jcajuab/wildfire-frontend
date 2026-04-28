@@ -231,6 +231,7 @@ export const displaysApi = api.injectEndpoints({
       ],
     }),
     getRuntimeOverrides: build.query<DisplayRuntimeOverrides, void>({
+      keepUnusedDataFor: 300,
       query: () => "displays/runtime-overrides",
       transformResponse: (response) =>
         parseApiResponseDataSafe<DisplayRuntimeOverrides>(

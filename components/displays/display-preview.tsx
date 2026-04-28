@@ -8,6 +8,7 @@ import { authFetch } from "@/lib/auth-session";
 interface DisplayPreviewProps {
   readonly displayId: string;
   readonly displayName: string;
+  readonly displayStatus?: string;
 }
 
 const REFRESH_MS = 30_000;
@@ -15,9 +16,11 @@ const REFRESH_MS = 30_000;
 export function DisplayPreview({
   displayId,
   displayName,
+  displayStatus,
 }: DisplayPreviewProps): ReactElement {
+  const isDown = displayStatus === "DOWN" || displayStatus === "PROCESSING";
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!isDown);
 
   const endpointUrl = useMemo(() => {
     const baseUrl = getBaseUrl();
@@ -25,6 +28,12 @@ export function DisplayPreview({
   }, [displayId]);
 
   useEffect(() => {
+    if (isDown) {
+      setImageUrl(null);
+      setIsLoading(false);
+      return;
+    }
+
     let cancelled = false;
     let activeObjectUrl: string | null = null;
 
@@ -88,7 +97,7 @@ export function DisplayPreview({
         URL.revokeObjectURL(activeObjectUrl);
       }
     };
-  }, [endpointUrl]);
+  }, [endpointUrl, isDown]);
 
   if (imageUrl) {
     return (
