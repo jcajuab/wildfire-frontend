@@ -17,7 +17,7 @@ import { useContentPageFilters } from "./use-content-page-filters";
 import { useContentDialogState } from "./use-content-dialog-state";
 import { useContentCrudHandlers } from "./use-content-crud-handlers";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 500;
 const POLLING_FALLBACK_INTERVAL_MS = 60_000;
 
 /**

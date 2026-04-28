@@ -13,7 +13,6 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ContentFilterPopover } from "@/components/content/content-filter-popover";
 import { ContentGrid } from "@/components/content/content-grid";
 import { CreateContentDialog } from "@/components/content/create-content-dialog";
-import { PaginationFooter } from "@/components/common/pagination-footer";
 import { SearchControl } from "@/components/common/search-control";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -186,14 +185,6 @@ export default function ContentPage(): ReactElement {
           </div>
         </div>
 
-        <footer className="empty:hidden border-t border-border bg-background/80">
-          <PaginationFooter
-            page={controller.filters.page}
-            pageSize={controller.pageSize}
-            total={controller.data?.total ?? 0}
-            onPageChange={controller.filters.setPage}
-          />
-        </footer>
       </section>
 
       <CreateContentDialog
