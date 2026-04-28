@@ -38,19 +38,21 @@ export default function CreateRolePage(): ReactElement {
           </Button>
         </div>
       </PageHeader>
-      <div className="min-h-0 flex-1 overflow-auto">
-        <div className="px-6 py-6 sm:px-8 sm:py-8">
-          <RoleForm
-            mode="create"
-            permissions={permissions}
-            initialUsers={initialUsers}
-            canReadUsers={canReadUsers}
-            initialPermissionIds={[]}
-            onSubmit={handleCreateRole}
-            onStateChange={setFormState}
-          />
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-auto">
+          <div className="px-6 py-6 sm:px-8 sm:py-8">
+            <RoleForm
+              mode="create"
+              permissions={permissions}
+              initialUsers={initialUsers}
+              canReadUsers={canReadUsers}
+              initialPermissionIds={[]}
+              onSubmit={handleCreateRole}
+              onStateChange={setFormState}
+            />
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

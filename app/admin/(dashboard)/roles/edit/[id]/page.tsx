@@ -42,7 +42,8 @@ export default function EditRolePage(): ReactElement {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
       <PageHeader title="Edit Role">{headerActions}</PageHeader>
-      <div className="min-h-0 flex-1 overflow-auto">
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-auto">
           {state.status === "loading" ? (
             <div className="flex items-center justify-center px-6 py-16 sm:px-8">
               <p className="text-muted-foreground">Loading role...</p>
@@ -105,7 +106,8 @@ export default function EditRolePage(): ReactElement {
               />
             </div>
           ) : null}
-      </div>
+        </div>
+      </section>
     </div>
   );
 }
