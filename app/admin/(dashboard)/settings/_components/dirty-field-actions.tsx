@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { IconCheck, IconX } from "@tabler/icons-react";
+import { IconCheck, IconLoader2, IconX } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -20,7 +20,7 @@ export function DirtyFieldActions({
   onConfirm,
   onCancel,
 }: DirtyFieldActionsProps): ReactElement {
-  if (!canConfirm) {
+  if (!canConfirm && !isSubmitting) {
     return <></>;
   }
 
@@ -34,7 +34,11 @@ export function DirtyFieldActions({
         onClick={onConfirm}
         aria-label={confirmLabel}
       >
-        <IconCheck className="size-4" aria-hidden="true" />
+        {isSubmitting ? (
+          <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
+        ) : (
+          <IconCheck className="size-4" aria-hidden="true" />
+        )}
       </Button>
       <Button
         type="button"
