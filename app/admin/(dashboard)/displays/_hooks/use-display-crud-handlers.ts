@@ -57,9 +57,6 @@ export function useDisplayCrudHandlers(input: {
         await updateDisplay({
           id: display.id,
           name: display.name,
-          location: display.location,
-          ipAddress: display.ipAddress === "" ? null : display.ipAddress,
-          macAddress: display.macAddress === "" ? null : display.macAddress,
           output: display.output === "Not available" ? null : display.output,
           emergencyContentId: display.emergencyContentId,
           screenWidth,

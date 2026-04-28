@@ -6,7 +6,6 @@ import {
   IconCheck,
   IconChevronRight,
   IconClipboardCheck,
-  IconMapPin,
   IconPhoto,
   IconSettings,
   IconWifi,
@@ -25,29 +24,23 @@ import type { Display, DisplayOutput } from "@/types/display";
 type WizardStep = 1 | 2 | 3 | 4;
 
 interface WizardData {
-  ipAddress: string;
   username: string;
   password: string;
   isNewDisplay: boolean;
   selectedOutput: string;
   selectedResolution: string;
   displayName: string;
-  location: string;
   groups: string[];
-  macAddress: string;
 }
 
 const initialWizardData: WizardData = {
-  ipAddress: "",
   username: "pi",
   password: "",
   isNewDisplay: false,
   selectedOutput: "",
   selectedResolution: "",
   displayName: "",
-  location: "",
   groups: [],
-  macAddress: "",
 };
 
 const availableDisplayOutputs: DisplayOutput[] = [
@@ -72,12 +65,9 @@ export function AddDisplayWizard({
 
   const handleNext = useCallback(() => {
     if (step < 4) {
-      if (step === 1 && data.ipAddress) {
-        setData((prev) => ({ ...prev, isNewDisplay: true }));
-      }
       setStep((prev) => (prev + 1) as WizardStep);
     }
-  }, [step, data.ipAddress]);
+  }, [step]);
 
   const handleBack = useCallback(() => {
     if (step > 1) setStep((prev) => (prev - 1) as WizardStep);
@@ -99,9 +89,9 @@ export function AddDisplayWizard({
       slug,
       name: data.displayName,
       status: "READY",
-      location: data.location,
-      ipAddress: data.ipAddress,
-      macAddress: data.macAddress,
+      location: "",
+      ipAddress: "",
+      macAddress: "",
       output: data.selectedOutput,
       resolution: data.selectedResolution,
       emergencyContentId: null,
@@ -159,15 +149,11 @@ export function AddDisplayWizard({
   const canProceed = (): boolean => {
     switch (step) {
       case 1:
-        return (
-          data.ipAddress.length > 0 &&
-          (!data.isNewDisplay ||
-            (data.username.length > 0 && data.password.length > 0))
-        );
+        return data.username.length > 0 && data.password.length > 0;
       case 2:
         return data.selectedOutput.length > 0;
       case 3:
-        return data.displayName.length > 0 && data.location.length > 0;
+        return data.displayName.length > 0;
       case 4:
         return true;
       default:
@@ -195,55 +181,27 @@ export function AddDisplayWizard({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="ip-address">IP Address or Hostname</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="ip-address"
-                placeholder="192.168.1.105"
-                value={data.ipAddress}
+                id="username"
+                value={data.username}
                 onChange={(e) =>
-                  setData((prev) => ({
-                    ...prev,
-                    ipAddress: e.target.value,
-                    isNewDisplay: e.target.value.length > 0,
-                  }))
+                  setData((prev) => ({ ...prev, username: e.target.value }))
                 }
               />
             </div>
 
-            {data.isNewDisplay && (
-              <>
-                <div className="flex flex-col gap-1 rounded-md bg-muted/50 p-3">
-                  <p className="text-sm font-medium">New Display Detected</p>
-                  <p className="text-xs text-muted-foreground">
-                    It looks like you are connecting to a new display. Please
-                    enter the display credentials to continue
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    value={data.username}
-                    onChange={(e) =>
-                      setData((prev) => ({ ...prev, username: e.target.value }))
-                    }
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={data.password}
-                    onChange={(e) =>
-                      setData((prev) => ({ ...prev, password: e.target.value }))
-                    }
-                  />
-                </div>
-              </>
-            )}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={data.password}
+                onChange={(e) =>
+                  setData((prev) => ({ ...prev, password: e.target.value }))
+                }
+              />
+            </div>
           </>
         )}
 
@@ -311,10 +269,6 @@ export function AddDisplayWizard({
               onDisplayNameChange={(value) =>
                 setData((prev) => ({ ...prev, displayName: value }))
               }
-              location={data.location}
-              onLocationChange={(value) =>
-                setData((prev) => ({ ...prev, location: value }))
-              }
               groups={data.groups}
               onGroupsChange={(names) =>
                 setData((prev) => ({ ...prev, groups: names }))
@@ -338,20 +292,10 @@ export function AddDisplayWizard({
                 <IconPhoto className="mt-0.5 size-4 text-muted-foreground" />
                 <div className="flex flex-col">
                   <span className="font-medium">{data.displayName}</span>
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <IconMapPin className="size-3" />
-                    {data.location}
-                  </span>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-y-2 text-sm">
-                <span className="text-muted-foreground">IP Address:</span>
-                <span>{data.ipAddress}</span>
-
-                <span className="text-muted-foreground">MAC Address:</span>
-                <span>{data.macAddress}</span>
-
                 <span className="text-muted-foreground">Display Output:</span>
                 <span>{data.selectedOutput}</span>
 

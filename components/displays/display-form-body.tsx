@@ -10,8 +10,6 @@ interface DisplayFormBodyProps {
   readonly mode: "add" | "edit";
   readonly displayName: string;
   readonly onDisplayNameChange: (value: string) => void;
-  readonly location: string;
-  readonly onLocationChange: (value: string) => void;
   readonly groups: readonly string[];
   readonly onGroupsChange: (names: string[]) => void;
   readonly existingGroups: readonly DisplayGroup[];
@@ -24,8 +22,6 @@ export function DisplayFormBody({
   mode,
   displayName,
   onDisplayNameChange,
-  location,
-  onLocationChange,
   groups,
   onGroupsChange,
   existingGroups,
@@ -35,13 +31,9 @@ export function DisplayFormBody({
 }: DisplayFormBodyProps): ReactElement {
   const namePrefix = mode === "add" ? "" : "edit-";
   const nameId = `${namePrefix}display-name`;
-  const locationId = `${namePrefix}location`;
   const groupsId = `${namePrefix}groups`;
   const nameLabel = "Display Name";
   const namePlaceholder = mode === "add" ? "LB446" : undefined;
-  const locationLabel = "Physical Location";
-  const locationPlaceholder =
-    mode === "add" ? "Bunzel Building - 4th Floor" : undefined;
 
   return (
     <>
@@ -52,16 +44,6 @@ export function DisplayFormBody({
           placeholder={namePlaceholder}
           value={displayName}
           onChange={(event) => onDisplayNameChange(event.target.value)}
-          disabled={disabled}
-        />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor={locationId}>{locationLabel}</Label>
-        <Input
-          id={locationId}
-          placeholder={locationPlaceholder}
-          value={location}
-          onChange={(event) => onLocationChange(event.target.value)}
           disabled={disabled}
         />
       </div>

@@ -39,9 +39,6 @@ export function ViewDisplayDialog({
 
   if (!display) return null;
   const displayName = display.name.trim() || "Unnamed display";
-  const location = display.location.trim() || "—";
-  const ipAddress = display.ipAddress.trim() || "—";
-  const macAddress = display.macAddress.trim() || "—";
   const output = display.output.trim() || "Not available";
   const resolution = display.resolution.trim() || "Not available";
 
@@ -51,8 +48,7 @@ export function ViewDisplayDialog({
         <DialogHeader>
           <DialogTitle>More Details</DialogTitle>
           <DialogDescription>
-            View network, output, and group configuration details for this
-            display.
+            View output and group configuration details for this display.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
@@ -66,15 +62,6 @@ export function ViewDisplayDialog({
                 <span>{display.slug}</span>
               </>
             ) : null}
-            <span className="text-muted-foreground">Physical Location</span>
-            <span>{location}</span>
-
-            <span className="text-muted-foreground">IP Address</span>
-            <span>{ipAddress}</span>
-
-            <span className="text-muted-foreground">MAC Address</span>
-            <span>{macAddress}</span>
-
             <span className="text-muted-foreground">Display Output</span>
             <span>{output}</span>
 

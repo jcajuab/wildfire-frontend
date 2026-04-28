@@ -38,9 +38,6 @@ import type { Display } from "@/types/display";
 interface EditFormData {
   readonly displayName: string;
   readonly slug: string;
-  readonly location: string;
-  readonly ipAddress: string;
-  readonly macAddress: string;
   readonly outputType: DisplayOutputType;
   readonly outputIndex: string;
   readonly resolutionWidth: string;
@@ -64,9 +61,6 @@ function createInitialFormData(display: Display): EditFormData {
   return {
     displayName: display.name,
     slug: display.slug,
-    location: display.location,
-    ipAddress: display.ipAddress,
-    macAddress: display.macAddress,
     outputType: parsedOutput?.type ?? "HDMI",
     outputIndex: String(parsedOutput?.index ?? 0),
     resolutionWidth: width,
@@ -145,9 +139,6 @@ export function EditDisplayForm({
       const didSave = await onSave({
         ...display,
         name: formData.displayName,
-        location: formData.location,
-        ipAddress: formData.ipAddress,
-        macAddress: formData.macAddress,
         output,
         resolution,
         emergencyContentId: formData.emergencyContentId,
@@ -185,10 +176,6 @@ export function EditDisplayForm({
           displayName={formData.displayName}
           onDisplayNameChange={(value) =>
             setFormData((prev) => ({ ...prev, displayName: value }))
-          }
-          location={formData.location}
-          onLocationChange={(value) =>
-            setFormData((prev) => ({ ...prev, location: value }))
           }
           groups={formData.groups}
           onGroupsChange={(names) =>

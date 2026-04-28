@@ -216,18 +216,18 @@ describe("EditDisplayDialog", () => {
 
       render(<EditDisplayDialogHarness />);
 
-      const locationInput = screen.getByLabelText(
-        "Physical Location",
+      const nameInput = screen.getByLabelText(
+        "Display Name",
       ) as HTMLInputElement;
-      await user.clear(locationInput);
-      await user.type(locationInput, "Temporary Location");
+      await user.clear(nameInput);
+      await user.type(nameInput, "Temporary Name");
 
       await dismissDialog(mode, user);
 
       await user.click(screen.getByRole("button", { name: "Reopen" }));
 
-      expect(screen.getByLabelText("Physical Location")).toHaveValue(
-        "Main Hall",
+      expect(screen.getByLabelText("Display Name")).toHaveValue(
+        "Main Lobby",
       );
     },
   );
