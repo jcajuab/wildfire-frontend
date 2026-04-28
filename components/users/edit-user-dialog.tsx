@@ -76,7 +76,11 @@ function EditUserForm({
     }
   };
 
-  const isValid = name.trim().length > 0 && username.trim().length > 0;
+  const trimmedEmail = email.trim();
+  const isEmailValid =
+    trimmedEmail.length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
+  const isValid =
+    name.trim().length > 0 && username.trim().length > 0 && isEmailValid;
 
   return (
     <form onSubmit={handleSubmit}>
@@ -124,7 +128,13 @@ function EditUserForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="user@example.com"
+            aria-invalid={!isEmailValid}
           />
+          {!isEmailValid ? (
+            <p className="text-xs text-destructive">
+              Please enter a valid email address.
+            </p>
+          ) : null}
         </div>
         <div className="flex items-center justify-between rounded-md border border-border p-4">
           <div className="space-y-0.5">
