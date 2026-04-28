@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { toast } from "sonner";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   useCreateRoleMutation,
@@ -57,6 +58,7 @@ export function useRolesHandlers({
               }).unwrap();
             }),
           );
+          toast.success(`Successfully created "${data.name}" role`);
           await onSuccess?.();
         } else if (selectedRole) {
           await updateRole({
@@ -105,10 +107,12 @@ export function useRolesHandlers({
               }).unwrap();
             }),
           );
+          toast.success(`Successfully updated "${data.name}" role`);
           await onSuccess?.();
         }
       } catch (err) {
-        notifyApiError(err, "Something went wrong");
+        const action = mode === "create" ? "create" : "update";
+        notifyApiError(err, `Failed to ${action} ${data.name} role`);
       }
     },
     [
