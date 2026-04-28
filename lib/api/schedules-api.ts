@@ -142,7 +142,30 @@ export const schedulesApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<BackendSchedule>(response, "createSchedule"),
-      invalidatesTags: [{ type: "Schedule", id: "LIST" }],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
+        try {
+          const { data: created } = await queryFulfilled;
+          // Patch all cached getSchedulesBootstrap queries
+          const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
+            { type: "Schedule", id: "LIST" },
+          ]);
+          for (const entry of entries) {
+            if (entry.endpointName === "getSchedulesBootstrap") {
+              dispatch(
+                schedulesApi.util.updateQueryData(
+                  "getSchedulesBootstrap",
+                  entry.originalArgs as ScheduleWindowQuery,
+                  (draft) => {
+                    (draft.schedules as BackendSchedule[]).push(created);
+                  },
+                ),
+              );
+            }
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     updateSchedule: build.mutation<BackendSchedule, UpdateScheduleRequest>({
       query: ({ id, ...body }) => ({
@@ -152,20 +175,66 @@ export const schedulesApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<BackendSchedule>(response, "updateSchedule"),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Schedule", id: "LIST" },
-        { type: "Schedule", id },
-      ],
+      async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
+        try {
+          const { data: updated } = await queryFulfilled;
+          const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
+            { type: "Schedule", id: "LIST" },
+          ]);
+          for (const entry of entries) {
+            if (entry.endpointName === "getSchedulesBootstrap") {
+              dispatch(
+                schedulesApi.util.updateQueryData(
+                  "getSchedulesBootstrap",
+                  entry.originalArgs as ScheduleWindowQuery,
+                  (draft) => {
+                    const schedules = draft.schedules as BackendSchedule[];
+                    const idx = schedules.findIndex((s) => s.id === arg.id);
+                    if (idx !== -1) {
+                      schedules[idx] = updated;
+                    }
+                  },
+                ),
+              );
+            }
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     deleteSchedule: build.mutation<void, string>({
       query: (id) => ({
         url: `schedules/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: (_result, _error, id) => [
-        { type: "Schedule", id: "LIST" },
-        { type: "Schedule", id },
-      ],
+      async onQueryStarted(id, { dispatch, queryFulfilled, getState }) {
+        try {
+          await queryFulfilled;
+          const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
+            { type: "Schedule", id: "LIST" },
+          ]);
+          for (const entry of entries) {
+            if (entry.endpointName === "getSchedulesBootstrap") {
+              dispatch(
+                schedulesApi.util.updateQueryData(
+                  "getSchedulesBootstrap",
+                  entry.originalArgs as ScheduleWindowQuery,
+                  (draft) => {
+                    const schedules = draft.schedules as BackendSchedule[];
+                    const idx = schedules.findIndex((s) => s.id === id);
+                    if (idx !== -1) {
+                      schedules.splice(idx, 1);
+                    }
+                  },
+                ),
+              );
+            }
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
   }),
 });

@@ -201,15 +201,15 @@ export default function UsersPage(): ReactElement {
                 }
               />
             ) : (
-              <div className="min-h-0 flex-1 flex flex-col overflow-hidden rounded-md border border-border">
+              <div className="relative min-h-0 flex-1 flex flex-col overflow-hidden rounded-md border border-border">
                 {usersFetching && !usersLoading ? (
-                  <div className="flex items-center justify-center py-12">
+                  <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-background/60">
                     <div className="flex items-center gap-2">
                       <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                       <span className="text-sm text-muted-foreground">Searching for users...</span>
                     </div>
                   </div>
-                ) : (
+                ) : null}
                 <div className="min-h-0 flex-1 overflow-y-auto">
                   <UsersTable
                     users={users}
@@ -229,7 +229,6 @@ export default function UsersPage(): ReactElement {
                     currentUserId={currentUser?.id}
                   />
                 </div>
-                )}
               </div>
             )}
 
