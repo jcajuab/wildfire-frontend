@@ -16,6 +16,17 @@ import {
 } from "@/components/content/content-file-types";
 import dynamic from "next/dynamic";
 
+const TICKER_PLACEHOLDERS = [
+  "Please return the aquaflask of John Doe to the department office!",
+  "Please do not forget to wear masks today due to air quality.",
+  "Reminding students that the Prog2 Departmentals Exam will be moved to LB447",
+  "Car with plate number GBW 3891 please remove your vehicle from the VPAA's parking spot",
+  "Student with ID number XXXXXXXX, please proceed to the department office.",
+] as const;
+
+const getRandomTickerPlaceholder = (): string =>
+  TICKER_PLACEHOLDERS[Math.floor(Math.random() * TICKER_PLACEHOLDERS.length)];
+
 const TiptapEditor = dynamic(
   () =>
     import("@/components/content/tiptap-editor").then((m) => m.TiptapEditor),
@@ -101,6 +112,9 @@ export function CreateContentDialog({
     resetState();
     onOpenChange(false);
   }, [onOpenChange, resetState]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally pick a new placeholder each time the dialog opens
+  const tickerPlaceholder = useMemo(() => getRandomTickerPlaceholder(), [open]);
 
   const isUploadMode = mode === "upload";
   const isFlashMode = mode === "flash";
@@ -356,7 +370,7 @@ export function CreateContentDialog({
                   id="flash-message"
                   value={flashMessage}
                   onChange={(event) => setFlashMessage(event.target.value)}
-                  placeholder="HELLO WORLD"
+                  placeholder={tickerPlaceholder}
                   maxLength={240}
                 />
                 <p className="text-xs text-muted-foreground">
