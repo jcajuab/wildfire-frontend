@@ -201,6 +201,22 @@ export function useAuditLogFilters(pageSize: number) {
     return resourceType || RESOURCE_TYPE_SELECT_ALL_VALUE;
   }, [resourceTypeInput, resourceType]);
 
+  const resetAll = useCallback(() => {
+    setFilters({
+      page: 1,
+      from: "",
+      to: "",
+      action: "",
+      requestId: "",
+      resourceType: "",
+      status: "",
+      actorType: "all",
+    });
+    setFromDraft("");
+    setToDraft("");
+    setResourceTypeInput("");
+  }, [setFilters]);
+
   return {
     page,
     setPage,
@@ -227,5 +243,6 @@ export function useAuditLogFilters(pageSize: number) {
     parsedStatus,
     listQuery,
     selectedResourceTypeValue,
+    resetAll,
   };
 }

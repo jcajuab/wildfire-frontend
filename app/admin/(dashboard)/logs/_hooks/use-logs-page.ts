@@ -194,30 +194,8 @@ export function useLogsPage(): UseLogsPageResult {
   );
 
   const handleResetFilters = useCallback((): void => {
-    setFromDraft("");
-    setToDraft("");
-    setFrom("");
-    setTo("");
-    setAction("");
-    setActorType("all");
-    setResourceType("");
-    setResourceTypeInput("");
-    setStatusRaw("");
-    setRequestId("");
-    setPage(1);
-  }, [
-    setFromDraft,
-    setToDraft,
-    setFrom,
-    setTo,
-    setAction,
-    setActorType,
-    setResourceType,
-    setResourceTypeInput,
-    setStatusRaw,
-    setRequestId,
-    setPage,
-  ]);
+    filters.resetAll();
+  }, [filters]);
 
   return {
     canExport,
