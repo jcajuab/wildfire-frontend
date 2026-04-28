@@ -58,7 +58,7 @@ export function useRolesHandlers({
               }).unwrap();
             }),
           );
-          toast.success(`Successfully created "${data.name}" role`);
+          toast.success(`Successfully created ${data.name} role`);
           await onSuccess?.();
         } else if (selectedRole) {
           await updateRole({
@@ -107,7 +107,7 @@ export function useRolesHandlers({
               }).unwrap();
             }),
           );
-          toast.success(`Successfully updated "${data.name}" role`);
+          toast.success(`Successfully updated ${data.name} role`);
           await onSuccess?.();
         }
       } catch (err) {

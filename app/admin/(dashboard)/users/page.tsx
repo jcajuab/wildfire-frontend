@@ -187,12 +187,7 @@ export default function UsersPage(): ReactElement {
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-6 py-6 sm:px-8 sm:py-8 pt-6">
-            {usersFetching && !usersLoading ? (
-              <div className="flex items-center justify-center gap-2 py-8">
-                <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                <span className="text-sm text-muted-foreground">Searching for users...</span>
-              </div>
-            ) : users.length === 0 ? (
+            {users.length === 0 && !usersFetching ? (
               <EmptyState
                 title="No users yet"
                 description="Invite users to give them access to WILDFIRE."
@@ -206,7 +201,15 @@ export default function UsersPage(): ReactElement {
                 }
               />
             ) : (
-              <div className="min-h-0 flex-1 flex flex-col overflow-hidden rounded-md border border-border">
+              <div className="relative min-h-0 flex-1 flex flex-col overflow-hidden rounded-md border border-border">
+                {usersFetching && !usersLoading ? (
+                  <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-background/60">
+                    <div className="flex items-center gap-2">
+                      <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      <span className="text-sm text-muted-foreground">Searching for users...</span>
+                    </div>
+                  </div>
+                ) : null}
                 <div className="min-h-0 flex-1 overflow-y-auto">
                   <UsersTable
                     users={users}

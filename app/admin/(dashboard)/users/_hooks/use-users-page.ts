@@ -40,6 +40,7 @@ export interface UseUsersPageResult {
   userRolesByUserId: Readonly<Record<string, readonly UserRole[]>>;
   systemRoleIds: readonly string[];
   usersLoading: boolean;
+  usersFetching: boolean;
   usersError: boolean;
 
   // Invitations

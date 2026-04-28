@@ -55,8 +55,8 @@ export function useScheduleHandlers(): UseScheduleHandlersResult {
         );
         toast.success(
           data.targetDisplayIds.length > 1
-            ? `${data.targetDisplayIds.length} schedules created.`
-            : "Schedule created.",
+            ? `Successfully created ${data.targetDisplayIds.length} schedules`
+            : "Successfully created schedule",
         );
       } catch (err) {
         if (isConflictError(err)) {
@@ -77,7 +77,7 @@ export function useScheduleHandlers(): UseScheduleHandlersResult {
     async (schedule: Schedule) => {
       try {
         await deleteSchedule(schedule.id).unwrap();
-        toast.success("Schedule deleted.");
+        toast.success("Successfully deleted schedule");
       } catch (err) {
         notifyApiError(err, "Failed to delete schedule.");
       }
@@ -91,7 +91,7 @@ export function useScheduleHandlers(): UseScheduleHandlersResult {
         await updateSchedule(
           mapUpdateFormToScheduleRequest(schedule.id, data),
         ).unwrap();
-        toast.success("Schedule updated.");
+        toast.success("Successfully updated schedule");
       } catch (err) {
         const message = getApiErrorMessage(err, "Failed to update schedule.");
         notifyApiError(err, message);

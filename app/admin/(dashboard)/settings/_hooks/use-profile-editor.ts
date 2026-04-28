@@ -116,7 +116,7 @@ export function useProfileEditor({
         updateSession(response);
         setSavedFirstName(normalizedFirstName);
         setSavedLastName(normalizedLastName);
-        toast.success("Name updated.");
+        toast.success("Successfully updated name");
         return true;
       } catch (err) {
         setProfileNameError(
@@ -146,7 +146,7 @@ export function useProfileEditor({
       try {
         await updateCurrentUserProfile({ username: normalized });
         setSavedUsername(normalized);
-        toast.success("Username updated. Logging out...");
+        toast.success("Successfully updated username. Logging out...");
         setTimeout(() => void logout(), 1500);
         return true;
       } catch (err) {
@@ -175,7 +175,7 @@ export function useProfileEditor({
       try {
         await updateCurrentUserProfile({ email: normalized || null });
         setSavedEmail(normalized);
-        toast.success("Email updated. Logging out...");
+        toast.success("Successfully updated email. Logging out...");
         setTimeout(() => void logout(), 1500);
         return true;
       } catch (err) {

@@ -168,7 +168,7 @@ export function useEditRolePage(
     roleUsersData:
       canReadUsers && state.status === "ready" ? state.initialUsers : undefined,
     onSuccess: () => {
-      toast.success("Role updated.");
+      toast.success("Successfully updated role");
       handleCancel();
     },
   });

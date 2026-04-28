@@ -150,7 +150,7 @@ export function useEditPlaylistPage(
             playlistId: state.playlist.id,
             items: payload.items,
           }).unwrap();
-          toast.success("Playlist updated.");
+          toast.success("Successfully updated playlist");
           router.push(PLAYLIST_INDEX_PATH);
         } catch (error) {
           notifyApiError(

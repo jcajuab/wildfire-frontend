@@ -115,9 +115,9 @@ export function DisplayGroupManagerDialog({
         name: nextName,
       }).unwrap();
       setCreateName("");
-      toast.success(`Successfully created "${nextName}" display group`);
+      toast.success(`Successfully created ${nextName} display group`);
     } catch (error) {
-      notifyApiError(error, `Failed to create "${nextName}" display group`);
+      notifyApiError(error, `Failed to create ${nextName} display group`);
     }
   }, [createName, createDisplayGroup, groups]);
 
@@ -157,7 +157,7 @@ export function DisplayGroupManagerDialog({
           nextName: updated.name,
         });
         cancelRename();
-        toast.success(`Renamed group to \"${updated.name}\".`);
+        toast.success(`Successfully renamed display group to ${updated.name}`);
       } catch (error) {
         notifyApiError(error, "Failed to rename group.");
       }
@@ -173,7 +173,7 @@ export function DisplayGroupManagerDialog({
         groupId: deleteCandidate.id,
         name: deleteCandidate.name,
       });
-      toast.success(`Deleted \"${deleteCandidate.name}\".`);
+      toast.success(`Successfully deleted ${deleteCandidate.name} display group`);
       setDeleteCandidate(null);
     } catch (error) {
       notifyApiError(error, "Failed to delete group.");

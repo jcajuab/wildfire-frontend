@@ -170,8 +170,8 @@ export default function RolesPage(): ReactElement {
           const removedUsers = roleToDelete.usersCount ?? 0;
           toast.success(
             removedUsers > 0
-              ? `Deleted "${roleToDelete.name}" and removed ${removedUsers} assignment(s).`
-              : `Deleted "${roleToDelete.name}".`,
+              ? `Successfully deleted ${roleToDelete.name} role and removed ${removedUsers} assignment(s)`
+              : `Successfully deleted ${roleToDelete.name} role`,
           );
           setRoleToDelete(null);
         }}

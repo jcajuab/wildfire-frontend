@@ -170,11 +170,11 @@ export function useUsersHandlers({
           email: data.email,
           isActive: data.isActive,
         }).unwrap();
-        toast.success(`Successfully updated "${data.name}"`);
+        toast.success(`Successfully updated ${data.name}`);
         setIsEditDialogOpen(false);
         setSelectedUser(null);
       } catch (err) {
-        notifyApiError(err, `Failed to update "${data.name}"`);
+        notifyApiError(err, `Failed to update ${data.name}`);
       }
     },
     [updateUser, setIsEditDialogOpen, setSelectedUser],

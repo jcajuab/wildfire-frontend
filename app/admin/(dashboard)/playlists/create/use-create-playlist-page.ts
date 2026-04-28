@@ -73,7 +73,7 @@ export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
           }).unwrap();
         }
 
-        toast.success("Playlist created.");
+        toast.success("Successfully created playlist");
         return true;
       } catch (error) {
         if (createdPlaylistId) {

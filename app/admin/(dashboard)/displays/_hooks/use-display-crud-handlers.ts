@@ -33,7 +33,7 @@ export function useDisplayCrudHandlers(input: {
       }
       try {
         await unregisterDisplay({ displayId: displayToUnregister.id }).unwrap();
-        toast.success(`"${displayToUnregister.name}" was unregistered.`);
+        toast.success(`Successfully unregistered ${displayToUnregister.name}`);
       } catch (err) {
         notifyApiError(err, "Failed to unregister display.");
       }
@@ -111,7 +111,7 @@ export function useDisplayCrudHandlers(input: {
         return false;
       }
 
-      toast.success(`Updated "${display.name}".`);
+      toast.success(`Successfully updated ${display.name}`);
       return true;
     },
     [updateDisplay, displayGroupsData, createDisplayGroup, setDisplayGroups],

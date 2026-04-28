@@ -15,3 +15,5 @@ next-env.d.ts
 .vercel/
 .DS_Store
 .playwright-mcp/
+.md
+perf-results/

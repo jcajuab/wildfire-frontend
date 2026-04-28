@@ -91,7 +91,7 @@ export function useContentCrudHandlers(
     }) => {
       try {
         await createFlashContent(flashInput).unwrap();
-        toast.success("Flash content created.");
+        toast.success("Successfully created flash content");
       } catch (error) {
         notifyApiError(error, "Failed to create flash content.");
       }
@@ -107,7 +107,7 @@ export function useContentCrudHandlers(
     }) => {
       try {
         await createTextContent(textInput).unwrap();
-        toast.success("Text content created.");
+        toast.success("Successfully created text content");
       } catch (error) {
         notifyApiError(error, "Failed to create text content.");
       }
@@ -175,7 +175,7 @@ export function useContentCrudHandlers(
                 }
               : {}),
         }).unwrap();
-        toast.success("Content updated.");
+        toast.success("Successfully updated content");
       } catch (error) {
         notifyApiError(
           error,
@@ -195,7 +195,7 @@ export function useContentCrudHandlers(
     }
     try {
       await deleteContent(contentToDelete.id).unwrap();
-      toast.success("Content deleted.");
+      toast.success("Successfully deleted content");
     } catch (error) {
       notifyApiError(error, "Failed to delete content.");
     }
