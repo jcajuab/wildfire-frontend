@@ -14,3 +14,4 @@ next-env.d.ts
 .omc/
 .vercel/
 .DS_Store
+.playwright-mcp/
