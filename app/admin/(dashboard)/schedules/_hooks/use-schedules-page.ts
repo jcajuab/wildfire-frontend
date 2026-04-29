@@ -81,6 +81,15 @@ export function useSchedulesPage() {
     () => displaysData?.map((d) => ({ id: d.id, name: d.name })) ?? [],
     [displaysData],
   );
+  const availableDisplayGroups = useMemo(
+    () =>
+      (displayGroupsData ?? []).map((g) => ({
+        id: g.id,
+        name: g.name,
+        displayIds: g.displayIds,
+      })),
+    [displayGroupsData],
+  );
   const availableFlashContents: readonly { id: string; title: string }[] =
     useMemo(
       () =>
@@ -118,6 +127,7 @@ export function useSchedulesPage() {
     setDisplayGroupSort,
     availablePlaylists,
     availableDisplays,
+    availableDisplayGroups,
     availableFlashContents,
     schedules,
     sortedDisplayGroups,

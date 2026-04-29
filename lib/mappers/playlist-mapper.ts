@@ -28,6 +28,7 @@ function mapBackendPlaylistItem(item: BackendPlaylistItem): PlaylistItem {
     content: mapBackendPlaylistItemToContent(item),
     duration: item.duration,
     sequence: item.sequence,
+    loop: item.loop,
   };
 }
 

@@ -19,6 +19,7 @@ export interface PlaylistItem {
   readonly content: PlaylistItemContent;
   readonly duration: number;
   readonly sequence: number;
+  readonly loop: boolean;
 }
 
 export interface PlaylistBase {

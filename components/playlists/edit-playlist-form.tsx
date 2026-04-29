@@ -22,12 +22,13 @@ function toDrafts(items: readonly PlaylistItem[]): DraftItem[] {
     content: item.content,
     duration: item.duration,
     sequence: item.sequence,
+    loop: item.loop,
   }));
 }
 
 export type PlaylistItemsAtomicSnapshot = readonly (
-  | { kind: "existing"; itemId: string; duration: number }
-  | { kind: "new"; contentId: string; duration: number }
+  | { kind: "existing"; itemId: string; duration: number; loop: boolean }
+  | { kind: "new"; contentId: string; duration: number; loop: boolean }
 )[];
 
 export interface PlaylistMetadataDraft {
@@ -87,8 +88,18 @@ export function EditPlaylistForm({
 
     const snapshot: PlaylistItemsAtomicSnapshot = items.map((item) =>
       item.id.startsWith("draft-")
-        ? { kind: "new", contentId: item.content.id, duration: item.duration }
-        : { kind: "existing", itemId: item.id, duration: item.duration },
+        ? {
+            kind: "new",
+            contentId: item.content.id,
+            duration: item.duration,
+            loop: item.loop,
+          }
+        : {
+            kind: "existing",
+            itemId: item.id,
+            duration: item.duration,
+            loop: item.loop,
+          },
     );
 
     onSave({

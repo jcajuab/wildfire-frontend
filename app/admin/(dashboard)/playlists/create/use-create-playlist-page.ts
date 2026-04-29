@@ -69,6 +69,7 @@ export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
               kind: "new" as const,
               contentId: item.content.id,
               duration: item.duration,
+              loop: item.loop,
             })),
           }).unwrap();
         }

@@ -12,6 +12,8 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { getTextThumbnailHtml } from "@/lib/content-thumbnail-preview";
 import { RICH_TEXT_PREVIEW_CLASSES } from "@/lib/rich-text-preview-classes";
 import { cn } from "@/lib/utils";
@@ -27,18 +29,21 @@ export interface DraftItem {
   readonly content: PlaylistSelectableContent | PlaylistItemContent;
   duration: number;
   sequence: number;
+  loop: boolean;
 }
 
 export interface SortableItemRowProps {
   readonly item: DraftItem;
   readonly onRemove: (id: string) => void;
   readonly onUpdateDuration: (id: string, duration: number) => void;
+  readonly onUpdateLoop: (id: string, loop: boolean) => void;
 }
 
 export function SortableItemRow({
   item,
   onRemove,
   onUpdateDuration,
+  onUpdateLoop,
 }: SortableItemRowProps): ReactElement {
   const {
     attributes,
@@ -102,7 +107,8 @@ export function SortableItemRow({
 
       <div className="flex flex-1 flex-col gap-0.5">
         <span className="text-sm font-medium">{item.content.title}</span>
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
           <IconClock className="size-4" />
           <input
             type="number"
@@ -128,6 +134,23 @@ export function SortableItemRow({
             onKeyDown={(e) => e.stopPropagation()}
           />
           <span>sec</span>
+          </div>
+          {item.content.type === "VIDEO" ? (
+            <div className="flex items-center gap-2">
+              <Switch
+                id={`loop-${item.id}`}
+                checked={item.loop}
+                onCheckedChange={(checked) => onUpdateLoop(item.id, checked)}
+                onPointerDown={(e) => e.stopPropagation()}
+              />
+              <Label
+                htmlFor={`loop-${item.id}`}
+                className="cursor-pointer font-normal text-muted-foreground"
+              >
+                Loop video
+              </Label>
+            </div>
+          ) : null}
         </div>
       </div>
 

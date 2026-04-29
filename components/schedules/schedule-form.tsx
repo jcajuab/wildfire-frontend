@@ -34,6 +34,78 @@ interface DisplayPickerProps {
   options: readonly { id: string; name: string }[];
 }
 
+export type ScheduleDisplayGroupOption = {
+  readonly id: string;
+  readonly name: string;
+  readonly displayIds: readonly string[];
+};
+
+interface DisplayGroupPickerProps {
+  value: string[];
+  onChange: (ids: string[]) => void;
+  options: readonly ScheduleDisplayGroupOption[];
+}
+
+function DisplayGroupPicker({
+  value,
+  onChange,
+  options,
+}: DisplayGroupPickerProps): ReactElement {
+  const [inputValue, setInputValue] = useState("");
+  const anchorRef = useComboboxAnchor();
+
+  const optionsById = useMemo(
+    () => new Map(options.map((option) => [option.id, option])),
+    [options],
+  );
+
+  const trimmed = inputValue.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    if (!trimmed) return options;
+    return options.filter((option) =>
+      option.name.toLowerCase().includes(trimmed),
+    );
+  }, [options, trimmed]);
+
+  return (
+    <Combobox
+      multiple
+      value={value}
+      onValueChange={(next) => {
+        onChange(Array.isArray(next) ? (next as string[]) : []);
+        setInputValue("");
+      }}
+      inputValue={inputValue}
+      onInputValueChange={(v) => setInputValue(v ?? "")}
+    >
+      <ComboboxChips ref={anchorRef}>
+        {value.map((id) => (
+          <ComboboxChip key={id}>{optionsById.get(id)?.name ?? id}</ComboboxChip>
+        ))}
+        <ComboboxChipsInput
+          placeholder={value.length === 0 ? "Search display groups…" : ""}
+        />
+      </ComboboxChips>
+      <ComboboxContent anchor={anchorRef}>
+        <ComboboxList>
+          {filtered.map((option) => (
+            <ComboboxItem key={option.id} value={option.id}>
+              <span className="flex flex-col gap-0.5">
+                <span>{option.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {option.displayIds.length}{" "}
+                  {option.displayIds.length === 1 ? "display" : "displays"}
+                </span>
+              </span>
+            </ComboboxItem>
+          ))}
+        </ComboboxList>
+        <ComboboxEmpty>No display groups found.</ComboboxEmpty>
+      </ComboboxContent>
+    </Combobox>
+  );
+}
+
 function DisplayPicker({
   value,
   onChange,
@@ -125,6 +197,7 @@ interface ScheduleFormProps {
   readonly availablePlaylists: readonly { id: string; name: string }[];
   readonly availableFlashContents: readonly { id: string; title: string }[];
   readonly availableDisplays: readonly { id: string; name: string }[];
+  readonly availableDisplayGroups?: readonly ScheduleDisplayGroupOption[];
   readonly onSubmit: (data: ScheduleFormData) => Promise<void> | void;
   readonly onCancel: () => void;
   readonly submitLabel: string;
@@ -132,11 +205,28 @@ interface ScheduleFormProps {
   readonly lockedKind?: "PLAYLIST" | "FLASH";
 }
 
+function resolveDisplayIdsFromGroups(
+  groupIds: readonly string[],
+  groups: readonly ScheduleDisplayGroupOption[],
+): string[] {
+  const byId = new Map(groups.map((g) => [g.id, g]));
+  const out = new Set<string>();
+  for (const gid of groupIds) {
+    const g = byId.get(gid);
+    if (!g) continue;
+    for (const id of g.displayIds) {
+      out.add(id);
+    }
+  }
+  return [...out];
+}
+
 function ScheduleFormFrame({
   initialData,
   availablePlaylists,
   availableFlashContents,
   availableDisplays,
+  availableDisplayGroups = [],
   onSubmit,
   onCancel,
   submitLabel,
@@ -145,6 +235,28 @@ function ScheduleFormFrame({
 }: ScheduleFormProps): ReactElement {
   const [formData, setFormData] = useState<ScheduleFormData>(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [targetMode, setTargetMode] = useState<"displays" | "display-groups">(
+    "displays",
+  );
+  const [targetDisplayGroupIds, setTargetDisplayGroupIds] = useState<string[]>(
+    [],
+  );
+
+  const resolvedTargetDisplayIds = useMemo(() => {
+    if (!isCreate || targetMode === "displays") {
+      return formData.targetDisplayIds;
+    }
+    return resolveDisplayIdsFromGroups(
+      targetDisplayGroupIds,
+      availableDisplayGroups,
+    );
+  }, [
+    isCreate,
+    targetMode,
+    formData.targetDisplayIds,
+    targetDisplayGroupIds,
+    availableDisplayGroups,
+  ]);
 
   const isEndTimeBeforeStartTime = useMemo(() => {
     if (!formData.startTime || !formData.endTime) return false;
@@ -152,7 +264,11 @@ function ScheduleFormFrame({
   }, [formData.startTime, formData.endTime]);
 
   const canSubmit = useMemo(() => {
-    if (!formData.name.trim() || formData.targetDisplayIds.length === 0) {
+    const hasTargets =
+      isCreate && targetMode === "display-groups"
+        ? targetDisplayGroupIds.length > 0 && resolvedTargetDisplayIds.length > 0
+        : formData.targetDisplayIds.length > 0;
+    if (!formData.name.trim() || !hasTargets) {
       return false;
     }
     if (isEndTimeBeforeStartTime) {
@@ -162,13 +278,24 @@ function ScheduleFormFrame({
       return Boolean(formData.playlistId);
     }
     return Boolean(formData.contentId);
-  }, [formData, isEndTimeBeforeStartTime]);
+  }, [
+    formData,
+    isEndTimeBeforeStartTime,
+    isCreate,
+    targetMode,
+    targetDisplayGroupIds.length,
+    resolvedTargetDisplayIds.length,
+  ]);
 
   async function handleSubmit(): Promise<void> {
     if (!canSubmit || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      const payload: ScheduleFormData =
+        isCreate && targetMode === "display-groups"
+          ? { ...formData, targetDisplayIds: resolvedTargetDisplayIds }
+          : formData;
+      await onSubmit(payload);
     } finally {
       setIsSubmitting(false);
     }
@@ -364,15 +491,55 @@ function ScheduleFormFrame({
         )}
 
         <div className="space-y-2">
-          <Label>Target Display</Label>
+          <Label>Target</Label>
           {isCreate ? (
-            <DisplayPicker
-              value={formData.targetDisplayIds}
-              onChange={(ids) =>
-                setFormData((prev) => ({ ...prev, targetDisplayIds: ids }))
-              }
-              options={availableDisplays}
-            />
+            <>
+              <Tabs
+                value={targetMode}
+                onValueChange={(value) => {
+                  const mode = value as "displays" | "display-groups";
+                  setTargetMode(mode);
+                  setTargetDisplayGroupIds([]);
+                  setFormData((prev) => ({ ...prev, targetDisplayIds: [] }));
+                }}
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="displays">Displays</TabsTrigger>
+                  <TabsTrigger value="display-groups">
+                    Display groups
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              {targetMode === "displays" ? (
+                <DisplayPicker
+                  value={formData.targetDisplayIds}
+                  onChange={(ids) =>
+                    setFormData((prev) => ({ ...prev, targetDisplayIds: ids }))
+                  }
+                  options={availableDisplays}
+                />
+              ) : availableDisplayGroups.length === 0 ? (
+                <EmptyResourceCta
+                  message="No display groups yet."
+                  href="/admin/displays"
+                  onNavigate={onCancel}
+                />
+              ) : (
+                <DisplayGroupPicker
+                  value={targetDisplayGroupIds}
+                  onChange={setTargetDisplayGroupIds}
+                  options={availableDisplayGroups}
+                />
+              )}
+              {targetMode === "display-groups" &&
+              targetDisplayGroupIds.length > 0 &&
+              resolvedTargetDisplayIds.length === 0 ? (
+                <p className="text-xs text-destructive">
+                  Selected groups have no displays. Add displays to those groups
+                  first.
+                </p>
+              ) : null}
+            </>
           ) : (
             <Select
               value={formData.targetDisplayIds[0] ?? ""}

@@ -78,6 +78,7 @@ export function PlaylistFormBody({
         content,
         duration: content.duration ?? 5,
         sequence: items.length + 1,
+        loop: false,
       };
       onItemsChange([...items, newItem]);
     },
@@ -99,6 +100,15 @@ export function PlaylistFormBody({
             ? { ...item, duration: Math.max(1, duration) }
             : item,
         ),
+      );
+    },
+    [items, onItemsChange],
+  );
+
+  const handleUpdateLoop = useCallback(
+    (itemId: string, loop: boolean) => {
+      onItemsChange(
+        items.map((item) => (item.id === itemId ? { ...item, loop } : item)),
       );
     },
     [items, onItemsChange],
@@ -191,6 +201,7 @@ export function PlaylistFormBody({
                       item={item}
                       onRemove={handleRemoveItem}
                       onUpdateDuration={handleUpdateDuration}
+                      onUpdateLoop={handleUpdateLoop}
                     />
                   ))
                 )}

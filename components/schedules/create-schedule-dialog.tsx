@@ -8,7 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CreateScheduleForm } from "@/components/schedules/schedule-form";
+import {
+  CreateScheduleForm,
+  type ScheduleDisplayGroupOption,
+} from "@/components/schedules/schedule-form";
 import type { ScheduleFormData } from "@/types/schedule";
 
 interface CreateScheduleDialogProps {
@@ -19,6 +22,7 @@ interface CreateScheduleDialogProps {
   readonly availablePlaylists: readonly { id: string; name: string }[];
   readonly availableFlashContents: readonly { id: string; title: string }[];
   readonly availableDisplays: readonly { id: string; name: string }[];
+  readonly availableDisplayGroups: readonly ScheduleDisplayGroupOption[];
 }
 
 export function CreateScheduleDialog({
@@ -29,6 +33,7 @@ export function CreateScheduleDialog({
   availablePlaylists,
   availableFlashContents,
   availableDisplays,
+  availableDisplayGroups,
 }: CreateScheduleDialogProps): ReactElement {
   async function handleCreate(data: ScheduleFormData): Promise<void> {
     try {
@@ -60,6 +65,7 @@ export function CreateScheduleDialog({
           availablePlaylists={availablePlaylists}
           availableFlashContents={availableFlashContents}
           availableDisplays={availableDisplays}
+          availableDisplayGroups={availableDisplayGroups}
           onSubmit={handleCreate}
           onCancel={() => onOpenChange(false)}
         />

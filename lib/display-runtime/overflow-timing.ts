@@ -7,6 +7,7 @@ export interface RuntimeContent {
 export interface RuntimeManifestItem {
   readonly id: string;
   readonly duration: number;
+  readonly loop?: boolean;
   readonly content: RuntimeContent;
 }
 

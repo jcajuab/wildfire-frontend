@@ -73,7 +73,6 @@ describe("thumbnail preview text helpers", () => {
     expect(
       getTextThumbnailText({
         ...baseContent,
-        type: "TEXT",
         title: "Announcement title",
         textHtmlContent: "<p><br/></p>",
       }),

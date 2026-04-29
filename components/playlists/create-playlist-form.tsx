@@ -84,6 +84,7 @@ export function CreatePlaylistForm({
       content: item.content,
       duration: item.duration,
       sequence: index,
+      loop: item.loop,
     }));
 
     setIsSubmitting(true);

@@ -33,6 +33,7 @@ export interface ManifestItem {
   readonly id: string;
   readonly sequence: number;
   readonly duration: number;
+  readonly loop: boolean;
   readonly content: {
     readonly id: string;
     readonly type: "IMAGE" | "VIDEO" | "TEXT";
@@ -309,10 +310,18 @@ const parseManifestItemContent = (
 
 const parseManifestItem = (payload: unknown, path: string): ManifestItem => {
   const root = readRecord(payload, path);
+  const loopRaw = root.loop;
+  const loop =
+    typeof loopRaw === "boolean"
+      ? loopRaw
+      : loopRaw === undefined
+        ? false
+        : readBoolean(loopRaw, `${path}.loop`);
   return {
     id: readString(root.id, `${path}.id`),
     sequence: readInteger(root.sequence, `${path}.sequence`),
     duration: readInteger(root.duration, `${path}.duration`),
+    loop,
     content: parseManifestItemContent(root.content, `${path}.content`),
   };
 };

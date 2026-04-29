@@ -22,6 +22,7 @@ export interface BackendPlaylistItem {
   readonly id: string;
   readonly sequence: number;
   readonly duration: number;
+  readonly loop: boolean;
   readonly content: {
     readonly id: string;
     readonly title: string;
@@ -77,6 +78,7 @@ export interface AddPlaylistItemRequest {
   readonly contentId: string;
   readonly sequence: number;
   readonly duration: number;
+  readonly loop?: boolean;
 }
 
 export interface UpdatePlaylistItemRequest {
@@ -84,6 +86,7 @@ export interface UpdatePlaylistItemRequest {
   readonly itemId: string;
   readonly sequence?: number;
   readonly duration?: number;
+  readonly loop?: boolean;
 }
 
 export interface DeletePlaylistItemRequest {
@@ -103,11 +106,13 @@ export interface SavePlaylistItemsAtomicRequest {
         kind: "existing";
         itemId: string;
         duration: number;
+        loop?: boolean;
       }
     | {
         kind: "new";
         contentId: string;
         duration: number;
+        loop?: boolean;
       }
   )[];
 }

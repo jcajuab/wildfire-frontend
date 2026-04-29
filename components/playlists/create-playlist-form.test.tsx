@@ -171,7 +171,7 @@ describe("CreatePlaylistForm", () => {
             id: "content-text-1",
             title: "Announcement",
             type: "TEXT",
-            thumbnailUrl: null,
+            thumbnailUrl: undefined,
             textHtmlContent: "<p><strong>Breaking</strong> News</p>",
           },
         ]}

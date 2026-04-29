@@ -38,6 +38,7 @@ export default function SchedulesPage(): ReactElement {
     schedules,
     sortedDisplayGroups,
     displayGroupsData,
+    availableDisplayGroups,
     createDialogKind,
     setCreateDialogKind,
     viewDialogOpen,
@@ -147,6 +148,7 @@ export default function SchedulesPage(): ReactElement {
         availablePlaylists={availablePlaylists}
         availableFlashContents={availableFlashContents}
         availableDisplays={availableDisplays}
+        availableDisplayGroups={availableDisplayGroups}
       />
 
       {/* View Schedule Dialog */}

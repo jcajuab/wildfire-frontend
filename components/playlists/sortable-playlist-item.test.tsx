@@ -43,6 +43,7 @@ const baseItem = {
   id: "draft-1",
   duration: 5,
   sequence: 0,
+  loop: false,
   content: {
     id: "content-1",
     title: "Poster",
@@ -65,6 +66,7 @@ describe("SortableItemRow", () => {
         }}
         onRemove={vi.fn()}
         onUpdateDuration={vi.fn()}
+        onUpdateLoop={vi.fn()}
       />,
     );
 
@@ -80,6 +82,7 @@ describe("SortableItemRow", () => {
         item={baseItem}
         onRemove={vi.fn()}
         onUpdateDuration={vi.fn()}
+        onUpdateLoop={vi.fn()}
       />,
     );
 
@@ -103,6 +106,7 @@ describe("SortableItemRow", () => {
         }}
         onRemove={vi.fn()}
         onUpdateDuration={vi.fn()}
+        onUpdateLoop={vi.fn()}
       />,
     );
 
