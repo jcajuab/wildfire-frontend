@@ -57,7 +57,7 @@ export interface PlaylistListQuery {
   readonly pageSize?: number;
   readonly status?: "DRAFT" | "IN_USE";
   readonly search?: string;
-  readonly sortBy?: "updatedAt" | "name";
+  readonly sortBy?: "createdAt" | "updatedAt" | "name";
   readonly sortDirection?: "asc" | "desc";
 }
 

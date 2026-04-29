@@ -158,19 +158,11 @@ function ScheduleFormFrame({
     if (isEndTimeBeforeStartTime) {
       return false;
     }
-    if (isCreate && formData.startDate && formData.startTime) {
-      const startDateTime = new Date(
-        `${formData.startDate}T${formData.startTime}`,
-      );
-      if (startDateTime < new Date()) {
-        return false;
-      }
-    }
     if (formData.kind === "PLAYLIST") {
       return Boolean(formData.playlistId);
     }
     return Boolean(formData.contentId);
-  }, [formData, isCreate, isEndTimeBeforeStartTime]);
+  }, [formData, isEndTimeBeforeStartTime]);
 
   async function handleSubmit(): Promise<void> {
     if (!canSubmit || isSubmitting) return;
@@ -228,7 +220,6 @@ function ScheduleFormFrame({
                 id="schedule-start-date"
                 type="date"
                 value={formData.startDate}
-                min={isCreate ? getTodayDateString() : undefined}
                 onChange={(event) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -268,11 +259,6 @@ function ScheduleFormFrame({
                 id="schedule-start-time"
                 type="time"
                 value={formData.startTime}
-                min={
-                  isCreate && formData.startDate === getTodayDateString()
-                    ? getCurrentTimeString()
-                    : undefined
-                }
                 onChange={(event) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -450,15 +436,6 @@ function getCurrentTimeString(): string {
   return `${hours}:${minutes}`;
 }
 
-function getCurrentTimeRoundedUp5Min(): string {
-  const now = new Date();
-  const totalMinutes = now.getHours() * 60 + now.getMinutes();
-  const roundedMinutes = Math.ceil(totalMinutes / 5) * 5;
-  const hours = Math.floor(roundedMinutes / 60) % 24;
-  const minutes = roundedMinutes % 60;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-}
-
 export function CreateScheduleForm({
   kind,
   ...props
@@ -470,7 +447,7 @@ export function CreateScheduleForm({
         kind: kind ?? "PLAYLIST",
         startDate: getTodayDateString(),
         endDate: getTodayDateString(),
-        startTime: getCurrentTimeRoundedUp5Min(),
+        startTime: getCurrentTimeString(),
         endTime: "17:00",
         playlistId: null,
         contentId: null,

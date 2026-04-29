@@ -74,7 +74,7 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
       pageSize: PAGE_SIZE,
       status: statusFilter === "all" ? undefined : statusFilter,
       search: debouncedSearch.length > 0 ? debouncedSearch : undefined,
-      sortBy: "updatedAt",
+      sortBy: "createdAt",
       sortDirection: "desc",
     }),
     [page, debouncedSearch, statusFilter],
