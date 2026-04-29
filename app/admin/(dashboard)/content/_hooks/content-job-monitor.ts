@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { type BackendContentJob, contentApi } from "@/lib/api/content-api";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppStore } from "@/lib/hooks";
 import { waitForContentJob } from "./content-job-sse-client";
 
 export interface UseContentJobMonitorInput {
@@ -22,12 +22,13 @@ export interface ContentJobMonitor {
 
 /**
  * React hook for monitoring content jobs using SSE.
- * Handles cache invalidation and user notifications on job completion.
+ * Patches cached content rows to READY on success (avoids broad LIST invalidation).
  */
 export function useContentJobMonitor(
   input: UseContentJobMonitorInput,
 ): ContentJobMonitor {
   const dispatch = useAppDispatch();
+  const store = useAppStore();
 
   const trackContentJob = useCallback(
     (job: {
@@ -41,11 +42,29 @@ export function useContentJobMonitor(
         fetchJob: input.fetchJob,
       })
         .then(() => {
+          const state = store.getState();
+          const listArgs = contentApi.util.selectCachedArgsForQuery(
+            state,
+            "listContent",
+          );
+          for (const args of listArgs) {
+            dispatch(
+              contentApi.util.updateQueryData("listContent", args, (draft) => ({
+                ...draft,
+                items: draft.items.map((c) =>
+                  c.id === job.contentId
+                    ? { ...c, status: "READY" as const }
+                    : c,
+                ),
+              })),
+            );
+          }
           dispatch(
-            contentApi.util.invalidateTags([
-              { type: "Content", id: "LIST" },
-              { type: "Content", id: job.contentId },
-            ]),
+            contentApi.util.updateQueryData(
+              "getContent",
+              job.contentId,
+              (draft) => ({ ...draft, status: "READY" as const }),
+            ),
           );
           toast.success(job.successMessage);
         })
@@ -53,7 +72,7 @@ export function useContentJobMonitor(
           notifyApiError(error, job.failureMessage);
         });
     },
-    [dispatch, input.fetchJob],
+    [dispatch, input.fetchJob, store],
   );
 
   return {

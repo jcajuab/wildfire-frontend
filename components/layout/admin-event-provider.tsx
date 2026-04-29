@@ -1,21 +1,21 @@
 "use client";
 
 import { useEffect, type ReactElement, type ReactNode } from "react";
+import { handleDisplayLifecycleEvent } from "@/lib/api/admin-lifecycle-cache";
 import {
   subscribeToDisplayLifecycleEvents,
   type DisplayLifecycleEvent,
 } from "@/lib/api/display-events";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppStore } from "@/lib/hooks";
 import { useCan } from "@/hooks/use-can";
-import { api } from "@/lib/api/api";
 
 /**
  * Persistent layout-level SSE subscription.
  *
  * Maintains a single connection to /displays/events for the entire
- * dashboard session. On any lifecycle event, the relevant RTK Query
- * cache tags are invalidated so pages receive fresh data without
- * per-page subscriptions or polling.
+ * dashboard session. Status updates patch cached query data in place;
+ * structural changes (display registered/unregistered) still invalidate
+ * the display list tag so lists refetch.
  */
 export function AdminEventProvider({
   children,
@@ -23,6 +23,7 @@ export function AdminEventProvider({
   readonly children: ReactNode;
 }): ReactElement {
   const dispatch = useAppDispatch();
+  const store = useAppStore();
   const canReadDisplays = useCan("displays:read");
 
   useEffect(() => {
@@ -30,38 +31,12 @@ export function AdminEventProvider({
 
     const subscription = subscribeToDisplayLifecycleEvents({
       onEvent: (event: DisplayLifecycleEvent) => {
-        switch (event.type) {
-          case "display_registered":
-          case "display_unregistered":
-          case "display_status_changed":
-            dispatch(
-              api.util.invalidateTags([
-                { type: "Display", id: "LIST" },
-              ]),
-            );
-            break;
-          case "playlist_status_changed":
-            dispatch(
-              api.util.invalidateTags([
-                { type: "Playlist", id: "LIST" },
-                { type: "Playlist", id: event.playlistId },
-              ]),
-            );
-            break;
-          case "content_status_changed":
-            dispatch(
-              api.util.invalidateTags([
-                { type: "Content", id: "LIST" },
-                { type: "Content", id: event.contentId },
-              ]),
-            );
-            break;
-        }
+        handleDisplayLifecycleEvent(dispatch, () => store.getState(), event);
       },
     });
 
     return () => subscription.close();
-  }, [canReadDisplays, dispatch]);
+  }, [canReadDisplays, dispatch, store]);
 
   return <>{children}</>;
 }

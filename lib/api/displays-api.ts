@@ -150,6 +150,8 @@ export const displaysApi = api.injectEndpoints({
       DisplaysBootstrapResponse,
       DisplaysListQuery | void
     >({
+      // Expensive aggregate; keep warm longer so navigation does not drop cache quickly.
+      keepUnusedDataFor: 120,
       query: (query) => {
         const params = new URLSearchParams();
         params.set("page", String(query?.page ?? 1));
@@ -178,11 +180,11 @@ export const displaysApi = api.injectEndpoints({
           response,
           "getDisplaysBootstrap",
         ),
+      // Do not provide Content:LIST — content list invalidation should not refetch this bootstrap.
       providesTags: [
         { type: "Display", id: "LIST" },
         { type: "DisplayGroup", id: "LIST" },
         { type: "RuntimeOverrides", id: "GLOBAL" },
-        { type: "Content", id: "LIST" },
       ],
     }),
     getDisplayOptions: build.query<

@@ -18,7 +18,8 @@ import { useContentDialogState } from "./use-content-dialog-state";
 import { useContentCrudHandlers } from "./use-content-crud-handlers";
 
 const PAGE_SIZE = 500;
-const POLLING_FALLBACK_INTERVAL_MS = 60_000;
+/** SSE delivers content_status_changed; long fallback only if SSE is unavailable */
+const POLLING_FALLBACK_INTERVAL_MS = 300_000;
 
 /**
  * Main controller for content page.
@@ -45,9 +46,8 @@ export function useContentPageController() {
     { pollingInterval: POLLING_FALLBACK_INTERVAL_MS },
   );
 
-  // SSE-driven cache invalidation is handled by AdminEventProvider in the
-  // layout, which invalidates Content tags on content_status_changed events.
-  // Polling above is a fallback only.
+  // SSE lifecycle events patch list rows via AdminEventProvider (no broad LIST invalidation).
+  // Polling is a slow fallback if SSE is disconnected.
 
   const searchParams = useSearchParams();
   const previewId = searchParams.get("preview");
