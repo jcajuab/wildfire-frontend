@@ -189,7 +189,7 @@ export const displaysApi = api.injectEndpoints({
       DisplayOption[],
       { q?: string; limit?: number } | void
     >({
-      keepUnusedDataFor: 600,
+      keepUnusedDataFor: 30,
       query: (query) => ({
         url: "displays/options",
         params: {
@@ -231,7 +231,7 @@ export const displaysApi = api.injectEndpoints({
       ],
     }),
     getRuntimeOverrides: build.query<DisplayRuntimeOverrides, void>({
-      keepUnusedDataFor: 300,
+      keepUnusedDataFor: 30,
       query: () => "displays/runtime-overrides",
       transformResponse: (response) =>
         parseApiResponseDataSafe<DisplayRuntimeOverrides>(

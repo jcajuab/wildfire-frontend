@@ -4,7 +4,7 @@ import { baseQuery } from "@/lib/api/base-query";
 export const api = createApi({
   reducerPath: "api",
   baseQuery,
-  keepUnusedDataFor: 300,
+  keepUnusedDataFor: 30,
   tagTypes: [
     "AICredential",
     "AuditEvent",
