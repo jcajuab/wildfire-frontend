@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 function buildCspHeader(): string {
-  const apiOrigin = process.env.NEXT_PUBLIC_API_URL
-    ? new URL(process.env.NEXT_PUBLIC_API_URL).origin
-    : "";
+  const apiOrigin = getAbsoluteOrigin(process.env.NEXT_PUBLIC_API_URL);
   const storageUrl = process.env.NEXT_PUBLIC_STORAGE_URL ?? "";
 
   return [
@@ -21,6 +19,16 @@ function buildCspHeader(): string {
     "base-uri 'self'",
     "form-action 'self'",
   ].join("; ");
+}
+
+function getAbsoluteOrigin(url: string | undefined): string {
+  if (!url) return "";
+
+  try {
+    return new URL(url).origin;
+  } catch {
+    return "";
+  }
 }
 
 /**

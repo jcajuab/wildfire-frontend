@@ -23,7 +23,14 @@ describe("getBaseUrl", () => {
     delete process.env.NEXT_PUBLIC_API_URL;
     process.env.NEXT_PUBLIC_API_VERSION = "v1";
 
-    expect(getBaseUrl()).toBe("/v1");
+    expect(getBaseUrl()).toBe("/api/v1");
+  });
+
+  test("returns relative versioned API URL when base URL is configured as a path", () => {
+    process.env.NEXT_PUBLIC_API_URL = "/api/";
+    process.env.NEXT_PUBLIC_API_VERSION = "v1";
+
+    expect(getBaseUrl()).toBe("/api/v1");
   });
 
   test("returns absolute versioned API URL when base URL is configured", () => {
