@@ -29,7 +29,7 @@ export function PlaylistGrid({
         action={
           <Can permission="playlists:create">
             <Button asChild>
-              <Link href="/admin/playlists/create" prefetch>
+              <Link href="/admin/playlists/create" prefetch="hover">
                 <IconPlus className="size-4" aria-hidden="true" />
                 Create Playlist
               </Link>

@@ -101,8 +101,8 @@ export function AppSidebar(): ReactElement {
   const [isPending, startTransition] = useTransition();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
-  /** Intercept link click: keep <Link> for prefetch, but use startTransition
-   *  for navigation so we get isPending state for spinner / disabled. */
+  /** Intercept link click: keep <Link> for hover-prefetch, but use
+   *  startTransition for navigation so we get isPending state. */
   function handleNavClick(e: MouseEvent, href: string): void {
     e.preventDefault();
     if (isPending) return;
@@ -144,7 +144,7 @@ export function AppSidebar(): ReactElement {
   return (
     <Sidebar variant="floating" collapsible="offcanvas" className="pr-0">
       <SidebarHeader>
-        <Link href={homeRoute} aria-label="Home" prefetch>
+        <Link href={homeRoute} aria-label="Home" prefetch="hover">
           <WildfireLogo className="h-6" />
         </Link>
       </SidebarHeader>
@@ -178,7 +178,7 @@ export function AppSidebar(): ReactElement {
                         >
                           <Link
                             href={item.href}
-                            prefetch
+                            prefetch="hover"
                             aria-disabled={isDisabled || undefined}
                             className={
                               isDisabled
@@ -229,7 +229,7 @@ export function AppSidebar(): ReactElement {
                         >
                           <Link
                             href={item.href}
-                            prefetch
+                            prefetch="hover"
                             aria-disabled={isDisabled || undefined}
                             className={
                               isDisabled

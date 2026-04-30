@@ -43,7 +43,7 @@ function EmptyResourcesState(): ReactElement {
       action={
         <Can permission="displays:create">
           <Button asChild>
-            <Link href="/admin/displays" prefetch>
+            <Link href="/admin/displays" prefetch="hover">
               <IconPlus className="size-4" aria-hidden="true" />
               Add Display
             </Link>
