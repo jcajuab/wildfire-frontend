@@ -14,9 +14,10 @@ import { mapBackendPlaylistSummary } from "@/lib/mappers/playlist-mapper";
 import { getPlaylistEditPath } from "@/lib/playlist-paths";
 import type { PlaylistStatusFilter } from "@/components/playlists/playlist-filter-popover";
 import type { PlaylistSummary } from "@/types/playlist";
+import { PLAYLISTS_PAGE_SIZE } from "@/lib/playlists-search-params";
 import { usePlaylistsFilters } from "./use-playlists-filters";
 
-export const PAGE_SIZE = 12;
+export const PAGE_SIZE = PLAYLISTS_PAGE_SIZE;
 
 export interface UsePlaylistsPageResult {
   // Permissions

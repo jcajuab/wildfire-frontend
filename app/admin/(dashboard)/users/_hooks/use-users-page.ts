@@ -11,9 +11,11 @@ import type { InvitationRecord } from "@/types/invitation";
 import type { EditUserFormData } from "@/components/users/edit-user-dialog";
 import { useUsersFilters } from "./use-users-filters";
 import { useUsersDialogs } from "./use-users-dialogs";
+import { USERS_PAGE_SIZE } from "@/lib/users-search-params";
+
 import { useUsersHandlers } from "./use-users-handlers";
 
-export const PAGE_SIZE = 10;
+export const PAGE_SIZE = USERS_PAGE_SIZE;
 
 export interface UseUsersPageResult {
   // Auth

@@ -1,104 +1,91 @@
-"use client";
-
 import type { ReactElement } from "react";
-import { useState } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { redirect } from "next/navigation";
 
-import { EmptyState } from "@/components/common/empty-state";
-import { PageHeader } from "@/components/layout/page-header";
-import { EditPlaylistForm } from "@/components/playlists/edit-playlist-form";
-import { Button } from "@/components/ui/button";
-import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
-import { useEditPlaylistPage } from "./use-edit-playlist-page";
+import type { BackendContent } from "@/lib/api/content-api";
+import type { BackendPlaylistWithItems } from "@/lib/api/playlists-api";
+import { parseApiResponseDataSafe } from "@/lib/api/contracts";
+import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
+import { PLAYLIST_CONTENT_PICKER_LIST_QUERY } from "@/lib/content-search-params";
+import { getPlaylistEditPath } from "@/lib/playlist-paths";
+import { getServerSession } from "@/lib/server/auth";
+import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
-interface EditPlaylistPageFormState {
-  readonly canSave: boolean;
-  readonly isSaving: boolean;
-  handleCancel: () => void;
-  handleSave: () => void;
+import { ContentListCacheSeeder } from "../../../content/content-page-client";
+import {
+  EditPlaylistPageView,
+  PlaylistDetailCacheSeeder,
+} from "./edit-playlist-page-client";
+
+interface EditPlaylistPageProps {
+  readonly params: Promise<{ id: string }>;
 }
 
-export default function EditPlaylistPage(): ReactElement {
-  const params = useParams<{ id: string }>();
-  const { state, availableContent, handleCancel, handleSave, isSaving } =
-    useEditPlaylistPage(params?.id);
-  const [formState, setFormState] = useState<EditPlaylistPageFormState | null>(
-    null,
+export default async function EditPlaylistPage({
+  params,
+}: EditPlaylistPageProps): Promise<ReactElement> {
+  const session = await getServerSession();
+  const { id: playlistId } = await params;
+
+  const redirectTo = encodeURIComponent(getPlaylistEditPath(playlistId));
+
+  if (!session) {
+    redirect(`/login?redirectTo=${redirectTo}`);
+  }
+  if (!sessionHasPermission(session, "playlists:update")) {
+    redirect("/unauthorized");
+  }
+
+  const playlistRes = await serverFetchJson<unknown>({
+    session,
+    path: `playlists/${encodeURIComponent(playlistId)}`,
+    tags: ["playlists"],
+    revalidate: 30,
+  });
+
+  if (!playlistRes.ok) {
+    redirect(`/login?redirectTo=${redirectTo}`);
+  }
+
+  const playlistData = parseApiResponseDataSafe<BackendPlaylistWithItems>(
+    playlistRes.data,
+    "getPlaylist",
   );
 
-  const headerActions =
-    state.status === "ready" ? (
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          onClick={() => formState?.handleCancel()}
-          disabled={formState?.isSaving ?? false}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={() => formState?.handleSave()}
-          disabled={!formState?.canSave || formState.isSaving}
-        >
-          {formState?.isSaving ? "Saving..." : "Save Changes"}
-        </Button>
-      </div>
-    ) : null;
+  let contentSeeder: ReactElement | null = null;
+  if (sessionHasPermission(session, "content:read")) {
+    const listRes = await serverFetchJson<unknown>({
+      session,
+      path: "content",
+      searchParams: {
+        page: PLAYLIST_CONTENT_PICKER_LIST_QUERY.page ?? 1,
+        pageSize: PLAYLIST_CONTENT_PICKER_LIST_QUERY.pageSize ?? 100,
+        status: PLAYLIST_CONTENT_PICKER_LIST_QUERY.status,
+        sortBy: PLAYLIST_CONTENT_PICKER_LIST_QUERY.sortBy ?? "createdAt",
+        sortDirection:
+          PLAYLIST_CONTENT_PICKER_LIST_QUERY.sortDirection ?? "desc",
+      },
+      tags: ["content"],
+      revalidate: 30,
+    });
+    if (listRes.ok) {
+      const listData = transformPaginatedListResponse<BackendContent>(
+        listRes.data,
+        "listContent",
+      );
+      contentSeeder = (
+        <ContentListCacheSeeder
+          queryArgs={PLAYLIST_CONTENT_PICKER_LIST_QUERY}
+          data={listData}
+        />
+      );
+    }
+  }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
-      <PageHeader title="Edit Playlist">{headerActions}</PageHeader>
-      <section className="flex min-h-0 flex-1 flex-col">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {state.status === "loading" ? (
-            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-6 py-6 sm:px-8 sm:py-8">
-              <p className="text-muted-foreground">Loading playlist...</p>
-            </div>
-          ) : null}
-
-          {state.status === "notFound" ? (
-            <div className="flex min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
-              <EmptyState
-                title="Playlist not found"
-                description={state.message}
-                action={
-                  <Button asChild>
-                    <Link href={PLAYLIST_INDEX_PATH}>Back to Playlists</Link>
-                  </Button>
-                }
-              />
-            </div>
-          ) : null}
-
-          {state.status === "error" ? (
-            <div className="flex min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
-              <EmptyState
-                title="Unable to load playlist"
-                description={state.message}
-                action={
-                  <Button asChild>
-                    <Link href={PLAYLIST_INDEX_PATH}>Back to Playlists</Link>
-                  </Button>
-                }
-              />
-            </div>
-          ) : null}
-
-          {state.status === "ready" ? (
-            <div className="flex min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
-              <EditPlaylistForm
-                playlist={state.playlist}
-                availableContent={availableContent}
-                onSave={handleSave}
-                onCancel={handleCancel}
-                onStateChange={setFormState}
-                isSaving={isSaving}
-              />
-            </div>
-          ) : null}
-        </div>
-      </section>
-    </div>
+    <>
+      <PlaylistDetailCacheSeeder playlistId={playlistId} data={playlistData} />
+      {contentSeeder}
+      <EditPlaylistPageView />
+    </>
   );
 }

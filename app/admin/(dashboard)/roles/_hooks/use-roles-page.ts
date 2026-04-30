@@ -11,9 +11,11 @@ import {
 } from "@/lib/api/rbac-api";
 import { ROLE_CREATE_PATH, getRoleEditPath } from "@/lib/role-paths";
 import type { Role, RoleSort } from "@/types/role";
+import { ROLES_PAGE_SIZE } from "@/lib/roles-search-params";
+
 import { useRolesFilters } from "./use-roles-filters";
 
-export const PAGE_SIZE = 10;
+export const PAGE_SIZE = ROLES_PAGE_SIZE;
 
 export interface UseRolesPageResult {
   // Permissions

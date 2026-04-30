@@ -1,5 +1,14 @@
+import { revalidateWildfireTag } from "@/app/actions/revalidate-wildfire-cache";
 import { api } from "@/lib/api/api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
+
+async function bumpSchedulesNextCache(): Promise<void> {
+  try {
+    await revalidateWildfireTag("schedules");
+  } catch {
+    // best-effort
+  }
+}
 
 export interface BackendSchedule {
   readonly id: string;
@@ -163,6 +172,7 @@ export const schedulesApi = api.injectEndpoints({
               );
             }
           }
+          await bumpSchedulesNextCache();
         } catch {
           // mutation failed
         }
@@ -199,6 +209,7 @@ export const schedulesApi = api.injectEndpoints({
               );
             }
           }
+          await bumpSchedulesNextCache();
         } catch {
           // mutation failed
         }
@@ -232,6 +243,7 @@ export const schedulesApi = api.injectEndpoints({
               );
             }
           }
+          await bumpSchedulesNextCache();
         } catch {
           // mutation failed
         }

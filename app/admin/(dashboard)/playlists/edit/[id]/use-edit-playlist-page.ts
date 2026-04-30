@@ -10,6 +10,7 @@ import type {
 } from "@/components/playlists/edit-playlist-form";
 import { useCan } from "@/hooks/use-can";
 import { useListContentQuery } from "@/lib/api/content-api";
+import { PLAYLIST_CONTENT_PICKER_LIST_QUERY } from "@/lib/content-search-params";
 import {
   getApiErrorMessage,
   notifyApiError,
@@ -47,7 +48,7 @@ export function useEditPlaylistPage(
   const canReadContent = useCan("content:read");
 
   const { data: contentData } = useListContentQuery(
-    { page: 1, pageSize: 100, status: "READY" },
+    PLAYLIST_CONTENT_PICKER_LIST_QUERY,
     { skip: !canReadContent },
   );
 

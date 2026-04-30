@@ -1,5 +1,14 @@
+import { revalidateWildfireTag } from "@/app/actions/revalidate-wildfire-cache";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { api } from "@/lib/api/api";
+
+async function bumpAiCredentialsNextCache(): Promise<void> {
+  try {
+    await revalidateWildfireTag("ai");
+  } catch {
+    // best-effort
+  }
+}
 
 export interface AICredential {
   readonly provider: string;
@@ -24,6 +33,14 @@ export const aiCredentialsApi = api.injectEndpoints({
         body,
       }),
       invalidatesTags: [{ type: "AICredential", id: "LIST" }],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await bumpAiCredentialsNextCache();
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     deleteAICredential: build.mutation<void, string>({
       query: (provider) => ({
@@ -31,6 +48,14 @@ export const aiCredentialsApi = api.injectEndpoints({
         method: "DELETE",
       }),
       invalidatesTags: [{ type: "AICredential", id: "LIST" }],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await bumpAiCredentialsNextCache();
+        } catch {
+          // mutation failed
+        }
+      },
     }),
   }),
 });

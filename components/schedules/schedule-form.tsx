@@ -179,7 +179,7 @@ function EmptyResourceCta({
       <Link
         href={href}
         onClick={onNavigate}
-        prefetch="hover"
+        prefetch={true}
         className="text-blue-500 underline underline-offset-2 hover:text-blue-600"
       >
         Create one here.

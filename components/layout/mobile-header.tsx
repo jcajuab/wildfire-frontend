@@ -43,7 +43,7 @@ export function MobileHeader(): ReactElement {
       <Link
         href={homeRoute}
         aria-label="Home"
-        prefetch="hover"
+        prefetch={true}
         className="flex items-center text-sidebar-foreground"
       >
         <WildfireLogo className="h-5" />

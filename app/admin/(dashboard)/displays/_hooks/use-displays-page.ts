@@ -20,9 +20,10 @@ import type {
 } from "@/lib/api/displays-api";
 import { useDisplayFilters } from "./use-display-filters";
 import { useDisplayDialogState } from "./use-display-dialog-state";
+import { DISPLAYS_PAGE_SIZE } from "@/lib/displays-search-params";
 import { useDisplayCrudHandlers } from "./use-display-crud-handlers";
 
-export const PAGE_SIZE = 20;
+export const PAGE_SIZE = DISPLAYS_PAGE_SIZE;
 
 export interface UseDisplaysPageResult {
   // Permissions

@@ -1,37 +1,12 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
+import { getScheduleWindow } from "@/lib/schedule-window";
 import type {
   CalendarView,
   ResourceMode,
   DisplayGroupSortField,
 } from "@/types/schedule";
-
-function toIsoDate(date: Date): string {
-  const year = String(date.getFullYear());
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function getScheduleWindow(
-  currentDate: Date,
-  view: CalendarView,
-): { from: string; to: string } {
-  const start = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth(),
-    currentDate.getDate(),
-  );
-
-  if (view === "resource-week") {
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    return { from: toIsoDate(start), to: toIsoDate(end) };
-  }
-
-  return { from: toIsoDate(start), to: toIsoDate(start) };
-}
 
 export interface UseScheduleFiltersResult {
   currentDate: Date;

@@ -1,8 +1,17 @@
+import { revalidateWildfireTag } from "@/app/actions/revalidate-wildfire-cache";
 import { api } from "@/lib/api/api";
 import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
+
+async function bumpDisplaysNextCache(): Promise<void> {
+  try {
+    await revalidateWildfireTag("displays");
+  } catch {
+    // Next cache revalidation is best-effort
+  }
+}
 
 /** Backend display shape (matches GET /displays and GET /displays/:id). */
 export interface BackendDisplay {
@@ -283,6 +292,7 @@ export const displaysApi = api.injectEndpoints({
               ),
             );
           }
+          await bumpDisplaysNextCache();
         } catch {
           // mutation failed
         }
@@ -338,6 +348,7 @@ export const displaysApi = api.injectEndpoints({
               ),
             );
           }
+          await bumpDisplaysNextCache();
         } catch {
           // mutation failed
         }
@@ -386,6 +397,7 @@ export const displaysApi = api.injectEndpoints({
                 ),
               );
             }
+            await bumpDisplaysNextCache();
           } catch {
             // mutation failed
           }
@@ -452,6 +464,7 @@ export const displaysApi = api.injectEndpoints({
               ),
             );
           }
+          await bumpDisplaysNextCache();
         } catch {
           // mutation failed
         }
@@ -508,6 +521,7 @@ export const displaysApi = api.injectEndpoints({
               ),
             );
           }
+          await bumpDisplaysNextCache();
         } catch {
           // mutation failed
         }
@@ -553,6 +567,7 @@ export const displaysApi = api.injectEndpoints({
               ),
             );
           }
+          await bumpDisplaysNextCache();
         } catch {
           // mutation failed
         }
@@ -614,6 +629,7 @@ export const displaysApi = api.injectEndpoints({
               ),
             );
           }
+          await bumpDisplaysNextCache();
         } catch {
           // mutation failed
         }
@@ -665,6 +681,7 @@ export const displaysApi = api.injectEndpoints({
               ),
             );
           }
+          await bumpDisplaysNextCache();
         } catch {
           // mutation failed
         }
@@ -683,6 +700,14 @@ export const displaysApi = api.injectEndpoints({
           response,
           "createRegistrationAttempt",
         ),
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await bumpDisplaysNextCache();
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     rotateRegistrationAttempt: build.mutation<
       DisplayRegistrationAttemptRotateResponse,
@@ -697,12 +722,28 @@ export const displaysApi = api.injectEndpoints({
           response,
           "rotateRegistrationAttempt",
         ),
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await bumpDisplaysNextCache();
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     closeRegistrationAttempt: build.mutation<void, { attemptId: string }>({
       query: ({ attemptId }) => ({
         url: `displays/registration-attempts/${attemptId}`,
         method: "DELETE",
       }),
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await bumpDisplaysNextCache();
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     createRegistrationLink: build.mutation<
       CreateRegistrationLinkResponse,
@@ -718,6 +759,14 @@ export const displaysApi = api.injectEndpoints({
           response,
           "createRegistrationLink",
         ),
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await bumpDisplaysNextCache();
+        } catch {
+          // mutation failed
+        }
+      },
     }),
   }),
 });

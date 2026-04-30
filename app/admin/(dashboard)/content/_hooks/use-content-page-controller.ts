@@ -15,9 +15,10 @@ import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import { useContentJobMonitor } from "./content-job-monitor";
 import { useContentPageFilters } from "./use-content-page-filters";
 import { useContentDialogState } from "./use-content-dialog-state";
+import { CONTENT_PAGE_SIZE } from "@/lib/content-search-params";
 import { useContentCrudHandlers } from "./use-content-crud-handlers";
 
-const PAGE_SIZE = 500;
+const PAGE_SIZE = CONTENT_PAGE_SIZE;
 /** SSE delivers content_status_changed; long fallback only if SSE is unavailable */
 const POLLING_FALLBACK_INTERVAL_MS = 300_000;
 

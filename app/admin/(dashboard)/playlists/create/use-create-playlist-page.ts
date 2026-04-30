@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useCan } from "@/hooks/use-can";
 import { useListContentQuery } from "@/lib/api/content-api";
+import { PLAYLIST_CONTENT_PICKER_LIST_QUERY } from "@/lib/content-search-params";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   useCreatePlaylistMutation,
@@ -29,7 +30,7 @@ export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
   const router = useRouter();
   const canReadContent = useCan("content:read");
   const { data: contentData } = useListContentQuery(
-    { page: 1, pageSize: 100, status: "READY" },
+    PLAYLIST_CONTENT_PICKER_LIST_QUERY,
     { skip: !canReadContent },
   );
 

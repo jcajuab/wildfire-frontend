@@ -1,58 +1,62 @@
-"use client";
-
 import type { ReactElement } from "react";
-import { useState } from "react";
-import { PageHeader } from "@/components/layout/page-header";
-import { CreatePlaylistForm } from "@/components/playlists/create-playlist-form";
-import { Button } from "@/components/ui/button";
-import { useCreatePlaylistPage } from "./use-create-playlist-page";
+import { redirect } from "next/navigation";
 
-export default function CreatePlaylistPage(): ReactElement {
-  const { availableContent, handleCancel, handleCreatePlaylist } =
-    useCreatePlaylistPage();
-  const [formState, setFormState] = useState<{
-    canCreate: boolean;
-    isSubmitting: boolean;
-    handleCancel: () => void;
-    handleCreate: () => Promise<void>;
-  } | null>(null);
+import type { BackendContent } from "@/lib/api/content-api";
+import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
+import {
+  PLAYLIST_CONTENT_PICKER_LIST_QUERY,
+} from "@/lib/content-search-params";
+import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
+import { getServerSession } from "@/lib/server/auth";
+import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
-  const createLabel = formState?.isSubmitting ? "Creating..." : "Create";
+import { ContentListCacheSeeder } from "../../content/content-page-client";
+import { CreatePlaylistPageView } from "./create-playlist-page-client";
+
+const CREATE_REDIRECT = `${PLAYLIST_INDEX_PATH}/create`;
+
+export default async function CreatePlaylistPage(): Promise<ReactElement> {
+  const session = await getServerSession();
+  if (!session) {
+    redirect(`/login?redirectTo=${encodeURIComponent(CREATE_REDIRECT)}`);
+  }
+  if (!sessionHasPermission(session, "playlists:create")) {
+    redirect("/unauthorized");
+  }
+
+  let contentSeeder: ReactElement | null = null;
+  if (sessionHasPermission(session, "content:read")) {
+    const listRes = await serverFetchJson<unknown>({
+      session,
+      path: "content",
+      searchParams: {
+        page: PLAYLIST_CONTENT_PICKER_LIST_QUERY.page ?? 1,
+        pageSize: PLAYLIST_CONTENT_PICKER_LIST_QUERY.pageSize ?? 100,
+        status: PLAYLIST_CONTENT_PICKER_LIST_QUERY.status,
+        sortBy: PLAYLIST_CONTENT_PICKER_LIST_QUERY.sortBy ?? "createdAt",
+        sortDirection: PLAYLIST_CONTENT_PICKER_LIST_QUERY.sortDirection ?? "desc",
+      },
+      tags: ["content"],
+      revalidate: 30,
+    });
+    if (listRes.ok) {
+      const listData = transformPaginatedListResponse<BackendContent>(
+        listRes.data,
+        "listContent",
+      );
+      contentSeeder = (
+        <ContentListCacheSeeder
+          queryArgs={PLAYLIST_CONTENT_PICKER_LIST_QUERY}
+          data={listData}
+        />
+      );
+    }
+  }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
-      <PageHeader title="Create Playlist">
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => formState?.handleCancel()}
-            disabled={formState?.isSubmitting ?? false}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              void formState?.handleCreate();
-            }}
-            disabled={!formState?.canCreate || formState.isSubmitting}
-          >
-            {createLabel}
-          </Button>
-        </div>
-      </PageHeader>
-      <section className="flex min-h-0 flex-1 flex-col">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <CreatePlaylistForm
-            availableContent={availableContent}
-            onCreate={handleCreatePlaylist}
-            onCancel={handleCancel}
-            onSuccess={handleCancel}
-            showHeader={false}
-            surface="page"
-            onStateChange={setFormState}
-          />
-        </div>
-      </section>
-    </div>
+    <>
+      {contentSeeder}
+      <CreatePlaylistPageView />
+    </>
   );
 }

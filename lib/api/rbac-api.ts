@@ -1,11 +1,23 @@
+import { revalidateWildfireTags } from "@/app/actions/revalidate-wildfire-cache";
 import { api } from "@/lib/api/api";
 import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
+import type { ServerCacheTag } from "@/lib/server/api";
 import type { PermissionAction, PermissionResource } from "@/types/permission";
 import { createPaginatedQueryFn } from "@/lib/api/paginated-query-factory";
 import { refreshAuthAfterMutation } from "@/lib/api/auth-refresh.helpers";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
+
+async function bumpRbacNextCache(
+  tags: readonly ServerCacheTag[],
+): Promise<void> {
+  try {
+    await revalidateWildfireTags(tags);
+  } catch {
+    // best-effort
+  }
+}
 
 export interface RbacRoleSummary {
   readonly id: string;
@@ -168,6 +180,7 @@ export const rbacApi = api.injectEndpoints({
               }),
             );
           }
+          await bumpRbacNextCache(["roles"]);
         } catch {
           // mutation failed
         }
@@ -246,6 +259,7 @@ export const rbacApi = api.injectEndpoints({
               }),
             );
           }
+          await bumpRbacNextCache(["roles", "users"]);
         } catch {
           // mutation failed
         }
@@ -269,6 +283,7 @@ export const rbacApi = api.injectEndpoints({
               }),
             );
           }
+          await bumpRbacNextCache(["roles", "users"]);
         } catch {
           // mutation failed
         }
@@ -313,6 +328,7 @@ export const rbacApi = api.injectEndpoints({
               },
             ),
           );
+          await bumpRbacNextCache(["roles", "permissions"]);
         } catch {
           // mutation failed
         }
@@ -408,6 +424,7 @@ export const rbacApi = api.injectEndpoints({
               }),
             );
           }
+          await bumpRbacNextCache(["users"]);
         } catch {
           // mutation failed
         }
@@ -455,6 +472,7 @@ export const rbacApi = api.injectEndpoints({
               () => updatedUser,
             ),
           );
+          await bumpRbacNextCache(["users"]);
         } catch {
           // mutation failed
         }
@@ -478,6 +496,7 @@ export const rbacApi = api.injectEndpoints({
               }),
             );
           }
+          await bumpRbacNextCache(["users"]);
         } catch {
           // mutation failed
         }
@@ -534,6 +553,7 @@ export const rbacApi = api.injectEndpoints({
               }),
             );
           }
+          await bumpRbacNextCache(["users", "roles"]);
         } catch {
           // mutation failed
         }

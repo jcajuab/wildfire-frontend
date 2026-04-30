@@ -144,7 +144,7 @@ export function AppSidebar(): ReactElement {
   return (
     <Sidebar variant="floating" collapsible="offcanvas" className="pr-0">
       <SidebarHeader>
-        <Link href={homeRoute} aria-label="Home" prefetch="hover">
+        <Link href={homeRoute} aria-label="Home" prefetch={true}>
           <WildfireLogo className="h-6" />
         </Link>
       </SidebarHeader>
@@ -178,7 +178,7 @@ export function AppSidebar(): ReactElement {
                         >
                           <Link
                             href={item.href}
-                            prefetch="hover"
+                            prefetch={true}
                             aria-disabled={isDisabled || undefined}
                             className={
                               isDisabled
@@ -229,7 +229,7 @@ export function AppSidebar(): ReactElement {
                         >
                           <Link
                             href={item.href}
-                            prefetch="hover"
+                            prefetch={true}
                             aria-disabled={isDisabled || undefined}
                             className={
                               isDisabled

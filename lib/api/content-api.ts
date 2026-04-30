@@ -1,9 +1,18 @@
+import { revalidateWildfireTag } from "@/app/actions/revalidate-wildfire-cache";
 import { api } from "@/lib/api/api";
 import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
 import type { FlashTone } from "@/types/content";
+
+async function bumpContentNextCache(): Promise<void> {
+  try {
+    await revalidateWildfireTag("content");
+  } catch {
+    // best-effort
+  }
+}
 
 export interface BackendContent {
   readonly id: string;
@@ -208,6 +217,7 @@ export const contentApi = api.injectEndpoints({
               }),
             );
           }
+          await bumpContentNextCache();
         } catch {
           // mutation failed
         }
@@ -241,6 +251,7 @@ export const contentApi = api.injectEndpoints({
                 }),
               );
             }
+            await bumpContentNextCache();
           } catch {
             // mutation failed
           }
@@ -274,6 +285,14 @@ export const contentApi = api.injectEndpoints({
               { type: "ContentJob" as const, id: result.job.id },
             ]
           : [{ type: "Content", id: "LIST" }],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await bumpContentNextCache();
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     uploadPdf: build.mutation<PdfUploadAcceptedResponse, File>({
       query: (file) => {
@@ -290,6 +309,14 @@ export const contentApi = api.injectEndpoints({
           response,
           "uploadPdf",
         ),
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await bumpContentNextCache();
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     submitPdfCrops: build.mutation<
       readonly BackendContent[],
@@ -306,12 +333,28 @@ export const contentApi = api.injectEndpoints({
           "submitPdfCrops",
         ),
       invalidatesTags: [{ type: "Content", id: "LIST" }],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await bumpContentNextCache();
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     cancelPdfUpload: build.mutation<void, string>({
       query: (uploadId) => ({
         url: `content/pdf-crops/${uploadId}`,
         method: "DELETE",
       }),
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await bumpContentNextCache();
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     deleteContent: build.mutation<void, string>({
       query: (id) => ({
@@ -348,6 +391,7 @@ export const contentApi = api.injectEndpoints({
               ),
             );
           }
+          await bumpContentNextCache();
         } catch {
           // mutation failed
         }
@@ -406,6 +450,7 @@ export const contentApi = api.injectEndpoints({
               }),
             );
           }
+          await bumpContentNextCache();
         } catch {
           // mutation failed
         }
@@ -444,6 +489,14 @@ export const contentApi = api.injectEndpoints({
               { type: "Content", id: "LIST" },
               { type: "Content", id },
             ],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await bumpContentNextCache();
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     getContentFileUrl: build.query<{ downloadUrl: string }, string>({
       query: (id) => `content/${id}/file`,
