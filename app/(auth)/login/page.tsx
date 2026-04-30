@@ -9,6 +9,10 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { AuthApiError } from "@/lib/api-client";
 import {
+  clearAuthSession,
+  refreshAccessToken,
+} from "@/lib/auth-session";
+import {
   getFirstPermittedAdminRoute,
   UNAUTHORIZED_ROUTE,
 } from "@/lib/route-permissions";
@@ -26,10 +30,36 @@ function LoginForm(): ReactElement {
     redirectTo ?? getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE;
 
   useEffect(() => {
-    if (isInitialized && isAuthenticated) {
-      router.replace(postLoginRedirect);
+    if (!isInitialized || !isAuthenticated) {
+      return;
     }
-  }, [isInitialized, isAuthenticated, postLoginRedirect, router]);
+
+    // Server sent us here (e.g. RSC redirect) but client may still hold a stale
+    // in-memory session. Force a cookie-based refresh before redirecting;
+    // bootstrapAccessToken skips refresh when an access token already exists.
+    if (redirectTo != null && redirectTo.length > 0) {
+      let cancelled = false;
+      void refreshAccessToken()
+        .then(() => {
+          if (!cancelled) {
+            router.replace(postLoginRedirect);
+          }
+        })
+        .catch((err: unknown) => {
+          if (cancelled) {
+            return;
+          }
+          if (err instanceof AuthApiError && err.status === 401) {
+            clearAuthSession(true);
+          }
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    router.replace(postLoginRedirect);
+  }, [isInitialized, isAuthenticated, redirectTo, postLoginRedirect, router]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();

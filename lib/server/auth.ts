@@ -37,10 +37,9 @@ export interface ServerSession {
 
 /**
  * Exchange refresh cookie for access token on the server (per-request memoized).
- * Uses POST /auth/refresh with forwarded cookies. Pair with {@link serverFetchJson}.
- *
- * Note: Backend may rotate the refresh token cookie; the browser keeps its cookie
- * until the next client refresh, but a grace window allows overlap.
+ * Uses POST /auth/refresh with forwarded cookies and `X-Server-Refresh: true` so
+ * the backend does not rotate the refresh token (server-side fetch cannot apply
+ * Set-Cookie to the browser). Pair with {@link serverFetchJson}.
  */
 export const getServerSession = cache(async (): Promise<ServerSession | null> => {
   if (!(await hasRefreshCookie())) {
@@ -57,6 +56,7 @@ export const getServerSession = cache(async (): Promise<ServerSession | null> =>
       method: "POST",
       headers: {
         Cookie: cookieHeader,
+        "X-Server-Refresh": "true",
         ...devHeaders,
       },
       cache: "no-store",
