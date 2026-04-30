@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/api";
+import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
@@ -138,6 +139,24 @@ export interface PlaylistDurationEstimate {
   }[];
 }
 
+/** RTK/Immer drafts still mirror readonly API types; cast for safe local mutation */
+type PlaylistDetailMutable = {
+  id: string;
+  name: string;
+  description: string | null;
+  status: "DRAFT" | "IN_USE";
+  itemsCount: number;
+  totalDuration: number;
+  createdAt: string;
+  updatedAt: string;
+  owner: { id: string; name: string | null };
+  items: BackendPlaylistItem[];
+};
+
+type PlaylistListMutable = Omit<BackendPlaylistListResponse, "items"> & {
+  items: BackendPlaylistSummary[];
+};
+
 export const playlistsApi = api.injectEndpoints({
   endpoints: (build) => ({
     getPlaylistOptions: build.query<
@@ -193,7 +212,30 @@ export const playlistsApi = api.injectEndpoints({
           response,
           "createPlaylist",
         ),
-      invalidatesTags: [{ type: "Playlist", id: "LIST" }],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
+        try {
+          const { data: created } = await queryFulfilled;
+          const summary: BackendPlaylistSummary = {
+            ...created,
+            previewItems: [],
+          };
+          const listArgs = playlistsApi.util.selectCachedArgsForQuery(
+            getState(),
+            "listPlaylists",
+          );
+          for (const la of listArgs) {
+            dispatch(
+              playlistsApi.util.updateQueryData("listPlaylists", la, (draft) => {
+                patchPaginatedListById(draft, "add", summary, {
+                  position: "start",
+                });
+              }),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     updatePlaylist: build.mutation<BackendPlaylistBase, UpdatePlaylistRequest>({
       query: ({ id, ...body }) => ({
@@ -206,20 +248,83 @@ export const playlistsApi = api.injectEndpoints({
           response,
           "updatePlaylist",
         ),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Playlist", id: "LIST" },
-        { type: "Playlist", id },
-      ],
+      async onQueryStarted({ id }, { dispatch, queryFulfilled, getState }) {
+        try {
+          const { data } = await queryFulfilled;
+          const listArgs = playlistsApi.util.selectCachedArgsForQuery(
+            getState(),
+            "listPlaylists",
+          );
+          for (const la of listArgs) {
+            dispatch(
+              playlistsApi.util.updateQueryData("listPlaylists", la, (draft) => {
+                const d = draft as unknown as PlaylistListMutable;
+                const idx = d.items.findIndex((p) => p.id === id);
+                if (idx === -1) return;
+                d.items = d.items.map((p, i) =>
+                  i === idx
+                    ? {
+                        ...p,
+                        name: data.name,
+                        description: data.description,
+                        status: data.status,
+                        itemsCount: data.itemsCount,
+                        totalDuration: data.totalDuration,
+                        updatedAt: data.updatedAt,
+                        owner: data.owner,
+                      }
+                    : p,
+                );
+              }),
+            );
+          }
+          dispatch(
+            playlistsApi.util.updateQueryData("getPlaylist", id, (draft) => {
+              const d = draft as unknown as PlaylistDetailMutable;
+              Object.assign(d, {
+                name: data.name,
+                description: data.description,
+                status: data.status,
+                itemsCount: data.itemsCount,
+                totalDuration: data.totalDuration,
+                updatedAt: data.updatedAt,
+                owner: data.owner,
+              });
+            }),
+          );
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     deletePlaylist: build.mutation<void, string>({
       query: (id) => ({
         url: `playlists/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: (_result, _error, id) => [
-        { type: "Playlist", id: "LIST" },
-        { type: "Playlist", id },
-      ],
+      invalidatesTags: (_result, _error, id) => [{ type: "Playlist", id }],
+      async onQueryStarted(id, { dispatch, queryFulfilled, getState }) {
+        try {
+          await queryFulfilled;
+          const listArgs = playlistsApi.util.selectCachedArgsForQuery(
+            getState(),
+            "listPlaylists",
+          );
+          for (const la of listArgs) {
+            dispatch(
+              playlistsApi.util.updateQueryData("listPlaylists", la, (draft) => {
+                patchPaginatedListById(
+                  draft,
+                  "remove",
+                  { id } as BackendPlaylistSummary,
+                );
+              }),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     addPlaylistItem: build.mutation<
       BackendPlaylistItem,
@@ -235,10 +340,53 @@ export const playlistsApi = api.injectEndpoints({
           response,
           "addPlaylistItem",
         ),
-      invalidatesTags: (_result, _error, { playlistId }) => [
-        { type: "Playlist", id: playlistId },
-        { type: "Playlist", id: "LIST" },
-      ],
+      async onQueryStarted(
+        { playlistId },
+        { dispatch, queryFulfilled, getState },
+      ) {
+        try {
+          const { data: item } = await queryFulfilled;
+          dispatch(
+            playlistsApi.util.updateQueryData(
+              "getPlaylist",
+              playlistId,
+              (draft) => {
+                const d = draft as unknown as PlaylistDetailMutable;
+                const next = [...d.items, item].sort(
+                  (a, b) => a.sequence - b.sequence,
+                );
+                d.items = next;
+                d.itemsCount += 1;
+                d.totalDuration += item.duration;
+              },
+            ),
+          );
+          const listArgs = playlistsApi.util.selectCachedArgsForQuery(
+            getState(),
+            "listPlaylists",
+          );
+          for (const la of listArgs) {
+            dispatch(
+              playlistsApi.util.updateQueryData("listPlaylists", la, (draft) => {
+                const d = draft as unknown as PlaylistListMutable;
+                const idx = d.items.findIndex((p) => p.id === playlistId);
+                if (idx === -1) return;
+                d.items = d.items.map((p, i) =>
+                  i === idx
+                    ? {
+                        ...p,
+                        itemsCount: p.itemsCount + 1,
+                        totalDuration: p.totalDuration + item.duration,
+                      }
+                    : p,
+                );
+              }),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     updatePlaylistItem: build.mutation<
       BackendPlaylistItem,
@@ -254,20 +402,114 @@ export const playlistsApi = api.injectEndpoints({
           response,
           "updatePlaylistItem",
         ),
-      invalidatesTags: (_result, _error, { playlistId }) => [
-        { type: "Playlist", id: playlistId },
-        { type: "Playlist", id: "LIST" },
-      ],
+      async onQueryStarted(
+        { playlistId, itemId },
+        { dispatch, queryFulfilled, getState },
+      ) {
+        try {
+          const { data: updated } = await queryFulfilled;
+          let deltaDuration = 0;
+          dispatch(
+            playlistsApi.util.updateQueryData(
+              "getPlaylist",
+              playlistId,
+              (draft) => {
+                const d = draft as unknown as PlaylistDetailMutable;
+                const idx = d.items.findIndex((i) => i.id === itemId);
+                if (idx === -1) return;
+                const prev = d.items[idx].duration;
+                deltaDuration = updated.duration - prev;
+                const next = [...d.items];
+                next[idx] = updated;
+                d.items = next.sort((a, b) => a.sequence - b.sequence);
+                d.totalDuration += deltaDuration;
+              },
+            ),
+          );
+          if (deltaDuration !== 0) {
+            const listArgs = playlistsApi.util.selectCachedArgsForQuery(
+              getState(),
+              "listPlaylists",
+            );
+            for (const la of listArgs) {
+              dispatch(
+                playlistsApi.util.updateQueryData(
+                  "listPlaylists",
+                  la,
+                  (draft) => {
+                    const d = draft as unknown as PlaylistListMutable;
+                    const idx = d.items.findIndex((p) => p.id === playlistId);
+                    if (idx === -1) return;
+                    d.items = d.items.map((p, i) =>
+                      i === idx
+                        ? {
+                            ...p,
+                            totalDuration: p.totalDuration + deltaDuration,
+                          }
+                        : p,
+                    );
+                  },
+                ),
+              );
+            }
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     deletePlaylistItem: build.mutation<void, DeletePlaylistItemRequest>({
       query: ({ playlistId, itemId }) => ({
         url: `playlists/${playlistId}/items/${itemId}`,
         method: "DELETE",
       }),
-      invalidatesTags: (_result, _error, { playlistId }) => [
-        { type: "Playlist", id: playlistId },
-        { type: "Playlist", id: "LIST" },
-      ],
+      async onQueryStarted(
+        { playlistId, itemId },
+        { dispatch, queryFulfilled, getState },
+      ) {
+        try {
+          await queryFulfilled;
+          let duration = 0;
+          dispatch(
+            playlistsApi.util.updateQueryData(
+              "getPlaylist",
+              playlistId,
+              (draft) => {
+                const d = draft as unknown as PlaylistDetailMutable;
+                const item = d.items.find((i) => i.id === itemId);
+                if (item) duration = item.duration;
+                d.items = d.items.filter((i) => i.id !== itemId);
+                d.itemsCount = Math.max(0, d.itemsCount - 1);
+                d.totalDuration = Math.max(0, d.totalDuration - duration);
+              },
+            ),
+          );
+          const listArgs = playlistsApi.util.selectCachedArgsForQuery(
+            getState(),
+            "listPlaylists",
+          );
+          for (const la of listArgs) {
+            dispatch(
+              playlistsApi.util.updateQueryData("listPlaylists", la, (draft) => {
+                const d = draft as unknown as PlaylistListMutable;
+                const idx = d.items.findIndex((p) => p.id === playlistId);
+                if (idx === -1) return;
+                d.items = d.items.map((p, i) =>
+                  i === idx
+                    ? {
+                        ...p,
+                        itemsCount: Math.max(0, p.itemsCount - 1),
+                        totalDuration: Math.max(0, p.totalDuration - duration),
+                      }
+                    : p,
+                );
+              }),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     reorderPlaylistItems: build.mutation<void, ReorderPlaylistItemsRequest>({
       query: ({ playlistId, orderedItemIds }) => ({
@@ -275,10 +517,29 @@ export const playlistsApi = api.injectEndpoints({
         method: "PUT",
         body: { orderedItemIds },
       }),
-      invalidatesTags: (_result, _error, { playlistId }) => [
-        { type: "Playlist", id: playlistId },
-        { type: "Playlist", id: "LIST" },
-      ],
+      async onQueryStarted(
+        { playlistId, orderedItemIds },
+        { dispatch, queryFulfilled },
+      ) {
+        try {
+          await queryFulfilled;
+          dispatch(
+            playlistsApi.util.updateQueryData(
+              "getPlaylist",
+              playlistId,
+              (draft) => {
+                const d = draft as unknown as PlaylistDetailMutable;
+                const byId = new Map(d.items.map((i) => [i.id, i]));
+                d.items = orderedItemIds
+                  .map((oid) => byId.get(oid))
+                  .filter((x): x is BackendPlaylistItem => x != null);
+              },
+            ),
+          );
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     savePlaylistItemsAtomic: build.mutation<
       readonly BackendPlaylistItem[],
@@ -294,10 +555,51 @@ export const playlistsApi = api.injectEndpoints({
           response,
           "savePlaylistItemsAtomic",
         ),
-      invalidatesTags: (_result, _error, { playlistId }) => [
-        { type: "Playlist", id: playlistId },
-        { type: "Playlist", id: "LIST" },
-      ],
+      async onQueryStarted(
+        { playlistId },
+        { dispatch, queryFulfilled, getState },
+      ) {
+        try {
+          const { data: items } = await queryFulfilled;
+          const totalDuration = items.reduce((s, i) => s + i.duration, 0);
+          dispatch(
+            playlistsApi.util.updateQueryData(
+              "getPlaylist",
+              playlistId,
+              (draft) => {
+                const d = draft as unknown as PlaylistDetailMutable;
+                d.items = [...items];
+                d.itemsCount = items.length;
+                d.totalDuration = totalDuration;
+              },
+            ),
+          );
+          const listArgs = playlistsApi.util.selectCachedArgsForQuery(
+            getState(),
+            "listPlaylists",
+          );
+          for (const la of listArgs) {
+            dispatch(
+              playlistsApi.util.updateQueryData("listPlaylists", la, (draft) => {
+                const d = draft as unknown as PlaylistListMutable;
+                const idx = d.items.findIndex((p) => p.id === playlistId);
+                if (idx === -1) return;
+                d.items = d.items.map((p, i) =>
+                  i === idx
+                    ? {
+                        ...p,
+                        itemsCount: items.length,
+                        totalDuration,
+                      }
+                    : p,
+                );
+              }),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     estimatePlaylistDuration: build.mutation<
       PlaylistDurationEstimate,

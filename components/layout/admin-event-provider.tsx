@@ -14,8 +14,8 @@ import { useCan } from "@/hooks/use-can";
  *
  * Maintains a single connection to /displays/events for the entire
  * dashboard session. Status updates patch cached query data in place;
- * structural changes (display registered/unregistered) still invalidate
- * the display list tag so lists refetch.
+ * display registered fetches the new row and merges into lists (fallback LIST invalidate on failure);
+ * display unregistered removes rows from cache and invalidates the detail tag.
  */
 export function AdminEventProvider({
   children,

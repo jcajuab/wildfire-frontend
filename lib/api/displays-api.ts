@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/api";
+import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
@@ -122,6 +123,23 @@ export interface DisplaysBootstrapResponse {
   }>;
 }
 
+type DisplaysListMutable = {
+  items: BackendDisplay[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+type DisplaysBootstrapMutable = {
+  displays: DisplaysListMutable;
+  displayGroups: DisplayGroup[];
+  displayOutputOptions: DisplayOutputOption[];
+  runtimeOverrides: {
+    globalEmergency: { active: boolean; startedAt: string | null };
+  };
+  emergencyContentOptions: DisplaysBootstrapResponse["emergencyContentOptions"];
+};
+
 export const displaysApi = api.injectEndpoints({
   endpoints: (build) => ({
     getDisplays: build.query<DisplaysListResponse, DisplaysListQuery | void>({
@@ -151,7 +169,7 @@ export const displaysApi = api.injectEndpoints({
       DisplaysListQuery | void
     >({
       // Expensive aggregate; keep warm longer so navigation does not drop cache quickly.
-      keepUnusedDataFor: 120,
+      keepUnusedDataFor: 600,
       query: (query) => {
         const params = new URLSearchParams();
         params.set("page", String(query?.page ?? 1));
@@ -227,10 +245,48 @@ export const displaysApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<BackendDisplay>(response, "updateDisplay"),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Display", id: "LIST" },
-        { type: "Display", id },
-      ],
+      async onQueryStarted({ id }, { dispatch, queryFulfilled, getState }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(
+            displaysApi.util.updateQueryData("getDisplay", id, () => data),
+          );
+          const listArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplays",
+          );
+          for (const a of listArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData("getDisplays", a, (draft) => {
+                const d = draft as unknown as DisplaysListMutable;
+                d.items = d.items.map((row) =>
+                  row.id === id ? { ...row, ...data } : row,
+                );
+              }),
+            );
+          }
+          const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplaysBootstrap",
+          );
+          for (const a of bootstrapArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplaysBootstrap",
+                a,
+                (draft) => {
+                  const b = draft as unknown as DisplaysBootstrapMutable;
+                  b.displays.items = b.displays.items.map((row) =>
+                    row.id === id ? { ...row, ...data } : row,
+                  );
+                },
+              ),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     getRuntimeOverrides: build.query<DisplayRuntimeOverrides, void>({
       keepUnusedDataFor: 30,
@@ -248,10 +304,44 @@ export const displaysApi = api.injectEndpoints({
         method: "PUT",
         body: { active: true, ...(body ?? {}) },
       }),
-      invalidatesTags: [
-        { type: "RuntimeOverrides", id: "GLOBAL" },
-        { type: "Display", id: "LIST" },
-      ],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
+        try {
+          await queryFulfilled;
+          const startedAt = new Date().toISOString();
+          dispatch(
+            displaysApi.util.updateQueryData(
+              "getRuntimeOverrides",
+              undefined,
+              (draft) => {
+                const r = draft as unknown as {
+                  globalEmergency: { active: boolean; startedAt: string | null };
+                };
+                r.globalEmergency.active = true;
+                r.globalEmergency.startedAt = startedAt;
+              },
+            ),
+          );
+          const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplaysBootstrap",
+          );
+          for (const a of bootstrapArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplaysBootstrap",
+                a,
+                (draft) => {
+                  const b = draft as unknown as DisplaysBootstrapMutable;
+                  b.runtimeOverrides.globalEmergency.active = true;
+                  b.runtimeOverrides.globalEmergency.startedAt = startedAt;
+                },
+              ),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     deactivateGlobalEmergency: build.mutation<void, { reason?: string } | void>(
       {
@@ -260,10 +350,46 @@ export const displaysApi = api.injectEndpoints({
           method: "PUT",
           body: { active: false, ...(body ?? {}) },
         }),
-        invalidatesTags: [
-          { type: "RuntimeOverrides", id: "GLOBAL" },
-          { type: "Display", id: "LIST" },
-        ],
+        async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
+          try {
+            await queryFulfilled;
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getRuntimeOverrides",
+                undefined,
+                (draft) => {
+                  const r = draft as unknown as {
+                    globalEmergency: {
+                      active: boolean;
+                      startedAt: string | null;
+                    };
+                  };
+                  r.globalEmergency.active = false;
+                  r.globalEmergency.startedAt = null;
+                },
+              ),
+            );
+            const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
+              getState(),
+              "getDisplaysBootstrap",
+            );
+            for (const a of bootstrapArgs) {
+              dispatch(
+                displaysApi.util.updateQueryData(
+                  "getDisplaysBootstrap",
+                  a,
+                  (draft) => {
+                    const b = draft as unknown as DisplaysBootstrapMutable;
+                    b.runtimeOverrides.globalEmergency.active = false;
+                    b.runtimeOverrides.globalEmergency.startedAt = null;
+                  },
+                ),
+              );
+            }
+          } catch {
+            // mutation failed
+          }
+        },
       },
     ),
     getDisplayGroups: build.query<DisplayGroup[], void>({
@@ -289,7 +415,47 @@ export const displaysApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<DisplayGroup>(response, "createDisplayGroup"),
-      invalidatesTags: [{ type: "DisplayGroup", id: "LIST" }],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
+        try {
+          const { data: group } = await queryFulfilled;
+          const groupArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplayGroups",
+          );
+          for (const ga of groupArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData("getDisplayGroups", ga, (draft) => {
+                const groups = draft as unknown as DisplayGroup[];
+                groups.push({
+                  ...group,
+                  displayIds: [...group.displayIds],
+                });
+              }),
+            );
+          }
+          const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplaysBootstrap",
+          );
+          for (const a of bootstrapArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplaysBootstrap",
+                a,
+                (draft) => {
+                  const b = draft as unknown as DisplaysBootstrapMutable;
+                  b.displayGroups.push({
+                    ...group,
+                    displayIds: [...group.displayIds],
+                  });
+                },
+              ),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     updateDisplayGroup: build.mutation<
       DisplayGroup,
@@ -302,11 +468,50 @@ export const displaysApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<DisplayGroup>(response, "updateDisplayGroup"),
-      invalidatesTags: (_result, _error, { groupId }) => [
-        { type: "DisplayGroup", id: "LIST" },
-        { type: "DisplayGroup", id: groupId },
-        { type: "Display", id: "LIST" },
-      ],
+      async onQueryStarted(
+        { groupId },
+        { dispatch, queryFulfilled, getState },
+      ) {
+        try {
+          const { data } = await queryFulfilled;
+          const groupArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplayGroups",
+          );
+          for (const ga of groupArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData("getDisplayGroups", ga, (draft) => {
+                const idx = draft.findIndex((g) => g.id === groupId);
+                if (idx !== -1) draft[idx] = data;
+              }),
+            );
+          }
+          const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplaysBootstrap",
+          );
+          for (const a of bootstrapArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplaysBootstrap",
+                a,
+                (draft) => {
+                  const b = draft as unknown as DisplaysBootstrapMutable;
+                  const idx = b.displayGroups.findIndex((g) => g.id === groupId);
+                  if (idx !== -1) {
+                    b.displayGroups[idx] = {
+                      ...data,
+                      displayIds: [...data.displayIds],
+                    };
+                  }
+                },
+              ),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     deleteDisplayGroup: build.mutation<void, { groupId: string }>({
       query: ({ groupId }) => ({
@@ -314,10 +519,44 @@ export const displaysApi = api.injectEndpoints({
         method: "DELETE",
       }),
       invalidatesTags: (_result, _error, { groupId }) => [
-        { type: "DisplayGroup", id: "LIST" },
         { type: "DisplayGroup", id: groupId },
-        { type: "Display", id: "LIST" },
       ],
+      async onQueryStarted({ groupId }, { dispatch, queryFulfilled, getState }) {
+        try {
+          await queryFulfilled;
+          const groupArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplayGroups",
+          );
+          for (const ga of groupArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData("getDisplayGroups", ga, (draft) =>
+                draft.filter((g) => g.id !== groupId),
+              ),
+            );
+          }
+          const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplaysBootstrap",
+          );
+          for (const a of bootstrapArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplaysBootstrap",
+                a,
+                (draft) => {
+                  const b = draft as unknown as DisplaysBootstrapMutable;
+                  b.displayGroups = b.displayGroups.filter(
+                    (g) => g.id !== groupId,
+                  );
+                },
+              ),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     setDisplayGroups: build.mutation<
       void,
@@ -328,11 +567,57 @@ export const displaysApi = api.injectEndpoints({
         method: "PUT",
         body: { groupIds },
       }),
-      invalidatesTags: (_result, _error, { displayId }) => [
-        { type: "Display", id: "LIST" },
-        { type: "Display", id: displayId },
-        { type: "DisplayGroup", id: "LIST" },
-      ],
+      async onQueryStarted(
+        { displayId, groupIds },
+        { dispatch, queryFulfilled, getState },
+      ) {
+        try {
+          await queryFulfilled;
+          const syncMembership = (
+            groups: { id: string; displayIds: readonly string[] }[],
+          ) => {
+            for (const g of groups) {
+              const gm = g as unknown as { displayIds: string[] };
+              const shouldHave = groupIds.includes(g.id);
+              const has = gm.displayIds.includes(displayId);
+              if (shouldHave && !has) {
+                gm.displayIds = [...gm.displayIds, displayId];
+              } else if (!shouldHave && has) {
+                gm.displayIds = gm.displayIds.filter((gid) => gid !== displayId);
+              }
+            }
+          };
+          const groupArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplayGroups",
+          );
+          for (const ga of groupArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData("getDisplayGroups", ga, (draft) => {
+                syncMembership(draft);
+              }),
+            );
+          }
+          const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplaysBootstrap",
+          );
+          for (const a of bootstrapArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplaysBootstrap",
+                a,
+                (draft) => {
+                  const b = draft as unknown as DisplaysBootstrapMutable;
+                  syncMembership(b.displayGroups);
+                },
+              ),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     unregisterDisplay: build.mutation<void, { displayId: string }>({
       query: ({ displayId }) => ({
@@ -340,9 +625,50 @@ export const displaysApi = api.injectEndpoints({
         method: "POST",
       }),
       invalidatesTags: (_result, _error, { displayId }) => [
-        { type: "Display", id: "LIST" },
         { type: "Display", id: displayId },
       ],
+      async onQueryStarted({ displayId }, { dispatch, queryFulfilled, getState }) {
+        try {
+          await queryFulfilled;
+          const listArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplays",
+          );
+          for (const a of listArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData("getDisplays", a, (draft) => {
+                patchPaginatedListById(
+                  draft,
+                  "remove",
+                  { id: displayId } as BackendDisplay,
+                );
+              }),
+            );
+          }
+          const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplaysBootstrap",
+          );
+          for (const a of bootstrapArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplaysBootstrap",
+                a,
+                (draft) => {
+                  const b = draft as unknown as DisplaysBootstrapMutable;
+                  patchPaginatedListById(
+                    b.displays,
+                    "remove",
+                    { id: displayId } as BackendDisplay,
+                  );
+                },
+              ),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     createRegistrationAttempt: build.mutation<
       DisplayRegistrationAttemptResponse,

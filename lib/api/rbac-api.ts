@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/api";
+import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import type { PermissionAction, PermissionResource } from "@/types/permission";
 import { createPaginatedQueryFn } from "@/lib/api/paginated-query-factory";
@@ -71,6 +72,19 @@ export interface RbacUserListQuery {
   readonly sortDirection?: "asc" | "desc";
 }
 
+type RoleListMutable = Omit<RbacRolesListResponse, "items"> & {
+  items: RbacRoleListItem[];
+};
+
+type RoleEditBootstrapMutable = Omit<RoleEditBootstrapResponse, "role" | "rolePermissions"> & {
+  role: RbacRoleSummary;
+  rolePermissions: RbacPermission[];
+};
+
+type UserListMutable = Omit<RbacUsersListResponse, "items"> & {
+  items: RbacUser[];
+};
+
 export interface RoleEditBootstrapResponse {
   readonly role: RbacRoleSummary;
   readonly permissions: RbacPermission[];
@@ -139,8 +153,26 @@ export const rbacApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacRoleSummary>(response, "createRole"),
-      invalidatesTags: [{ type: "Role", id: "LIST" }],
-      onQueryStarted: refreshAuthAfterMutation,
+      async onQueryStarted(_arg, api) {
+        try {
+          const { data } = await api.queryFulfilled;
+          const row: RbacRoleListItem = { ...data, usersCount: 0 };
+          const roleArgs = rbacApi.util.selectCachedArgsForQuery(
+            api.getState(),
+            "getRoles",
+          );
+          for (const ra of roleArgs) {
+            api.dispatch(
+              rbacApi.util.updateQueryData("getRoles", ra, (draft) => {
+                patchPaginatedListById(draft, "add", row, { position: "start" });
+              }),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+        await refreshAuthAfterMutation(_arg, api);
+      },
     }),
     updateRole: build.mutation<
       RbacRoleSummary,
@@ -153,21 +185,95 @@ export const rbacApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacRoleSummary>(response, "updateRole"),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Role", id },
-        { type: "Role", id: "LIST" },
-        { type: "User", id: "LIST" },
-      ],
-      onQueryStarted: refreshAuthAfterMutation,
+      async onQueryStarted(arg, api) {
+        try {
+          const { data } = await api.queryFulfilled;
+          const roleArgs = rbacApi.util.selectCachedArgsForQuery(
+            api.getState(),
+            "getRoles",
+          );
+          for (const ra of roleArgs) {
+            api.dispatch(
+              rbacApi.util.updateQueryData("getRoles", ra, (draft) => {
+                const d = draft as unknown as RoleListMutable;
+                const idx = d.items.findIndex((r) => r.id === arg.id);
+                if (idx === -1) return;
+                d.items = d.items.map((r, i) =>
+                  i === idx
+                    ? { ...r, ...data, usersCount: r.usersCount }
+                    : r,
+                );
+              }),
+            );
+          }
+          api.dispatch(
+            rbacApi.util.updateQueryData("getRole", arg.id, () => data),
+          );
+          const bootstrapArgs = rbacApi.util.selectCachedArgsForQuery(
+            api.getState(),
+            "getRoleEditBootstrap",
+          );
+          for (const ba of bootstrapArgs) {
+            if (ba !== arg.id) continue;
+            api.dispatch(
+              rbacApi.util.updateQueryData(
+                "getRoleEditBootstrap",
+                ba,
+                (draft) => {
+                  const ed = draft as unknown as RoleEditBootstrapMutable;
+                  ed.role = data;
+                },
+              ),
+            );
+          }
+          const userArgs = rbacApi.util.selectCachedArgsForQuery(
+            api.getState(),
+            "getUsers",
+          );
+          for (const ua of userArgs) {
+            api.dispatch(
+              rbacApi.util.updateQueryData("getUsers", ua, (draft) => {
+                const ud = draft as unknown as UserListMutable;
+                ud.items = ud.items.map((u) => {
+                  if (!u.roles) return u;
+                  const ri = u.roles.findIndex((r) => r.id === arg.id);
+                  if (ri === -1) return u;
+                  const nextRoles = u.roles.map((r, i) =>
+                    i === ri ? { id: data.id, name: data.name } : r,
+                  );
+                  return { ...u, roles: nextRoles };
+                });
+              }),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+        await refreshAuthAfterMutation(arg, api);
+      },
     }),
     deleteRole: build.mutation<void, string>({
       query: (id) => ({ url: `roles/${id}`, method: "DELETE" }),
-      invalidatesTags: (_result, _error, id) => [
-        { type: "Role", id },
-        { type: "Role", id: "LIST" },
-        { type: "User", id: "LIST" },
-      ],
-      onQueryStarted: refreshAuthAfterMutation,
+      invalidatesTags: (_result, _error, id) => [{ type: "Role", id }],
+      async onQueryStarted(id, api) {
+        try {
+          await api.queryFulfilled;
+          const roleArgs = rbacApi.util.selectCachedArgsForQuery(
+            api.getState(),
+            "getRoles",
+          );
+          for (const ra of roleArgs) {
+            api.dispatch(
+              rbacApi.util.updateQueryData("getRoles", ra, (draft) => {
+                patchPaginatedListById(draft, "remove", { id } as RbacRoleListItem);
+              }),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+        await refreshAuthAfterMutation(id, api);
+      },
     }),
     getRolePermissions: build.query<RbacPermission[], string>({
       queryFn: createPaginatedQueryFn<RbacPermission>({
@@ -194,13 +300,24 @@ export const rbacApi = api.injectEndpoints({
           response,
           "setRolePermissions",
         ),
-      invalidatesTags: (_result, _error, { roleId }) => [
-        { type: "Role", id: roleId },
-        { type: "Role", id: "LIST" },
-        { type: "Permission", id: "LIST" },
-        { type: "User", id: "LIST" },
-      ],
-      onQueryStarted: refreshAuthAfterMutation,
+      async onQueryStarted({ roleId }, api) {
+        try {
+          const { data } = await api.queryFulfilled;
+          api.dispatch(
+            rbacApi.util.updateQueryData(
+              "getRoleEditBootstrap",
+              roleId,
+              (draft) => {
+                const ed = draft as unknown as RoleEditBootstrapMutable;
+                ed.rolePermissions = data;
+              },
+            ),
+          );
+        } catch {
+          // mutation failed
+        }
+        await refreshAuthAfterMutation({ roleId }, api);
+      },
     }),
     getRoleUsers: build.query<RbacUser[], string>({
       queryFn: createPaginatedQueryFn<RbacUser>({
@@ -277,8 +394,25 @@ export const rbacApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacUser>(response, "createUser"),
-      invalidatesTags: [{ type: "User", id: "LIST" }],
-      onQueryStarted: refreshAuthAfterMutation,
+      async onQueryStarted(_arg, api) {
+        try {
+          const { data } = await api.queryFulfilled;
+          const userArgs = rbacApi.util.selectCachedArgsForQuery(
+            api.getState(),
+            "getUsers",
+          );
+          for (const ua of userArgs) {
+            api.dispatch(
+              rbacApi.util.updateQueryData("getUsers", ua, (draft) => {
+                patchPaginatedListById(draft, "add", data, { position: "start" });
+              }),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+        await refreshAuthAfterMutation(_arg, api);
+      },
     }),
     updateUser: build.mutation<
       RbacUser,
@@ -297,35 +431,58 @@ export const rbacApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacUser>(response, "updateUser"),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "User", id },
-      ],
       async onQueryStarted(arg, api) {
         try {
           const { data: updatedUser } = await api.queryFulfilled;
-          api.dispatch(
-            rbacApi.util.updateQueryData("getUsers", undefined as never, (draft) => {
-              const items = (draft as { items?: { id: string }[] })?.items;
-              if (!items) return;
-              const idx = items.findIndex((u) => u.id === arg.id);
-              if (idx !== -1) {
-                Object.assign(items[idx], updatedUser);
-              }
-            }),
+          const userArgs = rbacApi.util.selectCachedArgsForQuery(
+            api.getState(),
+            "getUsers",
           );
-          void refreshAuthAfterMutation(arg, api);
+          for (const ua of userArgs) {
+            api.dispatch(
+              rbacApi.util.updateQueryData("getUsers", ua, (draft) => {
+                const idx = draft.items.findIndex((u) => u.id === arg.id);
+                if (idx !== -1) {
+                  Object.assign(draft.items[idx], updatedUser);
+                }
+              }),
+            );
+          }
+          api.dispatch(
+            rbacApi.util.updateQueryData(
+              "getUser",
+              arg.id,
+              () => updatedUser,
+            ),
+          );
         } catch {
-          // mutation failed, no cache update needed
+          // mutation failed
         }
+        await refreshAuthAfterMutation(arg, api);
       },
     }),
     deleteUser: build.mutation<void, string>({
       query: (id) => ({ url: `users/${id}`, method: "DELETE" }),
-      invalidatesTags: (_result, _error, id) => [
-        { type: "User", id },
-        { type: "User", id: "LIST" },
-      ],
-      onQueryStarted: refreshAuthAfterMutation,
+      invalidatesTags: (_result, _error, id) => [{ type: "User", id }],
+      async onQueryStarted(id, api) {
+        try {
+          await api.queryFulfilled;
+          const userArgs = rbacApi.util.selectCachedArgsForQuery(
+            api.getState(),
+            "getUsers",
+          );
+          for (const ua of userArgs) {
+            api.dispatch(
+              rbacApi.util.updateQueryData("getUsers", ua, (draft) => {
+                patchPaginatedListById(draft, "remove", { id } as RbacUser);
+              }),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+        await refreshAuthAfterMutation(id, api);
+      },
     }),
     getUserRoles: build.query<RbacRoleSummary[], string>({
       queryFn: createPaginatedQueryFn<RbacRoleSummary>({
@@ -349,13 +506,39 @@ export const rbacApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacRoleSummary[]>(response, "setUserRoles"),
-      invalidatesTags: (_result, _error, { userId }) => [
-        { type: "User", id: userId },
-        { type: "User", id: "LIST" },
-        { type: "Role", id: "LIST" },
-        { type: "Permission", id: "LIST" },
-      ],
-      onQueryStarted: refreshAuthAfterMutation,
+      async onQueryStarted({ userId }, api) {
+        try {
+          const { data: roles } = await api.queryFulfilled;
+          const mapped = roles.map((r) => ({ id: r.id, name: r.name }));
+          api.dispatch(
+            rbacApi.util.updateQueryData("getUser", userId, (draft) => {
+              const ud = draft as unknown as RbacUser & {
+                roles?: RbacUserRoleSummary[];
+              };
+              ud.roles = mapped;
+            }),
+          );
+          const userArgs = rbacApi.util.selectCachedArgsForQuery(
+            api.getState(),
+            "getUsers",
+          );
+          for (const ua of userArgs) {
+            api.dispatch(
+              rbacApi.util.updateQueryData("getUsers", ua, (draft) => {
+                const ud = draft as unknown as UserListMutable;
+                const idx = ud.items.findIndex((u) => u.id === userId);
+                if (idx === -1) return;
+                ud.items = ud.items.map((u, i) =>
+                  i === idx ? { ...u, roles: mapped } : u,
+                );
+              }),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+        await refreshAuthAfterMutation({ userId }, api);
+      },
     }),
   }),
 });

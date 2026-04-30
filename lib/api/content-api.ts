@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/api";
+import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
@@ -191,7 +192,26 @@ export const contentApi = api.injectEndpoints({
           response,
           "createFlashContent",
         ),
-      invalidatesTags: [{ type: "Content", id: "LIST" }],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
+        try {
+          const { data: created } = await queryFulfilled;
+          const argsList = contentApi.util.selectCachedArgsForQuery(
+            getState(),
+            "listContent",
+          );
+          for (const args of argsList) {
+            dispatch(
+              contentApi.util.updateQueryData("listContent", args, (draft) => {
+                patchPaginatedListById(draft, "add", created, {
+                  position: "start",
+                });
+              }),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     createTextContent: build.mutation<BackendContent, CreateTextContentRequest>(
       {
@@ -205,7 +225,26 @@ export const contentApi = api.injectEndpoints({
             response,
             "createTextContent",
           ),
-        invalidatesTags: [{ type: "Content", id: "LIST" }],
+        async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
+          try {
+            const { data: created } = await queryFulfilled;
+            const argsList = contentApi.util.selectCachedArgsForQuery(
+              getState(),
+              "listContent",
+            );
+            for (const args of argsList) {
+              dispatch(
+                contentApi.util.updateQueryData("listContent", args, (draft) => {
+                  patchPaginatedListById(draft, "add", created, {
+                    position: "start",
+                  });
+                }),
+              );
+            }
+          } catch {
+            // mutation failed
+          }
+        },
       },
     ),
     uploadContent: build.mutation<
@@ -279,10 +318,40 @@ export const contentApi = api.injectEndpoints({
         url: `content/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: (_result, _error, id) => [
-        { type: "Content", id: "LIST" },
-        { type: "Content", id },
-      ],
+      invalidatesTags: (_result, _error, id) => [{ type: "Content", id }],
+      async onQueryStarted(id, { dispatch, queryFulfilled, getState }) {
+        try {
+          await queryFulfilled;
+          const argsList = contentApi.util.selectCachedArgsForQuery(
+            getState(),
+            "listContent",
+          );
+          for (const args of argsList) {
+            dispatch(
+              contentApi.util.updateQueryData("listContent", args, (draft) => {
+                patchPaginatedListById(
+                  draft,
+                  "remove",
+                  { id } as BackendContent,
+                );
+              }),
+            );
+          }
+          const optionArgs = contentApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getContentOptions",
+          );
+          for (const oa of optionArgs) {
+            dispatch(
+              contentApi.util.updateQueryData("getContentOptions", oa, (draft) =>
+                draft.filter((c) => c.id !== id),
+              ),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     updateContent: build.mutation<
       BackendContent,
@@ -302,10 +371,45 @@ export const contentApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<BackendContent>(response, "updateContent"),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Content", id: "LIST" },
-        { type: "Content", id },
-      ],
+      async onQueryStarted({ id }, { dispatch, queryFulfilled, getState }) {
+        try {
+          const { data: updated } = await queryFulfilled;
+          const argsList = contentApi.util.selectCachedArgsForQuery(
+            getState(),
+            "listContent",
+          );
+          for (const args of argsList) {
+            dispatch(
+              contentApi.util.updateQueryData("listContent", args, (draft) => {
+                patchPaginatedListById(draft, "update", updated);
+              }),
+            );
+          }
+          dispatch(
+            contentApi.util.updateQueryData("getContent", id, () => updated),
+          );
+          const optionArgs = contentApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getContentOptions",
+          );
+          for (const oa of optionArgs) {
+            dispatch(
+              contentApi.util.updateQueryData("getContentOptions", oa, (draft) => {
+                const idx = draft.findIndex((c) => c.id === id);
+                if (idx !== -1) {
+                  draft[idx] = {
+                    id: updated.id,
+                    title: updated.title,
+                    type: updated.type,
+                  };
+                }
+              }),
+            );
+          }
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     replaceContentFile: build.mutation<
       ContentIngestionAcceptedResponse,

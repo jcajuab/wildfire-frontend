@@ -113,7 +113,7 @@ export const schedulesApi = api.injectEndpoints({
       SchedulesBootstrapResponse,
       ScheduleWindowQuery
     >({
-      keepUnusedDataFor: 120,
+      keepUnusedDataFor: 600,
       query: (query) => ({
         url: "schedules/bootstrap",
         params: {
