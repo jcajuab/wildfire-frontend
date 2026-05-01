@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
   // rewrites Set-Cookie paths so refresh-token cookies survive the
   // /api/proxy prefix.
   experimental: {
+    staleTimes: {
+      dynamic: 30,
+    },
     optimizePackageImports: [
       "@tabler/icons-react",
       "@tiptap/react",
