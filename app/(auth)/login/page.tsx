@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { AuthApiError } from "@/lib/api-client";
 import {
-  clearAuthSession,
+  purgeStaleSession,
   refreshAccessToken,
 } from "@/lib/auth-session";
 import {
@@ -45,12 +45,12 @@ function LoginForm(): ReactElement {
             router.replace(postLoginRedirect);
           }
         })
-        .catch((err: unknown) => {
+        .catch(async (err: unknown) => {
           if (cancelled) {
             return;
           }
           if (err instanceof AuthApiError && err.status === 401) {
-            clearAuthSession(true);
+            await purgeStaleSession();
           }
         });
       return () => {

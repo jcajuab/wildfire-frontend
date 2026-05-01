@@ -307,7 +307,7 @@ export async function bootstrapAccessToken(): Promise<void> {
     await refreshAccessToken();
   } catch (error) {
     if (error instanceof AuthApiError && error.status === 401) {
-      clearAuthSession(true);
+      await purgeStaleSession();
       return;
     }
     throw error;
@@ -315,6 +315,25 @@ export async function bootstrapAccessToken(): Promise<void> {
     markBootstrapped();
     cachedSnapshot = null;
     notifyListeners();
+  }
+}
+
+/**
+ * Clear both in-memory auth state AND the HttpOnly refresh cookie.
+ * The logout call MUST be awaited so the browser processes the cookie-delete
+ * Set-Cookie before any subsequent login can set a new cookie (otherwise the
+ * delete can arrive after the login and nuke the fresh cookie).
+ */
+export async function purgeStaleSession(): Promise<void> {
+  clearAuthSession(true);
+  try {
+    await fetch(`${getBaseUrl()}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+      headers: getHeaders(),
+    });
+  } catch {
+    // Network error is fine — cookie may already be gone.
   }
 }
 
