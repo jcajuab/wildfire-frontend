@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { AuthApiError } from "@/lib/api-client";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   purgeStaleSession,
   refreshAccessToken,
@@ -69,16 +70,13 @@ function LoginForm(): ReactElement {
     try {
       await login(credentials);
     } catch (err) {
-      let message = "Something went wrong.";
-      if (err instanceof AuthApiError) {
-        if (err.status === 429) {
-          message =
-            "Too many login attempts. Wait a moment before trying again.";
-        } else {
-          message = err.message;
-        }
+      if (err instanceof AuthApiError && err.status === 429) {
+        setErrorMessage(
+          "Too many login attempts. Wait a moment before trying again.",
+        );
+      } else {
+        setErrorMessage(getApiErrorMessage(err, "Something went wrong."));
       }
-      setErrorMessage(message);
     } finally {
       setIsLoggingIn(false);
     }

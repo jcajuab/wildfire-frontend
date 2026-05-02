@@ -11,6 +11,59 @@ interface NormalizedError {
 
 const DEFAULT_FALLBACK_MESSAGE = "Request failed. Try again.";
 
+/** User-facing copy when the API is unreachable or returns non-JSON (e.g. HTML error pages). */
+export const CLIENT_TRANSPORT_ERROR_MESSAGE =
+  "Unable to reach the server. Check your connection and try again.";
+
+const RTK_TRANSPORT_STATUSES = [
+  "PARSING_ERROR",
+  "FETCH_ERROR",
+  "TIMEOUT_ERROR",
+] as const;
+
+function isRtkTransportStatus(
+  status: unknown,
+): status is (typeof RTK_TRANSPORT_STATUSES)[number] {
+  return (
+    typeof status === "string" &&
+    (RTK_TRANSPORT_STATUSES as readonly string[]).includes(status)
+  );
+}
+
+/** Maps noisy parser/network messages to a safe, generic line for the UI. */
+export function sanitizeTechnicalTransportMessage(message: string): string {
+  const trimmed = message.trim();
+  if (trimmed.length === 0) {
+    return DEFAULT_FALLBACK_MESSAGE;
+  }
+  const lower = trimmed.toLowerCase();
+  if (
+    lower.includes("unexpected token") &&
+    (lower.includes("<") || lower.includes("is not valid json"))
+  ) {
+    return CLIENT_TRANSPORT_ERROR_MESSAGE;
+  }
+  if (lower.includes("<!doctype") || lower.includes("<html")) {
+    return CLIENT_TRANSPORT_ERROR_MESSAGE;
+  }
+  if (lower.includes("response body is not valid json")) {
+    return CLIENT_TRANSPORT_ERROR_MESSAGE;
+  }
+  if (lower.includes("api payload is not a json object")) {
+    return CLIENT_TRANSPORT_ERROR_MESSAGE;
+  }
+  if (lower.includes("failed to fetch")) {
+    return CLIENT_TRANSPORT_ERROR_MESSAGE;
+  }
+  if (lower.includes("networkerror") || lower.includes("network error")) {
+    return CLIENT_TRANSPORT_ERROR_MESSAGE;
+  }
+  if (lower.includes("load failed")) {
+    return CLIENT_TRANSPORT_ERROR_MESSAGE;
+  }
+  return trimmed;
+}
+
 const STATUS_MESSAGES: Record<number, string> = {
   400: "The request was invalid or missing required data.",
   401: "Your session is no longer valid. Please sign in again.",
@@ -58,6 +111,14 @@ const extractPayloadMessage = (payload: unknown): string | null => {
 
   if (
     isRecord(payload) &&
+    Object.hasOwn(payload, "__parseFailure") &&
+    (payload as { __parseFailure?: unknown }).__parseFailure === true
+  ) {
+    return CLIENT_TRANSPORT_ERROR_MESSAGE;
+  }
+
+  if (
+    isRecord(payload) &&
     typeof payload.message === "string" &&
     payload.message.trim().length > 0
   ) {
@@ -69,16 +130,7 @@ const extractPayloadMessage = (payload: unknown): string | null => {
     typeof payload.error === "string" &&
     payload.error.trim().length > 0
   ) {
-    return payload.error;
-  }
-
-  if (
-    isRecord(payload) &&
-    Object.hasOwn(payload, "__parseFailure") &&
-    typeof payload.message === "string" &&
-    payload.message.trim().length > 0
-  ) {
-    return payload.message;
+    return sanitizeTechnicalTransportMessage(payload.error);
   }
 
   return null;
@@ -96,13 +148,22 @@ const extractErrorMessageFromWrappedPayload = (err: {
 };
 
 const normalizeError = (error: unknown): NormalizedError => {
-  if (!isRecord(error)) {
+  if (error instanceof Error) {
+    const raw = error.message.trim();
     return {
       message:
-        error instanceof Error
-          ? error.message.trim() || DEFAULT_FALLBACK_MESSAGE
-          : DEFAULT_FALLBACK_MESSAGE,
+        raw.length === 0
+          ? DEFAULT_FALLBACK_MESSAGE
+          : sanitizeTechnicalTransportMessage(raw),
     };
+  }
+
+  if (!isRecord(error)) {
+    return { message: DEFAULT_FALLBACK_MESSAGE };
+  }
+
+  if (isRtkTransportStatus(error.status)) {
+    return { message: CLIENT_TRANSPORT_ERROR_MESSAGE };
   }
 
   const payloadMessage = extractPayloadMessage(error);

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { acceptInvitation, AuthApiError } from "@/lib/api-client";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -72,9 +73,7 @@ function AcceptInvitePageBody(): ReactElement {
       if (err instanceof AuthApiError && err.status === 429) {
         setErrorMessage("Too many attempts. Please wait and try again.");
       } else {
-        setErrorMessage(
-          err instanceof AuthApiError ? err.message : "Something went wrong.",
-        );
+        setErrorMessage(getApiErrorMessage(err, "Something went wrong."));
       }
     } finally {
       setIsSubmitting(false);

@@ -1,6 +1,6 @@
 import { extractApiError, type ApiErrorResponse } from "@/lib/api/contracts";
 
-interface JsonParseFailurePayload {
+export interface JsonParseFailurePayload {
   readonly __parseFailure: true;
   readonly message: string;
   readonly status: number;
@@ -8,6 +8,17 @@ interface JsonParseFailurePayload {
   readonly contentType: string;
   readonly bodyPreview: string;
   readonly url: string;
+}
+
+export function isJsonParseFailurePayload(
+  payload: unknown,
+): payload is JsonParseFailurePayload {
+  return (
+    typeof payload === "object" &&
+    payload !== null &&
+    Object.hasOwn(payload, "__parseFailure") &&
+    (payload as { __parseFailure?: unknown }).__parseFailure === true
+  );
 }
 
 const previewResponseBody = (body: string, maxLength = 500): string => {

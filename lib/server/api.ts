@@ -1,6 +1,10 @@
 import type { PermissionType } from "@/types/permission";
 
 import { getDevOnlyRequestHeaders } from "@/lib/api/config";
+import {
+  isJsonParseFailurePayload,
+  readJsonPayload,
+} from "@/lib/api/auth-api";
 
 import { getServerApiBaseUrl } from "@/lib/server/api-origin";
 import type { ServerSession } from "@/lib/server/auth";
@@ -107,9 +111,12 @@ export async function serverFetchJson<T>(
     return { ok: false, status: response.status };
   }
 
-  const json: unknown = await response.json();
-  const data = json as T;
-  return { ok: true, data };
+  const payload: unknown = await readJsonPayload(response);
+  if (isJsonParseFailurePayload(payload)) {
+    return { ok: false, status: response.status };
+  }
+
+  return { ok: true, data: payload as T };
 }
 
 export function sessionHasPermission(
