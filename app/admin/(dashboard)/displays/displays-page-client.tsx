@@ -22,7 +22,7 @@ import {
   type DisplaysBootstrapResponse,
   type DisplaysListQuery,
 } from "@/lib/api/displays-api";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppStore } from "@/lib/hooks";
 import { PAGE_SIZE, useDisplaysPage } from "./_hooks/use-displays-page";
 
 export function DisplaysBootstrapCacheSeeder({
@@ -33,15 +33,27 @@ export function DisplaysBootstrapCacheSeeder({
   readonly data: DisplaysBootstrapResponse;
 }): null {
   const dispatch = useAppDispatch();
+  const store = useAppStore();
   useLayoutEffect(() => {
+    const rtSlice = displaysApi.endpoints.getRuntimeOverrides.select(undefined)(
+      store.getState(),
+    );
+    const rtData = rtSlice?.data;
+    const merged: DisplaysBootstrapResponse =
+      rtData != null
+        ? {
+            ...data,
+            runtimeOverrides: rtData,
+          }
+        : data;
     dispatch(
       displaysApi.util.upsertQueryData(
         "getDisplaysBootstrap",
         queryArgs,
-        data,
+        merged,
       ),
     );
-  }, [dispatch, queryArgs, data]);
+  }, [dispatch, store, queryArgs, data]);
   return null;
 }
 

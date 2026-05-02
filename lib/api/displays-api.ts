@@ -348,7 +348,6 @@ export const displaysApi = api.injectEndpoints({
               ),
             );
           }
-          await bumpDisplaysNextCache();
         } catch {
           // mutation failed
         }
@@ -397,7 +396,6 @@ export const displaysApi = api.injectEndpoints({
                 ),
               );
             }
-            await bumpDisplaysNextCache();
           } catch {
             // mutation failed
           }
