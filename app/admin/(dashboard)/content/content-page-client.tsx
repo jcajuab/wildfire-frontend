@@ -32,6 +32,8 @@ import {
   type BackendContent,
   type BackendContentListResponse,
   type ContentListQuery,
+  type ContentOption,
+  type ContentOptionsQueryArg,
 } from "@/lib/api/content-api";
 import { useAppDispatch } from "@/lib/hooks";
 import { useContentPageController } from "./_hooks/use-content-page-controller";
@@ -46,6 +48,22 @@ export function ContentListCacheSeeder({
   const dispatch = useAppDispatch();
   useLayoutEffect(() => {
     dispatch(contentApi.util.upsertQueryData("listContent", queryArgs, data));
+  }, [dispatch, queryArgs, data]);
+  return null;
+}
+
+export function ContentOptionsCacheSeeder({
+  queryArgs,
+  data,
+}: {
+  readonly queryArgs: ContentOptionsQueryArg;
+  readonly data: ContentOption[];
+}): null {
+  const dispatch = useAppDispatch();
+  useLayoutEffect(() => {
+    dispatch(
+      contentApi.util.upsertQueryData("getContentOptions", queryArgs, data),
+    );
   }, [dispatch, queryArgs, data]);
   return null;
 }

@@ -5,7 +5,11 @@ import type { RoleEditBootstrapResponse } from "@/lib/api/rbac-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { getRoleEditPath } from "@/lib/role-paths";
 import { getServerSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import {
+  serverFetchJson,
+  sessionHasPermission,
+  WILDFIRE_SERVER_REVALIDATE_SECONDS,
+} from "@/lib/server/api";
 
 import {
   EditRolePageView,
@@ -34,8 +38,8 @@ export default async function EditRolePage({
   const bootstrapRes = await serverFetchJson<unknown>({
     session,
     path: `roles/${encodeURIComponent(roleId)}/bootstrap`,
-    tags: ["roles", "permissions", "users"],
-    revalidate: 30,
+    tags: ["role-edit-bootstrap"],
+    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
 
   if (!bootstrapRes.ok) {

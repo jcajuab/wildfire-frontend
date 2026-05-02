@@ -4,7 +4,7 @@ import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 
 async function bumpSchedulesNextCache(): Promise<void> {
   try {
-    await revalidateWildfireTag("schedules");
+    await revalidateWildfireTag("schedules-bootstrap");
   } catch {
     // best-effort
   }

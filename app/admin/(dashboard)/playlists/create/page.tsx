@@ -1,16 +1,18 @@
 import type { ReactElement } from "react";
 import { redirect } from "next/navigation";
 
-import type { BackendContent } from "@/lib/api/content-api";
-import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
-import {
-  PLAYLIST_CONTENT_PICKER_LIST_QUERY,
-} from "@/lib/content-search-params";
+import type { ContentOption } from "@/lib/api/content-api";
+import { parseApiResponseDataSafe } from "@/lib/api/contracts";
+import { PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY } from "@/lib/content-search-params";
 import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
 import { getServerSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import {
+  serverFetchJson,
+  sessionHasPermission,
+  WILDFIRE_SERVER_REVALIDATE_SECONDS,
+} from "@/lib/server/api";
 
-import { ContentListCacheSeeder } from "../../content/content-page-client";
+import { ContentOptionsCacheSeeder } from "../../content/content-page-client";
 import { CreatePlaylistPageView } from "./create-playlist-page-client";
 
 const CREATE_REDIRECT = `${PLAYLIST_INDEX_PATH}/create`;
@@ -26,28 +28,24 @@ export default async function CreatePlaylistPage(): Promise<ReactElement> {
 
   let contentSeeder: ReactElement | null = null;
   if (sessionHasPermission(session, "content:read")) {
-    const listRes = await serverFetchJson<unknown>({
+    const optionsRes = await serverFetchJson<unknown>({
       session,
-      path: "content",
+      path: "content/options",
       searchParams: {
-        page: PLAYLIST_CONTENT_PICKER_LIST_QUERY.page ?? 1,
-        pageSize: PLAYLIST_CONTENT_PICKER_LIST_QUERY.pageSize ?? 100,
-        status: PLAYLIST_CONTENT_PICKER_LIST_QUERY.status,
-        sortBy: PLAYLIST_CONTENT_PICKER_LIST_QUERY.sortBy ?? "createdAt",
-        sortDirection: PLAYLIST_CONTENT_PICKER_LIST_QUERY.sortDirection ?? "desc",
+        status: PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY.status,
       },
-      tags: ["content"],
-      revalidate: 30,
+      tags: ["content-options"],
+      revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
     });
-    if (listRes.ok) {
-      const listData = transformPaginatedListResponse<BackendContent>(
-        listRes.data,
-        "listContent",
+    if (optionsRes.ok) {
+      const options = parseApiResponseDataSafe<ContentOption[]>(
+        optionsRes.data,
+        "getContentOptions",
       );
       contentSeeder = (
-        <ContentListCacheSeeder
-          queryArgs={PLAYLIST_CONTENT_PICKER_LIST_QUERY}
-          data={listData}
+        <ContentOptionsCacheSeeder
+          queryArgs={PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY}
+          data={options}
         />
       );
     }

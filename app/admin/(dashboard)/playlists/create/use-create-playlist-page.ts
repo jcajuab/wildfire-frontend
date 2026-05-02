@@ -4,8 +4,8 @@ import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useCan } from "@/hooks/use-can";
-import { useListContentQuery } from "@/lib/api/content-api";
-import { PLAYLIST_CONTENT_PICKER_LIST_QUERY } from "@/lib/content-search-params";
+import { useGetContentOptionsQuery } from "@/lib/api/content-api";
+import { PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY } from "@/lib/content-search-params";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   useCreatePlaylistMutation,
@@ -16,10 +16,8 @@ import {
   type CreatePlaylistDraft,
   type PlaylistSelectableContent,
 } from "@/components/playlists/create-playlist-form";
-import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
+import { mapContentOptionToPlaylistSelectable } from "@/lib/playlists/map-content-option-to-selectable";
 import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
-import { isPlaylistContentType } from "@/types/playlist";
-
 export interface UseCreatePlaylistPageResult {
   readonly availableContent: readonly PlaylistSelectableContent[];
   handleCreatePlaylist: (data: CreatePlaylistDraft) => Promise<boolean>;
@@ -29,8 +27,8 @@ export interface UseCreatePlaylistPageResult {
 export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
   const router = useRouter();
   const canReadContent = useCan("content:read");
-  const { data: contentData } = useListContentQuery(
-    PLAYLIST_CONTENT_PICKER_LIST_QUERY,
+  const { data: optionsData } = useGetContentOptionsQuery(
+    PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY,
     { skip: !canReadContent },
   );
 
@@ -38,15 +36,14 @@ export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
   const [deletePlaylist] = useDeletePlaylistMutation();
   const [savePlaylistItemsAtomic] = useSavePlaylistItemsAtomicMutation();
 
-  const availableContent = useMemo(
-    () =>
-      (contentData?.items ?? [])
-        .map(mapBackendContentToContent)
-        .filter((c): c is PlaylistSelectableContent =>
-          isPlaylistContentType(c.type),
-        ),
-    [contentData?.items],
-  );
+  const availableContent = useMemo(() => {
+    const rows: PlaylistSelectableContent[] = [];
+    for (const opt of optionsData ?? []) {
+      const row = mapContentOptionToPlaylistSelectable(opt);
+      if (row) rows.push(row);
+    }
+    return rows;
+  }, [optionsData]);
 
   const handleCancel = useCallback(() => {
     router.push(PLAYLIST_INDEX_PATH);

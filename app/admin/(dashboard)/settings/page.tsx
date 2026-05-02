@@ -4,7 +4,10 @@ import { redirect } from "next/navigation";
 import type { AICredential } from "@/lib/api/ai-credentials-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { getServerSession } from "@/lib/server/auth";
-import { serverFetchJson } from "@/lib/server/api";
+import {
+  serverFetchJson,
+  WILDFIRE_SERVER_REVALIDATE_SECONDS,
+} from "@/lib/server/api";
 
 import {
   AICredentialsCacheSeeder,
@@ -21,7 +24,7 @@ export default async function SettingsPage(): Promise<ReactElement> {
     session,
     path: "ai/credentials",
     tags: ["ai"],
-    revalidate: 30,
+    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
 
   let credentialsSeeder: ReactElement | null = null;

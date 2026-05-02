@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { IconLogout, IconSettings, IconUser } from "@tabler/icons-react";
 import type { ReactElement, ReactNode } from "react";
@@ -12,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AdminNavLink } from "@/components/layout/admin-nav-link";
 import { useAuth } from "@/context/auth-context";
 import { useLogout } from "@/hooks/use-logout";
 import { cn } from "@/lib/utils";
@@ -102,10 +102,10 @@ export function UserMenu({
       <DropdownMenuContent side={menuSide} align={menuAlign} sideOffset={8}>
         {canAccessSettings ? (
           <DropdownMenuItem asChild>
-            <Link href="/admin/settings" prefetch={true}>
+            <AdminNavLink href="/admin/settings">
               <IconSettings className="size-4" />
               Settings
-            </Link>
+            </AdminNavLink>
           </DropdownMenuItem>
         ) : null}
         <DropdownMenuItem

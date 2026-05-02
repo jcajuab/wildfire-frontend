@@ -5,16 +5,28 @@ import { getDevOnlyRequestHeaders } from "@/lib/api/config";
 import { getServerApiBaseUrl } from "@/lib/server/api-origin";
 import type { ServerSession } from "@/lib/server/auth";
 
+/** Default Next.js `fetch` revalidate (seconds) for admin server data. */
+export const WILDFIRE_SERVER_REVALIDATE_SECONDS = 300;
+
+/**
+ * Next.js Data Cache tags (`wildfire:${tag}`). Use narrow tags so mutations
+ * do not invalidate unrelated RSC payloads.
+ */
 export type ServerCacheTag =
   | "ai"
   | "audit"
-  | "content"
-  | "displays"
+  | "content-list"
+  | "content-options"
+  | "displays-bootstrap"
+  | "displays-options"
+  | "permissions-options"
   | "playlists"
-  | "schedules"
-  | "users"
-  | "roles"
-  | "permissions";
+  | "role-edit-bootstrap"
+  | "roles-list"
+  | "roles-options"
+  | "schedules-bootstrap"
+  | "users-list"
+  | "users-options";
 
 export type ServerSearchParamValue =
   | string
@@ -84,7 +96,10 @@ export async function serverFetchJson<T>(
         ? undefined
         : {
             tags: nextTags,
-            revalidate: typeof revalidate === "number" ? revalidate : 60,
+            revalidate:
+              typeof revalidate === "number"
+                ? revalidate
+                : WILDFIRE_SERVER_REVALIDATE_SECONDS,
           },
   });
 

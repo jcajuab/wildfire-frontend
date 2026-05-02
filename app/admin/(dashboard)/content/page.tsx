@@ -11,7 +11,11 @@ import {
   contentListQueryFromSearchParams,
 } from "@/lib/content-search-params";
 import { getServerSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import {
+  serverFetchJson,
+  sessionHasPermission,
+  WILDFIRE_SERVER_REVALIDATE_SECONDS,
+} from "@/lib/server/api";
 
 import {
   ContentListCacheSeeder,
@@ -48,8 +52,8 @@ export default async function ContentPage({
       sortBy: queryArgs.sortBy ?? "createdAt",
       sortDirection: queryArgs.sortDirection ?? "desc",
     },
-    tags: ["content"],
-    revalidate: 30,
+    tags: ["content-list"],
+    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
 
   if (!listRes.ok) {

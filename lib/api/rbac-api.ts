@@ -180,7 +180,7 @@ export const rbacApi = api.injectEndpoints({
               }),
             );
           }
-          await bumpRbacNextCache(["roles"]);
+          await bumpRbacNextCache(["roles-list", "roles-options"]);
         } catch {
           // mutation failed
         }
@@ -259,7 +259,12 @@ export const rbacApi = api.injectEndpoints({
               }),
             );
           }
-          await bumpRbacNextCache(["roles", "users"]);
+          await bumpRbacNextCache([
+            "roles-list",
+            "roles-options",
+            "users-list",
+            "role-edit-bootstrap",
+          ]);
         } catch {
           // mutation failed
         }
@@ -283,7 +288,11 @@ export const rbacApi = api.injectEndpoints({
               }),
             );
           }
-          await bumpRbacNextCache(["roles", "users"]);
+          await bumpRbacNextCache([
+            "roles-list",
+            "roles-options",
+            "users-list",
+          ]);
         } catch {
           // mutation failed
         }
@@ -328,7 +337,7 @@ export const rbacApi = api.injectEndpoints({
               },
             ),
           );
-          await bumpRbacNextCache(["roles", "permissions"]);
+          await bumpRbacNextCache(["role-edit-bootstrap"]);
         } catch {
           // mutation failed
         }
@@ -424,7 +433,7 @@ export const rbacApi = api.injectEndpoints({
               }),
             );
           }
-          await bumpRbacNextCache(["users"]);
+          await bumpRbacNextCache(["users-list", "users-options"]);
         } catch {
           // mutation failed
         }
@@ -472,7 +481,7 @@ export const rbacApi = api.injectEndpoints({
               () => updatedUser,
             ),
           );
-          await bumpRbacNextCache(["users"]);
+          await bumpRbacNextCache(["users-list", "users-options"]);
         } catch {
           // mutation failed
         }
@@ -496,7 +505,7 @@ export const rbacApi = api.injectEndpoints({
               }),
             );
           }
-          await bumpRbacNextCache(["users"]);
+          await bumpRbacNextCache(["users-list", "users-options"]);
         } catch {
           // mutation failed
         }
@@ -553,7 +562,11 @@ export const rbacApi = api.injectEndpoints({
               }),
             );
           }
-          await bumpRbacNextCache(["users", "roles"]);
+          await bumpRbacNextCache([
+            "users-list",
+            "users-options",
+            "roles-list",
+          ]);
         } catch {
           // mutation failed
         }

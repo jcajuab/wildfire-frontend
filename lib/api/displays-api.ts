@@ -1,4 +1,4 @@
-import { revalidateWildfireTag } from "@/app/actions/revalidate-wildfire-cache";
+import { revalidateWildfireTags } from "@/app/actions/revalidate-wildfire-cache";
 import { api } from "@/lib/api/api";
 import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
@@ -7,7 +7,7 @@ import { createProvidesTags } from "@/lib/api/provide-tags";
 
 async function bumpDisplaysNextCache(): Promise<void> {
   try {
-    await revalidateWildfireTag("displays");
+    await revalidateWildfireTags(["displays-bootstrap", "displays-options"]);
   } catch {
     // Next cache revalidation is best-effort
   }

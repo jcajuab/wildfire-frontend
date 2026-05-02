@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { IconMenu2 } from "@tabler/icons-react";
 import type { ReactElement } from "react";
 import { useMemo } from "react";
@@ -8,6 +7,7 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { WildfireLogo } from "@/components/common/wildfire-logo";
+import { AdminNavLink } from "@/components/layout/admin-nav-link";
 import { GlobalEmergencyButton } from "@/components/layout/global-emergency-button";
 import { UserMenu } from "@/components/layout/user-menu";
 import { useAuth } from "@/context/auth-context";
@@ -40,14 +40,13 @@ export function MobileHeader(): ReactElement {
         <IconMenu2 className="size-5" />
       </Button>
 
-      <Link
+      <AdminNavLink
         href={homeRoute}
         aria-label="Home"
-        prefetch={true}
         className="flex items-center text-sidebar-foreground"
       >
         <WildfireLogo className="h-5" />
-      </Link>
+      </AdminNavLink>
 
       <div className="flex-1" />
 

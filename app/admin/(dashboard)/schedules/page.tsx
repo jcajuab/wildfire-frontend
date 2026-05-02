@@ -8,7 +8,11 @@ import type {
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { defaultSchedulesBootstrapWindow } from "@/lib/schedule-window";
 import { getServerSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import {
+  serverFetchJson,
+  sessionHasPermission,
+  WILDFIRE_SERVER_REVALIDATE_SECONDS,
+} from "@/lib/server/api";
 
 import {
   SchedulesBootstrapCacheSeeder,
@@ -33,8 +37,8 @@ export default async function SchedulesPage(): Promise<ReactElement> {
       from: queryArgs.from,
       to: queryArgs.to,
     },
-    tags: ["schedules"],
-    revalidate: 30,
+    tags: ["schedules-bootstrap"],
+    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
 
   if (!bootstrapRes.ok) {

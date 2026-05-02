@@ -9,7 +9,11 @@ import {
   usersListQueryFromSearchParams,
 } from "@/lib/users-search-params";
 import { getServerSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import {
+  serverFetchJson,
+  sessionHasPermission,
+  WILDFIRE_SERVER_REVALIDATE_SECONDS,
+} from "@/lib/server/api";
 
 import {
   RoleOptionsCacheSeeder,
@@ -53,8 +57,8 @@ export default async function UsersPage({
       sortBy: queryArgs.sortBy ?? "name",
       sortDirection: queryArgs.sortDirection ?? "asc",
     },
-    tags: ["users"],
-    revalidate: 30,
+    tags: ["users-list"],
+    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
 
   if (!usersRes.ok) {
@@ -74,8 +78,8 @@ export default async function UsersPage({
       session,
       path: "roles/options",
       searchParams: { limit: 100 },
-      tags: ["roles"],
-      revalidate: 30,
+      tags: ["roles-options"],
+      revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
     });
     if (rolesRes.ok) {
       const roleOptions = parseApiResponseDataSafe<RbacRoleSummary[]>(

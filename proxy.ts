@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 function buildCspHeader(): string {
   const apiOrigin = getAbsoluteOrigin(process.env.NEXT_PUBLIC_API_URL);
@@ -31,32 +31,31 @@ function getAbsoluteOrigin(url: string | undefined): string {
   }
 }
 
-/**
- * Session cookie set by the backend on login/refresh (HTTP-only, path=/).
- * Presence is a heuristic — it does not guarantee a valid session, but it
- * eliminates the visible "skeleton → auth check → redirect" flash for:
- *   1. Unauthenticated user visits /admin/* → instant redirect to /login
- *   2. Authenticated user visits /login   → instant redirect to /admin
- * The client-side AuthGuard remains the authoritative check.
- */
-const SESSION_COOKIE = "wildfire_session_token";
+/** Aligned with backend and {@link lib/server/auth.ts}. */
+const DEFAULT_SESSION_COOKIE = "wildfire_session_token";
 
-export function proxy(request: NextRequest): NextResponse {
-  const { pathname } = request.nextUrl;
-  const hasSession = request.cookies.has(SESSION_COOKIE);
+function sessionCookieName(): string {
+  return (
+    process.env.AUTH_SESSION_COOKIE_NAME?.trim() || DEFAULT_SESSION_COOKIE
+  );
+}
 
-  // Unauthenticated user trying to access admin → redirect to login.
-  // This eliminates the "skeleton → auth check → redirect" flash.
-  // NOTE: we intentionally do NOT redirect /login → /admin when a cookie
-  // exists, because the cookie may be stale/expired and the client-side
-  // AuthGuard would redirect back to /login, creating a loop.
-  if (!hasSession && pathname.startsWith("/admin")) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("redirectTo", pathname);
-    return NextResponse.redirect(loginUrl);
+function hasSessionCookie(request: NextRequest): boolean {
+  return request.cookies.has(sessionCookieName());
+}
+
+/** Allow only same-app paths (no open redirects). */
+function safeInternalPath(raw: string | null): string | null {
+  if (raw == null || raw === "") {
+    return null;
   }
+  if (!raw.startsWith("/") || raw.startsWith("//")) {
+    return null;
+  }
+  return raw;
+}
 
+function applyCsp(request: NextRequest): NextResponse {
   const csp = buildCspHeader();
 
   const requestHeaders = new Headers(request.headers);
@@ -68,6 +67,42 @@ export function proxy(request: NextRequest): NextResponse {
   response.headers.set("Content-Security-Policy", csp);
 
   return response;
+}
+
+/**
+ * Edge proxy: CSP on every matched route plus fast auth redirects.
+ * Cookie presence is a heuristic (invalid cookies fall through to client AuthGuard).
+ */
+export function proxy(request: NextRequest): NextResponse {
+  const { pathname, search } = request.nextUrl;
+  const hasSession = hasSessionCookie(request);
+
+  if (pathname === "/login" || pathname.startsWith("/login/")) {
+    if (hasSession) {
+      const redirectTo = safeInternalPath(
+        request.nextUrl.searchParams.get("redirectTo"),
+      );
+      const target = redirectTo ?? "/admin";
+      return NextResponse.redirect(new URL(target, request.url));
+    }
+    return applyCsp(request);
+  }
+
+  const isRoot = pathname === "/";
+  const isAdmin = pathname.startsWith("/admin");
+
+  if ((isRoot || isAdmin) && !hasSession) {
+    const loginUrl = new URL("/login", request.url);
+    if (isAdmin) {
+      loginUrl.searchParams.set(
+        "redirectTo",
+        `${pathname}${search === "" ? "" : search}`,
+      );
+    }
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return applyCsp(request);
 }
 
 export const config = {

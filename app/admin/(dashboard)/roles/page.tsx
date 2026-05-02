@@ -11,7 +11,11 @@ import {
   rolesListQueryFromSearchParams,
 } from "@/lib/roles-search-params";
 import { getServerSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import {
+  serverFetchJson,
+  sessionHasPermission,
+  WILDFIRE_SERVER_REVALIDATE_SECONDS,
+} from "@/lib/server/api";
 
 import { RolesListCacheSeeder, RolesPageView } from "./roles-page-client";
 
@@ -51,8 +55,8 @@ export default async function RolesPage({
       sortBy: queryArgs.sortBy ?? "name",
       sortDirection: queryArgs.sortDirection ?? "asc",
     },
-    tags: ["roles"],
-    revalidate: 30,
+    tags: ["roles-list"],
+    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
 
   if (!rolesRes.ok) {

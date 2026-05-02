@@ -11,7 +11,11 @@ import {
   playlistsListQueryFromSearchParams,
 } from "@/lib/playlists-search-params";
 import { getServerSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import {
+  serverFetchJson,
+  sessionHasPermission,
+  WILDFIRE_SERVER_REVALIDATE_SECONDS,
+} from "@/lib/server/api";
 
 import {
   PlaylistsListCacheSeeder,
@@ -48,7 +52,7 @@ export default async function PlaylistsPage({
       sortDirection: queryArgs.sortDirection ?? "desc",
     },
     tags: ["playlists"],
-    revalidate: 30,
+    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
 
   if (!listRes.ok) {

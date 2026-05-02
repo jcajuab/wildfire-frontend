@@ -1,4 +1,4 @@
-import { revalidateWildfireTag } from "@/app/actions/revalidate-wildfire-cache";
+import { revalidateWildfireTags } from "@/app/actions/revalidate-wildfire-cache";
 import { api } from "@/lib/api/api";
 import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
@@ -8,7 +8,7 @@ import type { FlashTone } from "@/types/content";
 
 async function bumpContentNextCache(): Promise<void> {
   try {
-    await revalidateWildfireTag("content");
+    await revalidateWildfireTags(["content-list", "content-options"]);
   } catch {
     // best-effort
   }
@@ -56,6 +56,15 @@ export interface ContentOption {
   readonly title: string;
   readonly type: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
 }
+
+/** Cache key for `getContentOptions` (playlist picker SSR uses `PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY`). */
+export type ContentOptionsQueryArg =
+  | {
+      readonly q?: string;
+      readonly status?: "PROCESSING" | "READY" | "FAILED";
+      readonly type?: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
+    }
+  | void;
 
 export interface ContentIngestionAcceptedResponse {
   readonly content: BackendContent;
@@ -130,14 +139,7 @@ export interface SubmitPdfCropsRequest {
 
 export const contentApi = api.injectEndpoints({
   endpoints: (build) => ({
-    getContentOptions: build.query<
-      ContentOption[],
-      {
-        readonly q?: string;
-        readonly status?: "PROCESSING" | "READY" | "FAILED";
-        readonly type?: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
-      } | void
-    >({
+    getContentOptions: build.query<ContentOption[], ContentOptionsQueryArg>({
       query: (query) => ({
         url: "content/options",
         params: {

@@ -1,13 +1,12 @@
-import type { ContentListQuery } from "@/lib/api/content-api";
+import type {
+  ContentListQuery,
+  ContentOptionsQueryArg,
+} from "@/lib/api/content-api";
 
-/** Matches playlist create/edit content pickers (RTK `listContent` cache key). */
-export const PLAYLIST_CONTENT_PICKER_LIST_QUERY = {
-  page: 1,
-  pageSize: 100,
+/** Matches playlist pickers (`getContentOptions` / SSR `content/options`). */
+export const PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY = {
   status: "READY" as const,
-  sortBy: "createdAt" as const,
-  sortDirection: "desc" as const,
-} satisfies ContentListQuery;
+} satisfies Extract<ContentOptionsQueryArg, object>;
 
 /** Matches admin content grid page size (large page for grid UX). */
 export const CONTENT_PAGE_SIZE = 500;

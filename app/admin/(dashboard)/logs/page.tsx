@@ -8,7 +8,11 @@ import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { auditListQueryFromSearchParams } from "@/lib/audit-log-search-params";
 import { getServerSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import {
+  serverFetchJson,
+  sessionHasPermission,
+  WILDFIRE_SERVER_REVALIDATE_SECONDS,
+} from "@/lib/server/api";
 
 import { LogsPageClient } from "./logs-page-client";
 
@@ -45,7 +49,7 @@ export default async function LogsPage({
       requestId: listQuery.requestId,
     },
     tags: ["audit"],
-    revalidate: 30,
+    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
 
   if (!eventsRes.ok) {
@@ -63,8 +67,8 @@ export default async function LogsPage({
       session,
       path: "users/options",
       searchParams: { limit: 100 },
-      tags: ["users"],
-      revalidate: 30,
+      tags: ["users-options"],
+      revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
     });
     if (usersRes.ok) {
       users = parseApiResponseDataSafe<RbacUser[]>(usersRes.data, "users/options");
@@ -77,8 +81,8 @@ export default async function LogsPage({
       session,
       path: "displays/options",
       searchParams: { limit: 100 },
-      tags: ["displays"],
-      revalidate: 30,
+      tags: ["displays-options"],
+      revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
     });
     if (displaysRes.ok) {
       displays = parseApiResponseDataSafe<DisplayOption[]>(

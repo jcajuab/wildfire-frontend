@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   IconCalendarEvent,
@@ -29,6 +28,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { AdminNavLink } from "@/components/layout/admin-nav-link";
 import { GlobalEmergencyButton } from "@/components/layout/global-emergency-button";
 import { UserMenu } from "@/components/layout/user-menu";
 import { useAuth } from "@/context/auth-context";
@@ -101,7 +101,7 @@ export function AppSidebar(): ReactElement {
   const [isPending, startTransition] = useTransition();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
-  /** Intercept link click: keep <Link> for hover-prefetch, but use
+  /** Intercept click: `AdminNavLink` prefetches on hover/focus only; use
    *  startTransition for navigation so we get isPending state. */
   function handleNavClick(e: MouseEvent, href: string): void {
     e.preventDefault();
@@ -144,9 +144,9 @@ export function AppSidebar(): ReactElement {
   return (
     <Sidebar variant="floating" collapsible="offcanvas" className="pr-0">
       <SidebarHeader>
-        <Link href={homeRoute} aria-label="Home" prefetch={true}>
+        <AdminNavLink href={homeRoute} aria-label="Home">
           <WildfireLogo className="h-6" />
-        </Link>
+        </AdminNavLink>
       </SidebarHeader>
 
       <SidebarContent>
@@ -176,9 +176,8 @@ export function AppSidebar(): ReactElement {
                           className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
                           tooltip={item.title}
                         >
-                          <Link
+                          <AdminNavLink
                             href={item.href}
-                            prefetch={true}
                             aria-disabled={isDisabled || undefined}
                             className={
                               isDisabled
@@ -192,7 +191,7 @@ export function AppSidebar(): ReactElement {
                             {isNavPending && (
                               <IconLoader2 className="ml-auto size-3.5 animate-spin" />
                             )}
-                          </Link>
+                          </AdminNavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );
@@ -227,9 +226,8 @@ export function AppSidebar(): ReactElement {
                           className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
                           tooltip={item.title}
                         >
-                          <Link
+                          <AdminNavLink
                             href={item.href}
-                            prefetch={true}
                             aria-disabled={isDisabled || undefined}
                             className={
                               isDisabled
@@ -243,7 +241,7 @@ export function AppSidebar(): ReactElement {
                             {isNavPending && (
                               <IconLoader2 className="ml-auto size-3.5 animate-spin" />
                             )}
-                          </Link>
+                          </AdminNavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );

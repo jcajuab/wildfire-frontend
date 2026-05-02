@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { useEffect } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import EditRolePage from "./page";
+import { EditRolePageView } from "./edit-role-page-client";
 import { useEditRolePage, type EditRolePageState } from "./use-edit-role-page";
 import { useParams } from "next/navigation";
 
@@ -114,7 +114,7 @@ describe("EditRolePage", () => {
   });
 
   test("renders Edit Role title and ready editor state", () => {
-    render(<EditRolePage />);
+    render(<EditRolePageView />);
 
     expect(
       screen.getByRole("heading", { name: "Edit Role" }),
@@ -124,18 +124,13 @@ describe("EditRolePage", () => {
   });
 
   test("uses an inner scroll wrapper for the ready state", () => {
-    render(<EditRolePage />);
+    render(<EditRolePageView />);
 
     const roleForm = screen.getByTestId("role-form");
     const scrollWrapper = findAncestorWithClasses(roleForm, [
       "min-h-0",
       "flex-1",
       "overflow-auto",
-      "overscroll-none",
-      "px-6",
-      "py-6",
-      "sm:px-8",
-      "sm:py-8",
     ]);
 
     expect(scrollWrapper).not.toBeNull();
@@ -150,7 +145,7 @@ describe("EditRolePage", () => {
 
     expect(contentShell).not.toBeNull();
     expect(contentShell?.classList.contains("overflow-y-auto")).toBe(false);
-    expect(contentShell).toContainElement(scrollWrapper);
+    expect(contentShell).toContainElement(scrollWrapper!);
   });
 
   test("renders explicit loading state", () => {
@@ -162,7 +157,7 @@ describe("EditRolePage", () => {
       handleSave: vi.fn(),
     });
 
-    render(<EditRolePage />);
+    render(<EditRolePageView />);
 
     const loadingMessage = screen.getByText("Loading role...");
 
@@ -171,16 +166,18 @@ describe("EditRolePage", () => {
     expect(
       findAncestorWithClasses(loadingMessage, [
         "flex",
-        "min-h-0",
-        "flex-1",
         "items-center",
         "justify-center",
-        "overflow-auto",
-        "overscroll-none",
         "px-6",
-        "py-6",
+        "py-16",
         "sm:px-8",
-        "sm:py-8",
+      ]),
+    ).not.toBeNull();
+    expect(
+      findAncestorWithClasses(loadingMessage, [
+        "min-h-0",
+        "flex-1",
+        "overflow-auto",
       ]),
     ).not.toBeNull();
   });
@@ -197,7 +194,7 @@ describe("EditRolePage", () => {
       handleSave: vi.fn(),
     });
 
-    render(<EditRolePage />);
+    render(<EditRolePageView />);
 
     const heading = screen.getByRole("heading", { name: "Role not found" });
 
@@ -208,16 +205,13 @@ describe("EditRolePage", () => {
     );
     expect(screen.queryByTestId("role-form")).not.toBeInTheDocument();
     expect(
+      findAncestorWithClasses(heading, ["px-6", "py-6", "sm:px-8", "sm:py-8"]),
+    ).not.toBeNull();
+    expect(
       findAncestorWithClasses(heading, [
-        "flex",
         "min-h-0",
         "flex-1",
         "overflow-auto",
-        "overscroll-none",
-        "px-6",
-        "py-6",
-        "sm:px-8",
-        "sm:py-8",
       ]),
     ).not.toBeNull();
   });
@@ -234,7 +228,7 @@ describe("EditRolePage", () => {
       handleSave: vi.fn(),
     });
 
-    render(<EditRolePage />);
+    render(<EditRolePageView />);
 
     const heading = screen.getByRole("heading", {
       name: "Unable to load role",
@@ -247,16 +241,13 @@ describe("EditRolePage", () => {
     );
     expect(screen.queryByTestId("role-form")).not.toBeInTheDocument();
     expect(
+      findAncestorWithClasses(heading, ["px-6", "py-6", "sm:px-8", "sm:py-8"]),
+    ).not.toBeNull();
+    expect(
       findAncestorWithClasses(heading, [
-        "flex",
         "min-h-0",
         "flex-1",
         "overflow-auto",
-        "overscroll-none",
-        "px-6",
-        "py-6",
-        "sm:px-8",
-        "sm:py-8",
       ]),
     ).not.toBeNull();
   });
@@ -277,7 +268,7 @@ describe("EditRolePage", () => {
       handleSave: vi.fn(),
     });
 
-    render(<EditRolePage />);
+    render(<EditRolePageView />);
 
     const heading = screen.getByRole("heading", {
       name: "System role cannot be edited",
@@ -290,16 +281,13 @@ describe("EditRolePage", () => {
     );
     expect(screen.queryByTestId("role-form")).not.toBeInTheDocument();
     expect(
+      findAncestorWithClasses(heading, ["px-6", "py-6", "sm:px-8", "sm:py-8"]),
+    ).not.toBeNull();
+    expect(
       findAncestorWithClasses(heading, [
-        "flex",
         "min-h-0",
         "flex-1",
         "overflow-auto",
-        "overscroll-none",
-        "px-6",
-        "py-6",
-        "sm:px-8",
-        "sm:py-8",
       ]),
     ).not.toBeNull();
   });
@@ -316,7 +304,7 @@ describe("EditRolePage", () => {
       handleSave: vi.fn(),
     });
 
-    render(<EditRolePage />);
+    render(<EditRolePageView />);
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Cancel" })).toBeEnabled();
@@ -339,7 +327,7 @@ describe("EditRolePage", () => {
       handleSave,
     });
 
-    render(<EditRolePage />);
+    render(<EditRolePageView />);
 
     await waitFor(() => {
       expect(
@@ -361,7 +349,7 @@ describe("EditRolePage", () => {
       handleSave: vi.fn(),
     });
 
-    render(<EditRolePage />);
+    render(<EditRolePageView />);
 
     expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
   });
