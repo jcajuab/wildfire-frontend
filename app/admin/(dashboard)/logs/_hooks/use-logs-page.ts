@@ -19,10 +19,11 @@ import {
   type ActorTypeFilter,
 } from "./use-audit-log-filters";
 import { useActorResolver } from "./use-actor-resolver";
+import { LOGS_PAGE_SIZE } from "@/lib/audit-log-search-params";
 
 export { ACTOR_TYPE_FILTERS, type ActorTypeFilter };
 
-export const PAGE_SIZE = 20;
+export const PAGE_SIZE = LOGS_PAGE_SIZE;
 
 export interface UseLogsPageResult {
   // Permissions
@@ -94,8 +95,6 @@ export function useLogsPage(): UseLogsPageResult {
 
   const { page, setPage } = filters;
   const {
-    setFrom,
-    setTo,
     setFromDraft,
     setToDraft,
     setAction,
@@ -129,8 +128,9 @@ export function useLogsPage(): UseLogsPageResult {
   const handleActionChange = useCallback(
     (nextValue: string): void => {
       setAction(nextValue);
+      resetToFirstPage();
     },
-    [setAction],
+    [resetToFirstPage, setAction],
   );
 
   const handleActorTypeChange = useCallback(
@@ -189,8 +189,9 @@ export function useLogsPage(): UseLogsPageResult {
   const handleRequestIdChange = useCallback(
     (nextValue: string): void => {
       setRequestId(nextValue);
+      resetToFirstPage();
     },
-    [setRequestId],
+    [resetToFirstPage, setRequestId],
   );
 
   const handleResetFilters = useCallback((): void => {

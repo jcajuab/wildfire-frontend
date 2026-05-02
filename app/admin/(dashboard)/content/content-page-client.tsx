@@ -11,6 +11,7 @@ import {
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { EmptyState } from "@/components/common/empty-state";
+import { PaginationFooter } from "@/components/common/pagination-footer";
 import { ContentFilterPopover } from "@/components/content/content-filter-popover";
 import { ContentGrid } from "@/components/content/content-grid";
 import { CreateContentDialog } from "@/components/content/create-content-dialog";
@@ -226,6 +227,15 @@ export function ContentPageView(): ReactElement {
           </div>
         </div>
 
+        <footer className="empty:hidden border-t border-border bg-background/80">
+          <PaginationFooter
+            page={controller.filters.page}
+            pageSize={controller.pageSize}
+            total={controller.data?.total ?? 0}
+            onPageChange={controller.filters.setPage}
+            variant="numbered"
+          />
+        </footer>
       </section>
 
       <CreateContentDialog

@@ -2,9 +2,6 @@ import type { ReactElement } from "react";
 import { redirect } from "next/navigation";
 
 import type { BackendAuditEvent } from "@/lib/api/audit-api";
-import type { DisplayOption } from "@/lib/api/displays-api";
-import type { RbacUser } from "@/lib/api/rbac-api";
-import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { auditListQueryFromSearchParams } from "@/lib/audit-log-search-params";
 import { getServerSession } from "@/lib/server/auth";
@@ -14,7 +11,7 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
-import { LogsPageClient } from "./logs-page-client";
+import { AuditListCacheSeeder, LogsPageClient } from "./logs-page-client";
 
 interface LogsPageProps {
   readonly searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -61,44 +58,10 @@ export default async function LogsPage({
     "listAuditEvents",
   );
 
-  let users: readonly RbacUser[] = [];
-  if (sessionHasPermission(session, "users:read")) {
-    const usersRes = await serverFetchJson<unknown>({
-      session,
-      path: "users/options",
-      searchParams: { limit: 100 },
-      tags: ["users-options"],
-      revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
-    });
-    if (usersRes.ok) {
-      users = parseApiResponseDataSafe<RbacUser[]>(usersRes.data, "users/options");
-    }
-  }
-
-  let displays: readonly DisplayOption[] = [];
-  if (sessionHasPermission(session, "displays:read")) {
-    const displaysRes = await serverFetchJson<unknown>({
-      session,
-      path: "displays/options",
-      searchParams: { limit: 100 },
-      tags: ["displays-options"],
-      revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
-    });
-    if (displaysRes.ok) {
-      displays = parseApiResponseDataSafe<DisplayOption[]>(
-        displaysRes.data,
-        "displays/options",
-      );
-    }
-  }
-
   return (
-    <LogsPageClient
-      canExport
-      events={eventsData.items}
-      total={eventsData.total}
-      users={users}
-      displays={displays}
-    />
+    <>
+      <AuditListCacheSeeder queryArgs={listQuery} data={eventsData} />
+      <LogsPageClient />
+    </>
   );
 }

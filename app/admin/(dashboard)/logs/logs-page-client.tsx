@@ -1,9 +1,8 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useMemo } from "react";
+import { useLayoutEffect } from "react";
 
-import type { BackendAuditEvent } from "@/lib/api/audit-api";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { LogsTable } from "@/components/logs/logs-table";
@@ -28,26 +27,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  getResourceTypeFilterLabel,
   getResourceTypeLabel,
-  getResourceTypeValueFromInput,
   RESOURCE_TYPE_FILTER_OPTIONS,
   RESOURCE_TYPE_SELECT_ALL_VALUE,
   type ResourceTypeFilter,
 } from "@/lib/audit-resource-types";
-import { mapAuditEventToLogEntry } from "@/lib/mappers/audit-log-mapper";
-import type { LogEntry } from "@/types/log";
-import type { RbacUser } from "@/lib/api/rbac-api";
-import type { DisplayOption } from "@/lib/api/displays-api";
+import {
+  auditApi,
+  type AuditListQuery,
+  type BackendAuditListResponse,
+} from "@/lib/api/audit-api";
+import { useAppDispatch } from "@/lib/hooks";
+import { LOGS_PAGE_SIZE } from "@/lib/audit-log-search-params";
 
 import { AuditExportPopover } from "./_components/audit-export-popover";
 import {
   ACTOR_TYPE_FILTERS,
-  useAuditLogFilters,
+  useLogsPage,
   type ActorTypeFilter,
-} from "./_hooks/use-audit-log-filters";
-import { useActorResolver } from "./_hooks/use-actor-resolver";
-import { LOGS_PAGE_SIZE } from "@/lib/audit-log-search-params";
+} from "./_hooks/use-logs-page";
 
 const COMMON_STATUS_CODES = ["200", "401", "403", "404", "500"] as const;
 const STATUS_CODE_LABELS: Record<(typeof COMMON_STATUS_CODES)[number], string> =
@@ -59,139 +57,40 @@ const STATUS_CODE_LABELS: Record<(typeof COMMON_STATUS_CODES)[number], string> =
     "500": "500 (Internal Server Error)",
   };
 
-export interface LogsPageClientProps {
-  readonly canExport: boolean;
-  readonly events: readonly BackendAuditEvent[];
-  readonly total: number;
-  readonly users: readonly RbacUser[];
-  readonly displays: readonly DisplayOption[];
+export function AuditListCacheSeeder({
+  queryArgs,
+  data,
+}: {
+  readonly queryArgs: AuditListQuery;
+  readonly data: BackendAuditListResponse;
+}): null {
+  const dispatch = useAppDispatch();
+  useLayoutEffect(() => {
+    dispatch(
+      auditApi.util.upsertQueryData("listAuditEvents", queryArgs, data),
+    );
+  }, [dispatch, queryArgs, data]);
+  return null;
 }
 
-export function LogsPageClient({
-  canExport,
-  events,
-  total,
-  users,
-  displays,
-}: LogsPageClientProps): ReactElement {
-  const filters = useAuditLogFilters(LOGS_PAGE_SIZE);
-
-  const actorResolver = useActorResolver({ users, displays });
-
-  const logs = useMemo<LogEntry[]>(() => {
-    return events.map((event) =>
-      mapAuditEventToLogEntry(event, {
-        getActorName: actorResolver.getActorName,
-        getActorAvatarUrl: actorResolver.getActorAvatarUrl,
-      }),
-    );
-  }, [events, actorResolver]);
-
+export function LogsPageClient(): ReactElement {
   const {
-    page,
-    setPage,
-    setFromDraft,
-    setToDraft,
-    setAction,
-    setActorType,
-    setResourceType,
-    setResourceTypeInput,
-    setStatusRaw,
-    setRequestId,
-    resetAll,
-    statusRaw,
-  } = filters;
-
-  const resetToFirstPage = useCallback((): void => {
-    if (page !== 1) {
-      setPage(1);
-    }
-  }, [page, setPage]);
-
-  const handleFromChange = useCallback(
-    (nextValue: string): void => {
-      setFromDraft(nextValue);
-    },
-    [setFromDraft],
-  );
-
-  const handleToChange = useCallback(
-    (nextValue: string): void => {
-      setToDraft(nextValue);
-    },
-    [setToDraft],
-  );
-
-  const handleActionChange = useCallback(
-    (nextValue: string): void => {
-      setAction(nextValue);
-    },
-    [setAction],
-  );
-
-  const handleActorTypeChange = useCallback(
-    (nextValue: ActorTypeFilter): void => {
-      setActorType(nextValue);
-      resetToFirstPage();
-    },
-    [resetToFirstPage, setActorType],
-  );
-
-  const handleResourceTypeChange = useCallback(
-    (nextValue: ResourceTypeFilter): void => {
-      setResourceType(nextValue);
-      setResourceTypeInput(getResourceTypeFilterLabel(nextValue));
-      resetToFirstPage();
-    },
-    [resetToFirstPage, setResourceType, setResourceTypeInput],
-  );
-
-  const handleResourceTypeInputChange = useCallback(
-    (nextInputValue: string): void => {
-      const resolvedValue = getResourceTypeValueFromInput(nextInputValue);
-
-      if (resolvedValue !== null) {
-        setResourceType(resolvedValue);
-        setResourceTypeInput(getResourceTypeFilterLabel(resolvedValue));
-        resetToFirstPage();
-        return;
-      }
-
-      setResourceTypeInput(nextInputValue);
-      if (nextInputValue === "") {
-        setResourceType("");
-        resetToFirstPage();
-      }
-    },
-    [resetToFirstPage, setResourceType, setResourceTypeInput],
-  );
-
-  const handleStatusChange = useCallback(
-    (nextValue: string): void => {
-      setStatusRaw(nextValue);
-      resetToFirstPage();
-    },
-    [resetToFirstPage, setStatusRaw],
-  );
-
-  const selectedStatusValue = useMemo<string | null>(() => {
-    return COMMON_STATUS_CODES.includes(
-      statusRaw as (typeof COMMON_STATUS_CODES)[number],
-    )
-      ? statusRaw
-      : null;
-  }, [statusRaw]);
-
-  const handleRequestIdChange = useCallback(
-    (nextValue: string): void => {
-      setRequestId(nextValue);
-    },
-    [setRequestId],
-  );
-
-  const handleResetFilters = useCallback((): void => {
-    resetAll();
-  }, [resetAll]);
+    canExport,
+    filters,
+    logs,
+    total,
+    isFetching,
+    handleFromChange,
+    handleToChange,
+    handleActionChange,
+    handleActorTypeChange,
+    handleResourceTypeChange,
+    handleResourceTypeInputChange,
+    handleStatusChange,
+    handleRequestIdChange,
+    handleResetFilters,
+    selectedStatusValue,
+  } = useLogsPage();
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
@@ -357,6 +256,18 @@ export function LogsPageClient({
             </div>
           </div>
           <div className="relative min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+            {isFetching && logs.length > 0 ? (
+              <div
+                className="pointer-events-none absolute inset-0 z-10 flex items-start justify-center bg-background/40 pt-16"
+                aria-busy
+                aria-live="polite"
+              >
+                <span className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm text-muted-foreground shadow-sm">
+                  <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  Updating logs…
+                </span>
+              </div>
+            ) : null}
             {logs.length === 0 ? (
               <EmptyState
                 title="No logs found"

@@ -8,8 +8,8 @@ export const PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY = {
   status: "READY" as const,
 } satisfies Extract<ContentOptionsQueryArg, object>;
 
-/** Matches admin content grid page size (large page for grid UX). */
-export const CONTENT_PAGE_SIZE = 500;
+/** Matches admin content grid page size (paginated grid UX). */
+export const CONTENT_PAGE_SIZE = 12;
 
 const CONTENT_STATUS_VALUES = ["all", "PROCESSING", "READY", "FAILED"] as const;
 const CONTENT_TYPE_VALUES = ["all", "IMAGE", "VIDEO", "FLASH", "TEXT"] as const;
