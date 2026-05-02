@@ -10,10 +10,18 @@ import { getServerApiBaseUrl } from "@/lib/server/api-origin";
 
 const DEFAULT_SESSION_COOKIE = "wildfire_session_token";
 
-function getSessionCookieName(): string {
+/** Milliseconds before server-side refresh fetch is aborted (avoids hanging on proxy/network issues). */
+const SERVER_SESSION_REFRESH_TIMEOUT_MS = 5_000;
+
+/** Cookie name for the HttpOnly refresh token (matches backend `AUTH_SESSION_COOKIE_NAME`). */
+export function getAuthSessionCookieName(): string {
   return (
     process.env.AUTH_SESSION_COOKIE_NAME?.trim() || DEFAULT_SESSION_COOKIE
   );
+}
+
+function getSessionCookieName(): string {
+  return getAuthSessionCookieName();
 }
 
 async function buildIncomingCookieHeader(): Promise<string> {
@@ -51,6 +59,11 @@ export const getServerSession = cache(async (): Promise<ServerSession | null> =>
   const baseUrl = await getServerApiBaseUrl();
   const devHeaders = getDevOnlyRequestHeaders();
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, SERVER_SESSION_REFRESH_TIMEOUT_MS);
+
   try {
     const response = await fetch(`${baseUrl}/auth/refresh`, {
       method: "POST",
@@ -60,9 +73,17 @@ export const getServerSession = cache(async (): Promise<ServerSession | null> =>
         ...devHeaders,
       },
       cache: "no-store",
+      signal: controller.signal,
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        const store = await cookies();
+        store.delete({
+          name: getSessionCookieName(),
+          path: "/",
+        });
+      }
       return null;
     }
 
@@ -76,5 +97,7 @@ export const getServerSession = cache(async (): Promise<ServerSession | null> =>
     };
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 });
