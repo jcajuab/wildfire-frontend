@@ -52,10 +52,7 @@ async function proxyRequest(request: NextRequest): Promise<NextResponse> {
   if (rawSetCookies.length > 0) {
     responseHeaders.delete("set-cookie");
     for (const cookie of rawSetCookies) {
-      const rewritten = cookie.replace(
-        /Path=\/[^;]*/gi,
-        "Path=/",
-      );
+      const rewritten = cookie.replace(/Path=\/[^;]*/gi, "Path=/");
       responseHeaders.append("set-cookie", rewritten);
     }
   }

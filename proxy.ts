@@ -1,3 +1,7 @@
+/**
+ * Next.js 16+ edge entry: use this file only — do not add `middleware.ts`
+ * (build fails if both exist). Export name must be `proxy`.
+ */
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -44,17 +48,6 @@ function hasSessionCookie(request: NextRequest): boolean {
   return request.cookies.has(sessionCookieName());
 }
 
-/** Allow only same-app paths (no open redirects). */
-function safeInternalPath(raw: string | null): string | null {
-  if (raw == null || raw === "") {
-    return null;
-  }
-  if (!raw.startsWith("/") || raw.startsWith("//")) {
-    return null;
-  }
-  return raw;
-}
-
 function applyCsp(request: NextRequest): NextResponse {
   const csp = buildCspHeader();
 
@@ -70,21 +63,15 @@ function applyCsp(request: NextRequest): NextResponse {
 }
 
 /**
- * Edge proxy: CSP on every matched route plus fast auth redirects.
- * Cookie presence is a heuristic (invalid cookies fall through to client AuthGuard).
+ * Edge proxy: CSP on every matched route plus fast auth redirects for unauthenticated
+ * admin/root visits. Do not redirect away from `/login` when a session cookie exists —
+ * cookie presence is not validity; stale cookies caused infinite redirect loops with RSC.
  */
 export function proxy(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
   const hasSession = hasSessionCookie(request);
 
   if (pathname === "/login" || pathname.startsWith("/login/")) {
-    if (hasSession) {
-      const redirectTo = safeInternalPath(
-        request.nextUrl.searchParams.get("redirectTo"),
-      );
-      const target = redirectTo ?? "/admin";
-      return NextResponse.redirect(new URL(target, request.url));
-    }
     return applyCsp(request);
   }
 
