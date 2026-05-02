@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useSyncExternalStore,
 } from "react";
 import {
@@ -78,19 +79,37 @@ export function AuthProvider({
   const isAuthenticated = user !== null;
   const isInitialized = snapshot.isBootstrapped;
 
-  const value: AuthContextValue = {
-    user,
-    permissions,
-    isAuthenticated,
-    isLoading: false,
-    isInitialized,
-    can: (permission: PermissionType) =>
+  const can = useCallback(
+    (permission: PermissionType) =>
       canPermission(permission, permissions, user?.isAdmin ?? false),
-    login,
-    logout,
-    bootstrapSession,
-    updateSession,
-  };
+    [permissions, user?.isAdmin],
+  );
+
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user,
+      permissions,
+      isAuthenticated,
+      isLoading: false,
+      isInitialized,
+      can,
+      login,
+      logout,
+      bootstrapSession,
+      updateSession,
+    }),
+    [
+      user,
+      permissions,
+      isAuthenticated,
+      isInitialized,
+      can,
+      login,
+      logout,
+      bootstrapSession,
+      updateSession,
+    ],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

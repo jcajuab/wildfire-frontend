@@ -1,29 +1,24 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import type { ReactElement } from "react";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { can } from "@/lib/permissions";
 import {
   getFirstPermittedAdminRoute,
   UNAUTHORIZED_ROUTE,
 } from "@/lib/route-permissions";
-import { useAuth } from "@/context/auth-context";
+import { getServerSession } from "@/lib/server/auth";
+import type { PermissionType } from "@/types/permission";
 
-export default function AdminIndexPage(): ReactElement {
-  const router = useRouter();
-  const { can, isAuthenticated, isInitialized } = useAuth();
+export default async function AdminIndexPage(): Promise<void> {
+  const session = await getServerSession();
+  if (!session) {
+    redirect(`/login?redirectTo=${encodeURIComponent("/admin")}`);
+  }
 
-  useEffect(() => {
-    if (!isInitialized) return;
-    const target = isAuthenticated
-      ? (getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE)
-      : "/login";
-    router.replace(target);
-  }, [isInitialized, isAuthenticated, can, router]);
+  const predicate = (permission: PermissionType) =>
+    can(permission, session.permissions, session.user.isAdmin);
 
-  return (
-    <div className="flex min-h-svh items-center justify-center">
-      <span className="text-sm text-muted-foreground">Redirecting…</span>
-    </div>
-  );
+  const target =
+    getFirstPermittedAdminRoute(predicate) ?? UNAUTHORIZED_ROUTE;
+
+  redirect(target);
 }
