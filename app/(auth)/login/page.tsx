@@ -2,7 +2,7 @@
 
 import type { FormEvent, ReactElement } from "react";
 import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,8 +15,17 @@ import {
   UNAUTHORIZED_ROUTE,
 } from "@/lib/route-permissions";
 
+// Use a hard navigation on the post-login redirect so the Next.js Router
+// Cache (which holds RSC payloads keyed by URL only) cannot replay the
+// previous user's data to the new user. Soft navigation via router.replace
+// would serve stale admin payloads to a non-admin who lands on the same
+// URL within the cache window.
+function navigateToPostLogin(target: string): void {
+  if (typeof window === "undefined") return;
+  window.location.assign(target);
+}
+
 function LoginForm(): ReactElement {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isAuthenticated, isInitialized, can } = useAuth();
   const [username, setUsername] = useState("");
@@ -40,7 +49,7 @@ function LoginForm(): ReactElement {
       void refreshAccessToken()
         .then(() => {
           if (!cancelled) {
-            router.replace(postLoginRedirect);
+            navigateToPostLogin(postLoginRedirect);
           }
         })
         .catch(async (err: unknown) => {
@@ -56,8 +65,8 @@ function LoginForm(): ReactElement {
       };
     }
 
-    router.replace(postLoginRedirect);
-  }, [isInitialized, isAuthenticated, redirectTo, postLoginRedirect, router]);
+    navigateToPostLogin(postLoginRedirect);
+  }, [isInitialized, isAuthenticated, redirectTo, postLoginRedirect]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
