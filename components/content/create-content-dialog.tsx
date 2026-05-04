@@ -57,7 +57,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { FlashTone } from "@/types/content";
 
 const FLASH_PREVIEW_DEBOUNCE_MS = 500;
-const VIDEO_MAX_BYTES = 10 * 1024 * 1024;
+const FILE_MAX_BYTES = 10 * 1024 * 1024;
 
 interface CreateContentDialogProps {
   readonly open: boolean;
@@ -193,8 +193,8 @@ export function CreateContentDialog({
       setSelectedFile(null);
       return;
     }
-    if (file.type === "video/mp4" && file.size > VIDEO_MAX_BYTES) {
-      setFileError("Video files cannot exceed 10 MB.");
+    if (file.size > FILE_MAX_BYTES) {
+      setFileError("Files cannot exceed 10 MB.");
       setSelectedFile(null);
       return;
     }
@@ -338,7 +338,7 @@ export function CreateContentDialog({
                     {SUPPORTED_CONTENT_FILE_LABELS}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Videos: max 10 MB · Images: max 100 MB
+                    Max 10 MB
                   </p>
                 </div>
                 {fileError ? (
