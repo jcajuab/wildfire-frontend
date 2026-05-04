@@ -75,7 +75,16 @@ export async function serverFetchJson<T>(
   input: ServerFetchInit,
 ): Promise<{ ok: true; data: T } | { ok: false; status: number }> {
   const baseUrl = await getServerApiBaseUrl();
-  const url = buildUrl(baseUrl, input.path, input.searchParams);
+  // The Next.js Data Cache keys responses by URL only — the Authorization
+  // header is NOT part of the cache key. Without per-user URL variance the
+  // first user's response would be served to the next user in the same TTL
+  // window. We append the authenticated user id so each user gets their own
+  // cache entry. Backend zod query schemas strip unknown keys, so this is
+  // ignored server-side.
+  const url = buildUrl(baseUrl, input.path, {
+    ...input.searchParams,
+    _uid: input.session.user.id,
+  });
 
   const devHeaders = getDevOnlyRequestHeaders();
   const nextTags = input.tags?.map((t) => `wildfire:${t}`) ?? [];
