@@ -1,4 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
+import { AuthCacheSync } from "@/components/layout/auth-cache-sync";
 import { AuthGuard } from "@/components/layout/auth-guard";
 import { PageReadGuard } from "@/components/layout/page-read-guard";
 import StoreProvider from "@/lib/StoreProvider";
@@ -12,6 +13,7 @@ export default function DashboardLayout({
 }: DashboardLayoutProps): ReactElement {
   return (
     <StoreProvider>
+      <AuthCacheSync />
       <AuthGuard>
         <PageReadGuard>{children}</PageReadGuard>
       </AuthGuard>
