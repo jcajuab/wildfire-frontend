@@ -30,7 +30,6 @@ import {
 } from "./_components/content-page-dialogs";
 import {
   contentApi,
-  type BackendContent,
   type BackendContentListResponse,
   type ContentListQuery,
   type ContentOption,
@@ -81,7 +80,9 @@ export function ContentPageView(): ReactElement {
             <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
               <div className="flex items-center gap-2">
                 <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                <span className="text-sm text-muted-foreground">Loading content...</span>
+                <span className="text-sm text-muted-foreground">
+                  Loading content...
+                </span>
               </div>
             </div>
           </div>
@@ -109,35 +110,35 @@ export function ContentPageView(): ReactElement {
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
       <PageHeader title="Content">
         <Can permission="content:create">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button>
-                  <IconPlus className="size-4" />
-                  Create Content
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => controller.openCreateDialog("text")}
-                >
-                  <IconFileText className="size-4" />
-                  Text
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => controller.openCreateDialog("upload")}
-                >
-                  <IconUpload className="size-4" />
-                  Upload
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => controller.openCreateDialog("flash")}
-                >
-                  <IconBolt className="size-4" />
-                  Flash
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </Can>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <IconPlus className="size-4" />
+                Create Content
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => controller.openCreateDialog("text")}
+              >
+                <IconFileText className="size-4" />
+                Text
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => controller.openCreateDialog("upload")}
+              >
+                <IconUpload className="size-4" />
+                Upload
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => controller.openCreateDialog("flash")}
+              >
+                <IconBolt className="size-4" />
+                Flash
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </Can>
       </PageHeader>
 
       <section className="flex min-h-0 flex-1 flex-col">

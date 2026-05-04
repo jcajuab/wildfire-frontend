@@ -62,6 +62,7 @@ export const aiCredentialsApi = api.injectEndpoints({
 
 export const {
   useGetAICredentialsQuery,
+  useLazyGetAICredentialsQuery,
   useSaveAICredentialMutation,
   useDeleteAICredentialMutation,
 } = aiCredentialsApi;

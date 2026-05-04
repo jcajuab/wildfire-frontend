@@ -113,7 +113,9 @@ export function PlaylistsPageView(): ReactElement {
               <div className="flex h-full items-center justify-center">
                 <div className="flex items-center gap-2">
                   <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  <span className="text-sm text-muted-foreground">Loading playlists...</span>
+                  <span className="text-sm text-muted-foreground">
+                    Loading playlists...
+                  </span>
                 </div>
               </div>
             ) : (

@@ -58,13 +58,11 @@ export interface ContentOption {
 }
 
 /** Cache key for `getContentOptions` (playlist picker SSR uses `PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY`). */
-export type ContentOptionsQueryArg =
-  | {
-      readonly q?: string;
-      readonly status?: "PROCESSING" | "READY" | "FAILED";
-      readonly type?: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
-    }
-  | void;
+export type ContentOptionsQueryArg = {
+  readonly q?: string;
+  readonly status?: "PROCESSING" | "READY" | "FAILED";
+  readonly type?: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
+} | void;
 
 export interface ContentIngestionAcceptedResponse {
   readonly content: BackendContent;
@@ -246,11 +244,15 @@ export const contentApi = api.injectEndpoints({
             );
             for (const args of argsList) {
               dispatch(
-                contentApi.util.updateQueryData("listContent", args, (draft) => {
-                  patchPaginatedListById(draft, "add", created, {
-                    position: "start",
-                  });
-                }),
+                contentApi.util.updateQueryData(
+                  "listContent",
+                  args,
+                  (draft) => {
+                    patchPaginatedListById(draft, "add", created, {
+                      position: "start",
+                    });
+                  },
+                ),
               );
             }
             await bumpContentNextCache();
@@ -374,11 +376,9 @@ export const contentApi = api.injectEndpoints({
           for (const args of argsList) {
             dispatch(
               contentApi.util.updateQueryData("listContent", args, (draft) => {
-                patchPaginatedListById(
-                  draft,
-                  "remove",
-                  { id } as BackendContent,
-                );
+                patchPaginatedListById(draft, "remove", {
+                  id,
+                } as BackendContent);
               }),
             );
           }
@@ -388,8 +388,10 @@ export const contentApi = api.injectEndpoints({
           );
           for (const oa of optionArgs) {
             dispatch(
-              contentApi.util.updateQueryData("getContentOptions", oa, (draft) =>
-                draft.filter((c) => c.id !== id),
+              contentApi.util.updateQueryData(
+                "getContentOptions",
+                oa,
+                (draft) => draft.filter((c) => c.id !== id),
               ),
             );
           }
@@ -440,16 +442,20 @@ export const contentApi = api.injectEndpoints({
           );
           for (const oa of optionArgs) {
             dispatch(
-              contentApi.util.updateQueryData("getContentOptions", oa, (draft) => {
-                const idx = draft.findIndex((c) => c.id === id);
-                if (idx !== -1) {
-                  draft[idx] = {
-                    id: updated.id,
-                    title: updated.title,
-                    type: updated.type,
-                  };
-                }
-              }),
+              contentApi.util.updateQueryData(
+                "getContentOptions",
+                oa,
+                (draft) => {
+                  const idx = draft.findIndex((c) => c.id === id);
+                  if (idx !== -1) {
+                    draft[idx] = {
+                      id: updated.id,
+                      title: updated.title,
+                      type: updated.type,
+                    };
+                  }
+                },
+              ),
             );
           }
           await bumpContentNextCache();

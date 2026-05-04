@@ -1,10 +1,7 @@
 import type { ReactElement } from "react";
 import { redirect } from "next/navigation";
 
-import type {
-  RbacRoleListItem,
-  RbacRoleListQuery,
-} from "@/lib/api/rbac-api";
+import type { RbacRoleListItem, RbacRoleListQuery } from "@/lib/api/rbac-api";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import {
   ROLES_PAGE_SIZE,
@@ -20,7 +17,9 @@ import {
 import { RolesListCacheSeeder, RolesPageView } from "./roles-page-client";
 
 interface RolesPageProps {
-  readonly searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  readonly searchParams?: Promise<
+    Record<string, string | string[] | undefined>
+  >;
 }
 
 export default async function RolesPage({

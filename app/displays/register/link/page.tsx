@@ -27,9 +27,11 @@ function LinkRegistrationContent(): ReactElement {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
-  const [status, setStatus] = useState<RegistrationStatus>({
-    kind: "registering",
-  });
+  const [status, setStatus] = useState<RegistrationStatus>(() =>
+    token
+      ? { kind: "registering" }
+      : { kind: "error", message: "No registration token provided." },
+  );
   const hasStarted = useRef(false);
 
   const performRegistration = useCallback(
@@ -48,8 +50,7 @@ function LinkRegistrationContent(): ReactElement {
       }
 
       try {
-        const metadata =
-          await fetchRegistrationLinkMetadata(registrationToken);
+        const metadata = await fetchRegistrationLinkMetadata(registrationToken);
 
         const keyAlias = `display-output:${metadata.output}`;
         const keyPair = await getOrCreateDisplayKeyPair(keyAlias);
@@ -111,18 +112,11 @@ function LinkRegistrationContent(): ReactElement {
   );
 
   useEffect(() => {
-    if (hasStarted.current) return;
+    if (hasStarted.current || !token) return;
     hasStarted.current = true;
-
-    if (!token) {
-      setStatus({
-        kind: "error",
-        message: "No registration token provided.",
-      });
-      return;
-    }
-
-    void performRegistration(token);
+    queueMicrotask(() => {
+      void performRegistration(token);
+    });
   }, [token, performRegistration]);
 
   return (

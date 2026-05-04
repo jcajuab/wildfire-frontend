@@ -1,7 +1,11 @@
 import type { ReactElement } from "react";
 import { redirect } from "next/navigation";
 
-import type { RbacRoleSummary, RbacUser, RbacUserListQuery } from "@/lib/api/rbac-api";
+import type {
+  RbacRoleSummary,
+  RbacUser,
+  RbacUserListQuery,
+} from "@/lib/api/rbac-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import {
@@ -22,7 +26,9 @@ import {
 } from "./users-page-client";
 
 interface UsersPageProps {
-  readonly searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  readonly searchParams?: Promise<
+    Record<string, string | string[] | undefined>
+  >;
 }
 
 export default async function UsersPage({

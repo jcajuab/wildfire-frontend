@@ -252,9 +252,8 @@ describe("refreshAccessToken singleton", () => {
       removeItem: () => {},
     });
 
-    const { bootstrapAccessToken, getAuthSnapshot } = await import(
-      "@/lib/auth-session"
-    );
+    const { bootstrapAccessToken, getAuthSnapshot } =
+      await import("@/lib/auth-session");
 
     await bootstrapAccessToken();
 

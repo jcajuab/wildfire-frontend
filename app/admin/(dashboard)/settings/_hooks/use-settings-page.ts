@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
@@ -8,6 +8,23 @@ import { useAuth } from "@/context/auth-context";
 import { changePassword, deleteCurrentUser } from "@/lib/api-client";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import { useProfileEditor } from "./use-profile-editor";
+
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
+function subscribeReducedMotion(callback: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const mql = window.matchMedia(REDUCED_MOTION_QUERY);
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+}
+
+function getReducedMotionSnapshot(): boolean {
+  return window.matchMedia(REDUCED_MOTION_QUERY).matches;
+}
+
+function getReducedMotionServerSnapshot(): boolean | null {
+  return null;
+}
 
 export interface UseSettingsPageResult {
   // Auth
@@ -51,18 +68,11 @@ export interface UseSettingsPageResult {
 export function useSettingsPage(): UseSettingsPageResult {
   const { user, logout, updateSession } = useAuth();
   const { theme, setTheme } = useTheme();
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState<
-    boolean | null
-  >(null);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(mql.matches);
-    const handler = (e: MediaQueryListEvent) =>
-      setPrefersReducedMotion(e.matches);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, []);
+  const prefersReducedMotion = useSyncExternalStore<boolean | null>(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot,
+  );
 
   const profileEditor = useProfileEditor({
     userName: user?.name,

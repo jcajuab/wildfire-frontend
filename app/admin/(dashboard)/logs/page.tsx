@@ -14,7 +14,9 @@ import {
 import { AuditListCacheSeeder, LogsPageClient } from "./logs-page-client";
 
 interface LogsPageProps {
-  readonly searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  readonly searchParams?: Promise<
+    Record<string, string | string[] | undefined>
+  >;
 }
 
 export default async function LogsPage({

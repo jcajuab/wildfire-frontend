@@ -15,7 +15,12 @@ import { DisplayFormBody } from "@/components/displays/display-form-body";
 import { GroupBadge } from "@/components/displays/group-badge";
 import { StepIndicator } from "@/components/displays/step-indicator";
 import { Button } from "@/components/ui/button";
-import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { DisplayGroup } from "@/lib/api/displays-api";

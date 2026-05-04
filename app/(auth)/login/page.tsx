@@ -9,10 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { AuthApiError } from "@/lib/api-client";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
-import {
-  purgeStaleSession,
-  refreshAccessToken,
-} from "@/lib/auth-session";
+import { purgeStaleSession, refreshAccessToken } from "@/lib/auth-session";
 import {
   getFirstPermittedAdminRoute,
   UNAUTHORIZED_ROUTE,

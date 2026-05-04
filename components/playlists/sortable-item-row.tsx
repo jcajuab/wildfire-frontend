@@ -109,31 +109,31 @@ export function SortableItemRow({
         <span className="text-sm font-medium">{item.content.title}</span>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
-          <IconClock className="size-4" />
-          <input
-            type="number"
-            min="1"
-            value={rawValue}
-            aria-label={`Duration in seconds for ${item.content.title}`}
-            onChange={(e) => {
-              setRawValue(e.target.value);
-              const parsed = parseInt(e.target.value, 10);
-              if (Number.isFinite(parsed) && parsed > 0) {
-                onUpdateDuration(item.id, parsed);
-              }
-            }}
-            onBlur={() => {
-              const parsed = parseInt(rawValue, 10);
-              const clamped =
-                Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-              setRawValue(String(clamped));
-              onUpdateDuration(item.id, clamped);
-            }}
-            className="focus-visible:ring-ring w-12 rounded border border-border bg-transparent px-1 text-center focus-visible:outline-none focus-visible:ring-2"
-            onPointerDown={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          />
-          <span>sec</span>
+            <IconClock className="size-4" />
+            <input
+              type="number"
+              min="1"
+              value={rawValue}
+              aria-label={`Duration in seconds for ${item.content.title}`}
+              onChange={(e) => {
+                setRawValue(e.target.value);
+                const parsed = parseInt(e.target.value, 10);
+                if (Number.isFinite(parsed) && parsed > 0) {
+                  onUpdateDuration(item.id, parsed);
+                }
+              }}
+              onBlur={() => {
+                const parsed = parseInt(rawValue, 10);
+                const clamped =
+                  Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+                setRawValue(String(clamped));
+                onUpdateDuration(item.id, clamped);
+              }}
+              className="focus-visible:ring-ring w-12 rounded border border-border bg-transparent px-1 text-center focus-visible:outline-none focus-visible:ring-2"
+              onPointerDown={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            />
+            <span>sec</span>
           </div>
           {item.content.type === "VIDEO" ? (
             <div className="flex items-center gap-2">

@@ -4,10 +4,7 @@ import type { ReactElement } from "react";
 import { useCallback } from "react";
 
 import { EditDisplayForm } from "@/components/displays/edit-display-form";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { DisplayGroup } from "@/lib/api/displays-api";
 import type { Display } from "@/types/display";
 

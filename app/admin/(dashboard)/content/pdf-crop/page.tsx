@@ -14,9 +14,7 @@ import type { CropRegion } from "@/components/content/pdf-crop-editor";
 
 const PdfCropEditor = dynamic(
   () =>
-    import("@/components/content/pdf-crop-editor").then(
-      (m) => m.PdfCropEditor,
-    ),
+    import("@/components/content/pdf-crop-editor").then((m) => m.PdfCropEditor),
   {
     ssr: false,
     loading: () => (

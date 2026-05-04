@@ -1,10 +1,7 @@
 import type { PermissionType } from "@/types/permission";
 
 import { getDevOnlyRequestHeaders } from "@/lib/api/config";
-import {
-  isJsonParseFailurePayload,
-  readJsonPayload,
-} from "@/lib/api/auth-api";
+import { isJsonParseFailurePayload, readJsonPayload } from "@/lib/api/auth-api";
 
 import { getServerApiBaseUrl } from "@/lib/server/api-origin";
 import type { ServerSession } from "@/lib/server/auth";

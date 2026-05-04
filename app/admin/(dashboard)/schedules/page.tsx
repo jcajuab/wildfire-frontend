@@ -52,7 +52,10 @@ export default async function SchedulesPage(): Promise<ReactElement> {
 
   return (
     <>
-      <SchedulesBootstrapCacheSeeder queryArgs={queryArgs} data={bootstrapData} />
+      <SchedulesBootstrapCacheSeeder
+        queryArgs={queryArgs}
+        data={bootstrapData}
+      />
       <SchedulesPageView />
     </>
   );

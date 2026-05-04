@@ -29,10 +29,7 @@ export interface DisplayGroupsTagsInputProps {
   readonly disabled?: boolean;
   readonly placeholder?: string;
   readonly showLabel?: boolean;
-  readonly portalContainer?:
-    | HTMLElement
-    | null
-    | RefObject<HTMLElement | null>;
+  readonly portalContainer?: HTMLElement | null | RefObject<HTMLElement | null>;
 }
 
 export function DisplayGroupsTagsInput({

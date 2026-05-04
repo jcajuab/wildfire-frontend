@@ -26,7 +26,10 @@ interface UsersTableProps {
   readonly sort: UserSort;
   readonly onSortChange: (sort: UserSort) => void;
   readonly onEdit: (user: User) => void;
-  readonly onRoleToggle: (userId: string, roleIds: string[]) => Promise<string[]>;
+  readonly onRoleToggle: (
+    userId: string,
+    roleIds: string[],
+  ) => Promise<string[]>;
   readonly onBanUser: (user: User) => void;
   readonly onUnbanUser: (user: User) => void;
   readonly onResetPassword: (userId: string) => Promise<void>;
@@ -58,7 +61,10 @@ interface UserRowProps {
   readonly userRoles: readonly UserRole[];
   readonly availableRoles: readonly UserRole[];
   readonly onEdit: (user: User) => void;
-  readonly onRoleToggle: (userId: string, roleIds: string[]) => Promise<string[]>;
+  readonly onRoleToggle: (
+    userId: string,
+    roleIds: string[],
+  ) => Promise<string[]>;
   readonly onBanUser: (user: User) => void;
   readonly onUnbanUser: (user: User) => void;
   readonly onResetPassword: (userId: string) => Promise<void>;

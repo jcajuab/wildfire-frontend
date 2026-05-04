@@ -463,9 +463,12 @@ export async function createRegistrationSession(
 
 export async function fetchDisplayRegistrationConstraints(): Promise<DisplayRegistrationConstraints> {
   const baseUrl = getBaseUrl();
-  const response = await authFetch(`${baseUrl}/displays/registration-constraints`, {
-    method: "GET",
-  });
+  const response = await authFetch(
+    `${baseUrl}/displays/registration-constraints`,
+    {
+      method: "GET",
+    },
+  );
 
   if (!response.ok) {
     throw new Error(await parseErrorMessage(response));
@@ -684,10 +687,7 @@ const parseRegistrationLinkMetadata = (
       root.challengeNonce,
       "registrationLinkMetadata.challengeNonce",
     ),
-    expiresAt: readString(
-      root.expiresAt,
-      "registrationLinkMetadata.expiresAt",
-    ),
+    expiresAt: readString(root.expiresAt, "registrationLinkMetadata.expiresAt"),
   };
 };
 

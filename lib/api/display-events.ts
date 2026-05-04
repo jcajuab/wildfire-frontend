@@ -204,11 +204,13 @@ export function subscribeToDisplayLifecycleEvents(input: {
 }): DisplayLifecycleSubscription {
   // When an EventSource constructor is explicitly provided (tests), use it.
   if (input.eventSource) {
-    return subscribeViaEventSource(input as {
-      onEvent: (event: DisplayLifecycleEvent) => void;
-      baseUrl?: string;
-      eventSource: EventSourceConstructor;
-    });
+    return subscribeViaEventSource(
+      input as {
+        onEvent: (event: DisplayLifecycleEvent) => void;
+        baseUrl?: string;
+        eventSource: EventSourceConstructor;
+      },
+    );
   }
 
   // Otherwise use fetch-based SSE so we can attach Authorization headers.

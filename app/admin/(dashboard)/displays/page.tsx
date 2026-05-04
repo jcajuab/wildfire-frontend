@@ -24,7 +24,9 @@ import {
 } from "./displays-page-client";
 
 interface DisplaysPageProps {
-  readonly searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  readonly searchParams?: Promise<
+    Record<string, string | string[] | undefined>
+  >;
 }
 
 function bootstrapSearchParamsRecord(
@@ -78,7 +80,10 @@ export default async function DisplaysPage({
 
   return (
     <>
-      <DisplaysBootstrapCacheSeeder queryArgs={queryArgs} data={bootstrapData} />
+      <DisplaysBootstrapCacheSeeder
+        queryArgs={queryArgs}
+        data={bootstrapData}
+      />
       <DisplaysPageView />
     </>
   );

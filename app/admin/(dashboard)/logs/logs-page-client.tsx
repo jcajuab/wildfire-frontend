@@ -66,9 +66,7 @@ export function AuditListCacheSeeder({
 }): null {
   const dispatch = useAppDispatch();
   useLayoutEffect(() => {
-    dispatch(
-      auditApi.util.upsertQueryData("listAuditEvents", queryArgs, data),
-    );
+    dispatch(auditApi.util.upsertQueryData("listAuditEvents", queryArgs, data));
   }, [dispatch, queryArgs, data]);
   return null;
 }

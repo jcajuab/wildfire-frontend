@@ -88,8 +88,12 @@ export function EditContentDialog({
     <Dialog open={open} onOpenChange={guardedOnOpenChange}>
       <DialogContent
         className={dialogWidth}
-        onInteractOutside={(e) => { if (isSubmitting) e.preventDefault(); }}
-        onEscapeKeyDown={(e) => { if (isSubmitting) e.preventDefault(); }}
+        onInteractOutside={(e) => {
+          if (isSubmitting) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (isSubmitting) e.preventDefault();
+        }}
       >
         <EditContentDialogForm
           key={content.id}

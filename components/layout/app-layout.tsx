@@ -20,29 +20,29 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps): ReactElement {
   return (
     <AdminEventProvider>
-    <TooltipProvider>
-      <SidebarProvider
-        open
-        style={
-          {
-            "--sidebar-width": "15.5rem",
-            "--sidebar-width-icon": "4rem",
-          } as CSSProperties
-        }
-      >
-        <AppSidebar />
-        <MobileHeader />
-        <main
-          id="main-content"
-          className="flex h-svh min-h-0 w-full flex-1 flex-col overflow-hidden bg-muted/30 p-2 pt-16 md:pt-2"
+      <TooltipProvider>
+        <SidebarProvider
+          open
+          style={
+            {
+              "--sidebar-width": "15.5rem",
+              "--sidebar-width-icon": "4rem",
+            } as CSSProperties
+          }
         >
-          {children}
-        </main>
-        <aside aria-label="AI assistant">
-          <AIChatBubble />
-        </aside>
-      </SidebarProvider>
-    </TooltipProvider>
+          <AppSidebar />
+          <MobileHeader />
+          <main
+            id="main-content"
+            className="flex h-svh min-h-0 w-full flex-1 flex-col overflow-hidden bg-muted/30 p-2 pt-16 md:pt-2"
+          >
+            {children}
+          </main>
+          <aside aria-label="AI assistant">
+            <AIChatBubble />
+          </aside>
+        </SidebarProvider>
+      </TooltipProvider>
     </AdminEventProvider>
   );
 }

@@ -88,7 +88,10 @@ type RoleListMutable = Omit<RbacRolesListResponse, "items"> & {
   items: RbacRoleListItem[];
 };
 
-type RoleEditBootstrapMutable = Omit<RoleEditBootstrapResponse, "role" | "rolePermissions"> & {
+type RoleEditBootstrapMutable = Omit<
+  RoleEditBootstrapResponse,
+  "role" | "rolePermissions"
+> & {
   role: RbacRoleSummary;
   rolePermissions: RbacPermission[];
 };
@@ -176,7 +179,9 @@ export const rbacApi = api.injectEndpoints({
           for (const ra of roleArgs) {
             api.dispatch(
               rbacApi.util.updateQueryData("getRoles", ra, (draft) => {
-                patchPaginatedListById(draft, "add", row, { position: "start" });
+                patchPaginatedListById(draft, "add", row, {
+                  position: "start",
+                });
               }),
             );
           }
@@ -212,9 +217,7 @@ export const rbacApi = api.injectEndpoints({
                 const idx = d.items.findIndex((r) => r.id === arg.id);
                 if (idx === -1) return;
                 d.items = d.items.map((r, i) =>
-                  i === idx
-                    ? { ...r, ...data, usersCount: r.usersCount }
-                    : r,
+                  i === idx ? { ...r, ...data, usersCount: r.usersCount } : r,
                 );
               }),
             );
@@ -284,7 +287,9 @@ export const rbacApi = api.injectEndpoints({
           for (const ra of roleArgs) {
             api.dispatch(
               rbacApi.util.updateQueryData("getRoles", ra, (draft) => {
-                patchPaginatedListById(draft, "remove", { id } as RbacRoleListItem);
+                patchPaginatedListById(draft, "remove", {
+                  id,
+                } as RbacRoleListItem);
               }),
             );
           }
@@ -429,7 +434,9 @@ export const rbacApi = api.injectEndpoints({
           for (const ua of userArgs) {
             api.dispatch(
               rbacApi.util.updateQueryData("getUsers", ua, (draft) => {
-                patchPaginatedListById(draft, "add", data, { position: "start" });
+                patchPaginatedListById(draft, "add", data, {
+                  position: "start",
+                });
               }),
             );
           }
@@ -475,11 +482,7 @@ export const rbacApi = api.injectEndpoints({
             );
           }
           api.dispatch(
-            rbacApi.util.updateQueryData(
-              "getUser",
-              arg.id,
-              () => updatedUser,
-            ),
+            rbacApi.util.updateQueryData("getUser", arg.id, () => updatedUser),
           );
           await bumpRbacNextCache(["users-list", "users-options"]);
         } catch {

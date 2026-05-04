@@ -1,10 +1,7 @@
 import type { ReactElement } from "react";
 import { redirect } from "next/navigation";
 
-import type {
-  BackendContent,
-  BackendContentListResponse,
-} from "@/lib/api/content-api";
+import type { BackendContent } from "@/lib/api/content-api";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import {
   CONTENT_PAGE_SIZE,
@@ -17,13 +14,12 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
-import {
-  ContentListCacheSeeder,
-  ContentPageView,
-} from "./content-page-client";
+import { ContentListCacheSeeder, ContentPageView } from "./content-page-client";
 
 interface ContentPageProps {
-  readonly searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  readonly searchParams?: Promise<
+    Record<string, string | string[] | undefined>
+  >;
 }
 
 export default async function ContentPage({

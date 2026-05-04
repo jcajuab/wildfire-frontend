@@ -18,8 +18,7 @@ export default async function AdminIndexPage(): Promise<ReactNode> {
     const predicate = (permission: PermissionType) =>
       can(permission, session.permissions, session.user.isAdmin);
 
-    const target =
-      getFirstPermittedAdminRoute(predicate) ?? UNAUTHORIZED_ROUTE;
+    const target = getFirstPermittedAdminRoute(predicate) ?? UNAUTHORIZED_ROUTE;
 
     redirect(target);
   }

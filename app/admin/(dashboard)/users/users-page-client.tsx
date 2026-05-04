@@ -169,7 +169,9 @@ export function UsersPageView(): ReactElement {
             <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
               <div className="flex items-center gap-2">
                 <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                <span className="text-sm text-muted-foreground">Loading users...</span>
+                <span className="text-sm text-muted-foreground">
+                  Loading users...
+                </span>
               </div>
             </div>
           </div>
@@ -241,7 +243,9 @@ export function UsersPageView(): ReactElement {
                   <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-background/60">
                     <div className="flex items-center gap-2">
                       <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      <span className="text-sm text-muted-foreground">Searching for users...</span>
+                      <span className="text-sm text-muted-foreground">
+                        Searching for users...
+                      </span>
                     </div>
                   </div>
                 ) : null}

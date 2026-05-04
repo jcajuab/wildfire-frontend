@@ -20,9 +20,7 @@ export function handleDisplayLifecycleEvent(
 
   switch (event.type) {
     case "display_registered": {
-      void dispatch(
-        displaysApi.endpoints.getDisplay.initiate(event.displayId),
-      )
+      void dispatch(displaysApi.endpoints.getDisplay.initiate(event.displayId))
         .unwrap()
         .then((display) => {
           const latest = getState();
@@ -114,9 +112,7 @@ export function handleDisplayLifecycleEvent(
               displays: {
                 ...draft.displays,
                 items: draft.displays.items.map((d) =>
-                  d.id === event.displayId
-                    ? { ...d, status: event.status }
-                    : d,
+                  d.id === event.displayId ? { ...d, status: event.status } : d,
                 ),
               },
             }),
@@ -159,9 +155,7 @@ export function handleDisplayLifecycleEvent(
           playlistsApi.util.updateQueryData("listPlaylists", args, (draft) => ({
             ...draft,
             items: draft.items.map((p) =>
-              p.id === event.playlistId
-                ? { ...p, status: event.status }
-                : p,
+              p.id === event.playlistId ? { ...p, status: event.status } : p,
             ),
           })),
         );
@@ -187,9 +181,7 @@ export function handleDisplayLifecycleEvent(
           contentApi.util.updateQueryData("listContent", args, (draft) => ({
             ...draft,
             items: draft.items.map((c) =>
-              c.id === event.contentId
-                ? { ...c, status: event.status }
-                : c,
+              c.id === event.contentId ? { ...c, status: event.status } : c,
             ),
           })),
         );

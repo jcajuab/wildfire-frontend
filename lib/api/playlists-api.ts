@@ -234,11 +234,15 @@ export const playlistsApi = api.injectEndpoints({
           );
           for (const la of listArgs) {
             dispatch(
-              playlistsApi.util.updateQueryData("listPlaylists", la, (draft) => {
-                patchPaginatedListById(draft, "add", summary, {
-                  position: "start",
-                });
-              }),
+              playlistsApi.util.updateQueryData(
+                "listPlaylists",
+                la,
+                (draft) => {
+                  patchPaginatedListById(draft, "add", summary, {
+                    position: "start",
+                  });
+                },
+              ),
             );
           }
           await bumpPlaylistsNextCache();
@@ -267,25 +271,29 @@ export const playlistsApi = api.injectEndpoints({
           );
           for (const la of listArgs) {
             dispatch(
-              playlistsApi.util.updateQueryData("listPlaylists", la, (draft) => {
-                const d = draft as unknown as PlaylistListMutable;
-                const idx = d.items.findIndex((p) => p.id === id);
-                if (idx === -1) return;
-                d.items = d.items.map((p, i) =>
-                  i === idx
-                    ? {
-                        ...p,
-                        name: data.name,
-                        description: data.description,
-                        status: data.status,
-                        itemsCount: data.itemsCount,
-                        totalDuration: data.totalDuration,
-                        updatedAt: data.updatedAt,
-                        owner: data.owner,
-                      }
-                    : p,
-                );
-              }),
+              playlistsApi.util.updateQueryData(
+                "listPlaylists",
+                la,
+                (draft) => {
+                  const d = draft as unknown as PlaylistListMutable;
+                  const idx = d.items.findIndex((p) => p.id === id);
+                  if (idx === -1) return;
+                  d.items = d.items.map((p, i) =>
+                    i === idx
+                      ? {
+                          ...p,
+                          name: data.name,
+                          description: data.description,
+                          status: data.status,
+                          itemsCount: data.itemsCount,
+                          totalDuration: data.totalDuration,
+                          updatedAt: data.updatedAt,
+                          owner: data.owner,
+                        }
+                      : p,
+                  );
+                },
+              ),
             );
           }
           dispatch(
@@ -323,13 +331,15 @@ export const playlistsApi = api.injectEndpoints({
           );
           for (const la of listArgs) {
             dispatch(
-              playlistsApi.util.updateQueryData("listPlaylists", la, (draft) => {
-                patchPaginatedListById(
-                  draft,
-                  "remove",
-                  { id } as BackendPlaylistSummary,
-                );
-              }),
+              playlistsApi.util.updateQueryData(
+                "listPlaylists",
+                la,
+                (draft) => {
+                  patchPaginatedListById(draft, "remove", {
+                    id,
+                  } as BackendPlaylistSummary);
+                },
+              ),
             );
           }
           await bumpPlaylistsNextCache();
@@ -379,20 +389,24 @@ export const playlistsApi = api.injectEndpoints({
           );
           for (const la of listArgs) {
             dispatch(
-              playlistsApi.util.updateQueryData("listPlaylists", la, (draft) => {
-                const d = draft as unknown as PlaylistListMutable;
-                const idx = d.items.findIndex((p) => p.id === playlistId);
-                if (idx === -1) return;
-                d.items = d.items.map((p, i) =>
-                  i === idx
-                    ? {
-                        ...p,
-                        itemsCount: p.itemsCount + 1,
-                        totalDuration: p.totalDuration + item.duration,
-                      }
-                    : p,
-                );
-              }),
+              playlistsApi.util.updateQueryData(
+                "listPlaylists",
+                la,
+                (draft) => {
+                  const d = draft as unknown as PlaylistListMutable;
+                  const idx = d.items.findIndex((p) => p.id === playlistId);
+                  if (idx === -1) return;
+                  d.items = d.items.map((p, i) =>
+                    i === idx
+                      ? {
+                          ...p,
+                          itemsCount: p.itemsCount + 1,
+                          totalDuration: p.totalDuration + item.duration,
+                        }
+                      : p,
+                  );
+                },
+              ),
             );
           }
           await bumpPlaylistsNextCache();
@@ -504,20 +518,27 @@ export const playlistsApi = api.injectEndpoints({
           );
           for (const la of listArgs) {
             dispatch(
-              playlistsApi.util.updateQueryData("listPlaylists", la, (draft) => {
-                const d = draft as unknown as PlaylistListMutable;
-                const idx = d.items.findIndex((p) => p.id === playlistId);
-                if (idx === -1) return;
-                d.items = d.items.map((p, i) =>
-                  i === idx
-                    ? {
-                        ...p,
-                        itemsCount: Math.max(0, p.itemsCount - 1),
-                        totalDuration: Math.max(0, p.totalDuration - duration),
-                      }
-                    : p,
-                );
-              }),
+              playlistsApi.util.updateQueryData(
+                "listPlaylists",
+                la,
+                (draft) => {
+                  const d = draft as unknown as PlaylistListMutable;
+                  const idx = d.items.findIndex((p) => p.id === playlistId);
+                  if (idx === -1) return;
+                  d.items = d.items.map((p, i) =>
+                    i === idx
+                      ? {
+                          ...p,
+                          itemsCount: Math.max(0, p.itemsCount - 1),
+                          totalDuration: Math.max(
+                            0,
+                            p.totalDuration - duration,
+                          ),
+                        }
+                      : p,
+                  );
+                },
+              ),
             );
           }
           await bumpPlaylistsNextCache();
@@ -596,20 +617,24 @@ export const playlistsApi = api.injectEndpoints({
           );
           for (const la of listArgs) {
             dispatch(
-              playlistsApi.util.updateQueryData("listPlaylists", la, (draft) => {
-                const d = draft as unknown as PlaylistListMutable;
-                const idx = d.items.findIndex((p) => p.id === playlistId);
-                if (idx === -1) return;
-                d.items = d.items.map((p, i) =>
-                  i === idx
-                    ? {
-                        ...p,
-                        itemsCount: items.length,
-                        totalDuration,
-                      }
-                    : p,
-                );
-              }),
+              playlistsApi.util.updateQueryData(
+                "listPlaylists",
+                la,
+                (draft) => {
+                  const d = draft as unknown as PlaylistListMutable;
+                  const idx = d.items.findIndex((p) => p.id === playlistId);
+                  if (idx === -1) return;
+                  d.items = d.items.map((p, i) =>
+                    i === idx
+                      ? {
+                          ...p,
+                          itemsCount: items.length,
+                          totalDuration,
+                        }
+                      : p,
+                  );
+                },
+              ),
             );
           }
           await bumpPlaylistsNextCache();

@@ -6,7 +6,7 @@ import { IconMessageChatbot, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { useGetAICredentialsQuery } from "@/lib/api/ai-credentials-api";
+import { useLazyGetAICredentialsQuery } from "@/lib/api/ai-credentials-api";
 
 const AIChat = dynamic(
   () => import("@/components/ai/ai-chat").then((m) => m.AIChat),
@@ -26,30 +26,19 @@ const BUTTON_H = 56;
 const BOTTOM_M = 24;
 const TOP_PAD = 16;
 
+function showMissingCredentialsToast(): void {
+  toast.error("Please provide an API key in Settings first.", {
+    description: "Go to Settings > AI Provider Credentials to configure.",
+    duration: 5000,
+  });
+}
+
 export function AIChatBubble(): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
-  const [shouldFetch, setShouldFetch] = useState(false);
-  const [pendingOpen, setPendingOpen] = useState(false);
   const [panelHeight, setPanelHeight] = useState(PANEL_HEIGHT_MAX);
-  const { data: credentials = [], isFetching } = useGetAICredentialsQuery(
-    undefined,
-    { skip: !shouldFetch },
-  );
+  const [triggerGetCredentials, { isFetching }] =
+    useLazyGetAICredentialsQuery();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-
-  // Auto-open after credentials load on first click
-  useEffect(() => {
-    if (!pendingOpen || isFetching) return;
-    setPendingOpen(false);
-    if (credentials.length === 0) {
-      toast.error("Please provide an API key in Settings first.", {
-        description: "Go to Settings > AI Provider Credentials to configure.",
-        duration: 5000,
-      });
-      return;
-    }
-    setIsOpen(true);
-  }, [pendingOpen, isFetching, credentials]);
 
   useEffect(() => {
     function update() {
@@ -108,25 +97,25 @@ export function AIChatBubble(): ReactElement {
         type="button"
         aria-label="Open WILDFIRE AI"
         aria-expanded={isOpen}
-        onClick={() => {
+        disabled={isFetching}
+        onClick={async () => {
           if (isOpen) {
             setIsOpen(false);
             return;
           }
-          if (!shouldFetch) {
-            setShouldFetch(true);
-            setPendingOpen(true);
-            return;
+          try {
+            const credentials = await triggerGetCredentials(
+              undefined,
+              true,
+            ).unwrap();
+            if (credentials.length === 0) {
+              showMissingCredentialsToast();
+              return;
+            }
+            setIsOpen(true);
+          } catch {
+            showMissingCredentialsToast();
           }
-          if (credentials.length === 0) {
-            toast.error("Please provide an API key in Settings first.", {
-              description:
-                "Go to Settings > AI Provider Credentials to configure.",
-              duration: 5000,
-            });
-            return;
-          }
-          setIsOpen(true);
         }}
         className="size-14 rounded-full shadow-lg"
       >

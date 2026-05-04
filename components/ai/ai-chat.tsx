@@ -322,10 +322,7 @@ export function AIChat() {
                 value={input}
                 onChange={(e) => handleInputChange(e.currentTarget.value)}
                 onKeyDown={(e) => {
-                  if (
-                    (e.key === "Enter" || e.key === "Tab") &&
-                    showSlashMenu
-                  ) {
+                  if ((e.key === "Enter" || e.key === "Tab") && showSlashMenu) {
                     e.preventDefault();
                   }
                 }}

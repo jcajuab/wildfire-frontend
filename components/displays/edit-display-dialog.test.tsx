@@ -226,9 +226,7 @@ describe("EditDisplayDialog", () => {
 
       await user.click(screen.getByRole("button", { name: "Reopen" }));
 
-      expect(screen.getByLabelText("Display Name")).toHaveValue(
-        "Main Lobby",
-      );
+      expect(screen.getByLabelText("Display Name")).toHaveValue("Main Lobby");
     },
   );
 });

@@ -87,27 +87,25 @@ export function SchedulesPageView(): ReactElement {
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
       <PageHeader title="Schedules">
         <Can permission="schedules:create">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button>
-                  <IconPlus className="size-4" />
-                  Create Schedule
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => setCreateDialogKind("PLAYLIST")}
-                >
-                  <IconList className="size-4" />
-                  Playlist
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setCreateDialogKind("FLASH")}>
-                  <IconBolt className="size-4" />
-                  Flash Overlay
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </Can>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <IconPlus className="size-4" />
+                Create Schedule
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setCreateDialogKind("PLAYLIST")}>
+                <IconList className="size-4" />
+                Playlist
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCreateDialogKind("FLASH")}>
+                <IconBolt className="size-4" />
+                Flash Overlay
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </Can>
       </PageHeader>
 
       <section className="flex min-h-0 flex-1 flex-col">
@@ -134,7 +132,9 @@ export function SchedulesPageView(): ReactElement {
               <div className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center">
                 <div className="flex items-center gap-2 rounded-full border border-border bg-background/95 px-4 py-1.5 shadow-sm backdrop-blur-sm">
                   <span className="size-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  <span className="text-xs text-muted-foreground">Fetching...</span>
+                  <span className="text-xs text-muted-foreground">
+                    Fetching...
+                  </span>
                 </div>
               </div>
             ) : null}
@@ -142,7 +142,9 @@ export function SchedulesPageView(): ReactElement {
               <div className="flex flex-1 items-center justify-center">
                 <div className="flex items-center gap-2">
                   <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  <span className="text-sm text-muted-foreground">Loading schedules...</span>
+                  <span className="text-sm text-muted-foreground">
+                    Loading schedules...
+                  </span>
                 </div>
               </div>
             ) : (

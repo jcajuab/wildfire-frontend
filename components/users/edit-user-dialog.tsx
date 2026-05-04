@@ -54,8 +54,7 @@ function EditUserForm({
   const isAdmin = currentUser?.isAdmin === true;
   const isSelf = currentUser?.id === user.id;
   const isDcismUser =
-    !user.isInvitedUser &&
-    !(user.roles ?? []).some((r) => r.name === "Admin");
+    !user.isInvitedUser && !(user.roles ?? []).some((r) => r.name === "Admin");
 
   const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
@@ -78,7 +77,8 @@ function EditUserForm({
 
   const trimmedEmail = email.trim();
   const isEmailValid =
-    trimmedEmail.length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
+    trimmedEmail.length === 0 ||
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
   const isValid =
     name.trim().length > 0 && username.trim().length > 0 && isEmailValid;
 
@@ -185,8 +185,12 @@ export function EditUserDialog({
     <Dialog open={open} onOpenChange={guardedOnOpenChange}>
       <DialogContent
         className="sm:max-w-md"
-        onInteractOutside={(e) => { if (isSubmitting) e.preventDefault(); }}
-        onEscapeKeyDown={(e) => { if (isSubmitting) e.preventDefault(); }}
+        onInteractOutside={(e) => {
+          if (isSubmitting) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (isSubmitting) e.preventDefault();
+        }}
       >
         {open && user ? (
           <EditUserForm

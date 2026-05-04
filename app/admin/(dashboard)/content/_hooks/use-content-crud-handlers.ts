@@ -64,7 +64,9 @@ export function useContentCrudHandlers(
 
   const handleUploadFile = useCallback(
     async (name: string, file: File) => {
-      toast.message("Upload in progress. Please wait as the server processes your request.");
+      toast.message(
+        "Upload in progress. Please wait as the server processes your request.",
+      );
       uploadContent({ title: name, file })
         .unwrap()
         .then((accepted) => {

@@ -39,9 +39,7 @@ function getAbsoluteOrigin(url: string | undefined): string {
 const DEFAULT_SESSION_COOKIE = "wildfire_session_token";
 
 function sessionCookieName(): string {
-  return (
-    process.env.AUTH_SESSION_COOKIE_NAME?.trim() || DEFAULT_SESSION_COOKIE
-  );
+  return process.env.AUTH_SESSION_COOKIE_NAME?.trim() || DEFAULT_SESSION_COOKIE;
 }
 
 function hasSessionCookie(request: NextRequest): boolean {

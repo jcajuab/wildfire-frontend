@@ -283,9 +283,7 @@ export function useDisplayRuntime(displaySlug: string) {
       const pollTimer = setInterval(() => {
         void refreshViewerManifest().catch((error) => {
           setErrorMessage(
-            error instanceof Error
-              ? error.message
-              : "Failed to poll manifest",
+            error instanceof Error ? error.message : "Failed to poll manifest",
           );
         });
       }, VIEWER_POLL_MS);

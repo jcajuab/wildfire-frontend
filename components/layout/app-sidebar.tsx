@@ -159,10 +159,8 @@ export function AppSidebar(): ReactElement {
               <SidebarGroupContent>
                 <SidebarMenu className="gap-1">
                   {coreNavItems.map((item) => {
-                    const isNavPending =
-                      isPending && pendingHref === item.href;
-                    const isDisabled =
-                      isPending && pendingHref !== item.href;
+                    const isNavPending = isPending && pendingHref === item.href;
+                    const isDisabled = isPending && pendingHref !== item.href;
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
@@ -209,10 +207,8 @@ export function AppSidebar(): ReactElement {
               <SidebarGroupContent>
                 <SidebarMenu className="gap-1">
                   {manageNavItems.map((item) => {
-                    const isNavPending =
-                      isPending && pendingHref === item.href;
-                    const isDisabled =
-                      isPending && pendingHref !== item.href;
+                    const isNavPending = isPending && pendingHref === item.href;
+                    const isDisabled = isPending && pendingHref !== item.href;
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton

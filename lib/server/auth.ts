@@ -15,9 +15,7 @@ const SERVER_SESSION_REFRESH_TIMEOUT_MS = 5_000;
 
 /** Cookie name for the HttpOnly refresh token (matches backend `AUTH_SESSION_COOKIE_NAME`). */
 export function getAuthSessionCookieName(): string {
-  return (
-    process.env.AUTH_SESSION_COOKIE_NAME?.trim() || DEFAULT_SESSION_COOKIE
-  );
+  return process.env.AUTH_SESSION_COOKIE_NAME?.trim() || DEFAULT_SESSION_COOKIE;
 }
 
 function getSessionCookieName(): string {
@@ -49,55 +47,57 @@ export interface ServerSession {
  * the backend does not rotate the refresh token (server-side fetch cannot apply
  * Set-Cookie to the browser). Pair with {@link serverFetchJson}.
  */
-export const getServerSession = cache(async (): Promise<ServerSession | null> => {
-  if (!(await hasRefreshCookie())) {
-    return null;
-  }
-
-  const cookieHeader = await buildIncomingCookieHeader();
-
-  const baseUrl = await getServerApiBaseUrl();
-  const devHeaders = getDevOnlyRequestHeaders();
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-  }, SERVER_SESSION_REFRESH_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(`${baseUrl}/auth/refresh`, {
-      method: "POST",
-      headers: {
-        Cookie: cookieHeader,
-        "X-Server-Refresh": "true",
-        ...devHeaders,
-      },
-      cache: "no-store",
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        const store = await cookies();
-        store.delete({
-          name: getSessionCookieName(),
-          path: "/",
-        });
-      }
+export const getServerSession = cache(
+  async (): Promise<ServerSession | null> => {
+    if (!(await hasRefreshCookie())) {
       return null;
     }
 
-    const payload: unknown = await response.json();
-    const data = parseApiResponseData<AuthResponse>(payload);
+    const cookieHeader = await buildIncomingCookieHeader();
 
-    return {
-      accessToken: data.accessToken,
-      user: data.user,
-      permissions: data.permissions,
-    };
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-});
+    const baseUrl = await getServerApiBaseUrl();
+    const devHeaders = getDevOnlyRequestHeaders();
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, SERVER_SESSION_REFRESH_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(`${baseUrl}/auth/refresh`, {
+        method: "POST",
+        headers: {
+          Cookie: cookieHeader,
+          "X-Server-Refresh": "true",
+          ...devHeaders,
+        },
+        cache: "no-store",
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          const store = await cookies();
+          store.delete({
+            name: getSessionCookieName(),
+            path: "/",
+          });
+        }
+        return null;
+      }
+
+      const payload: unknown = await response.json();
+      const data = parseApiResponseData<AuthResponse>(payload);
+
+      return {
+        accessToken: data.accessToken,
+        user: data.user,
+        permissions: data.permissions,
+      };
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  },
+);

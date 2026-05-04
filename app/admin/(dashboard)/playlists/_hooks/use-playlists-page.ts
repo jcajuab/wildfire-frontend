@@ -81,11 +81,14 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     [page, debouncedSearch, statusFilter],
   );
 
-  const { data: playlistsData, isLoading, isFetching } =
-    useListPlaylistsQuery(playlistQuery, {
-      refetchOnFocus: false,
-      refetchOnReconnect: false,
-    });
+  const {
+    data: playlistsData,
+    isLoading,
+    isFetching,
+  } = useListPlaylistsQuery(playlistQuery, {
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+  });
   const [deletePlaylist] = useDeletePlaylistMutation();
 
   const deleteDialogOpen = playlistToDelete !== null;

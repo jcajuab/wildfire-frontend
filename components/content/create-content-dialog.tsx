@@ -413,7 +413,12 @@ export function CreateContentDialog({
         </div>
 
         <DialogFooter className="sm:justify-between">
-          <Button variant="outline" onClick={handleClose} disabled={isSubmitting} className="flex-1">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            disabled={isSubmitting}
+            className="flex-1"
+          >
             Cancel
           </Button>
           <Button

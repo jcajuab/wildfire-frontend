@@ -14,9 +14,7 @@ export async function getServerApiBaseUrl(): Promise<string> {
   const backend = process.env.BACKEND_URL?.trim();
   if (backend?.startsWith("http")) {
     const trimmed = backend.replace(/\/$/, "");
-    return trimmed.endsWith(`/${version}`)
-      ? trimmed
-      : `${trimmed}/${version}`;
+    return trimmed.endsWith(`/${version}`) ? trimmed : `${trimmed}/${version}`;
   }
 
   const pub = process.env.NEXT_PUBLIC_API_URL?.trim() ?? "/api";

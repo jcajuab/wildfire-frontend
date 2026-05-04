@@ -110,15 +110,15 @@ export function DisplaysPageView(): ReactElement {
       <PageHeader title="Displays">
         <>
           <Can permission="displays:update">
-              <Button
-                variant="outline"
-                onClick={() => setIsGroupManagerOpen(true)}
-                className="gap-2"
-              >
-                <IconSettings className="size-4" aria-hidden="true" />
-                Add Display Group
-              </Button>
-            </Can>
+            <Button
+              variant="outline"
+              onClick={() => setIsGroupManagerOpen(true)}
+              className="gap-2"
+            >
+              <IconSettings className="size-4" aria-hidden="true" />
+              Add Display Group
+            </Button>
+          </Can>
           <Can permission="displays:create">
             <Button onClick={() => setIsAddInfoDialogOpen(true)}>
               <IconPlus className="size-4" aria-hidden="true" />

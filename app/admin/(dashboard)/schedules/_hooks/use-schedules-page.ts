@@ -46,11 +46,14 @@ export function useSchedulesPage() {
   const { handleCreateSchedule, handleDeleteSchedule, handleSaveSchedule } =
     useScheduleHandlers();
 
-  const { data: bootstrapData, isLoading, isFetching } =
-    useGetSchedulesBootstrapQuery(scheduleWindow, {
-      refetchOnFocus: false,
-      refetchOnReconnect: false,
-    });
+  const {
+    data: bootstrapData,
+    isLoading,
+    isFetching,
+  } = useGetSchedulesBootstrapQuery(scheduleWindow, {
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+  });
   const displaysData = useMemo(
     () => (canReadDisplays ? bootstrapData?.displayOptions : []),
     [canReadDisplays, bootstrapData?.displayOptions],

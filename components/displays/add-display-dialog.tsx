@@ -21,10 +21,7 @@ export function AddDisplayDialog({
   onRegister,
   existingGroups = [],
 }: AddDisplayDialogProps): ReactElement {
-  const handleClose = useCallback(
-    () => onOpenChange(false),
-    [onOpenChange],
-  );
+  const handleClose = useCallback(() => onOpenChange(false), [onOpenChange]);
 
   const handleDialogOpenChange = useCallback(
     (nextOpen: boolean) => {

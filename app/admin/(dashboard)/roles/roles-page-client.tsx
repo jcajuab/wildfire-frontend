@@ -32,9 +32,7 @@ export function RolesListCacheSeeder({
 }): null {
   const dispatch = useAppDispatch();
   useLayoutEffect(() => {
-    dispatch(
-      rbacApi.util.upsertQueryData("getRoles", queryArgs, data),
-    );
+    dispatch(rbacApi.util.upsertQueryData("getRoles", queryArgs, data));
   }, [dispatch, queryArgs, data]);
   return null;
 }

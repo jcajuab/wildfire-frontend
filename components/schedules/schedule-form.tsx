@@ -80,7 +80,9 @@ function DisplayGroupPicker({
     >
       <ComboboxChips ref={anchorRef}>
         {value.map((id) => (
-          <ComboboxChip key={id}>{optionsById.get(id)?.name ?? id}</ComboboxChip>
+          <ComboboxChip key={id}>
+            {optionsById.get(id)?.name ?? id}
+          </ComboboxChip>
         ))}
         <ComboboxChipsInput
           placeholder={value.length === 0 ? "Search display groups…" : ""}
@@ -140,7 +142,9 @@ function DisplayPicker({
     >
       <ComboboxChips ref={anchorRef}>
         {value.map((id) => (
-          <ComboboxChip key={id}>{optionsById.get(id)?.name ?? id}</ComboboxChip>
+          <ComboboxChip key={id}>
+            {optionsById.get(id)?.name ?? id}
+          </ComboboxChip>
         ))}
         <ComboboxChipsInput
           placeholder={value.length === 0 ? "Search displays…" : ""}
@@ -265,7 +269,8 @@ function ScheduleFormFrame({
   const canSubmit = useMemo(() => {
     const hasTargets =
       isCreate && targetMode === "display-groups"
-        ? targetDisplayGroupIds.length > 0 && resolvedTargetDisplayIds.length > 0
+        ? targetDisplayGroupIds.length > 0 &&
+          resolvedTargetDisplayIds.length > 0
         : formData.targetDisplayIds.length > 0;
     if (!formData.name.trim() || !hasTargets) {
       return false;

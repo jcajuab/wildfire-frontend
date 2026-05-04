@@ -12,9 +12,7 @@ export const LOGS_PAGE_SIZE = 20;
 const ACTOR_TYPES = ["all", "user", "display"] as const;
 type ActorTypeParam = (typeof ACTOR_TYPES)[number];
 
-function firstParam(
-  value: string | string[] | undefined,
-): string | undefined {
+function firstParam(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0];
   return value;
 }
@@ -73,7 +71,8 @@ export function auditListQueryFromSearchParams(
   return {
     page,
     pageSize: LOGS_PAGE_SIZE,
-    from: from !== "" && isValidYyyyMmDd(from) ? dateToISOStart(from) : undefined,
+    from:
+      from !== "" && isValidYyyyMmDd(from) ? dateToISOStart(from) : undefined,
     to: to !== "" && isValidYyyyMmDd(to) ? dateToISOEnd(to) : undefined,
     action: action || undefined,
     actorType:

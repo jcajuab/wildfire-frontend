@@ -1,10 +1,7 @@
 import type { ReactElement } from "react";
 import { redirect } from "next/navigation";
 
-import type {
-  BackendPlaylistSummary,
-  BackendPlaylistListResponse,
-} from "@/lib/api/playlists-api";
+import type { BackendPlaylistSummary } from "@/lib/api/playlists-api";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import {
   PLAYLISTS_PAGE_SIZE,
@@ -23,7 +20,9 @@ import {
 } from "./playlists-page-client";
 
 interface PlaylistsPageProps {
-  readonly searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  readonly searchParams?: Promise<
+    Record<string, string | string[] | undefined>
+  >;
 }
 
 export default async function PlaylistsPage({

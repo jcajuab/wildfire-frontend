@@ -32,7 +32,6 @@ import {
   useCreateRegistrationLinkMutation,
   useGetDisplayGroupsQuery,
 } from "@/lib/api/displays-api";
-import { useCan } from "@/hooks/use-can";
 import {
   DISPLAY_OUTPUT_TYPES,
   type DisplayOutputType,
@@ -99,7 +98,7 @@ const isRegistrationSucceededEvent = (
 };
 
 function useCountdown(expiresAt: string | null): string {
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState<number>(() => Date.now());
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -120,7 +119,27 @@ export function DisplayRegistrationLinkDialog({
   onOpenChange,
   onRegistrationSucceeded,
 }: DisplayRegistrationLinkDialogProps): ReactElement {
-  const canCreateDisplay = useCan("displays:create");
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open ? (
+        <DisplayRegistrationLinkDialogBody
+          onOpenChange={onOpenChange}
+          onRegistrationSucceeded={onRegistrationSucceeded}
+        />
+      ) : null}
+    </Dialog>
+  );
+}
+
+interface DisplayRegistrationLinkDialogBodyProps {
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onRegistrationSucceeded?: () => void;
+}
+
+function DisplayRegistrationLinkDialogBody({
+  onOpenChange,
+  onRegistrationSucceeded,
+}: DisplayRegistrationLinkDialogBodyProps): ReactElement {
   const [formState, setFormState] = useState<LinkFormState>(INITIAL_FORM);
   const [step, setStep] = useState<DialogStep>({ kind: "form" });
   const [formError, setFormError] = useState<string | null>(null);
@@ -130,33 +149,15 @@ export function DisplayRegistrationLinkDialog({
   const [createRegistrationLink, { isLoading: isSubmitting }] =
     useCreateRegistrationLinkMutation();
 
-  // Reset state when dialog opens
-  useEffect(() => {
-    if (open) {
-      setFormState(INITIAL_FORM);
-      setStep({ kind: "form" });
-      setFormError(null);
-      setCopied(false);
-    }
-  }, [open]);
-
   const expiresAt = step.kind === "link-ready" ? step.expiresAt : null;
   const countdown = useCountdown(expiresAt);
   const dialogContentRef = useRef<HTMLDivElement>(null);
 
   const registrationUrl = useMemo(() => {
     if (step.kind !== "link-ready") return "";
-    const origin =
-      typeof window !== "undefined" ? window.location.origin : "";
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
     return `${origin}/displays/register/link?token=${step.token}`;
   }, [step]);
-
-  const reset = useCallback(() => {
-    setFormState(INITIAL_FORM);
-    setStep({ kind: "form" });
-    setFormError(null);
-    setCopied(false);
-  }, []);
 
   const updateField = useCallback(
     (field: keyof LinkFormState) =>
@@ -168,7 +169,7 @@ export function DisplayRegistrationLinkDialog({
 
   // SSE subscription for registration success
   useEffect(() => {
-    if (!open || step.kind !== "link-ready") return;
+    if (step.kind !== "link-ready") return;
     const { attemptId } = step;
     const baseUrl = getBaseUrl();
     if (!baseUrl) return;
@@ -206,13 +207,9 @@ export function DisplayRegistrationLinkDialog({
             if (line.startsWith("event:")) {
               currentEvent = line.slice(6).trim();
             } else if (line.startsWith("data:")) {
-              currentData +=
-                (currentData ? "\n" : "") + line.slice(5).trim();
+              currentData += (currentData ? "\n" : "") + line.slice(5).trim();
             } else if (line === "") {
-              if (
-                currentEvent === "registration_succeeded" &&
-                currentData
-              ) {
+              if (currentEvent === "registration_succeeded" && currentData) {
                 try {
                   const payload = JSON.parse(currentData) as unknown;
                   if (isRegistrationSucceededEvent(payload)) {
@@ -239,7 +236,7 @@ export function DisplayRegistrationLinkDialog({
     return () => {
       controller.abort();
     };
-  }, [open, step, onRegistrationSucceeded, onOpenChange]);
+  }, [step, onRegistrationSucceeded, onOpenChange]);
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>): Promise<void> => {
@@ -305,16 +302,6 @@ export function DisplayRegistrationLinkDialog({
     [formState, createRegistrationLink],
   );
 
-  const handleOpenChange = useCallback(
-    (next: boolean) => {
-      if (!next) {
-        reset();
-      }
-      onOpenChange(next);
-    },
-    [onOpenChange, reset],
-  );
-
   const handleCopyLink = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(registrationUrl);
@@ -326,209 +313,207 @@ export function DisplayRegistrationLinkDialog({
   }, [registrationUrl]);
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        ref={dialogContentRef}
-        className="max-w-[calc(100%-2rem)] sm:max-w-lg"
-        onPointerDownOutside={(e) => {
-          if (
-            dialogContentRef.current &&
-            !dialogContentRef.current.contains(e.target as Node)
-          ) {
-            return;
-          }
-        }}
-      >
-        <DialogHeader>
-          <DialogTitle>Register Display</DialogTitle>
-          <DialogDescription>
-            {step.kind === "form"
-              ? "Fill in the display details below. A registration link will be generated for the display device."
-              : "Copy the link below and open it on the display device to complete registration."}
-          </DialogDescription>
-        </DialogHeader>
+    <DialogContent
+      ref={dialogContentRef}
+      className="max-w-[calc(100%-2rem)] sm:max-w-lg"
+      onPointerDownOutside={(e) => {
+        if (
+          dialogContentRef.current &&
+          !dialogContentRef.current.contains(e.target as Node)
+        ) {
+          return;
+        }
+      }}
+    >
+      <DialogHeader>
+        <DialogTitle>Register Display</DialogTitle>
+        <DialogDescription>
+          {step.kind === "form"
+            ? "Fill in the display details below. A registration link will be generated for the display device."
+            : "Copy the link below and open it on the display device to complete registration."}
+        </DialogDescription>
+      </DialogHeader>
 
-        {step.kind === "form" ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {formError ? (
-              <p
-                className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-                role="alert"
-              >
-                {formError}
-              </p>
-            ) : null}
-
-            <div className="space-y-2">
-              <Label htmlFor="reg-display-name">Display name</Label>
-              <Input
-                id="reg-display-name"
-                type="text"
-                placeholder="Lobby Screen..."
-                value={formState.displayName}
-                onChange={updateField("displayName")}
-                autoComplete="off"
-                disabled={isSubmitting}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="reg-slug">Display slug</Label>
-              <Input
-                id="reg-slug"
-                type="text"
-                placeholder="lobby-hdmi-0..."
-                value={formState.slug}
-                onChange={updateField("slug")}
-                autoComplete="off"
-                spellCheck={false}
-                disabled={isSubmitting}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <DisplayGroupsTagsInput
-                id="reg-groups"
-                value={formState.displayGroups}
-                onValueChange={(names) =>
-                  setFormState((prev) => ({ ...prev, displayGroups: names }))
-                }
-                existingGroups={existingGroups}
-                disabled={isSubmitting}
-                showLabel
-                portalContainer={dialogContentRef}
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="reg-output-type">Output type</Label>
-                <Select
-                  value={formState.outputType}
-                  onValueChange={(value) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      outputType: value as DisplayOutputType,
-                    }))
-                  }
-                  disabled={isSubmitting}
-                >
-                  <SelectTrigger id="reg-output-type" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DISPLAY_OUTPUT_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reg-output-index">Output index</Label>
-                <Input
-                  id="reg-output-index"
-                  type="number"
-                  min={0}
-                  inputMode="numeric"
-                  placeholder="0"
-                  value={formState.outputIndex}
-                  onChange={updateField("outputIndex")}
-                  autoComplete="off"
-                  disabled={isSubmitting}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="reg-width">Resolution width</Label>
-                <Input
-                  id="reg-width"
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  placeholder="1920..."
-                  value={formState.resolutionWidth}
-                  onChange={updateField("resolutionWidth")}
-                  autoComplete="off"
-                  disabled={isSubmitting}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reg-height">Resolution height</Label>
-                <Input
-                  id="reg-height"
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  placeholder="1080..."
-                  value={formState.resolutionHeight}
-                  onChange={updateField("resolutionHeight")}
-                  autoComplete="off"
-                  disabled={isSubmitting}
-                  required
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="sm:justify-end">
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating link..." : "Register Display"}
-              </Button>
-            </DialogFooter>
-          </form>
-        ) : (
-          <div className="space-y-4">
-            <div className="rounded-md border border-border bg-muted/30 p-4">
-              <p className="mb-2 text-xs font-medium text-muted-foreground">
-                Registration link
-              </p>
-              <p className="break-all rounded bg-background px-2 py-1.5 font-mono text-xs text-foreground">
-                {registrationUrl}
-              </p>
-              <div className="mt-3 flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  {countdown === "Expired" ? (
-                    <span className="text-destructive">Link expired</span>
-                  ) : (
-                    <>Expires in {countdown}</>
-                  )}
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyLink}
-                  disabled={countdown === "Expired"}
-                >
-                  {copied ? "Copied!" : "Copy Link"}
-                </Button>
-              </div>
-            </div>
-
-            <p className="text-xs text-muted-foreground">
-              Open this link on the display device to complete registration.
-              This dialog will close automatically when registration succeeds.
+      {step.kind === "form" ? (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {formError ? (
+            <p
+              className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              role="alert"
+            >
+              {formError}
             </p>
+          ) : null}
 
-            <DialogFooter className="sm:justify-end">
+          <div className="space-y-2">
+            <Label htmlFor="reg-display-name">Display name</Label>
+            <Input
+              id="reg-display-name"
+              type="text"
+              placeholder="Lobby Screen..."
+              value={formState.displayName}
+              onChange={updateField("displayName")}
+              autoComplete="off"
+              disabled={isSubmitting}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="reg-slug">Display slug</Label>
+            <Input
+              id="reg-slug"
+              type="text"
+              placeholder="lobby-hdmi-0..."
+              value={formState.slug}
+              onChange={updateField("slug")}
+              autoComplete="off"
+              spellCheck={false}
+              disabled={isSubmitting}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <DisplayGroupsTagsInput
+              id="reg-groups"
+              value={formState.displayGroups}
+              onValueChange={(names) =>
+                setFormState((prev) => ({ ...prev, displayGroups: names }))
+              }
+              existingGroups={existingGroups}
+              disabled={isSubmitting}
+              showLabel
+              portalContainer={dialogContentRef}
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="reg-output-type">Output type</Label>
+              <Select
+                value={formState.outputType}
+                onValueChange={(value) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    outputType: value as DisplayOutputType,
+                  }))
+                }
+                disabled={isSubmitting}
+              >
+                <SelectTrigger id="reg-output-type" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DISPLAY_OUTPUT_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reg-output-index">Output index</Label>
+              <Input
+                id="reg-output-index"
+                type="number"
+                min={0}
+                inputMode="numeric"
+                placeholder="0"
+                value={formState.outputIndex}
+                onChange={updateField("outputIndex")}
+                autoComplete="off"
+                disabled={isSubmitting}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="reg-width">Resolution width</Label>
+              <Input
+                id="reg-width"
+                type="number"
+                min={1}
+                inputMode="numeric"
+                placeholder="1920..."
+                value={formState.resolutionWidth}
+                onChange={updateField("resolutionWidth")}
+                autoComplete="off"
+                disabled={isSubmitting}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reg-height">Resolution height</Label>
+              <Input
+                id="reg-height"
+                type="number"
+                min={1}
+                inputMode="numeric"
+                placeholder="1080..."
+                value={formState.resolutionHeight}
+                onChange={updateField("resolutionHeight")}
+                autoComplete="off"
+                disabled={isSubmitting}
+                required
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="sm:justify-end">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Creating link..." : "Register Display"}
+            </Button>
+          </DialogFooter>
+        </form>
+      ) : (
+        <div className="space-y-4">
+          <div className="rounded-md border border-border bg-muted/30 p-4">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
+              Registration link
+            </p>
+            <p className="break-all rounded bg-background px-2 py-1.5 font-mono text-xs text-foreground">
+              {registrationUrl}
+            </p>
+            <div className="mt-3 flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                {countdown === "Expired" ? (
+                  <span className="text-destructive">Link expired</span>
+                ) : (
+                  <>Expires in {countdown}</>
+                )}
+              </p>
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => handleOpenChange(false)}
+                size="sm"
+                onClick={handleCopyLink}
+                disabled={countdown === "Expired"}
               >
-                Close
+                {copied ? "Copied!" : "Copy Link"}
               </Button>
-            </DialogFooter>
+            </div>
           </div>
-        )}
-      </DialogContent>
-    </Dialog>
+
+          <p className="text-xs text-muted-foreground">
+            Open this link on the display device to complete registration. This
+            dialog will close automatically when registration succeeds.
+          </p>
+
+          <DialogFooter className="sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </div>
+      )}
+    </DialogContent>
   );
 }

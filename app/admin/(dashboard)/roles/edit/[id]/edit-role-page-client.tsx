@@ -9,10 +9,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { RoleForm, type RoleFormState } from "@/components/roles/role-form";
 import { Button } from "@/components/ui/button";
-import {
-  rbacApi,
-  type RoleEditBootstrapResponse,
-} from "@/lib/api/rbac-api";
+import { rbacApi, type RoleEditBootstrapResponse } from "@/lib/api/rbac-api";
 import { useAppDispatch } from "@/lib/hooks";
 import { ROLE_INDEX_PATH } from "@/lib/role-paths";
 import { useEditRolePage } from "./use-edit-role-page";

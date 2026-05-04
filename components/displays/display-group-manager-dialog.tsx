@@ -173,7 +173,9 @@ export function DisplayGroupManagerDialog({
         groupId: deleteCandidate.id,
         name: deleteCandidate.name,
       });
-      toast.success(`Successfully deleted ${deleteCandidate.name} display group`);
+      toast.success(
+        `Successfully deleted ${deleteCandidate.name} display group`,
+      );
       setDeleteCandidate(null);
     } catch (error) {
       notifyApiError(error, "Failed to delete group.");

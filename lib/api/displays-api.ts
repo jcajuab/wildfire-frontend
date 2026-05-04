@@ -324,7 +324,10 @@ export const displaysApi = api.injectEndpoints({
               undefined,
               (draft) => {
                 const r = draft as unknown as {
-                  globalEmergency: { active: boolean; startedAt: string | null };
+                  globalEmergency: {
+                    active: boolean;
+                    startedAt: string | null;
+                  };
                 };
                 r.globalEmergency.active = true;
                 r.globalEmergency.startedAt = startedAt;
@@ -434,13 +437,17 @@ export const displaysApi = api.injectEndpoints({
           );
           for (const ga of groupArgs) {
             dispatch(
-              displaysApi.util.updateQueryData("getDisplayGroups", ga, (draft) => {
-                const groups = draft as unknown as DisplayGroup[];
-                groups.push({
-                  ...group,
-                  displayIds: [...group.displayIds],
-                });
-              }),
+              displaysApi.util.updateQueryData(
+                "getDisplayGroups",
+                ga,
+                (draft) => {
+                  const groups = draft as unknown as DisplayGroup[];
+                  groups.push({
+                    ...group,
+                    displayIds: [...group.displayIds],
+                  });
+                },
+              ),
             );
           }
           const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
@@ -491,10 +498,14 @@ export const displaysApi = api.injectEndpoints({
           );
           for (const ga of groupArgs) {
             dispatch(
-              displaysApi.util.updateQueryData("getDisplayGroups", ga, (draft) => {
-                const idx = draft.findIndex((g) => g.id === groupId);
-                if (idx !== -1) draft[idx] = data;
-              }),
+              displaysApi.util.updateQueryData(
+                "getDisplayGroups",
+                ga,
+                (draft) => {
+                  const idx = draft.findIndex((g) => g.id === groupId);
+                  if (idx !== -1) draft[idx] = data;
+                },
+              ),
             );
           }
           const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
@@ -508,7 +519,9 @@ export const displaysApi = api.injectEndpoints({
                 a,
                 (draft) => {
                   const b = draft as unknown as DisplaysBootstrapMutable;
-                  const idx = b.displayGroups.findIndex((g) => g.id === groupId);
+                  const idx = b.displayGroups.findIndex(
+                    (g) => g.id === groupId,
+                  );
                   if (idx !== -1) {
                     b.displayGroups[idx] = {
                       ...data,
@@ -533,7 +546,10 @@ export const displaysApi = api.injectEndpoints({
       invalidatesTags: (_result, _error, { groupId }) => [
         { type: "DisplayGroup", id: groupId },
       ],
-      async onQueryStarted({ groupId }, { dispatch, queryFulfilled, getState }) {
+      async onQueryStarted(
+        { groupId },
+        { dispatch, queryFulfilled, getState },
+      ) {
         try {
           await queryFulfilled;
           const groupArgs = displaysApi.util.selectCachedArgsForQuery(
@@ -542,8 +558,10 @@ export const displaysApi = api.injectEndpoints({
           );
           for (const ga of groupArgs) {
             dispatch(
-              displaysApi.util.updateQueryData("getDisplayGroups", ga, (draft) =>
-                draft.filter((g) => g.id !== groupId),
+              displaysApi.util.updateQueryData(
+                "getDisplayGroups",
+                ga,
+                (draft) => draft.filter((g) => g.id !== groupId),
               ),
             );
           }
@@ -596,7 +614,9 @@ export const displaysApi = api.injectEndpoints({
               if (shouldHave && !has) {
                 gm.displayIds = [...gm.displayIds, displayId];
               } else if (!shouldHave && has) {
-                gm.displayIds = gm.displayIds.filter((gid) => gid !== displayId);
+                gm.displayIds = gm.displayIds.filter(
+                  (gid) => gid !== displayId,
+                );
               }
             }
           };
@@ -606,9 +626,13 @@ export const displaysApi = api.injectEndpoints({
           );
           for (const ga of groupArgs) {
             dispatch(
-              displaysApi.util.updateQueryData("getDisplayGroups", ga, (draft) => {
-                syncMembership(draft);
-              }),
+              displaysApi.util.updateQueryData(
+                "getDisplayGroups",
+                ga,
+                (draft) => {
+                  syncMembership(draft);
+                },
+              ),
             );
           }
           const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
@@ -641,7 +665,10 @@ export const displaysApi = api.injectEndpoints({
       invalidatesTags: (_result, _error, { displayId }) => [
         { type: "Display", id: displayId },
       ],
-      async onQueryStarted({ displayId }, { dispatch, queryFulfilled, getState }) {
+      async onQueryStarted(
+        { displayId },
+        { dispatch, queryFulfilled, getState },
+      ) {
         try {
           await queryFulfilled;
           const listArgs = displaysApi.util.selectCachedArgsForQuery(
@@ -651,11 +678,9 @@ export const displaysApi = api.injectEndpoints({
           for (const a of listArgs) {
             dispatch(
               displaysApi.util.updateQueryData("getDisplays", a, (draft) => {
-                patchPaginatedListById(
-                  draft,
-                  "remove",
-                  { id: displayId } as BackendDisplay,
-                );
+                patchPaginatedListById(draft, "remove", {
+                  id: displayId,
+                } as BackendDisplay);
               }),
             );
           }
@@ -670,11 +695,9 @@ export const displaysApi = api.injectEndpoints({
                 a,
                 (draft) => {
                   const b = draft as unknown as DisplaysBootstrapMutable;
-                  patchPaginatedListById(
-                    b.displays,
-                    "remove",
-                    { id: displayId } as BackendDisplay,
-                  );
+                  patchPaginatedListById(b.displays, "remove", {
+                    id: displayId,
+                  } as BackendDisplay);
                 },
               ),
             );
