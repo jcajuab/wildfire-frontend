@@ -391,7 +391,12 @@ export async function authFetch(
     return fetch(input, {
       ...init,
       headers,
-      credentials: init.credentials ?? "same-origin",
+      // include the HttpOnly refresh cookie on every authFetch — endpoints
+      // like /auth/me/avatar verify the cookie alongside the bearer token.
+      // With same-origin (the previous default) cross-origin dev builds
+      // (frontend :3000 → backend :8000) silently dropped the cookie and
+      // returned 401 even though the access token was valid.
+      credentials: init.credentials ?? "include",
     });
   };
 
