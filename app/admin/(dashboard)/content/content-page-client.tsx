@@ -17,7 +17,6 @@ import { ContentGrid } from "@/components/content/content-grid";
 import { CreateContentDialog } from "@/components/content/create-content-dialog";
 import { SearchControl } from "@/components/common/search-control";
 import { PageHeader } from "@/components/layout/page-header";
-import { PageToolbar } from "@/components/layout/page-toolbar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -144,30 +143,28 @@ export function ContentPageView(): ReactElement {
 
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <PageToolbar
-            end={
-              <>
-                <ContentFilterPopover
-                  statusFilter={controller.filters.statusFilter}
-                  typeFilter={controller.filters.typeFilter}
-                  filteredResultsCount={controller.data?.total ?? 0}
-                  isFetching={controller.isFetching && !controller.isLoading}
-                  onStatusFilterChange={
-                    controller.filters.handleStatusFilterChange
-                  }
-                  onTypeFilterChange={controller.filters.handleTypeFilterChange}
-                  onClearFilters={controller.filters.handleClearFilters}
-                />
-                <SearchControl
-                  value={controller.filters.search}
-                  onChange={controller.filters.handleSearchChange}
-                  ariaLabel="Search content"
-                  placeholder="Search..."
-                  className="w-full max-w-none sm:w-72"
-                />
-              </>
-            }
-          />
+          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+              <ContentFilterPopover
+                statusFilter={controller.filters.statusFilter}
+                typeFilter={controller.filters.typeFilter}
+                filteredResultsCount={controller.data?.total ?? 0}
+                isFetching={controller.isFetching && !controller.isLoading}
+                onStatusFilterChange={
+                  controller.filters.handleStatusFilterChange
+                }
+                onTypeFilterChange={controller.filters.handleTypeFilterChange}
+                onClearFilters={controller.filters.handleClearFilters}
+              />
+              <SearchControl
+                value={controller.filters.search}
+                onChange={controller.filters.handleSearchChange}
+                ariaLabel="Search content"
+                placeholder="Search..."
+                className="w-full max-w-none sm:w-72"
+              />
+            </div>
+          </div>
 
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
             {controller.visibleContents.length === 0 ? (
