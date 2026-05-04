@@ -134,6 +134,29 @@ describe("DisplayCard", () => {
     ).toBeInTheDocument();
   });
 
+  test("renders an accessible selection checkbox when selection is enabled", async () => {
+    const user = userEvent.setup();
+    const onSelectionChange = vi.fn();
+    renderDisplayCard(baseDisplay, {
+      onUnregisterDisplay: vi.fn(),
+      onSelectionChange,
+    });
+
+    await user.click(
+      screen.getByRole("checkbox", { name: "Select Lobby Display" }),
+    );
+
+    expect(onSelectionChange).toHaveBeenCalledWith(baseDisplay, true);
+  });
+
+  test("does not render a selection checkbox by default", () => {
+    renderDisplayCard();
+
+    expect(
+      screen.queryByRole("checkbox", { name: "Select Lobby Display" }),
+    ).not.toBeInTheDocument();
+  });
+
   test("keeps emergency active and missing emergency indicators distinct", () => {
     renderDisplayCard(baseDisplay, { isGlobalEmergencyActive: true });
 

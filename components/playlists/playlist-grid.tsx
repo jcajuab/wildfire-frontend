@@ -14,12 +14,19 @@ interface PlaylistGridProps {
   readonly playlists: readonly PlaylistSummary[];
   readonly onEdit?: (playlist: PlaylistSummary) => void;
   readonly onDelete?: (playlist: PlaylistSummary) => void;
+  readonly selectedIds?: ReadonlySet<string>;
+  readonly onSelectionChange?: (
+    playlist: PlaylistSummary,
+    checked: boolean,
+  ) => void;
 }
 
 export function PlaylistGrid({
   playlists,
   onEdit,
   onDelete,
+  selectedIds,
+  onSelectionChange,
 }: PlaylistGridProps): ReactElement {
   if (playlists.length === 0) {
     return (
@@ -48,6 +55,8 @@ export function PlaylistGrid({
           playlist={playlist}
           onEdit={onEdit}
           onDelete={onDelete}
+          isSelected={selectedIds?.has(playlist.id) ?? false}
+          onSelectionChange={onSelectionChange}
         />
       ))}
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { useState } from "react";
 import {
   AlertDialog,
@@ -13,12 +13,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
+import { cn } from "@/lib/utils";
 
 interface ConfirmActionDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly title: string;
-  readonly description?: string;
+  readonly description?: ReactNode;
   readonly confirmLabel: string;
   readonly cancelLabel?: string;
   readonly onConfirm: () => Promise<void> | void;
@@ -63,8 +64,17 @@ export function ConfirmActionDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          {description ? (
+          {typeof description === "string" ? (
             <AlertDialogDescription>{description}</AlertDialogDescription>
+          ) : description ? (
+            <div
+              className={cn(
+                "text-xs/relaxed text-balance text-muted-foreground md:text-pretty",
+                "*:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
+              )}
+            >
+              {description}
+            </div>
           ) : null}
         </AlertDialogHeader>
         <AlertDialogFooter>

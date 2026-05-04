@@ -26,19 +26,26 @@ export function useDisplayCrudHandlers(input: {
   const [createDisplayGroup] = useCreateDisplayGroupMutation();
   const [unregisterDisplay] = useUnregisterDisplayMutation();
 
+  const unregisterDisplayById = useCallback(
+    async (displayId: string) => {
+      await unregisterDisplay({ displayId }).unwrap();
+    },
+    [unregisterDisplay],
+  );
+
   const handleConfirmUnregisterDisplay = useCallback(
     async (displayToUnregister: Display | null) => {
       if (!displayToUnregister) {
         return;
       }
       try {
-        await unregisterDisplay({ displayId: displayToUnregister.id }).unwrap();
+        await unregisterDisplayById(displayToUnregister.id);
         toast.success(`Successfully unregistered ${displayToUnregister.name}`);
       } catch (err) {
         notifyApiError(err, "Failed to unregister display.");
       }
     },
-    [unregisterDisplay],
+    [unregisterDisplayById],
   );
 
   const handleSaveDisplay = useCallback(
@@ -120,5 +127,6 @@ export function useDisplayCrudHandlers(input: {
   return {
     handleConfirmUnregisterDisplay,
     handleSaveDisplay,
+    unregisterDisplayById,
   };
 }

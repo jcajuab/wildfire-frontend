@@ -1,11 +1,20 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconPlus } from "@tabler/icons-react";
+import { toast } from "sonner";
 
+import { BulkDeleteConfirmDialog } from "@/components/common/bulk-delete-confirm-dialog";
+import { BulkSelectionToolbar } from "@/components/common/bulk-selection-toolbar";
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { PageHeader } from "@/components/layout/page-header";
@@ -19,7 +28,10 @@ import {
   type BackendPlaylistListResponse,
   type PlaylistListQuery,
 } from "@/lib/api/playlists-api";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import { runBulkAction } from "@/lib/bulk-action";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { getPlaylistEditPath } from "@/lib/playlist-paths";
 import { PAGE_SIZE, usePlaylistsPage } from "./_hooks/use-playlists-page";
 
@@ -53,6 +65,16 @@ export function PlaylistsPageView(): ReactElement {
   const searchParams = useSearchParams();
   const manageId = searchParams.get("manage");
   const handledManageRef = useRef<string | null>(null);
+  const {
+    selectedItems,
+    selectedIds,
+    selectedCount,
+    clearSelection,
+    removeSelectedIds,
+    setItemSelected,
+  } = useBulkSelection();
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   const {
     canUpdatePlaylist,
@@ -77,6 +99,50 @@ export function PlaylistsPageView(): ReactElement {
   } = usePlaylistsPage();
 
   useEffect(() => {
+    clearSelection();
+  }, [clearSelection, search, statusFilter]);
+
+  const selectedPlaylistLabels = selectedItems.map((item) => item.label);
+  const selectedPlaylistCount = selectedCount;
+  const deleteSelectedLabel =
+    selectedPlaylistCount === 1
+      ? "Delete 1 playlist"
+      : `Delete ${selectedPlaylistCount} playlists`;
+
+  const handleConfirmBulkDelete = useCallback(async () => {
+    if (selectedItems.length === 0) return;
+
+    const result = await runBulkAction(selectedItems, (item) =>
+      deletePlaylistMutation(item.id),
+    );
+    removeSelectedIds(result.successfulItems.map((item) => item.id));
+
+    if (result.successfulItems.length > 0) {
+      toast.success(
+        result.successfulItems.length === 1
+          ? "Successfully deleted 1 playlist"
+          : `Successfully deleted ${result.successfulItems.length} playlists`,
+      );
+    }
+
+    const firstFailure = result.failedItems[0];
+    if (firstFailure) {
+      const message = getApiErrorMessage(
+        firstFailure.error,
+        "Some playlists could not be deleted.",
+      );
+      toast.error(
+        `Failed to delete ${result.failedItems.length} of ${selectedItems.length} playlists. ${message}`,
+      );
+    }
+  }, [deletePlaylistMutation, removeSelectedIds, selectedItems]);
+
+  const handleCancelSelectionMode = useCallback(() => {
+    clearSelection();
+    setIsSelectionMode(false);
+  }, [clearSelection]);
+
+  useEffect(() => {
     if (manageId && handledManageRef.current !== manageId) {
       handledManageRef.current = manageId;
       router.replace(getPlaylistEditPath(manageId));
@@ -99,21 +165,40 @@ export function PlaylistsPageView(): ReactElement {
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-              <PlaylistFilterPopover
-                statusFilter={statusFilter}
-                filteredResultsCount={totalPlaylists}
-                isFetching={isFetching && !isLoading}
-                onStatusFilterChange={handleStatusFilterChange}
-                onClearFilters={handleClearFilters}
-              />
-              <SearchControl
-                value={search}
-                onChange={handleSearchChange}
-                ariaLabel="Search playlists"
-                placeholder="Search..."
-                className="w-full max-w-none sm:w-72"
-              />
+            <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+              {isSelectionMode ? (
+                <BulkSelectionToolbar
+                  selectedCount={selectedPlaylistCount}
+                  deleteLabel={deleteSelectedLabel}
+                  onDelete={() => setIsBulkDeleteDialogOpen(true)}
+                  onCancel={handleCancelSelectionMode}
+                />
+              ) : null}
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:w-auto">
+                {canDeletePlaylist && !isSelectionMode ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsSelectionMode(true)}
+                  >
+                    Select mode
+                  </Button>
+                ) : null}
+                <PlaylistFilterPopover
+                  statusFilter={statusFilter}
+                  filteredResultsCount={totalPlaylists}
+                  isFetching={isFetching && !isLoading}
+                  onStatusFilterChange={handleStatusFilterChange}
+                  onClearFilters={handleClearFilters}
+                />
+                <SearchControl
+                  value={search}
+                  onChange={handleSearchChange}
+                  ariaLabel="Search playlists"
+                  placeholder="Search..."
+                  className="w-full max-w-none sm:w-72"
+                />
+              </div>
             </div>
           </div>
 
@@ -132,6 +217,16 @@ export function PlaylistsPageView(): ReactElement {
                 playlists={playlists}
                 onEdit={canUpdatePlaylist ? handleEditPlaylist : undefined}
                 onDelete={canDeletePlaylist ? handleDeletePlaylist : undefined}
+                selectedIds={isSelectionMode ? selectedIds : undefined}
+                onSelectionChange={
+                  canDeletePlaylist && isSelectionMode
+                    ? (playlist, checked) =>
+                        setItemSelected(
+                          { id: playlist.id, label: playlist.name },
+                          checked,
+                        )
+                    : undefined
+                }
               />
             )}
           </div>
@@ -166,6 +261,18 @@ export function PlaylistsPageView(): ReactElement {
           await deletePlaylistMutation(playlistToDelete.id);
           setPlaylistToDelete(null);
         }}
+      />
+
+      <BulkDeleteConfirmDialog
+        open={isBulkDeleteDialogOpen}
+        onOpenChange={setIsBulkDeleteDialogOpen}
+        selectedLabels={selectedPlaylistLabels}
+        title="Delete selected playlists?"
+        itemName="playlist"
+        itemNamePlural="playlists"
+        confirmLabel={deleteSelectedLabel}
+        actionDescription="This will permanently delete"
+        onConfirm={handleConfirmBulkDelete}
       />
     </div>
   );

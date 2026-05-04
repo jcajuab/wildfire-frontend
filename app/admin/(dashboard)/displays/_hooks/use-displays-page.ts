@@ -80,6 +80,7 @@ export interface UseDisplaysPageResult {
   handleUnregisterDisplay: (display: Display) => void;
   handleUnregisterDialogOpenChange: (open: boolean) => void;
   handleConfirmUnregisterDisplay: () => Promise<void>;
+  unregisterDisplayById: (displayId: string) => Promise<void>;
   handleEditDisplay: (display: Display) => void;
   handleEditFromView: (display: Display) => void;
   handleSaveDisplay: (display: Display) => Promise<boolean>;
@@ -249,6 +250,7 @@ export function useDisplaysPage(): UseDisplaysPageResult {
     handleUnregisterDialogOpenChange:
       dialogState.handleUnregisterDialogOpenChange,
     handleConfirmUnregisterDisplay,
+    unregisterDisplayById: crudHandlers.unregisterDisplayById,
     handleEditDisplay: dialogState.handleEditDisplay,
     handleEditFromView: dialogState.handleEditFromView,
     handleSaveDisplay: crudHandlers.handleSaveDisplay,

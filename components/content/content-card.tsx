@@ -14,6 +14,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
@@ -51,6 +52,8 @@ interface ContentCardProps {
   readonly onPreview: (content: Content) => void;
   readonly onDelete?: (content: Content) => void;
   readonly onDownload?: (content: Content) => void;
+  readonly isSelected?: boolean;
+  readonly onSelectionChange?: (content: Content, checked: boolean) => void;
 }
 
 export const ContentCard = memo(function ContentCard({
@@ -59,12 +62,15 @@ export const ContentCard = memo(function ContentCard({
   onPreview,
   onDelete,
   onDownload,
+  isSelected = false,
+  onSelectionChange,
 }: ContentCardProps): ReactElement {
   const canModify = useCanModifyResource(content.owner.id);
   const canDownloadFile =
     onDownload && content.type !== "FLASH" && content.type !== "TEXT";
   const showEdit = canModify && Boolean(onEdit);
   const showDelete = canModify && Boolean(onDelete);
+  const showSelection = canModify && Boolean(onSelectionChange);
   const isFlashContent = content.type === "FLASH";
   const isTextContent = content.type === "TEXT";
   const flashThumbnailText = isFlashContent
@@ -82,10 +88,22 @@ export const ContentCard = memo(function ContentCard({
     content.type === "VIDEO" ? IconVideo : IconPhoto;
 
   return (
-    <article className="group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors duration-150">
+    <article
+      data-state={isSelected ? "selected" : undefined}
+      className="group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors duration-150 data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5"
+    >
       {/* Zone A — Card header */}
       <div className="flex items-center justify-between px-3 py-2">
-        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          {showSelection ? (
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={(checked) =>
+                onSelectionChange?.(content, checked === true)
+              }
+              aria-label={`Select ${content.title}`}
+            />
+          ) : null}
           <h2 className="truncate text-sm font-semibold">{content.title}</h2>
         </div>
         <DropdownMenu>

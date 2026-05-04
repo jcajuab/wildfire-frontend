@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { PlaylistSummary } from "@/types/playlist";
 import { formatDateWithTime, formatDuration } from "@/lib/formatters";
 import { sanitizeRichTextHtml } from "@/lib/content-thumbnail-preview";
@@ -30,12 +31,19 @@ interface PlaylistCardProps {
   readonly playlist: PlaylistSummary;
   readonly onEdit?: (playlist: PlaylistSummary) => void;
   readonly onDelete?: (playlist: PlaylistSummary) => void;
+  readonly isSelected?: boolean;
+  readonly onSelectionChange?: (
+    playlist: PlaylistSummary,
+    checked: boolean,
+  ) => void;
 }
 
 export const PlaylistCard = memo(function PlaylistCard({
   playlist,
   onEdit,
   onDelete,
+  isSelected = false,
+  onSelectionChange,
 }: PlaylistCardProps): ReactElement {
   const canModify = useCanModifyResource(playlist.owner.id);
   const visiblePreviewItems = playlist.previewItems.slice(0, 3);
@@ -44,11 +52,25 @@ export const PlaylistCard = memo(function PlaylistCard({
   const updatedAtLabel = formatDateWithTime(playlist.updatedAt);
   const showEdit = canModify && Boolean(onEdit);
   const showDelete = canModify && Boolean(onDelete);
+  const showSelection = canModify && Boolean(onSelectionChange);
 
   return (
-    <article className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+    <article
+      data-state={isSelected ? "selected" : undefined}
+      className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 transition-colors data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5"
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
+        {showSelection ? (
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={(checked) =>
+              onSelectionChange?.(playlist, checked === true)
+            }
+            aria-label={`Select ${playlist.name}`}
+            className="mt-0.5"
+          />
+        ) : null}
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="flex items-center gap-2">
             <h2 className="truncate text-sm font-semibold leading-tight">

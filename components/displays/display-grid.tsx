@@ -14,6 +14,8 @@ interface DisplayGridProps {
   readonly onUnregisterDisplay?: (display: Display) => void;
   readonly onEditDisplay?: (display: Display) => void;
   readonly isGlobalEmergencyActive?: boolean;
+  readonly selectedIds?: ReadonlySet<string>;
+  readonly onSelectionChange?: (display: Display, checked: boolean) => void;
 }
 
 export function DisplayGrid({
@@ -23,6 +25,8 @@ export function DisplayGrid({
   onUnregisterDisplay,
   onEditDisplay,
   isGlobalEmergencyActive = false,
+  selectedIds,
+  onSelectionChange,
 }: DisplayGridProps): ReactElement {
   if (items.length === 0) {
     return (
@@ -45,6 +49,8 @@ export function DisplayGrid({
           onUnregisterDisplay={onUnregisterDisplay}
           onEditDisplay={onEditDisplay}
           isGlobalEmergencyActive={isGlobalEmergencyActive}
+          isSelected={selectedIds?.has(display.id) ?? false}
+          onSelectionChange={onSelectionChange}
         />
       ))}
     </div>

@@ -1,14 +1,17 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useLayoutEffect } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
   IconBolt,
   IconFileText,
   IconPlus,
   IconUpload,
 } from "@tabler/icons-react";
+import { toast } from "sonner";
 import { Can } from "@/components/common/can";
+import { BulkDeleteConfirmDialog } from "@/components/common/bulk-delete-confirm-dialog";
+import { BulkSelectionToolbar } from "@/components/common/bulk-selection-toolbar";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { EmptyState } from "@/components/common/empty-state";
 import { PaginationFooter } from "@/components/common/pagination-footer";
@@ -36,6 +39,9 @@ import {
   type ContentOptionsQueryArg,
 } from "@/lib/api/content-api";
 import { useAppDispatch } from "@/lib/hooks";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import { runBulkAction } from "@/lib/bulk-action";
+import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { useContentPageController } from "./_hooks/use-content-page-controller";
 
 export function ContentListCacheSeeder({
@@ -70,6 +76,61 @@ export function ContentOptionsCacheSeeder({
 
 export function ContentPageView(): ReactElement {
   const controller = useContentPageController();
+  const {
+    selectedItems,
+    selectedIds,
+    selectedCount,
+    clearSelection,
+    removeSelectedIds,
+    setItemSelected,
+  } = useBulkSelection();
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const { search, statusFilter, typeFilter } = controller.filters;
+
+  useEffect(() => {
+    clearSelection();
+  }, [clearSelection, search, statusFilter, typeFilter]);
+
+  const selectedContentLabels = selectedItems.map((item) => item.label);
+  const selectedContentCount = selectedCount;
+  const deleteSelectedLabel =
+    selectedContentCount === 1
+      ? "Delete 1 content item"
+      : `Delete ${selectedContentCount} content items`;
+
+  const handleConfirmBulkDelete = useCallback(async () => {
+    if (selectedItems.length === 0) return;
+
+    const result = await runBulkAction(selectedItems, (item) =>
+      controller.deleteContentById(item.id),
+    );
+    removeSelectedIds(result.successfulItems.map((item) => item.id));
+
+    if (result.successfulItems.length > 0) {
+      toast.success(
+        result.successfulItems.length === 1
+          ? "Successfully deleted 1 content item"
+          : `Successfully deleted ${result.successfulItems.length} content items`,
+      );
+    }
+
+    const firstFailure = result.failedItems[0];
+    if (firstFailure) {
+      const message = getApiErrorMessage(
+        firstFailure.error,
+        "Some content could not be deleted.",
+      );
+      toast.error(
+        `Failed to delete ${result.failedItems.length} of ${selectedItems.length} content items. ${message}`,
+      );
+    }
+  }, [controller, removeSelectedIds, selectedItems]);
+
+  const handleCancelSelectionMode = useCallback(() => {
+    clearSelection();
+    setIsSelectionMode(false);
+  }, [clearSelection]);
 
   if (controller.isLoading) {
     return (
@@ -144,25 +205,44 @@ export function ContentPageView(): ReactElement {
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-              <ContentFilterPopover
-                statusFilter={controller.filters.statusFilter}
-                typeFilter={controller.filters.typeFilter}
-                filteredResultsCount={controller.data?.total ?? 0}
-                isFetching={controller.isFetching && !controller.isLoading}
-                onStatusFilterChange={
-                  controller.filters.handleStatusFilterChange
-                }
-                onTypeFilterChange={controller.filters.handleTypeFilterChange}
-                onClearFilters={controller.filters.handleClearFilters}
-              />
-              <SearchControl
-                value={controller.filters.search}
-                onChange={controller.filters.handleSearchChange}
-                ariaLabel="Search content"
-                placeholder="Search..."
-                className="w-full max-w-none sm:w-72"
-              />
+            <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+              {isSelectionMode ? (
+                <BulkSelectionToolbar
+                  selectedCount={selectedContentCount}
+                  deleteLabel={deleteSelectedLabel}
+                  onDelete={() => setIsBulkDeleteDialogOpen(true)}
+                  onCancel={handleCancelSelectionMode}
+                />
+              ) : null}
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:w-auto">
+                {controller.canDeleteContent && !isSelectionMode ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsSelectionMode(true)}
+                  >
+                    Select mode
+                  </Button>
+                ) : null}
+                <ContentFilterPopover
+                  statusFilter={controller.filters.statusFilter}
+                  typeFilter={controller.filters.typeFilter}
+                  filteredResultsCount={controller.data?.total ?? 0}
+                  isFetching={controller.isFetching && !controller.isLoading}
+                  onStatusFilterChange={
+                    controller.filters.handleStatusFilterChange
+                  }
+                  onTypeFilterChange={controller.filters.handleTypeFilterChange}
+                  onClearFilters={controller.filters.handleClearFilters}
+                />
+                <SearchControl
+                  value={controller.filters.search}
+                  onChange={controller.filters.handleSearchChange}
+                  ariaLabel="Search content"
+                  placeholder="Search..."
+                  className="w-full max-w-none sm:w-72"
+                />
+              </div>
             </div>
           </div>
 
@@ -223,6 +303,16 @@ export function ContentPageView(): ReactElement {
                     ? controller.handleDownload
                     : undefined
                 }
+                selectedIds={isSelectionMode ? selectedIds : undefined}
+                onSelectionChange={
+                  controller.canDeleteContent && isSelectionMode
+                    ? (content, checked) =>
+                        setItemSelected(
+                          { id: content.id, label: content.title },
+                          checked,
+                        )
+                    : undefined
+                }
               />
             )}
           </div>
@@ -273,6 +363,18 @@ export function ContentPageView(): ReactElement {
         confirmLabel="Delete content"
         errorFallback="Failed to delete content."
         onConfirm={controller.handleConfirmDelete}
+      />
+
+      <BulkDeleteConfirmDialog
+        open={isBulkDeleteDialogOpen}
+        onOpenChange={setIsBulkDeleteDialogOpen}
+        selectedLabels={selectedContentLabels}
+        title="Delete selected content?"
+        itemName="content item"
+        itemNamePlural="content items"
+        confirmLabel={deleteSelectedLabel}
+        actionDescription="This will permanently delete"
+        onConfirm={handleConfirmBulkDelete}
       />
     </div>
   );

@@ -13,6 +13,8 @@ interface ContentGridProps {
   readonly onPreview: (content: Content) => void;
   readonly onDelete?: (content: Content) => void;
   readonly onDownload?: (content: Content) => void;
+  readonly selectedIds?: ReadonlySet<string>;
+  readonly onSelectionChange?: (content: Content, checked: boolean) => void;
 }
 
 export function ContentGrid({
@@ -21,6 +23,8 @@ export function ContentGrid({
   onPreview,
   onDelete,
   onDownload,
+  selectedIds,
+  onSelectionChange,
 }: ContentGridProps): ReactElement {
   if (items.length === 0) {
     return (
@@ -42,6 +46,8 @@ export function ContentGrid({
           onPreview={onPreview}
           onDelete={onDelete}
           onDownload={onDownload}
+          isSelected={selectedIds?.has(content.id) ?? false}
+          onSelectionChange={onSelectionChange}
         />
       ))}
     </div>

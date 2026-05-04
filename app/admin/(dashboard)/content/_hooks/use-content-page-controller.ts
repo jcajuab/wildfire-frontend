@@ -198,5 +198,6 @@ export function useContentPageController() {
     handleDownload: crudHandlers.handleDownload,
     handleSaveContent: crudHandlers.handleSaveContent,
     handleConfirmDelete: crudHandlers.handleConfirmDelete,
+    deleteContentById: crudHandlers.deleteContentById,
   };
 }

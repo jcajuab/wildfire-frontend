@@ -12,6 +12,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
@@ -42,6 +43,8 @@ interface DisplayCardProps {
   readonly onUnregisterDisplay?: (display: Display) => void;
   readonly onEditDisplay?: (display: Display) => void;
   readonly isGlobalEmergencyActive?: boolean;
+  readonly isSelected?: boolean;
+  readonly onSelectionChange?: (display: Display, checked: boolean) => void;
 }
 
 interface DisplayStatusStyles {
@@ -101,6 +104,8 @@ export const DisplayCard = memo(function DisplayCard({
   onUnregisterDisplay,
   onEditDisplay,
   isGlobalEmergencyActive = false,
+  isSelected = false,
+  onSelectionChange,
 }: DisplayCardProps): ReactElement {
   const statusStyles = getStatusStyles(display.status);
   const shouldPulse = display.status === "LIVE" || display.status === "READY";
@@ -116,11 +121,24 @@ export const DisplayCard = memo(function DisplayCard({
     display.groups.length - visibleGroups.length,
     0,
   );
+  const showSelection = Boolean(onUnregisterDisplay && onSelectionChange);
 
   return (
-    <article className="group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors duration-200 hover:border-primary/25 motion-reduce:transition-none">
+    <article
+      data-state={isSelected ? "selected" : undefined}
+      className="group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors duration-200 hover:border-primary/25 data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5 motion-reduce:transition-none"
+    >
       <header className="flex justify-between items-center gap-3">
         <div className="min-w-0 flex gap-3 items-center">
+          {showSelection ? (
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={(checked) =>
+                onSelectionChange?.(display, checked === true)
+              }
+              aria-label={`Select ${display.name}`}
+            />
+          ) : null}
           <h2 className="truncate text-lg font-semibold leading-none">
             {display.name}
           </h2>

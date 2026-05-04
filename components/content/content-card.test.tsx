@@ -5,6 +5,10 @@ import { ContentCard } from "@/components/content/content-card";
 import { getFlashBadgeClassName } from "@/lib/display-runtime/flash-ticker";
 import type { Content } from "@/types/content";
 
+vi.mock("@/hooks/use-can-modify-resource", () => ({
+  useCanModifyResource: vi.fn(() => true),
+}));
+
 const baseContent: Content = {
   id: "content-1",
   title: "Demo Image",
@@ -62,6 +66,34 @@ describe("ContentCard", () => {
 
     await user.click(screen.getByRole("button", { name: /actions for/i }));
     expect(onDelete).not.toHaveBeenCalled();
+  });
+
+  test("renders an accessible selection checkbox when selection is enabled", async () => {
+    const user = userEvent.setup();
+    const onSelectionChange = vi.fn();
+    render(
+      <ContentCard
+        content={baseContent}
+        onPreview={vi.fn()}
+        onDelete={vi.fn()}
+        isSelected={false}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("checkbox", { name: "Select Demo Image" }),
+    );
+
+    expect(onSelectionChange).toHaveBeenCalledWith(baseContent, true);
+  });
+
+  test("does not render a selection checkbox by default", () => {
+    render(<ContentCard content={baseContent} onPreview={vi.fn()} />);
+
+    expect(
+      screen.queryByRole("checkbox", { name: "Select Demo Image" }),
+    ).not.toBeInTheDocument();
   });
 
   test.each(["INFO", "WARNING", "CRITICAL"] as const)(

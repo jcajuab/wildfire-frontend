@@ -32,6 +32,7 @@ export interface ContentCrudHandlers {
     input: EditContentDialogSaveInput,
   ) => Promise<void>;
   readonly handleConfirmDelete: () => Promise<void>;
+  readonly deleteContentById: (id: string) => Promise<void>;
 }
 
 export interface UseContentCrudHandlersInput {
@@ -191,17 +192,24 @@ export function useContentCrudHandlers(
     [contentToEdit, trackContentJob, replaceContentFile, updateContent],
   );
 
+  const deleteContentById = useCallback(
+    async (id: string) => {
+      await deleteContent(id).unwrap();
+    },
+    [deleteContent],
+  );
+
   const handleConfirmDelete = useCallback(async () => {
     if (!contentToDelete) {
       return;
     }
     try {
-      await deleteContent(contentToDelete.id).unwrap();
+      await deleteContentById(contentToDelete.id);
       toast.success("Successfully deleted content");
     } catch (error) {
       notifyApiError(error, "Failed to delete content.");
     }
-  }, [contentToDelete, deleteContent]);
+  }, [contentToDelete, deleteContentById]);
 
   return {
     handleUploadFile,
@@ -210,5 +218,6 @@ export function useContentCrudHandlers(
     handleDownload,
     handleSaveContent,
     handleConfirmDelete,
+    deleteContentById,
   };
 }
