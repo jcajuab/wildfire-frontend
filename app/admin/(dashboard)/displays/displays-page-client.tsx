@@ -15,6 +15,7 @@ import { DisplaysToolbar } from "@/components/displays/displays-toolbar";
 import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
 import { ViewDisplayDialog } from "@/components/displays/view-display-dialog";
 import { PageHeader } from "@/components/layout/page-header";
+import { PageToolbar } from "@/components/layout/page-toolbar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -136,23 +137,25 @@ export function DisplaysPageView(): ReactElement {
 
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
-            <DisplaysToolbar
-              statusFilter={statusFilter}
-              search={search}
-              selectedGroups={groupFilters}
-              selectedOutput={normalizedOutputFilter}
-              filteredResultsCount={displaysData?.total ?? 0}
-              availableGroups={availableGroupFilters}
-              availableOutputs={availableOutputFilters}
-              isFetching={isFetching && !isLoading}
-              onStatusFilterChange={handleStatusFilterChange}
-              onSearchChange={handleSearchChange}
-              onGroupFilterChange={handleGroupFilterChange}
-              onOutputFilterChange={handleOutputFilterChange}
-              onClearFilters={handleClearFilters}
-            />
-          </div>
+          <PageToolbar
+            end={
+              <DisplaysToolbar
+                statusFilter={statusFilter}
+                search={search}
+                selectedGroups={groupFilters}
+                selectedOutput={normalizedOutputFilter}
+                filteredResultsCount={displaysData?.total ?? 0}
+                availableGroups={availableGroupFilters}
+                availableOutputs={availableOutputFilters}
+                isFetching={isFetching && !isLoading}
+                onStatusFilterChange={handleStatusFilterChange}
+                onSearchChange={handleSearchChange}
+                onGroupFilterChange={handleGroupFilterChange}
+                onOutputFilterChange={handleOutputFilterChange}
+                onClearFilters={handleClearFilters}
+              />
+            }
+          />
 
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-5">
             {isLoading ? (

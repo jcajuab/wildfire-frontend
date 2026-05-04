@@ -11,6 +11,7 @@ import { CreateScheduleDialog } from "@/components/schedules/create-schedule-dia
 import { EditScheduleDialog } from "@/components/schedules/edit-schedule-dialog";
 import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog";
 import { PageHeader } from "@/components/layout/page-header";
+import { PageToolbar } from "@/components/layout/page-toolbar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -110,22 +111,24 @@ export function SchedulesPageView(): ReactElement {
 
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2.5 sm:px-8">
-            <CalendarHeader
-              currentDate={currentDate}
-              view={view}
-              onViewChange={setView}
-              onPrev={handlePrev}
-              onNext={handleNext}
-              onToday={handleToday}
-              resourcesCount={availableDisplays.length}
-              resourceMode={resourceMode}
-              onResourceModeChange={setResourceMode}
-              displayGroupsCount={displayGroupsData?.length ?? 0}
-              displayGroupSort={displayGroupSort}
-              onDisplayGroupSortChange={setDisplayGroupSort}
-            />
-          </div>
+          <PageToolbar
+            start={
+              <CalendarHeader
+                currentDate={currentDate}
+                view={view}
+                onViewChange={setView}
+                onPrev={handlePrev}
+                onNext={handleNext}
+                onToday={handleToday}
+                resourcesCount={availableDisplays.length}
+                resourceMode={resourceMode}
+                onResourceModeChange={setResourceMode}
+                displayGroupsCount={displayGroupsData?.length ?? 0}
+                displayGroupSort={displayGroupSort}
+                onDisplayGroupSortChange={setDisplayGroupSort}
+              />
+            }
+          />
 
           <div className="relative min-h-0 flex-1 overflow-auto px-6 pb-6 pt-4 sm:px-8 sm:pb-8 sm:pt-5 flex flex-col">
             {isFetching && !isLoading ? (

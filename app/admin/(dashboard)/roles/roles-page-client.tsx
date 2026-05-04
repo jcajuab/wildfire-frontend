@@ -9,6 +9,7 @@ import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
+import { PageToolbar } from "@/components/layout/page-toolbar";
 import { SearchControl } from "@/components/common/search-control";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { RolesTable } from "@/components/roles/roles-table";
@@ -112,9 +113,8 @@ export function RolesPageView(): ReactElement {
       </PageHeader>
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-base font-semibold">Search Results</h2>
+          <PageToolbar
+            end={
               <SearchControl
                 value={search}
                 onChange={handleSearchChange}
@@ -122,8 +122,8 @@ export function RolesPageView(): ReactElement {
                 placeholder="Search..."
                 className="w-full max-w-none sm:w-72"
               />
-            </div>
-          </div>
+            }
+          />
 
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 pt-6 sm:px-8 sm:py-8">
             {roles.length === 0 ? (

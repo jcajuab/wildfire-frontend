@@ -9,6 +9,7 @@ import { IconPlus } from "@tabler/icons-react";
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { PageHeader } from "@/components/layout/page-header";
+import { PageToolbar } from "@/components/layout/page-toolbar";
 import { PlaylistGrid } from "@/components/playlists/playlist-grid";
 import { SearchControl } from "@/components/common/search-control";
 import { PlaylistFilterPopover } from "@/components/playlists/playlist-filter-popover";
@@ -89,24 +90,26 @@ export function PlaylistsPageView(): ReactElement {
 
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-              <PlaylistFilterPopover
-                statusFilter={statusFilter}
-                filteredResultsCount={totalPlaylists}
-                isFetching={isFetching && !isLoading}
-                onStatusFilterChange={handleStatusFilterChange}
-                onClearFilters={handleClearFilters}
-              />
-              <SearchControl
-                value={search}
-                onChange={handleSearchChange}
-                ariaLabel="Search playlists"
-                placeholder="Search..."
-                className="w-full max-w-none sm:w-72"
-              />
-            </div>
-          </div>
+          <PageToolbar
+            end={
+              <>
+                <PlaylistFilterPopover
+                  statusFilter={statusFilter}
+                  filteredResultsCount={totalPlaylists}
+                  isFetching={isFetching && !isLoading}
+                  onStatusFilterChange={handleStatusFilterChange}
+                  onClearFilters={handleClearFilters}
+                />
+                <SearchControl
+                  value={search}
+                  onChange={handleSearchChange}
+                  ariaLabel="Search playlists"
+                  placeholder="Search..."
+                  className="w-full max-w-none sm:w-72"
+                />
+              </>
+            }
+          />
 
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
             {isLoading ? (
