@@ -31,5 +31,5 @@ export function defaultSchedulesBootstrapWindow(): {
   from: string;
   to: string;
 } {
-  return getScheduleWindow(new Date(), "resource-week");
+  return getScheduleWindow(new Date(), "resource-day");
 }
