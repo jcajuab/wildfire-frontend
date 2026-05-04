@@ -71,6 +71,8 @@ function DisplayGroupPicker({
     <Combobox
       multiple
       value={value}
+      items={options.map((option) => option.id)}
+      filteredItems={filtered.map((option) => option.id)}
       onValueChange={(next) => {
         onChange(Array.isArray(next) ? (next as string[]) : []);
         setInputValue("");
@@ -133,6 +135,8 @@ function DisplayPicker({
     <Combobox
       multiple
       value={value}
+      items={options.map((option) => option.id)}
+      filteredItems={filtered.map((option) => option.id)}
       onValueChange={(next) => {
         onChange(Array.isArray(next) ? (next as string[]) : []);
         setInputValue("");

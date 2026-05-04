@@ -56,6 +56,13 @@ const STATUS_CODE_LABELS: Record<(typeof COMMON_STATUS_CODES)[number], string> =
     "404": "404 (Not Found)",
     "500": "500 (Internal Server Error)",
   };
+const RESOURCE_TYPE_FILTER_VALUES = RESOURCE_TYPE_FILTER_OPTIONS.filter(
+  (value): value is NonNullable<ResourceTypeFilter> => value !== "",
+);
+
+function includesNormalized(value: string, query: string): boolean {
+  return value.toLowerCase().includes(query.trim().toLowerCase());
+}
 
 export function AuditListCacheSeeder({
   queryArgs,
@@ -89,6 +96,20 @@ export function LogsPageClient(): ReactElement {
     handleResetFilters,
     selectedStatusValue,
   } = useLogsPage();
+  const resourceTypeItems = [
+    RESOURCE_TYPE_SELECT_ALL_VALUE,
+    ...RESOURCE_TYPE_FILTER_VALUES,
+  ];
+  const filteredResourceTypeItems = resourceTypeItems.filter((value) => {
+    const label =
+      value === RESOURCE_TYPE_SELECT_ALL_VALUE
+        ? "All"
+        : getResourceTypeLabel(value);
+    return includesNormalized(label, filters.resourceTypeInput);
+  });
+  const filteredStatusCodes = COMMON_STATUS_CODES.filter((code) =>
+    includesNormalized(STATUS_CODE_LABELS[code], filters.statusRaw),
+  );
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
@@ -170,6 +191,8 @@ export function LogsPageClient(): ReactElement {
                 <Label htmlFor="logs-filter-resource-type">Resource Type</Label>
                 <Combobox
                   value={filters.selectedResourceTypeValue}
+                  items={resourceTypeItems}
+                  filteredItems={filteredResourceTypeItems}
                   inputValue={filters.resourceTypeInput}
                   onValueChange={(nextValue) => {
                     if (nextValue === RESOURCE_TYPE_SELECT_ALL_VALUE) {
@@ -195,14 +218,11 @@ export function LogsPageClient(): ReactElement {
                   <ComboboxContent>
                     <ComboboxEmpty>No matching resource type.</ComboboxEmpty>
                     <ComboboxList>
-                      <ComboboxItem value={RESOURCE_TYPE_SELECT_ALL_VALUE}>
-                        All
-                      </ComboboxItem>
-                      {RESOURCE_TYPE_FILTER_OPTIONS.filter(
-                        (v): v is NonNullable<ResourceTypeFilter> => v !== "",
-                      ).map((v) => (
-                        <ComboboxItem key={v} value={v}>
-                          {getResourceTypeLabel(v)}
+                      {filteredResourceTypeItems.map((value) => (
+                        <ComboboxItem key={value} value={value}>
+                          {value === RESOURCE_TYPE_SELECT_ALL_VALUE
+                            ? "All"
+                            : getResourceTypeLabel(value)}
                         </ComboboxItem>
                       ))}
                     </ComboboxList>
@@ -213,6 +233,8 @@ export function LogsPageClient(): ReactElement {
                 <Label htmlFor="logs-filter-status">Status</Label>
                 <Combobox
                   value={selectedStatusValue}
+                  items={[...COMMON_STATUS_CODES]}
+                  filteredItems={filteredStatusCodes}
                   inputValue={filters.statusRaw}
                   onValueChange={(nextValue) =>
                     handleStatusChange(nextValue ?? "")
@@ -230,7 +252,7 @@ export function LogsPageClient(): ReactElement {
                   <ComboboxContent>
                     <ComboboxEmpty>No matching status code.</ComboboxEmpty>
                     <ComboboxList>
-                      {COMMON_STATUS_CODES.map((code) => (
+                      {filteredStatusCodes.map((code) => (
                         <ComboboxItem key={code} value={code}>
                           {STATUS_CODE_LABELS[code]}
                         </ComboboxItem>

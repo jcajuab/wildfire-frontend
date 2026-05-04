@@ -59,6 +59,14 @@ export function DisplayGroupsTagsInput({
     existingGroups,
     excludeSelected: true,
   });
+  const itemNames = dedupeDisplayGroupNames([
+    ...existingGroups.map((group) => group.name),
+    ...value,
+    "__create__",
+  ]);
+  const renderedItems = showCreate
+    ? [...filteredNames, "__create__"]
+    : filteredNames;
 
   const handleValueChange = useCallback(
     (next: unknown) => {
@@ -94,6 +102,8 @@ export function DisplayGroupsTagsInput({
       <Combobox
         multiple
         value={value as string[]}
+        items={itemNames}
+        filteredItems={renderedItems}
         onValueChange={handleValueChange}
         inputValue={inputValue}
         onInputValueChange={(v) => setInputValue(v ?? "")}
