@@ -19,7 +19,7 @@ import {
   type BackendPlaylistListResponse,
   type PlaylistListQuery,
 } from "@/lib/api/playlists-api";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { getPlaylistEditPath } from "@/lib/playlist-paths";
 import { PAGE_SIZE, usePlaylistsPage } from "./_hooks/use-playlists-page";
 
@@ -31,11 +31,20 @@ export function PlaylistsListCacheSeeder({
   readonly data: BackendPlaylistListResponse;
 }): null {
   const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) =>
+      playlistsApi.endpoints.listPlaylists.select(queryArgs)(state).data,
+  );
+
   useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
     dispatch(
       playlistsApi.util.upsertQueryData("listPlaylists", queryArgs, data),
     );
-  }, [dispatch, queryArgs, data]);
+  }, [cachedData, dispatch, queryArgs, data]);
   return null;
 }
 

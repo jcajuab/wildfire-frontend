@@ -154,9 +154,115 @@ type PlaylistDetailMutable = {
   items: BackendPlaylistItem[];
 };
 
-type PlaylistListMutable = Omit<BackendPlaylistListResponse, "items"> & {
+type PlaylistListMutable = {
   items: BackendPlaylistSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
 };
+
+function playlistMatchesListQuery(
+  playlist: BackendPlaylistBase,
+  query: PlaylistListQuery | void,
+): boolean {
+  if (query?.status && playlist.status !== query.status) {
+    return false;
+  }
+
+  const search = query?.search?.trim().toLowerCase();
+  if (search && !playlist.name.toLowerCase().includes(search)) {
+    return false;
+  }
+
+  return true;
+}
+
+function isFirstListPage(query: PlaylistListQuery | void): boolean {
+  return (query?.page ?? 1) === 1;
+}
+
+function canInsertCreatedPlaylist(query: PlaylistListQuery | void): boolean {
+  return (
+    isFirstListPage(query) &&
+    (query?.sortBy ?? "createdAt") === "createdAt" &&
+    (query?.sortDirection ?? "desc") === "desc"
+  );
+}
+
+function trimListToPageSize(draft: PlaylistListMutable): void {
+  const pageSize = draft.pageSize;
+  if (pageSize > 0 && draft.items.length > pageSize) {
+    draft.items.splice(pageSize);
+  }
+}
+
+function patchCreatedPlaylistList(
+  draft: BackendPlaylistListResponse,
+  query: PlaylistListQuery | void,
+  playlist: BackendPlaylistSummary,
+): void {
+  if (!playlistMatchesListQuery(playlist, query)) {
+    return;
+  }
+
+  const d = draft as unknown as PlaylistListMutable;
+  const idx = d.items.findIndex((p) => p.id === playlist.id);
+  if (idx !== -1) {
+    d.items[idx] = playlist;
+    return;
+  }
+
+  d.total += 1;
+  if (!canInsertCreatedPlaylist(query)) {
+    return;
+  }
+
+  d.items.unshift(playlist);
+  trimListToPageSize(d);
+}
+
+function applyPlaylistBaseToSummary(
+  summary: BackendPlaylistSummary,
+  playlist: BackendPlaylistBase,
+): BackendPlaylistSummary {
+  return {
+    ...summary,
+    name: playlist.name,
+    description: playlist.description,
+    status: playlist.status,
+    itemsCount: playlist.itemsCount,
+    totalDuration: playlist.totalDuration,
+    updatedAt: playlist.updatedAt,
+    owner: playlist.owner,
+  };
+}
+
+function patchUpdatedPlaylistList(
+  draft: BackendPlaylistListResponse,
+  query: PlaylistListQuery | void,
+  playlist: BackendPlaylistBase,
+): void {
+  const d = draft as unknown as PlaylistListMutable;
+  const idx = d.items.findIndex((p) => p.id === playlist.id);
+  if (idx === -1) {
+    return;
+  }
+
+  const updated = applyPlaylistBaseToSummary(d.items[idx], playlist);
+  if (!playlistMatchesListQuery(updated, query)) {
+    d.items.splice(idx, 1);
+    d.total = Math.max(0, d.total - 1);
+    return;
+  }
+
+  d.items[idx] = updated;
+}
+
+function getPreviewItems(
+  items: readonly BackendPlaylistItem[],
+): readonly BackendPlaylistItem[] {
+  return [...items].sort((a, b) => a.sequence - b.sequence).slice(0, 3);
+}
 
 async function bumpPlaylistsNextCache(): Promise<void> {
   try {
@@ -238,14 +344,11 @@ export const playlistsApi = api.injectEndpoints({
                 "listPlaylists",
                 la,
                 (draft) => {
-                  patchPaginatedListById(draft, "add", summary, {
-                    position: "start",
-                  });
+                  patchCreatedPlaylistList(draft, la, summary);
                 },
               ),
             );
           }
-          await bumpPlaylistsNextCache();
         } catch {
           // mutation failed
         }
@@ -275,23 +378,7 @@ export const playlistsApi = api.injectEndpoints({
                 "listPlaylists",
                 la,
                 (draft) => {
-                  const d = draft as unknown as PlaylistListMutable;
-                  const idx = d.items.findIndex((p) => p.id === id);
-                  if (idx === -1) return;
-                  d.items = d.items.map((p, i) =>
-                    i === idx
-                      ? {
-                          ...p,
-                          name: data.name,
-                          description: data.description,
-                          status: data.status,
-                          itemsCount: data.itemsCount,
-                          totalDuration: data.totalDuration,
-                          updatedAt: data.updatedAt,
-                          owner: data.owner,
-                        }
-                      : p,
-                  );
+                  patchUpdatedPlaylistList(draft, la, data);
                 },
               ),
             );
@@ -310,7 +397,6 @@ export const playlistsApi = api.injectEndpoints({
               });
             }),
           );
-          await bumpPlaylistsNextCache();
         } catch {
           // mutation failed
         }
@@ -599,6 +685,7 @@ export const playlistsApi = api.injectEndpoints({
         try {
           const { data: items } = await queryFulfilled;
           const totalDuration = items.reduce((s, i) => s + i.duration, 0);
+          const previewItems = getPreviewItems(items);
           dispatch(
             playlistsApi.util.updateQueryData(
               "getPlaylist",
@@ -630,6 +717,7 @@ export const playlistsApi = api.injectEndpoints({
                           ...p,
                           itemsCount: items.length,
                           totalDuration,
+                          previewItems,
                         }
                       : p,
                   );
@@ -637,7 +725,6 @@ export const playlistsApi = api.injectEndpoints({
               ),
             );
           }
-          await bumpPlaylistsNextCache();
         } catch {
           // mutation failed
         }
