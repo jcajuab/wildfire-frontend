@@ -137,8 +137,8 @@ export function PlaylistFormBody({
   }, [availableContent, items, contentSearch]);
 
   return (
-    <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
-      <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,1fr)_20rem] xl:overflow-hidden">
+      <div className="flex flex-col gap-4 xl:min-h-0 xl:overflow-hidden">
         <div className="flex flex-col gap-4 rounded-md border border-border p-4">
           <div className="flex items-center gap-2">
             <IconInfoCircle className="size-4" />
@@ -171,7 +171,7 @@ export function PlaylistFormBody({
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-md border border-border p-4">
+        <div className="flex flex-col gap-4 rounded-md border border-border p-4 xl:min-h-0 xl:flex-1 xl:overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <IconPlaylist className="size-4" />
@@ -180,7 +180,7 @@ export function PlaylistFormBody({
             {itemsHeaderSlot}
           </div>
 
-          <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
+          <div className="flex flex-col gap-2 xl:flex-1 xl:overflow-y-auto">
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -211,7 +211,7 @@ export function PlaylistFormBody({
         </div>
       </div>
 
-      <div className="flex min-h-0 w-full flex-col gap-4 overflow-hidden rounded-md border border-border p-4 xl:w-80">
+      <div className="flex w-full flex-col gap-4 rounded-md border border-border p-4 xl:min-h-0 xl:w-80 xl:overflow-hidden">
         <div className="flex items-center gap-2">
           <IconPhoto className="size-4" />
           <span className="text-sm font-semibold">Content Library</span>
@@ -225,7 +225,7 @@ export function PlaylistFormBody({
           className="max-w-none"
         />
 
-        <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
+        <div className="flex flex-col gap-2 xl:flex-1 xl:overflow-y-auto">
           {filteredContent.length === 0 ? (
             <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
               No content available

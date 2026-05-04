@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
 import { SortableItemRow } from "@/components/playlists/sortable-item-row";
 
@@ -119,5 +120,29 @@ describe("SortableItemRow", () => {
     expect(
       screen.getByTestId("playlist-item-thumbnail").querySelector("svg"),
     ).toBeFalsy();
+  });
+
+  test("keeps the duration control usable on narrow layouts", async () => {
+    const user = userEvent.setup();
+    const onUpdateDuration = vi.fn();
+
+    render(
+      <SortableItemRow
+        item={baseItem}
+        onRemove={vi.fn()}
+        onUpdateDuration={onUpdateDuration}
+        onUpdateLoop={vi.fn()}
+      />,
+    );
+
+    const durationInput = screen.getByLabelText(
+      "Duration in seconds for Poster",
+    );
+    expect(durationInput).toHaveClass("w-24", "sm:w-16");
+
+    await user.clear(durationInput);
+    await user.type(durationInput, "15");
+
+    expect(onUpdateDuration).toHaveBeenLastCalledWith("draft-1", 15);
   });
 });
