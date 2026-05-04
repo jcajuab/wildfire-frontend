@@ -329,7 +329,7 @@ function DisplayRegistrationLinkDialogBody({
         <DialogTitle>Register Display</DialogTitle>
         <DialogDescription>
           {step.kind === "form"
-            ? "Fill in the display details below. A registration link will be generated for the display device."
+            ? "Fill in the display details below. A registration link will be generated for the display device. After you have the registration link, paste it within the display."
             : "Copy the link below and open it on the display device to complete registration."}
         </DialogDescription>
       </DialogHeader>

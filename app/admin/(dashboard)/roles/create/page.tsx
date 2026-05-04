@@ -5,11 +5,7 @@ import type { RbacPermission } from "@/lib/api/rbac-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { ROLE_CREATE_PATH } from "@/lib/role-paths";
 import { getServerSession } from "@/lib/server/auth";
-import {
-  serverFetchJson,
-  sessionHasPermission,
-  WILDFIRE_SERVER_REVALIDATE_SECONDS,
-} from "@/lib/server/api";
+import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import {
   CreateRolePageView,
@@ -29,7 +25,7 @@ export default async function CreateRolePage(): Promise<ReactElement> {
     session,
     path: "permissions/options",
     tags: ["permissions-options"],
-    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
+    revalidate: 86400,
   });
 
   if (!permissionsRes.ok) {

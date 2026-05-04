@@ -129,6 +129,7 @@ export function UsersPageView(): ReactElement {
     usersLoading,
     usersFetching,
     usersError,
+    isRoleToggling,
     invitations,
     isInvitationsLoading,
     resendingInvitationId,
@@ -239,7 +240,7 @@ export function UsersPageView(): ReactElement {
               />
             ) : (
               <div className="relative min-h-0 flex-1 flex flex-col overflow-hidden rounded-md border border-border">
-                {usersFetching && !usersLoading ? (
+                {usersFetching && !usersLoading && !isRoleToggling ? (
                   <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-background/60">
                     <div className="flex items-center gap-2">
                       <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />

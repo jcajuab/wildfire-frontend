@@ -138,6 +138,7 @@ export interface SubmitPdfCropsRequest {
 export const contentApi = api.injectEndpoints({
   endpoints: (build) => ({
     getContentOptions: build.query<ContentOption[], ContentOptionsQueryArg>({
+      keepUnusedDataFor: 600,
       query: (query) => ({
         url: "content/options",
         params: {

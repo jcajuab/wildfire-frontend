@@ -49,6 +49,7 @@ export function useUsersHandlers({
     string | null
   >(null);
 
+  const [isRoleToggling, setIsRoleToggling] = useState(false);
   const [updateUser] = useUpdateUserMutation();
   const [setUserRoles] = useSetUserRolesMutation();
 
@@ -144,22 +145,27 @@ export function useUsersHandlers({
 
   const handleRoleToggle = useCallback(
     async (userId: string, newRoleIds: string[]): Promise<string[]> => {
-      const roleIdsToSend = isAdmin
-        ? newRoleIds
-        : (() => {
-            const currentIds =
-              userRolesByUserId[userId]?.map((r) => r.id) ?? [];
-            const preservedSystem = currentIds.filter((id) =>
-              systemRoleIds.includes(id),
-            );
-            return [...new Set([...newRoleIds, ...preservedSystem])];
-          })();
+      setIsRoleToggling(true);
+      try {
+        const roleIdsToSend = isAdmin
+          ? newRoleIds
+          : (() => {
+              const currentIds =
+                userRolesByUserId[userId]?.map((r) => r.id) ?? [];
+              const preservedSystem = currentIds.filter((id) =>
+                systemRoleIds.includes(id),
+              );
+              return [...new Set([...newRoleIds, ...preservedSystem])];
+            })();
 
-      const confirmedRoles = await setUserRoles({
-        userId,
-        roleIds: roleIdsToSend,
-      }).unwrap();
-      return confirmedRoles.map((r) => r.id);
+        const confirmedRoles = await setUserRoles({
+          userId,
+          roleIds: roleIdsToSend,
+        }).unwrap();
+        return confirmedRoles.map((r) => r.id);
+      } finally {
+        setTimeout(() => setIsRoleToggling(false), 500);
+      }
     },
     [setUserRoles, isAdmin, systemRoleIds, userRolesByUserId],
   );
@@ -207,6 +213,7 @@ export function useUsersHandlers({
 
   return {
     isInvitationsLoading,
+    isRoleToggling,
     resendingInvitationId,
     loadInvitations,
     handleInvite,

@@ -109,12 +109,19 @@ export function useSchedulesPage() {
   );
 
   const sortedDisplayGroups = useMemo(() => {
-    const groups = [...(displayGroupsData ?? [])];
+    const groups = [...(displayGroupsData ?? [])].filter(
+      (g) => g.displayIds.length > 0,
+    );
     if (displayGroupSort === "alphabetical") {
       return groups.sort((a, b) => a.name.localeCompare(b.name));
     }
     return groups.sort((a, b) => b.displayIds.length - a.displayIds.length);
   }, [displayGroupsData, displayGroupSort]);
+
+  const hasEmptyDisplayGroups = useMemo(
+    () => (displayGroupsData ?? []).some((g) => g.displayIds.length === 0),
+    [displayGroupsData],
+  );
 
   return {
     isLoading,
@@ -134,6 +141,7 @@ export function useSchedulesPage() {
     availableFlashContents,
     schedules,
     sortedDisplayGroups,
+    hasEmptyDisplayGroups,
     displayGroupsData,
     createDialogKind,
     setCreateDialogKind,

@@ -361,6 +361,7 @@ export const rbacApi = api.injectEndpoints({
       ],
     }),
     getPermissions: build.query<RbacPermission[], void>({
+      keepUnusedDataFor: 600,
       query: () => "permissions/options",
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacPermission[]>(response, "getPermissions"),

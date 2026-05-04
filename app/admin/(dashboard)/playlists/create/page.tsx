@@ -6,11 +6,7 @@ import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY } from "@/lib/content-search-params";
 import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
 import { getServerSession } from "@/lib/server/auth";
-import {
-  serverFetchJson,
-  sessionHasPermission,
-  WILDFIRE_SERVER_REVALIDATE_SECONDS,
-} from "@/lib/server/api";
+import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import { ContentOptionsCacheSeeder } from "../../content/content-page-client";
 import { CreatePlaylistPageView } from "./create-playlist-page-client";
@@ -35,7 +31,7 @@ export default async function CreatePlaylistPage(): Promise<ReactElement> {
         status: PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY.status,
       },
       tags: ["content-options"],
-      revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
+      revalidate: 86400,
     });
     if (optionsRes.ok) {
       const options = parseApiResponseDataSafe<ContentOption[]>(

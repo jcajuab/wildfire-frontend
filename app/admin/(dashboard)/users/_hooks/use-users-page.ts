@@ -44,6 +44,7 @@ export interface UseUsersPageResult {
   usersLoading: boolean;
   usersFetching: boolean;
   usersError: boolean;
+  isRoleToggling: boolean;
 
   // Invitations
   invitations: readonly InvitationRecord[];
@@ -201,6 +202,7 @@ export function useUsersPage(): UseUsersPageResult {
     usersLoading,
     usersFetching: usersQueryFetching,
     usersError,
+    isRoleToggling: handlers.isRoleToggling,
     invitations,
     isInvitationsLoading: handlers.isInvitationsLoading,
     resendingInvitationId: handlers.resendingInvitationId,

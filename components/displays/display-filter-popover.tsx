@@ -1,10 +1,21 @@
 "use client";
 
 import type { ReactElement } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { IconFilter, IconX } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  useComboboxAnchor,
+} from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -18,7 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import type { DisplayOutputFilter, DisplayStatus } from "@/types/display";
 
 export type DisplayStatusFilter = "all" | DisplayStatus;
@@ -66,15 +76,24 @@ export function DisplayFilterPopover({
     (statusFilter === "all" ? 0 : 1);
   const hasActiveFilters = activeFilterCount > 0;
 
-  const toggleGroup = (groupName: string, checked: boolean): void => {
-    if (checked) {
-      onGroupsChange([...selectedGroups, groupName]);
-      return;
-    }
-    onGroupsChange(
-      selectedGroups.filter((selectedGroup) => selectedGroup !== groupName),
-    );
-  };
+  const anchorRef = useComboboxAnchor();
+  const [groupSearchValue, setGroupSearchValue] = useState("");
+  const [groupComboOpen, setGroupComboOpen] = useState(false);
+
+  const filteredGroups = useMemo(() => {
+    const trimmed = groupSearchValue.trim().toLowerCase();
+    if (!trimmed) return availableGroups;
+    return availableGroups.filter((g) => g.toLowerCase().includes(trimmed));
+  }, [availableGroups, groupSearchValue]);
+
+  const handleGroupsValueChange = useCallback(
+    (next: unknown) => {
+      const nextArr = Array.isArray(next) ? (next as string[]) : [];
+      onGroupsChange(nextArr);
+      setGroupSearchValue("");
+    },
+    [onGroupsChange],
+  );
 
   return (
     <Popover>
@@ -188,35 +207,44 @@ export function DisplayFilterPopover({
                 No groups available.
               </p>
             ) : (
-              <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
-                {availableGroups.map((groupName, index) => {
-                  const checkboxId = `display-group-filter-${index}`;
-                  const isChecked = selectedGroups.includes(groupName);
-
-                  return (
-                    <label
-                      key={groupName}
-                      htmlFor={checkboxId}
-                      className={cn(
-                        "flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-2 text-sm transition-colors duration-150 motion-reduce:transition-none",
-                        isChecked
-                          ? "border-primary/40 bg-primary/10 text-foreground"
-                          : "border-border/70 hover:border-primary/30 hover:bg-muted/40",
-                      )}
-                    >
-                      <Checkbox
-                        id={checkboxId}
-                        checked={isChecked}
-                        onCheckedChange={(checked) =>
-                          toggleGroup(groupName, checked === true)
-                        }
-                        aria-label={`Filter by group ${groupName}`}
-                      />
-                      <span className="min-w-0 truncate">{groupName}</span>
-                    </label>
-                  );
-                })}
-              </div>
+              <Combobox
+                multiple
+                value={selectedGroups as string[]}
+                items={availableGroups as string[]}
+                filteredItems={filteredGroups as string[]}
+                onValueChange={handleGroupsValueChange}
+                inputValue={groupSearchValue}
+                onInputValueChange={(v) => setGroupSearchValue(v ?? "")}
+                open={groupComboOpen}
+                onOpenChange={(next) => setGroupComboOpen(next)}
+              >
+                <ComboboxChips ref={anchorRef}>
+                  {selectedGroups.map((name) => (
+                    <ComboboxChip key={name}>
+                      <span className="inline-flex rounded px-1 text-xs font-medium bg-primary/15 text-foreground">
+                        {name}
+                      </span>
+                    </ComboboxChip>
+                  ))}
+                  <ComboboxChipsInput
+                    placeholder={
+                      selectedGroups.length === 0 ? "Search groups…" : ""
+                    }
+                    onFocus={() => setGroupComboOpen(true)}
+                    onClick={() => setGroupComboOpen(true)}
+                  />
+                </ComboboxChips>
+                <ComboboxContent anchor={anchorRef}>
+                  <ComboboxList>
+                    {filteredGroups.map((name) => (
+                      <ComboboxItem key={name} value={name}>
+                        {name}
+                      </ComboboxItem>
+                    ))}
+                  </ComboboxList>
+                  <ComboboxEmpty>No groups found.</ComboboxEmpty>
+                </ComboboxContent>
+              </Combobox>
             )}
           </div>
         </div>

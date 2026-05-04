@@ -2,6 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useLayoutEffect } from "react";
+import Link from "next/link";
 import { IconBolt, IconList, IconPlus } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
@@ -64,6 +65,7 @@ export function SchedulesPageView(): ReactElement {
     availableFlashContents,
     schedules,
     sortedDisplayGroups,
+    hasEmptyDisplayGroups,
     displayGroupsData,
     availableDisplayGroups,
     createDialogKind,
@@ -136,6 +138,21 @@ export function SchedulesPageView(): ReactElement {
                     Fetching...
                   </span>
                 </div>
+              </div>
+            ) : null}
+            {hasEmptyDisplayGroups &&
+            !isLoading &&
+            resourceMode === "display-group" ? (
+              <div className="mb-3 rounded-md border border-border bg-muted/30 px-3 py-2">
+                <p className="text-xs text-muted-foreground">
+                  Some display groups have no displays attached and are hidden.{" "}
+                  <Link
+                    href="/admin/displays"
+                    className="text-primary underline underline-offset-2"
+                  >
+                    Manage display groups
+                  </Link>
+                </p>
               </div>
             ) : null}
             {isLoading ? (
