@@ -337,9 +337,7 @@ export function CreateContentDialog({
                   <p className="text-xs text-muted-foreground">
                     {SUPPORTED_CONTENT_FILE_LABELS}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Max 10 MB
-                  </p>
+                  <p className="text-xs text-muted-foreground">Max 10 MB</p>
                 </div>
                 {fileError ? (
                   <p className="text-xs font-medium text-destructive">
