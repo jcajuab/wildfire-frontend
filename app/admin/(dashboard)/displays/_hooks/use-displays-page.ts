@@ -3,6 +3,8 @@
 import { useCallback, useMemo } from "react";
 
 import { useCan } from "@/hooks/use-can";
+import { useSyncExternalStore } from "react";
+import { getAuthSnapshot, subscribeToAuthState } from "@/lib/auth-session";
 import { useDebounce } from "@/hooks/use-debounce";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { useGetDisplaysBootstrapQuery } from "@/lib/api/displays-api";
@@ -86,8 +88,16 @@ export interface UseDisplaysPageResult {
 
 export function useDisplaysPage(): UseDisplaysPageResult {
   const canReadDisplays = useCan("displays:read");
-  const canUpdateDisplay = useCan("displays:update");
-  const canDeleteDisplay = useCan("displays:delete");
+  const hasUpdatePermission = useCan("displays:update");
+  const hasDeletePermission = useCan("displays:delete");
+  const authSnapshot = useSyncExternalStore(
+    subscribeToAuthState,
+    getAuthSnapshot,
+    getAuthSnapshot,
+  );
+  const isAdmin = authSnapshot.user?.isAdmin === true;
+  const canUpdateDisplay = isAdmin && hasUpdatePermission;
+  const canDeleteDisplay = isAdmin && hasDeletePermission;
 
   const filters = useDisplayFilters();
   const dialogState = useDisplayDialogState();

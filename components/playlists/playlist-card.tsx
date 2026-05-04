@@ -24,6 +24,7 @@ import { formatDateWithTime, formatDuration } from "@/lib/formatters";
 import { sanitizeRichTextHtml } from "@/lib/content-thumbnail-preview";
 import { cn } from "@/lib/utils";
 import { RICH_TEXT_PREVIEW_CLASSES } from "@/lib/rich-text-preview-classes";
+import { useCanModifyResource } from "@/hooks/use-can-modify-resource";
 
 interface PlaylistCardProps {
   readonly playlist: PlaylistSummary;
@@ -36,10 +37,13 @@ export const PlaylistCard = memo(function PlaylistCard({
   onEdit,
   onDelete,
 }: PlaylistCardProps): ReactElement {
+  const canModify = useCanModifyResource(playlist.owner.id);
   const visiblePreviewItems = playlist.previewItems.slice(0, 3);
   const overflowCount = playlist.itemsCount - visiblePreviewItems.length;
   const createdAtLabel = formatDateWithTime(playlist.createdAt);
   const updatedAtLabel = formatDateWithTime(playlist.updatedAt);
+  const showEdit = canModify && Boolean(onEdit);
+  const showDelete = canModify && Boolean(onDelete);
 
   return (
     <article className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
@@ -60,34 +64,36 @@ export const PlaylistCard = memo(function PlaylistCard({
             @{playlist.owner.name}
           </p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Actions for ${playlist.name}`}
-            >
-              <IconDots className="size-4" aria-hidden="true" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-40">
-            {onEdit ? (
-              <DropdownMenuItem onClick={() => onEdit(playlist)}>
-                <IconListDetails className="size-4" />
-                Edit Playlist
-              </DropdownMenuItem>
-            ) : null}
-            {onDelete ? (
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => onDelete(playlist)}
+        {showEdit || showDelete ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Actions for ${playlist.name}`}
               >
-                <IconTrash className="size-4" />
-                Delete Playlist
-              </DropdownMenuItem>
-            ) : null}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <IconDots className="size-4" aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-40">
+              {showEdit && onEdit ? (
+                <DropdownMenuItem onClick={() => onEdit(playlist)}>
+                  <IconListDetails className="size-4" />
+                  Edit Playlist
+                </DropdownMenuItem>
+              ) : null}
+              {showDelete && onDelete ? (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => onDelete(playlist)}
+                >
+                  <IconTrash className="size-4" />
+                  Delete Playlist
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
       </div>
 
       {/* Description */}

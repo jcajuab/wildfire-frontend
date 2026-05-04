@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useCanModifyResource } from "@/hooks/use-can-modify-resource";
 import {
   formatContentStatus,
   formatDateWithTime,
@@ -59,8 +60,11 @@ export const ContentCard = memo(function ContentCard({
   onDelete,
   onDownload,
 }: ContentCardProps): ReactElement {
+  const canModify = useCanModifyResource(content.owner.id);
   const canDownloadFile =
     onDownload && content.type !== "FLASH" && content.type !== "TEXT";
+  const showEdit = canModify && Boolean(onEdit);
+  const showDelete = canModify && Boolean(onDelete);
   const isFlashContent = content.type === "FLASH";
   const isTextContent = content.type === "TEXT";
   const flashThumbnailText = isFlashContent
@@ -96,7 +100,7 @@ export const ContentCard = memo(function ContentCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
-            {onEdit ? (
+            {showEdit && onEdit ? (
               <DropdownMenuItem onClick={() => onEdit(content)}>
                 <IconPencil className="size-4" />
                 Edit Content
@@ -112,7 +116,7 @@ export const ContentCard = memo(function ContentCard({
                 Download File
               </DropdownMenuItem>
             ) : null}
-            {onDelete ? (
+            {showDelete && onDelete ? (
               <DropdownMenuItem
                 variant="destructive"
                 onClick={() => onDelete(content)}
