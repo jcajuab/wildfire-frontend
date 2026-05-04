@@ -24,7 +24,7 @@ export interface UseScheduleFiltersResult {
 
 export function useScheduleFilters(): UseScheduleFiltersResult {
   const [currentDate, setCurrentDate] = useState(() => new Date());
-  const [view, setView] = useState<CalendarView>("resource-week");
+  const [view, setView] = useState<CalendarView>("resource-day");
   const [resourceMode, setResourceMode] = useState<ResourceMode>("display");
   const [displayGroupSort, setDisplayGroupSort] =
     useState<DisplayGroupSortField>("alphabetical");
