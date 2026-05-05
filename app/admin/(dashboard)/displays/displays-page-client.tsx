@@ -8,22 +8,15 @@ import {
   useMemo,
   useState,
 } from "react";
+import dynamic from "next/dynamic";
 import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
-import { BulkDeleteConfirmDialog } from "@/components/common/bulk-delete-confirm-dialog";
-import { BulkSelectionToolbar } from "@/components/common/bulk-selection-toolbar";
 import { Can } from "@/components/common/can";
-import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { EmptyState } from "@/components/common/empty-state";
 import { PaginationFooter } from "@/components/common/pagination-footer";
-import { DisplayRegistrationLinkDialog } from "@/components/displays/display-registration-link-dialog";
-import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";
 import { DisplayGrid } from "@/components/displays/display-grid";
 import { DisplaysToolbar } from "@/components/displays/displays-toolbar";
-import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
-import { ViewDisplayDialog } from "@/components/displays/view-display-dialog";
-import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -33,9 +26,53 @@ import {
 } from "@/lib/api/displays-api";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { runBulkAction } from "@/lib/bulk-action";
-import { useAppDispatch, useAppSelector, useAppStore } from "@/lib/hooks";
+import { useAppDispatch, useAppStore } from "@/lib/hooks";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
-import { PAGE_SIZE, useDisplaysPage } from "./_hooks/use-displays-page";
+import {
+  PAGE_SIZE,
+  useDisplaysPage,
+  type InitialDisplaysBootstrap,
+} from "./_hooks/use-displays-page";
+
+const DisplayRegistrationLinkDialog = dynamic(
+  () =>
+    import(
+      "@/components/displays/display-registration-link-dialog"
+    ).then((mod) => mod.DisplayRegistrationLinkDialog),
+  { ssr: false },
+);
+
+const EditDisplayDialog = dynamic(
+  () =>
+    import("@/components/displays/edit-display-dialog").then(
+      (mod) => mod.EditDisplayDialog,
+    ),
+  { ssr: false },
+);
+
+const DisplayGroupManagerDialog = dynamic(
+  () =>
+    import("@/components/displays/display-group-manager-dialog").then(
+      (mod) => mod.DisplayGroupManagerDialog,
+    ),
+  { ssr: false },
+);
+
+const ConfirmActionDialog = dynamic(
+  () =>
+    import("@/components/common/confirm-action-dialog").then(
+      (mod) => mod.ConfirmActionDialog,
+    ),
+  { ssr: false },
+);
+
+const BulkDeleteConfirmDialog = dynamic(
+  () =>
+    import("@/components/common/bulk-delete-confirm-dialog").then(
+      (mod) => mod.BulkDeleteConfirmDialog,
+    ),
+  { ssr: false },
+);
 
 export function DisplaysBootstrapCacheSeeder({
   queryArgs,
@@ -46,16 +83,7 @@ export function DisplaysBootstrapCacheSeeder({
 }): null {
   const dispatch = useAppDispatch();
   const store = useAppStore();
-  const cachedData = useAppSelector(
-    (state) =>
-      displaysApi.endpoints.getDisplaysBootstrap.select(queryArgs)(state).data,
-  );
-
   useLayoutEffect(() => {
-    if (cachedData) {
-      return;
-    }
-
     const rtSlice = displaysApi.endpoints.getRuntimeOverrides.select(undefined)(
       store.getState(),
     );
@@ -74,11 +102,83 @@ export function DisplaysBootstrapCacheSeeder({
         merged,
       ),
     );
-  }, [dispatch, store, queryArgs, data, cachedData]);
+  }, [dispatch, store, queryArgs, data]);
   return null;
 }
 
-export function DisplaysPageView(): ReactElement {
+interface DisplaysPageViewProps {
+  readonly initialQueryArgs?: DisplaysListQuery;
+  readonly initialData?: DisplaysBootstrapResponse;
+}
+
+function InitialDisplaysBootstrapSeeder({
+  queryArgs,
+  data,
+  onSeeded,
+}: {
+  readonly queryArgs: DisplaysListQuery;
+  readonly data: DisplaysBootstrapResponse;
+  readonly onSeeded: () => void;
+}): null {
+  const dispatch = useAppDispatch();
+  const store = useAppStore();
+
+  useLayoutEffect(() => {
+    let cancelled = false;
+    const rtSlice = displaysApi.endpoints.getRuntimeOverrides.select(undefined)(
+      store.getState(),
+    );
+    const rtData = rtSlice?.data;
+    const merged: DisplaysBootstrapResponse =
+      rtData != null
+        ? {
+            ...data,
+            runtimeOverrides: rtData,
+          }
+        : data;
+
+    const seedResult = dispatch(
+      displaysApi.util.upsertQueryData(
+        "getDisplaysBootstrap",
+        queryArgs,
+        merged,
+      ),
+    );
+    void seedResult.then(() => {
+      if (!cancelled) {
+        onSeeded();
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data, dispatch, onSeeded, queryArgs, store]);
+
+  return null;
+}
+
+export function DisplaysPageView({
+  initialQueryArgs,
+  initialData,
+}: DisplaysPageViewProps = {}): ReactElement {
+  const [isInitialBootstrapSeeded, setIsInitialBootstrapSeeded] = useState(
+    () => initialQueryArgs == null || initialData == null,
+  );
+  const handleInitialBootstrapSeeded = useCallback(() => {
+    setIsInitialBootstrapSeeded(true);
+  }, []);
+  const initialBootstrap = useMemo<InitialDisplaysBootstrap | undefined>(
+    () =>
+      initialQueryArgs != null && initialData != null
+        ? {
+            queryArgs: initialQueryArgs,
+            data: initialData,
+            isSeeded: isInitialBootstrapSeeded,
+          }
+        : undefined,
+    [initialData, initialQueryArgs, isInitialBootstrapSeeded],
+  );
   const {
     selectedItems,
     selectedIds,
@@ -110,14 +210,14 @@ export function DisplaysPageView(): ReactElement {
     isError,
     loadErrorMessage,
     isAddInfoDialogOpen,
-    isViewDialogOpen,
     isEditDialogOpen,
     isGroupManagerOpen,
     isUnregisterDialogOpen,
     selectedDisplay,
     displayToUnregister,
+    canCreateDisplay,
+    canManageDisplayGroups,
     setIsAddInfoDialogOpen,
-    setIsViewDialogOpen,
     setIsGroupManagerOpen,
     setPage,
     refetch,
@@ -126,17 +226,15 @@ export function DisplaysPageView(): ReactElement {
     handleGroupFilterChange,
     handleOutputFilterChange,
     handleClearFilters,
-    handleViewDetails,
     handleViewPage,
     handleUnregisterDisplay,
     handleUnregisterDialogOpenChange,
     handleConfirmUnregisterDisplay,
     handleEditDisplay,
-    handleEditFromView,
     handleSaveDisplay,
     handleEditDialogOpenChange,
     unregisterDisplayById,
-  } = useDisplaysPage();
+  } = useDisplaysPage({ initialBootstrap });
   const groupFiltersKey = useMemo(
     () => [...groupFilters].sort().join("\u0000"),
     [groupFilters],
@@ -194,78 +292,56 @@ export function DisplaysPageView(): ReactElement {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
-      <PageHeader title="Displays">
-        <>
-          <Can permission="displays:update">
-            <Button
-              variant="outline"
-              onClick={() => setIsGroupManagerOpen(true)}
-              className="gap-2"
-            >
-              <IconPlus className="size-4" aria-hidden="true" />
-              Add Display Group
-            </Button>
-          </Can>
-          <Can permission="displays:create">
-            <Button onClick={() => setIsAddInfoDialogOpen(true)}>
-              <IconPlus className="size-4" aria-hidden="true" />
-              Register Display
-            </Button>
-          </Can>
-        </>
-      </PageHeader>
-
-      {isError ? (
-        <div className="mx-6 mt-3 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-2.5 text-sm text-destructive sm:mx-8">
-          {loadErrorMessage}
-        </div>
+      {initialQueryArgs != null && initialData != null ? (
+        <InitialDisplaysBootstrapSeeder
+          queryArgs={initialQueryArgs}
+          data={initialData}
+          onSeeded={handleInitialBootstrapSeeded}
+        />
       ) : null}
-
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
-            <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-              {isSelectionMode ? (
-                <BulkSelectionToolbar
-                  selectedCount={selectedDisplayCount}
-                  deleteLabel={unregisterSelectedLabel}
-                  onDelete={() => setIsBulkUnregisterDialogOpen(true)}
-                  onCancel={handleCancelSelectionMode}
-                />
-              ) : null}
-              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:w-auto">
-                {canDeleteDisplay && !isSelectionMode ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsSelectionMode(true)}
-                    className="w-full sm:w-auto"
-                  >
-                    Select mode
-                  </Button>
-                ) : null}
-                <DisplaysToolbar
-                  statusFilter={statusFilter}
-                  search={search}
-                  selectedGroups={groupFilters}
-                  selectedOutput={normalizedOutputFilter}
-                  filteredResultsCount={displaysData?.total ?? 0}
-                  availableGroups={availableGroupFilters}
-                  availableOutputs={availableOutputFilters}
-                  isFetching={isFetching && !isLoading}
-                  onStatusFilterChange={handleStatusFilterChange}
-                  onSearchChange={handleSearchChange}
-                  onGroupFilterChange={handleGroupFilterChange}
-                  onOutputFilterChange={handleOutputFilterChange}
-                  onClearFilters={handleClearFilters}
-                />
-              </div>
-            </div>
-          </div>
+          <DisplaysToolbar
+            statusFilter={statusFilter}
+            search={search}
+            selectedGroups={groupFilters}
+            selectedOutput={normalizedOutputFilter}
+            filteredResultsCount={displaysData?.total ?? 0}
+            availableGroups={availableGroupFilters}
+            availableOutputs={availableOutputFilters}
+            isFetching={isFetching && !isLoading}
+            canCreateDisplay={canCreateDisplay}
+            canManageGroups={canManageDisplayGroups}
+            canDeleteDisplay={canDeleteDisplay}
+            bulkState={
+              isSelectionMode
+                ? {
+                    mode: "bulk-unregister",
+                    selectedCount: selectedDisplayCount,
+                    onDelete: () => setIsBulkUnregisterDialogOpen(true),
+                    onCancel: handleCancelSelectionMode,
+                  }
+                : {
+                    mode: "normal",
+                    onEnterBulkUnregister: () => setIsSelectionMode(true),
+                  }
+            }
+            onRegisterDisplay={() => setIsAddInfoDialogOpen(true)}
+            onManageGroups={() => setIsGroupManagerOpen(true)}
+            onStatusFilterChange={handleStatusFilterChange}
+            onSearchChange={handleSearchChange}
+            onGroupFilterChange={handleGroupFilterChange}
+            onOutputFilterChange={handleOutputFilterChange}
+            onClearFilters={handleClearFilters}
+          />
 
-          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-5">
-            {isLoading ? (
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,24rem))] gap-4">
+          <div className="min-h-0 flex-1 overflow-auto p-4">
+            {isError ? (
+              <div className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
+                {loadErrorMessage}
+              </div>
+            ) : isLoading ? (
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-4">
                 {Array.from({ length: 6 }).map((_, index) => (
                   <Skeleton key={index} className="h-[220px] rounded-md" />
                 ))}
@@ -286,7 +362,6 @@ export function DisplaysPageView(): ReactElement {
             ) : (
               <DisplayGrid
                 items={displays}
-                onViewDetails={handleViewDetails}
                 onViewPage={handleViewPage}
                 onUnregisterDisplay={
                   canDeleteDisplay ? handleUnregisterDisplay : undefined
@@ -315,65 +390,68 @@ export function DisplaysPageView(): ReactElement {
             total={displaysData?.total ?? 0}
             onPageChange={setPage}
             variant="compact"
+            alwaysShow
           />
         </footer>
       </section>
 
-      <DisplayRegistrationLinkDialog
-        open={isAddInfoDialogOpen}
-        onOpenChange={setIsAddInfoDialogOpen}
-        onRegistrationSucceeded={refetch}
-      />
+      {isAddInfoDialogOpen ? (
+        <DisplayRegistrationLinkDialog
+          open={isAddInfoDialogOpen}
+          onOpenChange={setIsAddInfoDialogOpen}
+          onRegistrationSucceeded={refetch}
+        />
+      ) : null}
 
-      <ViewDisplayDialog
-        display={selectedDisplay}
-        open={isViewDialogOpen}
-        onOpenChange={setIsViewDialogOpen}
-        onEdit={handleEditFromView}
-        canEdit={canUpdateDisplay}
-      />
+      {isEditDialogOpen || selectedDisplay != null ? (
+        <EditDisplayDialog
+          display={selectedDisplay}
+          existingGroups={displayGroupsData}
+          emergencyContentOptions={emergencyContentOptions}
+          open={isEditDialogOpen}
+          onOpenChange={handleEditDialogOpenChange}
+          onSave={handleSaveDisplay}
+          canManageGroups={canUpdateDisplay}
+        />
+      ) : null}
 
-      <EditDisplayDialog
-        display={selectedDisplay}
-        existingGroups={displayGroupsData}
-        emergencyContentOptions={emergencyContentOptions}
-        open={isEditDialogOpen}
-        onOpenChange={handleEditDialogOpenChange}
-        onSave={handleSaveDisplay}
-        canManageGroups={canUpdateDisplay}
-      />
+      {isGroupManagerOpen ? (
+        <DisplayGroupManagerDialog
+          open={isGroupManagerOpen}
+          onOpenChange={setIsGroupManagerOpen}
+          groups={displayGroupsData}
+        />
+      ) : null}
 
-      <DisplayGroupManagerDialog
-        open={isGroupManagerOpen}
-        onOpenChange={setIsGroupManagerOpen}
-        groups={displayGroupsData}
-      />
+      {isUnregisterDialogOpen || displayToUnregister != null ? (
+        <ConfirmActionDialog
+          open={isUnregisterDialogOpen}
+          onOpenChange={handleUnregisterDialogOpenChange}
+          title="Unregister display?"
+          description={
+            displayToUnregister
+              ? `This will disconnect \"${displayToUnregister.name}\" and revoke its runtime authentication key.`
+              : "This will disconnect the display and revoke its runtime authentication key."
+          }
+          confirmLabel="Unregister Display"
+          errorFallback="Failed to unregister display."
+          onConfirm={handleConfirmUnregisterDisplay}
+        />
+      ) : null}
 
-      <ConfirmActionDialog
-        open={isUnregisterDialogOpen}
-        onOpenChange={handleUnregisterDialogOpenChange}
-        title="Unregister display?"
-        description={
-          displayToUnregister
-            ? `This will disconnect \"${displayToUnregister.name}\" and revoke its runtime authentication key.`
-            : "This will disconnect the display and revoke its runtime authentication key."
-        }
-        confirmLabel="Unregister Display"
-        errorFallback="Failed to unregister display."
-        onConfirm={handleConfirmUnregisterDisplay}
-      />
-
-      <BulkDeleteConfirmDialog
-        open={isBulkUnregisterDialogOpen}
-        onOpenChange={setIsBulkUnregisterDialogOpen}
-        selectedLabels={selectedDisplayLabels}
-        title="Unregister selected displays?"
-        itemName="display"
-        itemNamePlural="displays"
-        confirmLabel={unregisterSelectedLabel}
-        actionDescription="This will disconnect and revoke runtime authentication for"
-        onConfirm={handleConfirmBulkUnregister}
-      />
+      {isBulkUnregisterDialogOpen ? (
+        <BulkDeleteConfirmDialog
+          open={isBulkUnregisterDialogOpen}
+          onOpenChange={setIsBulkUnregisterDialogOpen}
+          selectedLabels={selectedDisplayLabels}
+          title="Unregister selected displays?"
+          itemName="display"
+          itemNamePlural="displays"
+          confirmLabel={unregisterSelectedLabel}
+          actionDescription="This will disconnect and revoke runtime authentication for"
+          onConfirm={handleConfirmBulkUnregister}
+        />
+      ) : null}
     </div>
   );
 }

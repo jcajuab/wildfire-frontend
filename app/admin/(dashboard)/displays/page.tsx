@@ -18,10 +18,7 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
-import {
-  DisplaysBootstrapCacheSeeder,
-  DisplaysPageView,
-} from "./displays-page-client";
+import { DisplaysPageView } from "./displays-page-client";
 
 interface DisplaysPageProps {
   readonly searchParams?: Promise<
@@ -50,7 +47,10 @@ function bootstrapSearchParamsRecord(
 export default async function DisplaysPage({
   searchParams,
 }: DisplaysPageProps): Promise<ReactElement> {
-  const session = await getServerSession();
+  const [session, sp] = await Promise.all([
+    getServerSession(),
+    searchParams,
+  ]);
   if (!session) {
     redirect(`/login?redirectTo=${encodeURIComponent("/admin/displays")}`);
   }
@@ -58,8 +58,7 @@ export default async function DisplaysPage({
     redirect("/unauthorized");
   }
 
-  const sp = (await searchParams) ?? {};
-  const queryArgs = displaysBootstrapQueryFromSearchParams(sp);
+  const queryArgs = displaysBootstrapQueryFromSearchParams(sp ?? {});
 
   const bootstrapRes = await serverFetchJson<unknown>({
     session,
@@ -79,12 +78,6 @@ export default async function DisplaysPage({
   );
 
   return (
-    <>
-      <DisplaysBootstrapCacheSeeder
-        queryArgs={queryArgs}
-        data={bootstrapData}
-      />
-      <DisplaysPageView />
-    </>
+    <DisplaysPageView initialQueryArgs={queryArgs} initialData={bootstrapData} />
   );
 }

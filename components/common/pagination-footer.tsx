@@ -55,6 +55,7 @@ interface PaginationFooterProps {
   readonly total: number;
   readonly onPageChange: (page: number) => void;
   readonly variant?: PaginationVariant;
+  readonly alwaysShow?: boolean;
 }
 
 export function PaginationFooter({
@@ -63,14 +64,16 @@ export function PaginationFooter({
   total,
   onPageChange,
   variant = "compact",
+  alwaysShow = false,
 }: PaginationFooterProps): ReactElement | null {
-  const totalPages = Math.ceil(total / pageSize);
-  const startItem = total === 0 ? 0 : (page - 1) * pageSize + 1;
-  const endItem = Math.min(page * pageSize, total);
-  const canGoPrevious = page > 1;
-  const canGoNext = page < totalPages;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const boundedPage = Math.min(Math.max(page, 1), totalPages);
+  const startItem = total === 0 ? 0 : (boundedPage - 1) * pageSize + 1;
+  const endItem = Math.min(boundedPage * pageSize, total);
+  const canGoPrevious = boundedPage > 1;
+  const canGoNext = boundedPage < totalPages;
 
-  if (total <= pageSize || totalPages <= 1) {
+  if (!alwaysShow && (total <= pageSize || totalPages <= 1)) {
     return null;
   }
 
@@ -80,11 +83,11 @@ export function PaginationFooter({
   };
 
   return (
-    <div className="flex flex-col gap-2 border-t border-border px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex w-full flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-muted-foreground sm:text-left">
         Showing {startItem} to {endItem} of {total} results
       </p>
-      <Pagination className="w-full justify-end sm:w-auto">
+      <Pagination className="mx-0 w-full justify-start sm:w-auto sm:justify-end">
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
@@ -92,16 +95,16 @@ export function PaginationFooter({
               aria-disabled={!canGoPrevious}
               tabIndex={canGoPrevious ? undefined : -1}
               className={!canGoPrevious ? "pointer-events-none opacity-50" : ""}
-              onClick={handleGo(page - 1)}
+              onClick={handleGo(boundedPage - 1)}
             />
           </PaginationItem>
           {variant === "numbered" ? (
-            getNumberedPageTokens(page, totalPages).map((token, index) =>
+            getNumberedPageTokens(boundedPage, totalPages).map((token, index) =>
               typeof token === "number" ? (
                 <PaginationItem key={token}>
                   <PaginationLink
                     href="#"
-                    isActive={token === page}
+                    isActive={token === boundedPage}
                     onClick={handleGo(token)}
                   >
                     {token}
@@ -116,7 +119,7 @@ export function PaginationFooter({
           ) : (
             <PaginationItem>
               <PaginationLink href="#" isActive aria-current="page">
-                {page}
+                {boundedPage}
               </PaginationLink>
             </PaginationItem>
           )}
@@ -126,7 +129,7 @@ export function PaginationFooter({
               aria-disabled={!canGoNext}
               tabIndex={canGoNext ? undefined : -1}
               className={!canGoNext ? "pointer-events-none opacity-50" : ""}
-              onClick={handleGo(page + 1)}
+              onClick={handleGo(boundedPage + 1)}
             />
           </PaginationItem>
         </PaginationContent>

@@ -2,9 +2,17 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { DisplayFilterPopover } from "@/components/displays/display-filter-popover";
+import { TooltipProvider } from "@/components/ui/tooltip";
+
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
 
 describe("DisplayFilterPopover", () => {
   beforeAll(() => {
+    globalThis.ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
     if (!Element.prototype.hasPointerCapture) {
       Element.prototype.hasPointerCapture = () => false;
     }
@@ -27,25 +35,27 @@ describe("DisplayFilterPopover", () => {
     const user = userEvent.setup();
 
     render(
-      <DisplayFilterPopover
-        statusFilter="LIVE"
-        selectedGroups={["Lobby", "Hallway"]}
-        selectedOutput="hdmi-1"
-        filteredResultsCount={6}
-        availableGroups={["Lobby", "Hallway", "Cafe"]}
-        availableOutputs={["hdmi-1", "hdmi-2"]}
-        onStatusChange={onStatusChange}
-        onGroupsChange={onGroupsChange}
-        onOutputChange={onOutputChange}
-        onClearFilters={onClearFilters}
-      />,
+      <TooltipProvider>
+        <DisplayFilterPopover
+          statusFilter="LIVE"
+          selectedGroups={["Lobby", "Hallway"]}
+          selectedOutput="hdmi-1"
+          filteredResultsCount={6}
+          availableGroups={["Lobby", "Hallway", "Cafe"]}
+          availableOutputs={["hdmi-1", "hdmi-2"]}
+          onStatusChange={onStatusChange}
+          onGroupsChange={onGroupsChange}
+          onOutputChange={onOutputChange}
+          onClearFilters={onClearFilters}
+        />
+      </TooltipProvider>,
     );
 
-    expect(screen.getByRole("button", { name: /Filter/ })).toHaveTextContent(
-      "6",
-    );
+    expect(
+      screen.getByRole("button", { name: "Filter displays" }),
+    ).toHaveTextContent("6");
 
-    await user.click(screen.getByRole("button", { name: /Filter/ }));
+    await user.click(screen.getByRole("button", { name: "Filter displays" }));
     expect(
       document.querySelector('[data-slot="popover-content"]'),
     ).toHaveAttribute("data-side", "bottom");
@@ -59,21 +69,23 @@ describe("DisplayFilterPopover", () => {
     const user = userEvent.setup();
 
     render(
-      <DisplayFilterPopover
-        statusFilter="all"
-        selectedGroups={[]}
-        selectedOutput="all"
-        filteredResultsCount={20}
-        availableGroups={[]}
-        availableOutputs={[]}
-        onStatusChange={onStatusChange}
-        onGroupsChange={vi.fn()}
-        onOutputChange={vi.fn()}
-        onClearFilters={vi.fn()}
-      />,
+      <TooltipProvider>
+        <DisplayFilterPopover
+          statusFilter="all"
+          selectedGroups={[]}
+          selectedOutput="all"
+          filteredResultsCount={20}
+          availableGroups={[]}
+          availableOutputs={[]}
+          onStatusChange={onStatusChange}
+          onGroupsChange={vi.fn()}
+          onOutputChange={vi.fn()}
+          onClearFilters={vi.fn()}
+        />
+      </TooltipProvider>,
     );
 
-    await user.click(screen.getByRole("button", { name: /^Filter$/ }));
+    await user.click(screen.getByRole("button", { name: "Filter displays" }));
     await user.click(screen.getByRole("combobox", { name: "Status" }));
     expect(
       document.querySelector('[data-slot="select-content"]'),

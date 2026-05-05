@@ -9,7 +9,6 @@ import type { Display } from "@/types/display";
 
 interface DisplayGridProps {
   readonly items: readonly Display[];
-  readonly onViewDetails: (display: Display) => void;
   readonly onViewPage: (display: Display) => void;
   readonly onUnregisterDisplay?: (display: Display) => void;
   readonly onEditDisplay?: (display: Display) => void;
@@ -20,7 +19,6 @@ interface DisplayGridProps {
 
 export function DisplayGrid({
   items,
-  onViewDetails,
   onViewPage,
   onUnregisterDisplay,
   onEditDisplay,
@@ -39,12 +37,11 @@ export function DisplayGrid({
   }
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,24rem))] gap-4">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-4">
       {items.map((display) => (
         <DisplayCard
           key={display.id}
           display={display}
-          onViewDetails={onViewDetails}
           onViewPage={onViewPage}
           onUnregisterDisplay={onUnregisterDisplay}
           onEditDisplay={onEditDisplay}

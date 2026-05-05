@@ -29,6 +29,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { DisplayOutputFilter, DisplayStatus } from "@/types/display";
 
 export type DisplayStatusFilter = "all" | DisplayStatus;
@@ -97,19 +102,28 @@ export function DisplayFilterPopover({
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="default" className="gap-2">
-          <IconFilter className="size-4" aria-hidden="true" />
-          <span>Filter</span>
-          {isFetching ? (
-            <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          ) : hasActiveFilters ? (
-            <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground tabular-nums">
-              {filteredResultsCount}
-            </span>
-          ) : null}
-        </Button>
-      </PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="relative"
+              aria-label="Filter displays"
+            >
+              <IconFilter className="size-4" aria-hidden="true" />
+              {isFetching ? (
+                <span className="absolute -right-1 -top-1 size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              ) : hasActiveFilters ? (
+                <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground tabular-nums">
+                  {filteredResultsCount}
+                </span>
+              ) : null}
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Filter</TooltipContent>
+      </Tooltip>
       <PopoverContent
         className="w-80 p-4"
         side="bottom"

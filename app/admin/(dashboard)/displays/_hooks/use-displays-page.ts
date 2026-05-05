@@ -7,7 +7,11 @@ import { useSyncExternalStore } from "react";
 import { getAuthSnapshot, subscribeToAuthState } from "@/lib/auth-session";
 import { useDebounce } from "@/hooks/use-debounce";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
-import { useGetDisplaysBootstrapQuery } from "@/lib/api/displays-api";
+import {
+  displaysApi,
+  useGetDisplaysBootstrapQuery,
+  useLazyGetDisplaysBootstrapQuery,
+} from "@/lib/api/displays-api";
 
 import { dedupeDisplayGroupNames } from "@/lib/display-group-normalization";
 import {
@@ -17,7 +21,9 @@ import {
 import type { DisplayStatusFilter } from "@/components/displays/display-filter-popover";
 import type { Display, DisplayOutputFilter } from "@/types/display";
 import type {
+  DisplaysBootstrapResponse,
   DisplayGroup,
+  DisplaysListQuery,
   DisplaysListResponse,
 } from "@/lib/api/displays-api";
 import { useDisplayFilters } from "./use-display-filters";
@@ -27,9 +33,21 @@ import { useDisplayCrudHandlers } from "./use-display-crud-handlers";
 
 export const PAGE_SIZE = DISPLAYS_PAGE_SIZE;
 
+export interface InitialDisplaysBootstrap {
+  readonly queryArgs: DisplaysListQuery;
+  readonly data: DisplaysBootstrapResponse;
+  readonly isSeeded: boolean;
+}
+
+interface UseDisplaysPageOptions {
+  readonly initialBootstrap?: InitialDisplaysBootstrap;
+}
+
 export interface UseDisplaysPageResult {
   // Permissions
   canReadDisplays: boolean;
+  canCreateDisplay: boolean;
+  canManageDisplayGroups: boolean;
   canUpdateDisplay: boolean;
   canDeleteDisplay: boolean;
 
@@ -55,7 +73,6 @@ export interface UseDisplaysPageResult {
 
   // Dialog state
   isAddInfoDialogOpen: boolean;
-  isViewDialogOpen: boolean;
   isEditDialogOpen: boolean;
   isGroupManagerOpen: boolean;
   isUnregisterDialogOpen: boolean;
@@ -64,7 +81,6 @@ export interface UseDisplaysPageResult {
 
   // Dialog setters
   setIsAddInfoDialogOpen: (open: boolean) => void;
-  setIsViewDialogOpen: (open: boolean) => void;
   setIsGroupManagerOpen: (open: boolean) => void;
   setPage: (page: number) => void;
 
@@ -75,20 +91,34 @@ export interface UseDisplaysPageResult {
   handleGroupFilterChange: (value: readonly string[]) => void;
   handleOutputFilterChange: (value: DisplayOutputFilter) => void;
   handleClearFilters: () => void;
-  handleViewDetails: (display: Display) => void;
   handleViewPage: (display: Display) => void;
   handleUnregisterDisplay: (display: Display) => void;
   handleUnregisterDialogOpenChange: (open: boolean) => void;
   handleConfirmUnregisterDisplay: () => Promise<void>;
   unregisterDisplayById: (displayId: string) => Promise<void>;
   handleEditDisplay: (display: Display) => void;
-  handleEditFromView: (display: Display) => void;
   handleSaveDisplay: (display: Display) => Promise<boolean>;
   handleEditDialogOpenChange: (open: boolean) => void;
 }
 
-export function useDisplaysPage(): UseDisplaysPageResult {
+function normalizedQueryKey(query: DisplaysListQuery): string {
+  return JSON.stringify({
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? PAGE_SIZE,
+    q: query.q ?? null,
+    status: query.status ?? null,
+    groupNames: query.groupNames ?? null,
+    output: query.output ?? null,
+    sortBy: query.sortBy ?? "name",
+    sortDirection: query.sortDirection ?? "asc",
+  });
+}
+
+export function useDisplaysPage({
+  initialBootstrap,
+}: UseDisplaysPageOptions = {}): UseDisplaysPageResult {
   const canReadDisplays = useCan("displays:read");
+  const hasCreatePermission = useCan("displays:create");
   const hasUpdatePermission = useCan("displays:update");
   const hasDeletePermission = useCan("displays:delete");
   const authSnapshot = useSyncExternalStore(
@@ -97,22 +127,16 @@ export function useDisplaysPage(): UseDisplaysPageResult {
     getAuthSnapshot,
   );
   const isAdmin = authSnapshot.user?.isAdmin === true;
+  const canCreateDisplay = hasCreatePermission;
+  const canManageDisplayGroups = hasUpdatePermission;
   const canUpdateDisplay = isAdmin && hasUpdatePermission;
   const canDeleteDisplay = isAdmin && hasDeletePermission;
 
   const filters = useDisplayFilters();
   const dialogState = useDisplayDialogState();
   const debouncedSearch = useDebounce(filters.search, 500);
-
-  const {
-    data: bootstrapData,
-    isLoading,
-    isFetching,
-    isError,
-    error,
-    refetch,
-  } = useGetDisplaysBootstrapQuery(
-    {
+  const currentQueryArgs = useMemo<DisplaysListQuery>(
+    () => ({
       page: filters.page,
       pageSize: PAGE_SIZE,
       q: debouncedSearch || undefined,
@@ -125,12 +149,66 @@ export function useDisplaysPage(): UseDisplaysPageResult {
           : filters.normalizedOutputFilter,
       sortBy: "name",
       sortDirection: "asc",
-    },
+    }),
+    [
+      debouncedSearch,
+      filters.groupFilters,
+      filters.normalizedOutputFilter,
+      filters.page,
+      filters.statusFilter,
+    ],
+  );
+  const isInitialBootstrapQuery =
+    initialBootstrap != null &&
+    normalizedQueryKey(initialBootstrap.queryArgs) ===
+      normalizedQueryKey(currentQueryArgs);
+  const shouldSkipInitialQuery = isInitialBootstrapQuery;
+  const [triggerBootstrapQuery] = useLazyGetDisplaysBootstrapQuery();
+
+  const {
+    data: queriedBootstrapData,
+    isLoading: queryIsLoading,
+    isFetching: queryIsFetching,
+    isError,
+    error,
+    refetch,
+  } = useGetDisplaysBootstrapQuery(
+    currentQueryArgs,
     {
       refetchOnFocus: false,
       refetchOnReconnect: false,
+      skip: shouldSkipInitialQuery,
     },
   );
+  const cachedInitialBootstrap =
+    displaysApi.endpoints.getDisplaysBootstrap.useQueryState(currentQueryArgs, {
+      skip: !isInitialBootstrapQuery,
+    });
+  const bootstrapData =
+    queriedBootstrapData ??
+    cachedInitialBootstrap.data ??
+    (isInitialBootstrapQuery ? initialBootstrap?.data : undefined);
+  const isLoading =
+    bootstrapData == null &&
+    (isInitialBootstrapQuery
+      ? cachedInitialBootstrap.isLoading
+      : queryIsLoading);
+  const isFetching = isInitialBootstrapQuery
+    ? cachedInitialBootstrap.isFetching
+    : queryIsFetching;
+  const handleRefetch = useCallback(() => {
+    if (isInitialBootstrapQuery) {
+      void triggerBootstrapQuery(currentQueryArgs, false);
+      return;
+    }
+
+    refetch();
+  }, [
+    currentQueryArgs,
+    isInitialBootstrapQuery,
+    refetch,
+    triggerBootstrapQuery,
+  ]);
 
   const displaysData = bootstrapData?.displays;
   const displayGroupsData = useMemo(
@@ -209,6 +287,8 @@ export function useDisplaysPage(): UseDisplaysPageResult {
 
   return {
     canReadDisplays,
+    canCreateDisplay,
+    canManageDisplayGroups,
     canUpdateDisplay,
     canDeleteDisplay,
     statusFilter: filters.statusFilter,
@@ -228,23 +308,20 @@ export function useDisplaysPage(): UseDisplaysPageResult {
     isError,
     loadErrorMessage,
     isAddInfoDialogOpen: dialogState.isAddInfoDialogOpen,
-    isViewDialogOpen: dialogState.isViewDialogOpen,
     isEditDialogOpen: dialogState.isEditDialogOpen,
     isGroupManagerOpen: dialogState.isGroupManagerOpen,
     isUnregisterDialogOpen: dialogState.isUnregisterDialogOpen,
     selectedDisplay: dialogState.selectedDisplay,
     displayToUnregister: dialogState.displayToUnregister,
     setIsAddInfoDialogOpen: dialogState.setIsAddInfoDialogOpen,
-    setIsViewDialogOpen: dialogState.setIsViewDialogOpen,
     setIsGroupManagerOpen: dialogState.setIsGroupManagerOpen,
     setPage: filters.setPage,
-    refetch,
+    refetch: handleRefetch,
     handleStatusFilterChange: filters.handleStatusFilterChange,
     handleSearchChange: filters.handleSearchChange,
     handleGroupFilterChange: filters.handleGroupFilterChange,
     handleOutputFilterChange: filters.handleOutputFilterChange,
     handleClearFilters: filters.handleClearFilters,
-    handleViewDetails: dialogState.handleViewDetails,
     handleViewPage: dialogState.handleViewPage,
     handleUnregisterDisplay: dialogState.handleUnregisterDisplay,
     handleUnregisterDialogOpenChange:
@@ -252,7 +329,6 @@ export function useDisplaysPage(): UseDisplaysPageResult {
     handleConfirmUnregisterDisplay,
     unregisterDisplayById: crudHandlers.unregisterDisplayById,
     handleEditDisplay: dialogState.handleEditDisplay,
-    handleEditFromView: dialogState.handleEditFromView,
     handleSaveDisplay: crudHandlers.handleSaveDisplay,
     handleEditDialogOpenChange: dialogState.handleEditDialogOpenChange,
   };

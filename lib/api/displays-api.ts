@@ -798,6 +798,7 @@ export const displaysApi = api.injectEndpoints({
 export const {
   useGetDisplaysQuery,
   useGetDisplaysBootstrapQuery,
+  useLazyGetDisplaysBootstrapQuery,
   useGetDisplayOptionsQuery,
   useGetDisplayOutputOptionsQuery,
   useGetDisplayQuery,

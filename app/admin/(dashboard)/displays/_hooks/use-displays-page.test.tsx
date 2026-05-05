@@ -4,8 +4,11 @@ import { useDisplaysPage } from "./use-displays-page";
 import { useCan } from "@/hooks/use-can";
 import { useDisplayFilters } from "./use-display-filters";
 import {
+  displaysApi,
+  type DisplaysBootstrapResponse,
   useCreateDisplayGroupMutation,
   useGetDisplaysBootstrapQuery,
+  useLazyGetDisplaysBootstrapQuery,
   useSetDisplayGroupsMutation,
   useUnregisterDisplayMutation,
   useUpdateDisplayMutation,
@@ -25,6 +28,17 @@ vi.mock("./use-display-filters", () => ({
 }));
 
 vi.mock("@/lib/api/displays-api", () => ({
+  displaysApi: {
+    endpoints: {
+      getDisplaysBootstrap: {
+        useQueryState: vi.fn(() => ({
+          data: undefined,
+          isLoading: false,
+          isFetching: false,
+        })),
+      },
+    },
+  },
   useGetDisplaysBootstrapQuery: vi.fn(() => ({
     data: undefined,
     isLoading: false,
@@ -32,6 +46,7 @@ vi.mock("@/lib/api/displays-api", () => ({
     error: null,
     refetch: vi.fn(),
   })),
+  useLazyGetDisplaysBootstrapQuery: vi.fn(() => [vi.fn()]),
   useLazyGetDisplayQuery: vi.fn(() => [vi.fn()]),
   useCreateDisplayGroupMutation: vi.fn(() => [vi.fn()]),
   useSetDisplayGroupsMutation: vi.fn(() => [vi.fn()]),
@@ -49,6 +64,12 @@ const useCanMock = vi.mocked(useCan);
 const useDisplayFiltersMock = vi.mocked(useDisplayFilters);
 const useGetDisplaysBootstrapQueryMock = vi.mocked(
   useGetDisplaysBootstrapQuery,
+);
+const useGetDisplaysBootstrapQueryStateMock = vi.mocked(
+  displaysApi.endpoints.getDisplaysBootstrap.useQueryState,
+);
+const useLazyGetDisplaysBootstrapQueryMock = vi.mocked(
+  useLazyGetDisplaysBootstrapQuery,
 );
 const useCreateDisplayGroupMutationMock = vi.mocked(
   useCreateDisplayGroupMutation,
@@ -68,6 +89,44 @@ const setOutputFilterMock = vi.fn();
 const setPageMock = vi.fn();
 const setGroupsMock = vi.fn();
 const refetchMock = vi.fn();
+
+const bootstrapData: DisplaysBootstrapResponse = {
+  displays: {
+    items: [
+      {
+        id: "display-1",
+        slug: "lobby-display",
+        fingerprint: null,
+        name: "Lobby Display",
+        location: "Lobby",
+        ipAddress: null,
+        macAddress: null,
+        screenWidth: 1920,
+        screenHeight: 1080,
+        output: "HDMI",
+        orientation: "LANDSCAPE",
+        emergencyContentId: null,
+        lastSeenAt: null,
+        status: "READY",
+        nowPlaying: null,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        updatedAt: "2025-01-01T00:00:00.000Z",
+      },
+    ],
+    total: 1,
+    page: 2,
+    pageSize: 20,
+  },
+  displayGroups: [],
+  displayOutputOptions: ["HDMI"],
+  runtimeOverrides: {
+    globalEmergency: {
+      active: false,
+      startedAt: null,
+    },
+  },
+  emergencyContentOptions: [],
+};
 
 describe("useDisplaysPage", () => {
   beforeEach(() => {
@@ -95,6 +154,16 @@ describe("useDisplaysPage", () => {
       error: null,
       refetch: refetchMock,
     } as unknown as ReturnType<typeof useGetDisplaysBootstrapQuery>);
+    useGetDisplaysBootstrapQueryStateMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+    } as unknown as ReturnType<
+      typeof displaysApi.endpoints.getDisplaysBootstrap.useQueryState
+    >);
+    useLazyGetDisplaysBootstrapQueryMock.mockReturnValue([
+      vi.fn(),
+    ] as unknown as ReturnType<typeof useLazyGetDisplaysBootstrapQuery>);
     useCreateDisplayGroupMutationMock.mockReturnValue([
       vi.fn(),
     ] as unknown as ReturnType<typeof useCreateDisplayGroupMutation>);
@@ -129,16 +198,72 @@ describe("useDisplaysPage", () => {
       {
         refetchOnFocus: false,
         refetchOnReconnect: false,
+        skip: false,
       },
     );
 
     expect("sortBy" in result.current).toBe(false);
     expect("handleSortChange" in result.current).toBe(false);
+    expect("isViewDialogOpen" in result.current).toBe(false);
+    expect("handleViewDetails" in result.current).toBe(false);
+    expect("handleEditFromView" in result.current).toBe(false);
 
     act(() => {
       result.current.handleClearFilters();
     });
 
     expect(useDisplayFiltersMock).toHaveBeenCalled();
+  });
+
+  test("uses initial bootstrap data while the matching RTK query is being seeded", () => {
+    useDisplayFiltersMock.mockReturnValue({
+      statusFilter: "all",
+      search: "",
+      page: 2,
+      groupFilters: [],
+      normalizedOutputFilter: "all",
+      setPage: setPageMock,
+      handleStatusFilterChange: setStatusFilterMock,
+      handleSearchChange: setSearchMock,
+      handleGroupFilterChange: setGroupsMock,
+      handleOutputFilterChange: setOutputFilterMock,
+      handleClearFilters: vi.fn(),
+    });
+
+    const { result } = renderHook(() =>
+      useDisplaysPage({
+        initialBootstrap: {
+          queryArgs: {
+            page: 2,
+            pageSize: 20,
+            sortBy: "name",
+            sortDirection: "asc",
+          },
+          data: bootstrapData,
+          isSeeded: false,
+        },
+      }),
+    );
+
+    expect(useGetDisplaysBootstrapQueryMock).toHaveBeenCalledWith(
+      {
+        page: 2,
+        pageSize: 20,
+        q: undefined,
+        status: undefined,
+        groupNames: undefined,
+        output: undefined,
+        sortBy: "name",
+        sortDirection: "asc",
+      },
+      {
+        refetchOnFocus: false,
+        refetchOnReconnect: false,
+        skip: true,
+      },
+    );
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.displaysData?.total).toBe(1);
+    expect(result.current.displays[0]?.name).toBe("Lobby Display");
   });
 });

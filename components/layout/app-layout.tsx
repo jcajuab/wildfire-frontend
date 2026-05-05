@@ -6,12 +6,6 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { AdminEventProvider } from "@/components/layout/admin-event-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import dynamic from "next/dynamic";
-
-const AIChatBubble = dynamic(
-  () => import("@/components/ai/ai-chat-bubble").then((m) => m.AIChatBubble),
-  { ssr: false },
-);
 
 interface AppLayoutProps {
   readonly children: ReactNode;
@@ -38,9 +32,7 @@ export function AppLayout({ children }: AppLayoutProps): ReactElement {
           >
             {children}
           </main>
-          <aside aria-label="AI assistant">
-            <AIChatBubble />
-          </aside>
+          {/* Temporarily removed while the AI assistant bubble is reworked. */}
         </SidebarProvider>
       </TooltipProvider>
     </AdminEventProvider>

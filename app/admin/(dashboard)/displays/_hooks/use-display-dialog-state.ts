@@ -11,7 +11,6 @@ import type { Display } from "@/types/display";
 
 export function useDisplayDialogState() {
   const [isAddInfoDialogOpen, setIsAddInfoDialogOpen] = useState(false);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
   const [isUnregisterDialogOpen, setIsUnregisterDialogOpen] = useState(false);
@@ -34,15 +33,6 @@ export function useDisplayDialogState() {
       }
     },
     [getDisplayById],
-  );
-
-  const handleViewDetails = useCallback(
-    (display: Display) => {
-      setSelectedDisplay(display);
-      setIsViewDialogOpen(true);
-      void refreshSelectedDisplay(display);
-    },
-    [refreshSelectedDisplay],
   );
 
   const handleViewPage = useCallback((display: Display) => {
@@ -81,16 +71,6 @@ export function useDisplayDialogState() {
     [refreshSelectedDisplay],
   );
 
-  const handleEditFromView = useCallback(
-    (display: Display) => {
-      setSelectedDisplay(display);
-      setIsViewDialogOpen(false);
-      setIsEditDialogOpen(true);
-      void refreshSelectedDisplay(display);
-    },
-    [refreshSelectedDisplay],
-  );
-
   const handleEditDialogOpenChange = useCallback((open: boolean) => {
     setIsEditDialogOpen(open);
     if (!open) {
@@ -101,20 +81,16 @@ export function useDisplayDialogState() {
   return {
     isAddInfoDialogOpen,
     setIsAddInfoDialogOpen,
-    isViewDialogOpen,
-    setIsViewDialogOpen,
     isEditDialogOpen,
     isGroupManagerOpen,
     setIsGroupManagerOpen,
     isUnregisterDialogOpen,
     selectedDisplay,
     displayToUnregister,
-    handleViewDetails,
     handleViewPage,
     handleUnregisterDisplay,
     handleUnregisterDialogOpenChange,
     handleEditDisplay,
-    handleEditFromView,
     handleEditDialogOpenChange,
   };
 }
