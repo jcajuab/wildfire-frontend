@@ -41,33 +41,19 @@ interface EditFormData {
   readonly slug: string;
   readonly outputType: DisplayOutputType;
   readonly outputIndex: string;
-  readonly resolutionWidth: string;
-  readonly resolutionHeight: string;
   readonly groups: readonly string[];
-}
-
-function parseResolution(resolution: string): {
-  width: string;
-  height: string;
-} {
-  const match = /^(\d+)x(\d+)$/.exec(resolution.trim());
-  if (!match) return { width: "", height: "" };
-  return { width: match[1], height: match[2] };
 }
 
 function createInitialFormData(display: Display): EditFormData {
   const parsedOutput = parseDisplayOutput(
     display.output === "Not available" ? null : display.output,
   );
-  const { width, height } = parseResolution(display.resolution);
 
   return {
     displayName: display.name,
     slug: display.slug,
     outputType: parsedOutput?.type ?? "HDMI",
     outputIndex: String(parsedOutput?.index ?? 0),
-    resolutionWidth: width,
-    resolutionHeight: height,
     groups: display.groups.map((group) => group.name),
   };
 }
@@ -129,26 +115,10 @@ export function EditDisplayForm({
   const hasValidOutputIndex =
     Number.isInteger(outputIndexNumber) && outputIndexNumber >= 0;
 
-  const widthRaw = formData.resolutionWidth.trim();
-  const heightRaw = formData.resolutionHeight.trim();
-  const widthNumber = widthRaw === "" ? null : Number.parseInt(widthRaw, 10);
-  const heightNumber = heightRaw === "" ? null : Number.parseInt(heightRaw, 10);
-  const hasValidResolution =
-    (widthNumber === null && heightNumber === null) ||
-    (Number.isInteger(widthNumber) &&
-      (widthNumber as number) > 0 &&
-      Number.isInteger(heightNumber) &&
-      (heightNumber as number) > 0);
-  const resolution =
-    widthNumber !== null && heightNumber !== null
-      ? `${widthNumber}x${heightNumber}`
-      : display.resolution;
-
   const canSave =
     formData.displayName.trim().length > 0 &&
     formData.slug.trim().length > 0 &&
     hasValidOutputIndex &&
-    hasValidResolution &&
     !isSaving;
 
   const handleSave = useCallback(async () => {
@@ -167,7 +137,7 @@ export function EditDisplayForm({
         ...display,
         name: formData.displayName,
         output,
-        resolution,
+        resolution: display.resolution,
         groups,
       });
       if (didSave) onClose();
@@ -298,50 +268,6 @@ export function EditDisplayForm({
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-resolution-width">Resolution Width</Label>
-            <Input
-              id="edit-resolution-width"
-              type="number"
-              min={1}
-              inputMode="numeric"
-              value={formData.resolutionWidth}
-              onChange={(event) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  resolutionWidth: event.target.value,
-                }))
-              }
-              aria-invalid={!hasValidResolution}
-              disabled={isSaving}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-resolution-height">Resolution Height</Label>
-            <Input
-              id="edit-resolution-height"
-              type="number"
-              min={1}
-              inputMode="numeric"
-              value={formData.resolutionHeight}
-              onChange={(event) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  resolutionHeight: event.target.value,
-                }))
-              }
-              aria-invalid={!hasValidResolution}
-              disabled={isSaving}
-            />
-          </div>
-        </div>
-        {!hasValidResolution ? (
-          <p className="text-xs text-destructive">
-            Resolution requires positive width and height, or leave both fields
-            empty.
-          </p>
-        ) : null}
       </div>
 
       <DialogFooter className="flex-row justify-end">

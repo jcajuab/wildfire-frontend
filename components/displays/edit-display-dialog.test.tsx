@@ -124,19 +124,8 @@ describe("EditDisplayDialog", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Output Index")).toBeInTheDocument();
     expect(
-      screen.getByRole("combobox", { name: "Emergency Content" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Emergency content help" }),
-    ).toBeInTheDocument();
-    expect(
       screen.queryByText(
         "Slug is fixed after registration and used by display runtime identity.",
-      ),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(
-        "Assign a READY image, video, or PDF for emergency override mode.",
       ),
     ).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Resolution Width")).not.toBeInTheDocument();
@@ -156,20 +145,7 @@ describe("EditDisplayDialog", () => {
     );
   });
 
-  test("shows emergency content help in a tooltip", async () => {
-    const user = userEvent.setup();
-
-    renderEditDisplayDialog();
-
-    await user.hover(
-      screen.getByRole("button", { name: "Emergency content help" }),
-    );
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Assign a READY image, video, or PDF for emergency override mode.",
-    );
-  });
-
-  test("keeps resolution and emergency content unchanged when changing display output", async () => {
+  test("keeps resolution unchanged when changing display output", async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
     const onSave = vi.fn(async () => true);
