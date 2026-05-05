@@ -54,7 +54,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { FlashTone } from "@/types/content";
+import { FLASH_MESSAGE_MAX_LENGTH, type FlashTone } from "@/types/content";
 
 const FLASH_PREVIEW_DEBOUNCE_MS = 500;
 const FILE_MAX_BYTES = 10 * 1024 * 1024;
@@ -387,10 +387,10 @@ export function CreateContentDialog({
                   value={flashMessage}
                   onChange={(event) => setFlashMessage(event.target.value)}
                   placeholder={tickerPlaceholder}
-                  maxLength={240}
+                  maxLength={FLASH_MESSAGE_MAX_LENGTH}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {flashMessage.length}/240 characters
+                  {flashMessage.length}/{FLASH_MESSAGE_MAX_LENGTH} characters
                 </p>
               </div>
               <div className="space-y-2">

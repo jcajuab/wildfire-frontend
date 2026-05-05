@@ -36,7 +36,11 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FlashTonePreview } from "@/components/content/flash-tone-preview";
-import type { Content, FlashTone } from "@/types/content";
+import {
+  FLASH_MESSAGE_MAX_LENGTH,
+  type Content,
+  type FlashTone,
+} from "@/types/content";
 
 const FLASH_PREVIEW_DEBOUNCE_MS = 500;
 
@@ -202,7 +206,7 @@ function EditContentDialogForm({
                 id="edit-flash-message"
                 value={flashMessage}
                 onChange={(event) => setFlashMessage(event.target.value)}
-                maxLength={240}
+                maxLength={FLASH_MESSAGE_MAX_LENGTH}
               />
             </div>
             <div className="space-y-2">

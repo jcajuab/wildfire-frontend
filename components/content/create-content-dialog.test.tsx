@@ -62,7 +62,7 @@ describe("CreateContentDialog", () => {
       target: { value: "HELLO WORLD" },
     });
 
-    expect(screen.getByText("11/240 characters")).toBeInTheDocument();
+    expect(screen.getByText("11/120 characters")).toBeInTheDocument();
     expect(
       screen.getByText("Ticker preview", { selector: "p" }),
     ).toBeInTheDocument();

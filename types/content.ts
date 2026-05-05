@@ -1,6 +1,9 @@
 export type ContentType = "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
 export type FlashTone = "INFO" | "WARNING" | "CRITICAL";
 
+/** Matches backend `FLASH_MESSAGE_MAX_LENGTH`. */
+export const FLASH_MESSAGE_MAX_LENGTH = 120;
+
 export type ContentStatus = "PROCESSING" | "READY" | "FAILED";
 
 interface ContentOwner {
