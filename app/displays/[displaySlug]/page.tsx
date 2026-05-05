@@ -75,7 +75,7 @@ export default function DisplayRuntimePage() {
     playlistVersion,
   } = useDisplayRuntime(displaySlug);
 
-  const { currentIndex, currentItem } = useDisplayPlayback(
+  const { currentIndex, currentItem, tickCount } = useDisplayPlayback(
     manifest,
     playlistVersion,
   );
@@ -282,7 +282,7 @@ export default function DisplayRuntimePage() {
         ) : currentItem.content.type === "VIDEO" ? (
           <div className="h-full w-full overflow-hidden bg-black">
             <video
-              key={currentItem.id}
+              key={`${currentItem.id}-${tickCount}`}
               src={currentItem.content.downloadUrl}
               className="h-full w-full object-contain"
               autoPlay

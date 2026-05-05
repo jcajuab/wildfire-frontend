@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent, ReactElement } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   IconBolt,
   IconFileText,
@@ -94,6 +94,7 @@ export function CreateContentDialog({
   const [isDragging, setIsDragging] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   const resetState = useCallback(() => {
     setTitle("");
@@ -106,6 +107,7 @@ export function CreateContentDialog({
     setIsDragging(false);
     setFileError(null);
     setIsSubmitting(false);
+    submittingRef.current = false;
   }, []);
 
   const handleClose = useCallback(() => {
@@ -143,8 +145,9 @@ export function CreateContentDialog({
   ]);
 
   const handleSubmit = useCallback(async () => {
-    if (!canSubmit) return;
+    if (!canSubmit || submittingRef.current) return;
 
+    submittingRef.current = true;
     setIsSubmitting(true);
     try {
       if (isUploadMode && selectedFile) {
@@ -165,6 +168,7 @@ export function CreateContentDialog({
 
       handleClose();
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   }, [
@@ -258,8 +262,22 @@ export function CreateContentDialog({
   }, [flashMessage]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={isTextMode ? "sm:max-w-2xl" : "sm:max-w-lg"}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (isSubmitting) return;
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent
+        className={isTextMode ? "sm:max-w-2xl" : "sm:max-w-lg"}
+        onInteractOutside={(e) => {
+          if (isSubmitting) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (isSubmitting) e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             {isUploadMode

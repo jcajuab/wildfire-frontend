@@ -8,6 +8,7 @@ export function useDisplayPlayback(
   playlistVersion: string | null,
 ) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [tickCount, setTickCount] = useState(0);
   const currentIndexRef = useRef(0);
   const lastPlaylistVersionRef = useRef(playlistVersion);
 
@@ -42,9 +43,10 @@ export function useDisplayPlayback(
     const controller = createPlayerController({
       timings,
       initialIndex: startIndex,
-      onTick: ({ index }) => {
+      onTick: ({ index, tickCount: tc }) => {
         currentIndexRef.current = index;
         setCurrentIndex(index);
+        setTickCount(tc);
       },
     });
     controller.start();
@@ -55,5 +57,5 @@ export function useDisplayPlayback(
 
   const currentItem = manifest?.items[currentIndex] ?? null;
 
-  return { currentIndex, currentItem };
+  return { currentIndex, currentItem, tickCount };
 }

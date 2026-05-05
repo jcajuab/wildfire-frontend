@@ -2,6 +2,7 @@ import type { RuntimeItemTiming } from "@/lib/display-runtime/overflow-timing";
 
 export interface PlayerTick {
   readonly index: number;
+  readonly tickCount: number;
 }
 
 export interface PlayerController {
@@ -17,6 +18,7 @@ export const createPlayerController = (input: {
   let active = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let currentIndex = 0;
+  let tickCount = 0;
 
   const clearTimer = () => {
     if (timer) {
@@ -29,7 +31,8 @@ export const createPlayerController = (input: {
     if (!active || input.timings.length === 0) {
       return;
     }
-    input.onTick({ index: currentIndex });
+    input.onTick({ index: currentIndex, tickCount });
+    tickCount += 1;
     const durationMs =
       (input.timings[currentIndex]?.effectiveDurationSeconds ?? 1) * 1000;
     timer = setTimeout(() => {
