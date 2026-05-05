@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { RoleForm, type RoleFormState } from "@/components/roles/role-form";
 import { Button } from "@/components/ui/button";
 import { rbacApi, type RbacPermission } from "@/lib/api/rbac-api";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { useCreateRolePage } from "./use-create-role-page";
 
 export function PermissionsOptionsCacheSeeder({
@@ -15,11 +15,20 @@ export function PermissionsOptionsCacheSeeder({
   readonly data: readonly RbacPermission[];
 }): null {
   const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) =>
+      rbacApi.endpoints.getPermissions.select(undefined)(state).data,
+  );
+
   useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
     dispatch(
       rbacApi.util.upsertQueryData("getPermissions", undefined, [...data]),
     );
-  }, [dispatch, data]);
+  }, [dispatch, data, cachedData]);
   return null;
 }
 

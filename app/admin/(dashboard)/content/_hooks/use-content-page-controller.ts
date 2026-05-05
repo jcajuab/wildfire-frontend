@@ -10,7 +10,10 @@ import {
   useListContentQuery,
   useUploadPdfMutation,
 } from "@/lib/api/content-api";
-import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import {
+  getApiErrorMessage,
+  notifyApiError,
+} from "@/lib/api/get-api-error-message";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
 import { useContentJobMonitor } from "./content-job-monitor";
 import { useContentPageFilters } from "./use-content-page-filters";
@@ -135,8 +138,8 @@ export function useContentPageController() {
           JSON.stringify({ ...session, contentName: name }),
         );
         router.push(`/admin/content/pdf-crop?uploadId=${session.uploadId}`);
-      } catch {
-        // notifyApiError already called inside uploadPdf on failure via RTK
+      } catch (error) {
+        notifyApiError(error, "Failed to upload PDF.");
       }
       return;
     }

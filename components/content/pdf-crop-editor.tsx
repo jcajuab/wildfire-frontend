@@ -18,6 +18,7 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconCrop,
+  IconLoader2,
   IconTrash,
   IconX,
 } from "@tabler/icons-react";
@@ -50,6 +51,7 @@ export interface PdfCropEditorProps {
   contentName?: string;
   onSubmit: (regions: CropRegion[]) => void;
   onCancel: () => void;
+  isSubmitting?: boolean;
 }
 
 interface CollectedCrop extends CropRegion {
@@ -428,6 +430,7 @@ export function PdfCropEditor({
   contentName,
   onSubmit,
   onCancel,
+  isSubmitting = false,
 }: PdfCropEditorProps): ReactElement {
   const maskId = useId();
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -782,12 +785,24 @@ export function PdfCropEditor({
           </p>
         </div>
         <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
-          <Button variant="outline" onClick={onCancel}>
+          <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!canSubmit}>
-            <IconCrop className="size-4" />
-            Create
+          <Button
+            onClick={handleSubmit}
+            disabled={!canSubmit || isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <IconLoader2 className="size-4 animate-spin" />
+                Creating…
+              </>
+            ) : (
+              <>
+                <IconCrop className="size-4" />
+                Create
+              </>
+            )}
           </Button>
         </div>
       </header>

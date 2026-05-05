@@ -30,7 +30,7 @@ import {
   type RbacUserListQuery,
   type RbacUsersListResponse,
 } from "@/lib/api/rbac-api";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { PAGE_SIZE, useUsersPage } from "./_hooks/use-users-page";
 
 export function UsersListCacheSeeder({
@@ -41,9 +41,17 @@ export function UsersListCacheSeeder({
   readonly data: RbacUsersListResponse;
 }): null {
   const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) => rbacApi.endpoints.getUsers.select(queryArgs)(state).data,
+  );
+
   useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
     dispatch(rbacApi.util.upsertQueryData("getUsers", queryArgs, data));
-  }, [dispatch, queryArgs, data]);
+  }, [dispatch, queryArgs, data, cachedData]);
   return null;
 }
 
@@ -53,11 +61,20 @@ export function RoleOptionsCacheSeeder({
   readonly data: readonly RbacRoleSummary[];
 }): null {
   const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) =>
+      rbacApi.endpoints.getRoleOptions.select(undefined)(state).data,
+  );
+
   useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
     dispatch(
       rbacApi.util.upsertQueryData("getRoleOptions", undefined, [...data]),
     );
-  }, [dispatch, data]);
+  }, [dispatch, data, cachedData]);
   return null;
 }
 

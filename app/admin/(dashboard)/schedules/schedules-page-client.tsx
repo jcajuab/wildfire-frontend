@@ -24,7 +24,7 @@ import {
   type ScheduleWindowQuery,
   type SchedulesBootstrapResponse,
 } from "@/lib/api/schedules-api";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { useSchedulesPage } from "./_hooks/use-schedules-page";
 
 export function SchedulesBootstrapCacheSeeder({
@@ -35,7 +35,16 @@ export function SchedulesBootstrapCacheSeeder({
   readonly data: SchedulesBootstrapResponse;
 }): null {
   const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) =>
+      schedulesApi.endpoints.getSchedulesBootstrap.select(queryArgs)(state).data,
+  );
+
   useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
     dispatch(
       schedulesApi.util.upsertQueryData(
         "getSchedulesBootstrap",
@@ -43,7 +52,7 @@ export function SchedulesBootstrapCacheSeeder({
         data,
       ),
     );
-  }, [dispatch, queryArgs, data]);
+  }, [dispatch, queryArgs, data, cachedData]);
   return null;
 }
 

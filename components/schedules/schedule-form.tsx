@@ -2,7 +2,6 @@
 
 import type { ReactElement } from "react";
 import { useMemo, useState } from "react";
-import { IconCalendar, IconClock } from "@tabler/icons-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -380,83 +379,67 @@ function ScheduleFormFrame({
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="schedule-start-date">Start Date</Label>
-            <div className="relative">
-              <IconCalendar className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="schedule-start-date"
-                type="date"
-                value={formData.startDate}
-                disabled={isSubmitting}
-                onChange={(event) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    startDate: event.target.value,
-                  }))
-                }
-                className="pl-8"
-              />
-            </div>
+            <Input
+              id="schedule-start-date"
+              type="date"
+              value={formData.startDate}
+              disabled={isSubmitting}
+              onChange={(event) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  startDate: event.target.value,
+                }))
+              }
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="schedule-end-date">End Date</Label>
-            <div className="relative">
-              <IconCalendar className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="schedule-end-date"
-                type="date"
-                value={formData.endDate}
-                disabled={isSubmitting}
-                onChange={(event) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    endDate: event.target.value,
-                  }))
-                }
-                className="pl-8"
-              />
-            </div>
+            <Input
+              id="schedule-end-date"
+              type="date"
+              value={formData.endDate}
+              disabled={isSubmitting}
+              onChange={(event) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  endDate: event.target.value,
+                }))
+              }
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="schedule-start-time">Start Time</Label>
-            <div className="relative">
-              <IconClock className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="schedule-start-time"
-                type="time"
-                value={formData.startTime}
-                disabled={isSubmitting}
-                onChange={(event) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    startTime: event.target.value,
-                  }))
-                }
-                className="pl-8"
-              />
-            </div>
+            <Input
+              id="schedule-start-time"
+              type="time"
+              value={formData.startTime}
+              disabled={isSubmitting}
+              onChange={(event) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  startTime: event.target.value,
+                }))
+              }
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="schedule-end-time">End Time</Label>
-            <div className="relative">
-              <IconClock className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="schedule-end-time"
-                type="time"
-                value={formData.endTime}
-                disabled={isSubmitting}
-                onChange={(event) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    endTime: event.target.value,
-                  }))
-                }
-                className="pl-8"
-                aria-invalid={isEndTimeBeforeStartTime}
-              />
-            </div>
+            <Input
+              id="schedule-end-time"
+              type="time"
+              value={formData.endTime}
+              disabled={isSubmitting}
+              onChange={(event) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  endTime: event.target.value,
+                }))
+              }
+              aria-invalid={isEndTimeBeforeStartTime}
+            />
           </div>
         </div>
         {isEndTimeBeforeStartTime ? (
@@ -466,39 +449,41 @@ function ScheduleFormFrame({
         ) : null}
 
         {formData.kind === "PLAYLIST" ? (
-          <div className="space-y-2">
-            <Label>Playlist</Label>
-            {isCreate && availablePlaylists.length === 0 ? (
-              <EmptyResourceCta
-                message="No playlists yet."
-                href="/admin/playlists/create"
-                onNavigate={onCancel}
-                disabled={isSubmitting}
-              />
-            ) : (
-              <Select
-                value={formData.playlistId ?? ""}
-                disabled={isSubmitting}
-                onValueChange={(value) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    playlistId: value,
-                    contentId: null,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a playlist" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availablePlaylists.map((playlist) => (
-                    <SelectItem key={playlist.id} value={playlist.id}>
-                      {playlist.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Playlist</Label>
+              {isCreate && availablePlaylists.length === 0 ? (
+                <EmptyResourceCta
+                  message="No playlists yet."
+                  href="/admin/playlists/create"
+                  onNavigate={onCancel}
+                  disabled={isSubmitting}
+                />
+              ) : (
+                <Select
+                  value={formData.playlistId ?? ""}
+                  disabled={isSubmitting}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      playlistId: value,
+                      contentId: null,
+                    }))
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a playlist" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availablePlaylists.map((playlist) => (
+                      <SelectItem key={playlist.id} value={playlist.id}>
+                        {playlist.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </div>
         ) : (
           <div className="space-y-2">

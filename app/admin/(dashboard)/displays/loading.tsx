@@ -22,7 +22,7 @@ export default function Loading(): ReactElement {
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,24rem))] gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}

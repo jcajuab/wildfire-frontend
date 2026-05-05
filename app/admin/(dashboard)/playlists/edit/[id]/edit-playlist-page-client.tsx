@@ -13,7 +13,7 @@ import {
   playlistsApi,
   type BackendPlaylistWithItems,
 } from "@/lib/api/playlists-api";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
 import { useEditPlaylistPage } from "./use-edit-playlist-page";
 
@@ -25,11 +25,20 @@ export function PlaylistDetailCacheSeeder({
   readonly data: BackendPlaylistWithItems;
 }): null {
   const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) =>
+      playlistsApi.endpoints.getPlaylist.select(playlistId)(state).data,
+  );
+
   useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
     dispatch(
       playlistsApi.util.upsertQueryData("getPlaylist", playlistId, data),
     );
-  }, [dispatch, playlistId, data]);
+  }, [dispatch, playlistId, data, cachedData]);
   return null;
 }
 

@@ -19,7 +19,7 @@ import {
   type RbacRolesListResponse,
 } from "@/lib/api/rbac-api";
 import { ROLE_CREATE_PATH } from "@/lib/role-paths";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { toast } from "sonner";
 import { PAGE_SIZE, useRolesPage } from "./_hooks/use-roles-page";
 
@@ -31,9 +31,17 @@ export function RolesListCacheSeeder({
   readonly data: RbacRolesListResponse;
 }): null {
   const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) => rbacApi.endpoints.getRoles.select(queryArgs)(state).data,
+  );
+
   useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
     dispatch(rbacApi.util.upsertQueryData("getRoles", queryArgs, data));
-  }, [dispatch, queryArgs, data]);
+  }, [dispatch, queryArgs, data, cachedData]);
   return null;
 }
 

@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { RoleForm, type RoleFormState } from "@/components/roles/role-form";
 import { Button } from "@/components/ui/button";
 import { rbacApi, type RoleEditBootstrapResponse } from "@/lib/api/rbac-api";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { ROLE_INDEX_PATH } from "@/lib/role-paths";
 import { useEditRolePage } from "./use-edit-role-page";
 
@@ -22,11 +22,20 @@ export function RoleEditBootstrapCacheSeeder({
   readonly data: RoleEditBootstrapResponse;
 }): null {
   const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) =>
+      rbacApi.endpoints.getRoleEditBootstrap.select(roleId)(state).data,
+  );
+
   useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
     dispatch(
       rbacApi.util.upsertQueryData("getRoleEditBootstrap", roleId, data),
     );
-  }, [dispatch, roleId, data]);
+  }, [dispatch, roleId, data, cachedData]);
   return null;
 }
 

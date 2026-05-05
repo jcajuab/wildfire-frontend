@@ -11,7 +11,7 @@ import {
   aiCredentialsApi,
   type AICredential,
 } from "@/lib/api/ai-credentials-api";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { useLogout } from "@/hooks/use-logout";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,13 +35,22 @@ export function AICredentialsCacheSeeder({
   readonly data: readonly AICredential[];
 }): null {
   const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) =>
+      aiCredentialsApi.endpoints.getAICredentials.select(undefined)(state).data,
+  );
+
   useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
     dispatch(
       aiCredentialsApi.util.upsertQueryData("getAICredentials", undefined, [
         ...data,
       ]),
     );
-  }, [dispatch, data]);
+  }, [dispatch, data, cachedData]);
   return null;
 }
 

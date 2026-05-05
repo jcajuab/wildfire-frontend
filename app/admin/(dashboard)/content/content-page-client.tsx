@@ -38,7 +38,7 @@ import {
   type ContentOption,
   type ContentOptionsQueryArg,
 } from "@/lib/api/content-api";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { runBulkAction } from "@/lib/bulk-action";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
@@ -52,9 +52,17 @@ export function ContentListCacheSeeder({
   readonly data: BackendContentListResponse;
 }): null {
   const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) => contentApi.endpoints.listContent.select(queryArgs)(state).data,
+  );
+
   useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
     dispatch(contentApi.util.upsertQueryData("listContent", queryArgs, data));
-  }, [dispatch, queryArgs, data]);
+  }, [dispatch, queryArgs, data, cachedData]);
   return null;
 }
 
@@ -66,11 +74,20 @@ export function ContentOptionsCacheSeeder({
   readonly data: ContentOption[];
 }): null {
   const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) =>
+      contentApi.endpoints.getContentOptions.select(queryArgs)(state).data,
+  );
+
   useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
     dispatch(
       contentApi.util.upsertQueryData("getContentOptions", queryArgs, data),
     );
-  }, [dispatch, queryArgs, data]);
+  }, [dispatch, queryArgs, data, cachedData]);
   return null;
 }
 

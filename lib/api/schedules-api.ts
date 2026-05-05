@@ -1,10 +1,10 @@
-import { revalidateWildfireTag } from "@/app/actions/revalidate-wildfire-cache";
+import { revalidateWildfireTagViaRoute } from "@/lib/api/revalidate-via-route";
 import { api } from "@/lib/api/api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 
 async function bumpSchedulesNextCache(): Promise<void> {
   try {
-    await revalidateWildfireTag("schedules-bootstrap");
+    await revalidateWildfireTagViaRoute("schedules-bootstrap");
   } catch {
     // best-effort
   }

@@ -37,7 +37,7 @@ import {
   type AuditListQuery,
   type BackendAuditListResponse,
 } from "@/lib/api/audit-api";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { LOGS_PAGE_SIZE } from "@/lib/audit-log-search-params";
 
 import { AuditExportPopover } from "./_components/audit-export-popover";
@@ -72,9 +72,18 @@ export function AuditListCacheSeeder({
   readonly data: BackendAuditListResponse;
 }): null {
   const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) =>
+      auditApi.endpoints.listAuditEvents.select(queryArgs)(state).data,
+  );
+
   useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
     dispatch(auditApi.util.upsertQueryData("listAuditEvents", queryArgs, data));
-  }, [dispatch, queryArgs, data]);
+  }, [dispatch, queryArgs, data, cachedData]);
   return null;
 }
 

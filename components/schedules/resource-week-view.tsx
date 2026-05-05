@@ -60,7 +60,7 @@ export function ResourceWeekView({
       <div className="overflow-auto">
         <div className="w-full min-w-0 max-[52rem]:min-w-[56rem]">
           <div
-            className="sticky top-0 z-30 grid border-b border-border bg-muted/30 backdrop-blur-sm"
+            className="sticky top-0 z-30 grid border-b border-border bg-muted/30 backdrop-blur-sm max-[52rem]:hidden"
             style={{ gridTemplateColumns: WEEK_GRID_TEMPLATE }}
           >
             <div className="sticky left-0 z-40 border-r border-border bg-muted/30 px-4 py-2 text-sm font-semibold">
@@ -133,11 +133,13 @@ export function ResourceWeekView({
                       className="relative border-r border-border bg-background/60 p-1.5 last:border-r-0"
                       style={{ minHeight: 72 }}
                     >
-                      {dayEvents.map((event) => {
+                      {dayEvents.map((event, index) => {
                         const schedule = schedulesById.get(event.scheduleId);
                         if (!schedule) {
                           return null;
                         }
+
+                        const showCounter = dayEvents.length > 1;
 
                         return (
                           <button
@@ -149,9 +151,21 @@ export function ResourceWeekView({
                                 ? "border-amber-500 bg-amber-500/12 hover:bg-amber-500/20"
                                 : "border-primary bg-primary/12 hover:bg-primary/20"
                             }`}
-                            aria-label={`View schedule ${schedule.name} on ${row.name}, ${event.timeLabel}`}
+                            aria-label={
+                              showCounter
+                                ? `View schedule ${schedule.name} (${index + 1} of ${dayEvents.length}) on ${row.name}, ${event.timeLabel}`
+                                : `View schedule ${schedule.name} on ${row.name}, ${event.timeLabel}`
+                            }
                           >
                             <span className="block truncate text-xs font-medium max-[52rem]:line-clamp-2 max-[52rem]:overflow-hidden max-[52rem]:whitespace-normal">
+                              {showCounter ? (
+                                <span
+                                  aria-hidden
+                                  className="mr-1 inline-flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold leading-none text-primary-foreground"
+                                >
+                                  {index + 1}
+                                </span>
+                              ) : null}
                               {schedule.name}
                             </span>
                             <span className="block truncate text-xs text-foreground/60 max-[52rem]:whitespace-normal">

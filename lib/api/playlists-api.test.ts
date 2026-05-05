@@ -5,11 +5,12 @@ vi.hoisted(() => {
   process.env.NEXT_PUBLIC_API_URL = "http://example.test";
 });
 
-vi.mock("@/app/actions/revalidate-wildfire-cache", () => ({
-  revalidateWildfireTag: vi.fn(async () => undefined),
+vi.mock("@/lib/api/revalidate-via-route", () => ({
+  revalidateWildfireTagViaRoute: vi.fn(async () => undefined),
+  revalidateWildfireTagsViaRoute: vi.fn(async () => undefined),
 }));
 
-import { revalidateWildfireTag } from "@/app/actions/revalidate-wildfire-cache";
+import { revalidateWildfireTagViaRoute } from "@/lib/api/revalidate-via-route";
 import { bootstrapAccessToken, clearAuthSession } from "@/lib/auth-session";
 import type { AppStore } from "@/lib/store";
 import {
@@ -140,7 +141,7 @@ describe("playlists api cache patches", () => {
     process.env.NEXT_PUBLIC_API_URL = "http://example.test";
     clearAuthSession(false);
     await bootstrapAccessToken();
-    vi.mocked(revalidateWildfireTag).mockClear();
+    vi.mocked(revalidateWildfireTagViaRoute).mockClear();
   });
 
   afterEach(() => {
@@ -228,7 +229,7 @@ describe("playlists api cache patches", () => {
       .unwrap();
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(revalidateWildfireTag).not.toHaveBeenCalled();
+    expect(revalidateWildfireTagViaRoute).not.toHaveBeenCalled();
     expect(selectList(store, defaultQuery)?.items.map((p) => p.id)).toEqual([
       "playlist-new",
       "playlist-old",
@@ -349,7 +350,7 @@ describe("playlists api cache patches", () => {
     });
     expect(selectList(store, searchQuery)?.items).toEqual([]);
     expect(selectList(store, searchQuery)?.total).toBe(0);
-    expect(revalidateWildfireTag).not.toHaveBeenCalled();
+    expect(revalidateWildfireTagViaRoute).not.toHaveBeenCalled();
   });
 
   test("savePlaylistItemsAtomic patches list counts, duration, and preview items", async () => {
@@ -401,6 +402,6 @@ describe("playlists api cache patches", () => {
     expect(patched?.previewItems.map((item) => item.sequence)).toEqual([
       10, 20, 30,
     ]);
-    expect(revalidateWildfireTag).not.toHaveBeenCalled();
+    expect(revalidateWildfireTagViaRoute).not.toHaveBeenCalled();
   });
 });

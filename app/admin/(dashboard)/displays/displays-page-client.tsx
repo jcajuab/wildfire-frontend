@@ -33,7 +33,7 @@ import {
 } from "@/lib/api/displays-api";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { runBulkAction } from "@/lib/bulk-action";
-import { useAppDispatch, useAppStore } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector, useAppStore } from "@/lib/hooks";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { PAGE_SIZE, useDisplaysPage } from "./_hooks/use-displays-page";
 
@@ -46,7 +46,16 @@ export function DisplaysBootstrapCacheSeeder({
 }): null {
   const dispatch = useAppDispatch();
   const store = useAppStore();
+  const cachedData = useAppSelector(
+    (state) =>
+      displaysApi.endpoints.getDisplaysBootstrap.select(queryArgs)(state).data,
+  );
+
   useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
     const rtSlice = displaysApi.endpoints.getRuntimeOverrides.select(undefined)(
       store.getState(),
     );
@@ -65,7 +74,7 @@ export function DisplaysBootstrapCacheSeeder({
         merged,
       ),
     );
-  }, [dispatch, store, queryArgs, data]);
+  }, [dispatch, store, queryArgs, data, cachedData]);
   return null;
 }
 
@@ -256,7 +265,7 @@ export function DisplaysPageView(): ReactElement {
 
           <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-5">
             {isLoading ? (
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-4">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,24rem))] gap-4">
                 {Array.from({ length: 6 }).map((_, index) => (
                   <Skeleton key={index} className="h-[220px] rounded-md" />
                 ))}

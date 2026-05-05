@@ -1,10 +1,10 @@
-import { revalidateWildfireTag } from "@/app/actions/revalidate-wildfire-cache";
+import { revalidateWildfireTagViaRoute } from "@/lib/api/revalidate-via-route";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { api } from "@/lib/api/api";
 
 async function bumpAiCredentialsNextCache(): Promise<void> {
   try {
-    await revalidateWildfireTag("ai");
+    await revalidateWildfireTagViaRoute("ai");
   } catch {
     // best-effort
   }

@@ -79,7 +79,7 @@ export function ResourceDayView({
       <div className="overflow-auto">
         <div className="min-w-[920px] lg:min-w-[1100px]">
           <div
-            className="sticky top-0 z-30 grid border-b border-border bg-muted/30 backdrop-blur-sm"
+            className="sticky top-0 z-30 grid border-b border-border bg-muted/30 backdrop-blur-sm max-[52rem]:hidden"
             style={{ gridTemplateColumns: DAY_GRID_TEMPLATE }}
           >
             <div className="sticky left-0 z-40 border-r border-border bg-muted/30 px-4 py-2 text-sm font-semibold">
@@ -166,7 +166,7 @@ export function ResourceDayView({
                       ))}
                     </div>
 
-                    {dayEvents.map((event) => {
+                    {dayEvents.map((event, index) => {
                       const schedule = schedulesById.get(event.scheduleId);
                       if (!schedule) {
                         return null;
@@ -180,6 +180,7 @@ export function ResourceDayView({
                           100,
                         1.2,
                       );
+                      const showCounter = dayEvents.length > 1;
 
                       return (
                         <button
@@ -197,9 +198,21 @@ export function ResourceDayView({
                             top: `${DAY_EVENT_TOP_PADDING_PX + event.lane * (DAY_EVENT_HEIGHT_PX + DAY_EVENT_LANE_GAP_PX)}px`,
                             height: `${DAY_EVENT_HEIGHT_PX}px`,
                           }}
-                          aria-label={`View schedule ${schedule.name} on ${row.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`}
+                          aria-label={
+                            showCounter
+                              ? `View schedule ${schedule.name} (${index + 1} of ${dayEvents.length}) on ${row.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`
+                              : `View schedule ${schedule.name} on ${row.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`
+                          }
                         >
                           <span className="block truncate text-xs font-medium">
+                            {showCounter ? (
+                              <span
+                                aria-hidden
+                                className="mr-1 inline-flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold leading-none text-primary-foreground"
+                              >
+                                {index + 1}
+                              </span>
+                            ) : null}
                             {schedule.name}
                           </span>
                           <span className="block truncate text-xs text-muted-foreground">

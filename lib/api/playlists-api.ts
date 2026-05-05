@@ -1,4 +1,4 @@
-import { revalidateWildfireTag } from "@/app/actions/revalidate-wildfire-cache";
+import { revalidateWildfireTagViaRoute } from "@/lib/api/revalidate-via-route";
 import { api } from "@/lib/api/api";
 import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
@@ -266,7 +266,7 @@ function getPreviewItems(
 
 async function bumpPlaylistsNextCache(): Promise<void> {
   try {
-    await revalidateWildfireTag("playlists");
+    await revalidateWildfireTagViaRoute("playlists");
   } catch {
     // best-effort
   }

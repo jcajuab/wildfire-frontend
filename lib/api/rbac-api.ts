@@ -1,4 +1,4 @@
-import { revalidateWildfireTags } from "@/app/actions/revalidate-wildfire-cache";
+import { revalidateWildfireTagsViaRoute } from "@/lib/api/revalidate-via-route";
 import { api } from "@/lib/api/api";
 import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
@@ -13,7 +13,7 @@ async function bumpRbacNextCache(
   tags: readonly ServerCacheTag[],
 ): Promise<void> {
   try {
-    await revalidateWildfireTags(tags);
+    await revalidateWildfireTagsViaRoute(tags);
   } catch {
     // best-effort
   }

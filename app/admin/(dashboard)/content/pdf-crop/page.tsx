@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconAlertTriangle } from "@tabler/icons-react";
+import { toast } from "sonner";
 import {
   useSubmitPdfCropsMutation,
   useCancelPdfUploadMutation,
   type PdfUploadAcceptedResponse,
   type PdfCropRegion,
 } from "@/lib/api/content-api";
+import { notifyApiError } from "@/lib/api/get-api-error-message";
 import dynamic from "next/dynamic";
 import type { CropRegion } from "@/components/content/pdf-crop-editor";
 
@@ -39,6 +41,8 @@ export default function PdfCropPage() {
   const [contentName, setContentName] = useState<string | undefined>(undefined);
   const [error, setError] = useState(false);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [submitPdfCrops] = useSubmitPdfCropsMutation();
   const [cancelPdfUpload] = useCancelPdfUploadMutation();
 
@@ -66,7 +70,8 @@ export default function PdfCropPage() {
 
   const handleSubmit = useCallback(
     async (regions: CropRegion[]) => {
-      if (!uploadId) return;
+      if (!uploadId || isSubmitting) return;
+      setIsSubmitting(true);
       try {
         const mapped: PdfCropRegion[] = regions.map((r) => ({
           pageNumber: r.pageNumber,
@@ -81,23 +86,28 @@ export default function PdfCropPage() {
           contentName,
         }).unwrap();
         sessionStorage.removeItem(`${SESSION_KEY_PREFIX}${uploadId}`);
+        toast.message("Upload in progress. Please wait for a moment.");
         router.push("/admin/content");
-      } catch {
-        // error surfaces via toast in RTK base query
+      } catch (error) {
+        notifyApiError(error, "Failed to create PDF content.");
+        setIsSubmitting(false);
       }
     },
-    [uploadId, submitPdfCrops, router, contentName],
+    [uploadId, isSubmitting, submitPdfCrops, router, contentName],
   );
 
   const handleCancel = useCallback(async () => {
-    if (!uploadId) return;
+    if (!uploadId || isCancelling) return;
+    setIsCancelling(true);
     try {
       await cancelPdfUpload(uploadId).unwrap();
+    } catch {
+      // best-effort cleanup
     } finally {
       sessionStorage.removeItem(`${SESSION_KEY_PREFIX}${uploadId}`);
       router.push("/admin/content");
     }
-  }, [uploadId, cancelPdfUpload, router]);
+  }, [uploadId, isCancelling, cancelPdfUpload, router]);
 
   if (error || (!session && uploadId)) {
     if (error) {
@@ -127,6 +137,7 @@ export default function PdfCropPage() {
         pages={[...session.pages]}
         filename={session.filename}
         contentName={contentName}
+        isSubmitting={isSubmitting || isCancelling}
         onSubmit={(regions) => {
           void handleSubmit(regions);
         }}
