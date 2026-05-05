@@ -48,6 +48,8 @@ export interface PlaylistFormBodyProps {
   readonly itemsHeaderSlot?: ReactNode;
   /** Empty state message shown when no items have been added */
   readonly emptyItemsMessage?: string;
+  /** When true, all fields are non-interactive (e.g. while creating the playlist). */
+  readonly disabled?: boolean;
 }
 
 export function PlaylistFormBody({
@@ -61,11 +63,14 @@ export function PlaylistFormBody({
   isOverDurationLimit,
   itemsHeaderSlot,
   emptyItemsMessage = "Add content from the library to get started",
+  disabled = false,
 }: PlaylistFormBodyProps): ReactElement {
   const [contentSearch, setContentSearch] = useState("");
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: disabled ? 9999 : 8 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
@@ -152,6 +157,7 @@ export function PlaylistFormBody({
                 id="playlist-name"
                 placeholder="Demo Playlist"
                 value={name}
+                disabled={disabled}
                 onChange={(e) => onNameChange(e.target.value)}
               />
             </div>
@@ -165,6 +171,7 @@ export function PlaylistFormBody({
                 placeholder="Enter playlist description"
                 rows={3}
                 value={description}
+                disabled={disabled}
                 onChange={(e) => onDescriptionChange(e.target.value)}
               />
             </div>
@@ -202,6 +209,7 @@ export function PlaylistFormBody({
                       onRemove={handleRemoveItem}
                       onUpdateDuration={handleUpdateDuration}
                       onUpdateLoop={handleUpdateLoop}
+                      disabled={disabled}
                     />
                   ))
                 )}
@@ -223,6 +231,7 @@ export function PlaylistFormBody({
           placeholder="Search contents..."
           ariaLabel="Search content library"
           className="max-w-none"
+          disabled={disabled}
         />
 
         <div className="flex flex-col gap-2 xl:flex-1 xl:overflow-y-auto">
@@ -237,8 +246,8 @@ export function PlaylistFormBody({
                 type="button"
                 aria-label={content.title}
                 onClick={() => handleAddContent(content)}
-                disabled={isOverDurationLimit}
-                className={`focus-visible:ring-ring flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 ${isOverDurationLimit ? "cursor-not-allowed opacity-50" : ""}`}
+                disabled={disabled || isOverDurationLimit}
+                className={`focus-visible:ring-ring flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 ${disabled || isOverDurationLimit ? "cursor-not-allowed opacity-50" : ""}`}
               >
                 <div
                   data-testid={`content-library-thumbnail-${content.id}`}

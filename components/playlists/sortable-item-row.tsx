@@ -38,6 +38,7 @@ export interface SortableItemRowProps {
   readonly onRemove: (id: string) => void;
   readonly onUpdateDuration: (id: string, duration: number) => void;
   readonly onUpdateLoop: (id: string, loop: boolean) => void;
+  readonly disabled?: boolean;
 }
 
 export function SortableItemRow({
@@ -45,6 +46,7 @@ export function SortableItemRow({
   onRemove,
   onUpdateDuration,
   onUpdateLoop,
+  disabled = false,
 }: SortableItemRowProps): ReactElement {
   const {
     attributes,
@@ -53,7 +55,7 @@ export function SortableItemRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: item.id });
+  } = useSortable({ id: item.id, disabled });
 
   const [rawValue, setRawValue] = useState(String(item.duration));
 
@@ -119,6 +121,7 @@ export function SortableItemRow({
                 min="1"
                 value={rawValue}
                 aria-label={`Duration in seconds for ${item.content.title}`}
+                disabled={disabled}
                 onChange={(e) => {
                   setRawValue(e.target.value);
                   const parsed = parseInt(e.target.value, 10);
@@ -144,6 +147,7 @@ export function SortableItemRow({
                 <Switch
                   id={`loop-${item.id}`}
                   checked={item.loop}
+                  disabled={disabled}
                   onCheckedChange={(checked) => onUpdateLoop(item.id, checked)}
                   onPointerDown={(e) => e.stopPropagation()}
                 />
@@ -165,6 +169,7 @@ export function SortableItemRow({
           size="icon-sm"
           onClick={() => onRemove(item.id)}
           aria-label={`Remove ${item.content.title} from playlist`}
+          disabled={disabled}
         >
           <IconX className="size-4" />
         </Button>
@@ -173,7 +178,8 @@ export function SortableItemRow({
           {...attributes}
           {...listeners}
           aria-label={`Drag to reorder ${item.content.title}`}
-          className="focus-visible:ring-ring cursor-grab rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 active:cursor-grabbing"
+          disabled={disabled}
+          className="focus-visible:ring-ring cursor-grab rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 active:cursor-grabbing disabled:pointer-events-none disabled:opacity-50"
         >
           <IconGripVertical className="size-4" />
         </button>

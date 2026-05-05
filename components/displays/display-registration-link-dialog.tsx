@@ -1,7 +1,13 @@
 "use client";
 
 import type { ChangeEvent, FormEvent, ReactElement } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import {
   Dialog,
@@ -119,12 +125,21 @@ export function DisplayRegistrationLinkDialog({
   onOpenChange,
   onRegistrationSucceeded,
 }: DisplayRegistrationLinkDialogProps): ReactElement {
+  const [blockClose, setBlockClose] = useState(false);
+
+  function handleOpenChange(next: boolean): void {
+    if (next) setBlockClose(false);
+    else if (blockClose) return;
+    onOpenChange(next);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       {open ? (
         <DisplayRegistrationLinkDialogBody
           onOpenChange={onOpenChange}
           onRegistrationSucceeded={onRegistrationSucceeded}
+          onBusyChange={setBlockClose}
         />
       ) : null}
     </Dialog>
@@ -134,11 +149,13 @@ export function DisplayRegistrationLinkDialog({
 interface DisplayRegistrationLinkDialogBodyProps {
   readonly onOpenChange: (open: boolean) => void;
   readonly onRegistrationSucceeded?: () => void;
+  readonly onBusyChange: (busy: boolean) => void;
 }
 
 function DisplayRegistrationLinkDialogBody({
   onOpenChange,
   onRegistrationSucceeded,
+  onBusyChange,
 }: DisplayRegistrationLinkDialogBodyProps): ReactElement {
   const [formState, setFormState] = useState<LinkFormState>(INITIAL_FORM);
   const [step, setStep] = useState<DialogStep>({ kind: "form" });
@@ -278,6 +295,7 @@ function DisplayRegistrationLinkDialogBody({
         return;
       }
 
+      onBusyChange(true);
       try {
         const result = await createRegistrationLink({
           slug,
@@ -297,9 +315,11 @@ function DisplayRegistrationLinkDialogBody({
         });
       } catch (err) {
         notifyApiError(err, "Failed to create registration link.");
+      } finally {
+        onBusyChange(false);
       }
     },
-    [formState, createRegistrationLink],
+    [formState, createRegistrationLink, onBusyChange],
   );
 
   const handleCopyLink = useCallback(async () => {

@@ -167,6 +167,7 @@ export function CreatePlaylistForm({
         availableContent={availableContent}
         isOverDurationLimit={isOverDurationLimit}
         emptyItemsMessage="Add content from the library to get started"
+        disabled={isSubmitting}
       />
     </div>
   );

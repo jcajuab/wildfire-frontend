@@ -75,6 +75,8 @@ export function DisplayGroupManagerDialog({
   const [deleteDisplayGroup, { isLoading: isDeleting }] =
     useDeleteDisplayGroupMutation();
 
+  const isBusy = isCreating || isRenaming || isDeleting;
+
   const sortedGroups = useMemo(
     () => [...groups].sort((a, b) => a.name.localeCompare(b.name)),
     [groups],
@@ -188,6 +190,7 @@ export function DisplayGroupManagerDialog({
       <Dialog
         open={open}
         onOpenChange={(next) => {
+          if (!next && isBusy) return;
           if (!next) {
             setCreateName("");
             setCreateNameError(null);
@@ -198,7 +201,7 @@ export function DisplayGroupManagerDialog({
           onOpenChange(next);
         }}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg" showCloseButton={!isBusy}>
           <DialogHeader>
             <DialogTitle>Manage Groups</DialogTitle>
             <DialogDescription>
@@ -215,12 +218,12 @@ export function DisplayGroupManagerDialog({
               }}
               placeholder="New group name"
               aria-label="New group name"
-              disabled={isCreating}
+              disabled={isBusy}
             />
             <Button
               type="button"
               onClick={() => void createGroup()}
-              disabled={isCreating}
+              disabled={isBusy}
             >
               <IconPlus className="size-4" />
               Add
@@ -271,6 +274,7 @@ export function DisplayGroupManagerDialog({
                           size="icon-sm"
                           onClick={() => startRename(group)}
                           aria-label={`Rename ${group.name}`}
+                          disabled={isBusy}
                         >
                           <IconPencil className="size-4" />
                         </Button>
@@ -280,6 +284,7 @@ export function DisplayGroupManagerDialog({
                           size="icon-sm"
                           onClick={() => setDeleteCandidate(group)}
                           aria-label={`Delete ${group.name}`}
+                          disabled={isBusy}
                         >
                           <IconTrash className="size-4" />
                         </Button>

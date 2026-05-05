@@ -15,6 +15,7 @@ interface SearchControlProps {
   readonly ariaLabel: string;
   readonly placeholder?: string;
   readonly className?: string;
+  readonly disabled?: boolean;
 }
 
 export function SearchControl({
@@ -23,6 +24,7 @@ export function SearchControl({
   ariaLabel,
   placeholder = "Search…",
   className,
+  disabled = false,
 }: SearchControlProps): ReactElement {
   return (
     <InputGroup className={cn("w-full min-w-52 max-w-80", className)}>
@@ -38,6 +40,7 @@ export function SearchControl({
         placeholder={placeholder}
         aria-label={ariaLabel}
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === "Escape" && value !== "") onChange("");
@@ -50,6 +53,7 @@ export function SearchControl({
             variant="ghost"
             onClick={() => onChange("")}
             aria-label="Clear search"
+            disabled={disabled}
           >
             <IconX className="size-3.5" aria-hidden="true" />
           </InputGroupButton>

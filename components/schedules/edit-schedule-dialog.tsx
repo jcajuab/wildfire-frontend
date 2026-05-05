@@ -48,28 +48,29 @@ export function EditScheduleDialog({
   availableFlashContents,
   availableDisplays,
 }: EditScheduleDialogProps): ReactElement | null {
-  const [isSaving, setIsSaving] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
 
   if (!schedule) return null;
 
   const currentSchedule = schedule;
 
+  function handleOpenChange(next: boolean): void {
+    if (!next && isMutating) return;
+    onOpenChange(next);
+  }
+
   async function handleSubmit(data: ScheduleFormData): Promise<void> {
-    if (isSaving) return;
-    setIsSaving(true);
     try {
       await onSave(currentSchedule, data);
       onOpenChange(false);
     } catch {
       // Keep dialog open so users can adjust and resubmit.
-    } finally {
-      setIsSaving(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md" showCloseButton={!isMutating}>
         <DialogHeader>
           <DialogTitle>Edit Schedule</DialogTitle>
           <DialogDescription>
@@ -83,8 +84,11 @@ export function EditScheduleDialog({
           availablePlaylists={availablePlaylists}
           availableFlashContents={availableFlashContents}
           availableDisplays={availableDisplays}
+          onSubmittingChange={setIsMutating}
           onSubmit={handleSubmit}
-          onCancel={() => onOpenChange(false)}
+          onCancel={() => {
+            if (!isMutating) onOpenChange(false);
+          }}
         />
       </DialogContent>
     </Dialog>

@@ -319,6 +319,7 @@ export function RoleForm({
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   placeholder="Enter role name"
+                  disabled={isSubmitting}
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -330,6 +331,7 @@ export function RoleForm({
                   placeholder="Optional description"
                   rows={3}
                   className="resize-none"
+                  disabled={isSubmitting}
                 />
               </div>
             </CardContent>
@@ -395,7 +397,9 @@ export function RoleForm({
                                   permission.id !== null &&
                                   selectedPermissions.includes(permission.id)
                                 }
-                                disabled={permission.id === null}
+                                disabled={
+                                  permission.id === null || isSubmitting
+                                }
                                 onCheckedChange={(checked) =>
                                   handlePermissionToggle(permission.id, checked)
                                 }
@@ -443,6 +447,7 @@ export function RoleForm({
                       placeholder="Search users by name, username, or email"
                       value={userSearch}
                       onChange={(event) => setUserSearch(event.target.value)}
+                      disabled={isSubmitting}
                     />
                   </div>
                   <div className="flex min-w-0 flex-col gap-2">
@@ -450,6 +455,7 @@ export function RoleForm({
                     <Select
                       value={selectedUserId}
                       onValueChange={setSelectedUserId}
+                      disabled={isSubmitting}
                     >
                       <SelectTrigger
                         id="roleUserSelect"
@@ -480,7 +486,7 @@ export function RoleForm({
                     type="button"
                     variant="outline"
                     onClick={handleAddUser}
-                    disabled={!selectedUserId}
+                    disabled={!selectedUserId || isSubmitting}
                     className="w-full lg:w-auto"
                   >
                     <IconUserPlus className="size-4" />
@@ -512,7 +518,7 @@ export function RoleForm({
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => handleRemoveUser(user.id)}
-                        disabled={!canReadUsers}
+                        disabled={!canReadUsers || isSubmitting}
                         aria-label={`Remove ${user.name} from role`}
                       >
                         <IconX className="size-4" />
@@ -529,6 +535,7 @@ export function RoleForm({
                         )
                       }
                       className="mt-1"
+                      disabled={isSubmitting}
                     >
                       Load More Users
                     </Button>

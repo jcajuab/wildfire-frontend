@@ -139,6 +139,7 @@ export function EditPlaylistForm({
         </span>
       }
       emptyItemsMessage="No items - add content from the library"
+      disabled={isSaving}
     />
   );
 }

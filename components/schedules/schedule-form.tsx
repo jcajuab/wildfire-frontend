@@ -32,6 +32,7 @@ interface DisplayPickerProps {
   value: string[];
   onChange: (ids: string[]) => void;
   options: readonly { id: string; name: string }[];
+  disabled?: boolean;
 }
 
 export type ScheduleDisplayGroupOption = {
@@ -44,12 +45,14 @@ interface DisplayGroupPickerProps {
   value: string[];
   onChange: (ids: string[]) => void;
   options: readonly ScheduleDisplayGroupOption[];
+  disabled?: boolean;
 }
 
 function DisplayGroupPicker({
   value,
   onChange,
   options,
+  disabled = false,
 }: DisplayGroupPickerProps): ReactElement {
   const [inputValue, setInputValue] = useState("");
   const anchorRef = useComboboxAnchor();
@@ -79,15 +82,17 @@ function DisplayGroupPicker({
       }}
       inputValue={inputValue}
       onInputValueChange={(v) => setInputValue(v ?? "")}
+      disabled={disabled}
     >
       <ComboboxChips ref={anchorRef}>
         {value.map((id) => (
-          <ComboboxChip key={id}>
+          <ComboboxChip key={id} showRemove={!disabled}>
             {optionsById.get(id)?.name ?? id}
           </ComboboxChip>
         ))}
         <ComboboxChipsInput
           placeholder={value.length === 0 ? "Search display groups…" : ""}
+          disabled={disabled}
         />
       </ComboboxChips>
       <ComboboxContent anchor={anchorRef}>
@@ -114,6 +119,7 @@ function DisplayPicker({
   value,
   onChange,
   options,
+  disabled = false,
 }: DisplayPickerProps): ReactElement {
   const [inputValue, setInputValue] = useState("");
   const anchorRef = useComboboxAnchor();
@@ -143,15 +149,17 @@ function DisplayPicker({
       }}
       inputValue={inputValue}
       onInputValueChange={(v) => setInputValue(v ?? "")}
+      disabled={disabled}
     >
       <ComboboxChips ref={anchorRef}>
         {value.map((id) => (
-          <ComboboxChip key={id}>
+          <ComboboxChip key={id} showRemove={!disabled}>
             {optionsById.get(id)?.name ?? id}
           </ComboboxChip>
         ))}
         <ComboboxChipsInput
           placeholder={value.length === 0 ? "Search displays…" : ""}
+          disabled={disabled}
         />
       </ComboboxChips>
       <ComboboxContent anchor={anchorRef}>
@@ -176,18 +184,31 @@ function EmptyResourceCta({
   message,
   href,
   onNavigate,
+  disabled = false,
 }: {
   message: string;
   href: string;
   onNavigate: () => void;
+  disabled?: boolean;
 }): ReactElement {
   return (
     <p className="text-xs text-muted-foreground">
       {message}{" "}
       <Link
         href={href}
-        onClick={onNavigate}
-        className="text-blue-500 underline underline-offset-2 hover:text-blue-600"
+        onClick={(event) => {
+          if (disabled) {
+            event.preventDefault();
+            return;
+          }
+          onNavigate();
+        }}
+        aria-disabled={disabled || undefined}
+        className={
+          disabled
+            ? "pointer-events-none text-muted-foreground no-underline"
+            : "text-blue-500 underline underline-offset-2 hover:text-blue-600"
+        }
       >
         Create one here.
       </Link>
@@ -210,6 +231,8 @@ interface ScheduleFormProps {
   readonly submitLabel: string;
   readonly isCreate?: boolean;
   readonly lockedKind?: "PLAYLIST" | "FLASH";
+  /** Notifies parent dialogs when a save/create request is in flight (for close guards). */
+  readonly onSubmittingChange?: (submitting: boolean) => void;
 }
 
 function resolveDisplayIdsFromGroups(
@@ -239,6 +262,7 @@ function ScheduleFormFrame({
   submitLabel,
   isCreate = false,
   lockedKind,
+  onSubmittingChange,
 }: ScheduleFormProps): ReactElement {
   const [formData, setFormData] = useState<ScheduleFormData>(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -298,6 +322,7 @@ function ScheduleFormFrame({
   async function handleSubmit(): Promise<void> {
     if (!canSubmit || isSubmitting) return;
     setIsSubmitting(true);
+    onSubmittingChange?.(true);
     try {
       const payload: ScheduleFormData =
         isCreate && targetMode === "display-groups"
@@ -306,6 +331,7 @@ function ScheduleFormFrame({
       await onSubmit(payload);
     } finally {
       setIsSubmitting(false);
+      onSubmittingChange?.(false);
     }
   }
 
@@ -327,8 +353,12 @@ function ScheduleFormFrame({
               }
             >
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="PLAYLIST">Playlist</TabsTrigger>
-                <TabsTrigger value="FLASH">Flash Overlay</TabsTrigger>
+                <TabsTrigger value="PLAYLIST" disabled={isSubmitting}>
+                  Playlist
+                </TabsTrigger>
+                <TabsTrigger value="FLASH" disabled={isSubmitting}>
+                  Flash Overlay
+                </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -340,6 +370,7 @@ function ScheduleFormFrame({
             id="schedule-name"
             placeholder="Lobby daytime"
             value={formData.name}
+            disabled={isSubmitting}
             onChange={(event) =>
               setFormData((prev) => ({ ...prev, name: event.target.value }))
             }
@@ -355,6 +386,7 @@ function ScheduleFormFrame({
                 id="schedule-start-date"
                 type="date"
                 value={formData.startDate}
+                disabled={isSubmitting}
                 onChange={(event) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -373,6 +405,7 @@ function ScheduleFormFrame({
                 id="schedule-end-date"
                 type="date"
                 value={formData.endDate}
+                disabled={isSubmitting}
                 onChange={(event) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -394,6 +427,7 @@ function ScheduleFormFrame({
                 id="schedule-start-time"
                 type="time"
                 value={formData.startTime}
+                disabled={isSubmitting}
                 onChange={(event) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -412,6 +446,7 @@ function ScheduleFormFrame({
                 id="schedule-end-time"
                 type="time"
                 value={formData.endTime}
+                disabled={isSubmitting}
                 onChange={(event) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -438,10 +473,12 @@ function ScheduleFormFrame({
                 message="No playlists yet."
                 href="/admin/playlists/create"
                 onNavigate={onCancel}
+                disabled={isSubmitting}
               />
             ) : (
               <Select
                 value={formData.playlistId ?? ""}
+                disabled={isSubmitting}
                 onValueChange={(value) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -471,10 +508,12 @@ function ScheduleFormFrame({
                 message="No flash content yet."
                 href="/admin/content?create=flash"
                 onNavigate={onCancel}
+                disabled={isSubmitting}
               />
             ) : (
               <Select
                 value={formData.contentId ?? ""}
+                disabled={isSubmitting}
                 onValueChange={(value) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -512,8 +551,10 @@ function ScheduleFormFrame({
                 }}
               >
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="displays">Displays</TabsTrigger>
-                  <TabsTrigger value="display-groups">
+                  <TabsTrigger value="displays" disabled={isSubmitting}>
+                    Displays
+                  </TabsTrigger>
+                  <TabsTrigger value="display-groups" disabled={isSubmitting}>
                     Display groups
                   </TabsTrigger>
                 </TabsList>
@@ -525,18 +566,21 @@ function ScheduleFormFrame({
                     setFormData((prev) => ({ ...prev, targetDisplayIds: ids }))
                   }
                   options={availableDisplays}
+                  disabled={isSubmitting}
                 />
               ) : availableDisplayGroups.length === 0 ? (
                 <EmptyResourceCta
                   message="No display groups yet."
                   href="/admin/displays"
                   onNavigate={onCancel}
+                  disabled={isSubmitting}
                 />
               ) : (
                 <DisplayGroupPicker
                   value={targetDisplayGroupIds}
                   onChange={setTargetDisplayGroupIds}
                   options={availableDisplayGroups}
+                  disabled={isSubmitting}
                 />
               )}
               {targetMode === "display-groups" &&
@@ -551,6 +595,7 @@ function ScheduleFormFrame({
           ) : (
             <Select
               value={formData.targetDisplayIds[0] ?? ""}
+              disabled={isSubmitting}
               onValueChange={(value) =>
                 setFormData((prev) => ({ ...prev, targetDisplayIds: [value] }))
               }

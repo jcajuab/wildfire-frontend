@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,13 @@ export function CreateScheduleDialog({
   availableDisplays,
   availableDisplayGroups,
 }: CreateScheduleDialogProps): ReactElement {
+  const [isMutating, setIsMutating] = useState(false);
+
+  function handleOpenChange(next: boolean): void {
+    if (!next && isMutating) return;
+    onOpenChange(next);
+  }
+
   async function handleCreate(data: ScheduleFormData): Promise<void> {
     try {
       await onCreate(data);
@@ -45,8 +53,8 @@ export function CreateScheduleDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md" showCloseButton={!isMutating}>
         <DialogHeader>
           <DialogTitle>
             {kind === "PLAYLIST"
@@ -66,8 +74,11 @@ export function CreateScheduleDialog({
           availableFlashContents={availableFlashContents}
           availableDisplays={availableDisplays}
           availableDisplayGroups={availableDisplayGroups}
+          onSubmittingChange={setIsMutating}
           onSubmit={handleCreate}
-          onCancel={() => onOpenChange(false)}
+          onCancel={() => {
+            if (!isMutating) onOpenChange(false);
+          }}
         />
       </DialogContent>
     </Dialog>
