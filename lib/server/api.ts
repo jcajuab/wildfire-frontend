@@ -7,7 +7,7 @@ import { getServerApiBaseUrl } from "@/lib/server/api-origin";
 import type { ServerSession } from "@/lib/server/auth";
 
 /** Default Next.js `fetch` revalidate (seconds) for admin server data. */
-export const WILDFIRE_SERVER_REVALIDATE_SECONDS = 300;
+export const WILDFIRE_SERVER_REVALIDATE_SECONDS = 600;
 
 /**
  * Next.js Data Cache tags (`wildfire:${tag}`). Use narrow tags so mutations

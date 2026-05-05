@@ -16,11 +16,11 @@ const nextConfig: NextConfig = {
   // rewrites Set-Cookie paths so refresh-token cookies survive the
   // /api/proxy prefix.
   experimental: {
-    // Align with `WILDFIRE_SERVER_REVALIDATE_SECONDS` (300) in lib/server/api.ts so
+    // Align with `WILDFIRE_SERVER_REVALIDATE_SECONDS` (600) in lib/server/api.ts so
     // soft navigations between admin routes reuse the router/RSC cache instead of
     // showing `(dashboard)/loading.tsx` every ~30s.
     staleTimes: {
-      dynamic: 300,
+      dynamic: 600,
     },
     optimizePackageImports: [
       "@tabler/icons-react",
