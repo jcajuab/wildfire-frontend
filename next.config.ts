@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 
+import { WILDFIRE_SERVER_REVALIDATE_SECONDS } from "./lib/wildfire-server-revalidate-seconds";
+
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
   openAnalyzer: false,
@@ -16,11 +18,11 @@ const nextConfig: NextConfig = {
   // rewrites Set-Cookie paths so refresh-token cookies survive the
   // /api/proxy prefix.
   experimental: {
-    // Align with `WILDFIRE_SERVER_REVALIDATE_SECONDS` (600) in lib/server/api.ts so
-    // soft navigations between admin routes reuse the router/RSC cache instead of
-    // showing `(dashboard)/loading.tsx` every ~30s.
+    // Align with `WILDFIRE_SERVER_REVALIDATE_SECONDS` so soft navigations between
+    // admin routes reuse the router/RSC cache instead of showing
+    // `(dashboard)/loading.tsx` on every navigation.
     staleTimes: {
-      dynamic: 600,
+      dynamic: WILDFIRE_SERVER_REVALIDATE_SECONDS,
     },
     optimizePackageImports: [
       "@tabler/icons-react",

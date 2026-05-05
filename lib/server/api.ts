@@ -5,9 +5,9 @@ import { isJsonParseFailurePayload, readJsonPayload } from "@/lib/api/auth-api";
 
 import { getServerApiBaseUrl } from "@/lib/server/api-origin";
 import type { ServerSession } from "@/lib/server/auth";
+import { WILDFIRE_SERVER_REVALIDATE_SECONDS } from "@/lib/wildfire-server-revalidate-seconds";
 
-/** Default Next.js `fetch` revalidate (seconds) for admin server data. */
-export const WILDFIRE_SERVER_REVALIDATE_SECONDS = 600;
+export { WILDFIRE_SERVER_REVALIDATE_SECONDS };
 
 /**
  * Next.js Data Cache tags (`wildfire:${tag}`). Use narrow tags so mutations
