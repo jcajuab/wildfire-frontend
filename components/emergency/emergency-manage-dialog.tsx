@@ -6,9 +6,6 @@ import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import type { BackendContent } from "@/lib/api/content-api";
@@ -41,7 +38,9 @@ export function EmergencyManageDialog({
   const slots = data?.slots ?? [];
 
   const handleSelectEmptySlot = useCallback((slotIndex: EmergencySlotIndex) => {
-    setSelectedSlotIndex(slotIndex);
+    setSelectedSlotIndex((current) =>
+      current === slotIndex ? null : slotIndex,
+    );
   }, []);
 
   const handleClearSlot = useCallback(
@@ -78,27 +77,28 @@ export function EmergencyManageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl">
-        <DialogHeader>
-          <DialogTitle>Manage Emergency Assets</DialogTitle>
-          <DialogDescription>
-            Configure up to five emergency presets that can be activated from
-            the sidebar.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 sm:grid-cols-[280px_1fr]">
-          <EmergencyAssetList
-            slots={slots}
-            selectedSlotIndex={selectedSlotIndex}
-            onSelectEmptySlot={handleSelectEmptySlot}
-            onClearSlot={handleClearSlot}
-            isClearing={isClearing}
+      <DialogContent className="gap-0 p-0 sm:max-w-5xl">
+        <div className="grid min-h-128 grid-cols-1 sm:grid-cols-[280px_1px_1fr]">
+          <div className="flex min-h-128 flex-col px-6 pt-10 pb-6 sm:py-6 sm:pt-10">
+            <EmergencyAssetList
+              slots={slots}
+              selectedSlotIndex={selectedSlotIndex}
+              onSelectEmptySlot={handleSelectEmptySlot}
+              onClearSlot={handleClearSlot}
+              isClearing={isClearing}
+            />
+          </div>
+          <div
+            className="hidden min-h-128 w-px shrink-0 bg-border sm:block"
+            aria-hidden
           />
-          <EmergencyContentPicker
-            selectedSlotIndex={selectedSlotIndex}
-            onSelect={handleSelectContent}
-            isSubmitting={isSetting}
-          />
+          <div className="flex min-h-128 min-w-0 flex-col px-6 pt-10 pb-6 sm:py-6 sm:pt-10">
+            <EmergencyContentPicker
+              selectedSlotIndex={selectedSlotIndex}
+              onSelect={handleSelectContent}
+              isSubmitting={isSetting}
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>

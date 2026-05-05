@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  useState,
-  type ReactElement,
-  type ReactNode,
-} from "react";
+import { useState, type ReactElement, type ReactNode } from "react";
 import { IconPlus } from "@tabler/icons-react";
 
 import {
@@ -40,12 +36,6 @@ export function EmergencySlotDropdown({
   for (const slot of data?.slots ?? []) {
     slotsByIndex.set(slot.slotIndex, slot);
   }
-  const filledCount = SLOT_INDICES.reduce((acc, index) => {
-    const slot = slotsByIndex.get(index);
-    return slot != null && slot.contentId != null ? acc + 1 : acc;
-  }, 0);
-  const emptyCount = SLOT_INDICES.length - filledCount;
-
   if (!canRead) {
     return <>{trigger}</>;
   }
@@ -54,10 +44,15 @@ export function EmergencySlotDropdown({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-        <DropdownMenuContent side="top" align="start" sideOffset={6} className="min-w-56">
+        <DropdownMenuContent
+          side='top'
+          align='start'
+          sideOffset={6}
+          className='min-w-56'
+        >
           {isActive ? (
             <DropdownMenuItem
-              variant="destructive"
+              variant='destructive'
               disabled={!canUpdate || isBusy}
               onSelect={() => {
                 void deactivate();
@@ -78,7 +73,7 @@ export function EmergencySlotDropdown({
                     <DropdownMenuItem
                       key={slotIndex}
                       disabled
-                      className="border border-dashed border-border/60 text-muted-foreground"
+                      className='justify-center border border-dashed border-border/60 text-center text-muted-foreground'
                     >
                       Slot {slotIndex}
                     </DropdownMenuItem>
@@ -89,6 +84,7 @@ export function EmergencySlotDropdown({
                   <DropdownMenuItem
                     key={slotIndex}
                     disabled={!canUpdate || isBusy}
+                    className='justify-center text-center'
                     onSelect={() => {
                       void activate(slotIndex);
                     }}
@@ -97,17 +93,15 @@ export function EmergencySlotDropdown({
                   </DropdownMenuItem>
                 );
               })}
-              <div className="px-2 py-1 text-[0.625rem] uppercase tracking-wide text-muted-foreground">
-                {emptyCount} of {SLOT_INDICES.length} slots empty
-              </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem
+                className='justify-center text-center'
                 onSelect={() => {
                   setIsManageOpen(true);
                 }}
               >
-                <IconPlus className="size-3.5" aria-hidden="true" />
-                Add assets
+                <IconPlus className='size-3.5' aria-hidden='true' />
+                Add emergency assets
               </DropdownMenuItem>
             </>
           )}

@@ -22,7 +22,8 @@ export function GlobalEmergencyButton({
   variant,
 }: GlobalEmergencyButtonProps): ReactElement | null {
   const { user } = useAuth();
-  const { isActive, isBusy, canRead, canUpdate } = useGlobalEmergency();
+  const { isActive, isBusy, canRead, canUpdate, deactivate } =
+    useGlobalEmergency();
 
   if (!user?.isAdmin || !canRead) {
     return null;
@@ -35,6 +36,28 @@ export function GlobalEmergencyButton({
       : "Manage Emergencies";
 
   if (variant === "sidebar") {
+    if (isActive) {
+      return (
+        <SidebarGroup className="mt-auto">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                size="default"
+                disabled={!canUpdate || isBusy}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
+                onClick={() => {
+                  void deactivate();
+                }}
+              >
+                <IconAlertTriangle className="size-4" />
+                <span>{label}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+      );
+    }
+
     return (
       <SidebarGroup className="mt-auto">
         <SidebarMenu>
@@ -47,7 +70,7 @@ export function GlobalEmergencyButton({
                   className={
                     isActive
                       ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
-                      : "border border-sidebar-border/70 bg-sidebar/70 text-sidebar-foreground shadow-sm hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:border-sidebar-ring/70 [&_svg]:text-sidebar-foreground hover:[&_svg]:text-sidebar-accent-foreground"
+                      : "border border-sidebar-ring bg-sidebar/70 text-sidebar-foreground hover:border-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:border-sidebar-ring [&_svg]:text-sidebar-foreground hover:[&_svg]:text-sidebar-accent-foreground"
                   }
                 >
                   <IconAlertTriangle className="size-4" />
@@ -58,6 +81,22 @@ export function GlobalEmergencyButton({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarGroup>
+    );
+  }
+
+  if (isActive) {
+    return (
+      <Button
+        variant="destructive"
+        size="icon"
+        disabled={!canUpdate || isBusy}
+        aria-label="Stop Emergency"
+        onClick={() => {
+          void deactivate();
+        }}
+      >
+        <IconAlertTriangle />
+      </Button>
     );
   }
 
@@ -72,7 +111,7 @@ export function GlobalEmergencyButton({
           className={
             isActive
               ? undefined
-              : "border border-border/70 bg-background/80 shadow-sm hover:bg-muted hover:text-foreground"
+              : "border border-border bg-background/80 hover:bg-muted hover:text-foreground"
           }
         >
           <IconAlertTriangle />
