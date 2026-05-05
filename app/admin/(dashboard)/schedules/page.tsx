@@ -14,7 +14,6 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
-import { AuthGate } from "@/app/admin/auth-gate";
 import {
   SchedulesBootstrapCacheSeeder,
   SchedulesPageView,
@@ -23,7 +22,7 @@ import {
 export default async function SchedulesPage(): Promise<ReactElement> {
   const session = await getServerSession();
   if (!session) {
-    return <AuthGate redirectTo="/admin/schedules" />;
+    redirect(`/login?redirectTo=${encodeURIComponent("/admin/schedules")}`);
   }
   if (!sessionHasPermission(session, "schedules:read")) {
     redirect("/unauthorized");
@@ -43,7 +42,7 @@ export default async function SchedulesPage(): Promise<ReactElement> {
   });
 
   if (!bootstrapRes.ok) {
-    return <AuthGate redirectTo="/admin/schedules" />;
+    redirect(`/login?redirectTo=${encodeURIComponent("/admin/schedules")}`);
   }
 
   const bootstrapData = parseApiResponseDataSafe<SchedulesBootstrapResponse>(

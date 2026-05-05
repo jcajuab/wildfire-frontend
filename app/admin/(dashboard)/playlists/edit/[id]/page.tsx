@@ -13,7 +13,6 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
-import { AuthGate } from "@/app/admin/auth-gate";
 import { ContentOptionsCacheSeeder } from "../../../content/content-page-client";
 import {
   EditPlaylistPageView,
@@ -33,7 +32,7 @@ export default async function EditPlaylistPage({
   const editPath = getPlaylistEditPath(playlistId);
 
   if (!session) {
-    return <AuthGate redirectTo={editPath} />;
+    redirect(`/login?redirectTo=${encodeURIComponent(editPath)}`);
   }
   if (!sessionHasPermission(session, "playlists:update")) {
     redirect("/unauthorized");
@@ -47,7 +46,7 @@ export default async function EditPlaylistPage({
   });
 
   if (!playlistRes.ok) {
-    return <AuthGate redirectTo={editPath} />;
+    redirect(`/login?redirectTo=${encodeURIComponent(editPath)}`);
   }
 
   const playlistData = parseApiResponseDataSafe<BackendPlaylistWithItems>(

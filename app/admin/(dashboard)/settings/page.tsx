@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { redirect } from "next/navigation";
 
 import type { AICredential } from "@/lib/api/ai-credentials-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
@@ -8,7 +9,6 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
-import { AuthGate } from "@/app/admin/auth-gate";
 import {
   AICredentialsCacheSeeder,
   SettingsPageView,
@@ -17,7 +17,7 @@ import {
 export default async function SettingsPage(): Promise<ReactElement> {
   const session = await getServerSession();
   if (!session) {
-    return <AuthGate redirectTo="/admin/settings" />;
+    redirect(`/login?redirectTo=${encodeURIComponent("/admin/settings")}`);
   }
 
   const credentialsRes = await serverFetchJson<unknown>({

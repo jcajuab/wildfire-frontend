@@ -76,6 +76,13 @@ export const getServerSession = cache(
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          const store = await cookies();
+          store.delete({
+            name: getSessionCookieName(),
+            path: "/",
+          });
+        }
         return null;
       }
 

@@ -11,7 +11,6 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
-import { AuthGate } from "@/app/admin/auth-gate";
 import {
   EditRolePageView,
   RoleEditBootstrapCacheSeeder,
@@ -30,7 +29,7 @@ export default async function EditRolePage({
   const editPath = getRoleEditPath(roleId);
 
   if (!session) {
-    return <AuthGate redirectTo={editPath} />;
+    redirect(`/login?redirectTo=${encodeURIComponent(editPath)}`);
   }
   if (!sessionHasPermission(session, "roles:update")) {
     redirect("/unauthorized");
@@ -44,7 +43,7 @@ export default async function EditRolePage({
   });
 
   if (!bootstrapRes.ok) {
-    return <AuthGate redirectTo={editPath} />;
+    redirect(`/login?redirectTo=${encodeURIComponent(editPath)}`);
   }
 
   const bootstrapData = parseApiResponseDataSafe<RoleEditBootstrapResponse>(

@@ -19,7 +19,6 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
-import { AuthGate } from "@/app/admin/auth-gate";
 import {
   RoleOptionsCacheSeeder,
   UsersListCacheSeeder,
@@ -37,7 +36,7 @@ export default async function UsersPage({
 }: UsersPageProps): Promise<ReactElement> {
   const session = await getServerSession();
   if (!session) {
-    return <AuthGate redirectTo="/admin/users" />;
+    redirect(`/login?redirectTo=${encodeURIComponent("/admin/users")}`);
   }
   if (!sessionHasPermission(session, "users:read")) {
     redirect("/unauthorized");
@@ -69,7 +68,7 @@ export default async function UsersPage({
   });
 
   if (!usersRes.ok) {
-    return <AuthGate redirectTo="/admin/users" />;
+    redirect(`/login?redirectTo=${encodeURIComponent("/admin/users")}`);
   }
 
   const usersData = transformPaginatedListResponse<RbacUser>(

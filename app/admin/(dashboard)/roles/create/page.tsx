@@ -7,7 +7,6 @@ import { ROLE_CREATE_PATH } from "@/lib/role-paths";
 import { getServerSession } from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
-import { AuthGate } from "@/app/admin/auth-gate";
 import {
   CreateRolePageView,
   PermissionsOptionsCacheSeeder,
@@ -16,7 +15,7 @@ import {
 export default async function CreateRolePage(): Promise<ReactElement> {
   const session = await getServerSession();
   if (!session) {
-    return <AuthGate redirectTo={ROLE_CREATE_PATH} />;
+    redirect(`/login?redirectTo=${encodeURIComponent(ROLE_CREATE_PATH)}`);
   }
   if (!sessionHasPermission(session, "roles:create")) {
     redirect("/unauthorized");
@@ -30,7 +29,7 @@ export default async function CreateRolePage(): Promise<ReactElement> {
   });
 
   if (!permissionsRes.ok) {
-    return <AuthGate redirectTo={ROLE_CREATE_PATH} />;
+    redirect(`/login?redirectTo=${encodeURIComponent(ROLE_CREATE_PATH)}`);
   }
 
   const permissions = parseApiResponseDataSafe<RbacPermission[]>(

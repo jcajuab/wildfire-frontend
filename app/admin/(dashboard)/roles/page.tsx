@@ -14,7 +14,6 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
-import { AuthGate } from "@/app/admin/auth-gate";
 import { RolesListCacheSeeder, RolesPageView } from "./roles-page-client";
 
 interface RolesPageProps {
@@ -28,7 +27,7 @@ export default async function RolesPage({
 }: RolesPageProps): Promise<ReactElement> {
   const session = await getServerSession();
   if (!session) {
-    return <AuthGate redirectTo="/admin/roles" />;
+    redirect(`/login?redirectTo=${encodeURIComponent("/admin/roles")}`);
   }
   if (!sessionHasPermission(session, "roles:read")) {
     redirect("/unauthorized");
@@ -60,7 +59,7 @@ export default async function RolesPage({
   });
 
   if (!rolesRes.ok) {
-    return <AuthGate redirectTo="/admin/roles" />;
+    redirect(`/login?redirectTo=${encodeURIComponent("/admin/roles")}`);
   }
 
   const rolesData = transformPaginatedListResponse<RbacRoleListItem>(
