@@ -1,7 +1,14 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
+import dynamic from "next/dynamic";
 import {
   IconBolt,
   IconFileText,
@@ -10,13 +17,10 @@ import {
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { Can } from "@/components/common/can";
-import { BulkDeleteConfirmDialog } from "@/components/common/bulk-delete-confirm-dialog";
-import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { EmptyState } from "@/components/common/empty-state";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { ContentGrid } from "@/components/content/content-grid";
 import { ContentToolbar } from "@/components/content/content-toolbar";
-import { CreateContentDialog } from "@/components/content/create-content-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -25,7 +29,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { EditContentDialog } from "./_components/content-page-dialogs";
 import {
   contentApi,
   type BackendContentListResponse,
@@ -38,6 +41,38 @@ import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { runBulkAction } from "@/lib/bulk-action";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { useContentPageController } from "./_hooks/use-content-page-controller";
+
+const CreateContentDialog = dynamic(
+  () =>
+    import("@/components/content/create-content-dialog").then(
+      (mod) => mod.CreateContentDialog,
+    ),
+  { ssr: false },
+);
+
+const EditContentDialog = dynamic(
+  () =>
+    import("./_components/content-page-dialogs").then(
+      (mod) => mod.EditContentDialog,
+    ),
+  { ssr: false },
+);
+
+const ConfirmActionDialog = dynamic(
+  () =>
+    import("@/components/common/confirm-action-dialog").then(
+      (mod) => mod.ConfirmActionDialog,
+    ),
+  { ssr: false },
+);
+
+const BulkDeleteConfirmDialog = dynamic(
+  () =>
+    import("@/components/common/bulk-delete-confirm-dialog").then(
+      (mod) => mod.BulkDeleteConfirmDialog,
+    ),
+  { ssr: false },
+);
 
 export function ContentListCacheSeeder({
   queryArgs,
@@ -86,8 +121,62 @@ export function ContentOptionsCacheSeeder({
   return null;
 }
 
-export function ContentPageView(): ReactElement {
-  const controller = useContentPageController();
+function InitialContentListSeeder({
+  queryArgs,
+  data,
+  onSeeded,
+}: {
+  readonly queryArgs: ContentListQuery;
+  readonly data: BackendContentListResponse;
+  readonly onSeeded: () => void;
+}): null {
+  const dispatch = useAppDispatch();
+
+  useLayoutEffect(() => {
+    let cancelled = false;
+    const seedResult = dispatch(
+      contentApi.util.upsertQueryData("listContent", queryArgs, data),
+    );
+    void seedResult.then(() => {
+      if (!cancelled) {
+        onSeeded();
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [data, dispatch, onSeeded, queryArgs]);
+
+  return null;
+}
+
+interface ContentPageViewProps {
+  readonly initialQueryArgs?: ContentListQuery;
+  readonly initialData?: BackendContentListResponse;
+}
+
+export function ContentPageView({
+  initialQueryArgs,
+  initialData,
+}: ContentPageViewProps = {}): ReactElement {
+  const [isInitialListSeeded, setIsInitialListSeeded] = useState(
+    () => initialQueryArgs == null || initialData == null,
+  );
+  const handleInitialListSeeded = useCallback(() => {
+    setIsInitialListSeeded(true);
+  }, []);
+  const initialList = useMemo(
+    () =>
+      initialQueryArgs != null && initialData != null
+        ? {
+            queryArgs: initialQueryArgs,
+            data: initialData,
+            isSeeded: isInitialListSeeded,
+          }
+        : undefined,
+    [initialData, initialQueryArgs, isInitialListSeeded],
+  );
+  const controller = useContentPageController({ initialList });
   const {
     selectedItems,
     selectedIds,
@@ -146,6 +235,13 @@ export function ContentPageView(): ReactElement {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+      {initialQueryArgs != null && initialData != null ? (
+        <InitialContentListSeeder
+          queryArgs={initialQueryArgs}
+          data={initialData}
+          onSeeded={handleInitialListSeeded}
+        />
+      ) : null}
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <ContentToolbar
@@ -271,47 +367,55 @@ export function ContentPageView(): ReactElement {
         </footer>
       </section>
 
-      <CreateContentDialog
-        open={controller.isCreateDialogOpen}
-        onOpenChange={controller.setIsCreateDialogOpen}
-        mode={controller.createMode ?? "upload"}
-        onUploadFile={controller.handleUploadFile}
-        onCreateFlash={controller.handleCreateFlash}
-        onCreateText={controller.handleCreateText}
-      />
+      {controller.isCreateDialogOpen ? (
+        <CreateContentDialog
+          open={controller.isCreateDialogOpen}
+          onOpenChange={controller.setIsCreateDialogOpen}
+          mode={controller.createMode ?? "upload"}
+          onUploadFile={controller.handleUploadFile}
+          onCreateFlash={controller.handleCreateFlash}
+          onCreateText={controller.handleCreateText}
+        />
+      ) : null}
 
-      <EditContentDialog
-        content={controller.contentToEdit}
-        open={controller.contentToEdit !== null}
-        onOpenChange={controller.closeEditDialog}
-        onSave={controller.handleSaveContent}
-      />
+      {controller.contentToEdit !== null ? (
+        <EditContentDialog
+          content={controller.contentToEdit}
+          open={controller.contentToEdit !== null}
+          onOpenChange={controller.closeEditDialog}
+          onSave={controller.handleSaveContent}
+        />
+      ) : null}
 
-      <ConfirmActionDialog
-        open={controller.isDeleteDialogOpen}
-        onOpenChange={controller.setIsDeleteDialogOpen}
-        title="Delete content?"
-        description={
-          controller.contentToDelete
-            ? `This will permanently delete "${controller.contentToDelete.title}".`
-            : undefined
-        }
-        confirmLabel="Delete content"
-        errorFallback="Failed to delete content."
-        onConfirm={controller.handleConfirmDelete}
-      />
+      {controller.isDeleteDialogOpen ? (
+        <ConfirmActionDialog
+          open={controller.isDeleteDialogOpen}
+          onOpenChange={controller.setIsDeleteDialogOpen}
+          title="Delete content?"
+          description={
+            controller.contentToDelete
+              ? `This will permanently delete "${controller.contentToDelete.title}".`
+              : undefined
+          }
+          confirmLabel="Delete content"
+          errorFallback="Failed to delete content."
+          onConfirm={controller.handleConfirmDelete}
+        />
+      ) : null}
 
-      <BulkDeleteConfirmDialog
-        open={isBulkDeleteDialogOpen}
-        onOpenChange={setIsBulkDeleteDialogOpen}
-        selectedLabels={selectedContentLabels}
-        title="Delete selected content?"
-        itemName="content item"
-        itemNamePlural="content items"
-        confirmLabel={deleteSelectedLabel}
-        actionDescription="This will permanently delete"
-        onConfirm={handleConfirmBulkDelete}
-      />
+      {isBulkDeleteDialogOpen ? (
+        <BulkDeleteConfirmDialog
+          open={isBulkDeleteDialogOpen}
+          onOpenChange={setIsBulkDeleteDialogOpen}
+          selectedLabels={selectedContentLabels}
+          title="Delete selected content?"
+          itemName="content item"
+          itemNamePlural="content items"
+          confirmLabel={deleteSelectedLabel}
+          actionDescription="This will permanently delete"
+          onConfirm={handleConfirmBulkDelete}
+        />
+      ) : null}
     </div>
   );
 }

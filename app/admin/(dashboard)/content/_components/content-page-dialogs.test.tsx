@@ -174,14 +174,10 @@ describe("EditContentDialog", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Content Title")).toBeInTheDocument();
-    expect(screen.getByText("Uploaded File")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        (content) =>
-          content.includes("Current file: IMAGE") &&
-          content.includes("image/jpeg"),
-      ),
-    ).toBeInTheDocument();
+      screen.queryByText("Uploaded File"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Current file:/)).not.toBeInTheDocument();
     expect(screen.getByText(SUPPORTED_CONTENT_FILE_LABELS)).toBeInTheDocument();
     expect(screen.getByText("Max 10 MB")).toBeInTheDocument();
 

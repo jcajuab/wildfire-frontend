@@ -3,6 +3,7 @@ import type { Content } from "@/types/content";
 
 type TextThumbnailContent = Pick<Content, "title"> & {
   readonly textHtmlContent?: string | null;
+  readonly textPreviewText?: string | null;
 };
 
 const HTML_ENTITY_MAP: Readonly<Record<string, string>> = {
@@ -113,6 +114,11 @@ export function getFlashThumbnailText(content: Content): string {
 }
 
 export function getTextThumbnailText(content: TextThumbnailContent): string {
+  const previewText = content.textPreviewText?.trim() ?? "";
+  if (previewText.length > 0) {
+    return previewText;
+  }
+
   const textContent = extractPlainTextFromHtml(content.textHtmlContent ?? null);
   return textContent.length > 0 ? textContent : content.title;
 }
@@ -122,6 +128,10 @@ export function getTextThumbnailHtml(content: TextThumbnailContent): string {
   const sanitized = sanitizeRichTextHtml(htmlContent);
   if (extractPlainTextFromHtml(sanitized).length > 0) {
     return sanitized;
+  }
+  const previewText = content.textPreviewText?.trim() ?? "";
+  if (previewText.length > 0) {
+    return `<p>${escapeHtml(previewText)}</p>`;
   }
   return `<p>${escapeHtml(content.title)}</p>`;
 }

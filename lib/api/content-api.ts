@@ -33,6 +33,7 @@ export interface BackendContent {
   readonly flashTone: FlashTone | null;
   readonly textJsonContent: string | null;
   readonly textHtmlContent: string | null;
+  readonly textPreviewText: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly owner: {
@@ -41,6 +42,11 @@ export interface BackendContent {
     readonly name: string | null;
   };
 }
+
+export type BackendContentListItem = Omit<
+  BackendContent,
+  "textJsonContent" | "textHtmlContent"
+>;
 
 export interface BackendContentJob {
   readonly id: string;
@@ -74,7 +80,7 @@ export interface ContentIngestionAcceptedResponse {
 }
 
 export interface BackendContentListResponse {
-  readonly items: readonly BackendContent[];
+  readonly items: readonly BackendContentListItem[];
   readonly page: number;
   readonly pageSize: number;
   readonly total: number;
@@ -175,7 +181,10 @@ export const contentApi = api.injectEndpoints({
         },
       }),
       transformResponse: (response) =>
-        transformPaginatedListResponse<BackendContent>(response, "listContent"),
+        transformPaginatedListResponse<BackendContentListItem>(
+          response,
+          "listContent",
+        ),
       providesTags: createProvidesTags("Content"),
     }),
     getContent: build.query<BackendContent, string>({
@@ -421,7 +430,7 @@ export const contentApi = api.injectEndpoints({
               contentApi.util.updateQueryData("listContent", args, (draft) => {
                 patchPaginatedListById(draft, "remove", {
                   id,
-                } as BackendContent);
+                } as BackendContentListItem);
               }),
             );
           }

@@ -1,7 +1,12 @@
-import type { BackendContent } from "@/lib/api/content-api";
+import type {
+  BackendContent,
+  BackendContentListItem,
+} from "@/lib/api/content-api";
 import type { Content } from "@/types/content";
 
-export function mapBackendContentToContent(item: BackendContent): Content {
+export function mapBackendContentToContent(
+  item: BackendContent | BackendContentListItem,
+): Content {
   return {
     id: item.id,
     title: item.title,
@@ -15,8 +20,9 @@ export function mapBackendContentToContent(item: BackendContent): Content {
     duration: item.duration,
     flashMessage: item.flashMessage ?? null,
     flashTone: item.flashTone ?? null,
-    textJsonContent: item.textJsonContent ?? null,
-    textHtmlContent: item.textHtmlContent ?? null,
+    textJsonContent: "textJsonContent" in item ? item.textJsonContent : null,
+    textHtmlContent: "textHtmlContent" in item ? item.textHtmlContent : null,
+    textPreviewText: item.textPreviewText ?? null,
     status: item.status,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
-import type { BackendContent } from "@/lib/api/content-api";
+import type { BackendContentListItem } from "@/lib/api/content-api";
 import {
   useClearEmergencySlotMutation,
   useListEmergencySlotsQuery,
@@ -53,7 +53,7 @@ export function EmergencyManageDialog({
   );
 
   const handleSelectContent = useCallback(
-    async (content: BackendContent) => {
+    async (content: BackendContentListItem) => {
       if (selectedSlotIndex === null) return;
       try {
         await setSlot({

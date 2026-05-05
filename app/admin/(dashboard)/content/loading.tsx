@@ -8,22 +8,26 @@ export default function Loading(): ReactElement {
         className="shrink-0 border-b border-border bg-background p-4"
       >
         <div className="flex w-full min-w-0 flex-col gap-2">
-          <div className="grid w-full min-w-0 grid-cols-1 items-center gap-2 lg:grid-cols-[1fr_auto_1fr]">
+          <div className="grid w-full min-w-0 grid-cols-1 items-center gap-2 md:grid-cols-[auto_minmax(12rem,1fr)_auto] md:gap-3">
             <div
               data-testid="content-loading-title"
               className="h-6 w-24 animate-pulse rounded-md bg-muted"
             />
-            <div className="flex min-w-0 items-center gap-2 lg:w-[38rem] lg:max-w-[48vw]">
+            <div
+              data-testid="content-loading-search-group"
+              className="flex h-7 w-full min-w-0 items-center justify-self-center rounded-md border border-input bg-input/20 md:max-w-168"
+            >
               <div
                 data-testid="content-loading-search"
-                className="h-7 min-w-0 flex-1 animate-pulse rounded-md bg-muted"
+                className="ml-8 h-3 min-w-0 flex-1 animate-pulse rounded-md bg-muted"
               />
+              <div className="mx-1.5 size-5 shrink-0 animate-pulse rounded-md bg-muted" />
               <div
                 data-testid="content-loading-filter"
-                className="size-7 shrink-0 animate-pulse rounded-md bg-muted"
+                className="mr-1 size-6 shrink-0 animate-pulse rounded-md bg-muted"
               />
             </div>
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center lg:justify-end">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center md:justify-end">
               <div
                 data-testid="content-loading-bulk-delete"
                 className="h-7 w-full animate-pulse rounded-md bg-muted sm:w-24"

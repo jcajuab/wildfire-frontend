@@ -3,12 +3,8 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, test, vi } from "vitest";
 import { EmergencySlotDropdown } from "@/components/emergency/emergency-slot-dropdown";
-import { useGlobalEmergency } from "@/hooks/use-global-emergency";
+import type { UseGlobalEmergencyReturn } from "@/hooks/use-global-emergency";
 import { useListEmergencySlotsQuery } from "@/lib/api/emergency-slots-api";
-
-vi.mock("@/hooks/use-global-emergency", () => ({
-  useGlobalEmergency: vi.fn(),
-}));
 
 vi.mock("@/lib/api/emergency-slots-api", () => ({
   useListEmergencySlotsQuery: vi.fn(),
@@ -50,22 +46,27 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   ),
 }));
 
-const useGlobalEmergencyMock = vi.mocked(useGlobalEmergency);
 const useListEmergencySlotsQueryMock = vi.mocked(useListEmergencySlotsQuery);
+
+function makeEmergency(
+  overrides: Partial<UseGlobalEmergencyReturn> = {},
+): UseGlobalEmergencyReturn {
+  return {
+    isActive: false,
+    isBusy: false,
+    canRead: true,
+    canUpdate: true,
+    activate: vi.fn(async () => {}),
+    deactivate: vi.fn(async () => {}),
+    ...overrides,
+  };
+}
 
 describe("EmergencySlotDropdown", () => {
   test("activates a filled slot and keeps empty slots disabled", async () => {
     const user = userEvent.setup();
     const activate = vi.fn(async () => {});
 
-    useGlobalEmergencyMock.mockReturnValue({
-      isActive: false,
-      isBusy: false,
-      canRead: true,
-      canUpdate: true,
-      activate,
-      deactivate: vi.fn(async () => {}),
-    });
     useListEmergencySlotsQueryMock.mockReturnValue({
       data: {
         slots: [
@@ -89,6 +90,7 @@ describe("EmergencySlotDropdown", () => {
 
     render(
       <EmergencySlotDropdown
+        emergency={makeEmergency({ activate })}
         trigger={<button type="button">Manage Emergencies</button>}
       />,
     );
@@ -104,20 +106,13 @@ describe("EmergencySlotDropdown", () => {
   test("renders stop action when global emergency is active", () => {
     const deactivate = vi.fn(async () => {});
 
-    useGlobalEmergencyMock.mockReturnValue({
-      isActive: true,
-      isBusy: false,
-      canRead: true,
-      canUpdate: true,
-      activate: vi.fn(async () => {}),
-      deactivate,
-    });
     useListEmergencySlotsQueryMock.mockReturnValue({
       data: { slots: [] },
     } as ReturnType<typeof useListEmergencySlotsQuery>);
 
     render(
       <EmergencySlotDropdown
+        emergency={makeEmergency({ isActive: true, deactivate })}
         trigger={<button type="button">Stop Emergency</button>}
       />,
     );

@@ -94,20 +94,6 @@ export interface CreateRegistrationLinkResponse {
   readonly expiresAt: string;
 }
 
-export interface BootstrapEmergencySlot {
-  readonly slotIndex: number;
-  readonly label: string | null;
-  readonly contentId: string | null;
-  readonly content: {
-    readonly id: string;
-    readonly title: string;
-    readonly type: "IMAGE" | "VIDEO" | "TEXT" | "FLASH";
-    readonly status: "PROCESSING" | "READY" | "FAILED";
-    readonly thumbnailKey: string | null;
-  } | null;
-  readonly updatedAt: string | null;
-}
-
 export interface DisplayRuntimeOverrides {
   readonly globalEmergency: {
     readonly active: boolean;
@@ -121,7 +107,6 @@ export interface DisplaysBootstrapResponse {
   readonly displayGroups: DisplayGroup[];
   readonly displayOutputOptions: DisplayOutputOption[];
   readonly runtimeOverrides: DisplayRuntimeOverrides;
-  readonly emergencySlots: readonly BootstrapEmergencySlot[];
 }
 
 type DisplaysListMutable = {
@@ -142,7 +127,6 @@ type DisplaysBootstrapMutable = {
       activeSlotIndex: number | null;
     };
   };
-  emergencySlots: BootstrapEmergencySlot[];
 };
 
 export const displaysApi = api.injectEndpoints({

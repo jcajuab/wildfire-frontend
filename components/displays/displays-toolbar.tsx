@@ -87,19 +87,12 @@ export function DisplaysToolbar({
   return (
     <header className="shrink-0 border-b border-border bg-background p-4">
       <div className="flex w-full min-w-0 flex-col gap-2">
-        <div className="grid w-full min-w-0 grid-cols-1 items-center gap-2 lg:grid-cols-[1fr_auto_1fr]">
+        <div className="grid w-full min-w-0 grid-cols-1 items-center gap-2 md:grid-cols-[auto_minmax(12rem,1fr)_auto] md:gap-3">
           <h1 className="min-w-0 truncate text-xl font-semibold leading-tight tracking-tight text-balance">
             Displays
           </h1>
 
-          <div className="flex min-w-0 items-center gap-2 lg:w-[38rem] lg:max-w-[48vw]">
-            <SearchControl
-              value={search}
-              onChange={onSearchChange}
-              ariaLabel="Search displays"
-              placeholder="Search by display name or slug"
-              className="min-w-0 flex-1 max-w-none"
-            />
+          <div className="flex w-full min-w-0 items-center justify-self-center md:max-w-168">
             <DisplayFilterPopover
               statusFilter={statusFilter}
               selectedGroups={selectedGroups}
@@ -108,6 +101,19 @@ export function DisplaysToolbar({
               availableGroups={availableGroups}
               availableOutputs={availableOutputs}
               isFetching={isFetching}
+              embeddedTrigger
+              renderEmbeddedAnchor={(trigger) => (
+                <div className="w-full min-w-0">
+                  <SearchControl
+                    value={search}
+                    onChange={onSearchChange}
+                    ariaLabel="Search displays"
+                    placeholder="Search by display name or slug"
+                    className="max-w-none min-w-0 flex-1"
+                    trailingAction={trigger}
+                  />
+                </div>
+              )}
               onStatusChange={onStatusFilterChange}
               onGroupsChange={onGroupFilterChange}
               onOutputChange={onOutputFilterChange}
@@ -115,7 +121,7 @@ export function DisplaysToolbar({
             />
           </div>
 
-          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center lg:justify-end">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center md:justify-end">
             {canShowBulkUnregister ? (
               <Button
                 type="button"

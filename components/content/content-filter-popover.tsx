@@ -1,12 +1,14 @@
 "use client";
 
 import type { ReactElement } from "react";
+import { useState } from "react";
 import { IconFilter, IconX } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
@@ -18,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import type { ContentStatus, ContentType } from "@/types/content";
 
 export type TypeFilter = "all" | ContentType;
@@ -28,6 +31,8 @@ interface ContentFilterPopoverProps {
   readonly typeFilter: TypeFilter;
   readonly filteredResultsCount: number;
   readonly isFetching?: boolean;
+  readonly embeddedTrigger?: boolean;
+  readonly renderEmbeddedAnchor?: (trigger: ReactElement) => ReactElement;
   readonly onStatusFilterChange: (value: ContentStatusFilter) => void;
   readonly onTypeFilterChange: (value: TypeFilter) => void;
   readonly onClearFilters: () => void;
@@ -78,10 +83,13 @@ export function ContentFilterPopover({
   typeFilter,
   filteredResultsCount,
   isFetching = false,
+  embeddedTrigger = false,
+  renderEmbeddedAnchor,
   onStatusFilterChange,
   onTypeFilterChange,
   onClearFilters,
 }: ContentFilterPopoverProps): ReactElement {
+  const [open, setOpen] = useState(false);
   const activeFilterCount =
     (statusFilter === "all" ? 0 : 1) + (typeFilter === "all" ? 0 : 1);
   const hasActiveFilters = activeFilterCount > 0;
@@ -93,30 +101,49 @@ export function ContentFilterPopover({
     typeFilter === "all"
       ? null
       : typeOptions.find((option) => option.value === typeFilter)?.label;
+  const triggerButton = (
+    <Button
+      variant={embeddedTrigger ? "ghost" : "outline"}
+      size={embeddedTrigger ? "icon-sm" : "icon"}
+      className={cn(
+        "relative",
+        embeddedTrigger &&
+          "border-0 bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+      aria-label="Filter content"
+      aria-expanded={embeddedTrigger ? open : undefined}
+      onClick={
+        embeddedTrigger ? () => setOpen((current) => !current) : undefined
+      }
+    >
+      <IconFilter className="size-4" aria-hidden="true" />
+      {isFetching ? (
+        <span className="absolute -right-1 -top-1 size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      ) : hasActiveFilters ? (
+        <Badge className="absolute -right-1.5 -top-1.5 h-4 min-w-4 px-1 text-[10px] leading-4">
+          {activeFilterCount}
+        </Badge>
+      ) : null}
+    </Button>
+  );
+  const trigger = embeddedTrigger ? (
+    triggerButton
+  ) : (
+    <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
+  );
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="relative"
-          aria-label="Filter content"
-        >
-          <IconFilter className="size-4" aria-hidden="true" />
-          {isFetching ? (
-            <span className="absolute -right-1 -top-1 size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          ) : hasActiveFilters ? (
-            <Badge className="absolute -right-1.5 -top-1.5 h-4 min-w-4 px-1 text-[10px] leading-4">
-              {activeFilterCount}
-            </Badge>
-          ) : null}
-        </Button>
-      </PopoverTrigger>
+    <Popover open={open} onOpenChange={setOpen}>
+      {renderEmbeddedAnchor ? (
+        <PopoverAnchor asChild>{renderEmbeddedAnchor(trigger)}</PopoverAnchor>
+      ) : (
+        trigger
+      )}
       <PopoverContent
         className="w-[22rem] max-w-[calc(100vw-2rem)] gap-0 p-0"
         side="bottom"
         align="end"
+        sideOffset={4}
         avoidCollisions={false}
         aria-label="Content filters"
       >

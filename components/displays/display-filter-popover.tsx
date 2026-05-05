@@ -19,6 +19,7 @@ import {
 import { Label } from "@/components/ui/label";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
@@ -40,6 +41,7 @@ import {
   normalizeDisplayOutputFilter,
   toDisplayOutputTypeFilter,
 } from "@/lib/display-output";
+import { cn } from "@/lib/utils";
 import type { DisplayOutputFilter, DisplayStatus } from "@/types/display";
 
 export type DisplayStatusFilter = "all" | DisplayStatus;
@@ -52,6 +54,8 @@ interface DisplayFilterPopoverProps {
   readonly availableGroups: readonly string[];
   readonly availableOutputs: readonly string[];
   readonly isFetching?: boolean;
+  readonly embeddedTrigger?: boolean;
+  readonly renderEmbeddedAnchor?: (trigger: ReactElement) => ReactElement;
   readonly onStatusChange: (nextStatus: DisplayStatusFilter) => void;
   readonly onGroupsChange: (nextGroups: readonly string[]) => void;
   readonly onOutputChange: (nextOutput: DisplayOutputFilter) => void;
@@ -94,11 +98,14 @@ export function DisplayFilterPopover({
   availableGroups,
   availableOutputs,
   isFetching = false,
+  embeddedTrigger = false,
+  renderEmbeddedAnchor,
   onStatusChange,
   onGroupsChange,
   onOutputChange,
   onClearFilters,
 }: DisplayFilterPopoverProps): ReactElement {
+  const [open, setOpen] = useState(false);
   const activeFilterCount =
     selectedGroups.length +
     (selectedOutput === "all" ? 0 : 1) +
@@ -156,35 +163,56 @@ export function DisplayFilterPopover({
     },
     [onGroupsChange, selectedGroups],
   );
+  const triggerButton = (
+    <Button
+      variant={embeddedTrigger ? "ghost" : "outline"}
+      size={embeddedTrigger ? "icon-sm" : "icon"}
+      className={cn(
+        "relative",
+        embeddedTrigger &&
+          "border-0 bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+      aria-label="Filter displays"
+      aria-expanded={embeddedTrigger ? open : undefined}
+      onClick={
+        embeddedTrigger ? () => setOpen((current) => !current) : undefined
+      }
+    >
+      <IconFilter className="size-4" aria-hidden="true" />
+      {isFetching ? (
+        <span className="absolute -right-1 -top-1 size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      ) : hasActiveFilters ? (
+        <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground tabular-nums">
+          {activeFilterCount}
+        </span>
+      ) : null}
+    </Button>
+  );
+  const trigger = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {embeddedTrigger ? (
+          triggerButton
+        ) : (
+          <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
+        )}
+      </TooltipTrigger>
+      <TooltipContent>Filter</TooltipContent>
+    </Tooltip>
+  );
 
   return (
-    <Popover>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="relative"
-              aria-label="Filter displays"
-            >
-              <IconFilter className="size-4" aria-hidden="true" />
-              {isFetching ? (
-                <span className="absolute -right-1 -top-1 size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              ) : hasActiveFilters ? (
-                <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground tabular-nums">
-                  {activeFilterCount}
-                </span>
-              ) : null}
-            </Button>
-          </PopoverTrigger>
-        </TooltipTrigger>
-        <TooltipContent>Filter</TooltipContent>
-      </Tooltip>
+    <Popover open={open} onOpenChange={setOpen}>
+      {renderEmbeddedAnchor ? (
+        <PopoverAnchor asChild>{renderEmbeddedAnchor(trigger)}</PopoverAnchor>
+      ) : (
+        trigger
+      )}
       <PopoverContent
         className="w-[22rem] max-w-[calc(100vw-2rem)] gap-0 p-0"
         side="bottom"
         align="end"
+        sideOffset={4}
         avoidCollisions={false}
         aria-label="Display filters"
       >

@@ -14,11 +14,15 @@ describe("Content loading state", () => {
     expect(toolbar).toHaveClass("bg-background");
     expect(toolbar).toHaveClass("p-4");
     expect(screen.getByTestId("content-loading-title")).toHaveClass("w-24");
-    expect(screen.getByTestId("content-loading-search")).toHaveClass(
+    expect(screen.getByTestId("content-loading-search-group")).toHaveClass(
       "h-7",
+      "md:max-w-168",
+    );
+    expect(screen.getByTestId("content-loading-search")).toHaveClass(
+      "h-3",
       "flex-1",
     );
-    expect(screen.getByTestId("content-loading-filter")).toHaveClass("size-7");
+    expect(screen.getByTestId("content-loading-filter")).toHaveClass("size-6");
     expect(screen.getByTestId("content-loading-create")).toHaveClass(
       "h-7",
       "sm:w-32",

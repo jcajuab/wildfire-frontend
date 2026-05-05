@@ -16,6 +16,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import {
   useListContentQuery,
   type BackendContent,
+  type BackendContentListItem,
 } from "@/lib/api/content-api";
 import {
   getTextThumbnailHtml,
@@ -34,7 +35,7 @@ const PAGE_SIZE = 12;
 
 interface EmergencyContentPickerProps {
   readonly selectedSlotIndex: EmergencySlotIndex | null;
-  readonly onSelect: (content: BackendContent) => void;
+  readonly onSelect: (content: BackendContentListItem) => void;
   readonly isSubmitting?: boolean;
 }
 
@@ -117,7 +118,7 @@ export function EmergencyContentPicker({
 }
 
 interface CompactContentCardProps {
-  readonly content: BackendContent;
+  readonly content: BackendContentListItem;
   readonly disabled: boolean;
   readonly onSelect: () => void;
 }

@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { redirect } from "next/navigation";
 
-import type { BackendContent } from "@/lib/api/content-api";
+import type { BackendContentListItem } from "@/lib/api/content-api";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import {
   CONTENT_PAGE_SIZE,
@@ -15,7 +15,7 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
-import { ContentListCacheSeeder, ContentPageView } from "./content-page-client";
+import { ContentPageView } from "./content-page-client";
 
 interface ContentPageProps {
   readonly searchParams?: Promise<
@@ -54,15 +54,10 @@ export default async function ContentPage({
   });
   handleBootstrapResult(listRes, "/admin/content");
 
-  const listData = transformPaginatedListResponse<BackendContent>(
+  const listData = transformPaginatedListResponse<BackendContentListItem>(
     listRes.data,
     "listContent",
   );
 
-  return (
-    <>
-      <ContentListCacheSeeder queryArgs={queryArgs} data={listData} />
-      <ContentPageView />
-    </>
-  );
+  return <ContentPageView initialQueryArgs={queryArgs} initialData={listData} />;
 }

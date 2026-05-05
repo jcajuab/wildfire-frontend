@@ -427,7 +427,7 @@ export function useDisplaysPage({
     displaysData: clientDisplaysData,
     displayGroupsData,
     globalEmergencyActive,
-    isLoading: isLoading || isLoadingRemainingDisplays,
+    isLoading,
     isFetching: isFetching || isLoadingRemainingDisplays,
     isError,
     loadErrorMessage,

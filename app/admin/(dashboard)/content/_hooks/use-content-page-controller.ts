@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCan } from "@/hooks/use-can";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
+  contentApi,
+  type BackendContentListResponse,
+  type ContentListQuery,
   useLazyGetContentJobQuery,
   useLazyGetContentQuery,
   useListContentQuery,
@@ -15,6 +18,7 @@ import {
   notifyApiError,
 } from "@/lib/api/get-api-error-message";
 import { mapBackendContentToContent } from "@/lib/mappers/content-mapper";
+import type { Content } from "@/types/content";
 import { useContentJobMonitor } from "./content-job-monitor";
 import { useContentPageFilters } from "./use-content-page-filters";
 import { useContentDialogState } from "./use-content-dialog-state";
@@ -25,11 +29,35 @@ const PAGE_SIZE = CONTENT_PAGE_SIZE;
 /** SSE delivers content_status_changed; long fallback only if SSE is unavailable */
 const POLLING_FALLBACK_INTERVAL_MS = 300_000;
 
+export interface InitialContentList {
+  readonly queryArgs: ContentListQuery;
+  readonly data: BackendContentListResponse;
+  readonly isSeeded: boolean;
+}
+
+interface UseContentPageControllerOptions {
+  readonly initialList?: InitialContentList;
+}
+
+function normalizedQueryKey(query: ContentListQuery): string {
+  return JSON.stringify({
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? PAGE_SIZE,
+    status: query.status ?? null,
+    type: query.type ?? null,
+    search: query.search ?? null,
+    sortBy: query.sortBy ?? "createdAt",
+    sortDirection: query.sortDirection ?? "desc",
+  });
+}
+
 /**
  * Main controller for content page.
  * Composes dialog state, CRUD handlers, filters, and job monitoring.
  */
-export function useContentPageController() {
+export function useContentPageController({
+  initialList,
+}: UseContentPageControllerOptions = {}) {
   const canCreateContent = useCan("content:create");
   const canUpdateContent = useCan("content:update");
   const canDeleteContent = useCan("content:delete");
@@ -37,19 +65,46 @@ export function useContentPageController() {
   const filters = useContentPageFilters();
   const dialogState = useContentDialogState();
   const debouncedSearch = useDebounce(filters.search, 500);
+  const queryArgs: ContentListQuery = {
+    page: filters.page,
+    pageSize: PAGE_SIZE,
+    status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
+    type: filters.typeFilter === "all" ? undefined : filters.typeFilter,
+    search: debouncedSearch.trim().length > 0 ? debouncedSearch : undefined,
+    sortBy: "createdAt",
+    sortDirection: "desc",
+  };
+  const isInitialListQuery =
+    initialList != null &&
+    normalizedQueryKey(initialList.queryArgs) === normalizedQueryKey(queryArgs);
+  const shouldSkipInitialQuery = isInitialListQuery;
 
-  const { data, isLoading, isFetching, isError, error } = useListContentQuery(
+  const {
+    data: queriedData,
+    isLoading: queryIsLoading,
+    isFetching: queryIsFetching,
+    isError,
+    error,
+  } = useListContentQuery(queryArgs, {
+    pollingInterval: POLLING_FALLBACK_INTERVAL_MS,
+    skip: shouldSkipInitialQuery,
+  });
+  const cachedInitialList = contentApi.endpoints.listContent.useQueryState(
+    queryArgs,
     {
-      page: filters.page,
-      pageSize: PAGE_SIZE,
-      status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
-      type: filters.typeFilter === "all" ? undefined : filters.typeFilter,
-      search: debouncedSearch.trim().length > 0 ? debouncedSearch : undefined,
-      sortBy: "createdAt",
-      sortDirection: "desc",
+      skip: !isInitialListQuery,
     },
-    { pollingInterval: POLLING_FALLBACK_INTERVAL_MS },
   );
+  const data =
+    queriedData ??
+    cachedInitialList.data ??
+    (isInitialListQuery ? initialList?.data : undefined);
+  const isLoading =
+    data == null &&
+    (isInitialListQuery ? !initialList?.isSeeded : queryIsLoading);
+  const isFetching = isInitialListQuery
+    ? cachedInitialList.isFetching
+    : queryIsFetching;
 
   // SSE lifecycle events patch list rows via AdminEventProvider (no broad LIST invalidation).
   // Polling is a slow fallback if SSE is disconnected.
@@ -130,6 +185,18 @@ export function useContentPageController() {
     }
     await crudHandlers.handleUploadFile(name, file);
   };
+  const handleEdit = useCallback(
+    (content: Content) => {
+      void loadContent(content.id).then((result) => {
+        if (result.data) {
+          dialogHandleEdit(mapBackendContentToContent(result.data));
+          return;
+        }
+        dialogHandleEdit(content);
+      });
+    },
+    [dialogHandleEdit, loadContent],
+  );
 
   const visibleContents = useMemo(
     () => (data?.items ?? []).map(mapBackendContentToContent),
@@ -178,7 +245,7 @@ export function useContentPageController() {
     handleUploadFile,
     handleCreateFlash: crudHandlers.handleCreateFlash,
     handleCreateText: crudHandlers.handleCreateText,
-    handleEdit: dialogState.handleEdit,
+    handleEdit,
     handleDelete: dialogState.handleDelete,
     closeEditDialog: dialogState.closeEditDialog,
     handleDownload: crudHandlers.handleDownload,

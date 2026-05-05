@@ -1,5 +1,5 @@
 "use client";
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { IconSearch, IconX } from "@tabler/icons-react";
 import {
   InputGroup,
@@ -16,6 +16,7 @@ interface SearchControlProps {
   readonly placeholder?: string;
   readonly className?: string;
   readonly disabled?: boolean;
+  readonly trailingAction?: ReactNode;
 }
 
 export function SearchControl({
@@ -25,6 +26,7 @@ export function SearchControl({
   placeholder = "Search…",
   className,
   disabled = false,
+  trailingAction,
 }: SearchControlProps): ReactElement {
   return (
     <InputGroup className={cn("w-full min-w-52 max-w-80", className)}>
@@ -46,17 +48,20 @@ export function SearchControl({
           if (event.key === "Escape" && value !== "") onChange("");
         }}
       />
-      {value !== "" ? (
+      {value !== "" || trailingAction ? (
         <InputGroupAddon align="inline-end">
-          <InputGroupButton
-            size="icon-xs"
-            variant="ghost"
-            onClick={() => onChange("")}
-            aria-label="Clear search"
-            disabled={disabled}
-          >
-            <IconX className="size-3.5" aria-hidden="true" />
-          </InputGroupButton>
+          {value !== "" ? (
+            <InputGroupButton
+              size="icon-xs"
+              variant="ghost"
+              onClick={() => onChange("")}
+              aria-label="Clear search"
+              disabled={disabled}
+            >
+              <IconX className="size-3.5" aria-hidden="true" />
+            </InputGroupButton>
+          ) : null}
+          {trailingAction}
         </InputGroupAddon>
       ) : null}
     </InputGroup>

@@ -22,8 +22,8 @@ export function GlobalEmergencyButton({
   variant,
 }: GlobalEmergencyButtonProps): ReactElement | null {
   const { user } = useAuth();
-  const { isActive, isBusy, canRead, canUpdate, deactivate } =
-    useGlobalEmergency();
+  const emergency = useGlobalEmergency();
+  const { isActive, isBusy, canRead, canUpdate, deactivate } = emergency;
 
   if (!user?.isAdmin || !canRead) {
     return null;
@@ -63,6 +63,7 @@ export function GlobalEmergencyButton({
         <SidebarMenu>
           <SidebarMenuItem>
             <EmergencySlotDropdown
+              emergency={emergency}
               trigger={
                 <SidebarMenuButton
                   size="default"
@@ -102,6 +103,7 @@ export function GlobalEmergencyButton({
 
   return (
     <EmergencySlotDropdown
+      emergency={emergency}
       trigger={
         <Button
           variant={isActive ? "destructive" : "ghost"}

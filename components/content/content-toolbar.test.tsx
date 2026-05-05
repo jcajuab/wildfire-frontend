@@ -65,10 +65,36 @@ describe("ContentToolbar", () => {
       screen.getByRole("button", { name: "Filter content" }),
     ).toBeInTheDocument();
     expect(
+      screen
+        .getByRole("button", { name: "Filter content" })
+        .closest('[data-slot="input-group"]'),
+    ).toBe(
+      screen
+        .getByRole("textbox", { name: "Search content" })
+        .closest('[data-slot="input-group"]'),
+    );
+    expect(
       screen.getByRole("button", { name: "Create Content" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Bulk Delete" }),
+    ).toBeInTheDocument();
+  });
+
+  test("opens filters from the merged search control", async () => {
+    const user = userEvent.setup();
+    renderToolbar();
+
+    await user.click(screen.getByRole("button", { name: "Filter content" }));
+
+    expect(
+      document.querySelector('[data-slot="popover-content"]'),
+    ).toHaveAttribute("data-side", "bottom");
+    expect(
+      document.querySelector('[data-slot="popover-content"]'),
+    ).toHaveAttribute("data-align", "end");
+    expect(
+      screen.getByRole("dialog", { name: "Content filters" }),
     ).toBeInTheDocument();
   });
 

@@ -277,11 +277,6 @@ function EditContentDialogForm({
           </div>
         ) : (
           <div className="space-y-2">
-            <Label>Uploaded File</Label>
-            <p className="text-xs text-muted-foreground">
-              Current file: {content.type} &middot;{" "}
-              {content.mimeType || "Unknown"}
-            </p>
             {canReplaceFile ? (
               <div
                 className={`flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-8 transition-colors ${

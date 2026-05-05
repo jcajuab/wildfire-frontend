@@ -25,9 +25,20 @@ vi.mock("@/hooks/use-can", () => ({
 }));
 
 vi.mock("@/lib/api/content-api", () => ({
+  contentApi: {
+    endpoints: {
+      listContent: {
+        useQueryState: vi.fn(() => ({
+          data: undefined,
+          isFetching: false,
+        })),
+      },
+    },
+  },
   useListContentQuery: vi.fn(() => ({
     data: { items: [], total: 0 },
     isLoading: false,
+    isFetching: false,
     isError: false,
     error: null,
   })),
@@ -155,7 +166,7 @@ describe("useContentPageController", () => {
         sortBy: "createdAt",
         sortDirection: "desc",
       },
-      { pollingInterval: 300_000 },
+      { pollingInterval: 300_000, skip: false },
     );
     expect(result.current.canCreateContent).toBe(true);
     expect("sortBy" in result.current.filters).toBe(false);

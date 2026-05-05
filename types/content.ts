@@ -29,6 +29,7 @@ export interface Content {
   readonly flashTone: FlashTone | null;
   readonly textJsonContent: string | null;
   readonly textHtmlContent: string | null;
+  readonly textPreviewText?: string | null;
   readonly status: ContentStatus;
   readonly createdAt: string;
   readonly updatedAt: string;

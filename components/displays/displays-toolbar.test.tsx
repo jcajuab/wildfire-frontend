@@ -88,6 +88,15 @@ describe("DisplaysToolbar", () => {
     ).toBeInTheDocument();
     expect(
       screen
+        .getByRole("button", { name: "Filter displays" })
+        .closest('[data-slot="input-group"]'),
+    ).toBe(
+      screen
+        .getByRole("textbox", { name: "Search displays" })
+        .closest('[data-slot="input-group"]'),
+    );
+    expect(
+      screen
         .getByRole("textbox", { name: "Search displays" })
         .compareDocumentPosition(
           screen.getByRole("button", { name: "Filter displays" }),
@@ -96,6 +105,23 @@ describe("DisplaysToolbar", () => {
     expect(
       screen.queryByRole("button", { name: "Actions" }),
     ).not.toBeInTheDocument();
+  });
+
+  test("opens filters from the merged search control", async () => {
+    const user = userEvent.setup();
+    renderToolbar();
+
+    await user.click(screen.getByRole("button", { name: "Filter displays" }));
+
+    expect(
+      document.querySelector('[data-slot="popover-content"]'),
+    ).toHaveAttribute("data-side", "bottom");
+    expect(
+      document.querySelector('[data-slot="popover-content"]'),
+    ).toHaveAttribute("data-align", "end");
+    expect(
+      screen.getByRole("dialog", { name: "Display filters" }),
+    ).toBeInTheDocument();
   });
 
   test("renders the manage displays dropdown when any manage permission exists", () => {

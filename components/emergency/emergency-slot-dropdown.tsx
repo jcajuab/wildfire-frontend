@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactElement, type ReactNode } from "react";
+import dynamic from "next/dynamic";
 import { IconPlus } from "@tabler/icons-react";
 
 import {
@@ -10,27 +11,39 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useGlobalEmergency } from "@/hooks/use-global-emergency";
+import type { UseGlobalEmergencyReturn } from "@/hooks/use-global-emergency";
 import {
   useListEmergencySlotsQuery,
   type EmergencySlot,
   type EmergencySlotIndex,
 } from "@/lib/api/emergency-slots-api";
-import { EmergencyManageDialog } from "./emergency-manage-dialog";
+
+const EmergencyManageDialog = dynamic(
+  () =>
+    import("./emergency-manage-dialog").then(
+      (mod) => mod.EmergencyManageDialog,
+    ),
+  { ssr: false },
+);
 
 const SLOT_INDICES: readonly EmergencySlotIndex[] = [1, 2, 3, 4, 5] as const;
 
 interface EmergencySlotDropdownProps {
   readonly trigger: ReactNode;
+  readonly emergency: UseGlobalEmergencyReturn;
 }
 
 export function EmergencySlotDropdown({
   trigger,
+  emergency,
 }: EmergencySlotDropdownProps): ReactElement {
   const { isActive, canRead, canUpdate, isBusy, activate, deactivate } =
-    useGlobalEmergency();
-  const { data } = useListEmergencySlotsQuery(undefined, { skip: !canRead });
+    emergency;
+  const [isOpen, setIsOpen] = useState(false);
   const [isManageOpen, setIsManageOpen] = useState(false);
+  const { data } = useListEmergencySlotsQuery(undefined, {
+    skip: !canRead || (!isOpen && !isManageOpen),
+  });
 
   const slotsByIndex = new Map<EmergencySlotIndex, EmergencySlot>();
   for (const slot of data?.slots ?? []) {
@@ -42,7 +55,7 @@ export function EmergencySlotDropdown({
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
         <DropdownMenuContent
           side="top"
@@ -107,10 +120,12 @@ export function EmergencySlotDropdown({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      <EmergencyManageDialog
-        open={isManageOpen}
-        onOpenChange={setIsManageOpen}
-      />
+      {isManageOpen ? (
+        <EmergencyManageDialog
+          open={isManageOpen}
+          onOpenChange={setIsManageOpen}
+        />
+      ) : null}
     </>
   );
 }

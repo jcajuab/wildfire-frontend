@@ -15,14 +15,21 @@ describe("Displays loading state", () => {
     expect(toolbar).toHaveClass("p-4");
     expect(screen.getAllByTestId("displays-loading-toolbar")).toHaveLength(1);
     expect(screen.getByTestId("displays-loading-title")).toHaveClass("w-28");
-    expect(screen.getByTestId("displays-loading-search")).toHaveClass("flex-1");
-    expect(screen.getByTestId("displays-loading-filter")).toHaveClass("size-9");
+    expect(screen.getByTestId("displays-loading-search-group")).toHaveClass(
+      "h-7",
+      "md:max-w-168",
+    );
+    expect(screen.getByTestId("displays-loading-search")).toHaveClass(
+      "h-3",
+      "flex-1",
+    );
+    expect(screen.getByTestId("displays-loading-filter")).toHaveClass("size-6");
     expect(screen.getByTestId("displays-loading-bulk-unregister")).toHaveClass(
-      "h-9",
+      "h-7",
       "sm:w-32",
     );
     expect(screen.getByTestId("displays-loading-manage")).toHaveClass(
-      "h-9",
+      "h-7",
       "sm:w-36",
     );
 

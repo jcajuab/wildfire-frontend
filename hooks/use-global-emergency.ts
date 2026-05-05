@@ -11,7 +11,7 @@ import {
   useGetRuntimeOverridesQuery,
 } from "@/lib/api/displays-api";
 
-interface UseGlobalEmergencyReturn {
+export interface UseGlobalEmergencyReturn {
   isActive: boolean;
   isBusy: boolean;
   canRead: boolean;

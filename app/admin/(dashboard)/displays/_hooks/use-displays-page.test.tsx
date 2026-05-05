@@ -140,7 +140,6 @@ const bootstrapData: DisplaysBootstrapResponse = {
       activeSlotIndex: null,
     },
   },
-  emergencySlots: [],
 };
 
 describe("useDisplaysPage", () => {
