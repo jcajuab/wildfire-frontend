@@ -119,7 +119,6 @@ describe("DisplayCard", () => {
     ).not.toBeInTheDocument();
   });
 
-
   test("keeps the actions menu button accessible", () => {
     renderDisplayCard();
 

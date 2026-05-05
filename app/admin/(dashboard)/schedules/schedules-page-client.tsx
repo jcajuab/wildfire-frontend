@@ -37,7 +37,8 @@ export function SchedulesBootstrapCacheSeeder({
   const dispatch = useAppDispatch();
   const cachedData = useAppSelector(
     (state) =>
-      schedulesApi.endpoints.getSchedulesBootstrap.select(queryArgs)(state).data,
+      schedulesApi.endpoints.getSchedulesBootstrap.select(queryArgs)(state)
+        .data,
   );
 
   useLayoutEffect(() => {

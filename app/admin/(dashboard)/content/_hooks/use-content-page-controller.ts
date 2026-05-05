@@ -30,6 +30,7 @@ const POLLING_FALLBACK_INTERVAL_MS = 300_000;
  * Composes dialog state, CRUD handlers, filters, and job monitoring.
  */
 export function useContentPageController() {
+  const canCreateContent = useCan("content:create");
   const canUpdateContent = useCan("content:update");
   const canDeleteContent = useCan("content:delete");
   const canDownloadContent = useCan("content:read");
@@ -54,31 +55,14 @@ export function useContentPageController() {
   // Polling is a slow fallback if SSE is disconnected.
 
   const searchParams = useSearchParams();
-  const previewId = searchParams.get("preview");
   const editId = searchParams.get("edit");
   const createMode = searchParams.get("create");
-  const handledPreviewRef = useRef<string | null>(null);
   const handledEditRef = useRef<string | null>(null);
   const handledCreateRef = useRef<string | null>(null);
   const scrollTargetRef = useRef<string | null>(null);
   const [loadContent] = useLazyGetContentQuery();
 
-  const {
-    handlePreview: dialogHandlePreview,
-    handleEdit: dialogHandleEdit,
-    openCreateDialog,
-  } = dialogState;
-
-  useEffect(() => {
-    if (previewId && handledPreviewRef.current !== previewId) {
-      handledPreviewRef.current = previewId;
-      void loadContent(previewId).then((result) => {
-        if (result.data) {
-          dialogHandlePreview(mapBackendContentToContent(result.data));
-        }
-      });
-    }
-  }, [previewId, loadContent, dialogHandlePreview]);
+  const { handleEdit: dialogHandleEdit, openCreateDialog } = dialogState;
 
   const { handleClearFilters, handleSearchChange } = filters;
 
@@ -166,6 +150,7 @@ export function useContentPageController() {
   }, [visibleContents]);
 
   return {
+    canCreateContent,
     canUpdateContent,
     canDeleteContent,
     canDownloadContent,
@@ -185,7 +170,6 @@ export function useContentPageController() {
     setIsCreateDialogOpen: dialogState.setIsCreateDialogOpen,
     createMode: dialogState.createMode,
     openCreateDialog: dialogState.openCreateDialog,
-    contentToPreview: dialogState.contentToPreview,
     contentToEdit: dialogState.contentToEdit,
     contentToDelete: dialogState.contentToDelete,
     isDeleteDialogOpen: dialogState.isDeleteDialogOpen,
@@ -194,10 +178,8 @@ export function useContentPageController() {
     handleCreateFlash: crudHandlers.handleCreateFlash,
     handleCreateText: crudHandlers.handleCreateText,
     handleEdit: dialogState.handleEdit,
-    handlePreview: dialogState.handlePreview,
     handleDelete: dialogState.handleDelete,
     closeEditDialog: dialogState.closeEditDialog,
-    closePreviewDialog: dialogState.closePreviewDialog,
     handleDownload: crudHandlers.handleDownload,
     handleSaveContent: crudHandlers.handleSaveContent,
     handleConfirmDelete: crudHandlers.handleConfirmDelete,

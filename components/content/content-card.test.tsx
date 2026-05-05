@@ -42,26 +42,30 @@ describe("ContentCard", () => {
       });
   };
 
-  test("does not show manage pages action for image content", async () => {
+  test("does not show removed details or manage pages actions", async () => {
     const user = userEvent.setup();
-    render(<ContentCard content={baseContent} onPreview={vi.fn()} />);
+    render(
+      <ContentCard content={baseContent} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    );
 
     await user.click(screen.getByRole("button", { name: /actions for/i }));
 
     expect(
+      screen.queryByRole("menuitem", { name: "View Details" }),
+    ).not.toBeInTheDocument();
+    expect(
       screen.queryByRole("menuitem", { name: "Manage Pages" }),
     ).not.toBeInTheDocument();
+    expect(
+      document.querySelector('[data-slot="dropdown-menu-separator"]'),
+    ).toBeInTheDocument();
   }, 15_000);
 
   test("does not toggle expansion when opening card actions menu", async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();
     render(
-      <ContentCard
-        content={baseContent}
-        onPreview={vi.fn()}
-        onDelete={onDelete}
-      />,
+      <ContentCard content={baseContent} onDelete={onDelete} />,
     );
 
     await user.click(screen.getByRole("button", { name: /actions for/i }));
@@ -74,7 +78,6 @@ describe("ContentCard", () => {
     render(
       <ContentCard
         content={baseContent}
-        onPreview={vi.fn()}
         onDelete={vi.fn()}
         isSelected={false}
         onSelectionChange={onSelectionChange}
@@ -88,11 +91,104 @@ describe("ContentCard", () => {
     expect(onSelectionChange).toHaveBeenCalledWith(baseContent, true);
   });
 
+  test("toggles selection from the whole card in selection mode", async () => {
+    const user = userEvent.setup();
+    const onSelectionChange = vi.fn();
+    render(
+      <ContentCard
+        content={baseContent}
+        onDelete={vi.fn()}
+        isSelected={false}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Select Demo Image" }));
+
+    expect(onSelectionChange).toHaveBeenCalledWith(baseContent, true);
+  });
+
+  test("supports keyboard selection from the focused card", async () => {
+    const user = userEvent.setup();
+    const onSelectionChange = vi.fn();
+    render(
+      <ContentCard
+        content={baseContent}
+        onDelete={vi.fn()}
+        isSelected={false}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+
+    const card = screen.getByRole("button", { name: "Select Demo Image" });
+    card.focus();
+    await user.keyboard("{Enter}");
+    await user.keyboard(" ");
+
+    expect(onSelectionChange).toHaveBeenNthCalledWith(1, baseContent, true);
+    expect(onSelectionChange).toHaveBeenNthCalledWith(2, baseContent, true);
+  });
+
+  test("does not double-toggle when selecting from the checkbox", async () => {
+    const user = userEvent.setup();
+    const onSelectionChange = vi.fn();
+    render(
+      <ContentCard
+        content={baseContent}
+        onDelete={vi.fn()}
+        isSelected={false}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("checkbox", { name: "Select Demo Image" }),
+    );
+
+    expect(onSelectionChange).toHaveBeenCalledTimes(1);
+    expect(onSelectionChange).toHaveBeenCalledWith(baseContent, true);
+  });
+
+  test("mutes unselected cards and keeps selected cards prominent in selection mode", () => {
+    const { rerender } = render(
+      <ContentCard
+        content={baseContent}
+        onDelete={vi.fn()}
+        isSelected={false}
+        onSelectionChange={vi.fn()}
+      />,
+    );
+
+    const card = screen.getByRole("button", { name: "Select Demo Image" });
+    expect(card).toHaveAttribute("data-selection-muted", "true");
+    expect(card).toHaveClass("opacity-55", "grayscale");
+
+    rerender(
+      <ContentCard
+        content={baseContent}
+        onDelete={vi.fn()}
+        isSelected
+        onSelectionChange={vi.fn()}
+      />,
+    );
+
+    expect(card).toHaveAttribute("data-state", "selected");
+    expect(card).toHaveClass("data-[state=selected]:opacity-100");
+  });
+
   test("does not render a selection checkbox by default", () => {
-    render(<ContentCard content={baseContent} onPreview={vi.fn()} />);
+    render(<ContentCard content={baseContent} />);
 
     expect(
       screen.queryByRole("checkbox", { name: "Select Demo Image" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("does not render an empty actions menu when no card actions are available", () => {
+    render(<ContentCard content={baseContent} />);
+
+    expect(
+      screen.queryByRole("button", { name: "Actions for Demo Image" }),
     ).not.toBeInTheDocument();
   });
 
@@ -111,7 +207,7 @@ describe("ContentCard", () => {
         flashTone: tone,
       };
 
-      render(<ContentCard content={flashContent} onPreview={vi.fn()} />);
+      render(<ContentCard content={flashContent} />);
 
       const toneBadge = screen.getByText(tone);
       expectClassTokens(toneBadge, getFlashBadgeClassName(tone));
@@ -136,7 +232,7 @@ describe("ContentCard", () => {
       flashTone: null,
     };
 
-    render(<ContentCard content={flashContent} onPreview={vi.fn()} />);
+    render(<ContentCard content={flashContent} />);
 
     const toneBadge = screen.getByText("INFO");
     expectClassTokens(toneBadge, getFlashBadgeClassName("INFO"));
@@ -159,7 +255,7 @@ describe("ContentCard", () => {
         '<p style="color:#16a34a">Hello <strong>world</strong> &amp; <em>team</em></p>',
     };
 
-    render(<ContentCard content={textContent} onPreview={vi.fn()} />);
+    render(<ContentCard content={textContent} />);
 
     const styledParagraph = screen.getByText((_, element) =>
       element?.tagName === "P"
@@ -184,7 +280,7 @@ describe("ContentCard", () => {
       textHtmlContent: "<p><br/></p>",
     };
 
-    render(<ContentCard content={textContent} onPreview={vi.fn()} />);
+    render(<ContentCard content={textContent} />);
 
     const titleMatches = screen.getAllByText("Announcement fallback title");
     expect(titleMatches.length).toBeGreaterThan(1);

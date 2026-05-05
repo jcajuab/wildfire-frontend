@@ -73,8 +73,7 @@ export function AuditListCacheSeeder({
 }): null {
   const dispatch = useAppDispatch();
   const cachedData = useAppSelector(
-    (state) =>
-      auditApi.endpoints.listAuditEvents.select(queryArgs)(state).data,
+    (state) => auditApi.endpoints.listAuditEvents.select(queryArgs)(state).data,
   );
 
   useLayoutEffect(() => {

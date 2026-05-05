@@ -15,19 +15,18 @@ describe("Displays loading state", () => {
     expect(toolbar).toHaveClass("p-4");
     expect(screen.getAllByTestId("displays-loading-toolbar")).toHaveLength(1);
     expect(screen.getByTestId("displays-loading-title")).toHaveClass("w-28");
-    expect(screen.getByTestId("displays-loading-search")).toHaveClass(
-      "flex-1",
+    expect(screen.getByTestId("displays-loading-search")).toHaveClass("flex-1");
+    expect(screen.getByTestId("displays-loading-filter")).toHaveClass("size-9");
+    expect(screen.getByTestId("displays-loading-bulk-unregister")).toHaveClass(
+      "h-9",
+      "sm:w-32",
     );
-    expect(screen.getByTestId("displays-loading-filter")).toHaveClass(
-      "size-9",
-    );
-    expect(screen.getByTestId("displays-loading-actions")).toHaveClass(
-      "sm:w-24",
+    expect(screen.getByTestId("displays-loading-manage")).toHaveClass(
+      "h-9",
+      "sm:w-36",
     );
 
-    expect(grid).toHaveClass(
-      "grid-cols-[repeat(auto-fill,minmax(18rem,1fr))]",
-    );
+    expect(grid).toHaveClass("grid-cols-[repeat(auto-fill,minmax(18rem,1fr))]");
     expect(screen.getAllByTestId("displays-loading-card")).toHaveLength(6);
     expect(screen.getAllByTestId("displays-loading-card")[0]).toHaveClass(
       "rounded-xl",

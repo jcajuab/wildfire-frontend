@@ -225,7 +225,9 @@ export function DisplayFilterPopover({
                 value={selectedOutput}
                 onValueChange={(nextValue) =>
                   onOutputChange(
-                    normalizeDisplayOutputFilter(nextValue) as DisplayOutputFilter,
+                    normalizeDisplayOutputFilter(
+                      nextValue,
+                    ) as DisplayOutputFilter,
                   )
                 }
               >
@@ -281,9 +283,7 @@ export function DisplayFilterPopover({
                   <ComboboxChipsInput
                     id="display-group-filter"
                     placeholder={
-                      selectedGroups.length === 0
-                        ? "Search display groups"
-                        : ""
+                      selectedGroups.length === 0 ? "Search display groups" : ""
                     }
                     onFocus={() => setGroupComboOpen(true)}
                     onClick={() => setGroupComboOpen(true)}

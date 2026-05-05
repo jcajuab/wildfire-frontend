@@ -788,10 +788,7 @@ export function PdfCropEditor({
           <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!canSubmit || isSubmitting}
-          >
+          <Button onClick={handleSubmit} disabled={!canSubmit || isSubmitting}>
             {isSubmitting ? (
               <>
                 <IconLoader2 className="size-4 animate-spin" />

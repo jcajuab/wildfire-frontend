@@ -17,12 +17,10 @@ const TiptapEditor = dynamic(
     loading: () => <div className="h-48 animate-pulse rounded-md bg-muted" />,
   },
 );
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -38,12 +36,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FlashTonePreview } from "@/components/content/flash-tone-preview";
-import { cn } from "@/lib/utils";
-import {
-  formatContentStatus,
-  formatFileSize,
-  getContentStatusBadgeClassName,
-} from "@/lib/formatters";
 import type { Content, FlashTone } from "@/types/content";
 
 const FLASH_PREVIEW_DEBOUNCE_MS = 500;
@@ -354,56 +346,5 @@ function EditContentDialogForm({
         </Button>
       </DialogFooter>
     </>
-  );
-}
-
-interface PreviewContentDialogProps {
-  readonly content: Content | null;
-  readonly open: boolean;
-  readonly onOpenChange: (open: boolean) => void;
-}
-
-export function PreviewContentDialog({
-  content,
-  open,
-  onOpenChange,
-}: PreviewContentDialogProps): ReactElement | null {
-  if (!content) {
-    return null;
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Content Details</DialogTitle>
-          <DialogDescription>
-            File details, type, and processing status for this content item.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
-          <span className="text-muted-foreground">Title</span>
-          <span>{content.title}</span>
-          <span className="text-muted-foreground">Type</span>
-          <span>{content.type}</span>
-          <span className="text-muted-foreground">MIME Type</span>
-          <span>{content.mimeType || "Unknown"}</span>
-          <span className="text-muted-foreground">Size</span>
-          <span>{formatFileSize(content.fileSize)}</span>
-          <span className="text-muted-foreground">Status</span>
-          <Badge
-            variant="outline"
-            className={cn(getContentStatusBadgeClassName(content.status))}
-          >
-            {formatContentStatus(content.status)}
-          </Badge>
-        </div>
-        <DialogFooter className="pt-4 sm:justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }

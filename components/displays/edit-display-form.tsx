@@ -46,9 +46,10 @@ interface EditFormData {
   readonly groups: readonly string[];
 }
 
-function parseResolution(
-  resolution: string,
-): { width: string; height: string } {
+function parseResolution(resolution: string): {
+  width: string;
+  height: string;
+} {
   const match = /^(\d+)x(\d+)$/.exec(resolution.trim());
   if (!match) return { width: "", height: "" };
   return { width: match[1], height: match[2] };
@@ -131,8 +132,7 @@ export function EditDisplayForm({
   const widthRaw = formData.resolutionWidth.trim();
   const heightRaw = formData.resolutionHeight.trim();
   const widthNumber = widthRaw === "" ? null : Number.parseInt(widthRaw, 10);
-  const heightNumber =
-    heightRaw === "" ? null : Number.parseInt(heightRaw, 10);
+  const heightNumber = heightRaw === "" ? null : Number.parseInt(heightRaw, 10);
   const hasValidResolution =
     (widthNumber === null && heightNumber === null) ||
     (Number.isInteger(widthNumber) &&
@@ -231,9 +231,7 @@ export function EditDisplayForm({
         </div>
 
         <div className="space-y-2">
-          <FieldLabelRow htmlFor="edit-groups">
-            Display Groups
-          </FieldLabelRow>
+          <FieldLabelRow htmlFor="edit-groups">Display Groups</FieldLabelRow>
           <DisplayGroupsTagsInput
             id="edit-groups"
             value={formData.groups}

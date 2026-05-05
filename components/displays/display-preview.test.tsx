@@ -124,9 +124,7 @@ describe("DisplayPreview", () => {
     let capturedSignal: AbortSignal | null = null;
     authFetchMock.mockImplementation((_url, init) => {
       capturedSignal =
-        init != null && "signal" in init
-          ? (init.signal as AbortSignal)
-          : null;
+        init != null && "signal" in init ? (init.signal as AbortSignal) : null;
       return new Promise<Response>(() => {});
     });
 

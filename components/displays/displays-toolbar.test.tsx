@@ -71,7 +71,12 @@ describe("DisplaysToolbar", () => {
     expect(screen.getAllByRole("heading", { name: "Displays" })).toHaveLength(
       1,
     );
-    expect(screen.getByRole("button", { name: "Actions" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Bulk Unregister" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Manage Displays" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("textbox", { name: "Search displays" }),
     ).toBeInTheDocument();
@@ -89,36 +94,38 @@ describe("DisplaysToolbar", () => {
         ),
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(
-      screen.queryByRole("button", { name: "Bulk Unregister" }),
+      screen.queryByRole("button", { name: "Actions" }),
     ).not.toBeInTheDocument();
   });
 
-  test("renders the actions dropdown when any action permission exists", () => {
+  test("renders the manage displays dropdown when any manage permission exists", () => {
     renderToolbar({ canCreateDisplay: false, canManageGroups: true });
 
-    expect(screen.getByRole("button", { name: "Actions" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Manage Displays" }),
+    ).toBeInTheDocument();
   });
 
-  test("routes actions menu items to the display and group dialogs", async () => {
+  test("routes manage displays menu items to the display and group dialogs", async () => {
     const user = userEvent.setup();
     const onRegisterDisplay = vi.fn();
     const onManageGroups = vi.fn();
     renderToolbar({ onRegisterDisplay, onManageGroups });
 
-    await user.click(screen.getByRole("button", { name: "Actions" }));
+    await user.click(screen.getByRole("button", { name: "Manage Displays" }));
     await user.click(
       screen.getByRole("menuitem", { name: "Register Display" }),
     );
     expect(onRegisterDisplay).toHaveBeenCalledTimes(1);
 
-    await user.click(screen.getByRole("button", { name: "Actions" }));
+    await user.click(screen.getByRole("button", { name: "Manage Displays" }));
     await user.click(
-      screen.getByRole("menuitem", { name: "Manage Display Groups" }),
+      screen.getByRole("menuitem", { name: "Edit Display Groups" }),
     );
     expect(onManageGroups).toHaveBeenCalledTimes(1);
   });
 
-  test("enters bulk unregister mode from the list action", async () => {
+  test("enters bulk unregister mode from the toolbar button", async () => {
     const user = userEvent.setup();
     const onEnterBulkUnregister = vi.fn();
     renderToolbar({
@@ -128,13 +135,13 @@ describe("DisplaysToolbar", () => {
       },
     });
 
-    await user.click(screen.getByRole("button", { name: "Actions" }));
-
-    const bulkButton = screen.getByRole("menuitem", {
+    const bulkButton = screen.getByRole("button", {
       name: "Bulk Unregister",
     });
 
-    expect(bulkButton).toHaveAttribute("data-variant", "destructive");
+    expect(bulkButton).toHaveAttribute("data-variant", "outline");
+    expect(bulkButton).toHaveAttribute("data-size", "default");
+    expect(bulkButton).toHaveClass("text-destructive");
 
     await user.click(bulkButton);
 
@@ -164,9 +171,14 @@ describe("DisplaysToolbar", () => {
     expect(
       screen.getByRole("button", { name: "Filter displays" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Actions" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Manage Displays" }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Bulk Unregister" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Actions" }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Unregister 2 displays" }),
@@ -174,6 +186,13 @@ describe("DisplaysToolbar", () => {
     expect(
       screen.getByRole("button", { name: "Unregister Selected" }),
     ).toHaveAttribute("data-variant", "destructive");
+    expect(
+      screen.getByRole("button", { name: "Unregister Selected" }),
+    ).toHaveAttribute("data-size", "default");
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveAttribute(
+      "data-size",
+      "default",
+    );
 
     await user.click(
       screen.getByRole("button", { name: "Unregister Selected" }),
@@ -184,7 +203,7 @@ describe("DisplaysToolbar", () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  test("hides bulk unregister from the actions menu while bulk mode is active", async () => {
+  test("hides bulk unregister while bulk mode is active", async () => {
     const user = userEvent.setup();
     renderToolbar({
       bulkState: {
@@ -195,7 +214,7 @@ describe("DisplaysToolbar", () => {
       },
     });
 
-    await user.click(screen.getByRole("button", { name: "Actions" }));
+    await user.click(screen.getByRole("button", { name: "Manage Displays" }));
 
     expect(
       screen.queryByRole("menuitem", { name: "Bulk Unregister" }),
@@ -229,24 +248,39 @@ describe("DisplaysToolbar", () => {
     });
 
     expect(
-      screen.queryByRole("button", { name: "Actions" }),
+      screen.queryByRole("button", { name: "Manage Displays" }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Bulk Unregister" }),
     ).not.toBeInTheDocument();
   });
 
+  test("can show bulk unregister without manage display actions", () => {
+    renderToolbar({
+      canCreateDisplay: false,
+      canManageGroups: false,
+      canDeleteDisplay: true,
+    });
+
+    expect(
+      screen.queryByRole("button", { name: "Manage Displays" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Bulk Unregister" }),
+    ).toBeInTheDocument();
+  });
+
   test("register menu items respect create and manage permissions", async () => {
     const user = userEvent.setup();
     renderToolbar({ canCreateDisplay: false, canManageGroups: true });
 
-    await user.click(screen.getByRole("button", { name: "Actions" }));
+    await user.click(screen.getByRole("button", { name: "Manage Displays" }));
 
     expect(
       screen.queryByRole("menuitem", { name: "Register Display" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("menuitem", { name: "Manage Display Groups" }),
+      screen.getByRole("menuitem", { name: "Edit Display Groups" }),
     ).toBeInTheDocument();
   });
 });

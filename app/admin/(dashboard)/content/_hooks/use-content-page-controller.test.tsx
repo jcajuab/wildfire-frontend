@@ -54,16 +54,13 @@ vi.mock("./use-content-dialog-state", () => ({
     setIsCreateDialogOpen: vi.fn(),
     createMode: null,
     openCreateDialog: vi.fn(),
-    contentToPreview: null,
     contentToEdit: null,
     contentToDelete: null,
     isDeleteDialogOpen: false,
     setIsDeleteDialogOpen: vi.fn(),
     handleEdit: vi.fn(),
-    handlePreview: vi.fn(),
     handleDelete: vi.fn(),
     closeEditDialog: vi.fn(),
-    closePreviewDialog: vi.fn(),
   })),
 }));
 
@@ -127,16 +124,13 @@ describe("useContentPageController", () => {
       setIsCreateDialogOpen: vi.fn(),
       createMode: null,
       openCreateDialog: vi.fn(),
-      contentToPreview: null,
       contentToEdit: null,
       contentToDelete: null,
       isDeleteDialogOpen: false,
       setIsDeleteDialogOpen: vi.fn(),
       handleEdit: vi.fn(),
-      handlePreview: vi.fn(),
       handleDelete: vi.fn(),
       closeEditDialog: vi.fn(),
-      closePreviewDialog: vi.fn(),
     });
     useContentCrudHandlersMock.mockReturnValue({
       handleUploadFile: vi.fn(),
@@ -151,15 +145,19 @@ describe("useContentPageController", () => {
   test("uses fixed recent sorting and exposes filters without sort state", () => {
     const { result } = renderHook(() => useContentPageController());
 
-    expect(useListContentQueryMock).toHaveBeenCalledWith({
-      page: 2,
-      pageSize: 20,
-      status: "READY",
-      type: "VIDEO",
-      search: "weather",
-      sortBy: "createdAt",
-      sortDirection: "desc",
-    });
+    expect(useListContentQueryMock).toHaveBeenCalledWith(
+      {
+        page: 2,
+        pageSize: 12,
+        status: "READY",
+        type: "VIDEO",
+        search: "weather",
+        sortBy: "createdAt",
+        sortDirection: "desc",
+      },
+      { pollingInterval: 300_000 },
+    );
+    expect(result.current.canCreateContent).toBe(true);
     expect("sortBy" in result.current.filters).toBe(false);
     expect("handleSortChange" in result.current.filters).toBe(false);
   });

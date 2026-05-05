@@ -187,7 +187,9 @@ describe("DisplayFilterPopover", () => {
 
     expect(screen.queryByText("1 matching display")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Remove Live filter" }));
+    await user.click(
+      screen.getByRole("button", { name: "Remove Live filter" }),
+    );
     await user.click(
       screen.getByRole("button", { name: "Remove hdmi-* filter" }),
     );
