@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ComponentProps } from "react";
 import { describe, expect, test, vi } from "vitest";
 import { DisplayCard } from "@/components/displays/display-card";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -40,25 +41,31 @@ const baseDisplay: Display = {
 };
 
 describe("DisplayCard", () => {
-  const renderDisplayCard = (display: Display = baseDisplay, props = {}) =>
+  const renderDisplayCard = (
+    display: Display = baseDisplay,
+    props: Partial<ComponentProps<typeof DisplayCard>> = {},
+  ) =>
     render(
       <TooltipProvider>
-        <DisplayCard
-          display={display}
-          onViewPage={vi.fn()}
-          {...props}
-        />
+        <DisplayCard display={display} onViewPage={vi.fn()} {...props} />
       </TooltipProvider>,
     );
 
-  test("shows preview label and display output metadata", () => {
-    renderDisplayCard();
+  test("shows output metadata for users who can create displays", () => {
+    renderDisplayCard(baseDisplay, { showOutputMetadata: true });
 
     expect(screen.getByText("hdmi-0")).toBeInTheDocument();
-    expect(screen.getByText("1920x1080")).toBeInTheDocument();
+    expect(screen.queryByText("1920x1080")).not.toBeInTheDocument();
     expect(
-      document.querySelector('[data-slot="separator"]'),
+      document.querySelector('[data-group-visible="Lobby"]'),
     ).toBeInTheDocument();
+  });
+
+  test("hides output metadata by default", () => {
+    renderDisplayCard();
+
+    expect(screen.queryByText("hdmi-0")).not.toBeInTheDocument();
+    expect(screen.queryByText("1920x1080")).not.toBeInTheDocument();
     expect(
       document.querySelector('[data-group-visible="Lobby"]'),
     ).toBeInTheDocument();

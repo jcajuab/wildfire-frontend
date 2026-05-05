@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { describe, expect, test, vi } from "vitest";
 
 import { DisplayGrid } from "@/components/displays/display-grid";
@@ -37,7 +38,10 @@ function makeDisplay(index: number): Display {
   };
 }
 
-function renderGrid(count: number): HTMLElement {
+function renderGrid(
+  count: number,
+  props: Partial<ComponentProps<typeof DisplayGrid>> = {},
+): HTMLElement {
   render(
     <TooltipProvider>
       <DisplayGrid
@@ -45,6 +49,7 @@ function renderGrid(count: number): HTMLElement {
           makeDisplay(index + 1),
         )}
         onViewPage={vi.fn()}
+        {...props}
       />
     </TooltipProvider>,
   );
@@ -68,4 +73,18 @@ describe("DisplayGrid", () => {
       expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(count);
     },
   );
+
+  test("passes output metadata visibility to display cards", () => {
+    renderGrid(1, { showOutputMetadata: true });
+
+    expect(screen.getByText("HDMI")).toBeInTheDocument();
+    expect(screen.queryByText("1920x1080")).not.toBeInTheDocument();
+  });
+
+  test("hides output metadata unless explicitly enabled", () => {
+    renderGrid(1);
+
+    expect(screen.queryByText("HDMI")).not.toBeInTheDocument();
+    expect(screen.queryByText("1920x1080")).not.toBeInTheDocument();
+  });
 });

@@ -1,4 +1,4 @@
-export const DISPLAY_OUTPUT_TYPES = ["VGA", "HDMI", "DP"] as const;
+export const DISPLAY_OUTPUT_TYPES = ["DP", "DVI", "HDMI", "VGA"] as const;
 
 export type DisplayOutputType = (typeof DISPLAY_OUTPUT_TYPES)[number];
 

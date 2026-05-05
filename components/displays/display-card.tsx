@@ -17,7 +17,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,6 +49,7 @@ interface DisplayCardProps {
   readonly isGlobalEmergencyActive?: boolean;
   readonly isSelected?: boolean;
   readonly onSelectionChange?: (display: Display, checked: boolean) => void;
+  readonly showOutputMetadata?: boolean;
 }
 
 interface DisplayStatusStyles {
@@ -120,14 +120,14 @@ export const DisplayCard = memo(function DisplayCard({
   isGlobalEmergencyActive = false,
   isSelected = false,
   onSelectionChange,
+  showOutputMetadata = false,
 }: DisplayCardProps): ReactElement {
   const statusStyles = getStatusStyles(display.status);
   const shouldPulse = display.status === "LIVE" || display.status === "READY";
   const statusLabel = getStatusLabel(display.status);
   const outputLabel = display.output.trim() || "Not available";
-  const resolutionLabel = display.resolution.trim();
-  const showResolution =
-    resolutionLabel !== "" && resolutionLabel.toLowerCase() !== "not available";
+  const showOutput =
+    showOutputMetadata && outputLabel.toLowerCase() !== "not available";
   const isEmergencyContentMissing = display.emergencyContentId === null;
 
   const visibleGroups = display.groups.slice(0, MAX_VISIBLE_GROUPS);
@@ -163,9 +163,7 @@ export const DisplayCard = memo(function DisplayCard({
     <div
       data-state={isSelected ? "selected" : undefined}
       data-selection-mode={showSelection ? "true" : undefined}
-      data-selection-muted={
-        showSelection && !isSelected ? "true" : undefined
-      }
+      data-selection-muted={showSelection && !isSelected ? "true" : undefined}
       onClick={handleCardClick}
       onKeyDown={handleCardKeyDown}
       role={showSelection ? "button" : undefined}
@@ -270,21 +268,14 @@ export const DisplayCard = memo(function DisplayCard({
       </header>
 
       <div className="flex min-h-6 min-w-0 items-center gap-1.5">
-        <Badge
-          variant="outline"
-          className={`${META_BADGE_CLASSNAME} bg-background text-foreground`}
-        >
-          {outputLabel}
-        </Badge>
-        {showResolution ? (
+        {showOutput ? (
           <Badge
             variant="outline"
             className={`${META_BADGE_CLASSNAME} bg-background text-foreground`}
           >
-            {resolutionLabel}
+            {outputLabel}
           </Badge>
         ) : null}
-        <Separator orientation="vertical" className="h-4 bg-border/80" />
         {isGlobalEmergencyActive ? (
           <Badge variant="destructive" className={META_BADGE_CLASSNAME}>
             Emergency Active

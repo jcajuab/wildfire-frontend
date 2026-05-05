@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement, RefObject } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Combobox,
@@ -38,12 +38,14 @@ export function DisplayGroupsTagsInput({
   onValueChange,
   existingGroups,
   disabled = false,
-  placeholder = "Add display groups…",
+  placeholder = "Select or create display groups",
   showLabel = true,
   portalContainer,
 }: DisplayGroupsTagsInputProps): ReactElement {
   const anchorRef = useComboboxAnchor();
+  const localPortalContainerRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  const resolvedPortalContainer = portalContainer ?? localPortalContainerRef;
 
   const {
     inputValue,
@@ -95,10 +97,8 @@ export function DisplayGroupsTagsInput({
   );
 
   return (
-    <div className="flex flex-col gap-1.5">
-      {showLabel && id ? (
-        <Label htmlFor={id}>Display Groups (Optional)</Label>
-      ) : null}
+    <div className="relative flex flex-col gap-1.5">
+      {showLabel && id ? <Label htmlFor={id}>Display Groups</Label> : null}
       <Combobox
         multiple
         value={value as string[]}
@@ -127,7 +127,7 @@ export function DisplayGroupsTagsInput({
             onClick={() => setOpen(true)}
           />
         </ComboboxChips>
-        <ComboboxContent anchor={anchorRef} container={portalContainer}>
+        <ComboboxContent anchor={anchorRef} container={resolvedPortalContainer}>
           <ComboboxList>
             {filteredNames.map((name) => (
               <ComboboxItem key={name} value={name}>
@@ -143,6 +143,12 @@ export function DisplayGroupsTagsInput({
           <ComboboxEmpty>No groups found.</ComboboxEmpty>
         </ComboboxContent>
       </Combobox>
+      {portalContainer ? null : (
+        <div
+          ref={localPortalContainerRef}
+          className="pointer-events-none absolute inset-0 z-50"
+        />
+      )}
     </div>
   );
 }

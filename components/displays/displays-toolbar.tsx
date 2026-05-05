@@ -100,7 +100,7 @@ export function DisplaysToolbar({
               value={search}
               onChange={onSearchChange}
               ariaLabel="Search displays"
-              placeholder="Search displays…"
+              placeholder="Search by display name or slug"
               className="min-w-0 flex-1 max-w-none"
             />
             <DisplayFilterPopover

@@ -71,11 +71,12 @@ describe("DisplaysToolbar", () => {
     expect(screen.getAllByRole("heading", { name: "Displays" })).toHaveLength(
       1,
     );
-    expect(
-      screen.getByRole("button", { name: "Actions" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Actions" })).toBeInTheDocument();
     expect(
       screen.getByRole("textbox", { name: "Search displays" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Search by display name or slug"),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Filter displays" }),

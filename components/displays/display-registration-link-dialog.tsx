@@ -1,16 +1,11 @@
 "use client";
 
-import type { ChangeEvent, FormEvent, ReactElement } from "react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import type { ChangeEvent, FormEvent, ReactElement, ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -63,8 +58,6 @@ interface LinkFormState {
   readonly slug: string;
   readonly outputType: DisplayOutputType;
   readonly outputIndex: string;
-  readonly resolutionWidth: string;
-  readonly resolutionHeight: string;
   readonly displayGroups: string[];
 }
 
@@ -82,14 +75,45 @@ const INITIAL_FORM: LinkFormState = {
   slug: "",
   outputType: "HDMI",
   outputIndex: "0",
-  resolutionWidth: "",
-  resolutionHeight: "",
   displayGroups: [],
 };
 
 const FALLBACK_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MIN_SLUG_LENGTH = 3;
 const MAX_SLUG_LENGTH = 120;
+
+function normalizeDisplaySlug(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function normalizeEditableDisplaySlug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+/g, "");
+}
+
+function RequiredFieldLabel({
+  htmlFor,
+  children,
+}: {
+  readonly htmlFor: string;
+  readonly children: ReactNode;
+}): ReactElement {
+  return (
+    <Label htmlFor={htmlFor} className="gap-0">
+      {children}
+      <span aria-hidden="true" className="text-destructive">
+        *
+      </span>
+      <span className="sr-only"> required</span>
+    </Label>
+  );
+}
 
 const isRegistrationSucceededEvent = (
   value: unknown,
@@ -158,6 +182,7 @@ function DisplayRegistrationLinkDialogBody({
   onBusyChange,
 }: DisplayRegistrationLinkDialogBodyProps): ReactElement {
   const [formState, setFormState] = useState<LinkFormState>(INITIAL_FORM);
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [step, setStep] = useState<DialogStep>({ kind: "form" });
   const [formError, setFormError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -181,6 +206,31 @@ function DisplayRegistrationLinkDialogBody({
       (event: ChangeEvent<HTMLInputElement>): void => {
         setFormState((prev) => ({ ...prev, [field]: event.target.value }));
       },
+    [],
+  );
+
+  const handleDisplayNameChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>): void => {
+      const displayName = event.target.value;
+      setFormState((prev) => ({
+        ...prev,
+        displayName,
+        slug: isSlugManuallyEdited
+          ? prev.slug
+          : normalizeDisplaySlug(displayName),
+      }));
+    },
+    [isSlugManuallyEdited],
+  );
+
+  const handleSlugChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>): void => {
+      setIsSlugManuallyEdited(true);
+      setFormState((prev) => ({
+        ...prev,
+        slug: normalizeEditableDisplaySlug(event.target.value),
+      }));
+    },
     [],
   );
 
@@ -261,10 +311,8 @@ function DisplayRegistrationLinkDialogBody({
       setFormError(null);
 
       const name = formState.displayName.trim();
-      const slug = formState.slug.trim().toLowerCase();
+      const slug = normalizeDisplaySlug(formState.slug);
       const outputIndex = Number.parseInt(formState.outputIndex, 10);
-      const width = Number.parseInt(formState.resolutionWidth, 10);
-      const height = Number.parseInt(formState.resolutionHeight, 10);
 
       if (!name) {
         setFormError("Display name is required.");
@@ -285,15 +333,6 @@ function DisplayRegistrationLinkDialogBody({
         setFormError("Output index must be a non-negative integer.");
         return;
       }
-      if (
-        !Number.isInteger(width) ||
-        width < 1 ||
-        !Number.isInteger(height) ||
-        height < 1
-      ) {
-        setFormError("Resolution width and height must be positive integers.");
-        return;
-      }
 
       onBusyChange(true);
       try {
@@ -302,8 +341,8 @@ function DisplayRegistrationLinkDialogBody({
           displayName: name,
           outputType: formState.outputType,
           outputIndex,
-          resolutionWidth: width,
-          resolutionHeight: height,
+          resolutionWidth: null,
+          resolutionHeight: null,
           displayGroups: formState.displayGroups,
         }).unwrap();
 
@@ -349,7 +388,7 @@ function DisplayRegistrationLinkDialogBody({
         <DialogTitle>Register Display</DialogTitle>
         <DialogDescription>
           {step.kind === "form"
-            ? "Fill in the display details below. A registration link will be generated for the display device. After you have the registration link, paste it within the display."
+            ? "Create a registration link for this display."
             : "Copy the link below and open it on the display device to complete registration."}
         </DialogDescription>
       </DialogHeader>
@@ -366,13 +405,15 @@ function DisplayRegistrationLinkDialogBody({
           ) : null}
 
           <div className="space-y-2">
-            <Label htmlFor="reg-display-name">Display name</Label>
+            <RequiredFieldLabel htmlFor="reg-display-name">
+              Display Name
+            </RequiredFieldLabel>
             <Input
               id="reg-display-name"
               type="text"
-              placeholder="Lobby Screen..."
+              placeholder="Enter display name"
               value={formState.displayName}
-              onChange={updateField("displayName")}
+              onChange={handleDisplayNameChange}
               autoComplete="off"
               disabled={isSubmitting}
               required
@@ -380,13 +421,15 @@ function DisplayRegistrationLinkDialogBody({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="reg-slug">Display slug</Label>
+            <RequiredFieldLabel htmlFor="reg-slug">
+              Display Slug
+            </RequiredFieldLabel>
             <Input
               id="reg-slug"
               type="text"
-              placeholder="lobby-hdmi-0..."
+              placeholder="Auto-generated from display name"
               value={formState.slug}
-              onChange={updateField("slug")}
+              onChange={handleSlugChange}
               autoComplete="off"
               spellCheck={false}
               disabled={isSubmitting}
@@ -404,13 +447,14 @@ function DisplayRegistrationLinkDialogBody({
               existingGroups={existingGroups}
               disabled={isSubmitting}
               showLabel
-              portalContainer={dialogContentRef}
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="reg-output-type">Output type</Label>
+              <RequiredFieldLabel htmlFor="reg-output-type">
+                Output Type
+              </RequiredFieldLabel>
               <Select
                 value={formState.outputType}
                 onValueChange={(value) =>
@@ -434,7 +478,9 @@ function DisplayRegistrationLinkDialogBody({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="reg-output-index">Output index</Label>
+              <RequiredFieldLabel htmlFor="reg-output-index">
+                Output Index
+              </RequiredFieldLabel>
               <Input
                 id="reg-output-index"
                 type="number"
@@ -450,42 +496,14 @@ function DisplayRegistrationLinkDialogBody({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="reg-width">Resolution width</Label>
-              <Input
-                id="reg-width"
-                type="number"
-                min={1}
-                inputMode="numeric"
-                placeholder="1920..."
-                value={formState.resolutionWidth}
-                onChange={updateField("resolutionWidth")}
-                autoComplete="off"
-                disabled={isSubmitting}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="reg-height">Resolution height</Label>
-              <Input
-                id="reg-height"
-                type="number"
-                min={1}
-                inputMode="numeric"
-                placeholder="1080..."
-                value={formState.resolutionHeight}
-                onChange={updateField("resolutionHeight")}
-                autoComplete="off"
-                disabled={isSubmitting}
-                required
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="sm:justify-end">
+          <DialogFooter className="flex-row justify-end">
+            <DialogClose asChild>
+              <Button type="button" variant="outline" disabled={isSubmitting}>
+                Cancel
+              </Button>
+            </DialogClose>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating link..." : "Register Display"}
+              {isSubmitting ? "Creating link..." : "Continue"}
             </Button>
           </DialogFooter>
         </form>

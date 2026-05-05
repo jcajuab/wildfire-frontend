@@ -57,8 +57,6 @@ export default function Loading(): ReactElement {
                 <div className="flex min-h-6 min-w-0 items-center gap-1.5">
                   <div className="h-6 w-14 shrink-0 animate-pulse rounded-full bg-muted" />
                   <div className="h-6 w-24 shrink-0 animate-pulse rounded-full bg-muted" />
-                  <div className="h-4 w-px shrink-0 bg-border/80" />
-                  <div className="h-6 w-24 shrink-0 animate-pulse rounded-full bg-muted" />
                 </div>
 
                 <div

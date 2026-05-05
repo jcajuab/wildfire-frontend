@@ -186,7 +186,7 @@ export function EditDisplayForm({
           portalContainer={portalContainerRef}
           groupsSlot={
             <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="edit-groups">Display Groups (Optional)</Label>
+              <Label htmlFor="edit-groups">Display Groups</Label>
               {canManageGroups ? (
                 <Button
                   type="button"

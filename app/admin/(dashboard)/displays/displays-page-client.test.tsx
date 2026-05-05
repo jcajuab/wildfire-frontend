@@ -44,8 +44,17 @@ vi.mock("@/components/displays/displays-toolbar", () => ({
 }));
 
 vi.mock("@/components/displays/display-grid", () => ({
-  DisplayGrid: ({ items }: { readonly items: readonly Display[] }) => (
-    <div data-testid="display-grid">
+  DisplayGrid: ({
+    items,
+    showOutputMetadata,
+  }: {
+    readonly items: readonly Display[];
+    readonly showOutputMetadata?: boolean;
+  }) => (
+    <div
+      data-testid="display-grid"
+      data-show-output-metadata={showOutputMetadata ? "true" : "false"}
+    >
       {items.map((item) => (
         <article key={item.id}>{item.name}</article>
       ))}
@@ -185,10 +194,9 @@ describe("DisplaysPageView", () => {
     expect(
       screen.getByRole("link", { name: "Go to previous page" }),
     ).toHaveAttribute("aria-disabled", "true");
-    expect(screen.getByRole("link", { name: "Go to next page" })).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+    expect(
+      screen.getByRole("link", { name: "Go to next page" }),
+    ).toHaveAttribute("aria-disabled", "true");
   });
 
   test("keeps pagination visible for empty display results", () => {
@@ -229,5 +237,27 @@ describe("DisplaysPageView", () => {
     const error = screen.getByText("Displays could not load.");
 
     expect(error.parentElement).toHaveClass("p-4");
+  });
+
+  test("shows display output metadata for users who can create displays", () => {
+    render(<DisplaysPageView />);
+
+    expect(screen.getByTestId("display-grid")).toHaveAttribute(
+      "data-show-output-metadata",
+      "true",
+    );
+  });
+
+  test("hides display output metadata for users without create permission", () => {
+    useDisplaysPageMock.mockReturnValue(
+      makePageResult({ canCreateDisplay: false }),
+    );
+
+    render(<DisplaysPageView />);
+
+    expect(screen.getByTestId("display-grid")).toHaveAttribute(
+      "data-show-output-metadata",
+      "false",
+    );
   });
 });

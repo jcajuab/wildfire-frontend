@@ -105,8 +105,8 @@ export interface CreateRegistrationLinkRequest {
   readonly displayName: string;
   readonly outputType: string;
   readonly outputIndex: number;
-  readonly resolutionWidth: number;
-  readonly resolutionHeight: number;
+  readonly resolutionWidth: number | null;
+  readonly resolutionHeight: number | null;
   readonly displayGroups: string[];
 }
 

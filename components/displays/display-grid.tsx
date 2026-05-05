@@ -15,6 +15,7 @@ interface DisplayGridProps {
   readonly isGlobalEmergencyActive?: boolean;
   readonly selectedIds?: ReadonlySet<string>;
   readonly onSelectionChange?: (display: Display, checked: boolean) => void;
+  readonly showOutputMetadata?: boolean;
 }
 
 export function DisplayGrid({
@@ -25,6 +26,7 @@ export function DisplayGrid({
   isGlobalEmergencyActive = false,
   selectedIds,
   onSelectionChange,
+  showOutputMetadata = false,
 }: DisplayGridProps): ReactElement {
   if (items.length === 0) {
     return (
@@ -48,6 +50,7 @@ export function DisplayGrid({
           isGlobalEmergencyActive={isGlobalEmergencyActive}
           isSelected={selectedIds?.has(display.id) ?? false}
           onSelectionChange={onSelectionChange}
+          showOutputMetadata={showOutputMetadata}
         />
       ))}
     </div>

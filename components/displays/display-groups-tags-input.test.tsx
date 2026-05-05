@@ -28,9 +28,16 @@ describe("DisplayGroupsTagsInput", () => {
       />,
     );
 
-    await user.click(screen.getByLabelText("Display Groups (Optional)"));
+    expect(
+      screen.getByPlaceholderText("Select or create display groups"),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByLabelText("Display Groups"));
 
     expect(screen.getByRole("option", { name: "Lobby" })).toBeInTheDocument();
+    expect(
+      screen.queryByText("Display Groups (Optional)"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("No groups found.")).not.toBeInTheDocument();
   });
 });

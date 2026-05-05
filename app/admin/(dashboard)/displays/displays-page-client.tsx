@@ -36,9 +36,9 @@ import {
 
 const DisplayRegistrationLinkDialog = dynamic(
   () =>
-    import(
-      "@/components/displays/display-registration-link-dialog"
-    ).then((mod) => mod.DisplayRegistrationLinkDialog),
+    import("@/components/displays/display-registration-link-dialog").then(
+      (mod) => mod.DisplayRegistrationLinkDialog,
+    ),
   { ssr: false },
 );
 
@@ -378,6 +378,7 @@ export function DisplaysPageView({
                         )
                     : undefined
                 }
+                showOutputMetadata={canCreateDisplay}
               />
             )}
           </div>
