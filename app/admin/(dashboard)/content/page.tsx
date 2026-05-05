@@ -14,6 +14,7 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
+import { AuthGate } from "@/app/admin/auth-gate";
 import { ContentListCacheSeeder, ContentPageView } from "./content-page-client";
 
 interface ContentPageProps {
@@ -27,7 +28,7 @@ export default async function ContentPage({
 }: ContentPageProps): Promise<ReactElement> {
   const session = await getServerSession();
   if (!session) {
-    redirect("/login?redirectTo=%2Fadmin%2Fcontent");
+    return <AuthGate redirectTo="/admin/content" />;
   }
   if (!sessionHasPermission(session, "content:read")) {
     redirect("/unauthorized");
@@ -53,7 +54,7 @@ export default async function ContentPage({
   });
 
   if (!listRes.ok) {
-    redirect("/login?redirectTo=%2Fadmin%2Fcontent");
+    return <AuthGate redirectTo="/admin/content" />;
   }
 
   const listData = transformPaginatedListResponse<BackendContent>(

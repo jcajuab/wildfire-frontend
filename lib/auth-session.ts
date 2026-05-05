@@ -17,6 +17,7 @@ import type { PermissionType } from "@/types/permission";
 
 const AUTH_CHANNEL_NAME = "wildfire_auth";
 const ACCESS_TOKEN_REFRESH_THRESHOLD_MS = 60_000;
+const MIN_REFRESH_INTERVAL_MS = 2000;
 const SESSION_HINT_KEY = "wildfire_has_session";
 
 interface InternalAuthState {
@@ -40,6 +41,8 @@ let cachedSnapshot: AuthSnapshot | null = null;
 let bootstrapResolvers: Array<() => void> = [];
 
 let refreshPromise: Promise<AuthResponse> | null = null;
+let lastRefreshAt: number | null = null;
+let lastRefreshResponse: AuthResponse | null = null;
 
 function markBootstrapped(): void {
   isBootstrapped = true;
@@ -247,6 +250,14 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
     return refreshPromise;
   }
 
+  if (
+    lastRefreshAt != null &&
+    lastRefreshResponse != null &&
+    Date.now() - lastRefreshAt < MIN_REFRESH_INTERVAL_MS
+  ) {
+    return Promise.resolve(lastRefreshResponse);
+  }
+
   const promise = (async () => {
     const response = await fetch(`${getBaseUrl()}/auth/refresh`, {
       method: "POST",
@@ -255,6 +266,8 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
     });
 
     const auth = await parseAuthResponse(response);
+    lastRefreshAt = Date.now();
+    lastRefreshResponse = auth;
     applyAuthResponse(auth, true);
     return auth;
   })();
@@ -263,16 +276,10 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
 
   promise
     .then(() => {
-      setTimeout(() => {
-        if (refreshPromise === promise) {
-          refreshPromise = null;
-        }
-      }, 1000);
+      refreshPromise = null;
     })
     .catch(() => {
-      if (refreshPromise === promise) {
-        refreshPromise = null;
-      }
+      refreshPromise = null;
     });
 
   return promise;

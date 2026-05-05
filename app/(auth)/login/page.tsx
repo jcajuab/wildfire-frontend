@@ -25,7 +25,7 @@ function navigateToPostLogin(target: string): void {
   window.location.assign(target);
 }
 
-function LoginForm(): ReactElement {
+function LoginForm(): ReactElement | null {
   const searchParams = useSearchParams();
   const { login, isAuthenticated, isInitialized, can } = useAuth();
   const [username, setUsername] = useState("");
@@ -99,13 +99,7 @@ function LoginForm(): ReactElement {
   }
 
   if (isAuthenticated) {
-    return (
-      <div className="w-full">
-        <div className="flex items-center justify-center py-12">
-          <span className="text-sm text-muted-foreground">Redirecting…</span>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (

@@ -8,6 +8,7 @@ import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
 import { getServerSession } from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
+import { AuthGate } from "@/app/admin/auth-gate";
 import { ContentOptionsCacheSeeder } from "../../content/content-page-client";
 import { CreatePlaylistPageView } from "./create-playlist-page-client";
 
@@ -16,7 +17,7 @@ const CREATE_REDIRECT = `${PLAYLIST_INDEX_PATH}/create`;
 export default async function CreatePlaylistPage(): Promise<ReactElement> {
   const session = await getServerSession();
   if (!session) {
-    redirect(`/login?redirectTo=${encodeURIComponent(CREATE_REDIRECT)}`);
+    return <AuthGate redirectTo={CREATE_REDIRECT} />;
   }
   if (!sessionHasPermission(session, "playlists:create")) {
     redirect("/unauthorized");

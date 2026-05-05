@@ -18,6 +18,7 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
+import { AuthGate } from "@/app/admin/auth-gate";
 import {
   DisplaysBootstrapCacheSeeder,
   DisplaysPageView,
@@ -52,7 +53,7 @@ export default async function DisplaysPage({
 }: DisplaysPageProps): Promise<ReactElement> {
   const session = await getServerSession();
   if (!session) {
-    redirect("/login?redirectTo=%2Fadmin%2Fdisplays");
+    return <AuthGate redirectTo="/admin/displays" />;
   }
   if (!sessionHasPermission(session, "displays:read")) {
     redirect("/unauthorized");
@@ -70,7 +71,7 @@ export default async function DisplaysPage({
   });
 
   if (!bootstrapRes.ok) {
-    redirect("/login?redirectTo=%2Fadmin%2Fdisplays");
+    return <AuthGate redirectTo="/admin/displays" />;
   }
 
   const bootstrapData = parseApiResponseDataSafe<DisplaysBootstrapResponse>(

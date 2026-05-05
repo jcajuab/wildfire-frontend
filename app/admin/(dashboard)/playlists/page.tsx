@@ -14,6 +14,7 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
+import { AuthGate } from "@/app/admin/auth-gate";
 import {
   PlaylistsListCacheSeeder,
   PlaylistsPageView,
@@ -30,7 +31,7 @@ export default async function PlaylistsPage({
 }: PlaylistsPageProps): Promise<ReactElement> {
   const session = await getServerSession();
   if (!session) {
-    redirect("/login?redirectTo=%2Fadmin%2Fplaylists");
+    return <AuthGate redirectTo="/admin/playlists" />;
   }
   if (!sessionHasPermission(session, "playlists:read")) {
     redirect("/unauthorized");
@@ -55,7 +56,7 @@ export default async function PlaylistsPage({
   });
 
   if (!listRes.ok) {
-    redirect("/login?redirectTo=%2Fadmin%2Fplaylists");
+    return <AuthGate redirectTo="/admin/playlists" />;
   }
 
   const listData = transformPaginatedListResponse<BackendPlaylistSummary>(

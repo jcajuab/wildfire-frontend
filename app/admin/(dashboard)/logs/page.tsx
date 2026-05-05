@@ -11,6 +11,7 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
+import { AuthGate } from "@/app/admin/auth-gate";
 import { AuditListCacheSeeder, LogsPageClient } from "./logs-page-client";
 
 interface LogsPageProps {
@@ -24,7 +25,7 @@ export default async function LogsPage({
 }: LogsPageProps): Promise<ReactElement> {
   const session = await getServerSession();
   if (!session) {
-    redirect("/login?redirectTo=%2Fadmin%2Flogs");
+    return <AuthGate redirectTo="/admin/logs" />;
   }
   if (!sessionHasPermission(session, "audit:read")) {
     redirect("/unauthorized");
@@ -52,7 +53,7 @@ export default async function LogsPage({
   });
 
   if (!eventsRes.ok) {
-    redirect("/login?redirectTo=%2Fadmin%2Flogs");
+    return <AuthGate redirectTo="/admin/logs" />;
   }
 
   const eventsData = transformPaginatedListResponse<BackendAuditEvent>(
