@@ -33,7 +33,6 @@ interface WizardData {
   password: string;
   isNewDisplay: boolean;
   selectedOutput: string;
-  selectedResolution: string;
   displayName: string;
   groups: string[];
 }
@@ -43,14 +42,13 @@ const initialWizardData: WizardData = {
   password: "",
   isNewDisplay: false,
   selectedOutput: "",
-  selectedResolution: "",
   displayName: "",
   groups: [],
 };
 
 const availableDisplayOutputs: DisplayOutput[] = [
-  { name: "HDMI-0", resolution: "Auto-detect" },
-  { name: "HDMI-1", resolution: "Auto-detect" },
+  { name: "HDMI-0" },
+  { name: "HDMI-1" },
 ];
 
 interface AddDisplayWizardProps {
@@ -94,13 +92,8 @@ export function AddDisplayWizard({
       slug,
       name: data.displayName,
       status: "READY",
-      location: "",
-      ipAddress: "",
-      macAddress: "",
       output: data.selectedOutput,
-      resolution: data.selectedResolution,
       groups,
-      nowPlaying: null,
     });
     onClose();
   }, [data, onRegister, onClose]);
@@ -109,7 +102,6 @@ export function AddDisplayWizard({
     setData((prev) => ({
       ...prev,
       selectedOutput: output.name,
-      selectedResolution: output.resolution,
     }));
   }, []);
 
@@ -239,9 +231,6 @@ export function AddDisplayWizard({
                 >
                   <div className="flex flex-col gap-0.5">
                     <span className="text-sm font-medium">{output.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {output.resolution}
-                    </span>
                   </div>
                   <div
                     aria-hidden="true"

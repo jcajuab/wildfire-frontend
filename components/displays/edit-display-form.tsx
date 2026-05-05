@@ -45,9 +45,7 @@ interface EditFormData {
 }
 
 function createInitialFormData(display: Display): EditFormData {
-  const parsedOutput = parseDisplayOutput(
-    display.output === "Not available" ? null : display.output,
-  );
+  const parsedOutput = parseDisplayOutput(display.output);
 
   return {
     displayName: display.name,
@@ -137,7 +135,6 @@ export function EditDisplayForm({
         ...display,
         name: formData.displayName,
         output,
-        resolution: display.resolution,
         groups,
       });
       if (didSave) onClose();
@@ -267,7 +264,6 @@ export function EditDisplayForm({
             ) : null}
           </div>
         </div>
-
       </div>
 
       <DialogFooter className="flex-row justify-end">

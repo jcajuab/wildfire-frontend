@@ -280,13 +280,14 @@ export const ContentCard = memo(function ContentCard({
           aria-label={`Created by @${ownerHandle}. ${activityLabel} ${activityDateLabel}.`}
         >
           <span className="min-w-0 truncate">@{ownerHandle}</span>
-          <span className="shrink-0 text-muted-foreground/70" aria-hidden="true">
+          <span
+            className="shrink-0 text-muted-foreground/70"
+            aria-hidden="true"
+          >
             ·
           </span>
           <span className="shrink-0 font-medium">{activityLabel}</span>
-          <span className="min-w-0 truncate">
-            {activityRelativeLabel}
-          </span>
+          <span className="min-w-0 truncate">{activityRelativeLabel}</span>
         </div>
       </div>
     </div>

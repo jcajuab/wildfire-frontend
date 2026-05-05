@@ -28,9 +28,7 @@ describe("Content loading state", () => {
       "sm:w-24",
     );
 
-    expect(grid).toHaveClass(
-      "grid-cols-[repeat(auto-fill,minmax(18rem,1fr))]",
-    );
+    expect(grid).toHaveClass("grid-cols-[repeat(auto-fill,minmax(18rem,1fr))]");
     expect(screen.getAllByTestId("content-loading-card")).toHaveLength(8);
     expect(screen.getAllByTestId("content-loading-card")[0]).toHaveClass(
       "rounded-lg",

@@ -11,13 +11,8 @@ const makeDisplay = (overrides?: Partial<Display>): Display => ({
   slug: "lobby-display",
   name: "Lobby Display",
   status: "READY",
-  location: "Main Hall",
-  ipAddress: "10.0.0.2",
-  macAddress: "AA:BB:CC:DD:EE:FF",
   output: "hdmi-0",
-  resolution: "1920x1080",
   groups: [],
-  nowPlaying: null,
   createdAt: "2025-01-01T00:00:00.000Z",
   ...overrides,
 });
@@ -145,7 +140,7 @@ describe("EditDisplayDialog", () => {
     );
   });
 
-  test("keeps resolution unchanged when changing display output", async () => {
+  test("updates display output when the index changes", async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
     const onSave = vi.fn(async () => true);
@@ -164,7 +159,6 @@ describe("EditDisplayDialog", () => {
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
         output: "hdmi-2",
-        resolution: "1920x1080",
       }),
     );
   }, 15_000);
@@ -179,26 +173,6 @@ describe("EditDisplayDialog", () => {
     await user.type(outputIndexInput, "-1");
 
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
-  });
-
-  test("keeps unavailable resolution unchanged when saving", async () => {
-    const user = userEvent.setup();
-    const onSave = vi.fn(async () => true);
-
-    renderEditDisplayDialog({
-      display: makeDisplay({ resolution: "Not available" }),
-      onSave,
-    });
-
-    const saveButton = screen.getByRole("button", { name: "Save" });
-    expect(saveButton).toBeEnabled();
-    await user.click(saveButton);
-
-    expect(onSave).toHaveBeenCalledWith(
-      expect.objectContaining({
-        resolution: "Not available",
-      }),
-    );
   });
 
   test("keeps dialog open when save fails", async () => {

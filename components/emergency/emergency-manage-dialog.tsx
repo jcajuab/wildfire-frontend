@@ -3,10 +3,7 @@
 import { useCallback, useState, type ReactElement } from "react";
 import { toast } from "sonner";
 
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import type { BackendContent } from "@/lib/api/content-api";
 import {

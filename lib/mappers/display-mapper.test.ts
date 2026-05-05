@@ -9,59 +9,26 @@ const makeBackendDisplay = (
   slug: "lobby-display",
   fingerprint: null,
   name: "Lobby",
-  location: "Main Hall",
-  ipAddress: null,
-  macAddress: null,
-  screenWidth: 1920,
-  screenHeight: 1080,
   output: "hdmi-0",
-  orientation: null,
   lastSeenAt: null,
   status: "READY",
-  nowPlaying: null,
   createdAt: "2025-01-01T00:00:00.000Z",
   updatedAt: "2025-01-01T00:00:00.000Z",
   ...overrides,
 });
 
 describe("display-mapper", () => {
-  test("maps nowPlaying playlist from backend payload", () => {
-    const mapped = mapDisplayApiToDisplay(
-      makeBackendDisplay({
-        nowPlaying: {
-          title: null,
-          playlist: "Morning Loop",
-          progress: 0,
-          duration: 0,
-        },
+  test("maps required display output from backend payload", () => {
+    const mapped = mapDisplayApiToDisplay(makeBackendDisplay());
+
+    expect(mapped).toEqual(
+      expect.objectContaining({
+        id: "display-1",
+        slug: "lobby-display",
+        name: "Lobby",
+        output: "hdmi-0",
+        status: "READY",
       }),
     );
-
-    expect(mapped.nowPlaying).toEqual({
-      title: null,
-      playlist: "Morning Loop",
-      progress: 0,
-      duration: 0,
-    });
-  });
-
-  test("clamps negative playback values to zero", () => {
-    const mapped = mapDisplayApiToDisplay(
-      makeBackendDisplay({
-        nowPlaying: {
-          title: null,
-          playlist: "Morning Loop",
-          progress: -5,
-          duration: -10,
-        },
-      }),
-    );
-
-    expect(mapped.nowPlaying).toEqual({
-      title: null,
-      playlist: "Morning Loop",
-      progress: 0,
-      duration: 0,
-    });
   });
 });

@@ -77,8 +77,7 @@ export function DisplaysToolbar({
   onManageGroups,
 }: DisplaysToolbarProps): ReactElement {
   const isBulkUnregisterMode = bulkState.mode === "bulk-unregister";
-  const canShowBulkUnregister =
-    canDeleteDisplay && bulkState.mode === "normal";
+  const canShowBulkUnregister = canDeleteDisplay && bulkState.mode === "normal";
   const canShowManageDisplays = canCreateDisplay || canManageGroups;
   const selectedCount =
     bulkState.mode === "bulk-unregister" ? bulkState.selectedCount : 0;

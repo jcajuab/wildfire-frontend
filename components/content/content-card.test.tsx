@@ -70,9 +70,7 @@ describe("ContentCard", () => {
   test("does not toggle expansion when opening card actions menu", async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();
-    render(
-      <ContentCard content={baseContent} onDelete={onDelete} />,
-    );
+    render(<ContentCard content={baseContent} onDelete={onDelete} />);
 
     await user.click(screen.getByRole("button", { name: /actions for/i }));
     expect(onDelete).not.toHaveBeenCalled();

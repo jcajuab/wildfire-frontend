@@ -45,14 +45,14 @@ export function EmergencySlotDropdown({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
         <DropdownMenuContent
-          side='top'
-          align='start'
+          side="top"
+          align="start"
           sideOffset={6}
-          className='min-w-56'
+          className="min-w-56"
         >
           {isActive ? (
             <DropdownMenuItem
-              variant='destructive'
+              variant="destructive"
               disabled={!canUpdate || isBusy}
               onSelect={() => {
                 void deactivate();
@@ -73,7 +73,7 @@ export function EmergencySlotDropdown({
                     <DropdownMenuItem
                       key={slotIndex}
                       disabled
-                      className='justify-center border border-dashed border-border/60 text-center text-muted-foreground'
+                      className="justify-center border border-dashed border-border/60 text-center text-muted-foreground"
                     >
                       Slot {slotIndex}
                     </DropdownMenuItem>
@@ -84,7 +84,7 @@ export function EmergencySlotDropdown({
                   <DropdownMenuItem
                     key={slotIndex}
                     disabled={!canUpdate || isBusy}
-                    className='justify-center text-center'
+                    className="justify-center text-center"
                     onSelect={() => {
                       void activate(slotIndex);
                     }}
@@ -95,12 +95,12 @@ export function EmergencySlotDropdown({
               })}
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className='justify-center text-center'
+                className="justify-center text-center"
                 onSelect={() => {
                   setIsManageOpen(true);
                 }}
               >
-                <IconPlus className='size-3.5' aria-hidden='true' />
+                <IconPlus className="size-3.5" aria-hidden="true" />
                 Add emergency assets
               </DropdownMenuItem>
             </>

@@ -249,7 +249,8 @@ describe("display-api client contract validation", () => {
     const emergencyContent = {
       id: "84c4c14f-d508-4807-a186-aa78f2a9fb66",
       type: "TEXT",
-      checksum: "9b73ae3859b4db2a30886a815b512b8495f9af5ce2b88a9a84461658d254874a",
+      checksum:
+        "9b73ae3859b4db2a30886a815b512b8495f9af5ce2b88a9a84461658d254874a",
       thumbnailUrl: null,
       mimeType: "application/json",
       width: null,

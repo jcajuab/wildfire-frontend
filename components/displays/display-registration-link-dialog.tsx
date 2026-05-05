@@ -343,8 +343,6 @@ function DisplayRegistrationLinkDialogBody({
           displayName: name,
           outputType: formState.outputType,
           outputIndex,
-          resolutionWidth: null,
-          resolutionHeight: null,
           displayGroups: formState.displayGroups,
         }).unwrap();
 

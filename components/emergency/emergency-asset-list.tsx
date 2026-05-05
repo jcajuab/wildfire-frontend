@@ -32,14 +32,14 @@ export function EmergencyAssetList({
   }
 
   return (
-    <div className='flex flex-col gap-3'>
-      <header className='flex flex-col gap-1'>
-        <h3 className='text-sm font-medium'>Assets</h3>
-        <p className='text-xs text-muted-foreground'>
+    <div className="flex flex-col gap-3">
+      <header className="flex flex-col gap-1">
+        <h3 className="text-sm font-medium">Assets</h3>
+        <p className="text-xs text-muted-foreground">
           Choose up to five emergency assets.
         </p>
       </header>
-      <ul className='flex flex-col gap-2'>
+      <ul className="flex flex-col gap-2">
         {SLOT_INDICES.map((slotIndex) => {
           const slot = slotsByIndex.get(slotIndex);
           const isFilled = slot != null && slot.contentId != null;
@@ -50,18 +50,18 @@ export function EmergencyAssetList({
               slot.label ?? slot.content?.title ?? `Slot ${slotIndex}`;
             return (
               <li key={slotIndex}>
-                <div className='flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2'>
-                  <span className='truncate text-xs font-medium'>{label}</span>
+                <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2">
+                  <span className="truncate text-xs font-medium">{label}</span>
                   <button
-                    type='button'
+                    type="button"
                     aria-label={`Clear ${label}`}
                     onClick={() => onClearSlot(slotIndex)}
                     disabled={isClearing}
-                    className='inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50'
+                    className="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <IconX
-                      className='size-3.5 text-current'
-                      aria-hidden='true'
+                      className="size-3.5 text-current"
+                      aria-hidden="true"
                     />
                   </button>
                 </div>
@@ -72,7 +72,7 @@ export function EmergencyAssetList({
           return (
             <li key={slotIndex}>
               <button
-                type='button'
+                type="button"
                 aria-label={`Select or clear selection for empty Slot ${slotIndex}`}
                 aria-pressed={isSelected}
                 onClick={() => onSelectEmptySlot(slotIndex)}
@@ -84,14 +84,17 @@ export function EmergencyAssetList({
                     : "border-border/90 hover:border-primary/60",
                 )}
               >
-                <span className='text-xs text-inherit'>Slot {slotIndex}</span>
+                <span className="text-xs text-inherit">Slot {slotIndex}</span>
                 <span
                   className={cn(
                     "inline-flex size-6 shrink-0 items-center justify-center rounded-full transition-colors text-muted-foreground group-hover:text-foreground",
                     isSelected && "text-primary group-hover:text-foreground",
                   )}
                 >
-                  <IconPlus className='size-3.5 text-current' aria-hidden='true' />
+                  <IconPlus
+                    className="size-3.5 text-current"
+                    aria-hidden="true"
+                  />
                 </span>
               </button>
             </li>

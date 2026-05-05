@@ -25,17 +25,12 @@ const baseDisplay: Display = {
   slug: "lobby-display",
   name: "Lobby Display",
   status: "LIVE",
-  location: "Main Hall",
-  ipAddress: "10.0.0.20",
-  macAddress: "AA:BB:CC:DD:EE:FF",
   output: "hdmi-0",
-  resolution: "1920x1080",
   groups: [
     {
       name: "Lobby",
     },
   ],
-  nowPlaying: null,
   createdAt: "2025-01-01T00:00:00.000Z",
 };
 

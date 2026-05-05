@@ -50,23 +50,11 @@ export function useDisplayCrudHandlers(input: {
 
   const handleSaveDisplay = useCallback(
     async (display: Display): Promise<boolean> => {
-      const [screenWidthRaw, screenHeightRaw] = display.resolution.split("x");
-      const screenWidth =
-        screenWidthRaw && Number.isFinite(Number(screenWidthRaw))
-          ? Number(screenWidthRaw)
-          : null;
-      const screenHeight =
-        screenHeightRaw && Number.isFinite(Number(screenHeightRaw))
-          ? Number(screenHeightRaw)
-          : null;
-
       try {
         await updateDisplay({
           id: display.id,
           name: display.name,
-          output: display.output === "Not available" ? null : display.output,
-          screenWidth,
-          screenHeight,
+          output: display.output,
         }).unwrap();
       } catch (updateError) {
         notifyApiError(updateError, "Failed to save display details.");

@@ -26,13 +26,8 @@ function makeDisplay(index: number): Display {
     slug: `display-${index}`,
     name: `Display ${index}`,
     status: "READY",
-    location: null,
-    ipAddress: null,
-    macAddress: null,
     output: "HDMI",
-    resolution: "1920x1080",
     groups: [],
-    nowPlaying: null,
     createdAt: "2025-01-01T00:00:00.000Z",
   };
 }

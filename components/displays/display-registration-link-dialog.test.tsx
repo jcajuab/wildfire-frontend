@@ -125,8 +125,6 @@ describe("DisplayRegistrationLinkDialog", () => {
         displayName: "Lobby Display",
         outputType: "HDMI",
         outputIndex: 0,
-        resolutionWidth: null,
-        resolutionHeight: null,
         displayGroups: [],
       });
     });

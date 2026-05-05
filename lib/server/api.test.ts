@@ -19,7 +19,10 @@ import { handleBootstrapResult } from "@/lib/server/api";
 describe("handleBootstrapResult", () => {
   test("returns when the bootstrap request succeeds", () => {
     expect(() =>
-      handleBootstrapResult({ ok: true, data: { ok: true } }, "/admin/displays"),
+      handleBootstrapResult(
+        { ok: true, data: { ok: true } },
+        "/admin/displays",
+      ),
     ).not.toThrow();
   });
 

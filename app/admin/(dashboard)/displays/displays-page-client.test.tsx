@@ -75,13 +75,8 @@ const display: Display = {
   slug: "display-1",
   name: "Lobby Display",
   status: "READY",
-  location: "Lobby",
-  ipAddress: "10.0.0.10",
-  macAddress: "AA:BB:CC:DD:EE:FF",
   output: "HDMI",
-  resolution: "1920x1080",
   groups: [],
-  nowPlaying: null,
   createdAt: "2025-01-01T00:00:00.000Z",
 };
 

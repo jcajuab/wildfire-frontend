@@ -69,31 +69,31 @@ export function EmergencyContentPicker({
   const isPickerDisabled = selectedSlotIndex === null;
 
   return (
-    <div className='flex min-h-0 flex-col gap-3'>
-      <header className='flex flex-col gap-1'>
-        <h3 className='text-sm font-medium'>Content</h3>
-        <p className='text-xs text-muted-foreground'>
+    <div className="flex min-h-0 flex-col gap-3">
+      <header className="flex flex-col gap-1">
+        <h3 className="text-sm font-medium">Content</h3>
+        <p className="text-xs text-muted-foreground">
           Select a content to act as an emergency asset.
         </p>
       </header>
       <SearchControl
         value={search}
         onChange={handleSearchChange}
-        ariaLabel='Search emergency content'
-        placeholder='Search content...'
-        className='max-w-none min-w-0 w-full'
+        ariaLabel="Search emergency content"
+        placeholder="Search content..."
+        className="max-w-none min-w-0 w-full"
       />
-      <div className='min-h-0 flex-1 overflow-auto'>
+      <div className="min-h-0 flex-1 overflow-auto">
         {isFetching && items.length === 0 ? (
-          <p className='px-2 py-6 text-center text-xs text-muted-foreground'>
+          <p className="px-2 py-6 text-center text-xs text-muted-foreground">
             Loading content...
           </p>
         ) : items.length === 0 ? (
-          <p className='px-2 py-6 text-center text-xs text-muted-foreground'>
+          <p className="px-2 py-6 text-center text-xs text-muted-foreground">
             No READY image, video, or text content found.
           </p>
         ) : (
-          <ul className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {items.map((item) => (
               <li key={item.id}>
                 <CompactContentCard
@@ -137,10 +137,10 @@ function CompactContentCard({
   const Icon = content.type === "VIDEO" ? IconVideo : IconPhoto;
   const button = (
     <Button
-      type='button'
-      size='sm'
-      variant='outline'
-      className='h-auto w-full cursor-pointer border-border py-1 hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed'
+      type="button"
+      size="sm"
+      variant="outline"
+      className="h-auto w-full cursor-pointer border-border py-1 hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed"
       disabled={disabled}
       onClick={onSelect}
     >
@@ -149,10 +149,10 @@ function CompactContentCard({
   );
 
   return (
-    <article className='flex flex-col overflow-hidden rounded-md border border-border bg-background'>
-      <div className='relative flex aspect-video items-center justify-center overflow-hidden bg-muted/50'>
+    <article className="flex flex-col overflow-hidden rounded-md border border-border bg-background">
+      <div className="relative flex aspect-video items-center justify-center overflow-hidden bg-muted/50">
         {isTextContent ? (
-          <div className='relative flex h-full w-full items-start overflow-hidden p-2'>
+          <div className="relative flex h-full w-full items-start overflow-hidden p-2">
             <div
               className={cn(
                 RICH_TEXT_PREVIEW_CLASSES,
@@ -161,28 +161,28 @@ function CompactContentCard({
               aria-label={textThumbnailText ?? content.title}
               dangerouslySetInnerHTML={{ __html: textThumbnailHtml ?? "" }}
             />
-            <div className='pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-linear-to-t from-muted/90 to-transparent' />
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-linear-to-t from-muted/90 to-transparent" />
           </div>
         ) : content.thumbnailUrl ? (
           <Image
             src={content.thumbnailUrl}
             alt={`${content.title} preview`}
             fill
-            sizes='(max-width: 768px) 50vw, 25vw'
-            className='object-cover'
+            sizes="(max-width: 768px) 50vw, 25vw"
+            className="object-cover"
           />
         ) : (
-          <Icon className='size-6 text-muted-foreground' aria-hidden='true' />
+          <Icon className="size-6 text-muted-foreground" aria-hidden="true" />
         )}
       </div>
-      <div className='flex flex-col gap-2 p-2'>
-        <p className='truncate text-xs font-medium' title={content.title}>
+      <div className="flex flex-col gap-2 p-2">
+        <p className="truncate text-xs font-medium" title={content.title}>
           {content.title}
         </p>
         {disabled ? (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className='block'>{button}</span>
+              <span className="block">{button}</span>
             </TooltipTrigger>
             <TooltipContent>Pick an empty slot first</TooltipContent>
           </Tooltip>

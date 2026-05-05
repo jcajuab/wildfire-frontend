@@ -483,8 +483,6 @@ export async function registerDisplay(input: {
   registrationSessionId: string;
   slug: string;
   displayName: string;
-  resolutionWidth: number;
-  resolutionHeight: number;
   output: string;
   fingerprint: string;
   publicKey: string;

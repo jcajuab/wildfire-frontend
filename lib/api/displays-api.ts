@@ -22,21 +22,9 @@ export interface BackendDisplay {
   readonly slug: string;
   readonly fingerprint?: string | null;
   readonly name: string;
-  readonly location: string | null;
-  readonly ipAddress: string | null;
-  readonly macAddress: string | null;
-  readonly screenWidth: number | null;
-  readonly screenHeight: number | null;
-  readonly output: string | null;
-  readonly orientation: "LANDSCAPE" | "PORTRAIT" | null;
+  readonly output: string;
   readonly lastSeenAt: string | null;
   readonly status: "PROCESSING" | "READY" | "LIVE" | "DOWN";
-  readonly nowPlaying?: {
-    readonly title: string | null;
-    readonly playlist: string | null;
-    readonly progress: number;
-    readonly duration: number;
-  } | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -56,7 +44,7 @@ export interface DisplaysListQuery {
   readonly groupIds?: readonly string[];
   readonly groupNames?: readonly string[];
   readonly output?: string;
-  readonly sortBy?: "name" | "status" | "location";
+  readonly sortBy?: "name" | "status";
   readonly sortDirection?: "asc" | "desc";
 }
 
@@ -70,13 +58,7 @@ export type DisplayOutputOption = string;
 export interface UpdateDisplayRequest {
   readonly id: string;
   readonly name?: string;
-  readonly location?: string | null;
-  readonly ipAddress?: string | null;
-  readonly macAddress?: string | null;
-  readonly screenWidth?: number | null;
-  readonly screenHeight?: number | null;
-  readonly output?: string | null;
-  readonly orientation?: "LANDSCAPE" | "PORTRAIT" | null;
+  readonly output?: string;
 }
 
 export interface DisplayGroup {
@@ -103,8 +85,6 @@ export interface CreateRegistrationLinkRequest {
   readonly displayName: string;
   readonly outputType: string;
   readonly outputIndex: number;
-  readonly resolutionWidth: number | null;
-  readonly resolutionHeight: number | null;
   readonly displayGroups: string[];
 }
 
