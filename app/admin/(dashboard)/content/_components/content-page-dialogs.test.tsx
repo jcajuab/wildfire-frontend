@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { EditContentDialog } from "./content-page-dialogs";
+import { SUPPORTED_CONTENT_FILE_LABELS } from "@/components/content/content-file-types";
 import type { Content } from "@/types/content";
 
 const richTextJson = JSON.stringify({
@@ -36,6 +37,30 @@ const textContent: Content = {
     username: "admin",
     name: "Admin",
   },
+};
+
+const flashContent: Content = {
+  ...textContent,
+  id: "content-2",
+  title: "Emergency Alert",
+  type: "FLASH",
+  mimeType: "text/plain",
+  fileSize: 120,
+  flashMessage: "Please proceed to the nearest exit.",
+  flashTone: "WARNING",
+  textJsonContent: null,
+  textHtmlContent: null,
+};
+
+const imageContent: Content = {
+  ...textContent,
+  id: "content-3",
+  title: "Lobby Poster",
+  type: "IMAGE",
+  mimeType: "image/jpeg",
+  fileSize: 1024,
+  textJsonContent: null,
+  textHtmlContent: null,
 };
 
 describe("EditContentDialog", () => {
@@ -74,7 +99,7 @@ describe("EditContentDialog", () => {
       screen.getByText("Update formatted text content for display playback."),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Text Content Title")).toBeInTheDocument();
-    expect(screen.getByText("Text Content Body")).toBeInTheDocument();
+    expect(screen.getByText("Text Content Message")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
 
@@ -90,5 +115,84 @@ describe("EditContentDialog", () => {
     expect(editor).toHaveClass("overflow-y-auto");
     expect(editor).toHaveClass("overflow-x-hidden");
     expect(editor).toHaveClass("[overflow-wrap:anywhere]");
+  });
+
+  test("matches the expanded flash content modal layout", () => {
+    render(
+      <EditContentDialog
+        open
+        content={flashContent}
+        onOpenChange={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAccessibleName("Edit Content");
+    expect(dialog).toHaveClass("sm:max-w-2xl");
+    expect(dialog).toHaveClass("max-h-[calc(100dvh-2rem)]");
+    expect(dialog).toHaveClass("overflow-hidden");
+
+    expect(
+      screen.getByText("Update the flash message used for display playback."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Flash Content Title")).toHaveAttribute(
+      "placeholder",
+      "Enter flash content title",
+    );
+    expect(screen.getByLabelText("Flash Content Message")).toHaveAttribute(
+      "placeholder",
+      "Enter the flash message to display",
+    );
+    expect(
+      screen.getByRole("combobox", { name: "Flash Content Tone" }),
+    ).toHaveClass("w-full");
+    expect(
+      screen.getAllByText("Please proceed to the nearest exit."),
+    ).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+  });
+
+  test("matches the upload modal layout for uploaded content", () => {
+    render(
+      <EditContentDialog
+        open
+        content={imageContent}
+        onOpenChange={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAccessibleName("Edit Content");
+    expect(dialog).toHaveClass("sm:max-w-lg");
+
+    expect(
+      screen.getByText(
+        "Update the content title or replace the uploaded file.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Content Title")).toBeInTheDocument();
+    expect(screen.getByText("Uploaded File")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (content) =>
+          content.includes("Current file: IMAGE") &&
+          content.includes("image/jpeg"),
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(SUPPORTED_CONTENT_FILE_LABELS)).toBeInTheDocument();
+    expect(screen.getByText("Max 10 MB")).toBeInTheDocument();
+
+    const dropzone = screen
+      .getByText("Choose a file")
+      .closest(".border-dashed");
+    expect(dropzone).toHaveClass("p-8", "gap-3");
+    expect(dropzone?.querySelector(".size-12")).toBeInTheDocument();
+    expect(dropzone?.querySelector(".size-6")).toBeInTheDocument();
+
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 });

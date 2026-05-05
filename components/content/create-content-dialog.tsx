@@ -2,29 +2,13 @@
 
 import type { ChangeEvent, ReactElement } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  IconBolt,
-  IconLoader2,
-  IconUpload,
-  IconX,
-} from "@tabler/icons-react";
+import { IconLoader2, IconUpload, IconX } from "@tabler/icons-react";
 import { FlashTonePreview } from "@/components/content/flash-tone-preview";
 import {
   SUPPORTED_CONTENT_FILE_LABELS,
   SUPPORTED_CONTENT_FILE_MIME_TYPES,
 } from "@/components/content/content-file-types";
 import dynamic from "next/dynamic";
-
-const TICKER_PLACEHOLDERS = [
-  "Please return the aquaflask of John Doe to the department office!",
-  "Please do not forget to wear masks today due to air quality.",
-  "Reminding students that the Prog2 Departmentals Exam will be moved to LB447",
-  "Car with plate number GBW 3891 please remove your vehicle from the VPAA's parking spot",
-  "Student with ID number XXXXXXXX, please proceed to the department office.",
-] as const;
-
-const getRandomTickerPlaceholder = (): string =>
-  TICKER_PLACEHOLDERS[Math.floor(Math.random() * TICKER_PLACEHOLDERS.length)];
 
 const TiptapEditor = dynamic(
   () =>
@@ -114,12 +98,14 @@ export function CreateContentDialog({
     onOpenChange(false);
   }, [onOpenChange, resetState]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally pick a new placeholder each time the dialog opens
-  const tickerPlaceholder = useMemo(() => getRandomTickerPlaceholder(), [open]);
-
   const isUploadMode = mode === "upload";
   const isFlashMode = mode === "flash";
   const isTextMode = mode === "text";
+  const dialogSizeClass = isFlashMode
+    ? "max-h-[calc(100dvh-2rem)] overflow-hidden sm:max-w-2xl"
+    : isTextMode
+      ? "max-h-[calc(100dvh-2rem)] overflow-hidden sm:max-w-4xl"
+      : "sm:max-w-lg";
   const canSubmit = useMemo(() => {
     if (title.trim().length === 0) return false;
     if (isUploadMode) {
@@ -269,11 +255,7 @@ export function CreateContentDialog({
       }}
     >
       <DialogContent
-        className={
-          isTextMode
-            ? "max-h-[calc(100dvh-2rem)] overflow-hidden sm:max-w-4xl"
-            : "sm:max-w-lg"
-        }
+        className={dialogSizeClass}
         onInteractOutside={(e) => {
           if (isSubmitting) e.preventDefault();
         }}
@@ -286,14 +268,14 @@ export function CreateContentDialog({
             {isUploadMode
               ? "Upload File"
               : isFlashMode
-                ? "Create Flash"
+                ? "Create Flash Content"
                 : "Create Text Content"}
           </DialogTitle>
           <DialogDescription>
             {isUploadMode
-              ? "Upload an image or video to display on your screens."
+              ? "Add a media file for display playback."
               : isFlashMode
-                ? "Create a flash ticker message to display on your screens."
+                ? "Create a short flash message for display playback."
                 : "Create formatted text content for display playback."}
           </DialogDescription>
         </DialogHeader>
@@ -304,17 +286,17 @@ export function CreateContentDialog({
               {isUploadMode
                 ? "Content Title"
                 : isFlashMode
-                  ? "Flash Title"
+                  ? "Flash Content Title"
                   : "Text Content Title"}
             </Label>
             <Input
               id="content-title"
               placeholder={
                 isUploadMode
-                  ? "Lobby Poster"
+                  ? "Enter content title"
                   : isFlashMode
-                    ? "Enter flash title"
-                    : "Announcement"
+                    ? "Enter flash content title"
+                    : "Enter text content title"
               }
               value={title}
               onChange={(event) => setTitle(event.target.value)}
@@ -384,25 +366,26 @@ export function CreateContentDialog({
           ) : isFlashMode ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="flash-message">Ticker Message</Label>
+                <Label htmlFor="flash-message">Flash Content Message</Label>
                 <Textarea
                   id="flash-message"
                   value={flashMessage}
                   onChange={(event) => setFlashMessage(event.target.value)}
-                  placeholder={tickerPlaceholder}
+                  placeholder="Enter the flash message to display"
                   maxLength={FLASH_MESSAGE_MAX_LENGTH}
+                  className="min-h-28 resize-y"
                 />
                 <p className="text-xs text-muted-foreground">
                   {flashMessage.length}/{FLASH_MESSAGE_MAX_LENGTH} characters
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="flash-tone">Tone</Label>
+                <Label htmlFor="flash-tone">Flash Content Tone</Label>
                 <Select
                   value={flashTone}
                   onValueChange={(value: FlashTone) => setFlashTone(value)}
                 >
-                  <SelectTrigger id="flash-tone">
+                  <SelectTrigger id="flash-tone" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -415,11 +398,12 @@ export function CreateContentDialog({
               <FlashTonePreview
                 tone={flashTone}
                 message={debouncedFlashMessage}
+                fallbackMessage="Flash content preview"
               />
             </div>
           ) : (
             <div className="space-y-2">
-              <Label>Text Content Body</Label>
+              <Label>Text Content Message</Label>
               <TiptapEditor
                 onChange={(json, html) => {
                   setTextJsonContent(json);
@@ -431,34 +415,19 @@ export function CreateContentDialog({
           )}
         </div>
 
-        <DialogFooter className={isTextMode ? undefined : "sm:justify-between"}>
+        <DialogFooter>
           <Button
             variant="outline"
             onClick={handleClose}
             disabled={isSubmitting}
-            className={isTextMode ? undefined : "flex-1"}
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!canSubmit || isSubmitting}
-            className={isTextMode ? undefined : "flex-1"}
-          >
+          <Button onClick={handleSubmit} disabled={!canSubmit || isSubmitting}>
             {isSubmitting ? (
               <>
                 <IconLoader2 className="size-4 animate-spin" />
-                {isUploadMode ? "Uploading…" : isFlashMode ? "Creating…" : "Saving…"}
-              </>
-            ) : isUploadMode ? (
-              <>
-                <IconUpload className="size-4" />
-                Upload file
-              </>
-            ) : isFlashMode ? (
-              <>
-                <IconBolt className="size-4" />
-                Create flash
+                Saving…
               </>
             ) : (
               "Save"

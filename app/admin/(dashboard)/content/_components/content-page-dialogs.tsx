@@ -2,7 +2,7 @@
 
 import type { ChangeEvent, DragEvent, ReactElement } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { IconLoader2, IconUpload } from "@tabler/icons-react";
+import { IconLoader2, IconUpload, IconX } from "@tabler/icons-react";
 import {
   SUPPORTED_CONTENT_FILE_LABELS,
   SUPPORTED_CONTENT_FILE_MIME_TYPES,
@@ -75,9 +75,11 @@ export function EditContentDialog({
   }
 
   const dialogWidth =
-    content.type === "TEXT"
-      ? "max-h-[calc(100dvh-2rem)] overflow-hidden sm:max-w-4xl"
-      : "sm:max-w-md";
+    content.type === "FLASH"
+      ? "max-h-[calc(100dvh-2rem)] overflow-hidden sm:max-w-2xl"
+      : content.type === "TEXT"
+        ? "max-h-[calc(100dvh-2rem)] overflow-hidden sm:max-w-4xl"
+        : "sm:max-w-lg";
 
   const guardedOnOpenChange = (nextOpen: boolean) => {
     if (isSubmitting) return;
@@ -192,19 +194,34 @@ function EditContentDialogForm({
     <>
       <DialogHeader>
         <DialogTitle>Edit Content</DialogTitle>
-        {isTextContent ? (
+        {isFlashContent ? (
+          <DialogDescription>
+            Update the flash message used for display playback.
+          </DialogDescription>
+        ) : isTextContent ? (
           <DialogDescription>
             Update formatted text content for display playback.
           </DialogDescription>
-        ) : null}
+        ) : (
+          <DialogDescription>
+            Update the content title or replace the uploaded file.
+          </DialogDescription>
+        )}
       </DialogHeader>
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="edit-content-title">
-            {isTextContent ? "Text Content Title" : "Title"}
+            {isFlashContent
+              ? "Flash Content Title"
+              : isTextContent
+                ? "Text Content Title"
+                : "Content Title"}
           </Label>
           <Input
             id="edit-content-title"
+            placeholder={
+              isFlashContent ? "Enter flash content title" : undefined
+            }
             value={title}
             onChange={(event) => setTitle(event.target.value)}
           />
@@ -212,21 +229,23 @@ function EditContentDialogForm({
         {isFlashContent ? (
           <>
             <div className="space-y-2">
-              <Label htmlFor="edit-flash-message">Ticker Message</Label>
+              <Label htmlFor="edit-flash-message">Flash Content Message</Label>
               <Textarea
                 id="edit-flash-message"
                 value={flashMessage}
                 onChange={(event) => setFlashMessage(event.target.value)}
+                placeholder="Enter the flash message to display"
                 maxLength={FLASH_MESSAGE_MAX_LENGTH}
+                className="min-h-28 resize-y"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-flash-tone">Tone</Label>
+              <Label htmlFor="edit-flash-tone">Flash Content Tone</Label>
               <Select
                 value={flashTone}
                 onValueChange={(value: FlashTone) => setFlashTone(value)}
               >
-                <SelectTrigger id="edit-flash-tone">
+                <SelectTrigger id="edit-flash-tone" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -241,12 +260,13 @@ function EditContentDialogForm({
               <FlashTonePreview
                 tone={flashTone}
                 message={debouncedFlashMessage}
+                fallbackMessage="Flash content preview"
               />
             </div>
           </>
         ) : isTextContent ? (
           <div className="space-y-2">
-            <Label>Text Content Body</Label>
+            <Label>Text Content Message</Label>
             <TiptapEditor
               content={textJsonContent}
               onChange={(json, html) => {
@@ -257,57 +277,63 @@ function EditContentDialogForm({
           </div>
         ) : (
           <div className="space-y-2">
-            <Label>Replace File</Label>
+            <Label>Uploaded File</Label>
             <p className="text-xs text-muted-foreground">
-              Current file type: {content.type} ({content.mimeType || "Unknown"}
-              )
+              Current file: {content.type} &middot;{" "}
+              {content.mimeType || "Unknown"}
             </p>
             {canReplaceFile ? (
-              <>
-                <p className="text-xs text-muted-foreground">
-                  Optional: choose a new file to replace it.
-                </p>
-                <div
-                  className={`flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-4 transition-colors ${
-                    isDragging
-                      ? "border-primary bg-primary/5"
-                      : "border-muted-foreground/25"
-                  }`}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                >
-                  <div className="flex size-10 items-center justify-center rounded-md bg-muted">
-                    <IconUpload className="size-5 text-muted-foreground" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm">
-                      <label
-                        htmlFor={`edit-content-file-${content.id}`}
-                        className="cursor-pointer font-medium text-primary hover:underline"
-                      >
-                        Choose a file
-                      </label>{" "}
-                      or drag it here.
-                    </p>
-                    <input
-                      id={`edit-content-file-${content.id}`}
-                      type="file"
-                      className="sr-only"
-                      accept={SUPPORTED_CONTENT_FILE_MIME_TYPES}
-                      onChange={handleFileInputChange}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Supported files: {SUPPORTED_CONTENT_FILE_LABELS}
-                    </p>
-                  </div>
-                  {selectedFile ? (
-                    <p className="text-xs font-medium text-primary">
-                      Selected: {selectedFile.name}
-                    </p>
-                  ) : null}
+              <div
+                className={`flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-8 transition-colors ${
+                  isDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-muted-foreground/25"
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <div className="flex size-12 items-center justify-center rounded-md bg-muted">
+                  <IconUpload className="size-6 text-muted-foreground" />
                 </div>
-              </>
+                <div className="space-y-1 text-center">
+                  <p className="text-sm">
+                    <label
+                      htmlFor={`edit-content-file-${content.id}`}
+                      className="cursor-pointer font-medium text-primary hover:underline"
+                    >
+                      Choose a file
+                    </label>{" "}
+                    or drag it here.
+                  </p>
+                  <input
+                    id={`edit-content-file-${content.id}`}
+                    type="file"
+                    className="sr-only"
+                    accept={SUPPORTED_CONTENT_FILE_MIME_TYPES}
+                    onChange={handleFileInputChange}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {SUPPORTED_CONTENT_FILE_LABELS}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Max 10 MB</p>
+                </div>
+                {selectedFile ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium leading-none text-primary">
+                      Selected: {selectedFile.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedFile(null)}
+                      className="text-primary transition-colors hover:text-destructive"
+                      aria-label="Remove selected file"
+                    >
+                      <IconX className="size-3.5" aria-hidden="true" />
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             ) : (
               <p className="text-xs text-muted-foreground">
                 Processing content cannot be replaced right now.
@@ -352,8 +378,8 @@ function EditContentDialogForm({
         >
           {isSaving ? (
             <>
-              Saving
               <IconLoader2 className="size-4 animate-spin" />
+              Saving…
             </>
           ) : (
             "Save"

@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 import { getFlashBadgeClassName } from "@/lib/display-runtime/flash-ticker";
@@ -51,27 +57,27 @@ describe("CreateContentDialog", () => {
     vi.useRealTimers();
   });
 
-  test("debounces ticker preview updates by 500ms while keeping character count immediate", async () => {
+  test("debounces flash preview updates by 500ms while keeping character count immediate", async () => {
     renderDialog("flash");
 
     const dialog = screen.getByRole("dialog");
-    expect(dialog).toHaveAccessibleName("Create Flash");
+    expect(dialog).toHaveAccessibleName("Create Flash Content");
     vi.useFakeTimers();
 
-    fireEvent.change(screen.getByLabelText("Ticker Message"), {
+    fireEvent.change(screen.getByLabelText("Flash Content Message"), {
       target: { value: "HELLO WORLD" },
     });
 
     expect(screen.getByText("11/120 characters")).toBeInTheDocument();
     expect(
-      screen.getByText("Ticker preview", { selector: "p" }),
+      screen.getByText("Flash content preview", { selector: "p" }),
     ).toBeInTheDocument();
 
     await act(async () => {
       vi.advanceTimersByTime(499);
     });
     expect(
-      screen.getByText("Ticker preview", { selector: "p" }),
+      screen.getByText("Flash content preview", { selector: "p" }),
     ).toBeInTheDocument();
 
     await act(async () => {
@@ -90,7 +96,9 @@ describe("CreateContentDialog", () => {
     const infoBadge = screen.getByText("INFO");
     expectClassTokens(infoBadge, getFlashBadgeClassName("INFO"));
 
-    await user.click(screen.getByRole("combobox", { name: "Tone" }));
+    await user.click(
+      screen.getByRole("combobox", { name: "Flash Content Tone" }),
+    );
     await user.click(screen.getByRole("option", { name: "Critical" }));
 
     const criticalBadge = screen.getByText("CRITICAL");
@@ -101,16 +109,64 @@ describe("CreateContentDialog", () => {
     ).toBeNull();
   });
 
-  test("applies shared overflow-safe sizing classes for long ticker input", async () => {
+  test("uses expanded flash content layout and professional field copy", async () => {
     renderDialog("flash");
 
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveClass("min-w-0");
+    expect(dialog).toHaveClass("sm:max-w-2xl");
+    expect(dialog).toHaveClass("max-h-[calc(100dvh-2rem)]");
+    expect(dialog).toHaveClass("overflow-hidden");
+    expect(
+      screen.getByText("Create a short flash message for display playback."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Flash Content Title")).toHaveAttribute(
+      "placeholder",
+      "Enter flash content title",
+    );
 
-    const tickerTextarea = screen.getByLabelText("Ticker Message");
-    expect(tickerTextarea).toHaveClass("min-w-0", "max-w-full", "break-words");
-    expect(tickerTextarea.className).toContain("[overflow-wrap:anywhere]");
-    expect(tickerTextarea.className).not.toContain("field-sizing-content");
+    const flashTextarea = screen.getByLabelText("Flash Content Message");
+    expect(flashTextarea).toHaveAttribute(
+      "placeholder",
+      "Enter the flash message to display",
+    );
+    expect(flashTextarea).toHaveClass(
+      "min-w-0",
+      "max-w-full",
+      "break-words",
+      "min-h-28",
+      "resize-y",
+    );
+    expect(flashTextarea.className).toContain("[overflow-wrap:anywhere]");
+    expect(flashTextarea.className).not.toContain("field-sizing-content");
+    expect(
+      screen.getByRole("combobox", { name: "Flash Content Tone" }),
+    ).toHaveClass("w-full");
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Create flash/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("uses consistent upload copy and footer actions", () => {
+    renderDialog("upload");
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAccessibleName("Upload File");
+    expect(
+      screen.getByText("Add a media file for display playback."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Content Title")).toHaveAttribute(
+      "placeholder",
+      "Enter content title",
+    );
+
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Upload file/i }),
+    ).not.toBeInTheDocument();
   });
 
   test("uses expanded text content layout and concise editor metadata", async () => {
@@ -125,8 +181,11 @@ describe("CreateContentDialog", () => {
     expect(
       screen.getByText("Create formatted text content for display playback."),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("Text Content Title")).toBeInTheDocument();
-    expect(screen.getByText("Text Content Body")).toBeInTheDocument();
+    expect(screen.getByLabelText("Text Content Title")).toHaveAttribute(
+      "placeholder",
+      "Enter text content title",
+    );
+    expect(screen.getByText("Text Content Message")).toBeInTheDocument();
 
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
