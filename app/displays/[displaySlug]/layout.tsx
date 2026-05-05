@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
 interface Props {
   params: Promise<{ displaySlug: string }>;
@@ -24,7 +24,7 @@ export default function DisplayLayout({
 }) {
   return (
     <div data-force-light className="h-screen w-screen">
-      {children}
+      <Suspense fallback={null}>{children}</Suspense>
     </div>
   );
 }
