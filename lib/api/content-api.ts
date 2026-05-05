@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { revalidateWildfireTagsViaRoute } from "@/lib/api/revalidate-via-route";
 import { api } from "@/lib/api/api";
 import { patchPaginatedListById } from "@/lib/api/cache-patches";
@@ -13,6 +14,8 @@ async function bumpContentNextCache(): Promise<void> {
     // best-effort
   }
 }
+
+const PDF_CROP_SUBMIT_WAIT_TIMEOUT_MS = 60_000;
 
 export interface BackendContent {
   readonly id: string;
@@ -333,18 +336,56 @@ export const contentApi = api.injectEndpoints({
         method: "POST",
         body: { crops: regions, contentName },
       }),
-      transformResponse: (response) =>
-        parseApiResponseDataSafe<readonly BackendContent[]>(
-          response,
-          "submitPdfCrops",
-        ),
-      invalidatesTags: [{ type: "Content", id: "LIST" }],
-      async onQueryStarted(_arg, { queryFulfilled }) {
+      transformResponse: (response) => {
+        const body = parseApiResponseDataSafe<{
+          readonly items: readonly BackendContent[];
+        }>(response, "submitPdfCrops");
+        return body.items;
+      },
+      async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
+        let timedOut = false;
+        const timeoutId = setTimeout(() => {
+          timedOut = true;
+          toast.error(
+            "PDF processing is taking longer than expected. You can try uploading again, or return to the crop page and click Create again if it's still open.",
+          );
+        }, PDF_CROP_SUBMIT_WAIT_TIMEOUT_MS);
+
         try {
-          await queryFulfilled;
+          const { data: items } = await queryFulfilled;
+          clearTimeout(timeoutId);
+
+          const state = getState();
+          const argsList = contentApi.util.selectCachedArgsForQuery(
+            state,
+            "listContent",
+          );
+          for (const args of argsList) {
+            dispatch(
+              contentApi.util.updateQueryData("listContent", args, (draft) => {
+                for (const item of items) {
+                  patchPaginatedListById(draft, "add", item, {
+                    position: "start",
+                  });
+                }
+              }),
+            );
+          }
+
+          if (!timedOut) {
+            const count = items.length;
+            toast.success(
+              count === 1
+                ? "PDF content created successfully (1 item)."
+                : `PDF content created successfully (${count} items).`,
+            );
+          }
           await bumpContentNextCache();
         } catch {
-          // mutation failed
+          clearTimeout(timeoutId);
+          if (!timedOut) {
+            toast.error("Failed to create PDF content. Please try again.");
+          }
         }
       },
     }),

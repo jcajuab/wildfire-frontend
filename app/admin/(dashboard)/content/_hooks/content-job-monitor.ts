@@ -2,13 +2,21 @@
 
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { type BackendContentJob, contentApi } from "@/lib/api/content-api";
+import {
+  type BackendContent,
+  type BackendContentJob,
+} from "@/lib/api/content-api";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
+import {
+  mergeEnrichedContentIntoCaches,
+  patchContentStatusInCaches,
+} from "@/lib/api/merge-enriched-content-into-caches";
 import { useAppDispatch, useAppStore } from "@/lib/hooks";
 import { waitForContentJob } from "./content-job-sse-client";
 
 export interface UseContentJobMonitorInput {
   fetchJob: (jobId: string) => Promise<BackendContentJob>;
+  fetchContent: (contentId: string) => Promise<BackendContent>;
 }
 
 export interface ContentJobMonitor {
@@ -22,7 +30,7 @@ export interface ContentJobMonitor {
 
 /**
  * React hook for monitoring content jobs using SSE.
- * Patches cached content rows to READY on success (avoids broad LIST invalidation).
+ * On success, refetches full content (thumbnailUrl, dimensions) and merges into cache.
  */
 export function useContentJobMonitor(
   input: UseContentJobMonitorInput,
@@ -42,37 +50,32 @@ export function useContentJobMonitor(
         fetchJob: input.fetchJob,
       })
         .then(() => {
-          const state = store.getState();
-          const listArgs = contentApi.util.selectCachedArgsForQuery(
-            state,
-            "listContent",
-          );
-          for (const args of listArgs) {
-            dispatch(
-              contentApi.util.updateQueryData("listContent", args, (draft) => ({
-                ...draft,
-                items: draft.items.map((c) =>
-                  c.id === job.contentId
-                    ? { ...c, status: "READY" as const }
-                    : c,
-                ),
-              })),
-            );
-          }
-          dispatch(
-            contentApi.util.updateQueryData(
-              "getContent",
-              job.contentId,
-              (draft) => ({ ...draft, status: "READY" as const }),
-            ),
-          );
-          toast.success(job.successMessage);
+          void input
+            .fetchContent(job.contentId)
+            .then((full) => {
+              mergeEnrichedContentIntoCaches(
+                dispatch,
+                store.getState,
+                full,
+              );
+            })
+            .catch(() => {
+              patchContentStatusInCaches(
+                dispatch,
+                store.getState,
+                job.contentId,
+                "READY",
+              );
+            })
+            .finally(() => {
+              toast.success(job.successMessage);
+            });
         })
         .catch((error) => {
           notifyApiError(error, job.failureMessage);
         });
     },
-    [dispatch, input.fetchJob, store],
+    [dispatch, input.fetchContent, input.fetchJob, store],
   );
 
   return {

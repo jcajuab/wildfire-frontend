@@ -1,6 +1,10 @@
 import { api } from "@/lib/api/api";
 import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { contentApi } from "@/lib/api/content-api";
+import {
+  mergeEnrichedContentIntoCaches,
+  patchContentStatusInCaches,
+} from "@/lib/api/merge-enriched-content-into-caches";
 import type { DisplayLifecycleEvent } from "@/lib/api/display-events";
 import type { BackendDisplay } from "@/lib/api/displays-api";
 import { displaysApi } from "@/lib/api/displays-api";
@@ -172,27 +176,32 @@ export function handleDisplayLifecycleEvent(
     }
 
     case "content_status_changed": {
-      const contentListArgs = contentApi.util.selectCachedArgsForQuery(
-        state,
-        "listContent",
-      );
-      for (const args of contentListArgs) {
-        dispatch(
-          contentApi.util.updateQueryData("listContent", args, (draft) => ({
-            ...draft,
-            items: draft.items.map((c) =>
-              c.id === event.contentId ? { ...c, status: event.status } : c,
-            ),
-          })),
-        );
+      if (event.status === "READY") {
+        void dispatch(
+          contentApi.endpoints.getContent.initiate(event.contentId, {
+            forceRefetch: true,
+          }),
+        )
+          .unwrap()
+          .then((full) => {
+            mergeEnrichedContentIntoCaches(dispatch, getState, full);
+          })
+          .catch(() => {
+            patchContentStatusInCaches(
+              dispatch,
+              getState,
+              event.contentId,
+              "READY",
+            );
+          });
+        return;
       }
 
-      dispatch(
-        contentApi.util.updateQueryData(
-          "getContent",
-          event.contentId,
-          (draft) => ({ ...draft, status: event.status }),
-        ),
+      patchContentStatusInCaches(
+        dispatch,
+        getState,
+        event.contentId,
+        event.status,
       );
       return;
     }

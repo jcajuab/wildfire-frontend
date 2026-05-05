@@ -101,6 +101,7 @@ export function useContentPageController() {
   const [getContentJob] = useLazyGetContentJobQuery();
   const { trackContentJob } = useContentJobMonitor({
     fetchJob: (jobId) => getContentJob(jobId).unwrap(),
+    fetchContent: (contentId) => loadContent(contentId).unwrap(),
   });
 
   const crudHandlers = useContentCrudHandlers({
