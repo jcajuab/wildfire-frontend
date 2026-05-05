@@ -33,6 +33,7 @@ import {
   formatContentStatus,
   formatDateWithTime,
   formatFileSize,
+  formatRelativeTime,
   getContentStatusBadgeClassName,
 } from "@/lib/formatters";
 import {
@@ -73,6 +74,18 @@ function shouldIgnoreCardSelection(
   return interactiveElement !== null && interactiveElement !== currentTarget;
 }
 
+function getContentActivityLabel(content: Content): "Created" | "Updated" {
+  return new Date(content.updatedAt).getTime() >
+    new Date(content.createdAt).getTime()
+    ? "Updated"
+    : "Created";
+}
+
+function getContentOwnerHandle(content: Content): string {
+  const username = content.owner.username?.trim();
+  return username && username.length > 0 ? username : content.owner.name;
+}
+
 export const ContentCard = memo(function ContentCard({
   content,
   onEdit,
@@ -101,6 +114,12 @@ export const ContentCard = memo(function ContentCard({
     ? getTextThumbnailHtml(content)
     : null;
   const flashTone = content.flashTone ?? "INFO";
+  const activityLabel = getContentActivityLabel(content);
+  const activityDate =
+    activityLabel === "Updated" ? content.updatedAt : content.createdAt;
+  const activityDateLabel = formatDateWithTime(activityDate);
+  const activityRelativeLabel = formatRelativeTime(activityDate);
+  const ownerHandle = getContentOwnerHandle(content);
 
   const ThumbnailFallbackIcon =
     content.type === "VIDEO" ? IconVideo : IconPhoto;
@@ -254,23 +273,19 @@ export const ContentCard = memo(function ContentCard({
           <Badge variant="outline">{CONTENT_TYPE_LABEL[content.type]}</Badge>
           <Badge variant="outline">{formatFileSize(content.fileSize)}</Badge>
         </div>
-        {/* Owner */}
-        <p className="truncate text-xs text-muted-foreground">
-          @{content.owner.name}
-        </p>
-        {/* Dates */}
-        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
-          <span className="text-xs font-medium text-muted-foreground">
-            Created at
+        {/* Owner + latest activity */}
+        <div
+          className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground"
+          title={`${activityLabel} ${activityDateLabel}`}
+          aria-label={`Created by @${ownerHandle}. ${activityLabel} ${activityDateLabel}.`}
+        >
+          <span className="min-w-0 truncate">@{ownerHandle}</span>
+          <span className="shrink-0 text-muted-foreground/70" aria-hidden="true">
+            ·
           </span>
-          <span className="text-xs text-muted-foreground">
-            {formatDateWithTime(content.createdAt)}
-          </span>
-          <span className="text-xs font-medium text-muted-foreground">
-            Updated at
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {formatDateWithTime(content.updatedAt || content.createdAt)}
+          <span className="shrink-0 font-medium">{activityLabel}</span>
+          <span className="min-w-0 truncate">
+            {activityRelativeLabel}
           </span>
         </div>
       </div>

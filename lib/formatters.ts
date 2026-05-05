@@ -86,6 +86,50 @@ export function formatDateWithTime(value: string | Date): string {
   });
 }
 
+export function formatRelativeTime(
+  value: string | Date,
+  now: string | Date = new Date(),
+): string {
+  const date = toDate(value);
+  const currentDate = toDate(now);
+  const timestamp = date.getTime();
+  const currentTimestamp = currentDate.getTime();
+
+  if (!Number.isFinite(timestamp) || !Number.isFinite(currentTimestamp)) {
+    return typeof value === "string" ? value : "";
+  }
+
+  const elapsedSeconds = Math.max(
+    0,
+    Math.floor((currentTimestamp - timestamp) / 1000),
+  );
+
+  if (elapsedSeconds < 60) {
+    return "just now";
+  }
+
+  const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+  if (elapsedMinutes < 60) {
+    return `${elapsedMinutes} ${elapsedMinutes === 1 ? "minute" : "minutes"} ago`;
+  }
+
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) {
+    return `${elapsedHours} ${elapsedHours === 1 ? "hour" : "hours"} ago`;
+  }
+
+  if (elapsedHours < 48) {
+    return "yesterday";
+  }
+
+  const elapsedDays = Math.floor(elapsedHours / 24);
+  if (elapsedDays < 30) {
+    return `${elapsedDays} ${elapsedDays === 1 ? "day" : "days"} ago`;
+  }
+
+  return formatDateWithTime(date);
+}
+
 export function formatDateTime(value: string | Date): string {
   return formatWithLocale(value, {
     month: "short",

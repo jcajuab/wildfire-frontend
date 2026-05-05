@@ -1,13 +1,18 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { ContentCard } from "@/components/content/content-card";
 import { getFlashBadgeClassName } from "@/lib/display-runtime/flash-ticker";
+import { formatDateWithTime } from "@/lib/formatters";
 import type { Content } from "@/types/content";
 
 vi.mock("@/hooks/use-can-modify-resource", () => ({
   useCanModifyResource: vi.fn(() => true),
 }));
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 const baseContent: Content = {
   id: "content-1",
@@ -28,6 +33,7 @@ const baseContent: Content = {
   updatedAt: "2024-01-01T00:00:00.000Z",
   owner: {
     id: "user-1",
+    username: "demo",
     name: "Demo User",
   },
 };
@@ -190,6 +196,53 @@ describe("ContentCard", () => {
     expect(
       screen.queryByRole("button", { name: "Actions for Demo Image" }),
     ).not.toBeInTheDocument();
+  });
+
+  test("shows owner and relative created activity on one row", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-01-01T02:00:00.000Z"));
+
+    render(<ContentCard content={baseContent} />);
+
+    expect(screen.getByText("@demo")).toBeInTheDocument();
+    expect(screen.getByText("Created")).toBeInTheDocument();
+    expect(screen.getByText("2 hours ago")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(
+        `Created by @demo. Created ${formatDateWithTime(baseContent.createdAt)}.`,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Created at")).not.toBeInTheDocument();
+    expect(screen.queryByText("Updated at")).not.toBeInTheDocument();
+    expect(screen.queryByText("Updated")).not.toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  test("shows owner and relative updated activity on one row", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-01-02T02:30:00.000Z"));
+    const updatedContent: Content = {
+      ...baseContent,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-02T00:30:00.000Z",
+    };
+
+    render(<ContentCard content={updatedContent} />);
+
+    expect(screen.getByText("@demo")).toBeInTheDocument();
+    expect(screen.getByText("Updated")).toBeInTheDocument();
+    expect(screen.getByText("2 hours ago")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(
+        `Created by @demo. Updated ${formatDateWithTime(updatedContent.updatedAt)}.`,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Created at")).not.toBeInTheDocument();
+    expect(screen.queryByText("Updated at")).not.toBeInTheDocument();
+    expect(screen.queryByText("Created")).not.toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 
   test.each(["INFO", "WARNING", "CRITICAL"] as const)(

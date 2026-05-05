@@ -8,6 +8,8 @@ export type ContentStatus = "PROCESSING" | "READY" | "FAILED";
 
 interface ContentOwner {
   readonly id: string;
+  /** Stable login handle of the owner. Preferred for compact attribution when available. */
+  readonly username?: string;
   /** Display name of the owner. Coerced from null to "Unknown" in content-mapper.ts. */
   readonly name: string;
 }

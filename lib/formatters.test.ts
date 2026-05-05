@@ -3,6 +3,8 @@ import {
   dateToISOStart,
   dateToISOEnd,
   formatFileSize,
+  formatDateWithTime,
+  formatRelativeTime,
   isValidYyyyMmDd,
 } from "@/lib/formatters";
 
@@ -87,5 +89,40 @@ describe("formatFileSize", () => {
   test("returns zero bytes for invalid input", () => {
     expect(formatFileSize(-10)).toBe("0 B");
     expect(formatFileSize(Number.NaN)).toBe("0 B");
+  });
+});
+
+describe("formatRelativeTime", () => {
+  const now = "2026-05-05T12:00:00.000Z";
+
+  test("formats recent timestamps as just now", () => {
+    expect(formatRelativeTime("2026-05-05T11:59:30.000Z", now)).toBe(
+      "just now",
+    );
+  });
+
+  test("formats minutes and hours", () => {
+    expect(formatRelativeTime("2026-05-05T11:59:00.000Z", now)).toBe(
+      "1 minute ago",
+    );
+    expect(formatRelativeTime("2026-05-05T10:00:00.000Z", now)).toBe(
+      "2 hours ago",
+    );
+  });
+
+  test("formats yesterday and recent days", () => {
+    expect(formatRelativeTime("2026-05-04T12:00:00.000Z", now)).toBe(
+      "yesterday",
+    );
+    expect(formatRelativeTime("2026-05-02T12:00:00.000Z", now)).toBe(
+      "3 days ago",
+    );
+  });
+
+  test("falls back to the full date for older timestamps", () => {
+    const olderTimestamp = "2026-04-01T12:00:00.000Z";
+    expect(formatRelativeTime(olderTimestamp, now)).toBe(
+      formatDateWithTime(olderTimestamp),
+    );
   });
 });

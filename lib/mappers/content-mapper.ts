@@ -22,6 +22,7 @@ export function mapBackendContentToContent(item: BackendContent): Content {
     updatedAt: item.updatedAt,
     owner: {
       id: item.owner.id,
+      username: item.owner.username,
       name: item.owner.name ?? "Unknown",
     },
   };

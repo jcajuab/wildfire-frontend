@@ -34,6 +34,7 @@ export interface BackendContent {
   readonly updatedAt: string;
   readonly owner: {
     readonly id: string;
+    readonly username?: string;
     readonly name: string | null;
   };
 }
