@@ -237,6 +237,86 @@ describe("display-api client contract validation", () => {
     );
   });
 
+  test("fetchSignedManifest parses emergency playback with SLOT source", async () => {
+    vi.mocked(createSignedHeaders).mockResolvedValue({
+      "x-display-key-id": "key-id",
+      "x-display-slug": "lobby-display",
+      "x-display-timestamp": "2026-01-01T00:00:00.000Z",
+      "x-display-nonce": "nonce",
+      "x-display-body-sha256": "hash",
+      "x-display-signature": "signature",
+    });
+    const emergencyContent = {
+      id: "84c4c14f-d508-4807-a186-aa78f2a9fb66",
+      type: "TEXT",
+      checksum: "9b73ae3859b4db2a30886a815b512b8495f9af5ce2b88a9a84461658d254874a",
+      thumbnailUrl: null,
+      mimeType: "application/json",
+      width: null,
+      height: null,
+      duration: null,
+      textHtmlContent: "<p>Emergency</p>",
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            playlistId: null,
+            playlistVersion: "pv-emergency-slot",
+            generatedAt: "2026-05-05T17:31:58.053Z",
+            playback: {
+              mode: "EMERGENCY",
+              emergency: {
+                source: "SLOT",
+                startedAt: "2026-05-05T17:31:41.000Z",
+                isGlobal: true,
+                content: emergencyContent,
+              },
+              flash: null,
+            },
+            items: [
+              {
+                id: "emergency:84c4c14f-d508-4807-a186-aa78f2a9fb66",
+                sequence: 1,
+                duration: 86400,
+                loop: false,
+                content: emergencyContent,
+              },
+            ],
+            schedules: [],
+          },
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await fetchSignedManifest({
+      registration: {
+        displayId: "display-id",
+        slug: "lobby-display",
+        keyId: "key-id",
+        keyAlias: "key-alias",
+        fingerprint: "fp",
+        output: "HDMI-1",
+        registeredAt: "2026-01-01T00:00:00.000Z",
+      },
+      privateKey: {} as CryptoKey,
+    });
+
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") throw new Error("Expected ok result");
+    expect(result.manifest.playback.mode).toBe("EMERGENCY");
+    expect(result.manifest.playback.emergency?.source).toBe("SLOT");
+    expect(result.manifest.playback.emergency?.isGlobal).toBe(true);
+    expect(result.manifest.playback.emergency?.content.id).toBe(
+      "84c4c14f-d508-4807-a186-aa78f2a9fb66",
+    );
+  });
+
   test("fetchSignedManifest rejects missing envelope data", async () => {
     vi.mocked(createSignedHeaders).mockResolvedValue({
       "x-display-key-id": "key-id",

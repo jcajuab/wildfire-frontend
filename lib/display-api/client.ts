@@ -69,7 +69,7 @@ export interface DisplayManifest {
   readonly playback: {
     readonly mode: "SCHEDULE" | "EMERGENCY";
     readonly emergency: {
-      readonly source: "DISPLAY" | "DEFAULT";
+      readonly source: "DISPLAY" | "DEFAULT" | "SLOT";
       readonly startedAt: string | null;
       readonly isGlobal: boolean;
       readonly content: ManifestItem["content"];
@@ -337,7 +337,7 @@ const parseEmergencyPlayback = (
   return {
     source: readEnum(
       root.source,
-      ["DISPLAY", "DEFAULT"] as const,
+      ["DISPLAY", "DEFAULT", "SLOT"] as const,
       `${path}.source`,
     ),
     startedAt: readNullableString(root.startedAt, `${path}.startedAt`),

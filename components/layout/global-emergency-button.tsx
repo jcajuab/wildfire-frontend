@@ -70,7 +70,7 @@ export function GlobalEmergencyButton({
                   className={
                     isActive
                       ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
-                      : "border border-sidebar-ring bg-sidebar/70 text-sidebar-foreground hover:border-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:border-sidebar-ring [&_svg]:text-sidebar-foreground hover:[&_svg]:text-sidebar-accent-foreground"
+                      : "border border-sidebar-foreground/35 bg-sidebar/70 text-sidebar-foreground hover:border-transparent hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground focus-visible:border-sidebar-foreground/45 [&_svg]:text-sidebar-foreground"
                   }
                 >
                   <IconAlertTriangle className="size-4" />
