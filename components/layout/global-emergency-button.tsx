@@ -47,7 +47,7 @@ export function GlobalEmergencyButton({
                   className={
                     isActive
                       ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
-                      : "bg-black/5 text-sidebar-foreground hover:bg-destructive/80 hover:text-destructive-foreground [&_svg]:text-sidebar-foreground hover:[&_svg]:text-destructive-foreground"
+                      : "border border-sidebar-border/70 bg-sidebar/70 text-sidebar-foreground shadow-sm hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:border-sidebar-ring/70 [&_svg]:text-sidebar-foreground hover:[&_svg]:text-sidebar-accent-foreground"
                   }
                 >
                   <IconAlertTriangle className="size-4" />
@@ -69,6 +69,11 @@ export function GlobalEmergencyButton({
           size="icon"
           disabled={!canUpdate || isBusy}
           aria-label={isActive ? "Stop Emergency" : "Manage Emergencies"}
+          className={
+            isActive
+              ? undefined
+              : "border border-border/70 bg-background/80 shadow-sm hover:bg-muted hover:text-foreground"
+          }
         >
           <IconAlertTriangle />
         </Button>
