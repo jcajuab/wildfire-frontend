@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { IconPlus, IconSettings } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { BulkDeleteConfirmDialog } from "@/components/common/bulk-delete-confirm-dialog";
@@ -193,7 +193,7 @@ export function DisplaysPageView(): ReactElement {
               onClick={() => setIsGroupManagerOpen(true)}
               className="gap-2"
             >
-              <IconSettings className="size-4" aria-hidden="true" />
+              <IconPlus className="size-4" aria-hidden="true" />
               Add Display Group
             </Button>
           </Can>
