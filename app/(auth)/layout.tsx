@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -14,7 +14,7 @@ export default function AuthLayout({
     <div className="grid min-h-svh bg-background md:grid-cols-2">
       <section className="flex items-center justify-center px-6 py-10 sm:px-10">
         <main id="main-content" className="w-full max-w-sm">
-          {children}
+          <Suspense fallback={null}>{children}</Suspense>
         </main>
       </section>
       <aside className="hidden bg-primary p-10 text-primary-foreground md:flex md:flex-col md:justify-end">

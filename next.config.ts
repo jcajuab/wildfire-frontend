@@ -9,6 +9,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  cacheComponents: true,
   output: "standalone",
   trailingSlash: false,
   images: {
