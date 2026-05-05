@@ -18,10 +18,6 @@ export function getAuthSessionCookieName(): string {
   return process.env.AUTH_SESSION_COOKIE_NAME?.trim() || DEFAULT_SESSION_COOKIE;
 }
 
-function getSessionCookieName(): string {
-  return getAuthSessionCookieName();
-}
-
 async function buildIncomingCookieHeader(): Promise<string> {
   const store = await cookies();
   return store
@@ -32,7 +28,7 @@ async function buildIncomingCookieHeader(): Promise<string> {
 
 async function hasRefreshCookie(): Promise<boolean> {
   const store = await cookies();
-  return store.has(getSessionCookieName());
+  return store.has(getAuthSessionCookieName());
 }
 
 export interface ServerSession {
@@ -76,13 +72,6 @@ export const getServerSession = cache(
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          const store = await cookies();
-          store.delete({
-            name: getSessionCookieName(),
-            path: "/",
-          });
-        }
         return null;
       }
 

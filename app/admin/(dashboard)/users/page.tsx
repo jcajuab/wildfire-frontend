@@ -14,6 +14,7 @@ import {
 } from "@/lib/users-search-params";
 import { getServerSession } from "@/lib/server/auth";
 import {
+  handleBootstrapResult,
   serverFetchJson,
   sessionHasPermission,
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
@@ -66,10 +67,7 @@ export default async function UsersPage({
     tags: ["users-list"],
     revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
-
-  if (!usersRes.ok) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/users")}`);
-  }
+  handleBootstrapResult(usersRes, "/admin/users");
 
   const usersData = transformPaginatedListResponse<RbacUser>(
     usersRes.data,

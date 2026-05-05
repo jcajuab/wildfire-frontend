@@ -9,6 +9,7 @@ import {
 } from "@/lib/roles-search-params";
 import { getServerSession } from "@/lib/server/auth";
 import {
+  handleBootstrapResult,
   serverFetchJson,
   sessionHasPermission,
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
@@ -57,10 +58,7 @@ export default async function RolesPage({
     tags: ["roles-list"],
     revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
-
-  if (!rolesRes.ok) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/roles")}`);
-  }
+  handleBootstrapResult(rolesRes, "/admin/roles");
 
   const rolesData = transformPaginatedListResponse<RbacRoleListItem>(
     rolesRes.data,

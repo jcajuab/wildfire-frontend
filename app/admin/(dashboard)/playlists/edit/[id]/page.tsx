@@ -8,6 +8,7 @@ import { PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY } from "@/lib/content-search-para
 import { getPlaylistEditPath } from "@/lib/playlist-paths";
 import { getServerSession } from "@/lib/server/auth";
 import {
+  handleBootstrapResult,
   serverFetchJson,
   sessionHasPermission,
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
@@ -44,10 +45,7 @@ export default async function EditPlaylistPage({
     tags: ["playlists"],
     revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
-
-  if (!playlistRes.ok) {
-    redirect(`/login?redirectTo=${encodeURIComponent(editPath)}`);
-  }
+  handleBootstrapResult(playlistRes, editPath);
 
   const playlistData = parseApiResponseDataSafe<BackendPlaylistWithItems>(
     playlistRes.data,

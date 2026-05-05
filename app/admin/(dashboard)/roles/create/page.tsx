@@ -5,7 +5,11 @@ import type { RbacPermission } from "@/lib/api/rbac-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { ROLE_CREATE_PATH } from "@/lib/role-paths";
 import { getServerSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import {
+  handleBootstrapResult,
+  serverFetchJson,
+  sessionHasPermission,
+} from "@/lib/server/api";
 
 import {
   CreateRolePageView,
@@ -27,10 +31,7 @@ export default async function CreateRolePage(): Promise<ReactElement> {
     tags: ["permissions-options"],
     revalidate: 86400,
   });
-
-  if (!permissionsRes.ok) {
-    redirect(`/login?redirectTo=${encodeURIComponent(ROLE_CREATE_PATH)}`);
-  }
+  handleBootstrapResult(permissionsRes, ROLE_CREATE_PATH);
 
   const permissions = parseApiResponseDataSafe<RbacPermission[]>(
     permissionsRes.data,

@@ -6,6 +6,7 @@ import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { getRoleEditPath } from "@/lib/role-paths";
 import { getServerSession } from "@/lib/server/auth";
 import {
+  handleBootstrapResult,
   serverFetchJson,
   sessionHasPermission,
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
@@ -41,10 +42,7 @@ export default async function EditRolePage({
     tags: ["role-edit-bootstrap"],
     revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
-
-  if (!bootstrapRes.ok) {
-    redirect(`/login?redirectTo=${encodeURIComponent(editPath)}`);
-  }
+  handleBootstrapResult(bootstrapRes, editPath);
 
   const bootstrapData = parseApiResponseDataSafe<RoleEditBootstrapResponse>(
     bootstrapRes.data,

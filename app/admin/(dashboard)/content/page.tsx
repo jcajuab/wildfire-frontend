@@ -9,6 +9,7 @@ import {
 } from "@/lib/content-search-params";
 import { getServerSession } from "@/lib/server/auth";
 import {
+  handleBootstrapResult,
   serverFetchJson,
   sessionHasPermission,
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
@@ -51,10 +52,7 @@ export default async function ContentPage({
     tags: ["content-list"],
     revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
-
-  if (!listRes.ok) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/content")}`);
-  }
+  handleBootstrapResult(listRes, "/admin/content");
 
   const listData = transformPaginatedListResponse<BackendContent>(
     listRes.data,

@@ -5,6 +5,7 @@ import type { AICredential } from "@/lib/api/ai-credentials-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { getServerSession } from "@/lib/server/auth";
 import {
+  handleBootstrapResult,
   serverFetchJson,
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
@@ -26,19 +27,16 @@ export default async function SettingsPage(): Promise<ReactElement> {
     tags: ["ai"],
     revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
+  handleBootstrapResult(credentialsRes, "/admin/settings");
 
-  let credentialsSeeder: ReactElement | null = null;
-  if (credentialsRes.ok) {
-    const credentials = parseApiResponseDataSafe<AICredential[]>(
-      credentialsRes.data,
-      "getAICredentials",
-    );
-    credentialsSeeder = <AICredentialsCacheSeeder data={credentials} />;
-  }
+  const credentials = parseApiResponseDataSafe<AICredential[]>(
+    credentialsRes.data,
+    "getAICredentials",
+  );
 
   return (
     <>
-      {credentialsSeeder}
+      <AICredentialsCacheSeeder data={credentials} />
       <SettingsPageView />
     </>
   );

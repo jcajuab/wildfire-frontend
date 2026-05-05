@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent, ReactElement } from "react";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,14 +32,22 @@ function LoginForm(): ReactElement | null {
   const [password, setPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const handledRedirectRef = useRef<string | null>(null);
   const redirectTo = searchParams.get("redirectTo");
   const postLoginRedirect =
     redirectTo ?? getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE;
 
   useEffect(() => {
     if (!isInitialized || !isAuthenticated) {
+      handledRedirectRef.current = null;
       return;
     }
+
+    const redirectKey = `${redirectTo ?? "__default__"}::${postLoginRedirect}`;
+    if (handledRedirectRef.current === redirectKey) {
+      return;
+    }
+    handledRedirectRef.current = redirectKey;
 
     // Server sent us here (e.g. RSC redirect) but client may still hold a stale
     // in-memory session. Force a cookie-based refresh before redirecting;

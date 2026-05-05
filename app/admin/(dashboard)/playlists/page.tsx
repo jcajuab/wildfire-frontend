@@ -9,6 +9,7 @@ import {
 } from "@/lib/playlists-search-params";
 import { getServerSession } from "@/lib/server/auth";
 import {
+  handleBootstrapResult,
   serverFetchJson,
   sessionHasPermission,
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
@@ -53,10 +54,7 @@ export default async function PlaylistsPage({
     tags: ["playlists"],
     revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
-
-  if (!listRes.ok) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/playlists")}`);
-  }
+  handleBootstrapResult(listRes, "/admin/playlists");
 
   const listData = transformPaginatedListResponse<BackendPlaylistSummary>(
     listRes.data,

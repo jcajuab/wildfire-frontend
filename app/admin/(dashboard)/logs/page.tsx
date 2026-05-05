@@ -6,6 +6,7 @@ import { transformPaginatedListResponse } from "@/lib/api/response-transformers"
 import { auditListQueryFromSearchParams } from "@/lib/audit-log-search-params";
 import { getServerSession } from "@/lib/server/auth";
 import {
+  handleBootstrapResult,
   serverFetchJson,
   sessionHasPermission,
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
@@ -50,10 +51,7 @@ export default async function LogsPage({
     tags: ["audit"],
     revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
-
-  if (!eventsRes.ok) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/logs")}`);
-  }
+  handleBootstrapResult(eventsRes, "/admin/logs");
 
   const eventsData = transformPaginatedListResponse<BackendAuditEvent>(
     eventsRes.data,

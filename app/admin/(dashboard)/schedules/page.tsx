@@ -9,6 +9,7 @@ import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { defaultSchedulesBootstrapWindow } from "@/lib/schedule-window";
 import { getServerSession } from "@/lib/server/auth";
 import {
+  handleBootstrapResult,
   serverFetchJson,
   sessionHasPermission,
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
@@ -40,10 +41,7 @@ export default async function SchedulesPage(): Promise<ReactElement> {
     tags: ["schedules-bootstrap"],
     revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
-
-  if (!bootstrapRes.ok) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/schedules")}`);
-  }
+  handleBootstrapResult(bootstrapRes, "/admin/schedules");
 
   const bootstrapData = parseApiResponseDataSafe<SchedulesBootstrapResponse>(
     bootstrapRes.data,

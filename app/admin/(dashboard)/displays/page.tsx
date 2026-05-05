@@ -12,6 +12,7 @@ import {
 import type { ServerSearchParamValue } from "@/lib/server/api";
 import { getServerSession } from "@/lib/server/auth";
 import {
+  handleBootstrapResult,
   serverFetchJson,
   sessionHasPermission,
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
@@ -60,10 +61,7 @@ export default async function DisplaysPage(): Promise<ReactElement> {
     tags: ["displays-bootstrap"],
     revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
   });
-
-  if (!bootstrapRes.ok) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/displays")}`);
-  }
+  handleBootstrapResult(bootstrapRes, "/admin/displays");
 
   const bootstrapData = parseApiResponseDataSafe<DisplaysBootstrapResponse>(
     bootstrapRes.data,

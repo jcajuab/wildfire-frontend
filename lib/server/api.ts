@@ -1,3 +1,5 @@
+import { notFound, redirect } from "next/navigation";
+
 import type { PermissionType } from "@/types/permission";
 
 import { getDevOnlyRequestHeaders } from "@/lib/api/config";
@@ -47,6 +49,18 @@ export interface ServerFetchInit {
   readonly body?: BodyInit;
 }
 
+export interface ServerFetchFailure {
+  readonly ok: false;
+  readonly status: number;
+}
+
+export interface ServerFetchSuccess<T> {
+  readonly ok: true;
+  readonly data: T;
+}
+
+export type ServerFetchResult<T> = ServerFetchSuccess<T> | ServerFetchFailure;
+
 function buildUrl(
   baseUrl: string,
   path: string,
@@ -73,7 +87,7 @@ function buildUrl(
 
 export async function serverFetchJson<T>(
   input: ServerFetchInit,
-): Promise<{ ok: true; data: T } | { ok: false; status: number }> {
+): Promise<ServerFetchResult<T>> {
   const baseUrl = await getServerApiBaseUrl();
   // The Next.js Data Cache keys responses by URL only — the Authorization
   // header is NOT part of the cache key. Without per-user URL variance the
@@ -123,6 +137,31 @@ export async function serverFetchJson<T>(
   }
 
   return { ok: true, data: payload as T };
+}
+
+export function handleBootstrapResult<T>(
+  result: ServerFetchResult<T>,
+  redirectTarget: string,
+): asserts result is ServerFetchSuccess<T> {
+  if (result.ok) {
+    return;
+  }
+
+  if (result.status === 401) {
+    redirect(`/login?redirectTo=${encodeURIComponent(redirectTarget)}`);
+  }
+
+  if (result.status === 403) {
+    redirect("/unauthorized");
+  }
+
+  if (result.status === 404) {
+    notFound();
+  }
+
+  throw new Error(
+    `Server bootstrap failed for ${redirectTarget} with status ${result.status}.`,
+  );
 }
 
 export function sessionHasPermission(
