@@ -79,10 +79,10 @@ export function ResourceDayView({
       <div className="overflow-auto">
         <div className="min-w-[920px] lg:min-w-[1100px]">
           <div
-            className="sticky top-0 z-30 grid border-b border-border bg-muted/30 backdrop-blur-sm max-[52rem]:hidden"
+            className="sticky top-0 z-30 grid border-b border-border bg-muted backdrop-blur-sm max-[52rem]:hidden"
             style={{ gridTemplateColumns: DAY_GRID_TEMPLATE }}
           >
-            <div className="sticky left-0 z-40 border-r border-border bg-muted/30 px-4 py-2 text-sm font-semibold">
+            <div className="sticky left-0 z-40 border-r border-border bg-muted px-4 py-2 text-sm font-semibold">
               Display
             </div>
             <div className="grid grid-cols-24">
@@ -145,7 +145,7 @@ export function ResourceDayView({
                   className="grid border-b border-border"
                   style={{ gridTemplateColumns: DAY_GRID_TEMPLATE }}
                 >
-                  <div className="sticky left-0 z-10 flex items-center border-r border-border bg-background px-4 py-3">
+                  <div className="sticky left-0 z-20 flex items-center border-r border-border bg-background px-4 py-3">
                     <p
                       className={`truncate text-sm font-medium ${row.inGroup ? "pl-3" : ""}`}
                     >

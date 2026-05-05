@@ -60,10 +60,10 @@ export function ResourceWeekView({
       <div className="overflow-auto">
         <div className="w-full min-w-0 max-[52rem]:min-w-[56rem]">
           <div
-            className="sticky top-0 z-30 grid border-b border-border bg-muted/30 backdrop-blur-sm max-[52rem]:hidden"
+            className="sticky top-0 z-30 grid border-b border-border bg-muted backdrop-blur-sm max-[52rem]:hidden"
             style={{ gridTemplateColumns: WEEK_GRID_TEMPLATE }}
           >
-            <div className="sticky left-0 z-40 border-r border-border bg-muted/30 px-4 py-2 text-sm font-semibold">
+            <div className="sticky left-0 z-40 border-r border-border bg-muted px-4 py-2 text-sm font-semibold">
               Display
             </div>
             {days.map((day) => (
