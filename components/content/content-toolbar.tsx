@@ -2,86 +2,80 @@
 
 import type { ReactElement } from "react";
 import {
+  IconBolt,
   IconChevronDown,
-  IconDeviceDesktopPlus,
-  IconFolderCog,
-  IconTrashX,
+  IconFileText,
+  IconTrash,
+  IconUpload,
   IconX,
 } from "@tabler/icons-react";
 
-import { DisplayFilterPopover } from "@/components/displays/display-filter-popover";
+import {
+  ContentFilterPopover,
+  type ContentStatusFilter,
+  type TypeFilter,
+} from "@/components/content/content-filter-popover";
 import { SearchControl } from "@/components/common/search-control";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { DisplayOutputFilter } from "@/types/display";
-import type { DisplayStatusFilter } from "@/components/displays/display-filter-popover";
 
-type DisplaysToolbarBulkState =
+type ContentToolbarBulkState =
   | {
       readonly mode: "normal";
-      readonly onEnterBulkUnregister: () => void;
+      readonly onEnterBulkDelete: () => void;
     }
   | {
-      readonly mode: "bulk-unregister";
+      readonly mode: "bulk-delete";
       readonly selectedCount: number;
       readonly onDelete: () => void;
       readonly onCancel: () => void;
     };
 
-interface DisplaysToolbarProps {
-  readonly statusFilter: DisplayStatusFilter;
+interface ContentToolbarProps {
+  readonly statusFilter: ContentStatusFilter;
+  readonly typeFilter: TypeFilter;
   readonly search: string;
-  readonly selectedGroups: readonly string[];
-  readonly selectedOutput: DisplayOutputFilter;
   readonly filteredResultsCount: number;
-  readonly availableGroups: readonly string[];
-  readonly availableOutputs: readonly string[];
-  readonly onStatusFilterChange: (value: DisplayStatusFilter) => void;
-  readonly onSearchChange: (value: string) => void;
-  readonly onGroupFilterChange: (value: readonly string[]) => void;
-  readonly onOutputFilterChange: (value: DisplayOutputFilter) => void;
   readonly isFetching?: boolean;
+  readonly canCreateContent: boolean;
+  readonly canDeleteContent: boolean;
+  readonly bulkState: ContentToolbarBulkState;
+  readonly onSearchChange: (value: string) => void;
+  readonly onStatusFilterChange: (value: ContentStatusFilter) => void;
+  readonly onTypeFilterChange: (value: TypeFilter) => void;
   readonly onClearFilters: () => void;
-  readonly canCreateDisplay: boolean;
-  readonly canManageGroups: boolean;
-  readonly canDeleteDisplay: boolean;
-  readonly bulkState: DisplaysToolbarBulkState;
-  readonly onRegisterDisplay: () => void;
-  readonly onManageGroups: () => void;
+  readonly onCreateText: () => void;
+  readonly onCreateUpload: () => void;
+  readonly onCreateFlash: () => void;
 }
 
-export function DisplaysToolbar({
+export function ContentToolbar({
   statusFilter,
+  typeFilter,
   search,
-  selectedGroups,
-  selectedOutput,
   filteredResultsCount,
-  availableGroups,
-  availableOutputs,
   isFetching = false,
-  onStatusFilterChange,
-  onSearchChange,
-  onGroupFilterChange,
-  onOutputFilterChange,
-  onClearFilters,
-  canCreateDisplay,
-  canManageGroups,
-  canDeleteDisplay,
+  canCreateContent,
+  canDeleteContent,
   bulkState,
-  onRegisterDisplay,
-  onManageGroups,
-}: DisplaysToolbarProps): ReactElement {
-  const isBulkUnregisterMode = bulkState.mode === "bulk-unregister";
-  const canShowBulkUnregister =
-    canDeleteDisplay && bulkState.mode === "normal";
-  const canShowManageDisplays = canCreateDisplay || canManageGroups;
+  onSearchChange,
+  onStatusFilterChange,
+  onTypeFilterChange,
+  onClearFilters,
+  onCreateText,
+  onCreateUpload,
+  onCreateFlash,
+}: ContentToolbarProps): ReactElement {
+  const isBulkDeleteMode = bulkState.mode === "bulk-delete";
+  const canShowBulkDelete = canDeleteContent && bulkState.mode === "normal";
   const selectedCount =
-    bulkState.mode === "bulk-unregister" ? bulkState.selectedCount : 0;
+    bulkState.mode === "bulk-delete" ? bulkState.selectedCount : 0;
   const selectedLabel =
     selectedCount === 1 ? "1 selected" : `${selectedCount} selected`;
 
@@ -90,57 +84,53 @@ export function DisplaysToolbar({
       <div className="flex w-full min-w-0 flex-col gap-2">
         <div className="grid w-full min-w-0 grid-cols-1 items-center gap-2 lg:grid-cols-[1fr_auto_1fr]">
           <h1 className="min-w-0 truncate text-xl font-semibold leading-tight tracking-tight text-balance">
-            Displays
+            Content
           </h1>
 
           <div className="flex min-w-0 items-center gap-2 lg:w-[38rem] lg:max-w-[48vw]">
             <SearchControl
               value={search}
               onChange={onSearchChange}
-              ariaLabel="Search displays"
-              placeholder="Search by display name or slug"
+              ariaLabel="Search content"
+              placeholder="Search by title or owner"
               className="min-w-0 flex-1 max-w-none"
             />
-            <DisplayFilterPopover
+            <ContentFilterPopover
               statusFilter={statusFilter}
-              selectedGroups={selectedGroups}
-              selectedOutput={selectedOutput}
+              typeFilter={typeFilter}
               filteredResultsCount={filteredResultsCount}
-              availableGroups={availableGroups}
-              availableOutputs={availableOutputs}
               isFetching={isFetching}
-              onStatusChange={onStatusFilterChange}
-              onGroupsChange={onGroupFilterChange}
-              onOutputChange={onOutputFilterChange}
+              onStatusFilterChange={onStatusFilterChange}
+              onTypeFilterChange={onTypeFilterChange}
               onClearFilters={onClearFilters}
             />
           </div>
 
           <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center lg:justify-end">
-            {canShowBulkUnregister ? (
+            {canShowBulkDelete ? (
               <Button
                 type="button"
                 variant="outline"
                 className="w-full justify-center border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/10 dark:hover:bg-destructive/20 sm:w-auto"
-                onClick={bulkState.onEnterBulkUnregister}
+                onClick={bulkState.onEnterBulkDelete}
               >
-                <IconTrashX
+                <IconTrash
                   className="size-4"
                   aria-hidden="true"
                   data-icon="inline-start"
                 />
-                Bulk Unregister
+                Bulk Delete
               </Button>
             ) : null}
 
-            {canShowManageDisplays ? (
+            {canCreateContent ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     type="button"
                     className="w-full justify-center sm:w-auto"
                   >
-                    Manage Displays
+                    Create Content
                     <IconChevronDown
                       className="size-4"
                       aria-hidden="true"
@@ -148,29 +138,30 @@ export function DisplaysToolbar({
                     />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-48">
-                  {canCreateDisplay ? (
-                    <DropdownMenuItem onClick={onRegisterDisplay}>
-                      <IconDeviceDesktopPlus
-                        className="size-4"
-                        aria-hidden="true"
-                      />
-                      Register Display
-                    </DropdownMenuItem>
-                  ) : null}
-                  {canManageGroups ? (
-                    <DropdownMenuItem onClick={onManageGroups}>
-                      <IconFolderCog className="size-4" aria-hidden="true" />
-                      Edit Display Groups
-                    </DropdownMenuItem>
-                  ) : null}
+                <DropdownMenuContent
+                  align="end"
+                  className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[var(--radix-dropdown-menu-trigger-width)]"
+                >
+                  <DropdownMenuItem onClick={onCreateText}>
+                    <IconFileText className="size-4" aria-hidden="true" />
+                    Text
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={onCreateUpload}>
+                    <IconUpload className="size-4" aria-hidden="true" />
+                    Upload
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={onCreateFlash}>
+                    <IconBolt className="size-4" aria-hidden="true" />
+                    Flash
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : null}
           </div>
         </div>
 
-        {isBulkUnregisterMode ? (
+        {isBulkDeleteMode ? (
           <div className="flex min-w-0 flex-col gap-2 rounded-md border border-border bg-background px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-sm font-medium text-foreground tabular-nums">
               {selectedLabel}
@@ -182,8 +173,8 @@ export function DisplaysToolbar({
                 onClick={bulkState.onDelete}
                 disabled={selectedCount === 0}
               >
-                <IconTrashX className="size-4" aria-hidden="true" />
-                Unregister Selected
+                <IconTrash className="size-4" aria-hidden="true" />
+                Delete Selected
               </Button>
               <Button
                 type="button"

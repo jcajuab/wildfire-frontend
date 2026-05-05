@@ -196,14 +196,11 @@ export function useDisplaysPage({
     isError,
     error,
     refetch,
-  } = useGetDisplaysBootstrapQuery(
-    currentQueryArgs,
-    {
-      refetchOnFocus: false,
-      refetchOnReconnect: false,
-      skip: shouldSkipInitialQuery,
-    },
-  );
+  } = useGetDisplaysBootstrapQuery(currentQueryArgs, {
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+    skip: shouldSkipInitialQuery,
+  });
   const cachedInitialBootstrap =
     displaysApi.endpoints.getDisplaysBootstrap.useQueryState(currentQueryArgs, {
       skip: !isInitialBootstrapQuery,

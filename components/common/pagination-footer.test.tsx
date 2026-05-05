@@ -15,8 +15,9 @@ describe("PaginationFooter", () => {
       />,
     );
 
-    const footerLayout = screen.getByText("Showing 1 to 4 of 4 results")
-      .parentElement;
+    const footerLayout = screen.getByText(
+      "Showing 1 to 4 of 4 results",
+    ).parentElement;
 
     expect(footerLayout).toHaveClass("w-full");
     expect(footerLayout).toHaveClass("sm:justify-between");

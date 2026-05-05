@@ -6,9 +6,7 @@ import type {
   DisplaysListQuery,
 } from "@/lib/api/displays-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
-import {
-  DISPLAYS_BOOTSTRAP_PAGE_SIZE,
-} from "@/lib/displays-search-params";
+import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
 import type { ServerSearchParamValue } from "@/lib/server/api";
 import { getServerSession } from "@/lib/server/auth";
 import {

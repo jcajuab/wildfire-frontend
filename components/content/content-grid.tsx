@@ -10,7 +10,6 @@ import type { Content } from "@/types/content";
 interface ContentGridProps {
   readonly items: readonly Content[];
   readonly onEdit?: (content: Content) => void;
-  readonly onPreview: (content: Content) => void;
   readonly onDelete?: (content: Content) => void;
   readonly onDownload?: (content: Content) => void;
   readonly selectedIds?: ReadonlySet<string>;
@@ -20,7 +19,6 @@ interface ContentGridProps {
 export function ContentGrid({
   items,
   onEdit,
-  onPreview,
   onDelete,
   onDownload,
   selectedIds,
@@ -37,13 +35,12 @@ export function ContentGrid({
   }
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,24rem))] gap-4">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-4">
       {items.map((content) => (
         <ContentCard
           key={content.id}
           content={content}
           onEdit={onEdit}
-          onPreview={onPreview}
           onDelete={onDelete}
           onDownload={onDownload}
           isSelected={selectedIds?.has(content.id) ?? false}

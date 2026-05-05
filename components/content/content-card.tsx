@@ -1,12 +1,16 @@
 "use client";
 
-import { type ReactElement, memo } from "react";
+import {
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactElement,
+  memo,
+} from "react";
 import Image from "next/image";
 import {
   IconDots,
   IconDownload,
   IconPencil,
-  IconEye,
   IconPhoto,
   IconTrash,
   IconVideo,
@@ -20,6 +24,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -46,20 +51,31 @@ const CONTENT_TYPE_LABEL: Record<ContentType, string> = {
   TEXT: "Text",
 };
 
+const CARD_SELECTION_IGNORE_SELECTOR =
+  "button,a,input,select,textarea,[role='button'],[role='menuitem'],[data-card-selection-ignore='true']";
+
 interface ContentCardProps {
   readonly content: Content;
   readonly onEdit?: (content: Content) => void;
-  readonly onPreview: (content: Content) => void;
   readonly onDelete?: (content: Content) => void;
   readonly onDownload?: (content: Content) => void;
   readonly isSelected?: boolean;
   readonly onSelectionChange?: (content: Content, checked: boolean) => void;
 }
 
+function shouldIgnoreCardSelection(
+  target: EventTarget | null,
+  currentTarget: HTMLElement,
+): boolean {
+  if (!(target instanceof Element)) return false;
+
+  const interactiveElement = target.closest(CARD_SELECTION_IGNORE_SELECTOR);
+  return interactiveElement !== null && interactiveElement !== currentTarget;
+}
+
 export const ContentCard = memo(function ContentCard({
   content,
   onEdit,
-  onPreview,
   onDelete,
   onDownload,
   isSelected = false,
@@ -71,6 +87,8 @@ export const ContentCard = memo(function ContentCard({
   const showEdit = canModify && Boolean(onEdit);
   const showDelete = canModify && Boolean(onDelete);
   const showSelection = canModify && Boolean(onSelectionChange);
+  const showActions = showEdit || canDownloadFile || showDelete;
+  const showDestructiveSeparator = showDelete && (showEdit || canDownloadFile);
   const isFlashContent = content.type === "FLASH";
   const isTextContent = content.type === "TEXT";
   const flashThumbnailText = isFlashContent
@@ -86,11 +104,42 @@ export const ContentCard = memo(function ContentCard({
 
   const ThumbnailFallbackIcon =
     content.type === "VIDEO" ? IconVideo : IconPhoto;
+  const handleCardClick = (event: MouseEvent<HTMLElement>): void => {
+    if (
+      !showSelection ||
+      shouldIgnoreCardSelection(event.target, event.currentTarget)
+    ) {
+      return;
+    }
+
+    onSelectionChange?.(content, !isSelected);
+  };
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
+    if (
+      !showSelection ||
+      event.target !== event.currentTarget ||
+      (event.key !== "Enter" && event.key !== " ")
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    onSelectionChange?.(content, !isSelected);
+  };
 
   return (
-    <article
+    <div
+      id={`content-card-${content.id}`}
       data-state={isSelected ? "selected" : undefined}
-      className="group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors duration-150 data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5"
+      data-selection-mode={showSelection ? "true" : undefined}
+      data-selection-muted={showSelection && !isSelected ? "true" : undefined}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      role={showSelection ? "button" : undefined}
+      tabIndex={showSelection ? 0 : undefined}
+      aria-pressed={showSelection ? isSelected : undefined}
+      aria-label={showSelection ? `Select ${content.title}` : undefined}
+      className={`group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-[border-color,background-color,filter,opacity] duration-150 data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5 data-[state=selected]:opacity-100 data-[state=selected]:grayscale-0 motion-reduce:transition-none ${showSelection ? "cursor-pointer focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30" : ""} ${showSelection && !isSelected ? "border-border/60 bg-muted/25 opacity-55 grayscale hover:border-primary/35 hover:bg-card hover:opacity-90 hover:grayscale-0" : ""}`}
     >
       {/* Zone A — Card header */}
       <div className="flex items-center justify-between px-3 py-2">
@@ -102,49 +151,49 @@ export const ContentCard = memo(function ContentCard({
                 onSelectionChange?.(content, checked === true)
               }
               aria-label={`Select ${content.title}`}
+              data-card-selection-ignore="true"
             />
           ) : null}
-          <h2 className="truncate text-sm font-semibold">{content.title}</h2>
+          <h2 className="truncate text-base font-semibold">{content.title}</h2>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Actions for ${content.title}`}
-              className="shrink-0"
-            >
-              <IconDots className="size-4" aria-hidden="true" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-40">
-            {showEdit && onEdit ? (
-              <DropdownMenuItem onClick={() => onEdit(content)}>
-                <IconPencil className="size-4" />
-                Edit Content
-              </DropdownMenuItem>
-            ) : null}
-            <DropdownMenuItem onClick={() => onPreview(content)}>
-              <IconEye className="size-4" />
-              View Details
-            </DropdownMenuItem>
-            {canDownloadFile ? (
-              <DropdownMenuItem onClick={() => onDownload(content)}>
-                <IconDownload className="size-4" />
-                Download File
-              </DropdownMenuItem>
-            ) : null}
-            {showDelete && onDelete ? (
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => onDelete(content)}
+        {showActions ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Actions for ${content.title}`}
+                className="shrink-0"
               >
-                <IconTrash className="size-4" />
-                Delete Content
-              </DropdownMenuItem>
-            ) : null}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <IconDots className="size-4" aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-40">
+              {showEdit && onEdit ? (
+                <DropdownMenuItem onClick={() => onEdit(content)}>
+                  <IconPencil className="size-4" />
+                  Edit Content
+                </DropdownMenuItem>
+              ) : null}
+              {canDownloadFile ? (
+                <DropdownMenuItem onClick={() => onDownload(content)}>
+                  <IconDownload className="size-4" />
+                  Download File
+                </DropdownMenuItem>
+              ) : null}
+              {showDestructiveSeparator ? <DropdownMenuSeparator /> : null}
+              {showDelete && onDelete ? (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => onDelete(content)}
+                >
+                  <IconTrash className="size-4" />
+                  Delete Content
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
       </div>
 
       {/* Zone B — Thumbnail (fixed 16:9) */}
@@ -225,6 +274,6 @@ export const ContentCard = memo(function ContentCard({
           </span>
         </div>
       </div>
-    </article>
+    </div>
   );
 });

@@ -16,8 +16,7 @@ export function PermissionsOptionsCacheSeeder({
 }): null {
   const dispatch = useAppDispatch();
   const cachedData = useAppSelector(
-    (state) =>
-      rbacApi.endpoints.getPermissions.select(undefined)(state).data,
+    (state) => rbacApi.endpoints.getPermissions.select(undefined)(state).data,
   );
 
   useLayoutEffect(() => {

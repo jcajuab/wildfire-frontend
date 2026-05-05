@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactElement } from "react";
+import { useCallback, useMemo, useState, type ReactElement } from "react";
 import Image from "next/image";
 import { IconPhoto, IconVideo } from "@tabler/icons-react";
 
@@ -47,9 +47,10 @@ export function EmergencyContentPicker({
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search, 300);
 
-  useEffect(() => {
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value);
     setPage(1);
-  }, [debouncedSearch]);
+  }, []);
 
   const { data, isFetching } = useListContentQuery({
     page,
@@ -77,7 +78,7 @@ export function EmergencyContentPicker({
       </header>
       <SearchControl
         value={search}
-        onChange={setSearch}
+        onChange={handleSearchChange}
         ariaLabel='Search emergency content'
         placeholder='Search content...'
         className='max-w-none min-w-0 w-full'

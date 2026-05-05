@@ -154,7 +154,6 @@ describe("EditDisplayDialog", () => {
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
       "Slug is fixed after registration and used by display runtime identity.",
     );
-
   });
 
   test("shows emergency content help in a tooltip", async () => {

@@ -23,10 +23,14 @@ export default function Loading(): ReactElement {
                 className="size-9 shrink-0 animate-pulse rounded-md bg-muted"
               />
             </div>
-            <div className="flex min-w-0 items-center justify-start lg:justify-end">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center lg:justify-end">
               <div
-                data-testid="displays-loading-actions"
-                className="h-9 w-full animate-pulse rounded-md bg-muted sm:w-24"
+                data-testid="displays-loading-bulk-unregister"
+                className="h-9 w-full animate-pulse rounded-md bg-muted sm:w-32"
+              />
+              <div
+                data-testid="displays-loading-manage"
+                className="h-9 w-full animate-pulse rounded-md bg-muted sm:w-36"
               />
             </div>
           </div>

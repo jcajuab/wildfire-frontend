@@ -148,10 +148,7 @@ describe("DisplayRegistrationLinkDialog", () => {
     ]);
 
     render(
-      <DisplayRegistrationLinkDialog
-        open={true}
-        onOpenChange={onOpenChange}
-      />,
+      <DisplayRegistrationLinkDialog open={true} onOpenChange={onOpenChange} />,
     );
 
     await user.type(screen.getByLabelText(/Display Name/), "Lobby Display");

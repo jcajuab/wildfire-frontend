@@ -62,8 +62,7 @@ export function RoleOptionsCacheSeeder({
 }): null {
   const dispatch = useAppDispatch();
   const cachedData = useAppSelector(
-    (state) =>
-      rbacApi.endpoints.getRoleOptions.select(undefined)(state).data,
+    (state) => rbacApi.endpoints.getRoleOptions.select(undefined)(state).data,
   );
 
   useLayoutEffect(() => {

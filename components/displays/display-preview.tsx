@@ -1,13 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import {
-  type ReactElement,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { getBaseUrl } from "@/lib/api/base-query";
 import { authFetch } from "@/lib/auth-session";
 

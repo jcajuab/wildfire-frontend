@@ -99,22 +99,23 @@ export function PaginationFooter({
             />
           </PaginationItem>
           {variant === "numbered" ? (
-            getNumberedPageTokens(boundedPage, totalPages).map((token, index) =>
-              typeof token === "number" ? (
-                <PaginationItem key={token}>
-                  <PaginationLink
-                    href="#"
-                    isActive={token === boundedPage}
-                    onClick={handleGo(token)}
-                  >
-                    {token}
-                  </PaginationLink>
-                </PaginationItem>
-              ) : (
-                <PaginationItem key={`${token}-${index}`}>
-                  <PaginationEllipsis />
-                </PaginationItem>
-              ),
+            getNumberedPageTokens(boundedPage, totalPages).map(
+              (token, index) =>
+                typeof token === "number" ? (
+                  <PaginationItem key={token}>
+                    <PaginationLink
+                      href="#"
+                      isActive={token === boundedPage}
+                      onClick={handleGo(token)}
+                    >
+                      {token}
+                    </PaginationLink>
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={`${token}-${index}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ),
             )
           ) : (
             <PaginationItem>

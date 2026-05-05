@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import { IconFilter, IconX } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -36,21 +37,40 @@ const statusOptions: readonly {
   readonly value: ContentStatusFilter;
   readonly label: string;
 }[] = [
-  { value: "all", label: "All" },
+  { value: "all", label: "All statuses" },
   { value: "PROCESSING", label: "Processing" },
   { value: "READY", label: "Ready" },
   { value: "FAILED", label: "Failed" },
 ] as const;
 
+interface FilterChipProps {
+  readonly label: string;
+  readonly onRemove: () => void;
+}
+
+function FilterChip({ label, onRemove }: FilterChipProps): ReactElement {
+  return (
+    <button
+      type="button"
+      aria-label={`Remove ${label} filter`}
+      className="inline-flex h-6 max-w-full items-center gap-1 rounded-md border border-border bg-muted/60 px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
+      onClick={onRemove}
+    >
+      <span className="truncate">{label}</span>
+      <IconX className="size-3 text-muted-foreground" aria-hidden="true" />
+    </button>
+  );
+}
+
 const typeOptions: readonly {
   readonly value: TypeFilter;
   readonly label: string;
 }[] = [
-  { value: "all", label: "All Types" },
+  { value: "all", label: "All content types" },
+  { value: "TEXT", label: "Text" },
   { value: "IMAGE", label: "Images" },
   { value: "VIDEO", label: "Videos" },
-  { value: "FLASH", label: "Flash Text" },
-  { value: "TEXT", label: "Rich Text" },
+  { value: "FLASH", label: "Flash" },
 ] as const;
 
 export function ContentFilterPopover({
@@ -65,52 +85,45 @@ export function ContentFilterPopover({
   const activeFilterCount =
     (statusFilter === "all" ? 0 : 1) + (typeFilter === "all" ? 0 : 1);
   const hasActiveFilters = activeFilterCount > 0;
+  const activeStatusLabel =
+    statusFilter === "all"
+      ? null
+      : statusOptions.find((option) => option.value === statusFilter)?.label;
+  const activeTypeLabel =
+    typeFilter === "all"
+      ? null
+      : typeOptions.find((option) => option.value === typeFilter)?.label;
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="default" className="gap-2">
-          <IconFilter className="size-4" />
-          Filter
+        <Button
+          variant="outline"
+          size="icon"
+          className="relative"
+          aria-label="Filter content"
+        >
+          <IconFilter className="size-4" aria-hidden="true" />
           {isFetching ? (
-            <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <span className="absolute -right-1 -top-1 size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           ) : hasActiveFilters ? (
-            <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground tabular-nums">
-              {filteredResultsCount}
-            </span>
+            <Badge className="absolute -right-1.5 -top-1.5 h-4 min-w-4 px-1 text-[10px] leading-4">
+              {activeFilterCount}
+            </Badge>
           ) : null}
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-80 p-4"
+        className="w-[22rem] max-w-[calc(100vw-2rem)] gap-0 p-0"
         side="bottom"
         align="end"
         avoidCollisions={false}
+        aria-label="Content filters"
       >
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Filters</h3>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="gap-1.5"
-              onClick={onClearFilters}
-              disabled={!hasActiveFilters}
-            >
-              <IconX className="size-3.5" aria-hidden="true" />
-              Clear
-            </Button>
-          </div>
-
-          <div className="flex flex-row flex-wrap gap-3">
+        <div className="flex flex-col gap-4 p-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="flex min-w-36 flex-1 flex-col gap-1.5">
-              <Label
-                htmlFor="content-status-filter"
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
-                Status
-              </Label>
+              <Label htmlFor="content-status-filter">Status</Label>
               <Select
                 value={statusFilter}
                 onValueChange={(value) =>
@@ -118,7 +131,7 @@ export function ContentFilterPopover({
                 }
               >
                 <SelectTrigger id="content-status-filter" className="w-full">
-                  <SelectValue placeholder="All" />
+                  <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent
                   position="popper"
@@ -136,12 +149,7 @@ export function ContentFilterPopover({
             </div>
 
             <div className="flex min-w-36 flex-1 flex-col gap-1.5">
-              <Label
-                htmlFor="type-filter"
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
-                Type
-              </Label>
+              <Label htmlFor="type-filter">Content Type</Label>
               <Select
                 value={typeFilter}
                 onValueChange={(value) =>
@@ -149,7 +157,7 @@ export function ContentFilterPopover({
                 }
               >
                 <SelectTrigger id="type-filter" className="w-full">
-                  <SelectValue placeholder="Select type" />
+                  <SelectValue placeholder="All content types" />
                 </SelectTrigger>
                 <SelectContent
                   position="popper"
@@ -167,6 +175,42 @@ export function ContentFilterPopover({
             </div>
           </div>
         </div>
+        {hasActiveFilters ? (
+          <div className="border-t border-border bg-muted/30 px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-medium text-muted-foreground">
+                Active filters
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1.5 px-2"
+                onClick={onClearFilters}
+              >
+                <IconX className="size-3.5" aria-hidden="true" />
+                Clear
+              </Button>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {activeStatusLabel ? (
+                <FilterChip
+                  label={activeStatusLabel}
+                  onRemove={() => onStatusFilterChange("all")}
+                />
+              ) : null}
+              {activeTypeLabel ? (
+                <FilterChip
+                  label={activeTypeLabel}
+                  onRemove={() => onTypeFilterChange("all")}
+                />
+              ) : null}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Showing {filteredResultsCount} matching results
+            </p>
+          </div>
+        ) : null}
       </PopoverContent>
     </Popover>
   );

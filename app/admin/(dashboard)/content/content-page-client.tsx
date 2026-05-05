@@ -11,26 +11,21 @@ import {
 import { toast } from "sonner";
 import { Can } from "@/components/common/can";
 import { BulkDeleteConfirmDialog } from "@/components/common/bulk-delete-confirm-dialog";
-import { BulkSelectionToolbar } from "@/components/common/bulk-selection-toolbar";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { EmptyState } from "@/components/common/empty-state";
 import { PaginationFooter } from "@/components/common/pagination-footer";
-import { ContentFilterPopover } from "@/components/content/content-filter-popover";
 import { ContentGrid } from "@/components/content/content-grid";
+import { ContentToolbar } from "@/components/content/content-toolbar";
 import { CreateContentDialog } from "@/components/content/create-content-dialog";
-import { SearchControl } from "@/components/common/search-control";
-import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  EditContentDialog,
-  PreviewContentDialog,
-} from "./_components/content-page-dialogs";
+import { EditContentDialog } from "./_components/content-page-dialogs";
 import {
   contentApi,
   type BackendContentListResponse,
@@ -149,122 +144,52 @@ export function ContentPageView(): ReactElement {
     setIsSelectionMode(false);
   }, [clearSelection]);
 
-  if (controller.isLoading) {
-    return (
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
-        <PageHeader title="Content" />
-        <section className="flex min-h-0 flex-1 flex-col">
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
-              <div className="flex items-center gap-2">
-                <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                <span className="text-sm text-muted-foreground">
-                  Loading content...
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-    );
-  }
-
-  if (controller.isError) {
-    return (
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
-        <PageHeader title="Content" />
-        <section className="flex min-h-0 flex-1 flex-col">
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
-              <p className="text-destructive">{controller.errorMessage}</p>
-            </div>
-          </div>
-        </section>
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
-      <PageHeader title="Content">
-        <Can permission="content:create">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>
-                <IconPlus className="size-4" />
-                Create Content
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => controller.openCreateDialog("text")}
-              >
-                <IconFileText className="size-4" />
-                Text
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => controller.openCreateDialog("upload")}
-              >
-                <IconUpload className="size-4" />
-                Upload
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => controller.openCreateDialog("flash")}
-              >
-                <IconBolt className="size-4" />
-                Flash
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </Can>
-      </PageHeader>
-
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
-            <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-              {isSelectionMode ? (
-                <BulkSelectionToolbar
-                  selectedCount={selectedContentCount}
-                  deleteLabel={deleteSelectedLabel}
-                  onDelete={() => setIsBulkDeleteDialogOpen(true)}
-                  onCancel={handleCancelSelectionMode}
-                />
-              ) : null}
-              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:w-auto">
-                {controller.canDeleteContent && !isSelectionMode ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsSelectionMode(true)}
-                  >
-                    Select mode
-                  </Button>
-                ) : null}
-                <ContentFilterPopover
-                  statusFilter={controller.filters.statusFilter}
-                  typeFilter={controller.filters.typeFilter}
-                  filteredResultsCount={controller.data?.total ?? 0}
-                  isFetching={controller.isFetching && !controller.isLoading}
-                  onStatusFilterChange={
-                    controller.filters.handleStatusFilterChange
+          <ContentToolbar
+            statusFilter={controller.filters.statusFilter}
+            typeFilter={controller.filters.typeFilter}
+            search={controller.filters.search}
+            filteredResultsCount={controller.data?.total ?? 0}
+            isFetching={controller.isFetching && !controller.isLoading}
+            canCreateContent={controller.canCreateContent}
+            canDeleteContent={controller.canDeleteContent}
+            bulkState={
+              isSelectionMode
+                ? {
+                    mode: "bulk-delete",
+                    selectedCount: selectedContentCount,
+                    onDelete: () => setIsBulkDeleteDialogOpen(true),
+                    onCancel: handleCancelSelectionMode,
                   }
-                  onTypeFilterChange={controller.filters.handleTypeFilterChange}
-                  onClearFilters={controller.filters.handleClearFilters}
-                />
-                <SearchControl
-                  value={controller.filters.search}
-                  onChange={controller.filters.handleSearchChange}
-                  ariaLabel="Search content"
-                  placeholder="Search..."
-                  className="w-full max-w-none sm:w-72"
-                />
-              </div>
-            </div>
-          </div>
+                : {
+                    mode: "normal",
+                    onEnterBulkDelete: () => setIsSelectionMode(true),
+                  }
+            }
+            onSearchChange={controller.filters.handleSearchChange}
+            onStatusFilterChange={controller.filters.handleStatusFilterChange}
+            onTypeFilterChange={controller.filters.handleTypeFilterChange}
+            onClearFilters={controller.filters.handleClearFilters}
+            onCreateText={() => controller.openCreateDialog("text")}
+            onCreateUpload={() => controller.openCreateDialog("upload")}
+            onCreateFlash={() => controller.openCreateDialog("flash")}
+          />
 
-          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
-            {controller.visibleContents.length === 0 ? (
+          <div className="min-h-0 flex-1 overflow-auto p-4">
+            {controller.isError ? (
+              <div className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
+                {controller.errorMessage}
+              </div>
+            ) : controller.isLoading ? (
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-4">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <Skeleton key={index} className="h-[244px] rounded-lg" />
+                ))}
+              </div>
+            ) : controller.visibleContents.length === 0 ? (
               <EmptyState
                 title="No content yet"
                 description="Upload images, videos, or create flash and text content to get started."
@@ -309,7 +234,6 @@ export function ContentPageView(): ReactElement {
                     ? controller.handleEdit
                     : undefined
                 }
-                onPreview={controller.handlePreview}
                 onDelete={
                   controller.canDeleteContent
                     ? controller.handleDelete
@@ -341,7 +265,8 @@ export function ContentPageView(): ReactElement {
             pageSize={controller.pageSize}
             total={controller.data?.total ?? 0}
             onPageChange={controller.filters.setPage}
-            variant="numbered"
+            variant="compact"
+            alwaysShow
           />
         </footer>
       </section>
@@ -360,12 +285,6 @@ export function ContentPageView(): ReactElement {
         open={controller.contentToEdit !== null}
         onOpenChange={controller.closeEditDialog}
         onSave={controller.handleSaveContent}
-      />
-
-      <PreviewContentDialog
-        content={controller.contentToPreview}
-        open={controller.contentToPreview !== null}
-        onOpenChange={controller.closePreviewDialog}
       />
 
       <ConfirmActionDialog
