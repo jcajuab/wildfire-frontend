@@ -82,7 +82,6 @@ export interface UseDisplaysPageResult {
   displays: Display[];
   displaysData: DisplaysListResponse | undefined;
   displayGroupsData: DisplayGroup[];
-  emergencyContentOptions: readonly { id: string; title: string }[];
   globalEmergencyActive: boolean;
   isLoading: boolean;
   isFetching: boolean;
@@ -251,10 +250,6 @@ export function useDisplaysPage({
   const runtimeOverrides = bootstrapData?.runtimeOverrides;
   const globalEmergencyActive =
     runtimeOverrides?.globalEmergency.active ?? false;
-  const emergencyAssets = useMemo(
-    () => bootstrapData?.emergencyContentOptions ?? [],
-    [bootstrapData?.emergencyContentOptions],
-  );
 
   const loadErrorMessage = getApiErrorMessage(
     error,
@@ -411,22 +406,6 @@ export function useDisplaysPage({
 
   const availableOutputFilters = displayOutputOptions;
 
-  const emergencyContentOptions = useMemo(
-    () =>
-      (emergencyAssets ?? [])
-        .filter(
-          (asset) =>
-            asset.type === "IMAGE" ||
-            asset.type === "VIDEO" ||
-            asset.type === "TEXT",
-        )
-        .map((asset) => ({
-          id: asset.id,
-          title: asset.title,
-        })),
-    [emergencyAssets],
-  );
-
   const { handleConfirmUnregisterDisplay: confirmUnregister } = crudHandlers;
 
   const handleConfirmUnregisterDisplay = useCallback(
@@ -450,7 +429,6 @@ export function useDisplaysPage({
     displays,
     displaysData: clientDisplaysData,
     displayGroupsData,
-    emergencyContentOptions,
     globalEmergencyActive,
     isLoading: isLoading || isLoadingRemainingDisplays,
     isFetching: isFetching || isLoadingRemainingDisplays,

@@ -11,10 +11,6 @@ import type { Display } from "@/types/display";
 interface EditDisplayDialogProps {
   readonly display: Display | null;
   readonly existingGroups: readonly DisplayGroup[];
-  readonly emergencyContentOptions?: readonly {
-    readonly id: string;
-    readonly title: string;
-  }[];
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onSave: (display: Display) => Promise<boolean>;
@@ -23,7 +19,6 @@ interface EditDisplayDialogProps {
 export function EditDisplayDialog({
   display,
   existingGroups,
-  emergencyContentOptions = [],
   open,
   onOpenChange,
   onSave,
@@ -62,7 +57,6 @@ export function EditDisplayDialog({
           key={`${display.id}:${open ? "open" : "closed"}`}
           display={display}
           existingGroups={existingGroups}
-          emergencyContentOptions={emergencyContentOptions}
           onClose={handleClose}
           onSave={onSave}
         />

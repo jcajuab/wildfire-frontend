@@ -26,7 +26,6 @@ export interface Display {
   readonly macAddress: string;
   readonly output: string;
   readonly resolution: string;
-  readonly emergencyContentId: string | null;
   readonly groups: readonly DisplayGroupLabel[];
   readonly nowPlaying: NowPlaying | null;
   readonly createdAt: string;

@@ -16,7 +16,8 @@ interface UseGlobalEmergencyReturn {
   isBusy: boolean;
   canRead: boolean;
   canUpdate: boolean;
-  handleToggle: () => Promise<void>;
+  activate: (slotIndex: number) => Promise<void>;
+  deactivate: () => Promise<void>;
 }
 
 export function useGlobalEmergency(): UseGlobalEmergencyReturn {
@@ -44,33 +45,38 @@ export function useGlobalEmergency(): UseGlobalEmergencyReturn {
 
   const isActive = optimisticActive ?? serverActive;
 
-  const handleToggle = useCallback(async () => {
+  const activate = useCallback(
+    async (slotIndex: number) => {
+      if (!canUpdate || isBusy) return;
+      setIsBusy(true);
+      try {
+        await activateGlobalEmergency({ slotIndex }).unwrap();
+        setOptimisticActive(true);
+        toast.success("Global emergency mode activated.");
+      } catch (error) {
+        notifyApiError(error, "Failed to activate global emergency mode.");
+      } finally {
+        setIsBusy(false);
+        setTimeout(() => setOptimisticActive(null), 3000);
+      }
+    },
+    [activateGlobalEmergency, canUpdate, isBusy],
+  );
+
+  const deactivate = useCallback(async () => {
     if (!canUpdate || isBusy) return;
     setIsBusy(true);
     try {
-      if (isActive) {
-        await deactivateGlobalEmergency({}).unwrap();
-        setOptimisticActive(false);
-        toast.success("Global emergency mode stopped.");
-      } else {
-        await activateGlobalEmergency({}).unwrap();
-        setOptimisticActive(true);
-        toast.success("Global emergency mode activated.");
-      }
+      await deactivateGlobalEmergency({}).unwrap();
+      setOptimisticActive(false);
+      toast.success("Global emergency mode stopped.");
     } catch (error) {
-      notifyApiError(error, "Failed to update global emergency mode.");
+      notifyApiError(error, "Failed to stop global emergency mode.");
     } finally {
       setIsBusy(false);
-      // Clear optimistic state after a short delay to let the cache refetch
       setTimeout(() => setOptimisticActive(null), 3000);
     }
-  }, [
-    canUpdate,
-    isBusy,
-    isActive,
-    activateGlobalEmergency,
-    deactivateGlobalEmergency,
-  ]);
+  }, [canUpdate, deactivateGlobalEmergency, isBusy]);
 
-  return { isActive, isBusy, canRead, canUpdate, handleToggle };
+  return { isActive, isBusy, canRead, canUpdate, activate, deactivate };
 }

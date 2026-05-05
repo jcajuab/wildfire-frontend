@@ -18,7 +18,6 @@ const makeDisplay = (overrides?: Partial<Display>): Display => ({
   resolution: "1920x1080",
   groups: [],
   nowPlaying: null,
-  emergencyContentId: null,
   createdAt: "2025-01-01T00:00:00.000Z",
   ...overrides,
 });
@@ -177,8 +176,6 @@ describe("EditDisplayDialog", () => {
     const onSave = vi.fn(async () => true);
 
     renderEditDisplayDialog({
-      display: makeDisplay({ emergencyContentId: "content-1" }),
-      emergencyContentOptions: [{ id: "content-1", title: "Fire Notice" }],
       onOpenChange,
       onSave,
     });
@@ -193,7 +190,6 @@ describe("EditDisplayDialog", () => {
       expect.objectContaining({
         output: "hdmi-2",
         resolution: "1920x1080",
-        emergencyContentId: "content-1",
       }),
     );
   }, 15_000);
@@ -226,28 +222,6 @@ describe("EditDisplayDialog", () => {
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
         resolution: "Not available",
-      }),
-    );
-  });
-
-  test("allows selecting emergency content", async () => {
-    const user = userEvent.setup();
-    const onSave = vi.fn(async () => true);
-
-    renderEditDisplayDialog({
-      emergencyContentOptions: [{ id: "content-1", title: "Fire Notice" }],
-      onSave,
-    });
-
-    await user.click(
-      screen.getByRole("combobox", { name: "Emergency Content" }),
-    );
-    await user.click(screen.getByRole("option", { name: "Fire Notice" }));
-    await user.click(screen.getByRole("button", { name: "Save" }));
-
-    expect(onSave).toHaveBeenCalledWith(
-      expect.objectContaining({
-        emergencyContentId: "content-1",
       }),
     );
   });

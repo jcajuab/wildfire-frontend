@@ -29,7 +29,6 @@ export interface BackendDisplay {
   readonly screenHeight: number | null;
   readonly output: string | null;
   readonly orientation: "LANDSCAPE" | "PORTRAIT" | null;
-  readonly emergencyContentId?: string | null;
   readonly lastSeenAt: string | null;
   readonly status: "PROCESSING" | "READY" | "LIVE" | "DOWN";
   readonly nowPlaying?: {
@@ -78,7 +77,6 @@ export interface UpdateDisplayRequest {
   readonly screenHeight?: number | null;
   readonly output?: string | null;
   readonly orientation?: "LANDSCAPE" | "PORTRAIT" | null;
-  readonly emergencyContentId?: string | null;
 }
 
 export interface DisplayGroup {
@@ -116,10 +114,25 @@ export interface CreateRegistrationLinkResponse {
   readonly expiresAt: string;
 }
 
+export interface BootstrapEmergencySlot {
+  readonly slotIndex: number;
+  readonly label: string | null;
+  readonly contentId: string | null;
+  readonly content: {
+    readonly id: string;
+    readonly title: string;
+    readonly type: "IMAGE" | "VIDEO" | "TEXT" | "FLASH";
+    readonly status: "PROCESSING" | "READY" | "FAILED";
+    readonly thumbnailKey: string | null;
+  } | null;
+  readonly updatedAt: string | null;
+}
+
 export interface DisplayRuntimeOverrides {
   readonly globalEmergency: {
     readonly active: boolean;
     readonly startedAt: string | null;
+    readonly activeSlotIndex: number | null;
   };
 }
 
@@ -128,11 +141,7 @@ export interface DisplaysBootstrapResponse {
   readonly displayGroups: DisplayGroup[];
   readonly displayOutputOptions: DisplayOutputOption[];
   readonly runtimeOverrides: DisplayRuntimeOverrides;
-  readonly emergencyContentOptions: Array<{
-    readonly id: string;
-    readonly title: string;
-    readonly type: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
-  }>;
+  readonly emergencySlots: readonly BootstrapEmergencySlot[];
 }
 
 type DisplaysListMutable = {
@@ -147,9 +156,13 @@ type DisplaysBootstrapMutable = {
   displayGroups: DisplayGroup[];
   displayOutputOptions: DisplayOutputOption[];
   runtimeOverrides: {
-    globalEmergency: { active: boolean; startedAt: string | null };
+    globalEmergency: {
+      active: boolean;
+      startedAt: string | null;
+      activeSlotIndex: number | null;
+    };
   };
-  emergencyContentOptions: DisplaysBootstrapResponse["emergencyContentOptions"];
+  emergencySlots: BootstrapEmergencySlot[];
 };
 
 export const displaysApi = api.injectEndpoints({
@@ -311,13 +324,19 @@ export const displaysApi = api.injectEndpoints({
         ),
       providesTags: [{ type: "RuntimeOverrides", id: "GLOBAL" }],
     }),
-    activateGlobalEmergency: build.mutation<void, { reason?: string } | void>({
-      query: (body) => ({
+    activateGlobalEmergency: build.mutation<
+      void,
+      { slotIndex: number; reason?: string }
+    >({
+      query: ({ slotIndex, reason }) => ({
         url: "displays/runtime-overrides/emergency",
         method: "PUT",
-        body: { active: true, ...(body ?? {}) },
+        body: { active: true, slotIndex, ...(reason ? { reason } : {}) },
       }),
-      async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
+      async onQueryStarted(
+        { slotIndex },
+        { dispatch, queryFulfilled, getState },
+      ) {
         try {
           await queryFulfilled;
           const startedAt = new Date().toISOString();
@@ -330,10 +349,12 @@ export const displaysApi = api.injectEndpoints({
                   globalEmergency: {
                     active: boolean;
                     startedAt: string | null;
+                    activeSlotIndex: number | null;
                   };
                 };
                 r.globalEmergency.active = true;
                 r.globalEmergency.startedAt = startedAt;
+                r.globalEmergency.activeSlotIndex = slotIndex;
               },
             ),
           );
@@ -350,6 +371,8 @@ export const displaysApi = api.injectEndpoints({
                   const b = draft as unknown as DisplaysBootstrapMutable;
                   b.runtimeOverrides.globalEmergency.active = true;
                   b.runtimeOverrides.globalEmergency.startedAt = startedAt;
+                  b.runtimeOverrides.globalEmergency.activeSlotIndex =
+                    slotIndex;
                 },
               ),
             );
@@ -378,10 +401,12 @@ export const displaysApi = api.injectEndpoints({
                     globalEmergency: {
                       active: boolean;
                       startedAt: string | null;
+                      activeSlotIndex: number | null;
                     };
                   };
                   r.globalEmergency.active = false;
                   r.globalEmergency.startedAt = null;
+                  r.globalEmergency.activeSlotIndex = null;
                 },
               ),
             );
@@ -398,6 +423,7 @@ export const displaysApi = api.injectEndpoints({
                     const b = draft as unknown as DisplaysBootstrapMutable;
                     b.runtimeOverrides.globalEmergency.active = false;
                     b.runtimeOverrides.globalEmergency.startedAt = null;
+                    b.runtimeOverrides.globalEmergency.activeSlotIndex = null;
                   },
                 ),
               );

@@ -30,7 +30,6 @@ const baseDisplay: Display = {
   macAddress: "AA:BB:CC:DD:EE:FF",
   output: "hdmi-0",
   resolution: "1920x1080",
-  emergencyContentId: null,
   groups: [
     {
       name: "Lobby",
@@ -119,6 +118,7 @@ describe("DisplayCard", () => {
       screen.queryByLabelText("Emergency content not set"),
     ).not.toBeInTheDocument();
   });
+
 
   test("keeps the actions menu button accessible", () => {
     renderDisplayCard();
@@ -247,7 +247,7 @@ describe("DisplayCard", () => {
     ).not.toBeInTheDocument();
   });
 
-  test("keeps emergency active and missing emergency indicators distinct", () => {
+  test("renders the emergency active badge when global emergency is on", () => {
     renderDisplayCard(baseDisplay, { isGlobalEmergencyActive: true });
 
     expect(screen.getByText("Emergency Active")).toBeInTheDocument();

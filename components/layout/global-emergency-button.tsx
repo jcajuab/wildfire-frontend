@@ -3,6 +3,7 @@
 import { IconAlertTriangle } from "@tabler/icons-react";
 import type { ReactElement } from "react";
 
+import { EmergencySlotDropdown } from "@/components/emergency/emergency-slot-dropdown";
 import { Button } from "@/components/ui/button";
 import {
   SidebarGroup,
@@ -21,8 +22,7 @@ export function GlobalEmergencyButton({
   variant,
 }: GlobalEmergencyButtonProps): ReactElement | null {
   const { user } = useAuth();
-  const { isActive, isBusy, canRead, canUpdate, handleToggle } =
-    useGlobalEmergency();
+  const { isActive, isBusy, canRead, canUpdate } = useGlobalEmergency();
 
   if (!user?.isAdmin || !canRead) {
     return null;
@@ -32,26 +32,29 @@ export function GlobalEmergencyButton({
     ? "Updating..."
     : isActive
       ? "Stop Emergency"
-      : "Start Emergency";
+      : "Manage Emergencies";
 
   if (variant === "sidebar") {
     return (
       <SidebarGroup className="mt-auto">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="default"
-              onClick={handleToggle}
-              disabled={!canUpdate || isBusy}
-              className={
-                isActive
-                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
-                  : "bg-black/5 text-sidebar-foreground hover:bg-destructive/80 hover:text-destructive-foreground [&_svg]:text-sidebar-foreground hover:[&_svg]:text-destructive-foreground"
+            <EmergencySlotDropdown
+              trigger={
+                <SidebarMenuButton
+                  size="default"
+                  disabled={!canUpdate || isBusy}
+                  className={
+                    isActive
+                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
+                      : "bg-black/5 text-sidebar-foreground hover:bg-destructive/80 hover:text-destructive-foreground [&_svg]:text-sidebar-foreground hover:[&_svg]:text-destructive-foreground"
+                  }
+                >
+                  <IconAlertTriangle className="size-4" />
+                  <span>{label}</span>
+                </SidebarMenuButton>
               }
-            >
-              <IconAlertTriangle className="size-4" />
-              <span>{label}</span>
-            </SidebarMenuButton>
+            />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarGroup>
@@ -59,14 +62,17 @@ export function GlobalEmergencyButton({
   }
 
   return (
-    <Button
-      variant={isActive ? "destructive" : "ghost"}
-      size="icon"
-      disabled={!canUpdate || isBusy}
-      onClick={handleToggle}
-      aria-label={isActive ? "Stop Emergency" : "Start Emergency"}
-    >
-      <IconAlertTriangle />
-    </Button>
+    <EmergencySlotDropdown
+      trigger={
+        <Button
+          variant={isActive ? "destructive" : "ghost"}
+          size="icon"
+          disabled={!canUpdate || isBusy}
+          aria-label={isActive ? "Stop Emergency" : "Manage Emergencies"}
+        >
+          <IconAlertTriangle />
+        </Button>
+      }
+    />
   );
 }

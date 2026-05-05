@@ -99,7 +99,6 @@ export function AddDisplayWizard({
       macAddress: "",
       output: data.selectedOutput,
       resolution: data.selectedResolution,
-      emergencyContentId: null,
       groups,
       nowPlaying: null,
     });

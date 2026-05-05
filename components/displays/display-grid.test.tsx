@@ -31,7 +31,6 @@ function makeDisplay(index: number): Display {
     macAddress: null,
     output: "HDMI",
     resolution: "1920x1080",
-    emergencyContentId: "content-1",
     groups: [],
     nowPlaying: null,
     createdAt: "2025-01-01T00:00:00.000Z",

@@ -108,7 +108,6 @@ const bootstrapData: DisplaysBootstrapResponse = {
         screenHeight: 1080,
         output: "HDMI",
         orientation: "LANDSCAPE",
-        emergencyContentId: null,
         lastSeenAt: null,
         status: "READY",
         nowPlaying: null,
@@ -127,7 +126,6 @@ const bootstrapData: DisplaysBootstrapResponse = {
         screenHeight: 1080,
         output: "dp-0",
         orientation: "LANDSCAPE",
-        emergencyContentId: null,
         lastSeenAt: null,
         status: "LIVE",
         nowPlaying: null,
@@ -153,9 +151,10 @@ const bootstrapData: DisplaysBootstrapResponse = {
     globalEmergency: {
       active: false,
       startedAt: null,
+      activeSlotIndex: null,
     },
   },
-  emergencyContentOptions: [],
+  emergencySlots: [],
 };
 
 describe("useDisplaysPage", () => {

@@ -13,6 +13,7 @@ export const api = createApi({
     "ContentJob",
     "Display",
     "DisplayGroup",
+    "EmergencySlots",
     "Permission",
     "Playlist",
     "Role",

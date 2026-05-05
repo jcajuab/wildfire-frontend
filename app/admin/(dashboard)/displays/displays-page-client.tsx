@@ -203,7 +203,6 @@ export function DisplaysPageView({
     displays,
     displaysData,
     displayGroupsData,
-    emergencyContentOptions,
     globalEmergencyActive,
     isLoading,
     isFetching,
@@ -408,7 +407,6 @@ export function DisplaysPageView({
         <EditDisplayDialog
           display={selectedDisplay}
           existingGroups={displayGroupsData}
-          emergencyContentOptions={emergencyContentOptions}
           open={isEditDialogOpen}
           onOpenChange={handleEditDialogOpenChange}
           onSave={handleSaveDisplay}

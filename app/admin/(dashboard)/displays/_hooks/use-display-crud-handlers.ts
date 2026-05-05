@@ -65,7 +65,6 @@ export function useDisplayCrudHandlers(input: {
           id: display.id,
           name: display.name,
           output: display.output === "Not available" ? null : display.output,
-          emergencyContentId: display.emergencyContentId,
           screenWidth,
           screenHeight,
         }).unwrap();
