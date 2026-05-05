@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -37,6 +38,7 @@ import {
   DISPLAY_OUTPUT_TYPES,
   type DisplayOutputType,
 } from "@/lib/display-output";
+import { IconCopy } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 interface DisplayRegistrationLinkDialogProps {
@@ -389,7 +391,7 @@ function DisplayRegistrationLinkDialogBody({
         <DialogDescription>
           {step.kind === "form"
             ? "Create a registration link for this display."
-            : "Copy the link below and open it on the display device to complete registration."}
+            : "Copy this link and open it on the display device. Registration completes automatically when the device connects."}
         </DialogDescription>
       </DialogHeader>
 
@@ -509,46 +511,59 @@ function DisplayRegistrationLinkDialogBody({
         </form>
       ) : (
         <div className="space-y-4">
-          <div className="rounded-md border border-border bg-muted/30 p-4">
-            <p className="mb-2 text-xs font-medium text-muted-foreground">
-              Registration link
-            </p>
-            <p className="break-all rounded bg-background px-2 py-1.5 font-mono text-xs text-foreground">
-              {registrationUrl}
-            </p>
-            <div className="mt-3 flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">
+          <div className="space-y-2">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <Label htmlFor="registration-link">Registration Link</Label>
+              <p
+                className={
+                  countdown === "Expired"
+                    ? "text-xs text-destructive"
+                    : "text-xs text-muted-foreground"
+                }
+              >
                 {countdown === "Expired" ? (
-                  <span className="text-destructive">Link expired</span>
+                  "Expired. Create a new registration link to continue."
                 ) : (
                   <>Expires in {countdown}</>
                 )}
               </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input
+                type="url"
+                id="registration-link"
+                value={registrationUrl}
+                readOnly
+                spellCheck={false}
+                className="min-w-0 font-mono text-xs"
+              />
               <Button
                 type="button"
-                variant="outline"
-                size="sm"
+                className="sm:w-auto"
                 onClick={handleCopyLink}
                 disabled={countdown === "Expired"}
               >
+                <IconCopy aria-hidden="true" />
                 {copied ? "Copied!" : "Copy Link"}
               </Button>
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            Open this link on the display device to complete registration. This
-            dialog will close automatically when registration succeeds.
-          </p>
+          <Separator />
+
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-foreground">Next Steps</p>
+            <ol className="list-decimal space-y-1 pl-4 text-xs text-muted-foreground">
+              <li>Copy the registration link.</li>
+              <li>Open it on the display device.</li>
+              <li>Keep this dialog open until the display connects.</li>
+            </ol>
+          </div>
 
           <DialogFooter className="sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Close
-            </Button>
+            <DialogClose asChild>
+              <Button type="button">Done</Button>
+            </DialogClose>
           </DialogFooter>
         </div>
       )}

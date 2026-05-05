@@ -132,6 +132,66 @@ describe("DisplayRegistrationLinkDialog", () => {
     });
   });
 
+  test("shows a compact generated link step with a done action", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    const createRegistrationLink = vi.fn(() => ({
+      unwrap: vi.fn().mockResolvedValue({
+        token: "464778f0-6e23-4db6-9686-5479796d1b2f",
+        attemptId: "b2c4a3f1-6b18-4f90-9d9b-9e1a2f0d9d45",
+        expiresAt: "2099-05-05T12:00:00.000Z",
+      }),
+    }));
+    useCreateRegistrationLinkMutationMock.mockReturnValue([
+      createRegistrationLink,
+      { isLoading: false },
+    ]);
+
+    render(
+      <DisplayRegistrationLinkDialog
+        open={true}
+        onOpenChange={onOpenChange}
+      />,
+    );
+
+    await user.type(screen.getByLabelText(/Display Name/), "Lobby Display");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    expect(
+      await screen.findByText(
+        "Copy this link and open it on the display device. Registration completes automatically when the device connects.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        /This dialog will close automatically when registration succeeds/,
+      ),
+    ).not.toBeInTheDocument();
+
+    const registrationLink = screen.getByLabelText("Registration Link");
+    expect(registrationLink).toHaveValue(
+      "http://localhost:3000/displays/register/link?token=464778f0-6e23-4db6-9686-5479796d1b2f",
+    );
+    expect(registrationLink).toHaveAttribute("type", "url");
+    expect(registrationLink).toHaveAttribute("readonly");
+    expect(screen.getByText(/Expires in/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Copy Link" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Next Steps")).toBeInTheDocument();
+    expect(screen.getByText("Copy the registration link.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Open it on the display device."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Keep this dialog open until the display connects."),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
   test("closes the form when cancel is clicked", async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
