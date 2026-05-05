@@ -7,7 +7,6 @@ import {
   memo,
 } from "react";
 import {
-  IconAlertTriangle,
   IconDots,
   IconExternalLink,
   IconEdit,
@@ -128,7 +127,6 @@ export const DisplayCard = memo(function DisplayCard({
   const outputLabel = display.output.trim() || "Not available";
   const showOutput =
     showOutputMetadata && outputLabel.toLowerCase() !== "not available";
-  const isEmergencyContentMissing = display.emergencyContentId === null;
 
   const visibleGroups = display.groups.slice(0, MAX_VISIBLE_GROUPS);
   const hiddenGroupCount = Math.max(
@@ -208,23 +206,6 @@ export const DisplayCard = memo(function DisplayCard({
               </TooltipTrigger>
               <TooltipContent>{statusLabel}</TooltipContent>
             </Tooltip>
-            {isEmergencyContentMissing ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    role="img"
-                    className="inline-flex size-5 items-center justify-center rounded-full text-amber-700"
-                    aria-label="Emergency content not set"
-                  >
-                    <IconAlertTriangle
-                      className="size-3.5"
-                      aria-hidden="true"
-                    />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>Emergency content not set</TooltipContent>
-              </Tooltip>
-            ) : null}
           </div>
         </div>
 
@@ -242,7 +223,7 @@ export const DisplayCard = memo(function DisplayCard({
             <DropdownMenuContent align="end" className="min-w-44">
               <DropdownMenuItem onClick={() => onViewPage(display)}>
                 <IconExternalLink className="size-4" aria-hidden="true" />
-                View Page
+                View Display Page
               </DropdownMenuItem>
               {onEditDisplay ? (
                 <DropdownMenuItem onClick={() => onEditDisplay(display)}>

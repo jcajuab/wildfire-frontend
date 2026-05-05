@@ -18,7 +18,6 @@ interface EditDisplayDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onSave: (display: Display) => Promise<boolean>;
-  readonly canManageGroups?: boolean;
 }
 
 export function EditDisplayDialog({
@@ -28,7 +27,6 @@ export function EditDisplayDialog({
   open,
   onOpenChange,
   onSave,
-  canManageGroups = true,
 }: EditDisplayDialogProps): ReactElement | null {
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -50,7 +48,7 @@ export function EditDisplayDialog({
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent
-        className="sm:max-w-md"
+        className="max-w-[calc(100%-2rem)] sm:max-w-lg"
         onPointerDownOutside={(e) => {
           const target = (e.detail?.originalEvent as PointerEvent)
             ?.target as HTMLElement | null;
@@ -67,7 +65,6 @@ export function EditDisplayDialog({
           emergencyContentOptions={emergencyContentOptions}
           onClose={handleClose}
           onSave={onSave}
-          canManageGroups={canManageGroups}
         />
       </DialogContent>
     </Dialog>

@@ -412,7 +412,6 @@ export function DisplaysPageView({
           open={isEditDialogOpen}
           onOpenChange={handleEditDialogOpenChange}
           onSave={handleSaveDisplay}
-          canManageGroups={canUpdateDisplay}
         />
       ) : null}
 

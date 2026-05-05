@@ -12,6 +12,9 @@ export const toCanonicalDisplayOutput = (input: {
   index: number;
 }): string => `${input.type.toLowerCase()}-${String(input.index)}`;
 
+export const toDisplayOutputTypeFilter = (type: DisplayOutputType): string =>
+  `${type.toLowerCase()}-*`;
+
 export const parseDisplayOutput = (
   value: string | null | undefined,
 ): {
@@ -32,4 +35,38 @@ export const parseDisplayOutput = (
     return null;
   }
   return { type, index };
+};
+
+export const parseDisplayOutputTypeFilter = (
+  value: string | null | undefined,
+): DisplayOutputType | null => {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const wildcardMatch = /^([a-z]+)-\*$/i.exec(trimmed);
+  if (wildcardMatch?.[1]) {
+    const type = wildcardMatch[1].toUpperCase();
+    return isOutputType(type) ? type : null;
+  }
+
+  const directType = trimmed.toUpperCase();
+  if (isOutputType(directType)) {
+    return directType;
+  }
+
+  return parseDisplayOutput(trimmed)?.type ?? null;
+};
+
+export const normalizeDisplayOutputFilter = (
+  value: string | null | undefined,
+): string => {
+  const type = parseDisplayOutputTypeFilter(value);
+  return type ? toDisplayOutputTypeFilter(type) : "all";
+};
+
+export const getDisplayOutputFilterLabel = (value: string): string => {
+  const type = parseDisplayOutputTypeFilter(value);
+  return type ? toDisplayOutputTypeFilter(type) : value;
 };

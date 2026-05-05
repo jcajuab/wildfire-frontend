@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useCan } from "@/hooks/use-can";
 import { useSyncExternalStore } from "react";
@@ -9,11 +9,13 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import {
   displaysApi,
+  useLazyGetDisplaysQuery,
   useGetDisplaysBootstrapQuery,
   useLazyGetDisplaysBootstrapQuery,
 } from "@/lib/api/displays-api";
 
 import { dedupeDisplayGroupNames } from "@/lib/display-group-normalization";
+import { normalizeDisplayOutputFilter } from "@/lib/display-output";
 import {
   mapDisplayApiToDisplay,
   withDisplayGroups,
@@ -21,6 +23,7 @@ import {
 import type { DisplayStatusFilter } from "@/components/displays/display-filter-popover";
 import type { Display, DisplayOutputFilter } from "@/types/display";
 import type {
+  BackendDisplay,
   DisplaysBootstrapResponse,
   DisplayGroup,
   DisplaysListQuery,
@@ -28,10 +31,25 @@ import type {
 } from "@/lib/api/displays-api";
 import { useDisplayFilters } from "./use-display-filters";
 import { useDisplayDialogState } from "./use-display-dialog-state";
-import { DISPLAYS_PAGE_SIZE } from "@/lib/displays-search-params";
+import {
+  DISPLAYS_BOOTSTRAP_PAGE_SIZE,
+  DISPLAYS_PAGE_SIZE,
+} from "@/lib/displays-search-params";
 import { useDisplayCrudHandlers } from "./use-display-crud-handlers";
 
 export const PAGE_SIZE = DISPLAYS_PAGE_SIZE;
+const BOOTSTRAP_PAGE_SIZE = DISPLAYS_BOOTSTRAP_PAGE_SIZE;
+const UNFILTERED_DISPLAY_QUERY: DisplaysListQuery = {
+  page: 1,
+  pageSize: BOOTSTRAP_PAGE_SIZE,
+  sortBy: "name",
+  sortDirection: "asc",
+};
+
+interface RemainingDisplayRowsState {
+  readonly key: string;
+  readonly rows: readonly BackendDisplay[];
+}
 
 export interface InitialDisplaysBootstrap {
   readonly queryArgs: DisplaysListQuery;
@@ -114,6 +132,32 @@ function normalizedQueryKey(query: DisplaysListQuery): string {
   });
 }
 
+function displayMatchesSearch(display: Display, search: string): boolean {
+  const query = search.trim().toLowerCase();
+  if (query.length === 0) return true;
+
+  return (
+    display.name.toLowerCase().includes(query) ||
+    display.slug.toLowerCase().includes(query)
+  );
+}
+
+function displayMatchesGroups(
+  display: Display,
+  selectedGroups: readonly string[],
+): boolean {
+  if (selectedGroups.length === 0) return true;
+  return display.groups.some((group) => selectedGroups.includes(group.name));
+}
+
+function displayMatchesOutput(
+  display: Display,
+  selectedOutput: DisplayOutputFilter,
+): boolean {
+  if (selectedOutput === "all") return true;
+  return normalizeDisplayOutputFilter(display.output) === selectedOutput;
+}
+
 export function useDisplaysPage({
   initialBootstrap,
 }: UseDisplaysPageOptions = {}): UseDisplaysPageResult {
@@ -135,35 +179,16 @@ export function useDisplaysPage({
   const filters = useDisplayFilters();
   const dialogState = useDisplayDialogState();
   const debouncedSearch = useDebounce(filters.search, 500);
-  const currentQueryArgs = useMemo<DisplaysListQuery>(
-    () => ({
-      page: filters.page,
-      pageSize: PAGE_SIZE,
-      q: debouncedSearch || undefined,
-      status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
-      groupNames:
-        filters.groupFilters.length > 0 ? filters.groupFilters : undefined,
-      output:
-        filters.normalizedOutputFilter === "all"
-          ? undefined
-          : filters.normalizedOutputFilter,
-      sortBy: "name",
-      sortDirection: "asc",
-    }),
-    [
-      debouncedSearch,
-      filters.groupFilters,
-      filters.normalizedOutputFilter,
-      filters.page,
-      filters.statusFilter,
-    ],
-  );
+  const currentQueryArgs = UNFILTERED_DISPLAY_QUERY;
   const isInitialBootstrapQuery =
     initialBootstrap != null &&
     normalizedQueryKey(initialBootstrap.queryArgs) ===
       normalizedQueryKey(currentQueryArgs);
   const shouldSkipInitialQuery = isInitialBootstrapQuery;
+  const [triggerDisplaysQuery] = useLazyGetDisplaysQuery();
   const [triggerBootstrapQuery] = useLazyGetDisplaysBootstrapQuery();
+  const [remainingDisplayRowsState, setRemainingDisplayRowsState] =
+    useState<RemainingDisplayRowsState>({ key: "", rows: [] });
 
   const {
     data: queriedBootstrapData,
@@ -211,6 +236,13 @@ export function useDisplaysPage({
   ]);
 
   const displaysData = bootstrapData?.displays;
+  const remainingRowsKey = useMemo(() => {
+    const total = displaysData?.total ?? 0;
+    const firstPageIds = (displaysData?.items ?? [])
+      .map((display) => display.id)
+      .join("\u0000");
+    return `${total}:${firstPageIds}`;
+  }, [displaysData?.items, displaysData?.total]);
   const displayGroupsData = useMemo(
     () => bootstrapData?.displayGroups ?? [],
     [bootstrapData?.displayGroups],
@@ -235,7 +267,78 @@ export function useDisplaysPage({
   // layout, which invalidates the Display LIST tag. RTK Query automatically
   // refetches this component's query when the tag is invalidated.
 
-  const displays: Display[] = useMemo(() => {
+  useEffect(() => {
+    const totalDisplays = displaysData?.total ?? 0;
+    const totalPages = Math.ceil(totalDisplays / BOOTSTRAP_PAGE_SIZE);
+
+    if (totalPages <= 1) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const remainingPageNumbers = Array.from(
+      { length: totalPages - 1 },
+      (_, index) => index + 2,
+    );
+
+    void Promise.all(
+      remainingPageNumbers.map((page) =>
+        triggerDisplaysQuery(
+          {
+            page,
+            pageSize: BOOTSTRAP_PAGE_SIZE,
+            sortBy: "name",
+            sortDirection: "asc",
+          },
+          true,
+        ).unwrap(),
+      ),
+    )
+      .then((responses) => {
+        if (cancelled) return;
+        setRemainingDisplayRowsState({
+          key: remainingRowsKey,
+          rows: responses.flatMap((response) => response.items),
+        });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRemainingDisplayRowsState({ key: remainingRowsKey, rows: [] });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [displaysData?.total, remainingRowsKey, triggerDisplaysQuery]);
+
+  const totalUnfilteredDisplays = displaysData?.total ?? 0;
+  const needsRemainingDisplayPages =
+    Math.ceil(totalUnfilteredDisplays / BOOTSTRAP_PAGE_SIZE) > 1;
+  const remainingDisplayRows = useMemo(
+    () =>
+      remainingDisplayRowsState.key === remainingRowsKey
+        ? remainingDisplayRowsState.rows
+        : [],
+    [remainingDisplayRowsState, remainingRowsKey],
+  );
+  const isLoadingRemainingDisplays =
+    needsRemainingDisplayPages &&
+    remainingDisplayRowsState.key !== remainingRowsKey;
+
+  const allBackendDisplayRows = useMemo(() => {
+    const rowsById = new Map<string, BackendDisplay>();
+    for (const row of [
+      ...(displaysData?.items ?? []),
+      ...remainingDisplayRows,
+    ]) {
+      rowsById.set(row.id, row);
+    }
+    return [...rowsById.values()];
+  }, [displaysData?.items, remainingDisplayRows]);
+
+  const allDisplayRows = useMemo(() => {
     const groupsByDisplayId = new Map<string, Array<{ name: string }>>();
 
     for (const group of displayGroupsData) {
@@ -247,13 +350,59 @@ export function useDisplaysPage({
       }
     }
 
-    return (displaysData?.items ?? []).map((display) =>
-      withDisplayGroups(
-        mapDisplayApiToDisplay(display),
-        groupsByDisplayId.get(display.id) ?? [],
+    return allBackendDisplayRows.map((backendDisplay) => ({
+      backendDisplay,
+      display: withDisplayGroups(
+        mapDisplayApiToDisplay(backendDisplay),
+        groupsByDisplayId.get(backendDisplay.id) ?? [],
       ),
-    );
-  }, [displaysData?.items, displayGroupsData]);
+    }));
+  }, [allBackendDisplayRows, displayGroupsData]);
+
+  const filteredDisplayRows = useMemo(
+    () =>
+      allDisplayRows.filter(({ display }) => {
+        if (!displayMatchesSearch(display, debouncedSearch)) return false;
+        if (
+          filters.statusFilter !== "all" &&
+          display.status !== filters.statusFilter
+        ) {
+          return false;
+        }
+        if (!displayMatchesGroups(display, filters.groupFilters)) return false;
+        return displayMatchesOutput(display, filters.normalizedOutputFilter);
+      }),
+    [
+      allDisplayRows,
+      debouncedSearch,
+      filters.groupFilters,
+      filters.normalizedOutputFilter,
+      filters.statusFilter,
+    ],
+  );
+
+  const filteredTotal = filteredDisplayRows.length;
+  const filteredTotalPages = Math.max(1, Math.ceil(filteredTotal / PAGE_SIZE));
+  const boundedPage = Math.min(Math.max(filters.page, 1), filteredTotalPages);
+  const paginatedDisplayRows = useMemo(() => {
+    const start = (boundedPage - 1) * PAGE_SIZE;
+    return filteredDisplayRows.slice(start, start + PAGE_SIZE);
+  }, [boundedPage, filteredDisplayRows]);
+
+  const displays: Display[] = useMemo(
+    () => paginatedDisplayRows.map((row) => row.display),
+    [paginatedDisplayRows],
+  );
+
+  const clientDisplaysData = useMemo<DisplaysListResponse | undefined>(() => {
+    if (bootstrapData == null) return undefined;
+    return {
+      items: paginatedDisplayRows.map((row) => row.backendDisplay),
+      total: filteredTotal,
+      page: boundedPage,
+      pageSize: PAGE_SIZE,
+    };
+  }, [bootstrapData, boundedPage, filteredTotal, paginatedDisplayRows]);
 
   const availableGroupFilters = useMemo(
     () => dedupeDisplayGroupNames(displayGroupsData.map((g) => g.name)),
@@ -299,12 +448,12 @@ export function useDisplaysPage({
     availableGroupFilters,
     availableOutputFilters,
     displays,
-    displaysData,
+    displaysData: clientDisplaysData,
     displayGroupsData,
     emergencyContentOptions,
     globalEmergencyActive,
-    isLoading,
-    isFetching,
+    isLoading: isLoading || isLoadingRemainingDisplays,
+    isFetching: isFetching || isLoadingRemainingDisplays,
     isError,
     loadErrorMessage,
     isAddInfoDialogOpen: dialogState.isAddInfoDialogOpen,

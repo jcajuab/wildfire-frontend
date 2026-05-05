@@ -1,11 +1,10 @@
 "use client";
 
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { useCallback, useRef, useState } from "react";
-import { IconSettings } from "@tabler/icons-react";
+import { IconInfoCircle } from "@tabler/icons-react";
 
-import { DisplayFormBody } from "@/components/displays/display-form-body";
-import { DisplayGroupManagerDialog } from "@/components/displays/display-group-manager-dialog";
+import { DisplayGroupsTagsInput } from "@/components/displays/display-groups-tags-input";
 import { Button } from "@/components/ui/button";
 import {
   DialogDescription,
@@ -22,6 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { DisplayGroup } from "@/lib/api/displays-api";
 import {
   DISPLAY_OUTPUT_TYPES,
@@ -29,10 +33,7 @@ import {
   toCanonicalDisplayOutput,
   type DisplayOutputType,
 } from "@/lib/display-output";
-import {
-  dedupeDisplayGroupNames,
-  toDisplayGroupKey,
-} from "@/lib/display-group-normalization";
+import { dedupeDisplayGroupNames } from "@/lib/display-group-normalization";
 import type { Display } from "@/types/display";
 
 interface EditFormData {
@@ -40,8 +41,6 @@ interface EditFormData {
   readonly slug: string;
   readonly outputType: DisplayOutputType;
   readonly outputIndex: string;
-  readonly resolutionWidth: string;
-  readonly resolutionHeight: string;
   readonly emergencyContentId: string | null;
   readonly groups: readonly string[];
 }
@@ -51,20 +50,11 @@ function createInitialFormData(display: Display): EditFormData {
     display.output === "Not available" ? null : display.output,
   );
 
-  const [rawWidth, rawHeight] = display.resolution
-    .split("x")
-    .map((value) => value.trim());
-  const width = rawWidth && Number.isFinite(Number(rawWidth)) ? rawWidth : "";
-  const height =
-    rawHeight && Number.isFinite(Number(rawHeight)) ? rawHeight : "";
-
   return {
     displayName: display.name,
     slug: display.slug,
     outputType: parsedOutput?.type ?? "HDMI",
     outputIndex: String(parsedOutput?.index ?? 0),
-    resolutionWidth: width,
-    resolutionHeight: height,
     emergencyContentId: display.emergencyContentId,
     groups: display.groups.map((group) => group.name),
   };
@@ -79,7 +69,41 @@ interface EditDisplayFormProps {
   }[];
   readonly onClose: () => void;
   readonly onSave: (display: Display) => Promise<boolean>;
-  readonly canManageGroups: boolean;
+}
+
+interface FieldLabelRowProps {
+  readonly htmlFor: string;
+  readonly children: ReactNode;
+  readonly help?: {
+    readonly label: string;
+    readonly content: ReactNode;
+  };
+}
+
+function FieldLabelRow({
+  htmlFor,
+  children,
+  help,
+}: FieldLabelRowProps): ReactElement {
+  return (
+    <div className="flex min-h-5 items-center gap-1">
+      <Label htmlFor={htmlFor}>{children}</Label>
+      {help ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={help.label}
+              className="inline-flex size-4 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
+            >
+              <IconInfoCircle className="size-3.5" aria-hidden="true" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{help.content}</TooltipContent>
+        </Tooltip>
+      ) : null}
+    </div>
+  );
 }
 
 export function EditDisplayForm({
@@ -88,37 +112,21 @@ export function EditDisplayForm({
   emergencyContentOptions = [],
   onClose,
   onSave,
-  canManageGroups,
 }: EditDisplayFormProps): ReactElement {
   const [formData, setFormData] = useState<EditFormData>(() =>
     createInitialFormData(display),
   );
   const [isSaving, setIsSaving] = useState(false);
-  const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
   const portalContainerRef = useRef<HTMLDivElement>(null);
 
   const outputIndexNumber = Number.parseInt(formData.outputIndex, 10);
   const hasValidOutputIndex =
     Number.isInteger(outputIndexNumber) && outputIndexNumber >= 0;
-  const widthNumber = Number.parseInt(formData.resolutionWidth, 10);
-  const heightNumber = Number.parseInt(formData.resolutionHeight, 10);
-  const hasResolutionWidth = formData.resolutionWidth.trim().length > 0;
-  const hasResolutionHeight = formData.resolutionHeight.trim().length > 0;
-  const isResolutionPairProvided = hasResolutionWidth && hasResolutionHeight;
-  const isResolutionPairEmpty = !hasResolutionWidth && !hasResolutionHeight;
-  const hasValidResolution =
-    isResolutionPairEmpty ||
-    (isResolutionPairProvided &&
-      Number.isInteger(widthNumber) &&
-      widthNumber > 0 &&
-      Number.isInteger(heightNumber) &&
-      heightNumber > 0);
 
   const canSave =
     formData.displayName.trim().length > 0 &&
     formData.slug.trim().length > 0 &&
     hasValidOutputIndex &&
-    hasValidResolution &&
     !isSaving;
 
   const handleSave = useCallback(async () => {
@@ -130,9 +138,6 @@ export function EditDisplayForm({
       type: formData.outputType,
       index: outputIndexNumber,
     });
-    const resolution = isResolutionPairProvided
-      ? `${String(widthNumber)}x${String(heightNumber)}`
-      : "Not available";
 
     setIsSaving(true);
     try {
@@ -140,7 +145,7 @@ export function EditDisplayForm({
         ...display,
         name: formData.displayName,
         output,
-        resolution,
+        resolution: display.resolution,
         emergencyContentId: formData.emergencyContentId,
         groups,
       });
@@ -152,75 +157,81 @@ export function EditDisplayForm({
     canSave,
     display,
     formData,
-    heightNumber,
-    isResolutionPairProvided,
     isSaving,
     onClose,
     onSave,
     outputIndexNumber,
-    widthNumber,
   ]);
 
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Edit Details</DialogTitle>
-        <DialogDescription className="sr-only">
-          Update display details and grouping.
+        <DialogTitle>Edit Display</DialogTitle>
+        <DialogDescription>
+          Update display details and groups.
         </DialogDescription>
       </DialogHeader>
 
       <div className="flex flex-col gap-4">
-        <DisplayFormBody
-          mode="edit"
-          displayName={formData.displayName}
-          onDisplayNameChange={(value) =>
-            setFormData((prev) => ({ ...prev, displayName: value }))
-          }
-          groups={formData.groups}
-          onGroupsChange={(names) =>
-            setFormData((prev) => ({ ...prev, groups: names }))
-          }
-          existingGroups={existingGroups}
-          disabled={isSaving}
-          portalContainer={portalContainerRef}
-          groupsSlot={
-            <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="edit-groups">Display Groups</Label>
-              {canManageGroups ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsGroupManagerOpen(true)}
-                  disabled={isSaving}
-                >
-                  <IconSettings className="size-4" />
-                  Manage Groups
-                </Button>
-              ) : null}
-            </div>
-          }
-        />
-        <div ref={portalContainerRef} />
+        <div className="space-y-2">
+          <FieldLabelRow htmlFor="edit-display-name">
+            Display Name
+          </FieldLabelRow>
+          <Input
+            id="edit-display-name"
+            value={formData.displayName}
+            onChange={(event) =>
+              setFormData((prev) => ({
+                ...prev,
+                displayName: event.target.value,
+              }))
+            }
+            disabled={isSaving}
+          />
+        </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-display-slug">Display Slug</Label>
+        <div className="space-y-2">
+          <FieldLabelRow
+            htmlFor="edit-display-slug"
+            help={{
+              label: "Display slug help",
+              content:
+                "Slug is fixed after registration and used by display runtime identity.",
+            }}
+          >
+            Display Slug
+          </FieldLabelRow>
           <Input
             id="edit-display-slug"
             value={formData.slug}
             disabled
             readOnly
           />
-          <p className="text-xs text-muted-foreground">
-            Slug is fixed after registration and used by display runtime
-            identity.
-          </p>
         </div>
 
+        <div className="space-y-2">
+          <FieldLabelRow htmlFor="edit-groups">
+            Display Groups
+          </FieldLabelRow>
+          <DisplayGroupsTagsInput
+            id="edit-groups"
+            value={formData.groups}
+            onValueChange={(names) =>
+              setFormData((prev) => ({ ...prev, groups: names }))
+            }
+            existingGroups={existingGroups}
+            disabled={isSaving}
+            showLabel={false}
+            portalContainer={portalContainerRef}
+          />
+        </div>
+        <div ref={portalContainerRef} />
+
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-output-type">Display Output Type</Label>
+          <div className="space-y-2">
+            <FieldLabelRow htmlFor="edit-output-type">
+              Output Type
+            </FieldLabelRow>
             <Select
               value={formData.outputType}
               onValueChange={(value) =>
@@ -243,8 +254,10 @@ export function EditDisplayForm({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-output-index">Display Output Index</Label>
+          <div className="space-y-2">
+            <FieldLabelRow htmlFor="edit-output-index">
+              Output Index
+            </FieldLabelRow>
             <Input
               id="edit-output-index"
               type="number"
@@ -268,53 +281,17 @@ export function EditDisplayForm({
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-resolution-width">Resolution Width</Label>
-            <Input
-              id="edit-resolution-width"
-              type="number"
-              min={1}
-              inputMode="numeric"
-              value={formData.resolutionWidth}
-              onChange={(event) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  resolutionWidth: event.target.value,
-                }))
-              }
-              aria-invalid={!hasValidResolution}
-              disabled={isSaving}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-resolution-height">Resolution Height</Label>
-            <Input
-              id="edit-resolution-height"
-              type="number"
-              min={1}
-              inputMode="numeric"
-              value={formData.resolutionHeight}
-              onChange={(event) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  resolutionHeight: event.target.value,
-                }))
-              }
-              aria-invalid={!hasValidResolution}
-              disabled={isSaving}
-            />
-          </div>
-        </div>
-        {!hasValidResolution ? (
-          <p className="text-xs text-destructive">
-            Resolution requires positive width and height, or leave both fields
-            empty.
-          </p>
-        ) : null}
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-emergency-content">Emergency Content</Label>
+        <div className="space-y-2">
+          <FieldLabelRow
+            htmlFor="edit-emergency-content"
+            help={{
+              label: "Emergency content help",
+              content:
+                "Assign a READY image, video, or PDF for emergency override mode.",
+            }}
+          >
+            Emergency Content
+          </FieldLabelRow>
           <Select
             value={formData.emergencyContentId ?? "__none__"}
             onValueChange={(value) =>
@@ -337,58 +314,17 @@ export function EditDisplayForm({
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">
-            Assign a READY image, video, or PDF for emergency override mode.
-          </p>
         </div>
       </div>
 
-      <DialogFooter className="sm:justify-between">
-        <Button
-          variant="outline"
-          onClick={onClose}
-          className="flex-1"
-          disabled={isSaving}
-        >
+      <DialogFooter className="flex-row justify-end">
+        <Button variant="outline" onClick={onClose} disabled={isSaving}>
           Cancel
         </Button>
-        <Button
-          onClick={() => void handleSave()}
-          disabled={!canSave}
-          className="flex-1"
-        >
-          <IconSettings className="size-4" />
+        <Button onClick={() => void handleSave()} disabled={!canSave}>
           {isSaving ? "Saving..." : "Save"}
         </Button>
       </DialogFooter>
-
-      {isGroupManagerOpen ? (
-        <DisplayGroupManagerDialog
-          open={isGroupManagerOpen}
-          onOpenChange={setIsGroupManagerOpen}
-          groups={existingGroups}
-          onGroupRenamed={({ previousName, nextName }) => {
-            const previousKey = toDisplayGroupKey(previousName);
-            setFormData((prev) => ({
-              ...prev,
-              groups: dedupeDisplayGroupNames(
-                prev.groups.map((name) =>
-                  toDisplayGroupKey(name) === previousKey ? nextName : name,
-                ),
-              ),
-            }));
-          }}
-          onGroupDeleted={({ name }) => {
-            const deletedKey = toDisplayGroupKey(name);
-            setFormData((prev) => ({
-              ...prev,
-              groups: prev.groups.filter(
-                (groupName) => toDisplayGroupKey(groupName) !== deletedKey,
-              ),
-            }));
-          }}
-        />
-      ) : null}
     </>
   );
 }

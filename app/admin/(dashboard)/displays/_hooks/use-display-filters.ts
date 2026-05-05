@@ -10,6 +10,7 @@ import {
 } from "nuqs";
 import type { DisplayStatusFilter } from "@/components/displays/display-filter-popover";
 import type { DisplayOutputFilter } from "@/types/display";
+import { normalizeDisplayOutputFilter } from "@/lib/display-output";
 
 const DISPLAY_STATUS_VALUES = ["all", "READY", "LIVE", "DOWN"] as const;
 
@@ -25,7 +26,7 @@ export function useDisplayFilters() {
   const [filters, setFilters] = useQueryStates(displayFiltersSchema);
 
   const normalizedOutputFilter: DisplayOutputFilter =
-    filters.output.length > 0 ? filters.output : "all";
+    normalizeDisplayOutputFilter(filters.output);
 
   const handleStatusFilterChange = useCallback(
     (value: DisplayStatusFilter) => {
@@ -53,7 +54,7 @@ export function useDisplayFilters() {
 
   const handleOutputFilterChange = useCallback(
     (value: DisplayOutputFilter) => {
-      setFilters({ output: value, page: 1 });
+      setFilters({ output: normalizeDisplayOutputFilter(value), page: 1 });
     },
     [setFilters],
   );

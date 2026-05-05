@@ -1,8 +1,9 @@
 import { useState, type ReactElement } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, test, vi } from "vitest";
+import { beforeAll, describe, expect, test, vi } from "vitest";
 import { EditDisplayDialog } from "@/components/displays/edit-display-dialog";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Display } from "@/types/display";
 
 const makeDisplay = (overrides?: Partial<Display>): Display => ({
@@ -22,6 +23,12 @@ const makeDisplay = (overrides?: Partial<Display>): Display => ({
   ...overrides,
 });
 
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
 function EditDisplayDialogHarness(): ReactElement {
   const [open, setOpen] = useState(true);
 
@@ -38,6 +45,23 @@ function EditDisplayDialogHarness(): ReactElement {
         onSave={vi.fn(async () => true)}
       />
     </>
+  );
+}
+
+function renderEditDisplayDialog(
+  props: Partial<Parameters<typeof EditDisplayDialog>[0]> = {},
+) {
+  return render(
+    <TooltipProvider>
+      <EditDisplayDialog
+        display={makeDisplay()}
+        existingGroups={[]}
+        open={true}
+        onOpenChange={vi.fn()}
+        onSave={vi.fn(async () => true)}
+        {...props}
+      />
+    </TooltipProvider>,
   );
 }
 
@@ -60,24 +84,106 @@ async function dismissDialog(
 }
 
 describe("EditDisplayDialog", () => {
-  test("keeps resolution unchanged when changing display output", async () => {
+  beforeAll(() => {
+    globalThis.ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
+    if (!Element.prototype.hasPointerCapture) {
+      Element.prototype.hasPointerCapture = () => false;
+    }
+    if (!Element.prototype.setPointerCapture) {
+      Element.prototype.setPointerCapture = () => {};
+    }
+    if (!Element.prototype.releasePointerCapture) {
+      Element.prototype.releasePointerCapture = () => {};
+    }
+    if (!HTMLElement.prototype.scrollIntoView) {
+      HTMLElement.prototype.scrollIntoView = () => {};
+    }
+  });
+
+  test("renders the simplified edit display form", () => {
+    renderEditDisplayDialog();
+
+    expect(
+      screen.getByRole("heading", { name: "Edit Display" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Update display details and groups."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Display Name")).toBeInTheDocument();
+    expect(screen.getByLabelText("Display Slug")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Display slug help" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: /display groups/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Manage Groups" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "Output Type" }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Output Index")).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "Emergency Content" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Emergency content help" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "Slug is fixed after registration and used by display runtime identity.",
+      ),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "Assign a READY image, video, or PDF for emergency override mode.",
+      ),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Resolution Width")).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Resolution Height"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("shows compact help in tooltips", async () => {
+    const user = userEvent.setup();
+
+    renderEditDisplayDialog();
+
+    await user.hover(screen.getByRole("button", { name: "Display slug help" }));
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Slug is fixed after registration and used by display runtime identity.",
+    );
+
+  });
+
+  test("shows emergency content help in a tooltip", async () => {
+    const user = userEvent.setup();
+
+    renderEditDisplayDialog();
+
+    await user.hover(
+      screen.getByRole("button", { name: "Emergency content help" }),
+    );
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Assign a READY image, video, or PDF for emergency override mode.",
+    );
+  });
+
+  test("keeps resolution and emergency content unchanged when changing display output", async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
     const onSave = vi.fn(async () => true);
 
-    render(
-      <EditDisplayDialog
-        display={makeDisplay()}
-        existingGroups={[]}
-        open={true}
-        onOpenChange={onOpenChange}
-        onSave={onSave}
-      />,
-    );
+    renderEditDisplayDialog({
+      display: makeDisplay({ emergencyContentId: "content-1" }),
+      emergencyContentOptions: [{ id: "content-1", title: "Fire Notice" }],
+      onOpenChange,
+      onSave,
+    });
 
-    const outputIndexInput = screen.getByLabelText(
-      "Display Output Index",
-    ) as HTMLInputElement;
+    const outputIndexInput = screen.getByLabelText("Output Index");
     await user.clear(outputIndexInput);
     await user.type(outputIndexInput, "2");
 
@@ -87,6 +193,7 @@ describe("EditDisplayDialog", () => {
       expect.objectContaining({
         output: "hdmi-2",
         resolution: "1920x1080",
+        emergencyContentId: "content-1",
       }),
     );
   }, 15_000);
@@ -94,38 +201,23 @@ describe("EditDisplayDialog", () => {
   test("disables save when output index is invalid", async () => {
     const user = userEvent.setup();
 
-    render(
-      <EditDisplayDialog
-        display={makeDisplay()}
-        existingGroups={[]}
-        open={true}
-        onOpenChange={vi.fn()}
-        onSave={vi.fn(async () => true)}
-      />,
-    );
+    renderEditDisplayDialog();
 
-    const outputIndexInput = screen.getByLabelText(
-      "Display Output Index",
-    ) as HTMLInputElement;
+    const outputIndexInput = screen.getByLabelText("Output Index");
     await user.clear(outputIndexInput);
     await user.type(outputIndexInput, "-1");
 
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   });
 
-  test("allows saving when resolution is intentionally empty", async () => {
+  test("keeps unavailable resolution unchanged when saving", async () => {
     const user = userEvent.setup();
     const onSave = vi.fn(async () => true);
 
-    render(
-      <EditDisplayDialog
-        display={makeDisplay({ resolution: "Not available" })}
-        existingGroups={[]}
-        open={true}
-        onOpenChange={vi.fn()}
-        onSave={onSave}
-      />,
-    );
+    renderEditDisplayDialog({
+      display: makeDisplay({ resolution: "Not available" }),
+      onSave,
+    });
 
     const saveButton = screen.getByRole("button", { name: "Save" });
     expect(saveButton).toBeEnabled();
@@ -138,20 +230,34 @@ describe("EditDisplayDialog", () => {
     );
   });
 
+  test("allows selecting emergency content", async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn(async () => true);
+
+    renderEditDisplayDialog({
+      emergencyContentOptions: [{ id: "content-1", title: "Fire Notice" }],
+      onSave,
+    });
+
+    await user.click(
+      screen.getByRole("combobox", { name: "Emergency Content" }),
+    );
+    await user.click(screen.getByRole("option", { name: "Fire Notice" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        emergencyContentId: "content-1",
+      }),
+    );
+  });
+
   test("keeps dialog open when save fails", async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
     const onSave = vi.fn(async () => false);
 
-    render(
-      <EditDisplayDialog
-        display={makeDisplay()}
-        existingGroups={[]}
-        open={true}
-        onOpenChange={onOpenChange}
-        onSave={onSave}
-      />,
-    );
+    renderEditDisplayDialog({ onOpenChange, onSave });
 
     await user.click(screen.getByRole("button", { name: "Save" }));
 
@@ -161,17 +267,8 @@ describe("EditDisplayDialog", () => {
     });
   });
 
-  test("hides manage groups action without write permission", () => {
-    render(
-      <EditDisplayDialog
-        display={makeDisplay()}
-        existingGroups={[]}
-        open={true}
-        onOpenChange={vi.fn()}
-        onSave={vi.fn(async () => true)}
-        canManageGroups={false}
-      />,
-    );
+  test("does not render manage groups in the edit modal", () => {
+    renderEditDisplayDialog();
 
     expect(
       screen.queryByRole("button", { name: "Manage Groups" }),
@@ -182,23 +279,18 @@ describe("EditDisplayDialog", () => {
     const user = userEvent.setup();
     const onSave = vi.fn(async () => true);
 
-    render(
-      <EditDisplayDialog
-        display={makeDisplay()}
-        existingGroups={[
-          {
-            id: "group-1",
-            name: "Lobby",
-            displayIds: [],
-            createdAt: "2025-01-01T00:00:00.000Z",
-            updatedAt: "2025-01-01T00:00:00.000Z",
-          },
-        ]}
-        open={true}
-        onOpenChange={vi.fn()}
-        onSave={onSave}
-      />,
-    );
+    renderEditDisplayDialog({
+      existingGroups: [
+        {
+          id: "group-1",
+          name: "Lobby",
+          displayIds: [],
+          createdAt: "2025-01-01T00:00:00.000Z",
+          updatedAt: "2025-01-01T00:00:00.000Z",
+        },
+      ],
+      onSave,
+    });
 
     const combobox = screen.getByRole("combobox", { name: /display groups/i });
     await user.click(combobox);
@@ -214,7 +306,11 @@ describe("EditDisplayDialog", () => {
     async (mode) => {
       const user = userEvent.setup();
 
-      render(<EditDisplayDialogHarness />);
+      render(
+        <TooltipProvider>
+          <EditDisplayDialogHarness />
+        </TooltipProvider>,
+      );
 
       const nameInput = screen.getByLabelText(
         "Display Name",
@@ -226,7 +322,9 @@ describe("EditDisplayDialog", () => {
 
       await user.click(screen.getByRole("button", { name: "Reopen" }));
 
-      expect(screen.getByLabelText("Display Name")).toHaveValue("Main Lobby");
+      expect(screen.getByLabelText("Display Name")).toHaveValue(
+        "Lobby Display",
+      );
     },
   );
 });

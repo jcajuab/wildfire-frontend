@@ -112,20 +112,8 @@ describe("DisplayCard", () => {
     ).not.toBeInTheDocument();
   });
 
-  test("shows missing emergency warning indicator when emergency content is not set", async () => {
-    const user = userEvent.setup();
+  test("does not show missing emergency warning indicator", () => {
     renderDisplayCard();
-
-    const indicator = screen.getByLabelText("Emergency content not set");
-    expect(indicator).toBeInTheDocument();
-    await user.hover(indicator);
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Emergency content not set",
-    );
-  });
-
-  test("does not show missing emergency indicator when emergency content is configured", () => {
-    renderDisplayCard({ ...baseDisplay, emergencyContentId: "content-1" });
 
     expect(
       screen.queryByLabelText("Emergency content not set"),
@@ -155,7 +143,7 @@ describe("DisplayCard", () => {
       screen.queryByRole("menuitem", { name: "More Details" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("menuitem", { name: "View Page" }),
+      screen.getByRole("menuitem", { name: "View Display Page" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("menuitem", { name: "Edit Display" }),
@@ -264,7 +252,7 @@ describe("DisplayCard", () => {
 
     expect(screen.getByText("Emergency Active")).toBeInTheDocument();
     expect(
-      screen.getByLabelText("Emergency content not set"),
-    ).toBeInTheDocument();
+      screen.queryByLabelText("Emergency content not set"),
+    ).not.toBeInTheDocument();
   });
 });

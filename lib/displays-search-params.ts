@@ -1,6 +1,8 @@
 import type { DisplaysListQuery } from "@/lib/api/displays-api";
+import { normalizeDisplayOutputFilter } from "@/lib/display-output";
 
 export const DISPLAYS_PAGE_SIZE = 20;
+export const DISPLAYS_BOOTSTRAP_PAGE_SIZE = 100;
 
 const DISPLAY_STATUS_VALUES = ["all", "READY", "LIVE", "DOWN"] as const;
 
@@ -37,8 +39,8 @@ export function displaysBootstrapQueryFromSearchParams(
       : [];
 
   const outputRaw = first(searchParams.output)?.trim() ?? "all";
-  const output =
-    outputRaw === "all" || outputRaw === "" ? undefined : outputRaw;
+  const normalizedOutput = normalizeDisplayOutputFilter(outputRaw);
+  const output = normalizedOutput === "all" ? undefined : normalizedOutput;
 
   return {
     page,

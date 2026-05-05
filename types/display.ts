@@ -32,5 +32,5 @@ export interface Display {
   readonly createdAt: string;
 }
 
-/** "all" is the sentinel for no filter; any other string is an output name. */
+/** "all" is the sentinel for no filter; output type filters use values like "hdmi-*". */
 export type DisplayOutputFilter = string;

@@ -34,6 +34,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DISPLAY_OUTPUT_TYPES,
+  getDisplayOutputFilterLabel,
+  normalizeDisplayOutputFilter,
+  toDisplayOutputTypeFilter,
+} from "@/lib/display-output";
 import type { DisplayOutputFilter, DisplayStatus } from "@/types/display";
 
 export type DisplayStatusFilter = "all" | DisplayStatus;
@@ -56,17 +62,35 @@ const statusOptions: readonly {
   readonly value: DisplayStatusFilter;
   readonly label: string;
 }[] = [
-  { value: "all", label: "All" },
+  { value: "all", label: "All statuses" },
   { value: "READY", label: "Ready" },
   { value: "LIVE", label: "Live" },
   { value: "DOWN", label: "Down" },
 ] as const;
 
+interface FilterChipProps {
+  readonly label: string;
+  readonly onRemove: () => void;
+}
+
+function FilterChip({ label, onRemove }: FilterChipProps): ReactElement {
+  return (
+    <button
+      type="button"
+      aria-label={`Remove ${label} filter`}
+      className="inline-flex h-6 max-w-full items-center gap-1 rounded-md border border-border bg-muted/60 px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
+      onClick={onRemove}
+    >
+      <span className="truncate">{label}</span>
+      <IconX className="size-3 text-muted-foreground" aria-hidden="true" />
+    </button>
+  );
+}
+
 export function DisplayFilterPopover({
   statusFilter,
   selectedGroups,
   selectedOutput,
-  filteredResultsCount,
   availableGroups,
   availableOutputs,
   isFetching = false,
@@ -80,6 +104,32 @@ export function DisplayFilterPopover({
     (selectedOutput === "all" ? 0 : 1) +
     (statusFilter === "all" ? 0 : 1);
   const hasActiveFilters = activeFilterCount > 0;
+  const activeStatusLabel =
+    statusFilter === "all"
+      ? null
+      : statusOptions.find((option) => option.value === statusFilter)?.label;
+  const outputTypeOptions = useMemo(() => {
+    const values = new Set<DisplayOutputFilter>();
+
+    for (const output of availableOutputs) {
+      const normalized = normalizeDisplayOutputFilter(output);
+      if (normalized !== "all") {
+        values.add(normalized);
+      }
+    }
+
+    for (const type of DISPLAY_OUTPUT_TYPES) {
+      values.add(toDisplayOutputTypeFilter(type));
+    }
+
+    return DISPLAY_OUTPUT_TYPES.map((type) => {
+      const value = toDisplayOutputTypeFilter(type);
+      return {
+        value,
+        label: value,
+      };
+    }).filter((option) => values.has(option.value));
+  }, [availableOutputs]);
 
   const anchorRef = useComboboxAnchor();
   const [groupSearchValue, setGroupSearchValue] = useState("");
@@ -100,6 +150,13 @@ export function DisplayFilterPopover({
     [onGroupsChange],
   );
 
+  const handleRemoveGroup = useCallback(
+    (groupName: string) => {
+      onGroupsChange(selectedGroups.filter((name) => name !== groupName));
+    },
+    [onGroupsChange, selectedGroups],
+  );
+
   return (
     <Popover>
       <Tooltip>
@@ -116,7 +173,7 @@ export function DisplayFilterPopover({
                 <span className="absolute -right-1 -top-1 size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               ) : hasActiveFilters ? (
                 <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground tabular-nums">
-                  {filteredResultsCount}
+                  {activeFilterCount}
                 </span>
               ) : null}
             </Button>
@@ -125,100 +182,81 @@ export function DisplayFilterPopover({
         <TooltipContent>Filter</TooltipContent>
       </Tooltip>
       <PopoverContent
-        className="w-80 p-4"
+        className="w-[22rem] max-w-[calc(100vw-2rem)] gap-0 p-0"
         side="bottom"
         align="end"
         avoidCollisions={false}
+        aria-label="Display filters"
       >
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Filters</h3>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="gap-1.5"
-              onClick={onClearFilters}
-              disabled={!hasActiveFilters}
-            >
-              <IconX className="size-3.5" aria-hidden="true" />
-              Clear
-            </Button>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label
-              htmlFor="display-status-filter"
-              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-            >
-              Status
-            </Label>
-            <Select
-              value={statusFilter}
-              onValueChange={(nextValue) =>
-                onStatusChange(nextValue as DisplayStatusFilter)
-              }
-            >
-              <SelectTrigger id="display-status-filter" className="w-full">
-                <SelectValue placeholder="All" />
-              </SelectTrigger>
-              <SelectContent
-                position="popper"
-                side="bottom"
-                align="start"
-                avoidCollisions={false}
+        <div className="flex flex-col gap-4 p-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="display-status-filter">Status</Label>
+              <Select
+                value={statusFilter}
+                onValueChange={(nextValue) =>
+                  onStatusChange(nextValue as DisplayStatusFilter)
+                }
               >
-                {statusOptions.map((statusOption) => (
-                  <SelectItem
-                    key={statusOption.value}
-                    value={statusOption.value}
-                  >
-                    {statusOption.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                <SelectTrigger id="display-status-filter" className="w-full">
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent
+                  position="popper"
+                  side="bottom"
+                  align="start"
+                  avoidCollisions={false}
+                >
+                  {statusOptions.map((statusOption) => (
+                    <SelectItem
+                      key={statusOption.value}
+                      value={statusOption.value}
+                    >
+                      {statusOption.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Label
-              htmlFor="display-output-filter"
-              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-            >
-              Output
-            </Label>
-            <Select
-              value={selectedOutput}
-              onValueChange={(nextValue) =>
-                onOutputChange(nextValue as DisplayOutputFilter)
-              }
-            >
-              <SelectTrigger id="display-output-filter" className="w-full">
-                <SelectValue placeholder="All Outputs" />
-              </SelectTrigger>
-              <SelectContent
-                position="popper"
-                side="bottom"
-                align="start"
-                avoidCollisions={false}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="display-output-filter">Output Type</Label>
+              <Select
+                value={selectedOutput}
+                onValueChange={(nextValue) =>
+                  onOutputChange(
+                    normalizeDisplayOutputFilter(nextValue) as DisplayOutputFilter,
+                  )
+                }
               >
-                <SelectItem value="all">All Outputs</SelectItem>
-                {availableOutputs.map((outputName) => (
-                  <SelectItem key={outputName} value={outputName}>
-                    {outputName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectTrigger id="display-output-filter" className="w-full">
+                  <SelectValue placeholder="All output types" />
+                </SelectTrigger>
+                <SelectContent
+                  position="popper"
+                  side="bottom"
+                  align="start"
+                  avoidCollisions={false}
+                >
+                  <SelectItem value="all">All output types</SelectItem>
+                  {outputTypeOptions.map((outputOption) => (
+                    <SelectItem
+                      key={outputOption.value}
+                      value={outputOption.value}
+                    >
+                      {outputOption.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Groups
-            </p>
+            <Label htmlFor="display-group-filter">Display Groups</Label>
             {availableGroups.length === 0 ? (
               <p className="rounded-md border border-dashed border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-                No groups available.
+                No display groups available.
               </p>
             ) : (
               <Combobox
@@ -241,8 +279,11 @@ export function DisplayFilterPopover({
                     </ComboboxChip>
                   ))}
                   <ComboboxChipsInput
+                    id="display-group-filter"
                     placeholder={
-                      selectedGroups.length === 0 ? "Search groups…" : ""
+                      selectedGroups.length === 0
+                        ? "Search display groups"
+                        : ""
                     }
                     onFocus={() => setGroupComboOpen(true)}
                     onClick={() => setGroupComboOpen(true)}
@@ -262,6 +303,46 @@ export function DisplayFilterPopover({
             )}
           </div>
         </div>
+        {hasActiveFilters ? (
+          <div className="border-t border-border bg-muted/30 px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-medium text-muted-foreground">
+                Active filters
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1.5 px-2"
+                onClick={onClearFilters}
+              >
+                <IconX className="size-3.5" aria-hidden="true" />
+                Clear
+              </Button>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {activeStatusLabel ? (
+                <FilterChip
+                  label={activeStatusLabel}
+                  onRemove={() => onStatusChange("all")}
+                />
+              ) : null}
+              {selectedOutput !== "all" ? (
+                <FilterChip
+                  label={getDisplayOutputFilterLabel(selectedOutput)}
+                  onRemove={() => onOutputChange("all")}
+                />
+              ) : null}
+              {selectedGroups.map((name) => (
+                <FilterChip
+                  key={name}
+                  label={name}
+                  onRemove={() => handleRemoveGroup(name)}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
       </PopoverContent>
     </Popover>
   );
