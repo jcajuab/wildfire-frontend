@@ -97,7 +97,7 @@ export function AppSidebar(): ReactElement {
   const pathname = usePathname();
   const router = useRouter();
   const { user, can, isInitialized } = useAuth();
-  const { isMobile } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar();
   const [isPending, startTransition] = useTransition();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
@@ -109,6 +109,7 @@ export function AppSidebar(): ReactElement {
     setPendingHref(href);
     startTransition(() => {
       router.push(href);
+      if (isMobile) setOpenMobile(false);
     });
   }
 
