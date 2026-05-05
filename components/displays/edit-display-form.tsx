@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement, ReactNode } from "react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { IconInfoCircle } from "@tabler/icons-react";
 
 import { DisplayGroupsTagsInput } from "@/components/displays/display-groups-tags-input";
@@ -123,7 +123,6 @@ export function EditDisplayForm({
     createInitialFormData(display),
   );
   const [isSaving, setIsSaving] = useState(false);
-  const portalContainerRef = useRef<HTMLDivElement>(null);
 
   const outputIndexNumber = Number.parseInt(formData.outputIndex, 10);
   const hasValidOutputIndex =
@@ -244,10 +243,8 @@ export function EditDisplayForm({
             existingGroups={existingGroups}
             disabled={isSaving}
             showLabel={false}
-            portalContainer={portalContainerRef}
           />
         </div>
-        <div ref={portalContainerRef} />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
