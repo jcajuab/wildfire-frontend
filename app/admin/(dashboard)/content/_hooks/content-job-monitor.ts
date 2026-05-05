@@ -53,11 +53,7 @@ export function useContentJobMonitor(
           void input
             .fetchContent(job.contentId)
             .then((full) => {
-              mergeEnrichedContentIntoCaches(
-                dispatch,
-                store.getState,
-                full,
-              );
+              mergeEnrichedContentIntoCaches(dispatch, store.getState, full);
             })
             .catch(() => {
               patchContentStatusInCaches(

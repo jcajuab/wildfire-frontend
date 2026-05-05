@@ -11,7 +11,10 @@ export function mergeEnrichedContentIntoCaches(
   content: BackendContent,
 ): void {
   const state = getState();
-  const listArgs = contentApi.util.selectCachedArgsForQuery(state, "listContent");
+  const listArgs = contentApi.util.selectCachedArgsForQuery(
+    state,
+    "listContent",
+  );
   for (const args of listArgs) {
     dispatch(
       contentApi.util.updateQueryData("listContent", args, (draft) => ({
@@ -33,7 +36,10 @@ export function patchContentStatusInCaches(
   status: BackendContent["status"],
 ): void {
   const state = getState();
-  const listArgs = contentApi.util.selectCachedArgsForQuery(state, "listContent");
+  const listArgs = contentApi.util.selectCachedArgsForQuery(
+    state,
+    "listContent",
+  );
   for (const args of listArgs) {
     dispatch(
       contentApi.util.updateQueryData("listContent", args, (draft) => ({

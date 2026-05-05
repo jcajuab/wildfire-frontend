@@ -29,12 +29,8 @@ import { Button } from "@/components/ui/button";
 
 const SESSION_KEY_PREFIX = "wildfire:pdf-crop:";
 
-type SubmitPdfCrops = ReturnType<
-  typeof useSubmitPdfCropsMutation
->[0];
-type CancelPdfUpload = ReturnType<
-  typeof useCancelPdfUploadMutation
->[0];
+type SubmitPdfCrops = ReturnType<typeof useSubmitPdfCropsMutation>[0];
+type CancelPdfUpload = ReturnType<typeof useCancelPdfUploadMutation>[0];
 
 type AppRouter = ReturnType<typeof useRouter>;
 
