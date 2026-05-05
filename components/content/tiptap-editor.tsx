@@ -90,7 +90,7 @@ export function TiptapEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[200px] p-4 [&_strong]:text-inherit [&_a]:text-inherit [&_em]:text-inherit",
+          "prose prose-sm dark:prose-invert max-w-none min-w-0 break-words focus:outline-none min-h-[280px] max-h-[min(46vh,420px)] overflow-y-auto overflow-x-hidden p-4 [overflow-wrap:anywhere] [&_a]:text-inherit [&_em]:text-inherit [&_strong]:text-inherit [&_table]:max-w-full",
       },
     },
   });
@@ -117,7 +117,6 @@ export function TiptapEditor({
   }
 
   const charCount = editor.storage.characterCount.characters();
-  const wordCount = editor.storage.characterCount.words();
   const isOverLimit = charCount > TEXT_CONTENT_MAX_CHARS;
 
   return (
@@ -279,7 +278,7 @@ export function TiptapEditor({
             isOverLimit ? "text-destructive" : "text-muted-foreground",
           )}
         >
-          {charCount} / {TEXT_CONTENT_MAX_CHARS} characters · ~{wordCount} words
+          {charCount} / {TEXT_CONTENT_MAX_CHARS} characters
         </div>
       ) : null}
     </div>

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 import { getFlashBadgeClassName } from "@/lib/display-runtime/flash-ticker";
@@ -111,5 +111,40 @@ describe("CreateContentDialog", () => {
     expect(tickerTextarea).toHaveClass("min-w-0", "max-w-full", "break-words");
     expect(tickerTextarea.className).toContain("[overflow-wrap:anywhere]");
     expect(tickerTextarea.className).not.toContain("field-sizing-content");
+  });
+
+  test("uses expanded text content layout and concise editor metadata", async () => {
+    renderDialog("text");
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAccessibleName("Create Text Content");
+    expect(dialog).toHaveClass("sm:max-w-4xl");
+    expect(dialog).toHaveClass("max-h-[calc(100dvh-2rem)]");
+    expect(dialog).toHaveClass("overflow-hidden");
+
+    expect(
+      screen.getByText("Create formatted text content for display playback."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Text Content Title")).toBeInTheDocument();
+    expect(screen.getByText("Text Content Body")).toBeInTheDocument();
+
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Create text/i }),
+    ).not.toBeInTheDocument();
+
+    expect(await screen.findByText("0 / 1000 characters")).toBeInTheDocument();
+    expect(screen.queryByText(/words/)).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(document.querySelector(".ProseMirror")).toBeInTheDocument();
+    });
+    const editor = document.querySelector(".ProseMirror");
+    expect(editor).toHaveClass("min-h-[280px]");
+    expect(editor).toHaveClass("max-h-[min(46vh,420px)]");
+    expect(editor).toHaveClass("overflow-y-auto");
+    expect(editor).toHaveClass("overflow-x-hidden");
+    expect(editor).toHaveClass("[overflow-wrap:anywhere]");
   });
 });

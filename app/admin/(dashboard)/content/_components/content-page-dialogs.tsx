@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -73,7 +74,10 @@ export function EditContentDialog({
     return null;
   }
 
-  const dialogWidth = content.type === "TEXT" ? "sm:max-w-2xl" : "sm:max-w-md";
+  const dialogWidth =
+    content.type === "TEXT"
+      ? "max-h-[calc(100dvh-2rem)] overflow-hidden sm:max-w-4xl"
+      : "sm:max-w-md";
 
   const guardedOnOpenChange = (nextOpen: boolean) => {
     if (isSubmitting) return;
@@ -188,10 +192,17 @@ function EditContentDialogForm({
     <>
       <DialogHeader>
         <DialogTitle>Edit Content</DialogTitle>
+        {isTextContent ? (
+          <DialogDescription>
+            Update formatted text content for display playback.
+          </DialogDescription>
+        ) : null}
       </DialogHeader>
       <div className="space-y-3">
         <div className="space-y-2">
-          <Label htmlFor="edit-content-title">Title</Label>
+          <Label htmlFor="edit-content-title">
+            {isTextContent ? "Text Content Title" : "Title"}
+          </Label>
           <Input
             id="edit-content-title"
             value={title}
@@ -235,7 +246,7 @@ function EditContentDialogForm({
           </>
         ) : isTextContent ? (
           <div className="space-y-2">
-            <Label>Rich Text Content</Label>
+            <Label>Text Content Body</Label>
             <TiptapEditor
               content={textJsonContent}
               onChange={(json, html) => {

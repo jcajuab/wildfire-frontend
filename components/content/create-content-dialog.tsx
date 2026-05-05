@@ -4,7 +4,6 @@ import type { ChangeEvent, ReactElement } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   IconBolt,
-  IconFileText,
   IconLoader2,
   IconUpload,
   IconX,
@@ -270,7 +269,11 @@ export function CreateContentDialog({
       }}
     >
       <DialogContent
-        className={isTextMode ? "sm:max-w-2xl" : "sm:max-w-lg"}
+        className={
+          isTextMode
+            ? "max-h-[calc(100dvh-2rem)] overflow-hidden sm:max-w-4xl"
+            : "sm:max-w-lg"
+        }
         onInteractOutside={(e) => {
           if (isSubmitting) e.preventDefault();
         }}
@@ -291,7 +294,7 @@ export function CreateContentDialog({
               ? "Upload an image or video to display on your screens."
               : isFlashMode
                 ? "Create a flash ticker message to display on your screens."
-                : "Create rich text content to display on your screens."}
+                : "Create formatted text content for display playback."}
           </DialogDescription>
         </DialogHeader>
 
@@ -302,7 +305,7 @@ export function CreateContentDialog({
                 ? "Content Title"
                 : isFlashMode
                   ? "Flash Title"
-                  : "Text Title"}
+                  : "Text Content Title"}
             </Label>
             <Input
               id="content-title"
@@ -416,7 +419,7 @@ export function CreateContentDialog({
             </div>
           ) : (
             <div className="space-y-2">
-              <Label>Content</Label>
+              <Label>Text Content Body</Label>
               <TiptapEditor
                 onChange={(json, html) => {
                   setTextJsonContent(json);
@@ -428,24 +431,24 @@ export function CreateContentDialog({
           )}
         </div>
 
-        <DialogFooter className="sm:justify-between">
+        <DialogFooter className={isTextMode ? undefined : "sm:justify-between"}>
           <Button
             variant="outline"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="flex-1"
+            className={isTextMode ? undefined : "flex-1"}
           >
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={!canSubmit || isSubmitting}
-            className="flex-1"
+            className={isTextMode ? undefined : "flex-1"}
           >
             {isSubmitting ? (
               <>
                 <IconLoader2 className="size-4 animate-spin" />
-                {isUploadMode ? "Uploading…" : "Creating…"}
+                {isUploadMode ? "Uploading…" : isFlashMode ? "Creating…" : "Saving…"}
               </>
             ) : isUploadMode ? (
               <>
@@ -458,10 +461,7 @@ export function CreateContentDialog({
                 Create flash
               </>
             ) : (
-              <>
-                <IconFileText className="size-4" />
-                Create text
-              </>
+              "Save"
             )}
           </Button>
         </DialogFooter>
