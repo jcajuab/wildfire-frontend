@@ -5,8 +5,11 @@ export type PermissionResource =
   | "displays"
   | "users"
   | "roles"
-  | "audit";
+  | "audit"
+  | "ai";
 
 export type PermissionAction = "read" | "create" | "update" | "delete";
 
-export type PermissionType = `${PermissionResource}:${PermissionAction}`;
+export type PermissionType =
+  | `${Exclude<PermissionResource, "ai">}:${PermissionAction}`
+  | "ai:access";

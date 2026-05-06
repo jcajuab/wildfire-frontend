@@ -178,6 +178,11 @@ export function useDisplaysPage({
   const filters = useDisplayFilters();
   const dialogState = useDisplayDialogState();
   const debouncedSearch = useDebounce(filters.search, 500);
+  const normalizedOutputFilter = filters.normalizedOutputFilter;
+  const handleOutputFilterChange = filters.handleOutputFilterChange;
+  const effectiveOutputFilter: DisplayOutputFilter = canCreateDisplay
+    ? normalizedOutputFilter
+    : "all";
   const currentQueryArgs = UNFILTERED_DISPLAY_QUERY;
   const isInitialBootstrapQuery =
     initialBootstrap != null &&
@@ -258,6 +263,12 @@ export function useDisplaysPage({
   // SSE-driven cache invalidation is handled by AdminEventProvider in the
   // layout, which invalidates the Display LIST tag. RTK Query automatically
   // refetches this component's query when the tag is invalidated.
+
+  useEffect(() => {
+    if (!canCreateDisplay && normalizedOutputFilter !== "all") {
+      handleOutputFilterChange("all");
+    }
+  }, [canCreateDisplay, handleOutputFilterChange, normalizedOutputFilter]);
 
   useEffect(() => {
     const totalDisplays = displaysData?.total ?? 0;
@@ -362,13 +373,13 @@ export function useDisplaysPage({
           return false;
         }
         if (!displayMatchesGroups(display, filters.groupFilters)) return false;
-        return displayMatchesOutput(display, filters.normalizedOutputFilter);
+        return displayMatchesOutput(display, effectiveOutputFilter);
       }),
     [
       allDisplayRows,
       debouncedSearch,
+      effectiveOutputFilter,
       filters.groupFilters,
-      filters.normalizedOutputFilter,
       filters.statusFilter,
     ],
   );
@@ -401,7 +412,7 @@ export function useDisplaysPage({
     [displayGroupsData],
   );
 
-  const availableOutputFilters = displayOutputOptions;
+  const availableOutputFilters = canCreateDisplay ? displayOutputOptions : [];
 
   const { handleConfirmUnregisterDisplay: confirmUnregister } = crudHandlers;
 
@@ -420,7 +431,7 @@ export function useDisplaysPage({
     search: filters.search,
     page: filters.page,
     groupFilters: filters.groupFilters,
-    normalizedOutputFilter: filters.normalizedOutputFilter,
+    normalizedOutputFilter: effectiveOutputFilter,
     availableGroupFilters,
     availableOutputFilters,
     displays,

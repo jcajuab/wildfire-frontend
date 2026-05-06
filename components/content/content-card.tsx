@@ -19,7 +19,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -187,7 +186,10 @@ export const ContentCard = memo(function ContentCard({
                 <IconDots className="size-4" aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-40">
+            <DropdownMenuContent
+              align="start"
+              className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
+            >
               {showEdit && onEdit ? (
                 <DropdownMenuItem onClick={() => onEdit(content)}>
                   <IconPencil className="size-4" />
@@ -269,7 +271,6 @@ export const ContentCard = memo(function ContentCard({
           >
             {formatContentStatus(content.status)}
           </Badge>
-          <Separator orientation="vertical" className="h-4 bg-border/80" />
           <Badge variant="outline">{CONTENT_TYPE_LABEL[content.type]}</Badge>
           <Badge variant="outline">{formatFileSize(content.fileSize)}</Badge>
         </div>

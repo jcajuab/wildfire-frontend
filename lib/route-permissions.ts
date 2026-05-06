@@ -11,6 +11,7 @@ export type SidebarSection = "core" | "manage";
 export interface DashboardRouteReadPermissionEntry {
   readonly path: string;
   readonly permission?: PermissionType;
+  readonly sidebarPermissions?: readonly PermissionType[];
   readonly title: string;
   readonly match: RouteMatchMode;
   readonly section: SidebarSection;
@@ -42,6 +43,7 @@ const CORE_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] = [
   {
     path: "/admin/content",
     permission: "content:read",
+    sidebarPermissions: ["content:read", "content:create"],
     title: "Content",
     match: "prefix",
     section: "core",
@@ -49,6 +51,7 @@ const CORE_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] = [
   {
     path: "/admin/playlists",
     permission: "playlists:read",
+    sidebarPermissions: ["playlists:read", "playlists:create"],
     title: "Playlists",
     match: "prefix",
     section: "core",
@@ -184,6 +187,33 @@ export const getFirstPermittedAdminRoute = (
 ): string | null => {
   const first = DASHBOARD_ROUTE_READ_ENTRIES.find((entry) =>
     entry.permission == null ? true : hasPermission(entry.permission),
+  );
+  return first?.path ?? null;
+};
+
+export const getSidebarVisibilityPermissions = (
+  entry: DashboardRouteReadPermissionEntry,
+): readonly PermissionType[] => {
+  if (entry.sidebarPermissions != null) {
+    return entry.sidebarPermissions;
+  }
+
+  return entry.permission == null ? [] : [entry.permission];
+};
+
+export const isSidebarRouteVisible = (
+  entry: DashboardRouteReadPermissionEntry,
+  hasPermission: AdminRoutePermissionPredicate,
+): boolean =>
+  getSidebarVisibilityPermissions(entry).every((permission) =>
+    hasPermission(permission),
+  );
+
+export const getFirstVisibleAdminRoute = (
+  hasPermission: AdminRoutePermissionPredicate,
+): string | null => {
+  const first = DASHBOARD_ROUTE_READ_ENTRIES.find((entry) =>
+    isSidebarRouteVisible(entry, hasPermission),
   );
   return first?.path ?? null;
 };

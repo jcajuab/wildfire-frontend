@@ -91,6 +91,58 @@ describe("PlaylistCard", () => {
     expect(screen.getByText("Updated")).toBeInTheDocument();
   });
 
+  test("renders playlist status and stats in one badge row", () => {
+    render(
+      <PlaylistCard
+        playlist={{
+          ...basePlaylist,
+          status: "IN_USE",
+          itemsCount: 4,
+          totalDuration: 20,
+        }}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    const inUseBadge = screen.getByText("In Use");
+    const itemsBadge = screen.getByText("4 items").closest("[data-slot=badge]");
+    const durationBadge = screen
+      .getByText("0:20 sec")
+      .closest("[data-slot=badge]");
+
+    expect(inUseBadge).toHaveClass("border-destructive/30");
+    expect(inUseBadge).toHaveClass("text-destructive");
+    expect(itemsBadge).toHaveClass("border-foreground/15");
+    expect(itemsBadge?.querySelector("svg")).not.toBeInTheDocument();
+    expect(durationBadge).toHaveClass("border-foreground/15");
+    expect(durationBadge?.querySelector("svg")).not.toBeInTheDocument();
+  });
+
+  test("shows draft status for draft playlists", () => {
+    render(<PlaylistCard playlist={basePlaylist} onDelete={vi.fn()} />);
+
+    const draftBadge = screen.getByText("Draft");
+
+    expect(draftBadge).toHaveClass("border-border");
+    expect(draftBadge).toHaveClass("text-muted-foreground");
+  });
+
+  test("keeps playlist card hover borders neutral", () => {
+    render(
+      <PlaylistCard
+        playlist={basePlaylist}
+        onDelete={vi.fn()}
+        isSelected={false}
+        onSelectionChange={vi.fn()}
+      />,
+    );
+
+    const card = screen.getByRole("button", { name: "Select Morning Loop" });
+
+    expect(card).toHaveClass("hover:border-border");
+    expect(card.className).not.toContain("hover:border-primary");
+  });
+
   test("falls back to the owner name when username is unavailable", () => {
     render(
       <PlaylistCard

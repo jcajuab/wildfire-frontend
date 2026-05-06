@@ -7,6 +7,7 @@ import { getServerSession } from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
+  sessionHasPermission,
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
@@ -21,23 +22,28 @@ export default async function SettingsPage(): Promise<ReactElement> {
     redirect(`/login?redirectTo=${encodeURIComponent("/admin/settings")}`);
   }
 
-  const credentialsRes = await serverFetchJson<unknown>({
-    session,
-    path: "ai/credentials",
-    tags: ["ai"],
-    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
-  });
-  handleBootstrapResult(credentialsRes, "/admin/settings");
+  const canManageAICredentials = sessionHasPermission(session, "ai:access");
+  let credentials: AICredential[] | null = null;
 
-  const credentials = parseApiResponseDataSafe<AICredential[]>(
-    credentialsRes.data,
-    "getAICredentials",
-  );
+  if (canManageAICredentials) {
+    const credentialsRes = await serverFetchJson<unknown>({
+      session,
+      path: "ai/credentials",
+      tags: ["ai"],
+      revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
+    });
+    handleBootstrapResult(credentialsRes, "/admin/settings");
+
+    credentials = parseApiResponseDataSafe<AICredential[]>(
+      credentialsRes.data,
+      "getAICredentials",
+    );
+  }
 
   return (
     <>
-      <AICredentialsCacheSeeder data={credentials} />
-      <SettingsPageView />
+      {credentials ? <AICredentialsCacheSeeder data={credentials} /> : null}
+      <SettingsPageView canManageAICredentials={canManageAICredentials} />
     </>
   );
 }

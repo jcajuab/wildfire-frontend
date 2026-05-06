@@ -57,7 +57,11 @@ export function AICredentialsCacheSeeder({
 const controlContainerClass = "w-full max-w-md";
 const controlClass = "h-10 w-full";
 
-export function SettingsPageView(): ReactElement {
+export function SettingsPageView({
+  canManageAICredentials,
+}: {
+  readonly canManageAICredentials: boolean;
+}): ReactElement {
   const {
     user,
     isWildfireUser,
@@ -397,9 +401,11 @@ export function SettingsPageView(): ReactElement {
                 </dl>
               </section>
 
-              <AICredentialsSection
-                prefersReducedMotion={prefersReducedMotion}
-              />
+              {canManageAICredentials ? (
+                <AICredentialsSection
+                  prefersReducedMotion={prefersReducedMotion}
+                />
+              ) : null}
 
               <section
                 aria-labelledby="danger-zone-heading"

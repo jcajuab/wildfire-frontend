@@ -2,15 +2,26 @@
 
 import { useMemo } from "react";
 
+import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
 import { useGetSchedulesBootstrapQuery } from "@/lib/api/schedules-api";
 import { mapBackendSchedulesToSchedules } from "@/lib/mappers/schedule-mapper";
+import type { AuthUser } from "@/types/auth";
 import type { Schedule } from "@/types/schedule";
 import { useScheduleFilters } from "./use-schedule-filters";
 import { useScheduleDialogs } from "./use-schedule-dialogs";
 import { useScheduleHandlers } from "./use-schedule-handlers";
 
+export function canManageScheduleForUser(
+  schedule: Schedule | null,
+  user: AuthUser | null,
+): boolean {
+  if (!schedule || !user) return false;
+  return user.isAdmin || schedule.createdBy === user.id;
+}
+
 export function useSchedulesPage() {
+  const { user } = useAuth();
   const canEditSchedule = useCan("schedules:update");
   const canDeleteSchedule = useCan("schedules:delete");
   const canReadDisplays = useCan("displays:read");
@@ -108,6 +119,11 @@ export function useSchedulesPage() {
     [schedulesData],
   );
 
+  const canManageSelectedSchedule = canManageScheduleForUser(
+    selectedSchedule,
+    user,
+  );
+
   const sortedDisplayGroups = useMemo(() => {
     const groups = [...(displayGroupsData ?? [])].filter(
       (g) => g.displayIds.length > 0,
@@ -128,6 +144,8 @@ export function useSchedulesPage() {
     isFetching,
     canEditSchedule,
     canDeleteSchedule,
+    canEditSelectedSchedule: canEditSchedule && canManageSelectedSchedule,
+    canDeleteSelectedSchedule: canDeleteSchedule && canManageSelectedSchedule,
     currentDate,
     view,
     setView,

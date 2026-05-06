@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { useDisplaysPage } from "./use-displays-page";
 import { useCan } from "@/hooks/use-can";
@@ -256,6 +256,47 @@ describe("useDisplaysPage", () => {
       "Cafeteria Display",
     ]);
     expect(result.current.displaysData?.total).toBe(1);
+  });
+
+  test("neutralizes output filtering for users without display create permission", async () => {
+    useCanMock.mockImplementation(
+      (permission) => permission !== "displays:create",
+    );
+    useDisplayFiltersMock.mockReturnValue({
+      statusFilter: "all",
+      search: "",
+      page: 1,
+      groupFilters: [],
+      normalizedOutputFilter: "dp-*",
+      setPage: setPageMock,
+      handleStatusFilterChange: setStatusFilterMock,
+      handleSearchChange: setSearchMock,
+      handleGroupFilterChange: setGroupsMock,
+      handleOutputFilterChange: setOutputFilterMock,
+      handleClearFilters: vi.fn(),
+    });
+    useGetDisplaysBootstrapQueryMock.mockReturnValue({
+      data: bootstrapData,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: refetchMock,
+    } as unknown as ReturnType<typeof useGetDisplaysBootstrapQuery>);
+
+    const { result } = renderHook(() => useDisplaysPage());
+
+    expect(result.current.canCreateDisplay).toBe(false);
+    expect(result.current.normalizedOutputFilter).toBe("all");
+    expect(result.current.availableOutputFilters).toEqual([]);
+    expect(result.current.displays.map((display) => display.name)).toEqual([
+      "Lobby Display",
+      "Cafeteria Display",
+    ]);
+    expect(result.current.displaysData?.total).toBe(2);
+
+    await waitFor(() => {
+      expect(setOutputFilterMock).toHaveBeenCalledWith("all");
+    });
   });
 
   test("uses initial bootstrap data while the matching RTK query is being seeded", () => {

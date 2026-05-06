@@ -32,6 +32,7 @@ export interface Schedule {
   readonly playlist: SchedulePlaylist | null;
   readonly content: ScheduleContent | null;
   readonly display: ScheduleDisplay;
+  readonly createdBy: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }

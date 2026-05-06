@@ -61,8 +61,8 @@ export function SchedulesPageView(): ReactElement {
   const {
     isLoading,
     isFetching,
-    canEditSchedule,
-    canDeleteSchedule,
+    canEditSelectedSchedule,
+    canDeleteSelectedSchedule,
     currentDate,
     view,
     setView,
@@ -212,8 +212,8 @@ export function SchedulesPageView(): ReactElement {
         schedule={selectedSchedule}
         open={viewDialogOpen}
         onOpenChange={setViewDialogOpen}
-        onEdit={canEditSchedule ? handleEditFromView : undefined}
-        onDelete={canDeleteSchedule ? handleDeleteSchedule : undefined}
+        onEdit={canEditSelectedSchedule ? handleEditFromView : undefined}
+        onDelete={canDeleteSelectedSchedule ? handleDeleteSchedule : undefined}
       />
 
       {/* Edit Schedule Dialog */}

@@ -10,7 +10,7 @@ export function GroupBadge({ name }: GroupBadgeProps): ReactElement {
   return (
     <Badge
       variant="secondary"
-      className="max-w-full truncate border text-[11px] font-medium bg-blue-600 text-white border-blue-200"
+      className="max-w-full truncate border border-primary/15 bg-primary/10 text-[11px] font-medium text-primary"
     >
       {name}
     </Badge>

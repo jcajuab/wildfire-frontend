@@ -48,11 +48,11 @@ function renderGrid(
     </TooltipProvider>,
   );
 
-  const firstCardAction = screen.getByRole("button", {
-    name: "Actions for Display 1",
+  const firstCardPreviewAction = screen.getByRole("button", {
+    name: "View Display Page for Display 1",
   });
 
-  return firstCardAction.closest(".grid") as HTMLElement;
+  return firstCardPreviewAction.closest(".grid") as HTMLElement;
 }
 
 describe("DisplayGrid", () => {

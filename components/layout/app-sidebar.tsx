@@ -35,7 +35,8 @@ import { useAuth } from "@/context/auth-context";
 import {
   getRoutesBySection,
   isPathMatch,
-  getFirstPermittedAdminRoute,
+  getFirstVisibleAdminRoute,
+  isSidebarRouteVisible,
   UNAUTHORIZED_ROUTE,
   type DashboardRouteReadPermissionEntry,
 } from "@/lib/route-permissions";
@@ -71,9 +72,7 @@ function resolveNavItems(
   can: (permission: PermissionType) => boolean,
 ): readonly NavItem[] {
   return entries
-    .filter((entry) =>
-      entry.permission == null ? true : can(entry.permission),
-    )
+    .filter((entry) => isSidebarRouteVisible(entry, can))
     .map((entry) => ({
       title: entry.title,
       href: entry.path,
@@ -134,7 +133,7 @@ export function AppSidebar(): ReactElement {
   const homeRoute = useMemo(
     () =>
       isInitialized
-        ? (getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE)
+        ? (getFirstVisibleAdminRoute(can) ?? UNAUTHORIZED_ROUTE)
         : UNAUTHORIZED_ROUTE,
     [can, isInitialized],
   );

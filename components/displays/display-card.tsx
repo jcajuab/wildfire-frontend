@@ -6,12 +6,7 @@ import {
   type ReactElement,
   memo,
 } from "react";
-import {
-  IconDots,
-  IconExternalLink,
-  IconEdit,
-  IconTrash,
-} from "@tabler/icons-react";
+import { IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -134,6 +129,10 @@ export const DisplayCard = memo(function DisplayCard({
     0,
   );
   const showSelection = Boolean(onUnregisterDisplay && onSelectionChange);
+  const showActions = Boolean(onEditDisplay || onUnregisterDisplay);
+  const showDestructiveSeparator = Boolean(
+    onEditDisplay && onUnregisterDisplay,
+  );
   const handleCardClick = (event: MouseEvent<HTMLElement>): void => {
     if (
       !showSelection ||
@@ -168,7 +167,7 @@ export const DisplayCard = memo(function DisplayCard({
       tabIndex={showSelection ? 0 : undefined}
       aria-pressed={showSelection ? isSelected : undefined}
       aria-label={showSelection ? `Select ${display.name}` : undefined}
-      className={`group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-[border-color,background-color,filter,opacity] duration-200 hover:border-primary/25 data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5 data-[state=selected]:opacity-100 data-[state=selected]:grayscale-0 motion-reduce:transition-none ${showSelection ? "cursor-pointer focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30" : ""} ${showSelection && !isSelected ? "border-border/60 bg-muted/25 opacity-55 grayscale hover:border-primary/35 hover:bg-card hover:opacity-90 hover:grayscale-0" : ""}`}
+      className={`group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-[border-color,background-color,filter,opacity] duration-200 hover:border-border hover:bg-muted/10 data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5 data-[state=selected]:opacity-100 data-[state=selected]:grayscale-0 motion-reduce:transition-none ${showSelection ? "cursor-pointer focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30" : ""} ${showSelection && !isSelected ? "border-border/60 bg-muted/25 opacity-55 grayscale hover:border-border hover:bg-card hover:opacity-90 hover:grayscale-0" : ""}`}
     >
       <header className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -209,43 +208,46 @@ export const DisplayCard = memo(function DisplayCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={`Actions for ${display.name}`}
+        {showActions ? (
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Actions for ${display.name}`}
+                >
+                  <IconDots className="size-4" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
               >
-                <IconDots className="size-4" aria-hidden="true" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-44">
-              <DropdownMenuItem onClick={() => onViewPage(display)}>
-                <IconExternalLink className="size-4" aria-hidden="true" />
-                View Display Page
-              </DropdownMenuItem>
-              {onEditDisplay ? (
-                <DropdownMenuItem onClick={() => onEditDisplay(display)}>
-                  <IconEdit className="size-4" aria-hidden="true" />
-                  Edit Display
-                </DropdownMenuItem>
-              ) : null}
-              {onUnregisterDisplay ? (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => onUnregisterDisplay(display)}
-                  >
-                    <IconTrash className="size-4" aria-hidden="true" />
-                    Unregister Display
+                {onEditDisplay ? (
+                  <DropdownMenuItem onClick={() => onEditDisplay(display)}>
+                    <IconEdit className="size-4" aria-hidden="true" />
+                    Edit Display
                   </DropdownMenuItem>
-                </>
-              ) : null}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                ) : null}
+                {onUnregisterDisplay ? (
+                  <>
+                    {showDestructiveSeparator ? (
+                      <DropdownMenuSeparator />
+                    ) : null}
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => onUnregisterDisplay(display)}
+                    >
+                      <IconTrash className="size-4" aria-hidden="true" />
+                      Unregister Display
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ) : null}
       </header>
 
       <div className="flex min-h-6 min-w-0 items-center gap-1.5">
@@ -299,6 +301,19 @@ export const DisplayCard = memo(function DisplayCard({
             displayStatus={display.status}
           />
         </div>
+        {!showSelection ? (
+          <button
+            type="button"
+            aria-label={`View Display Page for ${display.name}`}
+            data-card-selection-ignore="true"
+            className="group/preview absolute inset-0 flex cursor-pointer items-center justify-center bg-[color-mix(in_oklab,var(--primary)_10%,var(--background))] text-sm font-medium text-primary opacity-0 transition-opacity duration-200 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-inset motion-reduce:transition-none"
+            onClick={() => onViewPage(display)}
+          >
+            <span className="translate-y-1 text-xs font-semibold transition-transform duration-200 group-hover/preview:translate-y-0 group-focus-visible/preview:translate-y-0 motion-reduce:transition-none">
+              View Display Page
+            </span>
+          </button>
+        ) : null}
       </div>
     </div>
   );

@@ -196,6 +196,15 @@ describe("ContentCard", () => {
     ).not.toBeInTheDocument();
   });
 
+  test("shows metadata badges without a separator between status and content type", () => {
+    render(<ContentCard content={baseContent} />);
+
+    expect(screen.getByText("Ready")).toBeInTheDocument();
+    expect(screen.getByText("Image")).toBeInTheDocument();
+    expect(screen.getByText("123 B")).toBeInTheDocument();
+    expect(screen.queryByRole("separator")).not.toBeInTheDocument();
+  });
+
   test("shows owner and relative created activity on one row", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-01T02:00:00.000Z"));

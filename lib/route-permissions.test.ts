@@ -1,8 +1,11 @@
 import { describe, expect, test } from "vitest";
 import { can as canPermission } from "@/lib/permissions";
 import {
+  getFirstVisibleAdminRoute,
   getFirstPermittedAdminRoute,
   getRequiredReadPermission,
+  getRoutesBySection,
+  isSidebarRouteVisible,
 } from "@/lib/route-permissions";
 
 describe("getRequiredReadPermission", () => {
@@ -16,6 +19,10 @@ describe("getRequiredReadPermission", () => {
     expect(getRequiredReadPermission("/admin/playlists")).toBe(
       "playlists:read",
     );
+  });
+
+  test("keeps content index on the read permission", () => {
+    expect(getRequiredReadPermission("/admin/content")).toBe("content:read");
   });
 
   test("keeps role index on the read permission", () => {
@@ -32,6 +39,62 @@ describe("getRequiredReadPermission", () => {
     expect(getRequiredReadPermission("/admin/roles/edit/role-123")).toBe(
       "roles:update",
     );
+  });
+});
+
+describe("sidebar route visibility", () => {
+  test("requires content read and create permissions for the content nav item", () => {
+    const contentEntry = getRoutesBySection("core").find(
+      (entry) => entry.path === "/admin/content",
+    );
+
+    if (contentEntry == null) {
+      throw new Error("Missing content route entry");
+    }
+
+    expect(
+      isSidebarRouteVisible(
+        contentEntry,
+        (permission) => permission === "content:read",
+      ),
+    ).toBe(false);
+    expect(
+      isSidebarRouteVisible(contentEntry, (permission) =>
+        ["content:read", "content:create"].includes(permission),
+      ),
+    ).toBe(true);
+  });
+
+  test("requires playlist read and create permissions for the playlists nav item", () => {
+    const playlistsEntry = getRoutesBySection("core").find(
+      (entry) => entry.path === "/admin/playlists",
+    );
+
+    if (playlistsEntry == null) {
+      throw new Error("Missing playlists route entry");
+    }
+
+    expect(
+      isSidebarRouteVisible(
+        playlistsEntry,
+        (permission) => permission === "playlists:read",
+      ),
+    ).toBe(false);
+    expect(
+      isSidebarRouteVisible(playlistsEntry, (permission) =>
+        ["playlists:read", "playlists:create"].includes(permission),
+      ),
+    ).toBe(true);
+  });
+
+  test("returns the first visible route using sidebar visibility permissions", () => {
+    const actual = getFirstVisibleAdminRoute((permission) =>
+      ["content:read", "playlists:read", "playlists:create"].includes(
+        permission,
+      ),
+    );
+
+    expect(actual).toBe("/admin/playlists");
   });
 });
 

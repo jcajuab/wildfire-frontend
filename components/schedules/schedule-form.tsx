@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -250,6 +250,40 @@ function resolveDisplayIdsFromGroups(
   return [...out];
 }
 
+function getTodayDateString(now = new Date()): string {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getCurrentTimeString(now = new Date()): string {
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function isScheduleStartBeforeNow(
+  data: Pick<ScheduleFormData, "startDate" | "startTime">,
+  now = new Date(),
+): boolean {
+  return (
+    `${data.startDate}T${data.startTime}` <
+    `${getTodayDateString(now)}T${getCurrentTimeString(now)}`
+  );
+}
+
+// Defaults end time to 3 hours after the current local time. Clamps at 23:59
+// because the schedule model rejects endTime <= startTime, so wrapping past
+// midnight would produce an invalid form on open.
+function getDefaultEndTimeString(now = new Date()): string {
+  const totalMinutes = now.getHours() * 60 + now.getMinutes() + 3 * 60;
+  const clamped = Math.min(totalMinutes, 23 * 60 + 59);
+  const hours = String(Math.floor(clamped / 60)).padStart(2, "0");
+  const minutes = String(clamped % 60).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
 function ScheduleFormFrame({
   initialData,
   availablePlaylists,
@@ -271,6 +305,15 @@ function ScheduleFormFrame({
   const [targetDisplayGroupIds, setTargetDisplayGroupIds] = useState<string[]>(
     [],
   );
+  const [currentMinute, setCurrentMinute] = useState(() => new Date());
+
+  useEffect(() => {
+    if (!isCreate) return;
+    const intervalId = window.setInterval(() => {
+      setCurrentMinute(new Date());
+    }, 30_000);
+    return () => window.clearInterval(intervalId);
+  }, [isCreate]);
 
   const resolvedTargetDisplayIds = useMemo(() => {
     if (!isCreate || targetMode === "displays") {
@@ -293,6 +336,9 @@ function ScheduleFormFrame({
     return formData.endTime <= formData.startTime;
   }, [formData.startTime, formData.endTime]);
 
+  const isStartTimeBeforeNow =
+    isCreate && isScheduleStartBeforeNow(formData, currentMinute);
+
   const canSubmit = useMemo(() => {
     const hasTargets =
       isCreate && targetMode === "display-groups"
@@ -305,6 +351,9 @@ function ScheduleFormFrame({
     if (isEndTimeBeforeStartTime) {
       return false;
     }
+    if (isStartTimeBeforeNow) {
+      return false;
+    }
     if (formData.kind === "PLAYLIST") {
       return Boolean(formData.playlistId);
     }
@@ -312,6 +361,7 @@ function ScheduleFormFrame({
   }, [
     formData,
     isEndTimeBeforeStartTime,
+    isStartTimeBeforeNow,
     isCreate,
     targetMode,
     targetDisplayGroupIds.length,
@@ -320,6 +370,7 @@ function ScheduleFormFrame({
 
   async function handleSubmit(): Promise<void> {
     if (!canSubmit || isSubmitting) return;
+    if (isCreate && isScheduleStartBeforeNow(formData)) return;
     setIsSubmitting(true);
     onSubmittingChange?.(true);
     try {
@@ -383,7 +434,9 @@ function ScheduleFormFrame({
               id="schedule-start-date"
               type="date"
               value={formData.startDate}
+              min={isCreate ? getTodayDateString(currentMinute) : undefined}
               disabled={isSubmitting}
+              aria-invalid={isStartTimeBeforeNow}
               onChange={(event) =>
                 setFormData((prev) => ({
                   ...prev,
@@ -416,7 +469,14 @@ function ScheduleFormFrame({
               id="schedule-start-time"
               type="time"
               value={formData.startTime}
+              min={
+                isCreate &&
+                formData.startDate === getTodayDateString(currentMinute)
+                  ? getCurrentTimeString(currentMinute)
+                  : undefined
+              }
               disabled={isSubmitting}
+              aria-invalid={isStartTimeBeforeNow}
               onChange={(event) =>
                 setFormData((prev) => ({
                   ...prev,
@@ -445,6 +505,11 @@ function ScheduleFormFrame({
         {isEndTimeBeforeStartTime ? (
           <p className="text-xs text-destructive">
             End time must be later than start time.
+          </p>
+        ) : null}
+        {isStartTimeBeforeNow ? (
+          <p className="text-xs text-destructive">
+            Start time must be now or later.
           </p>
         ) : null}
 
@@ -624,33 +689,6 @@ type CreateScheduleFormProps = Omit<
 
 interface EditScheduleFormProps extends Omit<ScheduleFormProps, "submitLabel"> {
   readonly initialData: ScheduleFormData;
-}
-
-function getTodayDateString(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function getCurrentTimeString(): string {
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
-}
-
-// Defaults end time to 3 hours after the current local time. Clamps at 23:59
-// because the schedule model rejects endTime <= startTime, so wrapping past
-// midnight would produce an invalid form on open.
-function getDefaultEndTimeString(): string {
-  const now = new Date();
-  const totalMinutes = now.getHours() * 60 + now.getMinutes() + 3 * 60;
-  const clamped = Math.min(totalMinutes, 23 * 60 + 59);
-  const hours = String(Math.floor(clamped / 60)).padStart(2, "0");
-  const minutes = String(clamped % 60).padStart(2, "0");
-  return `${hours}:${minutes}`;
 }
 
 export function CreateScheduleForm({

@@ -53,6 +53,9 @@ describe("DisplayCard", () => {
     expect(
       document.querySelector('[data-group-visible="Lobby"]'),
     ).toBeInTheDocument();
+    expect(screen.getByText("Lobby")).toHaveClass("bg-primary/10");
+    expect(screen.getByText("Lobby")).toHaveClass("text-primary");
+    expect(screen.getByText("Lobby")).not.toHaveClass("bg-blue-600");
   });
 
   test("hides output metadata by default", () => {
@@ -114,15 +117,23 @@ describe("DisplayCard", () => {
     ).not.toBeInTheDocument();
   });
 
-  test("keeps the actions menu button accessible", () => {
+  test("hides the actions menu when no management actions are available", () => {
     renderDisplayCard();
+
+    expect(
+      screen.queryByRole("button", { name: "Actions for Lobby Display" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("keeps the actions menu button accessible when management actions exist", () => {
+    renderDisplayCard(baseDisplay, { onEditDisplay: vi.fn() });
 
     expect(
       screen.getByRole("button", { name: "Actions for Lobby Display" }),
     ).toBeInTheDocument();
   });
 
-  test("does not show the removed details action in the card menu", async () => {
+  test("keeps only management actions in the card menu", async () => {
     const user = userEvent.setup();
     renderDisplayCard(baseDisplay, {
       onEditDisplay: vi.fn(),
@@ -137,14 +148,59 @@ describe("DisplayCard", () => {
       screen.queryByRole("menuitem", { name: "More Details" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("menuitem", { name: "View Display Page" }),
-    ).toBeInTheDocument();
+      screen.queryByRole("menuitem", { name: "View Display Page" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("menuitem", { name: "Edit Display" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("menuitem", { name: "Unregister Display" }),
     ).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-slot="dropdown-menu-separator"]'),
+    ).toBeInTheDocument();
+  });
+
+  test("does not show a separator when only unregister is available", async () => {
+    const user = userEvent.setup();
+    renderDisplayCard(baseDisplay, {
+      onUnregisterDisplay: vi.fn(),
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: "Actions for Lobby Display" }),
+    );
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Edit Display" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: "Unregister Display" }),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-slot="dropdown-menu-separator"]'),
+    ).not.toBeInTheDocument();
+  });
+
+  test("opens the display page from the preview overlay", async () => {
+    const user = userEvent.setup();
+    const onViewPage = vi.fn();
+    renderDisplayCard(baseDisplay, { onViewPage });
+
+    const previewAction = screen.getByRole("button", {
+      name: "View Display Page for Lobby Display",
+    });
+
+    expect(previewAction).toHaveClass("cursor-pointer");
+    expect(previewAction).toHaveClass(
+      "bg-[color-mix(in_oklab,var(--primary)_10%,var(--background))]",
+    );
+    expect(previewAction).toHaveClass("transition-opacity");
+    expect(previewAction).not.toHaveClass("hover:bg-foreground/45");
+
+    await user.click(previewAction);
+
+    expect(onViewPage).toHaveBeenCalledWith(baseDisplay);
   });
 
   test("renders an accessible selection checkbox when selection is enabled", async () => {
@@ -193,15 +249,24 @@ describe("DisplayCard", () => {
 
   test("toggles selection when clicking the card body in selection mode", async () => {
     const user = userEvent.setup();
+    const onViewPage = vi.fn();
     const onSelectionChange = vi.fn();
     renderDisplayCard(baseDisplay, {
+      onViewPage,
       onUnregisterDisplay: vi.fn(),
       onSelectionChange,
     });
 
+    expect(
+      screen.queryByRole("button", {
+        name: "View Display Page for Lobby Display",
+      }),
+    ).not.toBeInTheDocument();
+
     await user.click(screen.getByTestId("display-preview"));
 
     expect(onSelectionChange).toHaveBeenCalledWith(baseDisplay, true);
+    expect(onViewPage).not.toHaveBeenCalled();
   });
 
   test("toggles selection from the keyboard when the card is focused", async () => {

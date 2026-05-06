@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactElement } from "react";
-import { IconTrash, IconX } from "@tabler/icons-react";
+import { IconPlus, IconTrash, IconX } from "@tabler/icons-react";
 
 import { SearchControl } from "@/components/common/search-control";
 import {
@@ -105,7 +105,14 @@ export function PlaylistsToolbar({
 
             {canCreatePlaylist ? (
               <Button asChild className="w-full justify-center sm:w-auto">
-                <Link href="/admin/playlists/create">Create Playlist</Link>
+                <Link href="/admin/playlists/create">
+                  Create Playlist
+                  <IconPlus
+                    className="size-4"
+                    aria-hidden="true"
+                    data-icon="inline-end"
+                  />
+                </Link>
               </Button>
             ) : null}
           </div>

@@ -124,6 +124,26 @@ describe("DisplaysToolbar", () => {
     ).toBeInTheDocument();
   });
 
+  test("hides output filters for users without display create permission", async () => {
+    const user = userEvent.setup();
+    renderToolbar({
+      canCreateDisplay: false,
+      canManageGroups: true,
+      selectedOutput: "hdmi-*",
+      selectedGroups: ["Lobby"],
+      statusFilter: "LIVE",
+    });
+
+    await user.click(screen.getByRole("button", { name: "Filter displays" }));
+
+    expect(screen.getByText("Status")).toBeInTheDocument();
+    expect(screen.getByText("Display Groups")).toBeInTheDocument();
+    expect(screen.queryByText("Output Type")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Remove hdmi-* filter" }),
+    ).not.toBeInTheDocument();
+  });
+
   test("renders the manage displays dropdown when any manage permission exists", () => {
     renderToolbar({ canCreateDisplay: false, canManageGroups: true });
 

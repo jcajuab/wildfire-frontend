@@ -102,6 +102,7 @@ export function DisplaysToolbar({
               availableOutputs={availableOutputs}
               isFetching={isFetching}
               embeddedTrigger
+              showOutputFilter={canCreateDisplay}
               renderEmbeddedAnchor={(trigger) => (
                 <div className="w-full min-w-0">
                   <SearchControl
@@ -153,7 +154,10 @@ export function DisplaysToolbar({
                     />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-48">
+                <DropdownMenuContent
+                  align="end"
+                  className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
+                >
                   {canCreateDisplay ? (
                     <DropdownMenuItem onClick={onRegisterDisplay}>
                       <IconDeviceDesktopPlus

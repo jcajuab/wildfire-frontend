@@ -228,4 +228,44 @@ describe("DisplayFilterPopover", () => {
       screen.getByPlaceholderText("Search display groups"),
     ).toBeInTheDocument();
   });
+
+  test("hides output type controls and chips when output filtering is unavailable", async () => {
+    const user = userEvent.setup();
+    const onOutputChange = vi.fn();
+
+    render(
+      <TooltipProvider>
+        <DisplayFilterPopover
+          statusFilter="LIVE"
+          selectedGroups={["Lobby", "Hallway"]}
+          selectedOutput="hdmi-*"
+          filteredResultsCount={3}
+          availableGroups={["Lobby", "Hallway", "Cafe"]}
+          availableOutputs={["hdmi-0"]}
+          showOutputFilter={false}
+          onStatusChange={vi.fn()}
+          onGroupsChange={vi.fn()}
+          onOutputChange={onOutputChange}
+          onClearFilters={vi.fn()}
+        />
+      </TooltipProvider>,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Filter displays" }),
+    ).toHaveTextContent("3");
+
+    await user.click(screen.getByRole("button", { name: "Filter displays" }));
+
+    expect(screen.getByText("Status")).toBeInTheDocument();
+    expect(screen.getByText("Display Groups")).toBeInTheDocument();
+    expect(screen.queryByText("Output Type")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("combobox", { name: "Output Type" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Remove hdmi-* filter" }),
+    ).not.toBeInTheDocument();
+    expect(onOutputChange).not.toHaveBeenCalled();
+  });
 });

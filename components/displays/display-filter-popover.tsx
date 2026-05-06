@@ -55,6 +55,7 @@ interface DisplayFilterPopoverProps {
   readonly availableOutputs: readonly string[];
   readonly isFetching?: boolean;
   readonly embeddedTrigger?: boolean;
+  readonly showOutputFilter?: boolean;
   readonly renderEmbeddedAnchor?: (trigger: ReactElement) => ReactElement;
   readonly onStatusChange: (nextStatus: DisplayStatusFilter) => void;
   readonly onGroupsChange: (nextGroups: readonly string[]) => void;
@@ -99,6 +100,7 @@ export function DisplayFilterPopover({
   availableOutputs,
   isFetching = false,
   embeddedTrigger = false,
+  showOutputFilter = true,
   renderEmbeddedAnchor,
   onStatusChange,
   onGroupsChange,
@@ -108,7 +110,7 @@ export function DisplayFilterPopover({
   const [open, setOpen] = useState(false);
   const activeFilterCount =
     selectedGroups.length +
-    (selectedOutput === "all" ? 0 : 1) +
+    (showOutputFilter && selectedOutput !== "all" ? 1 : 0) +
     (statusFilter === "all" ? 0 : 1);
   const hasActiveFilters = activeFilterCount > 0;
   const activeStatusLabel =
@@ -217,7 +219,12 @@ export function DisplayFilterPopover({
         aria-label="Display filters"
       >
         <div className="flex flex-col gap-4 p-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div
+            className={cn(
+              "grid gap-4",
+              showOutputFilter ? "grid-cols-2" : "grid-cols-1",
+            )}
+          >
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="display-status-filter">Status</Label>
               <Select
@@ -247,39 +254,41 @@ export function DisplayFilterPopover({
               </Select>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="display-output-filter">Output Type</Label>
-              <Select
-                value={selectedOutput}
-                onValueChange={(nextValue) =>
-                  onOutputChange(
-                    normalizeDisplayOutputFilter(
-                      nextValue,
-                    ) as DisplayOutputFilter,
-                  )
-                }
-              >
-                <SelectTrigger id="display-output-filter" className="w-full">
-                  <SelectValue placeholder="All output types" />
-                </SelectTrigger>
-                <SelectContent
-                  position="popper"
-                  side="bottom"
-                  align="start"
-                  avoidCollisions={false}
+            {showOutputFilter ? (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="display-output-filter">Output Type</Label>
+                <Select
+                  value={selectedOutput}
+                  onValueChange={(nextValue) =>
+                    onOutputChange(
+                      normalizeDisplayOutputFilter(
+                        nextValue,
+                      ) as DisplayOutputFilter,
+                    )
+                  }
                 >
-                  <SelectItem value="all">All output types</SelectItem>
-                  {outputTypeOptions.map((outputOption) => (
-                    <SelectItem
-                      key={outputOption.value}
-                      value={outputOption.value}
-                    >
-                      {outputOption.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  <SelectTrigger id="display-output-filter" className="w-full">
+                    <SelectValue placeholder="All output types" />
+                  </SelectTrigger>
+                  <SelectContent
+                    position="popper"
+                    side="bottom"
+                    align="start"
+                    avoidCollisions={false}
+                  >
+                    <SelectItem value="all">All output types</SelectItem>
+                    {outputTypeOptions.map((outputOption) => (
+                      <SelectItem
+                        key={outputOption.value}
+                        value={outputOption.value}
+                      >
+                        {outputOption.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -355,7 +364,7 @@ export function DisplayFilterPopover({
                   onRemove={() => onStatusChange("all")}
                 />
               ) : null}
-              {selectedOutput !== "all" ? (
+              {showOutputFilter && selectedOutput !== "all" ? (
                 <FilterChip
                   label={getDisplayOutputFilterLabel(selectedOutput)}
                   onRemove={() => onOutputChange("all")}

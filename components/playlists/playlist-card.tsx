@@ -9,8 +9,6 @@ import {
 import Image from "next/image";
 import {
   IconDots,
-  IconPlaylist,
-  IconClock,
   IconPhoto,
   IconTrash,
   IconListDetails,
@@ -49,6 +47,12 @@ interface PlaylistCardProps {
 const CARD_SELECTION_IGNORE_SELECTOR =
   "button,a,input,select,textarea,[role='button'],[role='menuitem'],[data-card-selection-ignore='true']";
 const MAX_VISIBLE_PREVIEW_ITEMS = 2;
+const PLAYLIST_META_BADGE_CLASSNAME =
+  "border-foreground/15 bg-background text-foreground";
+const PLAYLIST_IN_USE_BADGE_CLASSNAME =
+  "border-destructive/30 bg-destructive/10 text-destructive";
+const PLAYLIST_DRAFT_BADGE_CLASSNAME =
+  "border-border bg-muted/70 text-muted-foreground";
 
 function shouldIgnoreCardSelection(
   target: EventTarget | null,
@@ -74,6 +78,14 @@ function getPlaylistOwnerHandle(playlist: PlaylistSummary): string {
   return username && username.length > 0 ? username : playlist.owner.name;
 }
 
+function getPlaylistStatusBadgeClassName(
+  status: PlaylistSummary["status"],
+): string {
+  return status === "IN_USE"
+    ? PLAYLIST_IN_USE_BADGE_CLASSNAME
+    : PLAYLIST_DRAFT_BADGE_CLASSNAME;
+}
+
 export const PlaylistCard = memo(function PlaylistCard({
   playlist,
   onEdit,
@@ -93,6 +105,7 @@ export const PlaylistCard = memo(function PlaylistCard({
   const activityDateLabel = formatDateWithTime(activityDate);
   const activityRelativeLabel = formatRelativeTime(activityDate);
   const ownerHandle = getPlaylistOwnerHandle(playlist);
+  const statusLabel = playlist.status === "IN_USE" ? "In Use" : "Draft";
   const showEdit = canModify && Boolean(onEdit);
   const showDelete = canModify && Boolean(onDelete);
   const showSelection = canModify && Boolean(onSelectionChange);
@@ -130,7 +143,7 @@ export const PlaylistCard = memo(function PlaylistCard({
       tabIndex={showSelection ? 0 : undefined}
       aria-pressed={showSelection ? isSelected : undefined}
       aria-label={showSelection ? `Select ${playlist.name}` : undefined}
-      className={`group flex h-full flex-col gap-2.5 rounded-xl border border-border/80 bg-card p-4 transition-[border-color,background-color,filter,opacity] duration-200 hover:border-primary/25 data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5 data-[state=selected]:opacity-100 data-[state=selected]:grayscale-0 motion-reduce:transition-none ${showSelection ? "cursor-pointer focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30" : ""} ${showSelection && !isSelected ? "border-border/60 bg-muted/25 opacity-55 grayscale hover:border-primary/35 hover:bg-card hover:opacity-90 hover:grayscale-0" : ""}`}
+      className={`group flex h-full flex-col gap-2.5 rounded-xl border border-border/80 bg-card p-4 transition-[border-color,background-color,filter,opacity] duration-200 hover:border-border data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5 data-[state=selected]:opacity-100 data-[state=selected]:grayscale-0 motion-reduce:transition-none ${showSelection ? "cursor-pointer focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30" : ""} ${showSelection && !isSelected ? "border-border/60 bg-muted/25 opacity-55 grayscale hover:border-border hover:bg-card hover:opacity-90 hover:grayscale-0" : ""}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
@@ -149,11 +162,6 @@ export const PlaylistCard = memo(function PlaylistCard({
             <h2 className="truncate text-base font-semibold leading-tight">
               {playlist.name}
             </h2>
-            {playlist.status === "IN_USE" && (
-              <Badge variant="destructive" className="border-destructive/30">
-                In Use
-              </Badge>
-            )}
           </div>
         </div>
         {showEdit || showDelete ? (
@@ -168,7 +176,10 @@ export const PlaylistCard = memo(function PlaylistCard({
                 <IconDots className="size-4" aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-40">
+            <DropdownMenuContent
+              align="start"
+              className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
+            >
               {showEdit && onEdit ? (
                 <DropdownMenuItem onClick={() => onEdit(playlist)}>
                   <IconListDetails className="size-4" />
@@ -202,17 +213,15 @@ export const PlaylistCard = memo(function PlaylistCard({
       <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
         <Badge
           variant="outline"
-          className="border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-300"
+          className={getPlaylistStatusBadgeClassName(playlist.status)}
         >
-          <IconPlaylist className="size-3.5" aria-hidden="true" />
+          {statusLabel}
+        </Badge>
+        <Badge variant="outline" className={PLAYLIST_META_BADGE_CLASSNAME}>
           {playlist.itemsCount} {playlist.itemsCount === 1 ? "item" : "items"}
         </Badge>
-        <Badge
-          variant="outline"
-          className="border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
-        >
-          <IconClock className="size-3.5" aria-hidden="true" />
-          {formatDuration(playlist.totalDuration)}
+        <Badge variant="outline" className={PLAYLIST_META_BADGE_CLASSNAME}>
+          {formatDuration(playlist.totalDuration)} sec
         </Badge>
       </div>
 
