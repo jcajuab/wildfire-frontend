@@ -2,6 +2,7 @@
 
 import type { ReactElement } from "react";
 import { formatDuration } from "@/lib/formatters";
+import { Button } from "@/components/ui/button";
 import type { Content } from "@/types/content";
 import type { PlaylistItem, PlaylistItemContent } from "@/types/playlist";
 import { type DraftItem } from "./sortable-item-row";
@@ -73,11 +74,23 @@ export function EditPlaylistForm({
       availableContent={availableContent}
       isOverDurationLimit={isOverDurationLimit}
       itemsHeaderSlot={
-        <span
-          className={`text-sm ${isOverDurationLimit ? "text-red-500" : "text-muted-foreground"}`}
-        >
-          {items.length} items &middot; {formatDuration(totalDuration)}
-        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            type="button"
+            onClick={() => onItemsChange([])}
+            disabled={isSaving}
+            className={items.length === 0 ? "invisible" : ""}
+          >
+            Remove All
+          </Button>
+          <span
+            className={`text-sm ${isOverDurationLimit ? "text-red-500" : "text-muted-foreground"}`}
+          >
+            {items.length} items &middot; {formatDuration(totalDuration)}
+          </span>
+        </div>
       }
       itemsSubtitleSlot={
         <p className="text-xs text-muted-foreground">
