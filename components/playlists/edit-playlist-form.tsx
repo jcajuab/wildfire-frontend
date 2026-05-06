@@ -134,7 +134,7 @@ export function EditPlaylistForm({
       availableContent={availableContent}
       isOverDurationLimit={false}
       itemsHeaderSlot={
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-red-500">
           {items.length} items &middot; {formatDuration(totalDuration)}
         </span>
       }

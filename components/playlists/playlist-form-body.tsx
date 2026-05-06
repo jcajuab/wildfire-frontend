@@ -44,6 +44,8 @@ export interface PlaylistFormBodyProps {
   readonly isOverDurationLimit: boolean;
   /** Optional slot rendered in the Playlist Items section header (e.g. duration summary) */
   readonly itemsHeaderSlot?: ReactNode;
+  /** Optional slot rendered below the header row with a red separator before items */
+  readonly itemsSubtitleSlot?: ReactNode;
   /** Empty state message shown when no items have been added */
   readonly emptyItemsMessage?: string;
   /** When true, all fields are non-interactive (e.g. while creating the playlist). */
@@ -60,6 +62,7 @@ export function PlaylistFormBody({
   availableContent,
   isOverDurationLimit,
   itemsHeaderSlot,
+  itemsSubtitleSlot,
   emptyItemsMessage = "Add content from the library to get started",
   disabled = false,
 }: PlaylistFormBodyProps): ReactElement {
@@ -184,6 +187,13 @@ export function PlaylistFormBody({
             </div>
             {itemsHeaderSlot}
           </div>
+
+          {itemsSubtitleSlot && (
+            <div className="flex flex-col gap-2 -mt-2">
+              {itemsSubtitleSlot}
+              <hr className="border-red-500" />
+            </div>
+          )}
 
           <div className="flex flex-col gap-2 xl:flex-1 xl:overflow-y-auto">
             <DndContext

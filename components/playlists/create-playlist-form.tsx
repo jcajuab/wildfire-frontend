@@ -166,6 +166,30 @@ export function CreatePlaylistForm({
         onItemsChange={setItems}
         availableContent={availableContent}
         isOverDurationLimit={isOverDurationLimit}
+        itemsHeaderSlot={
+          <div className="flex items-center gap-2">
+            {items.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                type="button"
+                onClick={() => setItems([])}
+                disabled={isSubmitting}
+              >
+                Remove All
+              </Button>
+            )}
+            <span className="text-sm text-red-500">
+              {totalDuration}s / 60s
+            </span>
+          </div>
+        }
+        itemsSubtitleSlot={
+          <p className="text-xs text-muted-foreground">
+            The max playlist duration should not exceed more than 60 seconds or
+            1 minute.
+          </p>
+        }
         emptyItemsMessage="Add content from the library to get started"
         disabled={isSubmitting}
       />

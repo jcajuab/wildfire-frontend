@@ -65,6 +65,7 @@ export interface ContentOption {
   readonly id: string;
   readonly title: string;
   readonly type: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
+  readonly thumbnailUrl?: string;
 }
 
 /** Cache key for `getContentOptions` (playlist picker SSR uses `PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY`). */
@@ -504,6 +505,7 @@ export const contentApi = api.injectEndpoints({
                       id: updated.id,
                       title: updated.title,
                       type: updated.type,
+                      thumbnailUrl: updated.thumbnailUrl,
                     };
                   }
                 },
