@@ -591,6 +591,10 @@ export const displaysApi = api.injectEndpoints({
         method: "PUT",
         body: { groupIds },
       }),
+      invalidatesTags: (_result, _error, { displayId }) => [
+        { type: "Display", id: displayId },
+        { type: "Display", id: "LIST" },
+      ],
       async onQueryStarted(
         { displayId, groupIds },
         { dispatch, queryFulfilled, getState },
@@ -642,6 +646,33 @@ export const displaysApi = api.injectEndpoints({
                   syncMembership(b.displayGroups);
                 },
               ),
+            );
+          }
+          // Patch any active getDisplays caches whose groupIds filter no longer
+          // matches the display's new membership. The invalidatesTags above
+          // refetches with fresh data; this patch removes the stale row
+          // synchronously so the UI doesn't flash a stale list during the
+          // round-trip. The "add" direction is left to the refetch because we
+          // don't have the full BackendDisplay payload here.
+          const displaysArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplays",
+          );
+          for (const a of displaysArgs) {
+            const filterGroupIds = a?.groupIds ?? [];
+            if (filterGroupIds.length === 0) continue;
+            const matchesAfter = filterGroupIds.some((gid) =>
+              groupIds.includes(gid),
+            );
+            if (matchesAfter) continue;
+            dispatch(
+              displaysApi.util.updateQueryData("getDisplays", a, (draft) => {
+                if (draft.items.some((d) => d.id === displayId)) {
+                  patchPaginatedListById(draft, "remove", {
+                    id: displayId,
+                  } as BackendDisplay);
+                }
+              }),
             );
           }
           await bumpDisplaysNextCache();

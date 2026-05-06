@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useCan } from "@/hooks/use-can";
 import {
-  displaysApi,
   useGetDisplaysBootstrapQuery,
   useGetDisplaysQuery,
   useSetDisplayGroupsMutation,
@@ -92,23 +91,18 @@ export function useDisplayGroupsPage({
 }: UseDisplayGroupsPageOptions = {}): UseDisplayGroupsPageResult {
   const canManageGroups = useCan("displays:update");
 
-  const hasInitialData = initialData != null;
-
+  // Always subscribe to the bootstrap query. With initialData passed from SSR,
+  // RTK Query has the cache pre-warmed via the page-level seeder, so the
+  // background fetch is cheap; the subscription is what makes optimistic
+  // patches and tag invalidations from setDisplayGroups actually take effect.
   const {
     data: queriedData,
     isLoading: queryIsLoading,
     isError,
-  } = useGetDisplaysBootstrapQuery(BOOTSTRAP_QUERY, {
-    skip: hasInitialData,
-  });
+  } = useGetDisplaysBootstrapQuery(BOOTSTRAP_QUERY);
 
-  const cachedData = displaysApi.endpoints.getDisplaysBootstrap.useQueryState(
-    BOOTSTRAP_QUERY,
-    { skip: !hasInitialData },
-  );
-
-  const bootstrap = queriedData ?? cachedData.data ?? initialData;
-  const isLoading = bootstrap == null && (hasInitialData ? false : queryIsLoading);
+  const bootstrap = queriedData ?? initialData;
+  const isLoading = bootstrap == null && queryIsLoading;
 
   const [setDisplayGroupsMutation] = useSetDisplayGroupsMutation();
   const [createDisplayGroupMutation, { isLoading: isCreatePending }] =

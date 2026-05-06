@@ -350,12 +350,23 @@ export function DisplayGroupsPageClient({
                     ))}
                   </div>
                 ) : paginatedDisplays.length === 0 ? (
-                  <div className="flex min-h-[200px] items-center justify-center">
-                    <p className="text-sm text-muted-foreground">
-                      {actionMode === "add"
-                        ? "No displays available to add."
-                        : "No displays in this group yet."}
-                    </p>
+                  <div className="flex h-full items-center justify-center">
+                    {actionMode === "add" ? (
+                      <EmptyState
+                        title="No displays available to add"
+                        description="All matching displays are already members of this group, or no displays match the current filter."
+                      />
+                    ) : actionMode === "remove" ? (
+                      <EmptyState
+                        title="No displays available to remove"
+                        description="This group has no displays to remove."
+                      />
+                    ) : (
+                      <EmptyState
+                        title="No displays in this group yet"
+                        description="Use Actions → Add displays to assign displays to this group."
+                      />
+                    )}
                   </div>
                 ) : (
                   <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
