@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import type { RoleEditBootstrapResponse } from "@/lib/api/rbac-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { getRoleEditPath } from "@/lib/role-paths";
-import { getServerSession } from "@/lib/server/auth";
+import { getServerSession, resolveSession } from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
@@ -24,13 +24,12 @@ interface EditRolePageProps {
 export default async function EditRolePage({
   params,
 }: EditRolePageProps): Promise<ReactElement> {
-  const session = await getServerSession();
   const { id: roleId } = await params;
-
   const editPath = getRoleEditPath(roleId);
 
+  const session = resolveSession(await getServerSession(), editPath);
   if (!session) {
-    redirect(`/login?redirectTo=${encodeURIComponent(editPath)}`);
+    return <EditRolePageView />;
   }
   if (!sessionHasPermission(session, "roles:update")) {
     redirect("/unauthorized");

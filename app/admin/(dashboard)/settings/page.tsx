@@ -1,9 +1,7 @@
 import type { ReactElement } from "react";
-import { redirect } from "next/navigation";
-
 import type { AICredential } from "@/lib/api/ai-credentials-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
-import { getServerSession } from "@/lib/server/auth";
+import { getServerSession, resolveSession } from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
@@ -17,9 +15,9 @@ import {
 } from "./settings-page-client";
 
 export default async function SettingsPage(): Promise<ReactElement> {
-  const session = await getServerSession();
+  const session = resolveSession(await getServerSession(), "/admin/settings");
   if (!session) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/settings")}`);
+    return <SettingsPageView canManageAICredentials={false} />;
   }
 
   const canManageAICredentials = sessionHasPermission(session, "ai:access");

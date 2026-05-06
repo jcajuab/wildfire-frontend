@@ -7,7 +7,7 @@ import {
   PLAYLISTS_PAGE_SIZE,
   playlistsListQueryFromSearchParams,
 } from "@/lib/playlists-search-params";
-import { getServerSession } from "@/lib/server/auth";
+import { getServerSession, resolveSession } from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
@@ -26,16 +26,16 @@ interface PlaylistsPageProps {
 export default async function PlaylistsPage({
   searchParams,
 }: PlaylistsPageProps): Promise<ReactElement> {
-  const session = await getServerSession();
+  const sp = (await searchParams) ?? {};
+  const queryArgs = playlistsListQueryFromSearchParams(sp);
+
+  const session = resolveSession(await getServerSession(), "/admin/playlists");
   if (!session) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/playlists")}`);
+    return <PlaylistsPageView initialQueryArgs={queryArgs} initialData={undefined} />;
   }
   if (!sessionHasPermission(session, "playlists:read")) {
     redirect("/unauthorized");
   }
-
-  const sp = (await searchParams) ?? {};
-  const queryArgs = playlistsListQueryFromSearchParams(sp);
 
   const listRes = await serverFetchJson<unknown>({
     session,

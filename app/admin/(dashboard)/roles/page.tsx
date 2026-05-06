@@ -7,7 +7,7 @@ import {
   ROLES_PAGE_SIZE,
   rolesListQueryFromSearchParams,
 } from "@/lib/roles-search-params";
-import { getServerSession } from "@/lib/server/auth";
+import { getServerSession, resolveSession } from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
@@ -26,9 +26,9 @@ interface RolesPageProps {
 export default async function RolesPage({
   searchParams,
 }: RolesPageProps): Promise<ReactElement> {
-  const session = await getServerSession();
+  const session = resolveSession(await getServerSession(), "/admin/roles");
   if (!session) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/roles")}`);
+    return <RolesPageView />;
   }
   if (!sessionHasPermission(session, "roles:read")) {
     redirect("/unauthorized");

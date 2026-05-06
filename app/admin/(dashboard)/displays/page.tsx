@@ -8,7 +8,7 @@ import type {
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
 import type { ServerSearchParamValue } from "@/lib/server/api";
-import { getServerSession } from "@/lib/server/auth";
+import { getServerSession, resolveSession } from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
@@ -44,9 +44,14 @@ function bootstrapSearchParamsRecord(
 }
 
 export default async function DisplaysPage(): Promise<ReactElement> {
-  const session = await getServerSession();
+  const session = resolveSession(await getServerSession(), "/admin/displays");
   if (!session) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/displays")}`);
+    return (
+      <DisplaysPageView
+        initialQueryArgs={INITIAL_DISPLAYS_BOOTSTRAP_QUERY}
+        initialData={undefined}
+      />
+    );
   }
   if (!sessionHasPermission(session, "displays:read")) {
     redirect("/unauthorized");

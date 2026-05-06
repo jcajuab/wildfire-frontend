@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { parseApiResponseData } from "@/lib/api/contracts";
 import { getDevOnlyRequestHeaders } from "@/lib/api/config";
@@ -37,16 +38,25 @@ export interface ServerSession {
   readonly permissions: PermissionType[];
 }
 
+export type ServerSessionResult =
+  | { status: "ok"; session: ServerSession }
+  | { status: "unauthenticated" }
+  | { status: "unavailable" };
+
 /**
  * Exchange refresh cookie for access token on the server (per-request memoized).
  * Uses POST /auth/refresh with forwarded cookies and `X-Server-Refresh: true` so
  * the backend does not rotate the refresh token (server-side fetch cannot apply
  * Set-Cookie to the browser). Pair with {@link serverFetchJson}.
+ *
+ * Returns a discriminated union: "ok" (valid session), "unauthenticated" (confirmed
+ * 401 or no refresh cookie), or "unavailable" (timeout, network error, or backend
+ * 5xx) so callers can distinguish a real logout from a transient failure.
  */
 export const getServerSession = cache(
-  async (): Promise<ServerSession | null> => {
+  async (): Promise<ServerSessionResult> => {
     if (!(await hasRefreshCookie())) {
-      return null;
+      return { status: "unauthenticated" };
     }
 
     const cookieHeader = await buildIncomingCookieHeader();
@@ -71,22 +81,48 @@ export const getServerSession = cache(
         signal: controller.signal,
       });
 
+      if (response.status === 401) {
+        return { status: "unauthenticated" };
+      }
+
       if (!response.ok) {
-        return null;
+        return { status: "unavailable" };
       }
 
       const payload: unknown = await response.json();
       const data = parseApiResponseData<AuthResponse>(payload);
 
       return {
-        accessToken: data.accessToken,
-        user: data.user,
-        permissions: data.permissions,
+        status: "ok",
+        session: {
+          accessToken: data.accessToken,
+          user: data.user,
+          permissions: data.permissions,
+        },
       };
     } catch {
-      return null;
+      return { status: "unavailable" };
     } finally {
       clearTimeout(timeoutId);
     }
   },
 );
+
+/**
+ * Resolves a `ServerSessionResult` for a protected page.
+ *
+ * - "ok" → returns the session
+ * - "unauthenticated" → redirects to /login (throws, never returns)
+ * - "unavailable" → returns null so the page can render a skeleton and let
+ *   the client-side AuthGuard handle authentication at hydration time
+ */
+export function resolveSession(
+  result: ServerSessionResult,
+  redirectTarget: string,
+): ServerSession | null {
+  if (result.status === "ok") return result.session;
+  if (result.status === "unauthenticated") {
+    redirect(`/login?redirectTo=${encodeURIComponent(redirectTarget)}`);
+  }
+  return null;
+}

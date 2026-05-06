@@ -12,7 +12,7 @@ import {
   USERS_PAGE_SIZE,
   usersListQueryFromSearchParams,
 } from "@/lib/users-search-params";
-import { getServerSession } from "@/lib/server/auth";
+import { getServerSession, resolveSession } from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
@@ -35,9 +35,9 @@ interface UsersPageProps {
 export default async function UsersPage({
   searchParams,
 }: UsersPageProps): Promise<ReactElement> {
-  const session = await getServerSession();
+  const session = resolveSession(await getServerSession(), "/admin/users");
   if (!session) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/users")}`);
+    return <UsersPageView />;
   }
   if (!sessionHasPermission(session, "users:read")) {
     redirect("/unauthorized");

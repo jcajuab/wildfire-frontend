@@ -7,7 +7,7 @@ import {
   CONTENT_PAGE_SIZE,
   contentListQueryFromSearchParams,
 } from "@/lib/content-search-params";
-import { getServerSession } from "@/lib/server/auth";
+import { getServerSession, resolveSession } from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
@@ -26,16 +26,16 @@ interface ContentPageProps {
 export default async function ContentPage({
   searchParams,
 }: ContentPageProps): Promise<ReactElement> {
-  const session = await getServerSession();
+  const sp = (await searchParams) ?? {};
+  const queryArgs = contentListQueryFromSearchParams(sp);
+
+  const session = resolveSession(await getServerSession(), "/admin/content");
   if (!session) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/content")}`);
+    return <ContentPageView initialQueryArgs={queryArgs} initialData={undefined} />;
   }
   if (!sessionHasPermission(session, "content:read")) {
     redirect("/unauthorized");
   }
-
-  const sp = (await searchParams) ?? {};
-  const queryArgs = contentListQueryFromSearchParams(sp);
 
   const listRes = await serverFetchJson<unknown>({
     session,

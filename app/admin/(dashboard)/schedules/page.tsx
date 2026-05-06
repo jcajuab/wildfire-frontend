@@ -7,7 +7,7 @@ import type {
 } from "@/lib/api/schedules-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { defaultSchedulesBootstrapWindow } from "@/lib/schedule-window";
-import { getServerSession } from "@/lib/server/auth";
+import { getServerSession, resolveSession } from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
@@ -21,9 +21,9 @@ import {
 } from "./schedules-page-client";
 
 export default async function SchedulesPage(): Promise<ReactElement> {
-  const session = await getServerSession();
+  const session = resolveSession(await getServerSession(), "/admin/schedules");
   if (!session) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/schedules")}`);
+    return <SchedulesPageView />;
   }
   if (!sessionHasPermission(session, "schedules:read")) {
     redirect("/unauthorized");

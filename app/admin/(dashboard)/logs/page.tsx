@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import type { BackendAuditEvent } from "@/lib/api/audit-api";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { auditListQueryFromSearchParams } from "@/lib/audit-log-search-params";
-import { getServerSession } from "@/lib/server/auth";
+import { getServerSession, resolveSession } from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
@@ -23,16 +23,16 @@ interface LogsPageProps {
 export default async function LogsPage({
   searchParams,
 }: LogsPageProps): Promise<ReactElement> {
-  const session = await getServerSession();
+  const sp = (await searchParams) ?? {};
+  const listQuery = auditListQueryFromSearchParams(sp);
+
+  const session = resolveSession(await getServerSession(), "/admin/logs");
   if (!session) {
-    redirect(`/login?redirectTo=${encodeURIComponent("/admin/logs")}`);
+    return <LogsPageClient />;
   }
   if (!sessionHasPermission(session, "audit:read")) {
     redirect("/unauthorized");
   }
-
-  const sp = (await searchParams) ?? {};
-  const listQuery = auditListQueryFromSearchParams(sp);
 
   const eventsRes = await serverFetchJson<unknown>({
     session,
