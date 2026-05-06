@@ -189,9 +189,9 @@ export function PlaylistFormBody({
           </div>
 
           {itemsSubtitleSlot && (
-            <div className="flex flex-col gap-2 -mt-2">
+            <div className="flex flex-col gap-4 -mt-2">
               {itemsSubtitleSlot}
-              <hr className="border-red-500" />
+              <hr className="-mx-4 border-border" />
             </div>
           )}
 

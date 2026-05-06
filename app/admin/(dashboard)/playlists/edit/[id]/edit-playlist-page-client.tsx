@@ -1,13 +1,19 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useLayoutEffect, useState } from "react";
+import { useCallback, useLayoutEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
-import { EditPlaylistForm } from "@/components/playlists/edit-playlist-form";
+import {
+  EditPlaylistForm,
+  toDrafts,
+  type PlaylistItemsAtomicSnapshot,
+} from "@/components/playlists/edit-playlist-form";
+import { type DraftItem } from "@/components/playlists/sortable-item-row";
+import { MAX_BASE_DURATION_SECONDS } from "@/components/playlists/create-playlist-form";
 import { Button } from "@/components/ui/button";
 import {
   playlistsApi,
@@ -42,36 +48,68 @@ export function PlaylistDetailCacheSeeder({
   return null;
 }
 
-interface EditPlaylistPageFormState {
-  readonly canSave: boolean;
-  readonly isSaving: boolean;
-  handleCancel: () => void;
-  handleSave: () => void;
-}
-
 export function EditPlaylistPageView(): ReactElement {
   const params = useParams<{ id: string }>();
   const { state, availableContent, handleCancel, handleSave, isSaving } =
     useEditPlaylistPage(params?.id);
-  const [formState, setFormState] = useState<EditPlaylistPageFormState | null>(
-    null,
-  );
+
+  // Form state owned here so canSave is computed during render with no effects.
+  const [loadedPlaylistId, setLoadedPlaylistId] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+  const [items, setItems] = useState<DraftItem[]>([]);
+
+  // React-approved "adjust state during render" pattern (replaces reset useEffect).
+  // Fires once per playlist load; React immediately re-renders with the new values.
+  if (state.status === "ready" && state.playlist.id !== loadedPlaylistId) {
+    setLoadedPlaylistId(state.playlist.id);
+    setName(state.playlist.name);
+    setDesc(state.playlist.description ?? "");
+    setItems(toDrafts(state.playlist.items));
+  }
+
+  const totalDuration = items.reduce((sum, item) => sum + item.duration, 0);
+  const isOverDurationLimit = totalDuration > MAX_BASE_DURATION_SECONDS;
+  const canSave = !isSaving && !isOverDurationLimit;
+
+  const handleSaveClick = useCallback(() => {
+    const snapshot: PlaylistItemsAtomicSnapshot = items.map((item) =>
+      item.id.startsWith("draft-")
+        ? {
+            kind: "new",
+            contentId: item.content.id,
+            duration: item.duration,
+            loop: item.loop,
+          }
+        : {
+            kind: "existing",
+            itemId: item.id,
+            duration: item.duration,
+            loop: item.loop,
+          },
+    );
+
+    void handleSave({
+      metadata: {
+        name: name.trim(),
+        description: desc.trim() || null,
+      },
+      items: snapshot,
+    });
+  }, [desc, handleSave, items, name]);
 
   const headerActions =
     state.status === "ready" ? (
       <div className="flex flex-wrap items-center gap-2">
         <Button
           variant="outline"
-          onClick={() => formState?.handleCancel()}
-          disabled={formState?.isSaving ?? false}
+          onClick={handleCancel}
+          disabled={isSaving}
         >
           Cancel
         </Button>
-        <Button
-          onClick={() => formState?.handleSave()}
-          disabled={!formState?.canSave || formState.isSaving}
-        >
-          {formState?.isSaving ? "Saving..." : "Save Changes"}
+        <Button onClick={handleSaveClick} disabled={!canSave || isSaving}>
+          {isSaving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
     ) : null;
@@ -118,11 +156,15 @@ export function EditPlaylistPageView(): ReactElement {
           {state.status === "ready" ? (
             <div className="flex min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
               <EditPlaylistForm
-                playlist={state.playlist}
+                name={name}
+                onNameChange={setName}
+                description={desc}
+                onDescriptionChange={setDesc}
+                items={items}
+                onItemsChange={setItems}
                 availableContent={availableContent}
-                onSave={handleSave}
-                onCancel={handleCancel}
-                onStateChange={setFormState}
+                isOverDurationLimit={isOverDurationLimit}
+                totalDuration={totalDuration}
                 isSaving={isSaving}
               />
             </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Content } from "@/types/content";
 import type { PlaylistItem } from "@/types/playlist";
@@ -30,12 +30,6 @@ export interface CreatePlaylistFormProps {
   readonly description?: string;
   readonly showHeader?: boolean;
   readonly surface?: "card" | "page";
-  readonly onStateChange?: (state: {
-    canCreate: boolean;
-    isSubmitting: boolean;
-    handleCancel: () => void;
-    handleCreate: () => Promise<void>;
-  }) => void;
 }
 
 export const MAX_BASE_DURATION_SECONDS = 60;
@@ -49,7 +43,6 @@ export function CreatePlaylistForm({
   description = "Add and organize contents to form a playlist",
   showHeader = true,
   surface = "card",
-  onStateChange,
 }: CreatePlaylistFormProps): ReactElement {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
@@ -118,10 +111,6 @@ export function CreatePlaylistForm({
   const canCreate = name.trim().length > 0 && !isOverDurationLimit;
   const isPageSurface = surface === "page";
 
-  useEffect(() => {
-    onStateChange?.({ canCreate, isSubmitting, handleCancel, handleCreate });
-  }, [canCreate, handleCancel, handleCreate, isSubmitting, onStateChange]);
-
   return (
     <div
       data-testid="create-playlist-form-root"
@@ -168,18 +157,19 @@ export function CreatePlaylistForm({
         isOverDurationLimit={isOverDurationLimit}
         itemsHeaderSlot={
           <div className="flex items-center gap-2">
-            {items.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                type="button"
-                onClick={() => setItems([])}
-                disabled={isSubmitting}
-              >
-                Remove All
-              </Button>
-            )}
-            <span className="text-sm text-red-500">
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => setItems([])}
+              disabled={isSubmitting}
+              className={items.length === 0 ? "invisible" : ""}
+            >
+              Remove All
+            </Button>
+            <span
+              className={`text-sm ${isOverDurationLimit ? "text-red-500" : "text-muted-foreground"}`}
+            >
               {totalDuration}s / 60s
             </span>
           </div>

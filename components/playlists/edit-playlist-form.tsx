@@ -1,22 +1,18 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDuration } from "@/lib/formatters";
 import type { Content } from "@/types/content";
-import type {
-  PlaylistDetail,
-  PlaylistItem,
-  PlaylistItemContent,
-} from "@/types/playlist";
+import type { PlaylistItem, PlaylistItemContent } from "@/types/playlist";
 import { type DraftItem } from "./sortable-item-row";
 import { PlaylistFormBody } from "./playlist-form-body";
+import { MAX_BASE_DURATION_SECONDS } from "./create-playlist-form";
 
 export type PlaylistSelectableContent = Content & {
   readonly type: PlaylistItemContent["type"];
 };
 
-function toDrafts(items: readonly PlaylistItem[]): DraftItem[] {
+export function toDrafts(items: readonly PlaylistItem[]): DraftItem[] {
   return items.map((item) => ({
     id: item.id,
     content: item.content,
@@ -41,102 +37,53 @@ export interface PlaylistEditorSavePayload {
   readonly items: PlaylistItemsAtomicSnapshot;
 }
 
-export interface EditPlaylistFormState {
-  readonly canSave: boolean;
-  readonly isSaving: boolean;
-  handleCancel: () => void;
-  handleSave: () => void;
-}
-
 export interface EditPlaylistFormProps {
-  readonly playlist: PlaylistDetail;
+  readonly name: string;
+  readonly onNameChange: (value: string) => void;
+  readonly description: string;
+  readonly onDescriptionChange: (value: string) => void;
+  readonly items: DraftItem[];
+  readonly onItemsChange: (items: DraftItem[]) => void;
   readonly availableContent: readonly PlaylistSelectableContent[];
-  readonly onSave: (payload: PlaylistEditorSavePayload) => void;
-  readonly onCancel?: () => void;
-  readonly onStateChange?: (state: EditPlaylistFormState) => void;
-  readonly isSaving?: boolean;
+  readonly isOverDurationLimit: boolean;
+  readonly totalDuration: number;
+  readonly isSaving: boolean;
 }
 
 export function EditPlaylistForm({
-  playlist,
+  name,
+  onNameChange,
+  description,
+  onDescriptionChange,
+  items,
+  onItemsChange,
   availableContent,
-  onSave,
-  onCancel,
-  onStateChange,
-  isSaving = false,
+  isOverDurationLimit,
+  totalDuration,
+  isSaving,
 }: EditPlaylistFormProps): ReactElement {
-  const [name, setName] = useState(() => playlist.name);
-  const [desc, setDesc] = useState(() => playlist.description ?? "");
-  const [items, setItems] = useState<DraftItem[]>(() =>
-    toDrafts(playlist.items),
-  );
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- valid sync pattern for draft reset when the source playlist changes
-    setName(playlist.name);
-    setDesc(playlist.description ?? "");
-    setItems(toDrafts(playlist.items));
-  }, [playlist]);
-
-  const totalDuration = useMemo(
-    () => items.reduce((sum, item) => sum + item.duration, 0),
-    [items],
-  );
-
-  const handleSave = useCallback(() => {
-    if (isSaving) return;
-
-    const snapshot: PlaylistItemsAtomicSnapshot = items.map((item) =>
-      item.id.startsWith("draft-")
-        ? {
-            kind: "new",
-            contentId: item.content.id,
-            duration: item.duration,
-            loop: item.loop,
-          }
-        : {
-            kind: "existing",
-            itemId: item.id,
-            duration: item.duration,
-            loop: item.loop,
-          },
-    );
-
-    onSave({
-      metadata: {
-        name: name.trim(),
-        description: desc.trim().length > 0 ? desc.trim() : null,
-      },
-      items: snapshot,
-    });
-  }, [items, isSaving, onSave, desc, name]);
-
-  const handleCancel = useCallback(() => {
-    if (isSaving) return;
-    setName(playlist.name);
-    setDesc(playlist.description ?? "");
-    setItems(toDrafts(playlist.items));
-    onCancel?.();
-  }, [isSaving, onCancel, playlist]);
-
-  useEffect(() => {
-    onStateChange?.({ canSave: !isSaving, isSaving, handleCancel, handleSave });
-  }, [handleCancel, handleSave, isSaving, onStateChange]);
-
   return (
     <PlaylistFormBody
       name={name}
-      onNameChange={setName}
-      description={desc}
-      onDescriptionChange={setDesc}
+      onNameChange={onNameChange}
+      description={description}
+      onDescriptionChange={onDescriptionChange}
       items={items}
-      onItemsChange={setItems}
+      onItemsChange={onItemsChange}
       availableContent={availableContent}
-      isOverDurationLimit={false}
+      isOverDurationLimit={isOverDurationLimit}
       itemsHeaderSlot={
-        <span className="text-sm text-red-500">
+        <span
+          className={`text-sm ${isOverDurationLimit ? "text-red-500" : "text-muted-foreground"}`}
+        >
           {items.length} items &middot; {formatDuration(totalDuration)}
         </span>
+      }
+      itemsSubtitleSlot={
+        <p className="text-xs text-muted-foreground">
+          The max playlist duration should not exceed more than 60 seconds or
+          1 minute.
+        </p>
       }
       emptyItemsMessage="No items - add content from the library"
       disabled={isSaving}
