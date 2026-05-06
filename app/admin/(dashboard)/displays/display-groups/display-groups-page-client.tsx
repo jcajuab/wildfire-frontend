@@ -2,6 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useLayoutEffect } from "react";
+import dynamic from "next/dynamic";
 import {
   IconChevronDown,
   IconFilter,
@@ -34,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   displaysApi,
   type DisplaysBootstrapResponse,
@@ -43,12 +45,21 @@ import { useAppDispatch } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 
 import { DisplayGroupCard } from "./_components/display-group-card";
+import { DisplaySidebarCard } from "./_components/display-sidebar-card";
 import { CreateDisplayGroupDialog } from "./_components/create-display-group-dialog";
 import { RenameDisplayGroupDialog } from "./_components/rename-display-group-dialog";
 import {
   DISPLAY_PAGE_SIZE,
   useDisplayGroupsPage,
 } from "./_hooks/use-display-groups-page";
+
+const EditDisplayDialog = dynamic(
+  () =>
+    import("@/components/displays/edit-display-dialog").then(
+      (mod) => mod.EditDisplayDialog,
+    ),
+  { ssr: false },
+);
 
 function DisplayGroupsBootstrapSeeder({
   queryArgs,
@@ -77,6 +88,8 @@ export function DisplayGroupsPageClient({
 }: DisplayGroupsPageClientProps = {}): ReactElement {
   const {
     canManageGroups,
+    axis,
+    handleAxisChange,
     groups,
     filteredGroups,
     isLoading,
@@ -96,6 +109,27 @@ export function DisplayGroupsPageClient({
     displayTotal,
     setDisplayPage,
     isDisplaysLoading,
+    selectedDisplayId,
+    selectedDisplay,
+    leftDisplaySearch,
+    handleLeftDisplaySearchChange,
+    leftDisplays,
+    leftDisplayPage,
+    leftDisplayTotal,
+    setLeftDisplayPage,
+    isLeftDisplaysLoading,
+    selectedGroupIds,
+    groupsForRightPane,
+    groupsRightPaneTotal,
+    handleSelectDisplay,
+    handleToggleGroup,
+    handleConfirmAddGroups,
+    handleConfirmRemoveGroups,
+    editingDisplay,
+    isEditDisplayOpen,
+    handleOpenEditDisplay,
+    handleEditDisplayOpenChange,
+    handleSaveDisplay,
     renameGroupId,
     renameGroupInitialName,
     setRenameGroupId,
@@ -115,9 +149,15 @@ export function DisplayGroupsPageClient({
     handleRenameGroup,
   } = useDisplayGroupsPage({ initialData });
 
-  const counterText = actionMode
-    ? `Total selected: ${selectedDisplayIds.size}`
-    : `Total displays: ${displayTotal}`;
+  const isDisplayAxis = axis === "display";
+
+  const counterText = isDisplayAxis
+    ? actionMode
+      ? `Total selected: ${selectedGroupIds.size}`
+      : `Total groups: ${groupsRightPaneTotal}`
+    : actionMode
+      ? `Total selected: ${selectedDisplayIds.size}`
+      : `Total displays: ${displayTotal}`;
 
   const categoryFilterTrigger =
     actionMode === "add" ? (
@@ -185,237 +225,419 @@ export function DisplayGroupsPageClient({
         <div>
           <h1 className="text-sm font-semibold">Manage display groups</h1>
           <p className="text-xs text-muted-foreground">
-            Assign displays to groups for targeted content scheduling.
+            {isDisplayAxis
+              ? "Pick a display to view and manage the groups it belongs to."
+              : "Assign displays to groups for targeted content scheduling."}
           </p>
         </div>
-        {canManageGroups ? (
-          <Button onClick={() => setIsCreateOpen(true)}>
-            <IconPlus className="size-4" aria-hidden="true" />
-            Add display group
-          </Button>
-        ) : null}
+        <div className="flex items-center gap-3">
+          <Tabs
+            value={axis}
+            onValueChange={(v) => handleAxisChange(v as typeof axis)}
+            className="!flex-row"
+          >
+            <TabsList aria-label="Browse axis">
+              <TabsTrigger value="group" className="px-3">
+                By group
+              </TabsTrigger>
+              <TabsTrigger value="display" className="px-3">
+                By display
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {canManageGroups ? (
+            <Button onClick={() => setIsCreateOpen(true)}>
+              <IconPlus className="size-4" aria-hidden="true" />
+              Add display group
+            </Button>
+          ) : null}
+        </div>
       </div>
 
-      {/* Shared pane header — single border-b guarantees horizontal line alignment */}
-      <div className="flex shrink-0 border-b border-border">
-        {/* Left header: "Display groups" label + group search */}
-        <div className="flex w-56 shrink-0 flex-col gap-3 border-r border-border px-3 py-2">
-          <p className="text-xs font-medium text-foreground">Display groups</p>
-          <Input
-            placeholder="Search groups…"
-            value={groupSearch}
-            onChange={(e) => setGroupSearch(e.target.value)}
-            className="h-7 text-xs"
-          />
-        </div>
-
-        {/* Right header: 3-column layout */}
-        <div className="flex min-w-0 flex-1 py-2">
-          {/* container-left (25%): "Displays" label + display search */}
-          <div className="flex w-1/4 shrink-0 flex-col gap-3 px-3">
-            <p className="text-xs font-medium text-foreground">Displays</p>
-            <SearchControl
-              value={displaySearch}
-              onChange={handleDisplaySearchChange}
-              ariaLabel="Search displays"
-              placeholder={
-                selectedGroup ? "Search displays…" : "Select a group first"
-              }
-              className="max-w-none"
-              disabled={!selectedGroup || isExecuting}
-              trailingAction={categoryFilterTrigger}
-            />
-          </div>
-
-          {/* container-middle (flex-1): counter text, vertically centered */}
-          <div className="flex flex-1 items-center justify-center px-3">
-            <p className="text-sm text-muted-foreground">{counterText}</p>
-          </div>
-
-          {/* container-right: fixed-width action area to prevent layout shift */}
-          <div className="flex w-[14rem] shrink-0 items-center justify-end gap-1.5 px-3">
-            {actionMode ? (
+      {/* Subtree keyed by axis so search inputs / scroll position reset cleanly on toggle (rule §5). */}
+      <div
+        key={axis}
+        className="flex min-h-0 flex-1 flex-col overflow-hidden"
+      >
+        {/* Shared pane header — single border-b guarantees horizontal line alignment */}
+        <div className="flex shrink-0 border-b border-border">
+          {/* Left header */}
+          <div className="flex w-56 shrink-0 flex-col gap-3 border-r border-border px-3 py-2">
+            {isDisplayAxis ? (
               <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCancelAction}
-                  disabled={isExecuting}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  variant={
-                    actionMode === "remove" ? "destructive" : "default"
+                <p className="text-xs font-medium text-foreground">Displays</p>
+                <Input
+                  placeholder="Search displays…"
+                  value={leftDisplaySearch}
+                  onChange={(e) =>
+                    handleLeftDisplaySearchChange(e.target.value)
                   }
-                  disabled={selectedDisplayIds.size === 0 || isExecuting}
-                  onClick={() => {
-                    if (actionMode === "add") void handleConfirmAdd();
-                    else void handleConfirmRemove();
-                  }}
-                >
-                  {isExecuting
-                    ? "Applying…"
-                    : actionMode === "add"
-                      ? "Add"
-                      : "Remove"}
-                </Button>
+                  className="h-7 text-xs"
+                />
               </>
-            ) : canManageGroups ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+            ) : (
+              <>
+                <p className="text-xs font-medium text-foreground">
+                  Display groups
+                </p>
+                <Input
+                  placeholder="Search groups…"
+                  value={groupSearch}
+                  onChange={(e) => setGroupSearch(e.target.value)}
+                  className="h-7 text-xs"
+                />
+              </>
+            )}
+          </div>
+
+          {/* Right header: 3-column layout */}
+          <div className="flex min-w-0 flex-1 py-2">
+            {/* container-left (25%): label + search */}
+            <div className="flex w-1/4 shrink-0 flex-col gap-3 px-3">
+              {isDisplayAxis ? (
+                <>
+                  <p className="text-xs font-medium text-foreground">
+                    Display groups
+                  </p>
+                  <SearchControl
+                    value={displaySearch}
+                    onChange={handleDisplaySearchChange}
+                    ariaLabel="Search display groups"
+                    placeholder={
+                      selectedDisplay
+                        ? "Search groups…"
+                        : "Select a display first"
+                    }
+                    className="max-w-none"
+                    disabled={!selectedDisplay || isExecuting}
+                  />
+                </>
+              ) : (
+                <>
+                  <p className="text-xs font-medium text-foreground">
+                    Displays
+                  </p>
+                  <SearchControl
+                    value={displaySearch}
+                    onChange={handleDisplaySearchChange}
+                    ariaLabel="Search displays"
+                    placeholder={
+                      selectedGroup ? "Search displays…" : "Select a group first"
+                    }
+                    className="max-w-none"
+                    disabled={!selectedGroup || isExecuting}
+                    trailingAction={categoryFilterTrigger}
+                  />
+                </>
+              )}
+            </div>
+
+            {/* container-middle (flex-1): counter text */}
+            <div className="flex flex-1 items-center justify-center px-3">
+              <p className="text-sm text-muted-foreground">{counterText}</p>
+            </div>
+
+            {/* container-right: fixed-width action area */}
+            <div className="flex w-[14rem] shrink-0 items-center justify-end gap-1.5 px-3">
+              {actionMode ? (
+                <>
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={!selectedGroup}
+                    onClick={handleCancelAction}
+                    disabled={isExecuting}
                   >
-                    Actions
-                    <IconChevronDown
-                      className="size-4"
-                      aria-hidden="true"
-                      data-icon="inline-end"
-                    />
+                    Cancel
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={handleEnterAdd}>
-                    <IconPlus className="size-4" aria-hidden="true" />
-                    Add displays
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={handleEnterRemove}
+                  <Button
+                    size="sm"
+                    variant={
+                      actionMode === "remove" ? "destructive" : "default"
+                    }
+                    disabled={
+                      isDisplayAxis
+                        ? selectedGroupIds.size === 0 || isExecuting
+                        : selectedDisplayIds.size === 0 || isExecuting
+                    }
+                    onClick={() => {
+                      if (isDisplayAxis) {
+                        if (actionMode === "add")
+                          void handleConfirmAddGroups();
+                        else void handleConfirmRemoveGroups();
+                      } else {
+                        if (actionMode === "add") void handleConfirmAdd();
+                        else void handleConfirmRemove();
+                      }
+                    }}
                   >
-                    <IconMinus className="size-4" aria-hidden="true" />
-                    Remove displays
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : null}
-          </div>
-        </div>
-      </div>
-
-      {/* Two-pane scrollable area */}
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* Left pane — display groups list */}
-        <div className="flex w-56 shrink-0 flex-col border-r border-border">
-          <div className="flex-1 space-y-1 overflow-y-auto p-2">
-            {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-9 rounded-md" />
-              ))
-            ) : isError ? (
-              <p className="px-2 py-4 text-center text-xs text-destructive">
-                Failed to load groups.
-              </p>
-            ) : filteredGroups.length === 0 ? (
-              <p className="px-2 py-4 text-center text-xs text-muted-foreground">
-                {groupSearch
-                  ? "No matching groups."
-                  : "No display groups yet."}
-              </p>
-            ) : (
-              filteredGroups.map((group) => (
-                <DisplayGroupCard
-                  key={group.id}
-                  group={group}
-                  isSelected={selectedGroupId === group.id}
-                  onSelect={() => handleSelectGroup(group.id)}
-                  onSettings={() => setRenameGroupId(group.id)}
-                  canManage={canManageGroups}
-                />
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Right pane — displays grid */}
-        <div className="flex min-w-0 flex-1 flex-col">
-          {!selectedGroup ? (
-            <div className="flex flex-1 items-center justify-center p-8">
-              <EmptyState
-                title="Select a display group"
-                description="Choose a group on the left to view and manage its displays."
-              />
+                    {isExecuting
+                      ? "Applying…"
+                      : actionMode === "add"
+                        ? "Add"
+                        : "Remove"}
+                  </Button>
+                </>
+              ) : canManageGroups ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={
+                        isDisplayAxis ? !selectedDisplay : !selectedGroup
+                      }
+                    >
+                      Actions
+                      <IconChevronDown
+                        className="size-4"
+                        aria-hidden="true"
+                        data-icon="inline-end"
+                      />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={handleEnterAdd}>
+                      <IconPlus className="size-4" aria-hidden="true" />
+                      {isDisplayAxis ? "Add groups" : "Add displays"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={handleEnterRemove}
+                    >
+                      <IconMinus className="size-4" aria-hidden="true" />
+                      {isDisplayAxis ? "Remove groups" : "Remove displays"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
             </div>
-          ) : (
-            <>
-              <div className="min-h-0 flex-1 overflow-auto p-4">
-                {isDisplaysLoading ? (
-                  <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
-                    {Array.from({ length: DISPLAY_PAGE_SIZE }).map((_, i) => (
-                      <Skeleton key={i} className="h-10 rounded-md" />
-                    ))}
-                  </div>
-                ) : paginatedDisplays.length === 0 ? (
-                  <div className="flex h-full items-center justify-center">
-                    {actionMode === "add" ? (
-                      <EmptyState
-                        title="No displays available to add"
-                        description="All matching displays are already members of this group, or no displays match the current filter."
+          </div>
+        </div>
+
+        {/* Two-pane scrollable area */}
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          {/* Left pane */}
+          <div className="flex w-56 shrink-0 flex-col border-r border-border">
+            {isDisplayAxis ? (
+              <>
+                <div className="flex-1 space-y-1 overflow-y-auto p-2">
+                  {isLeftDisplaysLoading && leftDisplays.length === 0 ? (
+                    Array.from({ length: 6 }).map((_, i) => (
+                      <Skeleton key={i} className="h-9 rounded-md" />
+                    ))
+                  ) : leftDisplays.length === 0 ? (
+                    <p className="px-2 py-4 text-center text-xs text-muted-foreground">
+                      {leftDisplaySearch
+                        ? "No matching displays."
+                        : "No displays yet."}
+                    </p>
+                  ) : (
+                    leftDisplays.map((display) => (
+                      <DisplaySidebarCard
+                        key={display.id}
+                        display={display}
+                        isSelected={selectedDisplayId === display.id}
+                        onSelect={() => handleSelectDisplay(display.id)}
+                        onSettings={() => handleOpenEditDisplay(display.id)}
+                        canManage={canManageGroups}
                       />
-                    ) : actionMode === "remove" ? (
-                      <EmptyState
-                        title="No displays available to remove"
-                        description="This group has no displays to remove."
-                      />
-                    ) : (
-                      <EmptyState
-                        title="No displays in this group yet"
-                        description="Use Actions → Add displays to assign displays to this group."
-                      />
-                    )}
-                  </div>
+                    ))
+                  )}
+                </div>
+                <footer className="border-t border-border bg-background/80 empty:hidden">
+                  <PaginationFooter
+                    page={leftDisplayPage}
+                    pageSize={DISPLAY_PAGE_SIZE}
+                    total={leftDisplayTotal}
+                    onPageChange={setLeftDisplayPage}
+                    variant="compact"
+                    alwaysShow
+                  />
+                </footer>
+              </>
+            ) : (
+              <div className="flex-1 space-y-1 overflow-y-auto p-2">
+                {isLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-9 rounded-md" />
+                  ))
+                ) : isError ? (
+                  <p className="px-2 py-4 text-center text-xs text-destructive">
+                    Failed to load groups.
+                  </p>
+                ) : filteredGroups.length === 0 ? (
+                  <p className="px-2 py-4 text-center text-xs text-muted-foreground">
+                    {groupSearch
+                      ? "No matching groups."
+                      : "No display groups yet."}
+                  </p>
                 ) : (
-                  <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
-                    {paginatedDisplays.map((display) => {
-                      const isSelected = selectedDisplayIds.has(display.id);
-                      const isInteractive = actionMode !== null;
-                      return (
-                        <button
-                          key={display.id}
-                          type="button"
-                          onClick={() => {
-                            if (isInteractive)
-                              handleToggleDisplay(display.id);
-                          }}
-                          disabled={!isInteractive || isExecuting}
-                          aria-pressed={
-                            isInteractive ? isSelected : undefined
-                          }
-                          className={cn(
-                            "rounded-md border px-3 py-2.5 text-left text-sm font-medium transition-colors",
-                            isInteractive && !isExecuting
-                              ? "cursor-pointer"
-                              : "cursor-default",
-                            actionMode === "remove" && isSelected
-                              ? "border-destructive bg-destructive/10 text-destructive"
-                              : actionMode === "add" && isSelected
-                                ? "border-primary bg-primary/10 text-primary"
-                                : "border-border bg-background hover:bg-muted/50",
-                          )}
-                        >
-                          {display.name}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  filteredGroups.map((group) => (
+                    <DisplayGroupCard
+                      key={group.id}
+                      group={group}
+                      isSelected={selectedGroupId === group.id}
+                      onSelect={() => handleSelectGroup(group.id)}
+                      onSettings={() => setRenameGroupId(group.id)}
+                      canManage={canManageGroups}
+                    />
+                  ))
                 )}
               </div>
-              <footer className="border-t border-border bg-background/80 empty:hidden">
-                <PaginationFooter
-                  page={displayPage}
-                  pageSize={DISPLAY_PAGE_SIZE}
-                  total={displayTotal}
-                  onPageChange={setDisplayPage}
-                  variant="compact"
-                  alwaysShow
+            )}
+          </div>
+
+          {/* Right pane */}
+          <div className="flex min-w-0 flex-1 flex-col">
+            {isDisplayAxis ? (
+              !selectedDisplay ? (
+                <div className="flex flex-1 items-center justify-center p-8">
+                  <EmptyState
+                    title="Select a display"
+                    description="Choose a display on the left to view and manage its display groups."
+                  />
+                </div>
+              ) : (
+                <div className="min-h-0 flex-1 overflow-auto p-4">
+                  {groupsForRightPane.length === 0 ? (
+                    <div className="flex h-full items-center justify-center">
+                      {actionMode === "add" ? (
+                        <EmptyState
+                          title="No groups available to add"
+                          description="This display already belongs to every group."
+                        />
+                      ) : actionMode === "remove" ? (
+                        <EmptyState
+                          title="No groups available to remove"
+                          description="This display is not a member of any group."
+                        />
+                      ) : (
+                        <EmptyState
+                          title="No groups for this display yet"
+                          description="Use Actions → Add groups to assign this display to a group."
+                        />
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
+                      {groupsForRightPane.map((group) => {
+                        const isSelected = selectedGroupIds.has(group.id);
+                        const isInteractive = actionMode !== null;
+                        return (
+                          <button
+                            key={group.id}
+                            type="button"
+                            onClick={() => {
+                              if (isInteractive) handleToggleGroup(group.id);
+                            }}
+                            disabled={!isInteractive || isExecuting}
+                            aria-pressed={
+                              isInteractive ? isSelected : undefined
+                            }
+                            className={cn(
+                              "rounded-md border px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                              isInteractive && !isExecuting
+                                ? "cursor-pointer"
+                                : "cursor-default",
+                              actionMode === "remove" && isSelected
+                                ? "border-destructive bg-destructive/10 text-destructive"
+                                : actionMode === "add" && isSelected
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-border bg-background hover:bg-muted/50",
+                            )}
+                          >
+                            {group.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            ) : !selectedGroup ? (
+              <div className="flex flex-1 items-center justify-center p-8">
+                <EmptyState
+                  title="Select a display group"
+                  description="Choose a group on the left to view and manage its displays."
                 />
-              </footer>
-            </>
-          )}
+              </div>
+            ) : (
+              <>
+                <div className="min-h-0 flex-1 overflow-auto p-4">
+                  {isDisplaysLoading ? (
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
+                      {Array.from({ length: DISPLAY_PAGE_SIZE }).map((_, i) => (
+                        <Skeleton key={i} className="h-10 rounded-md" />
+                      ))}
+                    </div>
+                  ) : paginatedDisplays.length === 0 ? (
+                    <div className="flex h-full items-center justify-center">
+                      {actionMode === "add" ? (
+                        <EmptyState
+                          title="No displays available to add"
+                          description="All matching displays are already members of this group, or no displays match the current filter."
+                        />
+                      ) : actionMode === "remove" ? (
+                        <EmptyState
+                          title="No displays available to remove"
+                          description="This group has no displays to remove."
+                        />
+                      ) : (
+                        <EmptyState
+                          title="No displays in this group yet"
+                          description="Use Actions → Add displays to assign displays to this group."
+                        />
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
+                      {paginatedDisplays.map((display) => {
+                        const isSelected = selectedDisplayIds.has(display.id);
+                        const isInteractive = actionMode !== null;
+                        return (
+                          <button
+                            key={display.id}
+                            type="button"
+                            onClick={() => {
+                              if (isInteractive)
+                                handleToggleDisplay(display.id);
+                            }}
+                            disabled={!isInteractive || isExecuting}
+                            aria-pressed={
+                              isInteractive ? isSelected : undefined
+                            }
+                            className={cn(
+                              "rounded-md border px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                              isInteractive && !isExecuting
+                                ? "cursor-pointer"
+                                : "cursor-default",
+                              actionMode === "remove" && isSelected
+                                ? "border-destructive bg-destructive/10 text-destructive"
+                                : actionMode === "add" && isSelected
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-border bg-background hover:bg-muted/50",
+                            )}
+                          >
+                            {display.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                <footer className="border-t border-border bg-background/80 empty:hidden">
+                  <PaginationFooter
+                    page={displayPage}
+                    pageSize={DISPLAY_PAGE_SIZE}
+                    total={displayTotal}
+                    onPageChange={setDisplayPage}
+                    variant="compact"
+                    alwaysShow
+                  />
+                </footer>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -438,6 +660,17 @@ export function DisplayGroupsPageClient({
         onCreate={handleCreateGroup}
         onClose={() => setIsCreateOpen(false)}
       />
+
+      {/* Edit display details dialog — opened from the gear icon in display-axis mode */}
+      {isEditDisplayOpen || editingDisplay != null ? (
+        <EditDisplayDialog
+          display={editingDisplay}
+          existingGroups={groups}
+          open={isEditDisplayOpen}
+          onOpenChange={handleEditDisplayOpenChange}
+          onSave={handleSaveDisplay}
+        />
+      ) : null}
     </div>
   );
 }
