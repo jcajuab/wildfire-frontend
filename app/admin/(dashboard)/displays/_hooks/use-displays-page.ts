@@ -91,14 +91,12 @@ export interface UseDisplaysPageResult {
   // Dialog state
   isAddInfoDialogOpen: boolean;
   isEditDialogOpen: boolean;
-  isGroupManagerOpen: boolean;
   isUnregisterDialogOpen: boolean;
   selectedDisplay: Display | null;
   displayToUnregister: Display | null;
 
   // Dialog setters
   setIsAddInfoDialogOpen: (open: boolean) => void;
-  setIsGroupManagerOpen: (open: boolean) => void;
   setPage: (page: number) => void;
 
   // Handlers
@@ -444,12 +442,10 @@ export function useDisplaysPage({
     loadErrorMessage,
     isAddInfoDialogOpen: dialogState.isAddInfoDialogOpen,
     isEditDialogOpen: dialogState.isEditDialogOpen,
-    isGroupManagerOpen: dialogState.isGroupManagerOpen,
     isUnregisterDialogOpen: dialogState.isUnregisterDialogOpen,
     selectedDisplay: dialogState.selectedDisplay,
     displayToUnregister: dialogState.displayToUnregister,
     setIsAddInfoDialogOpen: dialogState.setIsAddInfoDialogOpen,
-    setIsGroupManagerOpen: dialogState.setIsGroupManagerOpen,
     setPage: filters.setPage,
     refetch: handleRefetch,
     handleStatusFilterChange: filters.handleStatusFilterChange,

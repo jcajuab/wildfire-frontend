@@ -12,7 +12,6 @@ import type { Display } from "@/types/display";
 export function useDisplayDialogState() {
   const [isAddInfoDialogOpen, setIsAddInfoDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isGroupManagerOpen, setIsGroupManagerOpen] = useState(false);
   const [isUnregisterDialogOpen, setIsUnregisterDialogOpen] = useState(false);
   const [selectedDisplay, setSelectedDisplay] = useState<Display | null>(null);
   const [displayToUnregister, setDisplayToUnregister] =
@@ -82,8 +81,6 @@ export function useDisplayDialogState() {
     isAddInfoDialogOpen,
     setIsAddInfoDialogOpen,
     isEditDialogOpen,
-    isGroupManagerOpen,
-    setIsGroupManagerOpen,
     isUnregisterDialogOpen,
     selectedDisplay,
     displayToUnregister,

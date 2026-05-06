@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
@@ -46,14 +47,6 @@ const EditDisplayDialog = dynamic(
   () =>
     import("@/components/displays/edit-display-dialog").then(
       (mod) => mod.EditDisplayDialog,
-    ),
-  { ssr: false },
-);
-
-const DisplayGroupManagerDialog = dynamic(
-  () =>
-    import("@/components/displays/display-group-manager-dialog").then(
-      (mod) => mod.DisplayGroupManagerDialog,
     ),
   { ssr: false },
 );
@@ -210,14 +203,12 @@ export function DisplaysPageView({
     loadErrorMessage,
     isAddInfoDialogOpen,
     isEditDialogOpen,
-    isGroupManagerOpen,
     isUnregisterDialogOpen,
     selectedDisplay,
     displayToUnregister,
     canCreateDisplay,
     canManageDisplayGroups,
     setIsAddInfoDialogOpen,
-    setIsGroupManagerOpen,
     setPage,
     refetch,
     handleStatusFilterChange,
@@ -234,6 +225,7 @@ export function DisplaysPageView({
     handleEditDialogOpenChange,
     unregisterDisplayById,
   } = useDisplaysPage({ initialBootstrap });
+  const router = useRouter();
   const groupFiltersKey = useMemo(
     () => [...groupFilters].sort().join("\u0000"),
     [groupFilters],
@@ -326,7 +318,7 @@ export function DisplaysPageView({
                   }
             }
             onRegisterDisplay={() => setIsAddInfoDialogOpen(true)}
-            onManageGroups={() => setIsGroupManagerOpen(true)}
+            onManageGroups={() => router.push("/admin/displays/display-groups")}
             onStatusFilterChange={handleStatusFilterChange}
             onSearchChange={handleSearchChange}
             onGroupFilterChange={handleGroupFilterChange}
@@ -411,14 +403,6 @@ export function DisplaysPageView({
           open={isEditDialogOpen}
           onOpenChange={handleEditDialogOpenChange}
           onSave={handleSaveDisplay}
-        />
-      ) : null}
-
-      {isGroupManagerOpen ? (
-        <DisplayGroupManagerDialog
-          open={isGroupManagerOpen}
-          onOpenChange={setIsGroupManagerOpen}
-          groups={displayGroupsData}
         />
       ) : null}
 
