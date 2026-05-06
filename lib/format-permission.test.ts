@@ -19,6 +19,9 @@ describe("formatPermissionReadableLabel", () => {
     expect(
       formatPermissionReadableLabel({ resource: "displays", action: "delete" }),
     ).toBe("Delete Displays");
+    expect(
+      formatPermissionReadableLabel({ resource: "ai", action: "access" }),
+    ).toBe("Access AI");
   });
 
   test("keeps stable wildcard and fallback formatting", () => {
@@ -63,6 +66,23 @@ describe("formatPermissionTooltipDescription", () => {
       formatPermissionTooltipDescription({ resource: "audit", action: "read" }),
     ).toBe(
       "Allows users with this role to view audit logs. This exposes a record of system activity for monitoring, investigations, and compliance checks.",
+    );
+
+    expect(
+      formatPermissionTooltipDescription({
+        resource: "audit",
+        action: "delete",
+      }),
+    ).toBe(
+      "Allows users with this role to delete audit logs. This exposes a record of system activity for monitoring, investigations, and compliance checks.",
+    );
+  });
+
+  test("describes AI access permissions with explicit feature access wording", () => {
+    expect(
+      formatPermissionTooltipDescription({ resource: "ai", action: "access" }),
+    ).toBe(
+      "Allows users with this role to access AI features. This lets them use AI-assisted workflows and related provider configuration in the system.",
     );
   });
 

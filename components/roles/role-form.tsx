@@ -46,15 +46,82 @@ import type { Permission, Role, RoleFormData, RoleUser } from "@/types/role";
 
 const INITIAL_ASSIGNED_VISIBLE_COUNT = 25;
 const ASSIGNED_VISIBLE_COUNT_STEP = 25;
+const DEFAULT_CREATE_PERMISSION_KEYS = new Set([
+  "displays:read",
+  "content:read",
+  "playlists:read",
+  "schedules:read",
+]);
+const WRITE_PERMISSION_ACTIONS = new Set(["create", "update", "delete"]);
 const PERMISSION_RESOURCE_ORDER = Array.from(
   new Set(DESIGN_PERMISSIONS.map((permission) => permission.resource)),
 );
+
+function getPermissionKey(permission: {
+  readonly resource: string;
+  readonly action: string;
+}): string {
+  return `${permission.resource}:${permission.action}`;
+}
 
 function formatPermissionResourceLabel(resource: string): string {
   if (resource === "audit") {
     return "Audit";
   }
+  if (resource === "ai") {
+    return "AI";
+  }
   return `${resource.charAt(0).toUpperCase()}${resource.slice(1)}`;
+}
+
+function isWritePermission(permission: {
+  readonly action: string;
+}): boolean {
+  return WRITE_PERMISSION_ACTIONS.has(permission.action);
+}
+
+function normalizePermissionSelection(
+  permissionIds: readonly string[],
+  displayPermissions: readonly DesignPermissionWithId[],
+): string[] {
+  const selectedIds = new Set(permissionIds);
+  const permissionById = new Map(
+    displayPermissions.flatMap((permission) =>
+      permission.id === null ? [] : [[permission.id, permission]],
+    ),
+  );
+  const permissionIdByKey = new Map(
+    displayPermissions.flatMap((permission) =>
+      permission.id === null ? [] : [[getPermissionKey(permission), permission.id]],
+    ),
+  );
+
+  for (const permissionId of permissionIds) {
+    const permission = permissionById.get(permissionId);
+    if (!permission || !isWritePermission(permission)) continue;
+
+    const readPermissionId = permissionIdByKey.get(
+      `${permission.resource}:read`,
+    );
+    if (readPermissionId) {
+      selectedIds.add(readPermissionId);
+    }
+  }
+
+  const orderedIds = displayPermissions.flatMap((permission) =>
+    permission.id !== null && selectedIds.has(permission.id)
+      ? [permission.id]
+      : [],
+  );
+  const knownIds = new Set(orderedIds);
+  const unknownIds = permissionIds.filter((permissionId) => {
+    if (knownIds.has(permissionId)) return false;
+    return !displayPermissions.some(
+      (permission) => permission.id === permissionId,
+    );
+  });
+
+  return [...orderedIds, ...unknownIds];
 }
 
 export interface RoleFormState {
@@ -103,9 +170,11 @@ export function RoleForm({
     INITIAL_ASSIGNED_VISIBLE_COUNT,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const didApplyCreateDefaultsRef = useRef(false);
   const latestNameRef = useRef(name);
   const latestDescriptionRef = useRef(description);
   const latestPermissionIdsRef = useRef(selectedPermissions);
+  const latestDisplayPermissionsRef = useRef<DesignPermissionWithId[]>([]);
   const latestAssignedUsersRef = useRef(assignedUsers);
   const latestOnSubmitRef = useRef(onSubmit);
   const emittedStateRef = useRef<RoleFormState | null>(null);
@@ -119,24 +188,92 @@ export function RoleForm({
     },
   );
 
-  const handlePermissionToggle = useCallback(
-    (permissionId: string | null, checked: boolean): void => {
-      if (permissionId == null) return;
-      if (checked) {
-        setSelectedPermissions((prev) => [...prev, permissionId]);
-        return;
-      }
-
-      setSelectedPermissions((prev) =>
-        prev.filter((id) => id !== permissionId),
-      );
-    },
-    [],
-  );
-
   const displayPermissions: DesignPermissionWithId[] = useMemo(
     () => mergeDesignPermissionsWithApi(permissions),
     [permissions],
+  );
+
+  const permissionById = useMemo(
+    () =>
+      new Map(
+        displayPermissions.flatMap((permission) =>
+          permission.id === null ? [] : [[permission.id, permission]],
+        ),
+      ),
+    [displayPermissions],
+  );
+
+  const permissionIdByKey = useMemo(
+    () =>
+      new Map(
+        displayPermissions.flatMap((permission) =>
+          permission.id === null
+            ? []
+            : [[getPermissionKey(permission), permission.id]],
+        ),
+      ),
+    [displayPermissions],
+  );
+
+  const selectedPermissionSet = useMemo(
+    () => new Set(selectedPermissions),
+    [selectedPermissions],
+  );
+
+  const isReadPermissionLocked = useCallback(
+    (permission: DesignPermissionWithId): boolean => {
+      if (permission.action !== "read") return false;
+
+      return displayPermissions.some((candidate) => {
+        if (
+          candidate.resource !== permission.resource ||
+          candidate.id === null ||
+          !isWritePermission(candidate)
+        ) {
+          return false;
+        }
+
+        return selectedPermissionSet.has(candidate.id);
+      });
+    },
+    [displayPermissions, selectedPermissionSet],
+  );
+
+  const handlePermissionToggle = useCallback(
+    (permissionId: string | null, checked: boolean): void => {
+      if (permissionId == null) return;
+      const permission = permissionById.get(permissionId);
+      if (!permission) return;
+
+      setSelectedPermissions((prev) => {
+        if (!checked && isReadPermissionLocked(permission)) {
+          return prev;
+        }
+
+        const next = new Set(prev);
+        if (checked) {
+          next.add(permissionId);
+          if (isWritePermission(permission)) {
+            const readPermissionId = permissionIdByKey.get(
+              `${permission.resource}:read`,
+            );
+            if (readPermissionId) {
+              next.add(readPermissionId);
+            }
+          }
+        } else {
+          next.delete(permissionId);
+        }
+
+        return normalizePermissionSelection([...next], displayPermissions);
+      });
+    },
+    [
+      displayPermissions,
+      isReadPermissionLocked,
+      permissionById,
+      permissionIdByKey,
+    ],
   );
 
   const permissionsByResource = useMemo(() => {
@@ -207,6 +344,47 @@ export function RoleForm({
   const hasMoreAssignedUsers = visibleAssignedCount < assignedUsers.length;
 
   useEffect(() => {
+    if (displayPermissions.length === 0) return;
+
+    if (mode === "create" && !didApplyCreateDefaultsRef.current) {
+      const defaultPermissionIds = displayPermissions.flatMap((permission) =>
+        permission.id !== null &&
+        DEFAULT_CREATE_PERMISSION_KEYS.has(getPermissionKey(permission))
+          ? [permission.id]
+          : [],
+      );
+
+      if (defaultPermissionIds.length > 0) {
+        didApplyCreateDefaultsRef.current = true;
+        setSelectedPermissions((prev) =>
+          normalizePermissionSelection(
+            [...new Set([...prev, ...defaultPermissionIds])],
+            displayPermissions,
+          ),
+        );
+      }
+
+      return;
+    }
+
+    if (mode === "edit") {
+      setSelectedPermissions((prev) => {
+        const normalized = normalizePermissionSelection(
+          prev,
+          displayPermissions,
+        );
+        const hasSameSelection =
+          normalized.length === prev.length &&
+          normalized.every(
+            (permissionId, index) => permissionId === prev[index],
+          );
+
+        return hasSameSelection ? prev : normalized;
+      });
+    }
+  }, [displayPermissions, mode]);
+
+  useEffect(() => {
     latestNameRef.current = name;
   }, [name]);
 
@@ -215,8 +393,12 @@ export function RoleForm({
   }, [description]);
 
   useEffect(() => {
-    latestPermissionIdsRef.current = selectedPermissions;
-  }, [selectedPermissions]);
+    latestDisplayPermissionsRef.current = displayPermissions;
+    latestPermissionIdsRef.current = normalizePermissionSelection(
+      selectedPermissions,
+      displayPermissions,
+    );
+  }, [displayPermissions, selectedPermissions]);
 
   useEffect(() => {
     latestAssignedUsersRef.current = assignedUsers;
@@ -250,7 +432,10 @@ export function RoleForm({
       await latestOnSubmitRef.current({
         name: trimmedName,
         description: latestDescriptionRef.current.trim() || null,
-        permissionIds: latestPermissionIdsRef.current,
+        permissionIds: normalizePermissionSelection(
+          latestPermissionIdsRef.current,
+          latestDisplayPermissionsRef.current,
+        ),
         userIds: latestAssignedUsersRef.current.map((user) => user.id),
       });
     } finally {
@@ -393,12 +578,17 @@ export function RoleForm({
                                 </span>
                               </div>
                               <Switch
+                                aria-label={formatPermissionReadableLabel(
+                                  permission,
+                                )}
                                 checked={
                                   permission.id !== null &&
-                                  selectedPermissions.includes(permission.id)
+                                  selectedPermissionSet.has(permission.id)
                                 }
                                 disabled={
-                                  permission.id === null || isSubmitting
+                                  permission.id === null ||
+                                  isSubmitting ||
+                                  isReadPermissionLocked(permission)
                                 }
                                 onCheckedChange={(checked) =>
                                   handlePermissionToggle(permission.id, checked)

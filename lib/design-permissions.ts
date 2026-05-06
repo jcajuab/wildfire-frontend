@@ -32,6 +32,8 @@ export const DESIGN_PERMISSIONS: ReadonlyArray<{
   { resource: "roles", action: "update" },
   { resource: "roles", action: "delete" },
   { resource: "audit", action: "read" },
+  { resource: "audit", action: "delete" },
+  { resource: "ai", action: "access" },
 ];
 
 export interface DesignPermissionWithId {

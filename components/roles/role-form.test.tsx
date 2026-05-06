@@ -16,6 +16,14 @@ vi.mock("@/lib/api/rbac-api", () => ({
 
 const useGetUserOptionsQueryMock = vi.mocked(useGetUserOptionsQuery);
 
+function buildDesignPermissions(): Permission[] {
+  return DESIGN_PERMISSIONS.map((permission) => ({
+    id: `${permission.resource}:${permission.action}`,
+    resource: permission.resource as PermissionResource,
+    action: permission.action as PermissionAction,
+  })) as Permission[];
+}
+
 describe("RoleForm", () => {
   beforeEach(() => {
     vi.stubGlobal(
@@ -162,6 +170,7 @@ describe("RoleForm", () => {
       "users",
       "roles",
       "audit",
+      "ai",
     ] as const;
 
     const anchors = resourceOrder.map((resource) => {
@@ -173,7 +182,8 @@ describe("RoleForm", () => {
         return resourceHeading;
       }
 
-      const firstAction = resource === "audit" ? "read" : "create";
+      const firstAction =
+        resource === "audit" ? "read" : resource === "ai" ? "access" : "create";
       return screen.getByText(
         formatPermissionReadableLabel({ resource, action: firstAction }),
       );
@@ -259,6 +269,196 @@ describe("RoleForm", () => {
     for (const permissionSwitch of permissionSwitches) {
       expect(permissionSwitch).toBeDisabled();
     }
+  });
+
+  test("includes all assignable canonical permissions in the design grid", () => {
+    const permissionKeys = DESIGN_PERMISSIONS.map(
+      (permission) => `${permission.resource}:${permission.action}`,
+    );
+
+    expect(permissionKeys).toContain("audit:read");
+    expect(permissionKeys).toContain("audit:delete");
+    expect(permissionKeys).toContain("ai:access");
+    expect(permissionKeys).not.toContain("admin:access");
+  });
+
+  test("selects core view permissions by default when creating a role", async () => {
+    render(
+      <RoleForm
+        mode="create"
+        permissions={buildDesignPermissions()}
+        initialUsers={[]}
+        canReadUsers={true}
+        initialPermissionIds={[]}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("switch", { name: "View Displays" }),
+      ).toBeChecked();
+      expect(
+        screen.getByRole("switch", { name: "View Content" }),
+      ).toBeChecked();
+      expect(
+        screen.getByRole("switch", { name: "View Playlists" }),
+      ).toBeChecked();
+      expect(
+        screen.getByRole("switch", { name: "View Schedules" }),
+      ).toBeChecked();
+    });
+
+    expect(screen.getByRole("switch", { name: "View Users" })).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: "View Roles" })).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: "View Audit" })).not.toBeChecked();
+    expect(
+      screen.getByRole("switch", { name: "Delete Audit" }),
+    ).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: "Access AI" })).not.toBeChecked();
+  });
+
+  test("keeps matching view permission selected while write permissions are enabled", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <RoleForm
+        mode="create"
+        permissions={buildDesignPermissions()}
+        initialUsers={[]}
+        canReadUsers={true}
+        initialPermissionIds={[]}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    const createUsers = screen.getByRole("switch", { name: "Create Users" });
+    const viewUsers = screen.getByRole("switch", { name: "View Users" });
+
+    expect(viewUsers).not.toBeChecked();
+    expect(viewUsers).toBeEnabled();
+
+    await user.click(createUsers);
+
+    expect(createUsers).toBeChecked();
+    expect(viewUsers).toBeChecked();
+    expect(viewUsers).toBeDisabled();
+
+    await user.click(createUsers);
+
+    expect(createUsers).not.toBeChecked();
+    expect(viewUsers).toBeChecked();
+    expect(viewUsers).toBeEnabled();
+
+    await user.click(viewUsers);
+
+    expect(viewUsers).not.toBeChecked();
+  });
+
+  test("does not add create-mode defaults while editing roles", () => {
+    render(
+      <RoleForm
+        mode="edit"
+        initialRole={{
+          id: "role-1",
+          name: "Operators",
+          description: null,
+          isSystem: false,
+        }}
+        permissions={buildDesignPermissions()}
+        initialUsers={[]}
+        canReadUsers={true}
+        initialPermissionIds={[]}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("switch", { name: "View Displays" }),
+    ).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: "View Content" })).not.toBeChecked();
+    expect(
+      screen.getByRole("switch", { name: "View Playlists" }),
+    ).not.toBeChecked();
+    expect(
+      screen.getByRole("switch", { name: "View Schedules" }),
+    ).not.toBeChecked();
+  });
+
+  test("normalizes edit-mode write permissions to include matching view permission", async () => {
+    render(
+      <RoleForm
+        mode="edit"
+        initialRole={{
+          id: "role-1",
+          name: "Operators",
+          description: null,
+          isSystem: false,
+        }}
+        permissions={buildDesignPermissions()}
+        initialUsers={[]}
+        canReadUsers={true}
+        initialPermissionIds={["users:create"]}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("switch", { name: "Create Users" }),
+      ).toBeChecked();
+      expect(screen.getByRole("switch", { name: "View Users" })).toBeChecked();
+    });
+
+    expect(screen.getByRole("switch", { name: "View Users" })).toBeDisabled();
+  });
+
+  test("submits normalized dependency permission ids", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+
+    function Wrapper() {
+      const [formState, setFormState] = useState<RoleFormState | null>(null);
+
+      return (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              void formState?.submit();
+            }}
+          >
+            Submit
+          </button>
+          <RoleForm
+            mode="edit"
+            initialRole={{
+              id: "role-1",
+              name: "Operators",
+              description: null,
+              isSystem: false,
+            }}
+            permissions={buildDesignPermissions()}
+            initialUsers={[]}
+            canReadUsers={true}
+            initialPermissionIds={["users:create"]}
+            onSubmit={onSubmit}
+            onStateChange={setFormState}
+          />
+        </>
+      );
+    }
+
+    render(<Wrapper />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    });
+
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({
+      permissionIds: ["users:create", "users:read"],
+    });
   });
 
   test("preserves search query and assigned-user pagination behavior", async () => {

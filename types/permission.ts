@@ -1,4 +1,5 @@
 export type PermissionResource =
+  | "admin"
   | "content"
   | "playlists"
   | "schedules"
@@ -8,8 +9,14 @@ export type PermissionResource =
   | "audit"
   | "ai";
 
-export type PermissionAction = "read" | "create" | "update" | "delete";
+export type PermissionAction =
+  | "access"
+  | "read"
+  | "create"
+  | "update"
+  | "delete";
 
 export type PermissionType =
-  | `${Exclude<PermissionResource, "ai">}:${PermissionAction}`
+  | `${Exclude<PermissionResource, "admin" | "ai">}:${Exclude<PermissionAction, "access">}`
+  | "admin:access"
   | "ai:access";

@@ -1,5 +1,6 @@
 function capitalizeResource(resource: string): string {
   if (resource === "*") return "All";
+  if (resource.toLowerCase() === "ai") return "AI";
   return resource.charAt(0).toUpperCase() + resource.slice(1).toLowerCase();
 }
 
@@ -23,6 +24,8 @@ export function formatPermissionReadableLabel(permission: {
       return `Edit ${resource}`;
     case "delete":
       return `Delete ${resource}`;
+    case "access":
+      return `Access ${resource}`;
     case "*":
       return `Manage ${resource}`;
     default:
@@ -36,6 +39,8 @@ function formatPermissionResource(resource: string): string {
   switch (resource.toLowerCase()) {
     case "audit":
       return "audit logs";
+    case "ai":
+      return "AI features";
     default:
       return resource.toLowerCase();
   }
@@ -51,6 +56,8 @@ function getPermissionActionLabel(action: string): string {
       return "edit";
     case "delete":
       return "delete";
+    case "access":
+      return "access";
     case "*":
       return "manage";
     default:
@@ -65,6 +72,10 @@ function getPermissionImpactSentence(action: string, resource: string): string {
 
   if (resource === "audit logs") {
     return "This exposes a record of system activity for monitoring, investigations, and compliance checks.";
+  }
+
+  if (resource === "AI features") {
+    return "This lets them use AI-assisted workflows and related provider configuration in the system.";
   }
 
   switch (action) {
