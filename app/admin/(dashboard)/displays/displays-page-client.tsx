@@ -367,6 +367,7 @@ export function DisplaysPageView({
                 }
                 onEditDisplay={canUpdateDisplay ? handleEditDisplay : undefined}
                 isGlobalEmergencyActive={globalEmergencyActive}
+                isSelectionMode={isSelectionMode}
                 selectedIds={isSelectionMode ? selectedIds : undefined}
                 onSelectionChange={
                   canDeleteDisplay && isSelectionMode

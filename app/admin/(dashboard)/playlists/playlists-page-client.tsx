@@ -210,6 +210,7 @@ export function PlaylistsPageView({
                 playlists={playlists}
                 onEdit={canUpdatePlaylist ? handleEditPlaylist : undefined}
                 onDelete={canDeletePlaylist ? handleDeletePlaylist : undefined}
+                isSelectionMode={isSelectionMode}
                 selectedIds={isSelectionMode ? selectedIds : undefined}
                 onSelectionChange={
                   canDeletePlaylist && isSelectionMode

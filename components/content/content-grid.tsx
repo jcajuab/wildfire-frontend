@@ -14,6 +14,7 @@ interface ContentGridProps {
   readonly onDownload?: (content: Content) => void;
   readonly selectedIds?: ReadonlySet<string>;
   readonly onSelectionChange?: (content: Content, checked: boolean) => void;
+  readonly isSelectionMode?: boolean;
 }
 
 export function ContentGrid({
@@ -23,6 +24,7 @@ export function ContentGrid({
   onDownload,
   selectedIds,
   onSelectionChange,
+  isSelectionMode,
 }: ContentGridProps): ReactElement {
   if (items.length === 0) {
     return (
@@ -45,6 +47,7 @@ export function ContentGrid({
           onDownload={onDownload}
           isSelected={selectedIds?.has(content.id) ?? false}
           onSelectionChange={onSelectionChange}
+          isSelectionMode={isSelectionMode}
         />
       ))}
     </div>

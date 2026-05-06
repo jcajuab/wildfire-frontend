@@ -42,6 +42,7 @@ interface PlaylistCardProps {
     playlist: PlaylistSummary,
     checked: boolean,
   ) => void;
+  readonly isSelectionMode?: boolean;
 }
 
 const CARD_SELECTION_IGNORE_SELECTOR =
@@ -92,6 +93,7 @@ export const PlaylistCard = memo(function PlaylistCard({
   onDelete,
   isSelected = false,
   onSelectionChange,
+  isSelectionMode = false,
 }: PlaylistCardProps): ReactElement {
   const canModify = useCanModifyResource(playlist.owner.id);
   const visiblePreviewItems = playlist.previewItems.slice(
@@ -172,6 +174,7 @@ export const PlaylistCard = memo(function PlaylistCard({
                 size="icon-sm"
                 aria-label={`Actions for ${playlist.name}`}
                 className="shrink-0"
+                disabled={isSelectionMode}
               >
                 <IconDots className="size-4" aria-hidden="true" />
               </Button>

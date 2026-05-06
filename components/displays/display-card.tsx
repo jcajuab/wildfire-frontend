@@ -44,6 +44,7 @@ interface DisplayCardProps {
   readonly isSelected?: boolean;
   readonly onSelectionChange?: (display: Display, checked: boolean) => void;
   readonly showOutputMetadata?: boolean;
+  readonly isSelectionMode?: boolean;
 }
 
 interface DisplayStatusStyles {
@@ -115,6 +116,7 @@ export const DisplayCard = memo(function DisplayCard({
   isSelected = false,
   onSelectionChange,
   showOutputMetadata = false,
+  isSelectionMode = false,
 }: DisplayCardProps): ReactElement {
   const statusStyles = getStatusStyles(display.status);
   const shouldPulse = display.status === "LIVE" || display.status === "READY";
@@ -216,6 +218,7 @@ export const DisplayCard = memo(function DisplayCard({
                   variant="ghost"
                   size="icon-sm"
                   aria-label={`Actions for ${display.name}`}
+                  disabled={isSelectionMode}
                 >
                   <IconDots className="size-4" aria-hidden="true" />
                 </Button>

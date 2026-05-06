@@ -18,6 +18,7 @@ interface PlaylistGridProps {
     playlist: PlaylistSummary,
     checked: boolean,
   ) => void;
+  readonly isSelectionMode?: boolean;
 }
 
 export function PlaylistGrid({
@@ -26,6 +27,7 @@ export function PlaylistGrid({
   onDelete,
   selectedIds,
   onSelectionChange,
+  isSelectionMode,
 }: PlaylistGridProps): ReactElement {
   if (playlists.length === 0) {
     return (
@@ -53,6 +55,7 @@ export function PlaylistGrid({
           onDelete={onDelete}
           isSelected={selectedIds?.has(playlist.id) ?? false}
           onSelectionChange={onSelectionChange}
+          isSelectionMode={isSelectionMode}
         />
       ))}
     </div>

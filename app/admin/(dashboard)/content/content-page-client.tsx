@@ -345,6 +345,7 @@ export function ContentPageView({
                     ? controller.handleDownload
                     : undefined
                 }
+                isSelectionMode={isSelectionMode}
                 selectedIds={isSelectionMode ? selectedIds : undefined}
                 onSelectionChange={
                   controller.canDeleteContent && isSelectionMode

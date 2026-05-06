@@ -61,6 +61,7 @@ interface ContentCardProps {
   readonly onDownload?: (content: Content) => void;
   readonly isSelected?: boolean;
   readonly onSelectionChange?: (content: Content, checked: boolean) => void;
+  readonly isSelectionMode?: boolean;
 }
 
 function shouldIgnoreCardSelection(
@@ -92,6 +93,7 @@ export const ContentCard = memo(function ContentCard({
   onDownload,
   isSelected = false,
   onSelectionChange,
+  isSelectionMode = false,
 }: ContentCardProps): ReactElement {
   const canModify = useCanModifyResource(content.owner.id);
   const canDownloadFile =
@@ -182,6 +184,7 @@ export const ContentCard = memo(function ContentCard({
                 size="icon-sm"
                 aria-label={`Actions for ${content.title}`}
                 className="shrink-0"
+                disabled={isSelectionMode}
               >
                 <IconDots className="size-4" aria-hidden="true" />
               </Button>
