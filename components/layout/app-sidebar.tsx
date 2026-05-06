@@ -13,7 +13,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import type { ComponentType, MouseEvent, ReactElement } from "react";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useOptimistic, useTransition } from "react";
 
 import {
   Sidebar,
@@ -98,15 +98,15 @@ export function AppSidebar(): ReactElement {
   const { user, can, isInitialized } = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
   const [isPending, startTransition] = useTransition();
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [optimisticPathname, setOptimisticPathname] = useOptimistic(pathname);
 
   /** Intercept click: `AdminNavLink` prefetches on hover/focus only; use
    *  startTransition for navigation so we get isPending state. */
   function handleNavClick(e: MouseEvent, href: string): void {
     e.preventDefault();
     if (isPending) return;
-    setPendingHref(href);
     startTransition(() => {
+      setOptimisticPathname(href);
       router.push(href);
       if (isMobile) setOpenMobile(false);
     });
@@ -159,8 +159,8 @@ export function AppSidebar(): ReactElement {
               <SidebarGroupContent>
                 <SidebarMenu className="gap-1">
                   {coreNavItems.map((item) => {
-                    const isNavPending = isPending && pendingHref === item.href;
-                    const isDisabled = isPending && pendingHref !== item.href;
+                    const isNavPending = isPending && isActiveRoute(optimisticPathname, item.href, item.match);
+                    const isDisabled = isPending && !isActiveRoute(optimisticPathname, item.href, item.match);
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
@@ -171,7 +171,7 @@ export function AppSidebar(): ReactElement {
                             item.href,
                             item.match,
                           )}
-                          className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
+                          className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary aria-disabled:opacity-100"
                           tooltip={item.title}
                         >
                           <AdminNavLink
@@ -179,7 +179,7 @@ export function AppSidebar(): ReactElement {
                             aria-disabled={isDisabled || undefined}
                             className={
                               isDisabled
-                                ? "pointer-events-none opacity-50"
+                                ? "pointer-events-none"
                                 : undefined
                             }
                             onClick={(e) => handleNavClick(e, item.href)}
@@ -207,8 +207,8 @@ export function AppSidebar(): ReactElement {
               <SidebarGroupContent>
                 <SidebarMenu className="gap-1">
                   {manageNavItems.map((item) => {
-                    const isNavPending = isPending && pendingHref === item.href;
-                    const isDisabled = isPending && pendingHref !== item.href;
+                    const isNavPending = isPending && isActiveRoute(optimisticPathname, item.href, item.match);
+                    const isDisabled = isPending && !isActiveRoute(optimisticPathname, item.href, item.match);
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
@@ -219,7 +219,7 @@ export function AppSidebar(): ReactElement {
                             item.href,
                             item.match,
                           )}
-                          className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary"
+                          className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary aria-disabled:opacity-100"
                           tooltip={item.title}
                         >
                           <AdminNavLink
@@ -227,7 +227,7 @@ export function AppSidebar(): ReactElement {
                             aria-disabled={isDisabled || undefined}
                             className={
                               isDisabled
-                                ? "pointer-events-none opacity-50"
+                                ? "pointer-events-none"
                                 : undefined
                             }
                             onClick={(e) => handleNavClick(e, item.href)}
