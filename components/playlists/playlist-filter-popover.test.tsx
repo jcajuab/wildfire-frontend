@@ -19,7 +19,7 @@ describe("PlaylistFilterPopover", () => {
     }
   });
 
-  test("shows active count when status filter is applied and triggers clear", async () => {
+  test("shows active filter strip when status filter is applied and triggers clear", async () => {
     const onClearFilters = vi.fn();
     const user = userEvent.setup();
 
@@ -32,14 +32,18 @@ describe("PlaylistFilterPopover", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: /Filter/ })).toHaveTextContent(
-      "6",
-    );
+    expect(
+      screen.getByRole("button", { name: "Filter playlists" }),
+    ).toHaveTextContent("1");
 
-    await user.click(screen.getByRole("button", { name: /Filter/ }));
+    await user.click(screen.getByRole("button", { name: "Filter playlists" }));
     expect(
       document.querySelector('[data-slot="popover-content"]'),
     ).toHaveAttribute("data-side", "bottom");
+    expect(screen.getByText("Active filters")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Remove Draft filter" }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Clear" }));
 
     expect(onClearFilters).toHaveBeenCalledTimes(1);
@@ -58,13 +62,37 @@ describe("PlaylistFilterPopover", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /^Filter$/ }));
+    await user.click(screen.getByRole("button", { name: "Filter playlists" }));
     await user.click(screen.getByRole("combobox", { name: "Status" }));
     expect(
       document.querySelector('[data-slot="select-content"]'),
     ).toHaveAttribute("data-side", "bottom");
-    await user.click(screen.getByRole("option", { name: "In Use" }));
+    await user.click(screen.getByRole("option", { name: "In use" }));
 
     expect(onStatusFilterChange).toHaveBeenCalledWith("IN_USE");
+  });
+
+  test("renders embedded trigger inside a supplied anchor", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <PlaylistFilterPopover
+        statusFilter="all"
+        filteredResultsCount={12}
+        embeddedTrigger
+        renderEmbeddedAnchor={(trigger) => (
+          <div>
+            <span>Search anchor</span>
+            {trigger}
+          </div>
+        )}
+        onStatusFilterChange={vi.fn()}
+        onClearFilters={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Filter playlists" }));
+
+    expect(screen.getByLabelText("Playlist filters")).toBeInTheDocument();
   });
 });

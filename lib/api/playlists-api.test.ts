@@ -34,6 +34,7 @@ const defaultQuery: PlaylistListQuery = {
 
 const owner = {
   id: "user-1",
+  username: "owner",
   name: "Owner",
 };
 
@@ -88,7 +89,7 @@ function playlistItem(
       type: "IMAGE",
       checksum: "checksum-1",
       thumbnailUrl: null,
-      textHtmlContent: null,
+      textPreviewText: null,
     },
     ...overrides,
   };

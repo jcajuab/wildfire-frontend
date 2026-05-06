@@ -16,6 +16,7 @@ export interface BackendPlaylistBase {
   readonly updatedAt: string;
   readonly owner: {
     readonly id: string;
+    readonly username: string;
     readonly name: string | null;
   };
 }
@@ -31,6 +32,8 @@ export interface BackendPlaylistItem {
     readonly type: "IMAGE" | "VIDEO" | "TEXT";
     readonly checksum: string;
     readonly thumbnailUrl?: string | null;
+    readonly textPreviewText?: string | null;
+    /** @deprecated Playlist previews now use textPreviewText. */
     readonly textHtmlContent?: string | null;
   };
 }
@@ -150,7 +153,7 @@ type PlaylistDetailMutable = {
   totalDuration: number;
   createdAt: string;
   updatedAt: string;
-  owner: { id: string; name: string | null };
+  owner: { id: string; username: string; name: string | null };
   items: BackendPlaylistItem[];
 };
 

@@ -161,7 +161,7 @@ describe("CreatePlaylistForm", () => {
     ).toBeTruthy();
   });
 
-  test("renders a rich text preview in the content library when text content has html but no thumbnail", () => {
+  test("renders a plain text preview in the content library when text content has no thumbnail", () => {
     render(
       <CreatePlaylistForm
         onCreate={vi.fn()}
@@ -172,7 +172,8 @@ describe("CreatePlaylistForm", () => {
             title: "Announcement",
             type: "TEXT",
             thumbnailUrl: undefined,
-            textHtmlContent: "<p><strong>Breaking</strong> News</p>",
+            textPreviewText: "Breaking News",
+            textHtmlContent: null,
           },
         ]}
       />,

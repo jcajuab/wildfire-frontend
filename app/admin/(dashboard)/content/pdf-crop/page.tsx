@@ -133,6 +133,7 @@ export default function PdfCropPage() {
     }
 
     try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sessionStorage is the external source of truth for this client-only upload handoff.
       setError(false);
       const raw = sessionStorage.getItem(`${SESSION_KEY_PREFIX}${uploadId}`);
       if (!raw) {

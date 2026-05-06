@@ -26,9 +26,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 
 import { SearchControl } from "@/components/common/search-control";
-import { getTextThumbnailHtml } from "@/lib/content-thumbnail-preview";
-import { RICH_TEXT_PREVIEW_CLASSES } from "@/lib/rich-text-preview-classes";
-import { cn } from "@/lib/utils";
+import { getTextThumbnailText } from "@/lib/content-thumbnail-preview";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -260,17 +258,12 @@ export function PlaylistFormBody({
                       fill
                       className="object-cover"
                     />
-                  ) : content.type === "TEXT" && content.textHtmlContent ? (
+                  ) : content.type === "TEXT" &&
+                    (content.textPreviewText || content.textHtmlContent) ? (
                     <div className="flex size-full items-start overflow-hidden p-1">
-                      <div
-                        className={cn(
-                          RICH_TEXT_PREVIEW_CLASSES,
-                          "text-[6px] leading-tight [&_ol]:ml-2 [&_td]:px-0.5 [&_th]:px-0.5 [&_ul]:ml-2",
-                        )}
-                        dangerouslySetInnerHTML={{
-                          __html: getTextThumbnailHtml(content),
-                        }}
-                      />
+                      <p className="line-clamp-4 text-[6px] leading-tight text-foreground">
+                        {getTextThumbnailText(content)}
+                      </p>
                     </div>
                   ) : (
                     <IconPhoto

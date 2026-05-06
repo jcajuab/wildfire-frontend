@@ -8,6 +8,7 @@ import type {
   PlaylistItem,
   PlaylistSummary,
 } from "@/types/playlist";
+import { extractPlainTextFromHtml } from "@/lib/content-thumbnail-preview";
 
 function mapBackendPlaylistItemToContent(
   item: BackendPlaylistItem,
@@ -18,7 +19,11 @@ function mapBackendPlaylistItemToContent(
     type: item.content.type,
     checksum: item.content.checksum,
     thumbnailUrl: item.content.thumbnailUrl ?? null,
-    textHtmlContent: item.content.textHtmlContent ?? null,
+    textPreviewText:
+      item.content.textPreviewText ??
+      (item.content.textHtmlContent
+        ? extractPlainTextFromHtml(item.content.textHtmlContent)
+        : null),
   };
 }
 
@@ -51,6 +56,7 @@ export function mapBackendPlaylistSummary(
     updatedAt: item.updatedAt,
     owner: {
       id: item.owner.id,
+      username: item.owner.username,
       name: item.owner.name ?? "Unknown",
     },
   };
@@ -76,6 +82,7 @@ export function mapBackendPlaylistWithItems(
     updatedAt: item.updatedAt,
     owner: {
       id: item.owner.id,
+      username: item.owner.username,
       name: item.owner.name ?? "Unknown",
     },
   };

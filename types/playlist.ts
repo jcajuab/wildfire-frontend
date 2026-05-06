@@ -2,6 +2,7 @@ export type PlaylistStatus = "DRAFT" | "IN_USE";
 
 interface PlaylistOwner {
   readonly id: string;
+  readonly username?: string;
   readonly name: string;
 }
 
@@ -11,6 +12,8 @@ export interface PlaylistItemContent {
   readonly type: "IMAGE" | "VIDEO" | "TEXT";
   readonly checksum: string;
   readonly thumbnailUrl?: string | null;
+  readonly textPreviewText?: string | null;
+  /** @deprecated Playlist previews now use textPreviewText. */
   readonly textHtmlContent?: string | null;
 }
 

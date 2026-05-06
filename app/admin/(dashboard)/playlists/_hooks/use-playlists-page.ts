@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useCan } from "@/hooks/use-can";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
+  playlistsApi,
+  type BackendPlaylistListResponse,
   type PlaylistListQuery,
   useDeletePlaylistMutation,
   useListPlaylistsQuery,
@@ -21,6 +23,7 @@ export const PAGE_SIZE = PLAYLISTS_PAGE_SIZE;
 
 export interface UsePlaylistsPageResult {
   // Permissions
+  canCreatePlaylist: boolean;
   canUpdatePlaylist: boolean;
   canDeletePlaylist: boolean;
 
@@ -50,8 +53,31 @@ export interface UsePlaylistsPageResult {
   deletePlaylistMutation: (id: string) => Promise<void>;
 }
 
-export function usePlaylistsPage(): UsePlaylistsPageResult {
+export interface InitialPlaylistsList {
+  readonly queryArgs: PlaylistListQuery;
+  readonly data: BackendPlaylistListResponse;
+}
+
+interface UsePlaylistsPageOptions {
+  readonly initialList?: InitialPlaylistsList;
+}
+
+function normalizedQueryKey(query: PlaylistListQuery): string {
+  return JSON.stringify({
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? PAGE_SIZE,
+    status: query.status ?? null,
+    search: query.search ?? null,
+    sortBy: query.sortBy ?? "createdAt",
+    sortDirection: query.sortDirection ?? "desc",
+  });
+}
+
+export function usePlaylistsPage({
+  initialList,
+}: UsePlaylistsPageOptions = {}): UsePlaylistsPageResult {
   const router = useRouter();
+  const canCreatePlaylist = useCan("playlists:create");
   const canUpdatePlaylist = useCan("playlists:update");
   const canDeletePlaylist = useCan("playlists:delete");
 
@@ -80,15 +106,40 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
     }),
     [page, debouncedSearch, statusFilter],
   );
+  const playlistQueryKey = useMemo(
+    () => normalizedQueryKey(playlistQuery),
+    [playlistQuery],
+  );
+  const initialListQueryKey = useMemo(
+    () =>
+      initialList != null ? normalizedQueryKey(initialList.queryArgs) : null,
+    [initialList],
+  );
+  const isInitialListQuery =
+    initialListQueryKey != null && initialListQueryKey === playlistQueryKey;
 
   const {
-    data: playlistsData,
-    isLoading,
-    isFetching,
+    data: queriedPlaylistsData,
+    isLoading: queryIsLoading,
+    isFetching: queryIsFetching,
   } = useListPlaylistsQuery(playlistQuery, {
     refetchOnFocus: false,
     refetchOnReconnect: false,
+    skip: isInitialListQuery,
   });
+  const cachedInitialList = playlistsApi.endpoints.listPlaylists.useQueryState(
+    playlistQuery,
+    { skip: !isInitialListQuery },
+  );
+  const playlistsData =
+    queriedPlaylistsData ??
+    cachedInitialList.data ??
+    (isInitialListQuery ? initialList?.data : undefined);
+  const isLoading =
+    playlistsData == null && (isInitialListQuery ? false : queryIsLoading);
+  const isFetching = isInitialListQuery
+    ? cachedInitialList.isFetching
+    : queryIsFetching;
   const [deletePlaylist] = useDeletePlaylistMutation();
 
   const deleteDialogOpen = playlistToDelete !== null;
@@ -119,6 +170,7 @@ export function usePlaylistsPage(): UsePlaylistsPageResult {
   );
 
   return {
+    canCreatePlaylist,
     canUpdatePlaylist,
     canDeletePlaylist,
     isLoading,

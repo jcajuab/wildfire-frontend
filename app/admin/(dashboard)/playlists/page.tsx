@@ -15,10 +15,7 @@ import {
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
-import {
-  PlaylistsListCacheSeeder,
-  PlaylistsPageView,
-} from "./playlists-page-client";
+import { PlaylistsPageView } from "./playlists-page-client";
 
 interface PlaylistsPageProps {
   readonly searchParams?: Promise<
@@ -62,9 +59,6 @@ export default async function PlaylistsPage({
   );
 
   return (
-    <>
-      <PlaylistsListCacheSeeder queryArgs={queryArgs} data={listData} />
-      <PlaylistsPageView />
-    </>
+    <PlaylistsPageView initialQueryArgs={queryArgs} initialData={listData} />
   );
 }

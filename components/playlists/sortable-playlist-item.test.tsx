@@ -93,7 +93,7 @@ describe("SortableItemRow", () => {
     ).toBeTruthy();
   });
 
-  test("renders a rich text preview when text content has html but no thumbnail", () => {
+  test("renders a plain text preview when text content has no thumbnail", () => {
     render(
       <SortableItemRow
         item={{
@@ -102,7 +102,8 @@ describe("SortableItemRow", () => {
             ...baseItem.content,
             title: "Announcement",
             type: "TEXT",
-            textHtmlContent: "<p><strong>Breaking</strong> News</p>",
+            textPreviewText: "Breaking News",
+            textHtmlContent: null,
           },
         }}
         onRemove={vi.fn()}

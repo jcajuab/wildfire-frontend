@@ -1,28 +1,15 @@
 "use client";
 
 import type { ReactElement } from "react";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { BulkDeleteConfirmDialog } from "@/components/common/bulk-delete-confirm-dialog";
-import { BulkSelectionToolbar } from "@/components/common/bulk-selection-toolbar";
-import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
-import { PageHeader } from "@/components/layout/page-header";
 import { PlaylistGrid } from "@/components/playlists/playlist-grid";
-import { SearchControl } from "@/components/common/search-control";
-import { PlaylistFilterPopover } from "@/components/playlists/playlist-filter-popover";
+import { PlaylistsToolbar } from "@/components/playlists/playlists-toolbar";
 import { PaginationFooter } from "@/components/common/pagination-footer";
-import { Button } from "@/components/ui/button";
 import {
   playlistsApi,
   type BackendPlaylistListResponse,
@@ -48,7 +35,7 @@ export function PlaylistsListCacheSeeder({
       playlistsApi.endpoints.listPlaylists.select(queryArgs)(state).data,
   );
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (cachedData) {
       return;
     }
@@ -60,7 +47,15 @@ export function PlaylistsListCacheSeeder({
   return null;
 }
 
-export function PlaylistsPageView(): ReactElement {
+interface PlaylistsPageViewProps {
+  readonly initialQueryArgs?: PlaylistListQuery;
+  readonly initialData?: BackendPlaylistListResponse;
+}
+
+export function PlaylistsPageView({
+  initialQueryArgs,
+  initialData,
+}: PlaylistsPageViewProps = {}): ReactElement {
   const router = useRouter();
   const searchParams = useSearchParams();
   const manageId = searchParams.get("manage");
@@ -77,6 +72,7 @@ export function PlaylistsPageView(): ReactElement {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   const {
+    canCreatePlaylist,
     canUpdatePlaylist,
     canDeletePlaylist,
     isLoading,
@@ -96,7 +92,16 @@ export function PlaylistsPageView(): ReactElement {
     handleEditPlaylist,
     handleDeletePlaylist,
     deletePlaylistMutation,
-  } = usePlaylistsPage();
+  } = usePlaylistsPage(
+    initialQueryArgs != null && initialData != null
+      ? {
+          initialList: {
+            queryArgs: initialQueryArgs,
+            data: initialData,
+          },
+        }
+      : undefined,
+  );
 
   useEffect(() => {
     clearSelection();
@@ -151,58 +156,41 @@ export function PlaylistsPageView(): ReactElement {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
-      <PageHeader title="Playlists">
-        <Can permission="playlists:create">
-          <Button asChild>
-            <Link href="/admin/playlists/create">
-              <IconPlus className="size-4" />
-              Create Playlist
-            </Link>
-          </Button>
-        </Can>
-      </PageHeader>
+      {initialQueryArgs != null && initialData != null ? (
+        <PlaylistsListCacheSeeder
+          queryArgs={initialQueryArgs}
+          data={initialData}
+        />
+      ) : null}
 
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
-            <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-              {isSelectionMode ? (
-                <BulkSelectionToolbar
-                  selectedCount={selectedPlaylistCount}
-                  deleteLabel={deleteSelectedLabel}
-                  onDelete={() => setIsBulkDeleteDialogOpen(true)}
-                  onCancel={handleCancelSelectionMode}
-                />
-              ) : null}
-              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:w-auto">
-                {canDeletePlaylist && !isSelectionMode ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsSelectionMode(true)}
-                  >
-                    Select mode
-                  </Button>
-                ) : null}
-                <PlaylistFilterPopover
-                  statusFilter={statusFilter}
-                  filteredResultsCount={totalPlaylists}
-                  isFetching={isFetching && !isLoading}
-                  onStatusFilterChange={handleStatusFilterChange}
-                  onClearFilters={handleClearFilters}
-                />
-                <SearchControl
-                  value={search}
-                  onChange={handleSearchChange}
-                  ariaLabel="Search playlists"
-                  placeholder="Search..."
-                  className="w-full max-w-none sm:w-72"
-                />
-              </div>
-            </div>
-          </div>
+          <PlaylistsToolbar
+            statusFilter={statusFilter}
+            search={search}
+            filteredResultsCount={totalPlaylists}
+            isFetching={isFetching && !isLoading}
+            canCreatePlaylist={canCreatePlaylist}
+            canDeletePlaylist={canDeletePlaylist}
+            bulkState={
+              isSelectionMode
+                ? {
+                    mode: "bulk-delete",
+                    selectedCount: selectedPlaylistCount,
+                    onDelete: () => setIsBulkDeleteDialogOpen(true),
+                    onCancel: handleCancelSelectionMode,
+                  }
+                : {
+                    mode: "normal",
+                    onEnterBulkDelete: () => setIsSelectionMode(true),
+                  }
+            }
+            onSearchChange={handleSearchChange}
+            onStatusFilterChange={handleStatusFilterChange}
+            onClearFilters={handleClearFilters}
+          />
 
-          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 pt-6">
+          <div className="min-h-0 flex-1 overflow-auto p-4">
             {isLoading ? (
               <div className="flex h-full items-center justify-center">
                 <div className="flex items-center gap-2">
@@ -239,6 +227,7 @@ export function PlaylistsPageView(): ReactElement {
             total={totalPlaylists}
             onPageChange={setPage}
             variant="compact"
+            alwaysShow
           />
         </footer>
       </section>

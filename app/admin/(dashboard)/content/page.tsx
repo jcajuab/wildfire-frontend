@@ -59,5 +59,7 @@ export default async function ContentPage({
     "listContent",
   );
 
-  return <ContentPageView initialQueryArgs={queryArgs} initialData={listData} />;
+  return (
+    <ContentPageView initialQueryArgs={queryArgs} initialData={listData} />
+  );
 }

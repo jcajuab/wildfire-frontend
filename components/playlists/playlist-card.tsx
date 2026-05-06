@@ -1,6 +1,11 @@
 "use client";
 
-import { type ReactElement, memo } from "react";
+import {
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactElement,
+  memo,
+} from "react";
 import Image from "next/image";
 import {
   IconDots,
@@ -15,16 +20,19 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { PlaylistSummary } from "@/types/playlist";
-import { formatDateWithTime, formatDuration } from "@/lib/formatters";
-import { sanitizeRichTextHtml } from "@/lib/content-thumbnail-preview";
-import { cn } from "@/lib/utils";
-import { RICH_TEXT_PREVIEW_CLASSES } from "@/lib/rich-text-preview-classes";
+import {
+  formatDateWithTime,
+  formatDuration,
+  formatRelativeTime,
+} from "@/lib/formatters";
+import { getTextThumbnailText } from "@/lib/content-thumbnail-preview";
 import { useCanModifyResource } from "@/hooks/use-can-modify-resource";
 
 interface PlaylistCardProps {
@@ -38,6 +46,34 @@ interface PlaylistCardProps {
   ) => void;
 }
 
+const CARD_SELECTION_IGNORE_SELECTOR =
+  "button,a,input,select,textarea,[role='button'],[role='menuitem'],[data-card-selection-ignore='true']";
+const MAX_VISIBLE_PREVIEW_ITEMS = 2;
+
+function shouldIgnoreCardSelection(
+  target: EventTarget | null,
+  currentTarget: HTMLElement,
+): boolean {
+  if (!(target instanceof Element)) return false;
+
+  const interactiveElement = target.closest(CARD_SELECTION_IGNORE_SELECTOR);
+  return interactiveElement !== null && interactiveElement !== currentTarget;
+}
+
+function getPlaylistActivityLabel(
+  playlist: PlaylistSummary,
+): "Created" | "Updated" {
+  return new Date(playlist.updatedAt).getTime() >
+    new Date(playlist.createdAt).getTime()
+    ? "Updated"
+    : "Created";
+}
+
+function getPlaylistOwnerHandle(playlist: PlaylistSummary): string {
+  const username = playlist.owner.username?.trim();
+  return username && username.length > 0 ? username : playlist.owner.name;
+}
+
 export const PlaylistCard = memo(function PlaylistCard({
   playlist,
   onEdit,
@@ -46,21 +82,58 @@ export const PlaylistCard = memo(function PlaylistCard({
   onSelectionChange,
 }: PlaylistCardProps): ReactElement {
   const canModify = useCanModifyResource(playlist.owner.id);
-  const visiblePreviewItems = playlist.previewItems.slice(0, 3);
+  const visiblePreviewItems = playlist.previewItems.slice(
+    0,
+    MAX_VISIBLE_PREVIEW_ITEMS,
+  );
   const overflowCount = playlist.itemsCount - visiblePreviewItems.length;
-  const createdAtLabel = formatDateWithTime(playlist.createdAt);
-  const updatedAtLabel = formatDateWithTime(playlist.updatedAt);
+  const activityLabel = getPlaylistActivityLabel(playlist);
+  const activityDate =
+    activityLabel === "Updated" ? playlist.updatedAt : playlist.createdAt;
+  const activityDateLabel = formatDateWithTime(activityDate);
+  const activityRelativeLabel = formatRelativeTime(activityDate);
+  const ownerHandle = getPlaylistOwnerHandle(playlist);
   const showEdit = canModify && Boolean(onEdit);
   const showDelete = canModify && Boolean(onDelete);
   const showSelection = canModify && Boolean(onSelectionChange);
+  const handleCardClick = (event: MouseEvent<HTMLElement>): void => {
+    if (
+      !showSelection ||
+      shouldIgnoreCardSelection(event.target, event.currentTarget)
+    ) {
+      return;
+    }
+
+    onSelectionChange?.(playlist, !isSelected);
+  };
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
+    if (
+      !showSelection ||
+      event.target !== event.currentTarget ||
+      (event.key !== "Enter" && event.key !== " ")
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    onSelectionChange?.(playlist, !isSelected);
+  };
 
   return (
-    <article
+    <div
       data-state={isSelected ? "selected" : undefined}
-      className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 transition-colors data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5"
+      data-selection-mode={showSelection ? "true" : undefined}
+      data-selection-muted={showSelection && !isSelected ? "true" : undefined}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      role={showSelection ? "button" : undefined}
+      tabIndex={showSelection ? 0 : undefined}
+      aria-pressed={showSelection ? isSelected : undefined}
+      aria-label={showSelection ? `Select ${playlist.name}` : undefined}
+      className={`group flex h-full flex-col gap-2.5 rounded-xl border border-border/80 bg-card p-4 transition-[border-color,background-color,filter,opacity] duration-200 hover:border-primary/25 data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5 data-[state=selected]:opacity-100 data-[state=selected]:grayscale-0 motion-reduce:transition-none ${showSelection ? "cursor-pointer focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30" : ""} ${showSelection && !isSelected ? "border-border/60 bg-muted/25 opacity-55 grayscale hover:border-primary/35 hover:bg-card hover:opacity-90 hover:grayscale-0" : ""}`}
     >
       {/* Header */}
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         {showSelection ? (
           <Checkbox
             checked={isSelected}
@@ -68,12 +141,12 @@ export const PlaylistCard = memo(function PlaylistCard({
               onSelectionChange?.(playlist, checked === true)
             }
             aria-label={`Select ${playlist.name}`}
-            className="mt-0.5"
+            data-card-selection-ignore="true"
           />
         ) : null}
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="flex items-center gap-2">
-            <h2 className="truncate text-sm font-semibold leading-tight">
+            <h2 className="truncate text-base font-semibold leading-tight">
               {playlist.name}
             </h2>
             {playlist.status === "IN_USE" && (
@@ -82,9 +155,6 @@ export const PlaylistCard = memo(function PlaylistCard({
               </Badge>
             )}
           </div>
-          <p className="truncate text-xs text-muted-foreground">
-            @{playlist.owner.name}
-          </p>
         </div>
         {showEdit || showDelete ? (
           <DropdownMenu>
@@ -93,6 +163,7 @@ export const PlaylistCard = memo(function PlaylistCard({
                 variant="ghost"
                 size="icon-sm"
                 aria-label={`Actions for ${playlist.name}`}
+                className="shrink-0"
               >
                 <IconDots className="size-4" aria-hidden="true" />
               </Button>
@@ -104,6 +175,7 @@ export const PlaylistCard = memo(function PlaylistCard({
                   Edit Playlist
                 </DropdownMenuItem>
               ) : null}
+              {showEdit && showDelete ? <DropdownMenuSeparator /> : null}
               {showDelete && onDelete ? (
                 <DropdownMenuItem
                   variant="destructive"
@@ -120,34 +192,46 @@ export const PlaylistCard = memo(function PlaylistCard({
 
       {/* Description */}
       <p
-        className="truncate text-xs text-muted-foreground"
+        className="truncate text-xs leading-4 text-muted-foreground"
         title={playlist.description ?? "No description provided."}
       >
         {playlist.description ?? "No description provided."}
       </p>
 
       {/* Stats */}
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <Badge variant="secondary" className="gap-1">
-          <IconPlaylist className="size-4" />
+      <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+        <Badge
+          variant="outline"
+          className="border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-300"
+        >
+          <IconPlaylist className="size-3.5" aria-hidden="true" />
           {playlist.itemsCount} {playlist.itemsCount === 1 ? "item" : "items"}
         </Badge>
-        <Badge variant="secondary" className="gap-1">
-          <IconClock className="size-4" />
+        <Badge
+          variant="outline"
+          className="border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+        >
+          <IconClock className="size-3.5" aria-hidden="true" />
           {formatDuration(playlist.totalDuration)}
         </Badge>
       </div>
 
       {/* Content Thumbnails */}
       {visiblePreviewItems.length > 0 && (
-        <div className="flex gap-2">
+        <div
+          className={
+            overflowCount > 0
+              ? "grid grid-cols-3 gap-2 pt-0.5"
+              : "grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-2 pt-0.5"
+          }
+        >
           {visiblePreviewItems.map((item) => (
             <div
               key={item.id}
-              className="relative flex w-20 flex-col overflow-hidden rounded"
+              className="relative flex h-[3.75rem] min-w-0 flex-col overflow-hidden rounded"
             >
               {/* Thumbnail */}
-              <div className="relative flex aspect-video items-center justify-center bg-muted">
+              <div className="relative flex h-10 shrink-0 items-center justify-center overflow-hidden bg-muted">
                 {item.content.thumbnailUrl ? (
                   <Image
                     src={item.content.thumbnailUrl}
@@ -156,19 +240,12 @@ export const PlaylistCard = memo(function PlaylistCard({
                     className="object-cover"
                   />
                 ) : item.content.type === "TEXT" &&
-                  item.content.textHtmlContent ? (
+                  (item.content.textPreviewText ||
+                    item.content.textHtmlContent) ? (
                   <div className="flex size-full items-start overflow-hidden p-1">
-                    <div
-                      className={cn(
-                        RICH_TEXT_PREVIEW_CLASSES,
-                        "text-[6px] leading-tight [&_ol]:ml-2 [&_td]:px-0.5 [&_th]:px-0.5 [&_ul]:ml-2 [&_*]:!text-inherit",
-                      )}
-                      dangerouslySetInnerHTML={{
-                        __html: sanitizeRichTextHtml(
-                          item.content.textHtmlContent,
-                        ),
-                      }}
-                    />
+                    <p className="line-clamp-4 text-[6px] leading-tight text-foreground">
+                      {getTextThumbnailText(item.content)}
+                    </p>
                   </div>
                 ) : (
                   <IconPhoto
@@ -181,31 +258,33 @@ export const PlaylistCard = memo(function PlaylistCard({
                 </span>
               </div>
               {/* Title bar */}
-              <div className="bg-primary px-1.5 py-1">
-                <span className="block truncate text-xs font-medium text-primary-foreground">
+              <div className="flex h-5 items-center bg-primary px-1.5">
+                <span className="block min-w-0 truncate text-xs font-medium text-primary-foreground">
                   {item.content.title}
                 </span>
               </div>
             </div>
           ))}
           {overflowCount > 0 ? (
-            <div className="flex w-20 items-center justify-center rounded bg-muted text-xs font-medium text-muted-foreground">
+            <div className="flex h-[3.75rem] min-w-0 items-center justify-center rounded bg-muted text-xs font-medium text-foreground/80">
               +{overflowCount}
             </div>
           ) : null}
         </div>
       )}
 
-      <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
-        <span className="text-xs font-medium text-muted-foreground">
-          Created at
+      <div
+        className="flex min-w-0 items-center gap-1.5 pt-0.5 text-xs leading-4 text-muted-foreground"
+        title={`${activityLabel} ${activityDateLabel}`}
+        aria-label={`Created by @${ownerHandle}. ${activityLabel} ${activityDateLabel}.`}
+      >
+        <span className="min-w-0 truncate">@{ownerHandle}</span>
+        <span className="shrink-0 text-muted-foreground/70" aria-hidden="true">
+          ·
         </span>
-        <span className="text-xs text-muted-foreground">{createdAtLabel}</span>
-        <span className="text-xs font-medium text-muted-foreground">
-          Updated at
-        </span>
-        <span className="text-xs text-muted-foreground">{updatedAtLabel}</span>
+        <span className="shrink-0 font-medium">{activityLabel}</span>
+        <span className="min-w-0 truncate">{activityRelativeLabel}</span>
       </div>
-    </article>
+    </div>
   );
 });

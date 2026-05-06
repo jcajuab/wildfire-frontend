@@ -15,9 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { getTextThumbnailHtml } from "@/lib/content-thumbnail-preview";
-import { RICH_TEXT_PREVIEW_CLASSES } from "@/lib/rich-text-preview-classes";
-import { cn } from "@/lib/utils";
+import { getTextThumbnailText } from "@/lib/content-thumbnail-preview";
 import type { Content } from "@/types/content";
 import type { PlaylistItemContent } from "@/types/playlist";
 
@@ -89,17 +87,12 @@ export function SortableItemRow({
               fill
               className="object-cover"
             />
-          ) : item.content.type === "TEXT" && item.content.textHtmlContent ? (
+          ) : item.content.type === "TEXT" &&
+            (item.content.textPreviewText || item.content.textHtmlContent) ? (
             <div className="flex size-full items-start overflow-hidden p-1">
-              <div
-                className={cn(
-                  RICH_TEXT_PREVIEW_CLASSES,
-                  "text-[6px] leading-tight [&_ol]:ml-2 [&_td]:px-0.5 [&_th]:px-0.5 [&_ul]:ml-2",
-                )}
-                dangerouslySetInnerHTML={{
-                  __html: getTextThumbnailHtml(item.content),
-                }}
-              />
+              <p className="line-clamp-4 text-[6px] leading-tight text-foreground">
+                {getTextThumbnailText(item.content)}
+              </p>
             </div>
           ) : (
             <IconPhoto

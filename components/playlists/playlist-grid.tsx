@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconPlus } from "@tabler/icons-react";
 import Link from "next/link";
 
 import { Can } from "@/components/common/can";
@@ -36,10 +35,7 @@ export function PlaylistGrid({
         action={
           <Can permission="playlists:create">
             <Button asChild>
-              <Link href="/admin/playlists/create">
-                <IconPlus className="size-4" aria-hidden="true" />
-                Create Playlist
-              </Link>
+              <Link href="/admin/playlists/create">Create Playlist</Link>
             </Button>
           </Can>
         }
@@ -48,7 +44,7 @@ export function PlaylistGrid({
   }
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,24rem))] gap-4">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-4">
       {playlists.map((playlist) => (
         <PlaylistCard
           key={playlist.id}

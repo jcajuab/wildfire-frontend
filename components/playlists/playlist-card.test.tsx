@@ -19,6 +19,7 @@ const basePlaylist: PlaylistSummary = {
   updatedAt: "2024-01-01T00:00:00.000Z",
   owner: {
     id: "user-1",
+    username: "demo",
     name: "Demo User",
   },
   previewItems: [],
@@ -45,11 +46,227 @@ describe("PlaylistCard", () => {
     expect(onSelectionChange).toHaveBeenCalledWith(basePlaylist, true);
   });
 
+  test("toggles selection from the whole card in selection mode", async () => {
+    const user = userEvent.setup();
+    const onSelectionChange = vi.fn();
+
+    render(
+      <PlaylistCard
+        playlist={basePlaylist}
+        onDelete={vi.fn()}
+        isSelected={false}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Select Morning Loop" }),
+    );
+
+    expect(onSelectionChange).toHaveBeenCalledWith(basePlaylist, true);
+  });
+
   test("does not render a selection checkbox by default", () => {
     render(<PlaylistCard playlist={basePlaylist} onDelete={vi.fn()} />);
 
     expect(
       screen.queryByRole("checkbox", { name: "Select Morning Loop" }),
     ).not.toBeInTheDocument();
+  });
+
+  test("shows the consolidated latest activity row", () => {
+    render(
+      <PlaylistCard
+        playlist={{
+          ...basePlaylist,
+          updatedAt: "2024-01-02T00:00:00.000Z",
+        }}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText("Created at")).not.toBeInTheDocument();
+    expect(screen.queryByText("Updated at")).not.toBeInTheDocument();
+    expect(screen.getByText("@demo")).toBeInTheDocument();
+    expect(screen.getByText("Updated")).toBeInTheDocument();
+  });
+
+  test("falls back to the owner name when username is unavailable", () => {
+    render(
+      <PlaylistCard
+        playlist={{
+          ...basePlaylist,
+          owner: {
+            id: "user-1",
+            name: "Demo User",
+          },
+        }}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("@Demo User")).toBeInTheDocument();
+  });
+
+  test("renders text preview content without raw html", () => {
+    render(
+      <PlaylistCard
+        playlist={{
+          ...basePlaylist,
+          itemsCount: 1,
+          totalDuration: 5,
+          previewItems: [
+            {
+              id: "item-1",
+              duration: 5,
+              sequence: 1,
+              loop: false,
+              content: {
+                id: "content-1",
+                title: "Announcement",
+                type: "TEXT",
+                checksum: "checksum-1",
+                thumbnailUrl: null,
+                textPreviewText: "Breaking News",
+              },
+            },
+          ],
+        }}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Breaking News")).toBeInTheDocument();
+    expect(
+      screen.queryByText("<strong>Breaking</strong>"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("shows two preview thumbnails and summarizes the remaining items", () => {
+    render(
+      <PlaylistCard
+        playlist={{
+          ...basePlaylist,
+          itemsCount: 4,
+          totalDuration: 20,
+          previewItems: [
+            {
+              id: "item-1",
+              duration: 5,
+              sequence: 1,
+              loop: false,
+              content: {
+                id: "content-1",
+                title: "First",
+                type: "IMAGE",
+                checksum: "checksum-1",
+                thumbnailUrl: null,
+              },
+            },
+            {
+              id: "item-2",
+              duration: 5,
+              sequence: 2,
+              loop: false,
+              content: {
+                id: "content-2",
+                title: "Second",
+                type: "IMAGE",
+                checksum: "checksum-2",
+                thumbnailUrl: null,
+              },
+            },
+            {
+              id: "item-3",
+              duration: 5,
+              sequence: 3,
+              loop: false,
+              content: {
+                id: "content-3",
+                title: "Third",
+                type: "IMAGE",
+                checksum: "checksum-3",
+                thumbnailUrl: null,
+              },
+            },
+          ],
+        }}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("First")).toBeInTheDocument();
+    expect(screen.getByText("Second")).toBeInTheDocument();
+    expect(screen.queryByText("Third")).not.toBeInTheDocument();
+    expect(screen.getByText("+2")).toBeInTheDocument();
+  });
+
+  test("does not show an overflow tile when all playlist items are visible", () => {
+    render(
+      <PlaylistCard
+        playlist={{
+          ...basePlaylist,
+          itemsCount: 2,
+          totalDuration: 10,
+          previewItems: [
+            {
+              id: "item-1",
+              duration: 5,
+              sequence: 1,
+              loop: false,
+              content: {
+                id: "content-1",
+                title: "First",
+                type: "IMAGE",
+                checksum: "checksum-1",
+                thumbnailUrl: null,
+              },
+            },
+            {
+              id: "item-2",
+              duration: 5,
+              sequence: 2,
+              loop: false,
+              content: {
+                id: "content-2",
+                title: "Second",
+                type: "IMAGE",
+                checksum: "checksum-2",
+                thumbnailUrl: null,
+              },
+            },
+          ],
+        }}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("First")).toBeInTheDocument();
+    expect(screen.getByText("Second")).toBeInTheDocument();
+    expect(screen.queryByText(/^\+/)).not.toBeInTheDocument();
+  });
+
+  test("separates edit and destructive delete actions", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <PlaylistCard
+        playlist={basePlaylist}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Actions for Morning Loop" }),
+    );
+
+    expect(
+      screen.getByRole("menuitem", { name: "Edit Playlist" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("separator")).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: "Delete Playlist" }),
+    ).toBeInTheDocument();
   });
 });

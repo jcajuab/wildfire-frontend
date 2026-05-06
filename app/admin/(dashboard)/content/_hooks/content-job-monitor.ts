@@ -71,7 +71,7 @@ export function useContentJobMonitor(
           notifyApiError(error, job.failureMessage);
         });
     },
-    [dispatch, input.fetchContent, input.fetchJob, store],
+    [dispatch, input, store],
   );
 
   return {
