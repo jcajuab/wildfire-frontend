@@ -206,9 +206,9 @@ export function ContentPageView({
     const result = await runBulkAction(selectedItems, (item) =>
       controller.deleteContentById(item.id),
     );
-    removeSelectedIds(result.successfulItems.map((item) => item.id));
 
     if (result.successfulItems.length > 0) {
+      removeSelectedIds(result.successfulItems.map((item) => item.id));
       toast.success(
         result.successfulItems.length === 1
           ? "Successfully deleted 1 content item"
@@ -226,7 +226,12 @@ export function ContentPageView({
         `Failed to delete ${result.failedItems.length} of ${selectedItems.length} content items. ${message}`,
       );
     }
-  }, [controller, removeSelectedIds, selectedItems]);
+
+    if (result.failedItems.length === 0) {
+      setIsSelectionMode(false);
+      clearSelection();
+    }
+  }, [controller, removeSelectedIds, selectedItems, clearSelection]);
 
   const handleCancelSelectionMode = useCallback(() => {
     clearSelection();

@@ -15,6 +15,57 @@ async function bumpContentNextCache(): Promise<void> {
   }
 }
 
+type ContentListMutable = {
+  items: BackendContentListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+function contentMatchesListQuery(
+  content: BackendContentListItem,
+  query: ContentListQuery | void,
+): boolean {
+  if (query?.status && content.status !== query.status) return false;
+  if (query?.type && content.type !== query.type) return false;
+  const search = query?.search?.trim().toLowerCase();
+  if (search && !content.title.toLowerCase().includes(search)) return false;
+  return true;
+}
+
+function canInsertCreatedContent(query: ContentListQuery | void): boolean {
+  return (
+    (query?.page ?? 1) === 1 &&
+    (query?.sortBy ?? "createdAt") === "createdAt" &&
+    (query?.sortDirection ?? "desc") === "desc"
+  );
+}
+
+function trimContentListToPageSize(draft: ContentListMutable): void {
+  const pageSize = draft.pageSize;
+  if (pageSize > 0 && draft.items.length > pageSize) {
+    draft.items.splice(pageSize);
+  }
+}
+
+function patchCreatedContentList(
+  draft: BackendContentListResponse,
+  query: ContentListQuery | void,
+  content: BackendContentListItem,
+): void {
+  if (!contentMatchesListQuery(content, query)) return;
+  const d = draft as unknown as ContentListMutable;
+  const idx = d.items.findIndex((c) => c.id === content.id);
+  if (idx !== -1) {
+    d.items[idx] = content;
+    return;
+  }
+  d.total += 1;
+  if (!canInsertCreatedContent(query)) return;
+  d.items.unshift(content);
+  trimContentListToPageSize(d);
+}
+
 const PDF_CROP_SUBMIT_WAIT_TIMEOUT_MS = 60_000;
 
 export interface BackendContent {
@@ -226,9 +277,11 @@ export const contentApi = api.injectEndpoints({
           for (const args of argsList) {
             dispatch(
               contentApi.util.updateQueryData("listContent", args, (draft) => {
-                patchPaginatedListById(draft, "add", created, {
-                  position: "start",
-                });
+                patchCreatedContentList(
+                  draft,
+                  args,
+                  created as BackendContentListItem,
+                );
               }),
             );
           }
@@ -263,9 +316,11 @@ export const contentApi = api.injectEndpoints({
                   "listContent",
                   args,
                   (draft) => {
-                    patchPaginatedListById(draft, "add", created, {
-                      position: "start",
-                    });
+                    patchCreatedContentList(
+                      draft,
+                      args,
+                      created as BackendContentListItem,
+                    );
                   },
                 ),
               );
@@ -304,9 +359,24 @@ export const contentApi = api.injectEndpoints({
               { type: "ContentJob" as const, id: result.job.id },
             ]
           : [{ type: "Content", id: "LIST" }],
-      async onQueryStarted(_arg, { queryFulfilled }) {
+      async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
         try {
-          await queryFulfilled;
+          const { data: result } = await queryFulfilled;
+          const argsList = contentApi.util.selectCachedArgsForQuery(
+            getState(),
+            "listContent",
+          );
+          for (const args of argsList) {
+            dispatch(
+              contentApi.util.updateQueryData("listContent", args, (draft) => {
+                patchCreatedContentList(
+                  draft,
+                  args,
+                  result.content as BackendContentListItem,
+                );
+              }),
+            );
+          }
           await bumpContentNextCache();
         } catch {
           // mutation failed
@@ -374,9 +444,11 @@ export const contentApi = api.injectEndpoints({
             dispatch(
               contentApi.util.updateQueryData("listContent", args, (draft) => {
                 for (const item of items) {
-                  patchPaginatedListById(draft, "add", item, {
-                    position: "start",
-                  });
+                  patchCreatedContentList(
+                    draft,
+                    args,
+                    item as BackendContentListItem,
+                  );
                 }
               }),
             );

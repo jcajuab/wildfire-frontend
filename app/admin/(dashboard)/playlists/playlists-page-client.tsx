@@ -120,9 +120,9 @@ export function PlaylistsPageView({
     const result = await runBulkAction(selectedItems, (item) =>
       deletePlaylistMutation(item.id),
     );
-    removeSelectedIds(result.successfulItems.map((item) => item.id));
 
     if (result.successfulItems.length > 0) {
+      removeSelectedIds(result.successfulItems.map((item) => item.id));
       toast.success(
         result.successfulItems.length === 1
           ? "Successfully deleted 1 playlist"
@@ -140,7 +140,12 @@ export function PlaylistsPageView({
         `Failed to delete ${result.failedItems.length} of ${selectedItems.length} playlists. ${message}`,
       );
     }
-  }, [deletePlaylistMutation, removeSelectedIds, selectedItems]);
+
+    if (result.failedItems.length === 0) {
+      setIsSelectionMode(false);
+      clearSelection();
+    }
+  }, [deletePlaylistMutation, removeSelectedIds, selectedItems, clearSelection]);
 
   const handleCancelSelectionMode = useCallback(() => {
     clearSelection();
