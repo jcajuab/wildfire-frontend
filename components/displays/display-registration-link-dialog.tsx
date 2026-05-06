@@ -88,6 +88,7 @@ function normalizeDisplaySlug(value: string): string {
   return value
     .trim()
     .toLowerCase()
+    .replace(/['''']/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
@@ -95,6 +96,7 @@ function normalizeDisplaySlug(value: string): string {
 function normalizeEditableDisplaySlug(value: string): string {
   return value
     .toLowerCase()
+    .replace(/['''']/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+/g, "");
 }
