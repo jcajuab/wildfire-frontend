@@ -3,6 +3,13 @@
 import type { ReactElement } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Content } from "@/types/content";
 import type { PlaylistItem } from "@/types/playlist";
 import { type DraftItem } from "./sortable-item-row";
@@ -15,6 +22,7 @@ export type PlaylistSelectableContent = Content & {
 export interface CreatePlaylistDraft {
   readonly name: string;
   readonly description: string | null;
+  readonly showCounter: boolean;
   readonly items: readonly PlaylistItem[];
   readonly totalDuration: number;
 }
@@ -56,6 +64,7 @@ export function CreatePlaylistForm({
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [items, setItems] = useState<DraftItem[]>([]);
+  const [showCounter, setShowCounter] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const totalDuration = useMemo(
@@ -70,6 +79,7 @@ export function CreatePlaylistForm({
     setName("");
     setDesc("");
     setItems([]);
+    setShowCounter(false);
     setIsSubmitting(false);
   }, []);
 
@@ -95,6 +105,7 @@ export function CreatePlaylistForm({
       const didCreate = await onCreate({
         name: name.trim(),
         description: desc.trim() || null,
+        showCounter,
         items: playlistItems,
         totalDuration,
       });
@@ -190,6 +201,28 @@ export function CreatePlaylistForm({
             >
               {totalDuration}s / 60s
             </span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <label className="flex cursor-pointer items-center gap-1.5">
+                    <Switch
+                      checked={showCounter}
+                      onCheckedChange={setShowCounter}
+                      disabled={isSubmitting}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      Show counter
+                    </span>
+                  </label>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    Turning this on will show a counter for each content
+                    duration
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         }
         itemsSubtitleSlot={

@@ -30,6 +30,7 @@ export interface PlaylistBase {
   readonly name: string;
   readonly description: string | null;
   readonly status: PlaylistStatus;
+  readonly showCounter: boolean;
   readonly itemsCount: number;
   readonly totalDuration: number;
   readonly createdAt: string;

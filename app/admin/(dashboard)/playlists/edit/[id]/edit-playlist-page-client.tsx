@@ -57,6 +57,7 @@ export function EditPlaylistPageView(): ReactElement {
   const [loadedPlaylistId, setLoadedPlaylistId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
+  const [showCounter, setShowCounter] = useState(false);
   const [items, setItems] = useState<DraftItem[]>([]);
 
   // React-approved "adjust state during render" pattern (replaces reset useEffect).
@@ -65,6 +66,7 @@ export function EditPlaylistPageView(): ReactElement {
     setLoadedPlaylistId(state.playlist.id);
     setName(state.playlist.name);
     setDesc(state.playlist.description ?? "");
+    setShowCounter(state.playlist.showCounter ?? false);
     setItems(toDrafts(state.playlist.items));
   }
 
@@ -93,10 +95,11 @@ export function EditPlaylistPageView(): ReactElement {
       metadata: {
         name: name.trim(),
         description: desc.trim() || null,
+        showCounter,
       },
       items: snapshot,
     });
-  }, [desc, handleSave, items, name]);
+  }, [desc, handleSave, items, name, showCounter]);
 
   const headerActions =
     state.status === "ready" ? (
@@ -156,6 +159,8 @@ export function EditPlaylistPageView(): ReactElement {
                 onNameChange={setName}
                 description={desc}
                 onDescriptionChange={setDesc}
+                showCounter={showCounter}
+                onShowCounterChange={setShowCounter}
                 items={items}
                 onItemsChange={setItems}
                 availableContent={availableContent}

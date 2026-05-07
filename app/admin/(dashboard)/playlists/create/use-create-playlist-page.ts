@@ -57,6 +57,7 @@ export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
         const created = await createPlaylist({
           name: data.name,
           description: data.description,
+          showCounter: data.showCounter,
         }).unwrap();
         createdPlaylistId = created.id;
 

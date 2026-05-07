@@ -11,6 +11,13 @@ import {
 } from "@/components/playlists/create-playlist-form";
 import { type DraftItem } from "@/components/playlists/sortable-item-row";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { PlaylistItem } from "@/types/playlist";
 import { useCreatePlaylistPage } from "./use-create-playlist-page";
 
@@ -24,6 +31,7 @@ export function CreatePlaylistPageView(): ReactElement {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [items, setItems] = useState<DraftItem[]>([]);
+  const [showCounter, setShowCounter] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const totalDuration = items.reduce((sum, item) => sum + item.duration, 0);
@@ -44,6 +52,7 @@ export function CreatePlaylistPageView(): ReactElement {
     const draft: CreatePlaylistDraft = {
       name: name.trim(),
       description: desc.trim() || null,
+      showCounter,
       items: playlistItems,
       totalDuration,
     };
@@ -55,6 +64,7 @@ export function CreatePlaylistPageView(): ReactElement {
       setName("");
       setDesc("");
       setItems([]);
+      setShowCounter(false);
       navigateToList();
     } finally {
       setIsSubmitting(false);
@@ -67,6 +77,7 @@ export function CreatePlaylistPageView(): ReactElement {
     items,
     name,
     navigateToList,
+    showCounter,
     totalDuration,
   ]);
 
@@ -75,6 +86,7 @@ export function CreatePlaylistPageView(): ReactElement {
     setName("");
     setDesc("");
     setItems([]);
+    setShowCounter(false);
     navigateToList();
   }, [isSubmitting, navigateToList]);
 
@@ -128,6 +140,28 @@ export function CreatePlaylistPageView(): ReactElement {
                   >
                     {totalDuration}s / 60s
                   </span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <label className="flex cursor-pointer items-center gap-1.5">
+                          <Switch
+                            checked={showCounter}
+                            onCheckedChange={setShowCounter}
+                            disabled={isSubmitting}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            Show counter
+                          </span>
+                        </label>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          Turning this on will show a counter for each content
+                          duration
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               }
               itemsSubtitleSlot={

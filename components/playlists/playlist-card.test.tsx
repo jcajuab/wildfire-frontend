@@ -13,6 +13,7 @@ const basePlaylist: PlaylistSummary = {
   name: "Morning Loop",
   description: "Morning content",
   status: "DRAFT",
+  showCounter: false,
   itemsCount: 0,
   totalDuration: 0,
   createdAt: "2024-01-01T00:00:00.000Z",

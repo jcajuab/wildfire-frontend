@@ -142,6 +142,7 @@ export function useEditPlaylistPage(
           id: state.playlist.id,
           name: payload.metadata.name,
           description: payload.metadata.description,
+          showCounter: payload.metadata.showCounter,
         }).unwrap();
 
         try {

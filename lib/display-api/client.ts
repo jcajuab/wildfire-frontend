@@ -64,6 +64,7 @@ export interface ManifestScheduleWindow {
 
 export interface DisplayManifest {
   readonly playlistId: string | null;
+  readonly showCounter: boolean;
   readonly playlistVersion: string;
   readonly generatedAt: string;
   readonly playback: {
@@ -397,6 +398,8 @@ const parseDisplayManifest = (payload: unknown): DisplayManifest => {
 
   return {
     playlistId: readNullableString(root.playlistId, "manifest.playlistId"),
+    showCounter:
+      typeof root.showCounter === "boolean" ? root.showCounter : false,
     playlistVersion: readString(
       root.playlistVersion,
       "manifest.playlistVersion",

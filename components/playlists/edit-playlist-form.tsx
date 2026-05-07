@@ -3,6 +3,13 @@
 import type { ReactElement } from "react";
 import { formatDuration } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Content } from "@/types/content";
 import type { PlaylistItem, PlaylistItemContent } from "@/types/playlist";
 import { type DraftItem } from "./sortable-item-row";
@@ -31,6 +38,7 @@ export type PlaylistItemsAtomicSnapshot = readonly (
 export interface PlaylistMetadataDraft {
   readonly name: string;
   readonly description: string | null;
+  readonly showCounter?: boolean;
 }
 
 export interface PlaylistEditorSavePayload {
@@ -43,6 +51,8 @@ export interface EditPlaylistFormProps {
   readonly onNameChange: (value: string) => void;
   readonly description: string;
   readonly onDescriptionChange: (value: string) => void;
+  readonly showCounter: boolean;
+  readonly onShowCounterChange: (value: boolean) => void;
   readonly items: DraftItem[];
   readonly onItemsChange: (items: DraftItem[]) => void;
   readonly availableContent: readonly PlaylistSelectableContent[];
@@ -56,6 +66,8 @@ export function EditPlaylistForm({
   onNameChange,
   description,
   onDescriptionChange,
+  showCounter,
+  onShowCounterChange,
   items,
   onItemsChange,
   availableContent,
@@ -90,6 +102,28 @@ export function EditPlaylistForm({
           >
             {items.length} items &middot; {formatDuration(totalDuration)}
           </span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <label className="flex cursor-pointer items-center gap-1.5">
+                  <Switch
+                    checked={showCounter}
+                    onCheckedChange={onShowCounterChange}
+                    disabled={isSaving}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    Show counter
+                  </span>
+                </label>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  Turning this on will show a counter for each content
+                  duration
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       }
       itemsSubtitleSlot={

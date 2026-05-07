@@ -82,6 +82,23 @@ export default function DisplayRuntimePage() {
 
   useSnapshotUploader(manifest, currentIndex, registration);
 
+  const [countdown, setCountdown] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!manifest?.showCounter || !currentItem) {
+      setCountdown(null);
+      return;
+    }
+
+    setCountdown(currentItem.duration);
+
+    const interval = setInterval(() => {
+      setCountdown((prev) => (prev !== null && prev > 1 ? prev - 1 : prev));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [tickCount, manifest?.showCounter, currentItem]);
+
   const [viewport, setViewport] = useState({ width: 1920, height: 1080 });
 
   useEffect(() => {
@@ -307,6 +324,18 @@ export default function DisplayRuntimePage() {
             key={currentItem.id}
             html={currentItem.content.textHtmlContent ?? ""}
           />
+        ) : null}
+        {countdown !== null ? (
+          <div
+            className="pointer-events-none absolute bottom-4 right-4 z-30 select-none text-5xl font-bold text-white"
+            style={{
+              textShadow:
+                "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            }}
+            aria-hidden="true"
+          >
+            {countdown}
+          </div>
         ) : null}
       </div>
       <style jsx>{`

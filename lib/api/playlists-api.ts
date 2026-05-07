@@ -15,6 +15,7 @@ export interface BackendPlaylistBase {
   readonly name: string;
   readonly description: string | null;
   readonly status: "DRAFT" | "IN_USE";
+  readonly showCounter: boolean;
   readonly itemsCount: number;
   readonly totalDuration: number;
   readonly createdAt: string;
@@ -75,12 +76,14 @@ export interface PlaylistListQuery {
 export interface CreatePlaylistRequest {
   readonly name: string;
   readonly description?: string | null;
+  readonly showCounter?: boolean;
 }
 
 export interface UpdatePlaylistRequest {
   readonly id: string;
   readonly name?: string;
   readonly description?: string | null;
+  readonly showCounter?: boolean;
 }
 
 export interface AddPlaylistItemRequest {
@@ -154,6 +157,7 @@ type PlaylistDetailMutable = {
   name: string;
   description: string | null;
   status: "DRAFT" | "IN_USE";
+  showCounter: boolean;
   itemsCount: number;
   totalDuration: number;
   createdAt: string;
@@ -238,6 +242,7 @@ function applyPlaylistBaseToSummary(
     name: playlist.name,
     description: playlist.description,
     status: playlist.status,
+    showCounter: playlist.showCounter,
     itemsCount: playlist.itemsCount,
     totalDuration: playlist.totalDuration,
     updatedAt: playlist.updatedAt,
@@ -416,6 +421,7 @@ export const playlistsApi = api.injectEndpoints({
                 name: data.name,
                 description: data.description,
                 status: data.status,
+                showCounter: data.showCounter,
                 itemsCount: data.itemsCount,
                 totalDuration: data.totalDuration,
                 updatedAt: data.updatedAt,

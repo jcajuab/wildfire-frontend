@@ -56,6 +56,7 @@ function playlistBase(
     name: "Morning Playlist",
     description: null,
     status: "DRAFT",
+    showCounter: false,
     itemsCount: 0,
     totalDuration: 0,
     createdAt: "2026-01-01T00:00:00.000Z",
