@@ -159,8 +159,12 @@ export function AppSidebar(): ReactElement {
               <SidebarGroupContent>
                 <SidebarMenu className="gap-1">
                   {coreNavItems.map((item) => {
-                    const isNavPending = isPending && isActiveRoute(optimisticPathname, item.href, item.match);
-                    const isDisabled = isPending && !isActiveRoute(optimisticPathname, item.href, item.match);
+                    const isNavPending =
+                      isPending &&
+                      isActiveRoute(optimisticPathname, item.href, item.match);
+                    const isDisabled =
+                      isPending &&
+                      !isActiveRoute(optimisticPathname, item.href, item.match);
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
@@ -178,9 +182,7 @@ export function AppSidebar(): ReactElement {
                             href={item.href}
                             aria-disabled={isDisabled || undefined}
                             className={
-                              isDisabled
-                                ? "pointer-events-none"
-                                : undefined
+                              isDisabled ? "pointer-events-none" : undefined
                             }
                             onClick={(e) => handleNavClick(e, item.href)}
                           >
@@ -207,8 +209,12 @@ export function AppSidebar(): ReactElement {
               <SidebarGroupContent>
                 <SidebarMenu className="gap-1">
                   {manageNavItems.map((item) => {
-                    const isNavPending = isPending && isActiveRoute(optimisticPathname, item.href, item.match);
-                    const isDisabled = isPending && !isActiveRoute(optimisticPathname, item.href, item.match);
+                    const isNavPending =
+                      isPending &&
+                      isActiveRoute(optimisticPathname, item.href, item.match);
+                    const isDisabled =
+                      isPending &&
+                      !isActiveRoute(optimisticPathname, item.href, item.match);
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
@@ -226,9 +232,7 @@ export function AppSidebar(): ReactElement {
                             href={item.href}
                             aria-disabled={isDisabled || undefined}
                             className={
-                              isDisabled
-                                ? "pointer-events-none"
-                                : undefined
+                              isDisabled ? "pointer-events-none" : undefined
                             }
                             onClick={(e) => handleNavClick(e, item.href)}
                           >

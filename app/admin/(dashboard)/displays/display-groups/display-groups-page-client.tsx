@@ -239,7 +239,7 @@ export function DisplayGroupsPageClient({
       ) : null}
 
       {/* Page header */}
-      <div className="flex items-center justify-between gap-4 border-b border-border px-4 py-2.5">
+      <div className="flex items-center justify-between gap-4 border-b border-border p-4">
         <div>
           <h1 className="text-sm font-semibold">Manage display groups</h1>
           <p className="text-xs text-muted-foreground">
@@ -273,10 +273,7 @@ export function DisplayGroupsPageClient({
       </div>
 
       {/* Subtree keyed by axis so search inputs / scroll position reset cleanly on toggle (rule §5). */}
-      <div
-        key={axis}
-        className="flex min-h-0 flex-1 flex-col overflow-hidden"
-      >
+      <div key={axis} className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Shared pane header — single border-b guarantees horizontal line alignment */}
         <div className="flex shrink-0 border-b border-border">
           {/* Left header */}
@@ -340,7 +337,9 @@ export function DisplayGroupsPageClient({
                     onChange={handleDisplaySearchChange}
                     ariaLabel="Search displays"
                     placeholder={
-                      selectedGroup ? "Search displays…" : "Select a group first"
+                      selectedGroup
+                        ? "Search displays…"
+                        : "Select a group first"
                     }
                     className="max-w-none"
                     disabled={!selectedGroup || isExecuting}
@@ -379,8 +378,7 @@ export function DisplayGroupsPageClient({
                     }
                     onClick={() => {
                       if (isDisplayAxis) {
-                        if (actionMode === "add")
-                          void handleConfirmAddGroups();
+                        if (actionMode === "add") void handleConfirmAddGroups();
                         else void handleConfirmRemoveGroups();
                       } else {
                         if (actionMode === "add") void handleConfirmAdd();

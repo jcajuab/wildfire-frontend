@@ -39,8 +39,11 @@ export function useInfiniteScrollSentinel({
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
-          const { hasMore: hm, isFetching: f, onIntersect: cb } =
-            stateRef.current;
+          const {
+            hasMore: hm,
+            isFetching: f,
+            onIntersect: cb,
+          } = stateRef.current;
           if (hm && !f) cb();
         }
       },

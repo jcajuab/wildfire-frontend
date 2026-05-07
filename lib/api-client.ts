@@ -1,12 +1,17 @@
 import { getBaseUrl, getDevOnlyRequestHeaders } from "@/lib/api/config";
 import {
-  parseApiListResponseDataSafe,
+  parseApiListResponseSafe,
   parseApiResponseData,
 } from "@/lib/api/contracts";
 import { createAuthApiError, readJsonPayload } from "@/lib/api/auth-api";
 import { authFetch } from "@/lib/auth-session";
 import type { AuthResponse } from "@/types/auth";
-import type { InvitationRecord } from "@/types/invitation";
+import type {
+  InvitationListResponse,
+  InvitationRecord,
+  InvitationSortField,
+  InvitationStatusFilter,
+} from "@/types/invitation";
 
 export { AuthApiError } from "@/lib/api/auth-api";
 
@@ -144,10 +149,35 @@ export async function createInvitation(input: {
   return parseApiPayload<CreateInvitationResponse>(response);
 }
 
+export interface InvitationListQuery {
+  readonly q?: string;
+  readonly page?: number;
+  readonly pageSize?: number;
+  readonly status?: InvitationStatusFilter;
+  readonly sortBy?: InvitationSortField;
+  readonly sortDirection?: "asc" | "desc";
+}
+
 /** GET /auth/invitations. Returns recent invitation records. */
-export async function getInvitations(): Promise<readonly InvitationRecord[]> {
+export async function getInvitations(
+  query: InvitationListQuery = {},
+): Promise<InvitationListResponse> {
   const baseUrl = getBaseUrl();
-  const response = await authFetch(`${baseUrl}/auth/invitations`, {
+  const url = new URL(`${baseUrl}/auth/invitations`);
+  if (query.q) url.searchParams.set("q", query.q);
+  if (query.page != null) url.searchParams.set("page", String(query.page));
+  if (query.pageSize != null) {
+    url.searchParams.set("pageSize", String(query.pageSize));
+  }
+  if (query.status && query.status !== "all") {
+    url.searchParams.set("status", query.status);
+  }
+  if (query.sortBy) url.searchParams.set("sortBy", query.sortBy);
+  if (query.sortDirection) {
+    url.searchParams.set("sortDirection", query.sortDirection);
+  }
+
+  const response = await authFetch(url.toString(), {
     method: "GET",
   });
 
@@ -155,10 +185,16 @@ export async function getInvitations(): Promise<readonly InvitationRecord[]> {
   if (!response.ok) {
     throw createAuthApiError(response, payload);
   }
-  return parseApiListResponseDataSafe<InvitationRecord>(
+  const parsed = parseApiListResponseSafe<InvitationRecord>(
     payload,
     "getInvitations",
   );
+  return {
+    items: parsed.data,
+    total: parsed.meta.total,
+    page: parsed.meta.page,
+    pageSize: parsed.meta.pageSize,
+  };
 }
 
 /** POST /auth/invitations/:id/resend. */

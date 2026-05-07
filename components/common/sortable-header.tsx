@@ -1,11 +1,9 @@
 "use client";
 
 import type { ReactElement } from "react";
-import {
-  IconArrowsSort,
-  IconSortAscending,
-  IconSortDescending,
-} from "@tabler/icons-react";
+import { IconArrowsSort } from "@tabler/icons-react";
+import { TableHeaderControl } from "@/components/common/table-header-control";
+import { cn } from "@/lib/utils";
 
 interface SortableHeaderProps<T extends string> {
   readonly field: T;
@@ -35,21 +33,15 @@ export function SortableHeader<T extends string>({
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="focus-visible:ring-ring inline-flex items-center gap-1 rounded-sm px-0.5 py-0.5 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2"
-    >
+    <TableHeaderControl onClick={handleClick}>
       {label}
-      {isActive ? (
-        isAsc ? (
-          <IconSortAscending className="size-4" />
-        ) : (
-          <IconSortDescending className="size-4" />
-        )
-      ) : (
-        <IconArrowsSort className="size-4 text-muted-foreground" />
-      )}
-    </button>
+      <IconArrowsSort
+        className={cn(
+          "size-3.5",
+          isActive ? "text-foreground" : "text-muted-foreground",
+        )}
+        aria-hidden="true"
+      />
+    </TableHeaderControl>
   );
 }

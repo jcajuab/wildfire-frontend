@@ -31,7 +31,9 @@ export default async function ContentPage({
 
   const session = resolveSession(await getServerSession(), "/admin/content");
   if (!session) {
-    return <ContentPageView initialQueryArgs={queryArgs} initialData={undefined} />;
+    return (
+      <ContentPageView initialQueryArgs={queryArgs} initialData={undefined} />
+    );
   }
   if (!sessionHasPermission(session, "content:read")) {
     redirect("/unauthorized");

@@ -106,12 +106,12 @@ export function PlaylistsToolbar({
             {canCreatePlaylist ? (
               <Button asChild className="w-full justify-center sm:w-auto">
                 <Link href="/admin/playlists/create">
-                  Create Playlist
                   <IconPlus
                     className="size-4"
                     aria-hidden="true"
-                    data-icon="inline-end"
+                    data-icon="inline-start"
                   />
+                  Create Playlist
                 </Link>
               </Button>
             ) : null}

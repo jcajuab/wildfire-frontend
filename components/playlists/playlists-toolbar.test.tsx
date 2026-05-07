@@ -1,10 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ComponentProps } from "react";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 
 import { PlaylistsToolbar } from "@/components/playlists/playlists-toolbar";
 
-const baseProps = {
+type PlaylistsToolbarProps = ComponentProps<typeof PlaylistsToolbar>;
+
+const baseProps: PlaylistsToolbarProps = {
   statusFilter: "all" as const,
   search: "",
   filteredResultsCount: 4,
@@ -20,7 +23,7 @@ const baseProps = {
   onClearFilters: vi.fn(),
 };
 
-function renderToolbar(props: Partial<typeof baseProps> = {}) {
+function renderToolbar(props: Partial<PlaylistsToolbarProps> = {}) {
   return render(<PlaylistsToolbar {...baseProps} {...props} />);
 }
 

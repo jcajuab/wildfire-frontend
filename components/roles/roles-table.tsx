@@ -23,6 +23,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Role, RoleSort } from "@/types/role";
@@ -71,13 +72,14 @@ function RoleActionsMenu({
           <IconDotsVertical className="size-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="min-w-40">
         {canEdit && (
           <DropdownMenuItem onClick={() => onEdit(role)}>
             <IconEdit className="size-4" />
             Edit Role
           </DropdownMenuItem>
         )}
+        {canEdit && canDelete ? <DropdownMenuSeparator /> : null}
         {canDelete && (
           <DropdownMenuItem
             variant={deleteDisabled ? "default" : "destructive"}
@@ -127,9 +129,10 @@ export function RolesTable({
 
   return (
     <Table>
-      <TableHeader>
+      <TableHeader className="sticky top-0 z-10 bg-background">
         <TableRow>
           <TableHead
+            className="w-[260px]"
             aria-sort={
               sort.field === "name"
                 ? sort.direction === "asc"
@@ -139,7 +142,7 @@ export function RolesTable({
             }
           >
             <SortableHeader
-              label="Roles"
+              label="Role"
               field="name"
               currentSort={sort}
               onSort={(field, direction) => onSortChange({ field, direction })}
@@ -147,7 +150,7 @@ export function RolesTable({
           </TableHead>
           <TableHead>Description</TableHead>
           <TableHead
-            className="w-[150px]"
+            className="w-[140px] text-center"
             aria-sort={
               sort.field === "usersCount"
                 ? sort.direction === "asc"
@@ -163,25 +166,26 @@ export function RolesTable({
               onSort={(field, direction) => onSortChange({ field, direction })}
             />
           </TableHead>
-          <TableHead className="w-[50px]">
+          <TableHead className="w-[48px] text-right">
             <span className="sr-only">Actions</span>
           </TableHead>
         </TableRow>
       </TableHeader>
-      <TableBody>
+      <TableBody className="[&_tr:last-child]:border-b">
         {roles.map((role) => (
           <TableRow key={role.id}>
-            <TableCell className="font-medium">{role.name}</TableCell>
-            <TableCell className="text-muted-foreground">
-              {role.description ?? "No description set for this role"}
-            </TableCell>
             <TableCell>
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <span>{role.usersCount ?? "—"}</span>
-                <IconUsers className="size-4" />
-              </div>
+              <span className="block min-w-0 truncate font-medium">
+                {role.name}
+              </span>
             </TableCell>
-            <TableCell>
+            <TableCell className="max-w-[40rem] truncate text-muted-foreground">
+              {role.description ?? "No description available"}
+            </TableCell>
+            <TableCell className="text-center text-muted-foreground tabular-nums">
+              {role.usersCount ?? "—"}
+            </TableCell>
+            <TableCell className="text-right">
               <RoleActionsMenu
                 role={role}
                 onEdit={onEdit}

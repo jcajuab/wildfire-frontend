@@ -75,7 +75,7 @@ export function RolesPageView(): ReactElement {
         <PageHeader title="Roles" />
         <section className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
               <div className="flex items-center gap-2">
                 <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 <span className="text-sm text-muted-foreground">
@@ -95,7 +95,7 @@ export function RolesPageView(): ReactElement {
         <PageHeader title="Roles" />
         <section className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
               <p className="text-destructive">
                 Failed to load roles. Check the API and try again.
               </p>
@@ -120,70 +120,77 @@ export function RolesPageView(): ReactElement {
       </PageHeader>
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-base font-semibold">Search Results</h2>
-              <SearchControl
-                value={search}
-                onChange={handleSearchChange}
-                ariaLabel="Search roles"
-                placeholder="Search..."
-                className="w-full max-w-none sm:w-72"
-              />
-            </div>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 pt-6 sm:px-8 sm:py-8">
-            {roles.length === 0 ? (
-              <EmptyState
-                title="No roles yet"
-                description="Create roles to group permissions and assign them to users."
-                action={
-                  <Can permission="roles:create">
-                    <Button asChild>
-                      <Link href={ROLE_CREATE_PATH}>
-                        <IconPlus className="size-4" />
-                        Create Role
-                      </Link>
-                    </Button>
-                  </Can>
-                }
-              />
-            ) : (
-              <div className="relative overflow-hidden rounded-md border border-border">
-                {rolesFetching && !rolesLoading ? (
-                  <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-background/60">
-                    <div className="flex items-center gap-2">
-                      <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      <span className="text-sm text-muted-foreground">
-                        Searching for roles...
-                      </span>
-                    </div>
-                  </div>
-                ) : null}
-                <RolesTable
-                  roles={roles}
-                  sort={sort}
-                  onSortChange={handleSortChange}
-                  onEdit={handleEdit}
-                  onDelete={handleDeleteRole}
-                  canEdit={canUpdateRole}
-                  canDelete={canDeleteRole}
+          <div className="flex min-h-0 flex-1 overflow-hidden p-4">
+            <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border">
+              <div className="flex shrink-0 justify-end border-b border-border px-4 py-3">
+                <SearchControl
+                  value={search}
+                  onChange={handleSearchChange}
+                  ariaLabel="Search roles"
+                  placeholder="Search by role name or description"
+                  className="w-full max-w-none sm:w-80"
                 />
               </div>
-            )}
+
+              {rolesFetching && !rolesLoading ? (
+                <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-background/60">
+                  <div className="flex items-center gap-2">
+                    <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <span className="text-sm text-muted-foreground">
+                      Searching for roles...
+                    </span>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                {roles.length === 0 ? (
+                  <EmptyState
+                    title={search ? "No roles found" : "No roles yet"}
+                    description={
+                      search
+                        ? "Try a different role name or description."
+                        : "Create roles to group permissions and assign them to users."
+                    }
+                    action={
+                      !search ? (
+                        <Can permission="roles:create">
+                          <Button asChild>
+                            <Link href={ROLE_CREATE_PATH}>
+                              <IconPlus className="size-4" />
+                              Create Role
+                            </Link>
+                          </Button>
+                        </Can>
+                      ) : null
+                    }
+                  />
+                ) : (
+                  <RolesTable
+                    roles={roles}
+                    sort={sort}
+                    onSortChange={handleSortChange}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteRole}
+                    canEdit={canUpdateRole}
+                    canDelete={canDeleteRole}
+                  />
+                )}
+              </div>
+
+              <footer className="border-t border-border bg-background/80">
+                <PaginationFooter
+                  page={page}
+                  pageSize={PAGE_SIZE}
+                  total={rolesData?.total ?? 0}
+                  onPageChange={setPage}
+                  variant="numbered"
+                  alwaysShow
+                />
+              </footer>
+            </section>
           </div>
         </div>
-
-        <footer className="empty:hidden border-t border-border bg-background/80">
-          <PaginationFooter
-            page={page}
-            pageSize={PAGE_SIZE}
-            total={rolesData?.total ?? 0}
-            onPageChange={setPage}
-            variant="numbered"
-          />
-        </footer>
       </section>
 
       <ConfirmActionDialog

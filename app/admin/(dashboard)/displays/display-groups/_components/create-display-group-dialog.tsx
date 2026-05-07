@@ -51,7 +51,12 @@ export function CreateDisplayGroupDialog({
   }, [canCreate, onCreate, trimmed]);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-sm">
         <DialogTitle className="sr-only">Add display group</DialogTitle>
         <div className="space-y-2">
@@ -60,7 +65,9 @@ export function CreateDisplayGroupDialog({
             id="new-group-name-input"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void handleCreate();
+            }}
             disabled={isPending}
           />
           {errorMessage ? (

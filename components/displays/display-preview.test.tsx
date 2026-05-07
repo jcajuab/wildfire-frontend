@@ -35,12 +35,13 @@ class IntersectionObserverMock {
 }
 
 function intersect(isIntersecting: boolean): void {
-  if (intersectionCallback == null) {
+  const callback = intersectionCallback;
+  if (callback == null) {
     throw new Error("IntersectionObserver was not created.");
   }
 
   act(() => {
-    intersectionCallback(
+    callback(
       [
         {
           isIntersecting,
@@ -143,6 +144,7 @@ describe("DisplayPreview", () => {
 
     unmount();
 
-    expect(capturedSignal?.aborted).toBe(true);
+    expect(capturedSignal).not.toBeNull();
+    expect(capturedSignal!.aborted).toBe(true);
   });
 });

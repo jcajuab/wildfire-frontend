@@ -1,142 +1,175 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { useRouter } from "next/navigation";
 
-import { useCan } from "@/hooks/use-can";
-import { useDeleteRoleMutation, useGetRolesQuery } from "@/lib/api/rbac-api";
+import { RolesPageView } from "./roles-page-client";
+import { useRolesPage, type UseRolesPageResult } from "./_hooks/use-roles-page";
 import { ROLE_CREATE_PATH, getRoleEditPath } from "@/lib/role-paths";
-import { useRolesFilters } from "./_hooks/use-roles-filters";
-import RolesPage from "./page";
 
-const pushMock = vi.fn();
+vi.mock("@/components/common/can", () => ({
+  Can: ({ children }: { readonly children: ReactNode }) => <>{children}</>,
+}));
+
+vi.mock("@/components/common/confirm-action-dialog", () => ({
+  ConfirmActionDialog: () => null,
+}));
+
+vi.mock("./_hooks/use-roles-page", () => ({
+  PAGE_SIZE: 10,
+  useRolesPage: vi.fn(),
+}));
+
+const useRolesPageMock = vi.mocked(useRolesPage);
 const setPageMock = vi.fn();
-const deleteRoleMutationMock = vi.fn();
 const handleSearchChangeMock = vi.fn();
 const handleSortChangeMock = vi.fn();
+const handleEditMock = vi.fn();
+const handleDeleteRoleMock = vi.fn();
 
-vi.mock("next/navigation", async () => {
-  const actual =
-    await vi.importActual<typeof import("next/navigation")>("next/navigation");
-
+function makePageResult(
+  overrides: Partial<UseRolesPageResult> = {},
+): UseRolesPageResult {
   return {
-    ...actual,
-    useRouter: vi.fn(),
-  };
-});
-
-vi.mock("@/hooks/use-can", () => ({
-  useCan: vi.fn(),
-}));
-
-vi.mock("@/lib/api/rbac-api", () => ({
-  useGetRolesQuery: vi.fn(),
-  useDeleteRoleMutation: vi.fn(),
-}));
-
-vi.mock("./_hooks/use-roles-filters", () => ({
-  useRolesFilters: vi.fn(),
-}));
-
-const useRouterMock = vi.mocked(useRouter);
-const useCanMock = vi.mocked(useCan);
-const useGetRolesQueryMock = vi.mocked(useGetRolesQuery);
-const useDeleteRoleMutationMock = vi.mocked(useDeleteRoleMutation);
-const useRolesFiltersMock = vi.mocked(useRolesFilters);
-
-describe("RolesPage", () => {
-  beforeEach(() => {
-    vi.stubGlobal(
-      "ResizeObserver",
-      class ResizeObserver {
-        observe(): void {}
-        unobserve(): void {}
-        disconnect(): void {}
+    canUpdateRole: true,
+    canDeleteRole: true,
+    search: "",
+    page: 1,
+    sort: { field: "name", direction: "asc" },
+    roles: [
+      {
+        id: "role-1",
+        name: "Operators",
+        description: "Ops role",
+        isSystem: false,
+        usersCount: 2,
       },
-    );
-
-    vi.clearAllMocks();
-
-    useRouterMock.mockReturnValue({
-      push: pushMock,
-    } as unknown as ReturnType<typeof useRouter>);
-
-    useCanMock.mockReturnValue(true);
-
-    useRolesFiltersMock.mockReturnValue({
-      search: "",
+      {
+        id: "role-system",
+        name: "System Admin",
+        description: "Managed by system",
+        isSystem: true,
+        usersCount: 1,
+      },
+    ],
+    rolesData: {
+      items: [],
+      total: 2,
       page: 1,
-      sort: { field: "name", direction: "asc" },
-      sortField: "name",
-      sortDirection: "asc",
-      setPage: setPageMock,
-      handleSearchChange: handleSearchChangeMock,
-      handleSortChange: handleSortChangeMock,
-    } as ReturnType<typeof useRolesFilters>);
+      pageSize: 10,
+    },
+    rolesLoading: false,
+    rolesFetching: false,
+    rolesError: false,
+    roleToDelete: null,
+    isDeleteDialogOpen: false,
+    setPage: setPageMock,
+    setRoleToDelete: vi.fn(),
+    setIsDeleteDialogOpen: vi.fn(),
+    handleSearchChange: handleSearchChangeMock,
+    handleSortChange: handleSortChangeMock,
+    handleCreate: vi.fn(),
+    handleEdit: handleEditMock,
+    handleDeleteRole: handleDeleteRoleMock,
+    deleteRole: vi.fn(),
+    ...overrides,
+  };
+}
 
-    useGetRolesQueryMock.mockReturnValue({
-      data: {
-        items: [
-          {
-            id: "role-1",
-            name: "Operators",
-            description: "Ops role",
-            isSystem: false,
-            usersCount: 2,
-          },
-          {
-            id: "role-system",
-            name: "System Admin",
-            description: "Managed by system",
-            isSystem: true,
-            usersCount: 1,
-          },
-        ],
-        total: 2,
-      },
-      isLoading: false,
-      isError: false,
-    } as unknown as ReturnType<typeof useGetRolesQuery>);
-
-    deleteRoleMutationMock.mockReturnValue({
-      unwrap: async () => undefined,
-    });
-
-    useDeleteRoleMutationMock.mockReturnValue([
-      deleteRoleMutationMock,
-    ] as unknown as ReturnType<typeof useDeleteRoleMutation>);
+describe("RolesPageView", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useRolesPageMock.mockReturnValue(makePageResult());
   });
 
-  test("renders Create Role actions with ROLE_CREATE_PATH target", () => {
-    render(<RolesPage />);
+  test("renders the cohesive roles table shell", () => {
+    render(<RolesPageView />);
 
-    const createLinks = screen.getAllByRole("link", { name: "Create Role" });
+    expect(screen.getByRole("heading", { name: "Roles" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Search Results" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Search by role name or description"),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Role" })).toBeVisible();
+    expect(
+      screen.getByRole("columnheader", { name: "Description" }),
+    ).toBeVisible();
+    expect(screen.getByRole("columnheader", { name: "Users" })).toBeVisible();
+    expect(screen.getByText("Showing 1 to 2 of 2 results")).toBeInTheDocument();
+  });
 
-    expect(createLinks.length).toBeGreaterThan(0);
-    expect(createLinks[0]).toHaveAttribute("href", ROLE_CREATE_PATH);
+  test("renders Create Role action with ROLE_CREATE_PATH target", () => {
+    render(<RolesPageView />);
+
+    expect(screen.getByRole("link", { name: "Create Role" })).toHaveAttribute(
+      "href",
+      ROLE_CREATE_PATH,
+    );
+  });
+
+  test("updates search and sorting through page handlers", async () => {
+    const actor = userEvent.setup();
+    render(<RolesPageView />);
+
+    await actor.type(
+      screen.getByPlaceholderText("Search by role name or description"),
+      "ops",
+    );
+    await actor.click(screen.getByRole("button", { name: "Users" }));
+
+    expect(handleSearchChangeMock).toHaveBeenCalledWith("o");
+    expect(handleSearchChangeMock).toHaveBeenCalledWith("p");
+    expect(handleSearchChangeMock).toHaveBeenCalledWith("s");
+    expect(handleSortChangeMock).toHaveBeenCalledWith({
+      field: "usersCount",
+      direction: "asc",
+    });
   });
 
   test("routes edit action to getRoleEditPath(role.id)", async () => {
-    const user = userEvent.setup();
+    const actor = userEvent.setup();
 
-    render(<RolesPage />);
+    render(<RolesPageView />);
 
-    await user.click(screen.getByLabelText("Actions for Operators"));
-    await user.click(screen.getByRole("menuitem", { name: "Edit Role" }));
+    await actor.click(screen.getByLabelText("Actions for Operators"));
+    await actor.click(screen.getByRole("menuitem", { name: "Edit Role" }));
 
-    expect(pushMock).toHaveBeenCalledWith(getRoleEditPath("role-1"));
+    expect(handleEditMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "role-1" }),
+    );
+    expect(getRoleEditPath("role-1")).toBe("/admin/roles/edit/role-1");
   });
 
-  test("does not show edit action for system roles", () => {
-    render(<RolesPage />);
+  test("does not show row actions for system roles", () => {
+    render(<RolesPageView />);
 
     expect(
       screen.queryByLabelText("Actions for System Admin"),
     ).not.toBeInTheDocument();
   });
 
-  test("renders roles index as route content without any open modal", () => {
-    render(<RolesPage />);
+  test("renders search empty state inside the shell", () => {
+    useRolesPageMock.mockReturnValueOnce(
+      makePageResult({ search: "missing", roles: [] }),
+    );
+
+    render(<RolesPageView />);
+
+    expect(
+      screen.getByRole("heading", { name: "No roles found" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Create Role" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Create Role" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("renders roles index without any open modal", () => {
+    render(<RolesPageView />);
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();

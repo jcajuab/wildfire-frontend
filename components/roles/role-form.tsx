@@ -74,9 +74,7 @@ function formatPermissionResourceLabel(resource: string): string {
   return `${resource.charAt(0).toUpperCase()}${resource.slice(1)}`;
 }
 
-function isWritePermission(permission: {
-  readonly action: string;
-}): boolean {
+function isWritePermission(permission: { readonly action: string }): boolean {
   return WRITE_PERMISSION_ACTIONS.has(permission.action);
 }
 
@@ -92,7 +90,9 @@ function normalizePermissionSelection(
   );
   const permissionIdByKey = new Map(
     displayPermissions.flatMap((permission) =>
-      permission.id === null ? [] : [[getPermissionKey(permission), permission.id]],
+      permission.id === null
+        ? []
+        : [[getPermissionKey(permission), permission.id]],
     ),
   );
 

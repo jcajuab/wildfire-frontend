@@ -145,7 +145,12 @@ export function PlaylistsPageView({
       setIsSelectionMode(false);
       clearSelection();
     }
-  }, [deletePlaylistMutation, removeSelectedIds, selectedItems, clearSelection]);
+  }, [
+    deletePlaylistMutation,
+    removeSelectedIds,
+    selectedItems,
+    clearSelection,
+  ]);
 
   const handleCancelSelectionMode = useCallback(() => {
     clearSelection();

@@ -122,7 +122,7 @@ export function SchedulesPageView(): ReactElement {
 
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2.5 sm:px-8">
+          <div className="shrink-0 border-b border-border bg-muted/15 p-4">
             <CalendarHeader
               currentDate={currentDate}
               view={view}
@@ -139,7 +139,7 @@ export function SchedulesPageView(): ReactElement {
             />
           </div>
 
-          <div className="relative min-h-0 flex-1 overflow-auto px-6 pb-6 pt-4 sm:px-8 sm:pb-8 sm:pt-5 flex flex-col">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-auto p-4">
             {isFetching && !isLoading ? (
               <div className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center">
                 <div className="flex items-center gap-2 rounded-full border border-border bg-background/95 px-4 py-1.5 shadow-sm backdrop-blur-sm">

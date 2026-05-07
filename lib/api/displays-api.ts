@@ -483,7 +483,8 @@ export const displaysApi = api.injectEndpoints({
         if (query?.displayId) params.set("displayId", query.displayId);
         if (query?.membership) params.set("membership", query.membership);
         if (query?.sortBy) params.set("sortBy", query.sortBy);
-        if (query?.sortDirection) params.set("sortDirection", query.sortDirection);
+        if (query?.sortDirection)
+          params.set("sortDirection", query.sortDirection);
         return `displays/groups?${params.toString()}`;
       },
       transformResponse: (response) =>
@@ -511,7 +512,8 @@ export const displaysApi = api.injectEndpoints({
         if (queryArg.displayId) params.set("displayId", queryArg.displayId);
         if (queryArg.membership) params.set("membership", queryArg.membership);
         if (queryArg.sortBy) params.set("sortBy", queryArg.sortBy);
-        if (queryArg.sortDirection) params.set("sortDirection", queryArg.sortDirection);
+        if (queryArg.sortDirection)
+          params.set("sortDirection", queryArg.sortDirection);
         return `displays/groups?${params.toString()}`;
       },
       transformResponse: (response) =>

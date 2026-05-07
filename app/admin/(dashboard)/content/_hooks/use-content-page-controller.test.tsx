@@ -150,6 +150,7 @@ describe("useContentPageController", () => {
       handleDownload: vi.fn(),
       handleSaveContent: vi.fn(),
       handleConfirmDelete: vi.fn(),
+      deleteContentById: vi.fn(),
     });
   });
 

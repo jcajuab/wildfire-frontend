@@ -43,6 +43,32 @@ let bootstrapResolvers: Array<() => void> = [];
 let refreshPromise: Promise<AuthResponse> | null = null;
 let lastRefreshAt: number | null = null;
 let lastRefreshResponse: AuthResponse | null = null;
+let refreshAbortController: AbortController | null = null;
+let authGeneration = 0;
+
+class StaleRefreshError extends Error {
+  constructor() {
+    super("Stale refresh response ignored");
+    this.name = "StaleRefreshError";
+  }
+}
+
+function isRefreshInterruption(error: unknown): boolean {
+  return (
+    error instanceof StaleRefreshError ||
+    (error instanceof DOMException && error.name === "AbortError")
+  );
+}
+
+function resetRefreshState({ abort = false }: { abort?: boolean } = {}): void {
+  lastRefreshAt = null;
+  lastRefreshResponse = null;
+  refreshPromise = null;
+  if (abort) {
+    refreshAbortController?.abort();
+  }
+  refreshAbortController = null;
+}
 
 function markBootstrapped(): void {
   isBootstrapped = true;
@@ -120,7 +146,11 @@ async function parseAuthResponse(response: Response): Promise<AuthResponse> {
 function applyAuthResponse(
   response: AuthResponse,
   shouldBroadcast: boolean,
+  options: { advanceGeneration?: boolean } = {},
 ): void {
+  if (options.advanceGeneration === true) {
+    authGeneration += 1;
+  }
   state = {
     accessToken: response.accessToken,
     accessTokenExpiresAt: response.accessTokenExpiresAt,
@@ -143,10 +173,13 @@ function applyAuthResponse(
 }
 
 export function setAuthSession(response: AuthResponse): void {
-  applyAuthResponse(response, true);
+  resetRefreshState({ abort: true });
+  applyAuthResponse(response, true, { advanceGeneration: true });
 }
 
 export function clearAuthSession(shouldBroadcast = true): void {
+  authGeneration += 1;
+  resetRefreshState({ abort: true });
   state = {
     accessToken: null,
     accessTokenExpiresAt: null,
@@ -228,6 +261,7 @@ export async function loginWithPassword(
   credentials: LoginCredentials,
 ): Promise<AuthResponse> {
   ensureBroadcastChannel();
+  resetRefreshState({ abort: true });
 
   const response = await fetch(`${getBaseUrl()}/auth/login`, {
     method: "POST",
@@ -239,7 +273,8 @@ export async function loginWithPassword(
   });
 
   const auth = await parseAuthResponse(response);
-  applyAuthResponse(auth, true);
+  resetRefreshState({ abort: true });
+  applyAuthResponse(auth, true, { advanceGeneration: true });
   return auth;
 }
 
@@ -258,14 +293,26 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
     return Promise.resolve(lastRefreshResponse);
   }
 
+  const generationAtStart = authGeneration;
+  const controller = new AbortController();
+  refreshAbortController = controller;
+
   const promise = (async () => {
     const response = await fetch(`${getBaseUrl()}/auth/refresh`, {
       method: "POST",
       credentials: "include",
       headers: getHeaders(),
+      signal: controller.signal,
     });
 
+    if (authGeneration !== generationAtStart) {
+      throw new StaleRefreshError();
+    }
+
     const auth = await parseAuthResponse(response);
+    if (authGeneration !== generationAtStart) {
+      throw new StaleRefreshError();
+    }
     lastRefreshAt = Date.now();
     lastRefreshResponse = auth;
     applyAuthResponse(auth, true);
@@ -274,13 +321,24 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
 
   refreshPromise = promise;
 
-  promise
-    .then(() => {
-      refreshPromise = null;
-    })
-    .catch(() => {
-      refreshPromise = null;
-    });
+  void promise.then(
+    () => {
+      if (refreshPromise === promise) {
+        refreshPromise = null;
+      }
+      if (refreshAbortController === controller) {
+        refreshAbortController = null;
+      }
+    },
+    () => {
+      if (refreshPromise === promise) {
+        refreshPromise = null;
+      }
+      if (refreshAbortController === controller) {
+        refreshAbortController = null;
+      }
+    },
+  );
 
   return promise;
 }
@@ -313,6 +371,9 @@ export async function bootstrapAccessToken(): Promise<void> {
   try {
     await refreshAccessToken();
   } catch (error) {
+    if (isRefreshInterruption(error)) {
+      return;
+    }
     if (error instanceof AuthApiError && error.status === 401) {
       await purgeStaleSession();
       return;

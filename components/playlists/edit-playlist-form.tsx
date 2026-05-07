@@ -94,8 +94,8 @@ export function EditPlaylistForm({
       }
       itemsSubtitleSlot={
         <p className="text-xs text-muted-foreground">
-          The max playlist duration should not exceed more than 60 seconds or
-          1 minute.
+          The max playlist duration should not exceed more than{" "}
+          {MAX_BASE_DURATION_SECONDS} seconds or 1 minute.
         </p>
       }
       emptyItemsMessage="No items - add content from the library"

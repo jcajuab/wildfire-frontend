@@ -19,6 +19,15 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/server/auth", () => ({
   getServerSession: getServerSessionMock,
+  resolveSession: (
+    result: ServerSession | null,
+    redirectTarget: string,
+  ): ServerSession | null => {
+    if (!result) {
+      redirectMock(`/login?redirectTo=${encodeURIComponent(redirectTarget)}`);
+    }
+    return result;
+  },
 }));
 
 vi.mock("@/lib/server/api", () => ({

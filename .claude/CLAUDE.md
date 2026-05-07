@@ -9,19 +9,22 @@ Strict guardrails for AI and human contributors. Before adding a `useEffect`, ch
 **Rule:** If a value can be computed from props, state, or context alone, compute it during render. Do not store it in separate state and update it in `useEffect`.
 
 **Smell:**
+
 - `useEffect(() => setFiltered(items.filter(...)), [items])`
 - State that only mirrors other state or props
 
 **Bad:**
+
 ```tsx
 useEffect(() => {
-  setFilteredProducts(products.filter(p => p.inStock))
-}, [products])
+  setFilteredProducts(products.filter((p) => p.inStock));
+}, [products]);
 ```
 
 **Good:**
+
 ```tsx
-const filteredProducts = products.filter(p => p.inStock)
+const filteredProducts = products.filter((p) => p.inStock);
 ```
 
 ---
@@ -31,6 +34,7 @@ const filteredProducts = products.filter(p => p.inStock)
 **Rule:** Prefer RTK Query, TanStack Query, SWR, or similar for server state.
 
 **Smell:**
+
 - Effect body does `fetch(...).then(setData)`
 - You are re-implementing loading/error/refetch semantics
 
@@ -41,17 +45,23 @@ const filteredProducts = products.filter(p => p.inStock)
 **Rule:** When the user clicks, submits, or refreshes, perform the work in that handler. Avoid "set a flag → effect observes flag → does the real work."
 
 **Smell:**
+
 - State exists only so an effect can react to it
 - "Relay" pattern: `setLiked(true)` then effect posts to API
 
 **Bad:**
+
 ```tsx
 useEffect(() => {
-  if (liked) { postLike(); setLiked(false) }
-}, [liked])
+  if (liked) {
+    postLike();
+    setLiked(false);
+  }
+}, [liked]);
 ```
 
 **Good:**
+
 ```tsx
 <button onClick={() => postLike()}>Like</button>
 ```
@@ -71,11 +81,15 @@ useEffect(() => {
 **Rule:** When a subtree should fully reset when an identifier changes, prefer `key={id}` on the component so React remounts a clean instance.
 
 **Bad:**
+
 ```tsx
-useEffect(() => { loadVideo(videoId) }, [videoId])
+useEffect(() => {
+  loadVideo(videoId);
+}, [videoId]);
 ```
 
 **Good:**
+
 ```tsx
 <VideoPlayer key={videoId} videoId={videoId} />
 ```
@@ -84,8 +98,8 @@ useEffect(() => { loadVideo(videoId) }, [videoId])
 
 ```tsx
 if (playlist.id !== loadedId) {
-  setLoadedId(playlist.id)
-  setName(playlist.name)
+  setLoadedId(playlist.id);
+  setName(playlist.name);
   // React immediately re-renders with these values; no effect needed
 }
 ```
@@ -103,6 +117,7 @@ if (playlist.id !== loadedId) {
 **Rule:** Do not use `useEffect` to call a parent callback (e.g. `onStateChange`) whenever child state changes. This causes extra renders after paint and creates stale-closure risks.
 
 **Bad:**
+
 ```tsx
 // child
 useEffect(() => {
@@ -116,6 +131,7 @@ const [formState, setFormState] = useState(null)
 ```
 
 **Good — lift state into the parent:**
+
 ```tsx
 // parent owns the state and computes canSave during render
 const canSave = !isSaving && !isOverDurationLimit
@@ -133,12 +149,12 @@ const canSave = !isSaving && !isOverDurationLimit
 
 ## Quick checklist before adding `useEffect`
 
-| Question | If yes |
-|----------|--------|
-| Can this be a variable derived from existing state/props? | Derive in render (§1). |
-| Is this server data? | Use RTK Query / SWR (§2). |
-| Did the user just do something? | Use an event handler (§3). |
-| Is this DOM / third-party mount integration? | Mount-only effect (§4). |
-| Should the whole subtree reset when `id` changes? | Use `key` (§5). |
-| Am I notifying a parent about child state changes? | Lift state up instead (§7). |
-| Am I syncing two stores / networks? | Avoid render; use explicit async paths (§8). |
+| Question                                                  | If yes                                       |
+| --------------------------------------------------------- | -------------------------------------------- |
+| Can this be a variable derived from existing state/props? | Derive in render (§1).                       |
+| Is this server data?                                      | Use RTK Query / SWR (§2).                    |
+| Did the user just do something?                           | Use an event handler (§3).                   |
+| Is this DOM / third-party mount integration?              | Mount-only effect (§4).                      |
+| Should the whole subtree reset when `id` changes?         | Use `key` (§5).                              |
+| Am I notifying a parent about child state changes?        | Lift state up instead (§7).                  |
+| Am I syncing two stores / networks?                       | Avoid render; use explicit async paths (§8). |

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { IconPlus, IconCopy, IconCheck } from "@tabler/icons-react";
 import { toast } from "sonner";
 
@@ -24,6 +24,7 @@ import { SearchControl } from "@/components/common/search-control";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { UsersTable } from "@/components/users/users-table";
 import { PendingInvitationsTable } from "@/components/users/pending-invitations-table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   rbacApi,
   type RbacRoleSummary,
@@ -134,9 +135,16 @@ export function UsersPageView(): ReactElement {
     isAdmin,
     canUpdateUser,
     canDeleteUser,
+    canCreateUser,
     search,
+    invitationSearch,
+    roleId,
     page,
+    activeTab,
     sort,
+    invitationPage,
+    invitationStatusFilter,
+    invitationSort,
     users,
     usersData,
     availableRoles,
@@ -147,6 +155,7 @@ export function UsersPageView(): ReactElement {
     usersError,
     isRoleToggling,
     invitations,
+    invitationsData,
     isInvitationsLoading,
     resendingInvitationId,
     isInviteDialogOpen,
@@ -157,13 +166,19 @@ export function UsersPageView(): ReactElement {
     resetPasswordResult,
     isResetPasswordDialogOpen,
     setPage,
+    setInvitationPage,
+    setActiveTab,
     setIsInviteDialogOpen,
     setIsEditDialogOpen,
     setIsBanDialogOpen,
     setUserToBan,
     setIsResetPasswordDialogOpen,
     handleSearchChange,
+    handleInvitationSearchChange,
     handleSortChange,
+    handleRoleFilterChange,
+    handleInvitationStatusFilterChange,
+    handleInvitationSortChange,
     handleInvite,
     handleResendInvitation,
     handleRoleToggle,
@@ -177,13 +192,22 @@ export function UsersPageView(): ReactElement {
     refreshUsers,
   } = useUsersPage();
 
+  const selectedTab = canCreateUser ? activeTab : "users";
+  const invitationsTotal = invitationsData?.total ?? 0;
+
+  useEffect(() => {
+    if (!canCreateUser && activeTab !== "users") {
+      void setActiveTab("users");
+    }
+  }, [activeTab, canCreateUser, setActiveTab]);
+
   if (usersLoading) {
     return (
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
         <PageHeader title="Users" />
         <section className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
               <div className="flex items-center gap-2">
                 <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 <span className="text-sm text-muted-foreground">
@@ -203,7 +227,7 @@ export function UsersPageView(): ReactElement {
         <PageHeader title="Users" />
         <section className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8 flex items-center justify-center">
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
               <p className="text-destructive">
                 Failed to load users. Check the API and try again.
               </p>
@@ -227,35 +251,54 @@ export function UsersPageView(): ReactElement {
 
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-base font-semibold">Search Results</h2>
-              <SearchControl
-                value={search}
-                onChange={handleSearchChange}
-                ariaLabel="Search users"
-                placeholder="Search..."
-                className="w-full max-w-none sm:w-72"
-              />
-            </div>
-          </div>
+          <Tabs
+            value={selectedTab}
+            onValueChange={(value) => {
+              if (value === "users" || value === "invitations") {
+                void setActiveTab(value);
+              }
+            }}
+            className="min-h-0 flex-1 overflow-hidden p-4"
+          >
+            <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border">
+              <div className="flex shrink-0 flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                {canCreateUser ? (
+                  <TabsList aria-label="Users page sections">
+                    <TabsTrigger value="users" className="px-3">
+                      Users
+                    </TabsTrigger>
+                    <TabsTrigger value="invitations" className="px-3">
+                      Invitations
+                    </TabsTrigger>
+                  </TabsList>
+                ) : (
+                  <h2 className="text-sm font-semibold">Users</h2>
+                )}
+                <SearchControl
+                  value={selectedTab === "users" ? search : invitationSearch}
+                  onChange={
+                    selectedTab === "users"
+                      ? handleSearchChange
+                      : handleInvitationSearchChange
+                  }
+                  ariaLabel={
+                    selectedTab === "users"
+                      ? "Search users"
+                      : "Search invitations"
+                  }
+                  placeholder={
+                    selectedTab === "users"
+                      ? "Search by name, username, or email"
+                      : "Search by invitee"
+                  }
+                  className="w-full max-w-none sm:w-80"
+                />
+              </div>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-6 py-6 sm:px-8 sm:py-8 pt-6">
-            {users.length === 0 && !usersFetching ? (
-              <EmptyState
-                title="No users yet"
-                description="Invite users to give them access to WILDFIRE."
-                action={
-                  <Can permission="users:create">
-                    <Button onClick={() => setIsInviteDialogOpen(true)}>
-                      <IconPlus className="size-4" />
-                      Invite User
-                    </Button>
-                  </Can>
-                }
-              />
-            ) : (
-              <div className="relative min-h-0 flex-1 flex flex-col overflow-hidden rounded-md border border-border">
+              <TabsContent
+                value="users"
+                className="flex min-h-0 flex-col overflow-hidden data-[state=inactive]:hidden"
+              >
                 {usersFetching && !usersLoading && !isRoleToggling ? (
                   <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-background/60">
                     <div className="flex items-center gap-2">
@@ -267,58 +310,91 @@ export function UsersPageView(): ReactElement {
                   </div>
                 ) : null}
                 <div className="min-h-0 flex-1 overflow-y-auto">
-                  <UsersTable
-                    users={users}
-                    availableRoles={availableRoles}
-                    userRolesByUserId={userRolesByUserId}
-                    sort={sort}
-                    onSortChange={handleSortChange}
-                    onEdit={handleEdit}
-                    onRoleToggle={handleRoleToggle}
-                    onBanUser={handleRequestBanUser}
-                    onUnbanUser={handleRequestUnbanUser}
-                    onResetPassword={handleResetPassword}
-                    canUpdate={canUpdateUser}
-                    canDelete={canDeleteUser}
-                    isSuperAdmin={isAdmin}
-                    systemRoleIds={systemRoleIds}
-                    currentUserId={currentUser?.id}
-                  />
+                  {users.length === 0 && !usersFetching ? (
+                    <EmptyState
+                      title={search ? "No users found" : "No users yet"}
+                      description={
+                        search
+                          ? "Try a different name, username, or email."
+                          : "Invite users to give them access to WILDFIRE."
+                      }
+                      action={
+                        !search ? (
+                          <Can permission="users:create">
+                            <Button onClick={() => setIsInviteDialogOpen(true)}>
+                              <IconPlus className="size-4" />
+                              Invite User
+                            </Button>
+                          </Can>
+                        ) : null
+                      }
+                    />
+                  ) : (
+                    <UsersTable
+                      users={users}
+                      availableRoles={availableRoles}
+                      userRolesByUserId={userRolesByUserId}
+                      sort={sort}
+                      onSortChange={handleSortChange}
+                      roleFilter={roleId}
+                      onRoleFilterChange={handleRoleFilterChange}
+                      onEdit={handleEdit}
+                      onRoleToggle={handleRoleToggle}
+                      onBanUser={handleRequestBanUser}
+                      onUnbanUser={handleRequestUnbanUser}
+                      onResetPassword={handleResetPassword}
+                      canUpdate={canUpdateUser}
+                      canDelete={canDeleteUser}
+                      isSuperAdmin={isAdmin}
+                      systemRoleIds={systemRoleIds}
+                      currentUserId={currentUser?.id}
+                    />
+                  )}
                 </div>
-              </div>
-            )}
+              </TabsContent>
 
-            <Can permission="users:create">
-              <section className="min-h-0 flex-1 flex flex-col overflow-hidden rounded-md border border-border">
-                <div className="shrink-0 border-b border-border px-4 py-3">
-                  <h3 className="text-sm font-semibold">Invitations</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Recent invitation status and expiration timestamps.
-                  </p>
-                </div>
-                <div className="min-h-0 flex-1 overflow-y-auto">
-                  <PendingInvitationsTable
-                    invitations={invitations}
-                    isLoading={isInvitationsLoading}
-                    resendingInvitationId={resendingInvitationId}
-                    onResend={handleResendInvitation}
-                    onSendInvitation={() => setIsInviteDialogOpen(true)}
+              {canCreateUser ? (
+                <TabsContent
+                  value="invitations"
+                  className="flex min-h-0 flex-col overflow-hidden data-[state=inactive]:hidden"
+                >
+                  <div className="min-h-0 flex-1 overflow-y-auto">
+                    <PendingInvitationsTable
+                      invitations={invitations}
+                      isLoading={isInvitationsLoading}
+                      statusFilter={invitationStatusFilter}
+                      sort={invitationSort}
+                      onStatusFilterChange={handleInvitationStatusFilterChange}
+                      onSortChange={handleInvitationSortChange}
+                      resendingInvitationId={resendingInvitationId}
+                      onResend={handleResendInvitation}
+                      onSendInvitation={() => setIsInviteDialogOpen(true)}
+                    />
+                  </div>
+                </TabsContent>
+              ) : null}
+
+              {selectedTab === "users" || selectedTab === "invitations" ? (
+                <footer className="border-t border-border bg-background/80">
+                  <PaginationFooter
+                    page={selectedTab === "users" ? page : invitationPage}
+                    pageSize={PAGE_SIZE}
+                    total={
+                      selectedTab === "users"
+                        ? (usersData?.total ?? 0)
+                        : invitationsTotal
+                    }
+                    onPageChange={
+                      selectedTab === "users" ? setPage : setInvitationPage
+                    }
+                    variant="numbered"
+                    alwaysShow
                   />
-                </div>
-              </section>
-            </Can>
-          </div>
+                </footer>
+              ) : null}
+            </section>
+          </Tabs>
         </div>
-
-        <footer className="empty:hidden border-t border-border bg-background/80">
-          <PaginationFooter
-            page={page}
-            pageSize={PAGE_SIZE}
-            total={usersData?.total ?? 0}
-            onPageChange={setPage}
-            variant="numbered"
-          />
-        </footer>
       </section>
 
       <InviteUsersDialog

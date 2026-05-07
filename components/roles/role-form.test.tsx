@@ -309,9 +309,15 @@ describe("RoleForm", () => {
       ).toBeChecked();
     });
 
-    expect(screen.getByRole("switch", { name: "View Users" })).not.toBeChecked();
-    expect(screen.getByRole("switch", { name: "View Roles" })).not.toBeChecked();
-    expect(screen.getByRole("switch", { name: "View Audit" })).not.toBeChecked();
+    expect(
+      screen.getByRole("switch", { name: "View Users" }),
+    ).not.toBeChecked();
+    expect(
+      screen.getByRole("switch", { name: "View Roles" }),
+    ).not.toBeChecked();
+    expect(
+      screen.getByRole("switch", { name: "View Audit" }),
+    ).not.toBeChecked();
     expect(
       screen.getByRole("switch", { name: "Delete Audit" }),
     ).not.toBeChecked();
@@ -376,7 +382,9 @@ describe("RoleForm", () => {
     expect(
       screen.getByRole("switch", { name: "View Displays" }),
     ).not.toBeChecked();
-    expect(screen.getByRole("switch", { name: "View Content" })).not.toBeChecked();
+    expect(
+      screen.getByRole("switch", { name: "View Content" }),
+    ).not.toBeChecked();
     expect(
       screen.getByRole("switch", { name: "View Playlists" }),
     ).not.toBeChecked();

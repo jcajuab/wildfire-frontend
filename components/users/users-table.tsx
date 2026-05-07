@@ -2,12 +2,20 @@
 
 import type { ReactElement } from "react";
 import Image from "next/image";
-import { IconAdjustmentsHorizontal, IconUser } from "@tabler/icons-react";
+import { IconFilter, IconUser } from "@tabler/icons-react";
 import { UserActionsMenu } from "./user-actions-menu";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { SortableHeader } from "@/components/common/sortable-header";
+import { TableHeaderControl } from "@/components/common/table-header-control";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -33,6 +41,8 @@ interface UsersTableProps {
   readonly onBanUser: (user: User) => void;
   readonly onUnbanUser: (user: User) => void;
   readonly onResetPassword: (userId: string) => Promise<void>;
+  readonly roleFilter?: string;
+  readonly onRoleFilterChange?: (roleId: string) => void;
   readonly canUpdate?: boolean;
   readonly canDelete?: boolean;
   /** When true, allow update/delete for Root users. When false, hide actions for users who have a system role. */
@@ -43,16 +53,47 @@ interface UsersTableProps {
   readonly currentUserId?: string | null;
 }
 
-interface FilterableHeaderProps {
-  readonly label: string;
-}
+function RoleFilterHeader({
+  roles,
+  value,
+  onChange,
+}: {
+  readonly roles: readonly UserRole[];
+  readonly value: string;
+  readonly onChange: (roleId: string) => void;
+}): ReactElement {
+  const hasActiveFilter = value !== "all";
+  const activeLabel = roles.find((role) => role.id === value)?.name;
 
-function FilterableHeader({ label }: FilterableHeaderProps): ReactElement {
   return (
-    <div className="flex items-center gap-1">
-      {label}
-      <IconAdjustmentsHorizontal className="size-4 opacity-50" />
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <TableHeaderControl aria-label="Filter users by role">
+          Roles
+          <IconFilter
+            className={
+              hasActiveFilter
+                ? "size-3.5 text-foreground"
+                : "size-3.5 text-muted-foreground"
+            }
+            aria-hidden="true"
+          />
+          {activeLabel ? (
+            <span className="sr-only">filtered by {activeLabel}</span>
+          ) : null}
+        </TableHeaderControl>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-40">
+        <DropdownMenuRadioGroup value={value} onValueChange={onChange}>
+          <DropdownMenuRadioItem value="all">All roles</DropdownMenuRadioItem>
+          {roles.map((role) => (
+            <DropdownMenuRadioItem key={role.id} value={role.id}>
+              {role.name}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -93,21 +134,21 @@ function UserRow({
   return (
     <TableRow>
       <TableCell>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {user?.avatarUrl ? (
             <Image
               src={user.avatarUrl}
               alt={`${user.name} avatar`}
               width={48}
               height={48}
-              className="size-7 rounded-full object-cover"
+              className="size-6 rounded-full object-cover"
             />
           ) : (
-            <IconUser className="size-6 text-muted-foreground" />
+            <IconUser className="size-5 shrink-0 text-muted-foreground" />
           )}
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-medium">
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate font-medium">
                 {user.name}
                 {isCurrentUser && (
                   <span className="text-muted-foreground font-normal">
@@ -117,18 +158,21 @@ function UserRow({
                 )}
               </span>
               {isBanned && (
-                <Badge variant="destructive" className="border-destructive/30">
+                <Badge
+                  variant="destructive"
+                  className="h-5 border-destructive/30 px-2 text-[0.625rem]"
+                >
                   Banned
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="truncate text-xs text-muted-foreground">
               @{user.username}
             </div>
           </div>
         </div>
       </TableCell>
-      <TableCell className="text-muted-foreground">
+      <TableCell className="max-w-[18rem] truncate text-muted-foreground">
         {user.email ?? "No email available"}
       </TableCell>
       <TableCell>
@@ -137,7 +181,11 @@ function UserRow({
             <span className="text-muted-foreground">No roles assigned yet</span>
           )}
           {userRoles.map((role) => (
-            <Badge key={role.id} variant="default" className="text-xs">
+            <Badge
+              key={role.id}
+              variant="outline"
+              className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+            >
               {role.name}
             </Badge>
           ))}
@@ -146,7 +194,7 @@ function UserRow({
       <TableCell className="text-muted-foreground">
         {user.lastSeenAt ? formatDateTime(user.lastSeenAt) : "Never"}
       </TableCell>
-      <TableCell>
+      <TableCell className="text-right">
         <UserActionsMenu
           user={user}
           userRoleIds={userRoleIds}
@@ -175,9 +223,10 @@ export function UsersTable({
   onBanUser,
   onUnbanUser,
   onResetPassword,
+  roleFilter = "all",
+  onRoleFilterChange,
   canUpdate = true,
   canDelete = true,
-  isSuperAdmin = false,
   systemRoleIds = [],
   currentUserId,
 }: UsersTableProps): ReactElement {
@@ -198,7 +247,7 @@ export function UsersTable({
       <TableHeader className="sticky top-0 z-10 bg-background">
         <TableRow>
           <TableHead
-            className="w-[250px]"
+            className="w-[300px]"
             aria-sort={
               sort.field === "name"
                 ? sort.direction === "asc"
@@ -214,14 +263,36 @@ export function UsersTable({
               onSort={(field, direction) => onSortChange({ field, direction })}
             />
           </TableHead>
-          <TableHead className="w-[250px]">
-            <FilterableHeader label="Email" />
+          <TableHead
+            className="w-[300px]"
+            aria-sort={
+              sort.field === "email"
+                ? sort.direction === "asc"
+                  ? "ascending"
+                  : "descending"
+                : "none"
+            }
+          >
+            <SortableHeader
+              label="Email"
+              field="email"
+              currentSort={sort}
+              onSort={(field, direction) => onSortChange({ field, direction })}
+            />
           </TableHead>
-          <TableHead className="w-[200px]">
-            <FilterableHeader label="Roles" />
+          <TableHead className="w-[240px]">
+            {onRoleFilterChange ? (
+              <RoleFilterHeader
+                roles={availableRoles}
+                value={roleFilter}
+                onChange={onRoleFilterChange}
+              />
+            ) : (
+              "Roles"
+            )}
           </TableHead>
           <TableHead
-            className="w-[200px]"
+            className="w-[240px]"
             aria-sort={
               sort.field === "lastSeen"
                 ? sort.direction === "asc"
@@ -237,12 +308,12 @@ export function UsersTable({
               onSort={(field, direction) => onSortChange({ field, direction })}
             />
           </TableHead>
-          <TableHead className="w-[50px]">
+          <TableHead className="w-[48px] text-right">
             <span className="sr-only">Actions</span>
           </TableHead>
         </TableRow>
       </TableHeader>
-      <TableBody>
+      <TableBody className="[&_tr:last-child]:border-b">
         {users.map((user) => {
           const userRoleIds = (userRolesByUserId[user.id] ?? []).map(
             (r) => r.id,
@@ -250,11 +321,10 @@ export function UsersTable({
           const isTargetSuperAdmin =
             systemRoleIds.length > 0 &&
             userRoleIds.some((id) => systemRoleIds.includes(id));
-          const canUpdateRow =
-            canUpdate && (isSuperAdmin || !isTargetSuperAdmin);
+          const canUpdateRow = canUpdate && !isTargetSuperAdmin;
           const canDeleteRow =
             canDelete &&
-            (isSuperAdmin || !isTargetSuperAdmin) &&
+            !isTargetSuperAdmin &&
             (currentUserId == null || user.id !== currentUserId);
           return (
             <UserRow
