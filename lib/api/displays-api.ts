@@ -44,7 +44,7 @@ export interface DisplaysListQuery {
   readonly groupIds?: readonly string[];
   readonly groupNames?: readonly string[];
   readonly output?: string;
-  readonly sortBy?: "name" | "status";
+  readonly sortBy?: "name" | "status" | "groupCount";
   readonly sortDirection?: "asc" | "desc";
   readonly membership?: "ungrouped" | "any";
 }
@@ -55,6 +55,8 @@ export interface DisplayGroupsListQuery {
   readonly q?: string;
   readonly displayId?: string;
   readonly membership?: "member" | "non-member";
+  readonly sortBy?: "name" | "count";
+  readonly sortDirection?: "asc" | "desc";
 }
 
 export interface DisplayGroupsListResponse {
@@ -480,6 +482,8 @@ export const displaysApi = api.injectEndpoints({
         if (query?.q) params.set("q", query.q);
         if (query?.displayId) params.set("displayId", query.displayId);
         if (query?.membership) params.set("membership", query.membership);
+        if (query?.sortBy) params.set("sortBy", query.sortBy);
+        if (query?.sortDirection) params.set("sortDirection", query.sortDirection);
         return `displays/groups?${params.toString()}`;
       },
       transformResponse: (response) =>
@@ -506,6 +510,8 @@ export const displaysApi = api.injectEndpoints({
         if (queryArg.q) params.set("q", queryArg.q);
         if (queryArg.displayId) params.set("displayId", queryArg.displayId);
         if (queryArg.membership) params.set("membership", queryArg.membership);
+        if (queryArg.sortBy) params.set("sortBy", queryArg.sortBy);
+        if (queryArg.sortDirection) params.set("sortDirection", queryArg.sortDirection);
         return `displays/groups?${params.toString()}`;
       },
       transformResponse: (response) =>
@@ -623,6 +629,7 @@ export const displaysApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<DisplayGroup>(response, "updateDisplayGroup"),
+      invalidatesTags: [{ type: "DisplayGroup", id: "LIST" }],
       async onQueryStarted(
         { groupId },
         { dispatch, queryFulfilled, getState },
@@ -852,6 +859,7 @@ export const displaysApi = api.injectEndpoints({
       invalidatesTags: (_result, _error, { displayId }) => [
         { type: "Display", id: displayId },
         { type: "Display", id: "LIST" },
+        { type: "DisplayGroup", id: "LIST" },
       ],
       async onQueryStarted(
         { displayId, groupIds },

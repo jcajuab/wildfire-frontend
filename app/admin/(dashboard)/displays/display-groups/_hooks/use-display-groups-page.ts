@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { useDebounce } from "@/hooks/use-debounce";
@@ -35,12 +35,11 @@ import type { Display } from "@/types/display";
 export const DISPLAY_PAGE_SIZE = 12;
 export const GROUP_PAGE_SIZE = 12;
 // Internal query for "all groups for a single display" — display can belong
-// to many groups but rarely more than a few dozen; 200 is a safe ceiling.
-const SELECTED_DISPLAY_GROUPS_PAGE_SIZE = 200;
+// to many groups but rarely more than a few dozen; 100 matches the backend's
+// pageSize cap so requests don't 422.
+const SELECTED_DISPLAY_GROUPS_PAGE_SIZE = 100;
 
 export type Axis = "group" | "display";
-
-const AXIS_STORAGE_KEY = "wf.displayGroupsPage.axis";
 
 export const BOOTSTRAP_QUERY: DisplaysListQuery = {
   page: 1,
@@ -192,30 +191,31 @@ export function useDisplayGroupsPage({
   const [editingDisplayId, setEditingDisplayId] = useState<string | null>(null);
   const [isEditDisplayOpen, setIsEditDisplayOpen] = useState(false);
 
-  // Mount-only rehydration of axis preference from localStorage (rule §4 of
-  // useEffect guardrails: external system, empty deps).
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(AXIS_STORAGE_KEY);
-      if (saved === "display" || saved === "group") {
-        setAxis(saved);
-      }
-    } catch {
-      // localStorage may be unavailable (private mode, etc.)
-    }
-  }, []);
-
   const debouncedDisplaySearch = useDebounce(displaySearch, 500);
   const debouncedLeftDisplaySearch = useDebounce(leftDisplaySearch, 500);
   const debouncedGroupSearch = useDebounce(groupSearch, 500);
 
+  // Bypass debounce when search is cleared so the unfiltered cache activates
+  // immediately rather than waiting 500 ms on the stale filtered key.
+  const effectiveGroupQ =
+    groupSearch.trim() === "" ? undefined : debouncedGroupSearch || undefined;
+  const effectiveLeftDisplayQ =
+    leftDisplaySearch.trim() === ""
+      ? undefined
+      : debouncedLeftDisplaySearch || undefined;
+
   // ---- Left pane "By group": infinite-scroll groups list ----
+  // refetchOnMountOrArgChange forces a fresh page-1 fetch every time `q`
+  // changes (incl. clearing back to ""), so a previously-cached unfiltered
+  // entry can never serve stale post-mutation data.
   const groupsInfinite = useGetDisplayGroupsInfiniteQuery(
     {
       pageSize: GROUP_PAGE_SIZE,
-      q: debouncedGroupSearch || undefined,
+      q: effectiveGroupQ,
+      sortBy: "count",
+      sortDirection: "desc",
     },
-    { skip: axis !== "group" },
+    { skip: axis !== "group", refetchOnMountOrArgChange: true },
   );
 
   const leftGroups = useMemo<readonly DisplayGroup[]>(
@@ -292,12 +292,12 @@ export function useDisplayGroupsPage({
   // ---- Display-axis: infinite-scroll displays list for the left pane ----
   const displaysInfinite = useGetDisplaysInfiniteQuery(
     {
-      q: debouncedLeftDisplaySearch || undefined,
+      q: effectiveLeftDisplayQ,
       pageSize: DISPLAY_PAGE_SIZE,
-      sortBy: "name",
-      sortDirection: "asc",
+      sortBy: "groupCount",
+      sortDirection: "desc",
     },
-    { skip: axis !== "display" },
+    { skip: axis !== "display", refetchOnMountOrArgChange: true },
   );
 
   const leftDisplays = useMemo<readonly BackendDisplay[]>(
@@ -568,11 +568,6 @@ export function useDisplayGroupsPage({
   // ---- Display-axis handlers ----
   const handleAxisChange = useCallback((next: Axis) => {
     setAxis(next);
-    try {
-      window.localStorage.setItem(AXIS_STORAGE_KEY, next);
-    } catch {
-      // localStorage may be unavailable
-    }
     // Reset both axes' selections so users don't carry stale state across.
     setSelectedGroupId(null);
     setSelectedDisplayId(null);
