@@ -56,6 +56,18 @@ export function useInfiniteScrollSentinel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Re-observe the sentinel when hasMore/isFetching change so the observer
+  // re-evaluates intersection state. Without this, a sentinel that was
+  // already visible before a data change (e.g. infinite-query cache switch)
+  // won't trigger another fetch because no intersection transition occurred.
+  useEffect(() => {
+    const observer = observerRef.current;
+    const sentinel = sentinelRef.current;
+    if (!observer || !sentinel || !hasMore || isFetching) return;
+    observer.unobserve(sentinel);
+    observer.observe(sentinel);
+  }, [hasMore, isFetching]);
+
   return useCallback((node: HTMLElement | null) => {
     const observer = observerRef.current;
     const previous = sentinelRef.current;

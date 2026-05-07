@@ -495,11 +495,17 @@ export function useDisplayGroupsPage({
         toast.warning(`${succeeded} added, ${failed} failed. Try again.`);
       }
     } finally {
+      dispatch(
+        displaysApi.util.invalidateTags([
+          { type: "DisplayGroup", id: "LIST" },
+        ]),
+      );
       setIsExecuting(false);
       setActionMode(null);
       setSelectedDisplayIds(new Set());
     }
   }, [
+    dispatch,
     selectedDisplayIds,
     selectedGroupId,
     setDisplayGroupsMutation,
@@ -531,11 +537,17 @@ export function useDisplayGroupsPage({
         toast.warning(`${succeeded} removed, ${failed} failed. Try again.`);
       }
     } finally {
+      dispatch(
+        displaysApi.util.invalidateTags([
+          { type: "DisplayGroup", id: "LIST" },
+        ]),
+      );
       setIsExecuting(false);
       setActionMode(null);
       setSelectedDisplayIds(new Set());
     }
   }, [
+    dispatch,
     selectedDisplayIds,
     selectedGroupId,
     setDisplayGroupsMutation,

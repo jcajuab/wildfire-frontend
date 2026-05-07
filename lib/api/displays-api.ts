@@ -898,23 +898,6 @@ export const displaysApi = api.injectEndpoints({
               ),
             );
           }
-          const infiniteArgs = displaysApi.util.selectCachedArgsForQuery(
-            getState(),
-            "getDisplayGroupsInfinite",
-          );
-          for (const ia of infiniteArgs) {
-            dispatch(
-              displaysApi.util.updateQueryData(
-                "getDisplayGroupsInfinite",
-                ia,
-                (draft) => {
-                  for (const page of draft.pages) {
-                    syncMembership(page.items as DisplayGroup[]);
-                  }
-                },
-              ),
-            );
-          }
           // For getDisplayGroupsForDisplay: when membership changes for the
           // affected displayId, the result set itself shifts (member ↔
           // non-member), so the synchronous syncMembership patch isn't enough.
