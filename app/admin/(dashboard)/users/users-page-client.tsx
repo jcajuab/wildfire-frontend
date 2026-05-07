@@ -31,6 +31,7 @@ import {
   type RbacUserListQuery,
   type RbacUsersListResponse,
 } from "@/lib/api/rbac-api";
+import type { InvitationListResponse } from "@/types/invitation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { PAGE_SIZE, useUsersPage } from "./_hooks/use-users-page";
 
@@ -129,7 +130,11 @@ function ResetPasswordDialog({
   );
 }
 
-export function UsersPageView(): ReactElement {
+export function UsersPageView({
+  initialInvitations,
+}: {
+  readonly initialInvitations?: InvitationListResponse;
+} = {}): ReactElement {
   const {
     currentUser,
     isAdmin,
@@ -190,7 +195,7 @@ export function UsersPageView(): ReactElement {
     banUserById,
     unbanUserById,
     refreshUsers,
-  } = useUsersPage();
+  } = useUsersPage({ initialInvitations });
 
   const selectedTab = canCreateUser ? activeTab : "users";
   const invitationsTotal = invitationsData?.total ?? 0;

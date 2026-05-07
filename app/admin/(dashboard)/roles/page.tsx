@@ -7,13 +7,14 @@ import {
   ROLES_PAGE_SIZE,
   rolesListQueryFromSearchParams,
 } from "@/lib/roles-search-params";
-import { getServerSession, resolveSession } from "@/lib/server/auth";
+import { cacheLife, cacheTag } from "next/cache";
+
 import {
-  handleBootstrapResult,
-  serverFetchJson,
-  sessionHasPermission,
-  WILDFIRE_SERVER_REVALIDATE_SECONDS,
-} from "@/lib/server/api";
+  getCachedServerSession,
+  getServerSession,
+  resolveSession,
+} from "@/lib/server/auth";
+import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import { RolesListCacheSeeder, RolesPageView } from "./roles-page-client";
 
@@ -23,10 +24,38 @@ interface RolesPageProps {
   >;
 }
 
+async function getCachedRolesList(params: {
+  page: number;
+  pageSize: number;
+  sortBy: string;
+  sortDirection: string;
+  q?: string;
+}) {
+  "use cache: private";
+  cacheTag("wildfire:roles-list");
+  cacheLife("dashboard");
+
+  const sessionResult = await getServerSession();
+  if (sessionResult.status !== "ok") return null;
+
+  const res = await serverFetchJson<unknown>({
+    session: sessionResult.session,
+    path: "roles",
+    searchParams: params,
+    revalidate: false,
+  });
+
+  if (!res.ok) return null;
+  return transformPaginatedListResponse<RbacRoleListItem>(
+    res.data,
+    "getRoles",
+  );
+}
+
 export default async function RolesPage({
   searchParams,
 }: RolesPageProps): Promise<ReactElement> {
-  const session = resolveSession(await getServerSession(), "/admin/roles");
+  const session = resolveSession(await getCachedServerSession(), "/admin/roles");
   if (!session) {
     return <RolesPageView />;
   }
@@ -45,29 +74,17 @@ export default async function RolesPage({
     sortDirection: q.sortDirection,
   };
 
-  const rolesRes = await serverFetchJson<unknown>({
-    session,
-    path: "roles",
-    searchParams: {
-      page: queryArgs.page ?? 1,
-      pageSize: queryArgs.pageSize ?? ROLES_PAGE_SIZE,
-      q: queryArgs.q,
-      sortBy: queryArgs.sortBy ?? "name",
-      sortDirection: queryArgs.sortDirection ?? "asc",
-    },
-    tags: ["roles-list"],
-    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
+  const rolesData = await getCachedRolesList({
+    page: queryArgs.page ?? 1,
+    pageSize: queryArgs.pageSize ?? ROLES_PAGE_SIZE,
+    sortBy: queryArgs.sortBy ?? "name",
+    sortDirection: queryArgs.sortDirection ?? "asc",
+    q: queryArgs.q,
   });
-  handleBootstrapResult(rolesRes, "/admin/roles");
-
-  const rolesData = transformPaginatedListResponse<RbacRoleListItem>(
-    rolesRes.data,
-    "getRoles",
-  );
 
   return (
     <>
-      <RolesListCacheSeeder queryArgs={queryArgs} data={rolesData} />
+      {rolesData ? <RolesListCacheSeeder queryArgs={queryArgs} data={rolesData} /> : null}
       <RolesPageView />
     </>
   );

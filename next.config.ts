@@ -10,6 +10,13 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  cacheLife: {
+    dashboard: {
+      stale: 60,
+      revalidate: 300,
+      expire: 600,
+    },
+  },
   output: "standalone",
   trailingSlash: false,
   images: {

@@ -106,7 +106,9 @@ export interface UseUsersPageResult {
   refreshUsers: () => void;
 }
 
-export function useUsersPage(): UseUsersPageResult {
+export function useUsersPage(options?: {
+  initialInvitations?: InvitationListResponse;
+}): UseUsersPageResult {
   const { user: currentUser } = useAuth();
   const canUpdateUser = useCan("users:update");
   const canDeleteUser = useCan("users:delete");
@@ -145,7 +147,7 @@ export function useUsersPage(): UseUsersPageResult {
   const usersLoading = usersQueryLoading || rolesLoading;
 
   const [invitationsData, setInvitationsData] =
-    useState<InvitationListResponse>();
+    useState<InvitationListResponse | undefined>(options?.initialInvitations);
 
   const dialogs = useUsersDialogs();
 
@@ -221,8 +223,9 @@ export function useUsersPage(): UseUsersPageResult {
 
   const { loadInvitations } = handlers;
   useEffect(() => {
+    if (options?.initialInvitations) return;
     void loadInvitations();
-  }, [loadInvitations]);
+  }, [loadInvitations, options?.initialInvitations]);
 
   return {
     currentUser,

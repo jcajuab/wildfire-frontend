@@ -6,19 +6,21 @@ import type {
   RbacUser,
   RbacUserListQuery,
 } from "@/lib/api/rbac-api";
-import { parseApiResponseDataSafe } from "@/lib/api/contracts";
+import type { InvitationRecord, InvitationListResponse } from "@/types/invitation";
+import { parseApiResponseDataSafe, parseApiListResponseSafe } from "@/lib/api/contracts";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import {
   USERS_PAGE_SIZE,
   usersListQueryFromSearchParams,
 } from "@/lib/users-search-params";
-import { getServerSession, resolveSession } from "@/lib/server/auth";
+import { cacheLife, cacheTag } from "next/cache";
+
 import {
-  handleBootstrapResult,
-  serverFetchJson,
-  sessionHasPermission,
-  WILDFIRE_SERVER_REVALIDATE_SECONDS,
-} from "@/lib/server/api";
+  getCachedServerSession,
+  getServerSession,
+  resolveSession,
+} from "@/lib/server/auth";
+import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import {
   RoleOptionsCacheSeeder,
@@ -32,10 +34,91 @@ interface UsersPageProps {
   >;
 }
 
+async function getCachedUsersList(params: {
+  page: number;
+  pageSize: number;
+  sortBy: string;
+  sortDirection: string;
+  q?: string;
+  roleId?: string;
+}) {
+  "use cache: private";
+  cacheTag("wildfire:users-list");
+  cacheLife("dashboard");
+
+  const sessionResult = await getServerSession();
+  if (sessionResult.status !== "ok") return null;
+
+  const res = await serverFetchJson<unknown>({
+    session: sessionResult.session,
+    path: "users",
+    searchParams: params,
+    revalidate: false,
+  });
+
+  if (!res.ok) return null;
+  return transformPaginatedListResponse<RbacUser>(res.data, "getUsers");
+}
+
+async function getCachedRoleOptions() {
+  "use cache: private";
+  cacheTag("wildfire:roles-options");
+  cacheLife("dashboard");
+
+  const sessionResult = await getServerSession();
+  if (sessionResult.status !== "ok") return null;
+
+  const res = await serverFetchJson<unknown>({
+    session: sessionResult.session,
+    path: "roles/options",
+    searchParams: { limit: 100 },
+    revalidate: false,
+  });
+
+  if (!res.ok) return null;
+  return parseApiResponseDataSafe<RbacRoleSummary[]>(
+    res.data,
+    "getRoleOptions",
+  );
+}
+
+async function getCachedInvitations(params: {
+  page: number;
+  pageSize: number;
+  sortBy: string;
+  sortDirection: string;
+}) {
+  "use cache: private";
+  cacheTag("wildfire:invitations");
+  cacheLife("dashboard");
+
+  const sessionResult = await getServerSession();
+  if (sessionResult.status !== "ok") return null;
+
+  const res = await serverFetchJson<unknown>({
+    session: sessionResult.session,
+    path: "auth/invitations",
+    searchParams: params,
+    revalidate: false,
+  });
+
+  if (!res.ok) return null;
+  const parsed = parseApiListResponseSafe<InvitationRecord>(
+    res.data,
+    "getInvitations",
+  );
+  return {
+    items: parsed.data,
+    total: parsed.meta.total,
+    page: parsed.meta.page,
+    pageSize: parsed.meta.pageSize,
+  } satisfies InvitationListResponse;
+}
+
 export default async function UsersPage({
   searchParams,
 }: UsersPageProps): Promise<ReactElement> {
-  const session = resolveSession(await getServerSession(), "/admin/users");
+  const session = resolveSession(await getCachedServerSession(), "/admin/users");
   if (!session) {
     return <UsersPageView />;
   }
@@ -55,52 +138,34 @@ export default async function UsersPage({
     sortDirection: q.sortDirection,
   };
 
-  const usersRes = await serverFetchJson<unknown>({
-    session,
-    path: "users",
-    searchParams: {
+  const canReadRoles = sessionHasPermission(session, "roles:read");
+  const canCreateUser = sessionHasPermission(session, "users:create");
+
+  const [usersData, roleOptions, invitationsData] = await Promise.all([
+    getCachedUsersList({
       page: queryArgs.page ?? 1,
       pageSize: queryArgs.pageSize ?? USERS_PAGE_SIZE,
-      q: queryArgs.q,
-      roleId: queryArgs.roleId,
       sortBy: queryArgs.sortBy ?? "name",
       sortDirection: queryArgs.sortDirection ?? "asc",
-    },
-    tags: ["users-list"],
-    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
-  });
-  handleBootstrapResult(usersRes, "/admin/users");
-
-  const usersData = transformPaginatedListResponse<RbacUser>(
-    usersRes.data,
-    "getUsers",
-  );
-
-  const canReadRoles = sessionHasPermission(session, "roles:read");
-
-  let roleOptionsSeeder: ReactElement | null = null;
-  if (canReadRoles) {
-    const rolesRes = await serverFetchJson<unknown>({
-      session,
-      path: "roles/options",
-      searchParams: { limit: 100 },
-      tags: ["roles-options"],
-      revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
-    });
-    if (rolesRes.ok) {
-      const roleOptions = parseApiResponseDataSafe<RbacRoleSummary[]>(
-        rolesRes.data,
-        "getRoleOptions",
-      );
-      roleOptionsSeeder = <RoleOptionsCacheSeeder data={roleOptions} />;
-    }
-  }
+      q: queryArgs.q,
+      roleId: queryArgs.roleId,
+    }),
+    canReadRoles ? getCachedRoleOptions() : null,
+    canCreateUser
+      ? getCachedInvitations({
+          page: 1,
+          pageSize: USERS_PAGE_SIZE,
+          sortBy: "createdAt",
+          sortDirection: "desc",
+        })
+      : null,
+  ]);
 
   return (
     <>
-      <UsersListCacheSeeder queryArgs={queryArgs} data={usersData} />
-      {roleOptionsSeeder}
-      <UsersPageView />
+      {usersData ? <UsersListCacheSeeder queryArgs={queryArgs} data={usersData} /> : null}
+      {roleOptions ? <RoleOptionsCacheSeeder data={roleOptions} /> : null}
+      <UsersPageView initialInvitations={invitationsData ?? undefined} />
     </>
   );
 }

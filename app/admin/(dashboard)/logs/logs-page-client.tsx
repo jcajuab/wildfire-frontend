@@ -37,6 +37,8 @@ import {
   type AuditListQuery,
   type BackendAuditListResponse,
 } from "@/lib/api/audit-api";
+import { displaysApi, type DisplayOption } from "@/lib/api/displays-api";
+import { rbacApi, type RbacUser } from "@/lib/api/rbac-api";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { LOGS_PAGE_SIZE } from "@/lib/audit-log-search-params";
 
@@ -83,6 +85,53 @@ export function AuditListCacheSeeder({
 
     dispatch(auditApi.util.upsertQueryData("listAuditEvents", queryArgs, data));
   }, [dispatch, queryArgs, data, cachedData]);
+  return null;
+}
+
+export function UserOptionsCacheSeeder({
+  data,
+}: {
+  readonly data: readonly RbacUser[];
+}): null {
+  const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) => rbacApi.endpoints.getUserOptions.select(undefined)(state).data,
+  );
+
+  useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
+    dispatch(
+      rbacApi.util.upsertQueryData("getUserOptions", undefined, [...data]),
+    );
+  }, [dispatch, data, cachedData]);
+  return null;
+}
+
+export function DisplayOptionsCacheSeeder({
+  data,
+}: {
+  readonly data: readonly DisplayOption[];
+}): null {
+  const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) =>
+      displaysApi.endpoints.getDisplayOptions.select(undefined)(state).data,
+  );
+
+  useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
+    dispatch(
+      displaysApi.util.upsertQueryData("getDisplayOptions", undefined, [
+        ...data,
+      ]),
+    );
+  }, [dispatch, data, cachedData]);
   return null;
 }
 

@@ -22,6 +22,7 @@ export type ServerCacheTag =
   | "content-options"
   | "displays-bootstrap"
   | "displays-options"
+  | "invitations"
   | "permissions-options"
   | "playlists"
   | "role-edit-bootstrap"

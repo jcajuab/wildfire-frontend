@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cacheLife, cacheTag } from "next/cache";
 
 import { parseApiResponseData } from "@/lib/api/contracts";
 import { getDevOnlyRequestHeaders } from "@/lib/api/config";
@@ -125,4 +126,21 @@ export function resolveSession(
     redirect(`/login?redirectTo=${encodeURIComponent(redirectTarget)}`);
   }
   return null;
+}
+
+/**
+ * Cached variant of {@link getServerSession} for page-level auth checks.
+ *
+ * Keyed per-user (cookies are part of the `"use cache: private"` key) and
+ * served stale for up to 60 s so repeat navigations skip the backend
+ * `/auth/refresh` round-trip entirely.  The underlying data-fetching
+ * `getCachedXxx` functions still call `getServerSession()` directly on cache
+ * miss, so they always use a fresh token when they actually talk to the API.
+ */
+export async function getCachedServerSession(): Promise<ServerSessionResult> {
+  "use cache: private";
+  cacheTag("wildfire:session");
+  cacheLife("dashboard");
+
+  return getServerSession();
 }

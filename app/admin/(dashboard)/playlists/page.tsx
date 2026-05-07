@@ -7,13 +7,14 @@ import {
   PLAYLISTS_PAGE_SIZE,
   playlistsListQueryFromSearchParams,
 } from "@/lib/playlists-search-params";
-import { getServerSession, resolveSession } from "@/lib/server/auth";
+import { cacheLife, cacheTag } from "next/cache";
+
 import {
-  handleBootstrapResult,
-  serverFetchJson,
-  sessionHasPermission,
-  WILDFIRE_SERVER_REVALIDATE_SECONDS,
-} from "@/lib/server/api";
+  getCachedServerSession,
+  getServerSession,
+  resolveSession,
+} from "@/lib/server/auth";
+import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import { PlaylistsPageView } from "./playlists-page-client";
 
@@ -23,13 +24,42 @@ interface PlaylistsPageProps {
   >;
 }
 
+async function getCachedPlaylistsList(params: {
+  page: number;
+  pageSize: number;
+  sortBy: string;
+  sortDirection: string;
+  status?: string;
+  search?: string;
+}) {
+  "use cache: private";
+  cacheTag("wildfire:playlists");
+  cacheLife("dashboard");
+
+  const sessionResult = await getServerSession();
+  if (sessionResult.status !== "ok") return null;
+
+  const res = await serverFetchJson<unknown>({
+    session: sessionResult.session,
+    path: "playlists",
+    searchParams: params,
+    revalidate: false,
+  });
+
+  if (!res.ok) return null;
+  return transformPaginatedListResponse<BackendPlaylistSummary>(
+    res.data,
+    "listPlaylists",
+  );
+}
+
 export default async function PlaylistsPage({
   searchParams,
 }: PlaylistsPageProps): Promise<ReactElement> {
   const sp = (await searchParams) ?? {};
   const queryArgs = playlistsListQueryFromSearchParams(sp);
 
-  const session = resolveSession(await getServerSession(), "/admin/playlists");
+  const session = resolveSession(await getCachedServerSession(), "/admin/playlists");
   if (!session) {
     return (
       <PlaylistsPageView initialQueryArgs={queryArgs} initialData={undefined} />
@@ -39,28 +69,19 @@ export default async function PlaylistsPage({
     redirect("/unauthorized");
   }
 
-  const listRes = await serverFetchJson<unknown>({
-    session,
-    path: "playlists",
-    searchParams: {
-      page: queryArgs.page ?? 1,
-      pageSize: queryArgs.pageSize ?? PLAYLISTS_PAGE_SIZE,
-      status: queryArgs.status,
-      search: queryArgs.search,
-      sortBy: queryArgs.sortBy ?? "createdAt",
-      sortDirection: queryArgs.sortDirection ?? "desc",
-    },
-    tags: ["playlists"],
-    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
+  const listData = await getCachedPlaylistsList({
+    page: queryArgs.page ?? 1,
+    pageSize: queryArgs.pageSize ?? PLAYLISTS_PAGE_SIZE,
+    sortBy: queryArgs.sortBy ?? "createdAt",
+    sortDirection: queryArgs.sortDirection ?? "desc",
+    status: queryArgs.status,
+    search: queryArgs.search,
   });
-  handleBootstrapResult(listRes, "/admin/playlists");
-
-  const listData = transformPaginatedListResponse<BackendPlaylistSummary>(
-    listRes.data,
-    "listPlaylists",
-  );
 
   return (
-    <PlaylistsPageView initialQueryArgs={queryArgs} initialData={listData} />
+    <PlaylistsPageView
+      initialQueryArgs={queryArgs}
+      initialData={listData ?? undefined}
+    />
   );
 }

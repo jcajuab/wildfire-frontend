@@ -7,14 +7,15 @@ import type {
 } from "@/lib/api/displays-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
+import { cacheLife, cacheTag } from "next/cache";
+
 import type { ServerSearchParamValue } from "@/lib/server/api";
-import { getServerSession, resolveSession } from "@/lib/server/auth";
 import {
-  handleBootstrapResult,
-  serverFetchJson,
-  sessionHasPermission,
-  WILDFIRE_SERVER_REVALIDATE_SECONDS,
-} from "@/lib/server/api";
+  getCachedServerSession,
+  getServerSession,
+  resolveSession,
+} from "@/lib/server/auth";
+import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import { DisplaysPageView } from "./displays-page-client";
 
@@ -43,8 +44,32 @@ function bootstrapSearchParamsRecord(
   return record;
 }
 
+async function getCachedDisplaysBootstrap(): Promise<DisplaysBootstrapResponse | null> {
+  "use cache: private";
+  cacheTag("wildfire:displays-bootstrap");
+  cacheLife("dashboard");
+
+  const sessionResult = await getServerSession();
+  if (sessionResult.status !== "ok") return null;
+
+  const res = await serverFetchJson<unknown>({
+    session: sessionResult.session,
+    path: "displays/bootstrap",
+    searchParams: bootstrapSearchParamsRecord(INITIAL_DISPLAYS_BOOTSTRAP_QUERY),
+    revalidate: false,
+  });
+
+  if (!res.ok) return null;
+  return (
+    parseApiResponseDataSafe<DisplaysBootstrapResponse>(
+      res.data,
+      "getDisplaysBootstrap",
+    ) ?? null
+  );
+}
+
 export default async function DisplaysPage(): Promise<ReactElement> {
-  const session = resolveSession(await getServerSession(), "/admin/displays");
+  const session = resolveSession(await getCachedServerSession(), "/admin/displays");
   if (!session) {
     return (
       <DisplaysPageView
@@ -57,24 +82,12 @@ export default async function DisplaysPage(): Promise<ReactElement> {
     redirect("/unauthorized");
   }
 
-  const bootstrapRes = await serverFetchJson<unknown>({
-    session,
-    path: "displays/bootstrap",
-    searchParams: bootstrapSearchParamsRecord(INITIAL_DISPLAYS_BOOTSTRAP_QUERY),
-    tags: ["displays-bootstrap"],
-    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
-  });
-  handleBootstrapResult(bootstrapRes, "/admin/displays");
-
-  const bootstrapData = parseApiResponseDataSafe<DisplaysBootstrapResponse>(
-    bootstrapRes.data,
-    "getDisplaysBootstrap",
-  );
+  const bootstrapData = await getCachedDisplaysBootstrap();
 
   return (
     <DisplaysPageView
       initialQueryArgs={INITIAL_DISPLAYS_BOOTSTRAP_QUERY}
-      initialData={bootstrapData}
+      initialData={bootstrapData ?? undefined}
     />
   );
 }

@@ -9,12 +9,12 @@ import type {
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
 import type { ServerSearchParamValue } from "@/lib/server/api";
-import { getServerSession, resolveSession } from "@/lib/server/auth";
 import {
-  serverFetchJson,
-  sessionHasPermission,
-  WILDFIRE_SERVER_REVALIDATE_SECONDS,
-} from "@/lib/server/api";
+  getCachedServerSession,
+  getServerSession,
+  resolveSession,
+} from "@/lib/server/auth";
+import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import { DisplayGroupsPageClient } from "./display-groups-page-client";
 
@@ -39,7 +39,7 @@ function bootstrapSearchParams(
 async function getCachedBootstrap(): Promise<DisplaysBootstrapResponse | null> {
   "use cache: private";
   cacheTag("wildfire:displays-bootstrap");
-  cacheLife({ expire: WILDFIRE_SERVER_REVALIDATE_SECONDS });
+  cacheLife("dashboard");
 
   const sessionResult = await getServerSession();
   if (sessionResult.status !== "ok") return null;
@@ -62,7 +62,7 @@ async function getCachedBootstrap(): Promise<DisplaysBootstrapResponse | null> {
 
 export default async function DisplayGroupsPage(): Promise<ReactElement> {
   const session = resolveSession(
-    await getServerSession(),
+    await getCachedServerSession(),
     "/admin/displays/display-groups",
   );
   if (!session) {

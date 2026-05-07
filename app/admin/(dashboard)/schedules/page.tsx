@@ -7,21 +7,46 @@ import type {
 } from "@/lib/api/schedules-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { defaultSchedulesBootstrapWindow } from "@/lib/schedule-window";
-import { getServerSession, resolveSession } from "@/lib/server/auth";
+import { cacheLife, cacheTag } from "next/cache";
+
 import {
-  handleBootstrapResult,
-  serverFetchJson,
-  sessionHasPermission,
-  WILDFIRE_SERVER_REVALIDATE_SECONDS,
-} from "@/lib/server/api";
+  getCachedServerSession,
+  getServerSession,
+  resolveSession,
+} from "@/lib/server/auth";
+import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import {
   SchedulesBootstrapCacheSeeder,
   SchedulesPageView,
 } from "./schedules-page-client";
 
+async function getCachedSchedulesBootstrap(from: string, to: string) {
+  "use cache: private";
+  cacheTag("wildfire:schedules-bootstrap");
+  cacheLife("dashboard");
+
+  const sessionResult = await getServerSession();
+  if (sessionResult.status !== "ok") return null;
+
+  const res = await serverFetchJson<unknown>({
+    session: sessionResult.session,
+    path: "schedules/bootstrap",
+    searchParams: { from, to },
+    revalidate: false,
+  });
+
+  if (!res.ok) return null;
+  return (
+    parseApiResponseDataSafe<SchedulesBootstrapResponse>(
+      res.data,
+      "getSchedulesBootstrap",
+    ) ?? null
+  );
+}
+
 export default async function SchedulesPage(): Promise<ReactElement> {
-  const session = resolveSession(await getServerSession(), "/admin/schedules");
+  const session = resolveSession(await getCachedServerSession(), "/admin/schedules");
   if (!session) {
     return <SchedulesPageView />;
   }
@@ -30,30 +55,19 @@ export default async function SchedulesPage(): Promise<ReactElement> {
   }
 
   const queryArgs: ScheduleWindowQuery = defaultSchedulesBootstrapWindow();
-
-  const bootstrapRes = await serverFetchJson<unknown>({
-    session,
-    path: "schedules/bootstrap",
-    searchParams: {
-      from: queryArgs.from,
-      to: queryArgs.to,
-    },
-    tags: ["schedules-bootstrap"],
-    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
-  });
-  handleBootstrapResult(bootstrapRes, "/admin/schedules");
-
-  const bootstrapData = parseApiResponseDataSafe<SchedulesBootstrapResponse>(
-    bootstrapRes.data,
-    "getSchedulesBootstrap",
+  const bootstrapData = await getCachedSchedulesBootstrap(
+    queryArgs.from,
+    queryArgs.to,
   );
 
   return (
     <>
-      <SchedulesBootstrapCacheSeeder
-        queryArgs={queryArgs}
-        data={bootstrapData}
-      />
+      {bootstrapData ? (
+        <SchedulesBootstrapCacheSeeder
+          queryArgs={queryArgs}
+          data={bootstrapData}
+        />
+      ) : null}
       <SchedulesPageView />
     </>
   );

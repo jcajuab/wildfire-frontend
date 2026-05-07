@@ -7,13 +7,14 @@ import {
   CONTENT_PAGE_SIZE,
   contentListQueryFromSearchParams,
 } from "@/lib/content-search-params";
-import { getServerSession, resolveSession } from "@/lib/server/auth";
+import { cacheLife, cacheTag } from "next/cache";
+
 import {
-  handleBootstrapResult,
-  serverFetchJson,
-  sessionHasPermission,
-  WILDFIRE_SERVER_REVALIDATE_SECONDS,
-} from "@/lib/server/api";
+  getCachedServerSession,
+  getServerSession,
+  resolveSession,
+} from "@/lib/server/auth";
+import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import { ContentPageView } from "./content-page-client";
 
@@ -23,13 +24,43 @@ interface ContentPageProps {
   >;
 }
 
+async function getCachedContentList(params: {
+  page: number;
+  pageSize: number;
+  sortBy: string;
+  sortDirection: string;
+  status?: string;
+  type?: string;
+  search?: string;
+}) {
+  "use cache: private";
+  cacheTag("wildfire:content-list");
+  cacheLife("dashboard");
+
+  const sessionResult = await getServerSession();
+  if (sessionResult.status !== "ok") return null;
+
+  const res = await serverFetchJson<unknown>({
+    session: sessionResult.session,
+    path: "content",
+    searchParams: params,
+    revalidate: false,
+  });
+
+  if (!res.ok) return null;
+  return transformPaginatedListResponse<BackendContentListItem>(
+    res.data,
+    "listContent",
+  );
+}
+
 export default async function ContentPage({
   searchParams,
 }: ContentPageProps): Promise<ReactElement> {
   const sp = (await searchParams) ?? {};
   const queryArgs = contentListQueryFromSearchParams(sp);
 
-  const session = resolveSession(await getServerSession(), "/admin/content");
+  const session = resolveSession(await getCachedServerSession(), "/admin/content");
   if (!session) {
     return (
       <ContentPageView initialQueryArgs={queryArgs} initialData={undefined} />
@@ -39,29 +70,20 @@ export default async function ContentPage({
     redirect("/unauthorized");
   }
 
-  const listRes = await serverFetchJson<unknown>({
-    session,
-    path: "content",
-    searchParams: {
-      page: queryArgs.page ?? 1,
-      pageSize: queryArgs.pageSize ?? CONTENT_PAGE_SIZE,
-      status: queryArgs.status,
-      type: queryArgs.type,
-      search: queryArgs.search,
-      sortBy: queryArgs.sortBy ?? "createdAt",
-      sortDirection: queryArgs.sortDirection ?? "desc",
-    },
-    tags: ["content-list"],
-    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
+  const listData = await getCachedContentList({
+    page: queryArgs.page ?? 1,
+    pageSize: queryArgs.pageSize ?? CONTENT_PAGE_SIZE,
+    sortBy: queryArgs.sortBy ?? "createdAt",
+    sortDirection: queryArgs.sortDirection ?? "desc",
+    status: queryArgs.status,
+    type: queryArgs.type,
+    search: queryArgs.search,
   });
-  handleBootstrapResult(listRes, "/admin/content");
-
-  const listData = transformPaginatedListResponse<BackendContentListItem>(
-    listRes.data,
-    "listContent",
-  );
 
   return (
-    <ContentPageView initialQueryArgs={queryArgs} initialData={listData} />
+    <ContentPageView
+      initialQueryArgs={queryArgs}
+      initialData={listData ?? undefined}
+    />
   );
 }
