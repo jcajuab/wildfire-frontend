@@ -282,8 +282,9 @@ export function useDisplayGroupsPage({
   const paginatedDisplays =
     actionMode === "add" ? addModePool : (groupDisplaysData?.items ?? []);
 
-  const displayTotal =
-    actionMode === "add"
+  const displayTotal = !selectedGroupId
+    ? 0
+    : actionMode === "add"
       ? (addModeDisplaysData?.total ?? 0)
       : (groupDisplaysData?.total ?? 0);
 
@@ -362,7 +363,8 @@ export function useDisplayGroupsPage({
     () => rightPaneGroupsData?.items ?? [],
     [rightPaneGroupsData?.items],
   );
-  const groupsRightPaneTotal = rightPaneGroupsData?.total ?? 0;
+  const groupsRightPaneTotal =
+    selectedDisplayId == null ? 0 : (rightPaneGroupsData?.total ?? 0);
 
   // ---- Edit-display dialog: groups for the editing display id ----
   const { data: editingDisplayGroupsData } = useGetDisplayGroupsForDisplayQuery(
