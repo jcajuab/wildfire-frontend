@@ -4,6 +4,11 @@ import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
+import {
+  schedulesApi,
+  type BackendSchedule,
+  type ScheduleWindowQuery,
+} from "@/lib/api/schedules-api";
 
 export interface BackendPlaylistBase {
   readonly id: string;
@@ -352,6 +357,24 @@ export const playlistsApi = api.injectEndpoints({
               ),
             );
           }
+          const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
+            { type: "Schedule", id: "LIST" },
+          ]);
+          for (const entry of entries) {
+            if (entry.endpointName === "getSchedulesBootstrap") {
+              dispatch(
+                schedulesApi.util.updateQueryData(
+                  "getSchedulesBootstrap",
+                  entry.originalArgs as ScheduleWindowQuery,
+                  (draft) => {
+                    (
+                      draft.playlistOptions as { id: string; name: string }[]
+                    ).push({ id: created.id, name: created.name });
+                  },
+                ),
+              );
+            }
+          }
         } catch {
           // mutation failed
         }
@@ -400,6 +423,34 @@ export const playlistsApi = api.injectEndpoints({
               });
             }),
           );
+          const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
+            { type: "Schedule", id: "LIST" },
+          ]);
+          for (const entry of entries) {
+            if (entry.endpointName === "getSchedulesBootstrap") {
+              dispatch(
+                schedulesApi.util.updateQueryData(
+                  "getSchedulesBootstrap",
+                  entry.originalArgs as ScheduleWindowQuery,
+                  (draft) => {
+                    const opts = draft.playlistOptions as {
+                      id: string;
+                      name: string;
+                    }[];
+                    const optIdx = opts.findIndex((o) => o.id === id);
+                    if (optIdx !== -1) opts[optIdx] = { id, name: data.name };
+                    const schedules = draft.schedules as BackendSchedule[];
+                    for (const s of schedules) {
+                      if (s.playlist && s.playlist.id === id) {
+                        (s.playlist as { id: string; name: string | null }).name =
+                          data.name;
+                      }
+                    }
+                  },
+                ),
+              );
+            }
+          }
         } catch {
           // mutation failed
         }
@@ -430,6 +481,27 @@ export const playlistsApi = api.injectEndpoints({
                 },
               ),
             );
+          }
+          const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
+            { type: "Schedule", id: "LIST" },
+          ]);
+          for (const entry of entries) {
+            if (entry.endpointName === "getSchedulesBootstrap") {
+              dispatch(
+                schedulesApi.util.updateQueryData(
+                  "getSchedulesBootstrap",
+                  entry.originalArgs as ScheduleWindowQuery,
+                  (draft) => {
+                    const opts = draft.playlistOptions as {
+                      id: string;
+                      name: string;
+                    }[];
+                    const idx = opts.findIndex((o) => o.id === id);
+                    if (idx !== -1) opts.splice(idx, 1);
+                  },
+                ),
+              );
+            }
           }
           await bumpPlaylistsNextCache();
         } catch {

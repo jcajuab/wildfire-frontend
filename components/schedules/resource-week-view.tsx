@@ -126,6 +126,11 @@ export function ResourceWeekView({
                   const resourceDateKey = createResourceDateKey(row.id, day);
                   const dayEvents =
                     eventsByResourceDate.get(resourceDateKey) ?? [];
+                  let playlistPos = 0;
+                  const playlistPositions = dayEvents.map((e) =>
+                    e.kind === "FLASH" ? -1 : playlistPos++,
+                  );
+                  const playlistCount = playlistPos;
 
                   return (
                     <div
@@ -139,7 +144,8 @@ export function ResourceWeekView({
                           return null;
                         }
 
-                        const showCounter = dayEvents.length > 1;
+                        const showCounter =
+                          event.kind !== "FLASH" && playlistCount > 1;
 
                         return (
                           <button
@@ -153,7 +159,7 @@ export function ResourceWeekView({
                             }`}
                             aria-label={
                               showCounter
-                                ? `View schedule ${schedule.name} (${index + 1} of ${dayEvents.length}) on ${row.name}, ${event.timeLabel}`
+                                ? `View schedule ${schedule.name} (${playlistPositions[index] + 1} of ${playlistCount}) on ${row.name}, ${event.timeLabel}`
                                 : `View schedule ${schedule.name} on ${row.name}, ${event.timeLabel}`
                             }
                           >
@@ -163,7 +169,7 @@ export function ResourceWeekView({
                                   aria-hidden
                                   className="mr-1 inline-flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold leading-none text-primary-foreground"
                                 >
-                                  {index + 1}
+                                  {playlistPositions[index] + 1}
                                 </span>
                               ) : null}
                               {schedule.name}

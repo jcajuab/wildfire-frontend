@@ -16,6 +16,7 @@ export interface ResourceCalendarEvent {
   readonly startMinutes: number;
   readonly endMinutes: number;
   readonly timeLabel: string;
+  readonly kind: "PLAYLIST" | "FLASH";
 }
 
 export interface ResourceCalendarLaneEvent extends ResourceCalendarEvent {
@@ -140,6 +141,7 @@ export function projectResourceEvents({
         startMinutes,
         endMinutes,
         timeLabel,
+        kind: schedule.kind,
       });
     }
   }
@@ -171,7 +173,10 @@ export function assignEventLanes(
 
   for (const group of groupedEvents.values()) {
     const sorted = [...group].sort((a, b) => {
+      const kindOrder =
+        (a.kind === "FLASH" ? 0 : 1) - (b.kind === "FLASH" ? 0 : 1);
       return (
+        kindOrder ||
         a.startMinutes - b.startMinutes ||
         a.endMinutes - b.endMinutes ||
         a.scheduleId.localeCompare(b.scheduleId)

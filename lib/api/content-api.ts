@@ -5,6 +5,10 @@ import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
+import {
+  schedulesApi,
+  type ScheduleWindowQuery,
+} from "@/lib/api/schedules-api";
 import type { FlashTone } from "@/types/content";
 
 async function bumpContentNextCache(): Promise<void> {
@@ -117,6 +121,7 @@ export interface ContentOption {
   readonly title: string;
   readonly type: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
   readonly thumbnailUrl?: string;
+  readonly textPreviewText?: string | null;
 }
 
 /** Cache key for `getContentOptions` (playlist picker SSR uses `PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY`). */
@@ -285,6 +290,53 @@ export const contentApi = api.injectEndpoints({
               }),
             );
           }
+          const optionArgs = contentApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getContentOptions",
+          );
+          for (const oa of optionArgs) {
+            dispatch(
+              contentApi.util.updateQueryData(
+                "getContentOptions",
+                oa,
+                (draft) => {
+                  draft.push({
+                    id: created.id,
+                    title: created.title,
+                    type: created.type,
+                    thumbnailUrl: created.thumbnailUrl,
+                  });
+                },
+              ),
+            );
+          }
+          const scheduleEntries = schedulesApi.util.selectInvalidatedBy(
+            getState(),
+            [{ type: "Schedule", id: "LIST" }],
+          );
+          for (const entry of scheduleEntries) {
+            if (entry.endpointName === "getSchedulesBootstrap") {
+              dispatch(
+                schedulesApi.util.updateQueryData(
+                  "getSchedulesBootstrap",
+                  entry.originalArgs as ScheduleWindowQuery,
+                  (draft) => {
+                    (
+                      draft.flashContentOptions as {
+                        id: string;
+                        title: string;
+                        type: "FLASH";
+                      }[]
+                    ).push({
+                      id: created.id,
+                      title: created.title,
+                      type: "FLASH",
+                    });
+                  },
+                ),
+              );
+            }
+          }
           await bumpContentNextCache();
         } catch {
           // mutation failed
@@ -321,6 +373,27 @@ export const contentApi = api.injectEndpoints({
                       args,
                       created as BackendContentListItem,
                     );
+                  },
+                ),
+              );
+            }
+            const optionArgs = contentApi.util.selectCachedArgsForQuery(
+              getState(),
+              "getContentOptions",
+            );
+            for (const oa of optionArgs) {
+              dispatch(
+                contentApi.util.updateQueryData(
+                  "getContentOptions",
+                  oa,
+                  (draft) => {
+                    draft.push({
+                      id: created.id,
+                      title: created.title,
+                      type: created.type,
+                      thumbnailUrl: created.thumbnailUrl,
+                      textPreviewText: created.textPreviewText,
+                    });
                   },
                 ),
               );
@@ -520,6 +593,29 @@ export const contentApi = api.injectEndpoints({
               ),
             );
           }
+          const scheduleEntries = schedulesApi.util.selectInvalidatedBy(
+            getState(),
+            [{ type: "Schedule", id: "LIST" }],
+          );
+          for (const entry of scheduleEntries) {
+            if (entry.endpointName === "getSchedulesBootstrap") {
+              dispatch(
+                schedulesApi.util.updateQueryData(
+                  "getSchedulesBootstrap",
+                  entry.originalArgs as ScheduleWindowQuery,
+                  (draft) => {
+                    const opts = draft.flashContentOptions as {
+                      id: string;
+                      title: string;
+                      type: "FLASH";
+                    }[];
+                    const idx = opts.findIndex((o) => o.id === id);
+                    if (idx !== -1) opts.splice(idx, 1);
+                  },
+                ),
+              );
+            }
+          }
           await bumpContentNextCache();
         } catch {
           // mutation failed
@@ -578,6 +674,7 @@ export const contentApi = api.injectEndpoints({
                       title: updated.title,
                       type: updated.type,
                       thumbnailUrl: updated.thumbnailUrl,
+                      textPreviewText: updated.textPreviewText,
                     };
                   }
                 },

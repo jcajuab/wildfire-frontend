@@ -26,6 +26,28 @@ export function mergeEnrichedContentIntoCaches(
   dispatch(
     contentApi.util.updateQueryData("getContent", content.id, () => content),
   );
+  const optionArgs = contentApi.util.selectCachedArgsForQuery(
+    getState(),
+    "getContentOptions",
+  );
+  for (const oa of optionArgs) {
+    dispatch(
+      contentApi.util.updateQueryData("getContentOptions", oa, (draft) => {
+        const idx = draft.findIndex((c) => c.id === content.id);
+        const option = {
+          id: content.id,
+          title: content.title,
+          type: content.type,
+          thumbnailUrl: content.thumbnailUrl,
+        };
+        if (idx !== -1) {
+          draft[idx] = option;
+        } else {
+          draft.push(option);
+        }
+      }),
+    );
+  }
 }
 
 /** Shallow status-only patch when full GET is unavailable. */

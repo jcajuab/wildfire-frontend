@@ -30,5 +30,6 @@ export function mapContentOptionToPlaylistSelectable(
     type: opt.type,
     ...OPTIONS_PICKER_CONTENT_REST,
     thumbnailUrl: opt.thumbnailUrl ?? undefined,
+    textPreviewText: opt.textPreviewText ?? null,
   };
 }
