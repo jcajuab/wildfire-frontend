@@ -319,6 +319,7 @@ export function DisplaysPageView({
             }
             onRegisterDisplay={() => setIsAddInfoDialogOpen(true)}
             onManageGroups={() => router.push("/admin/displays/display-groups")}
+            onManageGroupsPrefetch={() => router.prefetch("/admin/displays/display-groups")}
             onStatusFilterChange={handleStatusFilterChange}
             onSearchChange={handleSearchChange}
             onGroupFilterChange={handleGroupFilterChange}

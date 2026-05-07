@@ -53,6 +53,7 @@ interface DisplaysToolbarProps {
   readonly bulkState: DisplaysToolbarBulkState;
   readonly onRegisterDisplay: () => void;
   readonly onManageGroups: () => void;
+  readonly onManageGroupsPrefetch?: () => void;
 }
 
 export function DisplaysToolbar({
@@ -75,6 +76,7 @@ export function DisplaysToolbar({
   bulkState,
   onRegisterDisplay,
   onManageGroups,
+  onManageGroupsPrefetch,
 }: DisplaysToolbarProps): ReactElement {
   const isBulkUnregisterMode = bulkState.mode === "bulk-unregister";
   const canShowBulkUnregister = canDeleteDisplay && bulkState.mode === "normal";
@@ -140,7 +142,11 @@ export function DisplaysToolbar({
             ) : null}
 
             {canShowManageDisplays ? (
-              <DropdownMenu>
+              <DropdownMenu
+                onOpenChange={(open) => {
+                  if (open) onManageGroupsPrefetch?.();
+                }}
+              >
                 <DropdownMenuTrigger asChild>
                   <Button
                     type="button"

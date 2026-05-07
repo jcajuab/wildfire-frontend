@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { redirect } from "next/navigation";
+import { cacheLife, cacheTag } from "next/cache";
 
 import type {
   DisplaysBootstrapResponse,
@@ -10,7 +11,6 @@ import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
 import type { ServerSearchParamValue } from "@/lib/server/api";
 import { getServerSession, resolveSession } from "@/lib/server/auth";
 import {
-  handleBootstrapResult,
   serverFetchJson,
   sessionHasPermission,
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
@@ -36,6 +36,30 @@ function bootstrapSearchParams(
   };
 }
 
+async function getCachedBootstrap(): Promise<DisplaysBootstrapResponse | null> {
+  "use cache: private";
+  cacheTag("wildfire:displays-bootstrap");
+  cacheLife({ expire: WILDFIRE_SERVER_REVALIDATE_SECONDS });
+
+  const sessionResult = await getServerSession();
+  if (sessionResult.status !== "ok") return null;
+
+  const res = await serverFetchJson<unknown>({
+    session: sessionResult.session,
+    path: "displays/bootstrap",
+    searchParams: bootstrapSearchParams(DISPLAY_GROUPS_BOOTSTRAP_QUERY),
+    revalidate: false,
+  });
+
+  if (!res.ok) return null;
+  return (
+    parseApiResponseDataSafe<DisplaysBootstrapResponse>(
+      res.data,
+      "getDisplaysBootstrap",
+    ) ?? null
+  );
+}
+
 export default async function DisplayGroupsPage(): Promise<ReactElement> {
   const session = resolveSession(
     await getServerSession(),
@@ -48,19 +72,7 @@ export default async function DisplayGroupsPage(): Promise<ReactElement> {
     redirect("/unauthorized");
   }
 
-  const bootstrapRes = await serverFetchJson<unknown>({
-    session,
-    path: "displays/bootstrap",
-    searchParams: bootstrapSearchParams(DISPLAY_GROUPS_BOOTSTRAP_QUERY),
-    tags: ["displays-bootstrap"],
-    revalidate: WILDFIRE_SERVER_REVALIDATE_SECONDS,
-  });
-  handleBootstrapResult(bootstrapRes, "/admin/displays/display-groups");
-
-  const bootstrapData = parseApiResponseDataSafe<DisplaysBootstrapResponse>(
-    bootstrapRes.data,
-    "getDisplaysBootstrap",
-  );
+  const bootstrapData = await getCachedBootstrap();
 
   return (
     <DisplayGroupsPageClient
