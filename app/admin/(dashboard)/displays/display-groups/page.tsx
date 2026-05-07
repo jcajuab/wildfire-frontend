@@ -9,11 +9,7 @@ import type {
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
 import type { ServerSearchParamValue } from "@/lib/server/api";
-import {
-  getCachedServerSession,
-  getServerSession,
-  resolveSession,
-} from "@/lib/server/auth";
+import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import { DisplayGroupsPageClient } from "./display-groups-page-client";
@@ -41,7 +37,7 @@ async function getCachedBootstrap(): Promise<DisplaysBootstrapResponse | null> {
   cacheTag("wildfire:displays-bootstrap");
   cacheLife("dashboard");
 
-  const sessionResult = await getServerSession();
+  const sessionResult = await getCachedServerSession();
   if (sessionResult.status !== "ok") return null;
 
   const res = await serverFetchJson<unknown>({
@@ -61,18 +57,18 @@ async function getCachedBootstrap(): Promise<DisplaysBootstrapResponse | null> {
 }
 
 export default async function DisplayGroupsPage(): Promise<ReactElement> {
-  const session = resolveSession(
-    await getCachedServerSession(),
-    "/admin/displays/display-groups",
-  );
+  const [sessionResult, bootstrapData] = await Promise.all([
+    getCachedServerSession(),
+    getCachedBootstrap(),
+  ]);
+
+  const session = resolveSession(sessionResult, "/admin/displays/display-groups");
   if (!session) {
     return <DisplayGroupsPageClient />;
   }
   if (!sessionHasPermission(session, "displays:read")) {
     redirect("/unauthorized");
   }
-
-  const bootstrapData = await getCachedBootstrap();
 
   return (
     <DisplayGroupsPageClient

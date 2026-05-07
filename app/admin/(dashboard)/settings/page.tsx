@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import type { AICredential } from "@/lib/api/ai-credentials-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
-import { getServerSession, resolveSession } from "@/lib/server/auth";
+import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
@@ -15,7 +15,7 @@ import {
 } from "./settings-page-client";
 
 export default async function SettingsPage(): Promise<ReactElement> {
-  const session = resolveSession(await getServerSession(), "/admin/settings");
+  const session = resolveSession(await getCachedServerSession(), "/admin/settings");
   if (!session) {
     return <SettingsPageView canManageAICredentials={false} />;
   }

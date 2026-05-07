@@ -351,13 +351,10 @@ export async function bootstrapAccessToken(): Promise<void> {
     return;
   }
 
-  // Skip the refresh attempt if we have no evidence of a prior session.
-  // This avoids a wasted 401 on the login page for first-time visitors.
   let hasSessionHint = false;
   try {
     hasSessionHint = sessionStorage.getItem(SESSION_HINT_KEY) === "1";
   } catch {
-    // sessionStorage may be unavailable — fall through to refresh attempt.
     hasSessionHint = true;
   }
 
@@ -375,8 +372,21 @@ export async function bootstrapAccessToken(): Promise<void> {
       return;
     }
     if (error instanceof AuthApiError && error.status === 401) {
-      await purgeStaleSession();
-      return;
+      // Retry once — a transient race between server/client token rotation
+      // can produce a spurious 401 that resolves on the next attempt.
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      try {
+        await refreshAccessToken();
+        return;
+      } catch (retryError) {
+        if (
+          retryError instanceof AuthApiError &&
+          retryError.status === 401
+        ) {
+          await purgeStaleSession();
+          return;
+        }
+      }
     }
     throw error;
   } finally {

@@ -15,11 +15,7 @@ import {
 } from "@/lib/users-search-params";
 import { cacheLife, cacheTag } from "next/cache";
 
-import {
-  getCachedServerSession,
-  getServerSession,
-  resolveSession,
-} from "@/lib/server/auth";
+import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import {
@@ -46,7 +42,7 @@ async function getCachedUsersList(params: {
   cacheTag("wildfire:users-list");
   cacheLife("dashboard");
 
-  const sessionResult = await getServerSession();
+  const sessionResult = await getCachedServerSession();
   if (sessionResult.status !== "ok") return null;
 
   const res = await serverFetchJson<unknown>({
@@ -65,7 +61,7 @@ async function getCachedRoleOptions() {
   cacheTag("wildfire:roles-options");
   cacheLife("dashboard");
 
-  const sessionResult = await getServerSession();
+  const sessionResult = await getCachedServerSession();
   if (sessionResult.status !== "ok") return null;
 
   const res = await serverFetchJson<unknown>({
@@ -92,7 +88,7 @@ async function getCachedInvitations(params: {
   cacheTag("wildfire:invitations");
   cacheLife("dashboard");
 
-  const sessionResult = await getServerSession();
+  const sessionResult = await getCachedServerSession();
   if (sessionResult.status !== "ok") return null;
 
   const res = await serverFetchJson<unknown>({

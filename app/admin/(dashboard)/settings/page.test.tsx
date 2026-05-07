@@ -19,6 +19,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/server/auth", () => ({
   getServerSession: getServerSessionMock,
+  getCachedServerSession: getServerSessionMock,
   resolveSession: (
     result: ServerSession | null,
     redirectTarget: string,

@@ -9,11 +9,7 @@ import {
 } from "@/lib/playlists-search-params";
 import { cacheLife, cacheTag } from "next/cache";
 
-import {
-  getCachedServerSession,
-  getServerSession,
-  resolveSession,
-} from "@/lib/server/auth";
+import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import { PlaylistsPageView } from "./playlists-page-client";
@@ -36,7 +32,7 @@ async function getCachedPlaylistsList(params: {
   cacheTag("wildfire:playlists");
   cacheLife("dashboard");
 
-  const sessionResult = await getServerSession();
+  const sessionResult = await getCachedServerSession();
   if (sessionResult.status !== "ok") return null;
 
   const res = await serverFetchJson<unknown>({
@@ -59,7 +55,19 @@ export default async function PlaylistsPage({
   const sp = (await searchParams) ?? {};
   const queryArgs = playlistsListQueryFromSearchParams(sp);
 
-  const session = resolveSession(await getCachedServerSession(), "/admin/playlists");
+  const [sessionResult, listData] = await Promise.all([
+    getCachedServerSession(),
+    getCachedPlaylistsList({
+      page: queryArgs.page ?? 1,
+      pageSize: queryArgs.pageSize ?? PLAYLISTS_PAGE_SIZE,
+      sortBy: queryArgs.sortBy ?? "createdAt",
+      sortDirection: queryArgs.sortDirection ?? "desc",
+      status: queryArgs.status,
+      search: queryArgs.search,
+    }),
+  ]);
+
+  const session = resolveSession(sessionResult, "/admin/playlists");
   if (!session) {
     return (
       <PlaylistsPageView initialQueryArgs={queryArgs} initialData={undefined} />
@@ -68,15 +76,6 @@ export default async function PlaylistsPage({
   if (!sessionHasPermission(session, "playlists:read")) {
     redirect("/unauthorized");
   }
-
-  const listData = await getCachedPlaylistsList({
-    page: queryArgs.page ?? 1,
-    pageSize: queryArgs.pageSize ?? PLAYLISTS_PAGE_SIZE,
-    sortBy: queryArgs.sortBy ?? "createdAt",
-    sortDirection: queryArgs.sortDirection ?? "desc",
-    status: queryArgs.status,
-    search: queryArgs.search,
-  });
 
   return (
     <PlaylistsPageView

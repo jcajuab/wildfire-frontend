@@ -9,11 +9,7 @@ import {
 } from "@/lib/roles-search-params";
 import { cacheLife, cacheTag } from "next/cache";
 
-import {
-  getCachedServerSession,
-  getServerSession,
-  resolveSession,
-} from "@/lib/server/auth";
+import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import { RolesListCacheSeeder, RolesPageView } from "./roles-page-client";
@@ -35,7 +31,7 @@ async function getCachedRolesList(params: {
   cacheTag("wildfire:roles-list");
   cacheLife("dashboard");
 
-  const sessionResult = await getServerSession();
+  const sessionResult = await getCachedServerSession();
   if (sessionResult.status !== "ok") return null;
 
   const res = await serverFetchJson<unknown>({
@@ -55,14 +51,6 @@ async function getCachedRolesList(params: {
 export default async function RolesPage({
   searchParams,
 }: RolesPageProps): Promise<ReactElement> {
-  const session = resolveSession(await getCachedServerSession(), "/admin/roles");
-  if (!session) {
-    return <RolesPageView />;
-  }
-  if (!sessionHasPermission(session, "roles:read")) {
-    redirect("/unauthorized");
-  }
-
   const sp = (await searchParams) ?? {};
   const q = rolesListQueryFromSearchParams(sp, ROLES_PAGE_SIZE);
 
@@ -74,13 +62,24 @@ export default async function RolesPage({
     sortDirection: q.sortDirection,
   };
 
-  const rolesData = await getCachedRolesList({
-    page: queryArgs.page ?? 1,
-    pageSize: queryArgs.pageSize ?? ROLES_PAGE_SIZE,
-    sortBy: queryArgs.sortBy ?? "name",
-    sortDirection: queryArgs.sortDirection ?? "asc",
-    q: queryArgs.q,
-  });
+  const [sessionResult, rolesData] = await Promise.all([
+    getCachedServerSession(),
+    getCachedRolesList({
+      page: queryArgs.page ?? 1,
+      pageSize: queryArgs.pageSize ?? ROLES_PAGE_SIZE,
+      sortBy: queryArgs.sortBy ?? "name",
+      sortDirection: queryArgs.sortDirection ?? "asc",
+      q: queryArgs.q,
+    }),
+  ]);
+
+  const session = resolveSession(sessionResult, "/admin/roles");
+  if (!session) {
+    return <RolesPageView />;
+  }
+  if (!sessionHasPermission(session, "roles:read")) {
+    redirect("/unauthorized");
+  }
 
   return (
     <>

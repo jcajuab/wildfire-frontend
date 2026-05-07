@@ -9,11 +9,7 @@ import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { defaultSchedulesBootstrapWindow } from "@/lib/schedule-window";
 import { cacheLife, cacheTag } from "next/cache";
 
-import {
-  getCachedServerSession,
-  getServerSession,
-  resolveSession,
-} from "@/lib/server/auth";
+import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import {
@@ -26,7 +22,7 @@ async function getCachedSchedulesBootstrap(from: string, to: string) {
   cacheTag("wildfire:schedules-bootstrap");
   cacheLife("dashboard");
 
-  const sessionResult = await getServerSession();
+  const sessionResult = await getCachedServerSession();
   if (sessionResult.status !== "ok") return null;
 
   const res = await serverFetchJson<unknown>({

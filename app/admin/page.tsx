@@ -6,13 +6,13 @@ import {
   getFirstPermittedAdminRoute,
   UNAUTHORIZED_ROUTE,
 } from "@/lib/route-permissions";
-import { getServerSession } from "@/lib/server/auth";
+import { getCachedServerSession } from "@/lib/server/auth";
 import type { PermissionType } from "@/types/permission";
 
 import { AdminIndexFallbackRedirect } from "./admin-index-fallback-redirect";
 
 export default async function AdminIndexPage(): Promise<ReactNode> {
-  const result = await getServerSession();
+  const result = await getCachedServerSession();
 
   if (result.status === "ok") {
     const { session } = result;

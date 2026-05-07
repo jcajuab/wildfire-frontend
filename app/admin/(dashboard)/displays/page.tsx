@@ -10,11 +10,7 @@ import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
 import { cacheLife, cacheTag } from "next/cache";
 
 import type { ServerSearchParamValue } from "@/lib/server/api";
-import {
-  getCachedServerSession,
-  getServerSession,
-  resolveSession,
-} from "@/lib/server/auth";
+import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import { DisplaysPageView } from "./displays-page-client";
@@ -49,7 +45,7 @@ async function getCachedDisplaysBootstrap(): Promise<DisplaysBootstrapResponse |
   cacheTag("wildfire:displays-bootstrap");
   cacheLife("dashboard");
 
-  const sessionResult = await getServerSession();
+  const sessionResult = await getCachedServerSession();
   if (sessionResult.status !== "ok") return null;
 
   const res = await serverFetchJson<unknown>({
@@ -69,7 +65,12 @@ async function getCachedDisplaysBootstrap(): Promise<DisplaysBootstrapResponse |
 }
 
 export default async function DisplaysPage(): Promise<ReactElement> {
-  const session = resolveSession(await getCachedServerSession(), "/admin/displays");
+  const [sessionResult, bootstrapData] = await Promise.all([
+    getCachedServerSession(),
+    getCachedDisplaysBootstrap(),
+  ]);
+
+  const session = resolveSession(sessionResult, "/admin/displays");
   if (!session) {
     return (
       <DisplaysPageView
@@ -81,8 +82,6 @@ export default async function DisplaysPage(): Promise<ReactElement> {
   if (!sessionHasPermission(session, "displays:read")) {
     redirect("/unauthorized");
   }
-
-  const bootstrapData = await getCachedDisplaysBootstrap();
 
   return (
     <DisplaysPageView

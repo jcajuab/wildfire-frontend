@@ -9,11 +9,7 @@ import {
 } from "@/lib/content-search-params";
 import { cacheLife, cacheTag } from "next/cache";
 
-import {
-  getCachedServerSession,
-  getServerSession,
-  resolveSession,
-} from "@/lib/server/auth";
+import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import { ContentPageView } from "./content-page-client";
@@ -37,7 +33,7 @@ async function getCachedContentList(params: {
   cacheTag("wildfire:content-list");
   cacheLife("dashboard");
 
-  const sessionResult = await getServerSession();
+  const sessionResult = await getCachedServerSession();
   if (sessionResult.status !== "ok") return null;
 
   const res = await serverFetchJson<unknown>({
@@ -60,7 +56,20 @@ export default async function ContentPage({
   const sp = (await searchParams) ?? {};
   const queryArgs = contentListQueryFromSearchParams(sp);
 
-  const session = resolveSession(await getCachedServerSession(), "/admin/content");
+  const [sessionResult, listData] = await Promise.all([
+    getCachedServerSession(),
+    getCachedContentList({
+      page: queryArgs.page ?? 1,
+      pageSize: queryArgs.pageSize ?? CONTENT_PAGE_SIZE,
+      sortBy: queryArgs.sortBy ?? "createdAt",
+      sortDirection: queryArgs.sortDirection ?? "desc",
+      status: queryArgs.status,
+      type: queryArgs.type,
+      search: queryArgs.search,
+    }),
+  ]);
+
+  const session = resolveSession(sessionResult, "/admin/content");
   if (!session) {
     return (
       <ContentPageView initialQueryArgs={queryArgs} initialData={undefined} />
@@ -69,16 +78,6 @@ export default async function ContentPage({
   if (!sessionHasPermission(session, "content:read")) {
     redirect("/unauthorized");
   }
-
-  const listData = await getCachedContentList({
-    page: queryArgs.page ?? 1,
-    pageSize: queryArgs.pageSize ?? CONTENT_PAGE_SIZE,
-    sortBy: queryArgs.sortBy ?? "createdAt",
-    sortDirection: queryArgs.sortDirection ?? "desc",
-    status: queryArgs.status,
-    type: queryArgs.type,
-    search: queryArgs.search,
-  });
 
   return (
     <ContentPageView

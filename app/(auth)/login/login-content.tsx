@@ -17,8 +17,6 @@ import {
 } from "@/lib/route-permissions";
 import type { AuthResponse } from "@/types/auth";
 
-// Use a hard navigation on the post-login redirect so the Next.js Router
-// Cache cannot replay a previous user's RSC payload to the next user.
 function defaultPostLoginNavigator(target: string): void {
   if (typeof window === "undefined") return;
   window.location.assign(target);

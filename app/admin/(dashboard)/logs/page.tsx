@@ -9,11 +9,7 @@ import { transformPaginatedListResponse } from "@/lib/api/response-transformers"
 import { auditListQueryFromSearchParams } from "@/lib/audit-log-search-params";
 import { cacheLife, cacheTag } from "next/cache";
 
-import {
-  getCachedServerSession,
-  getServerSession,
-  resolveSession,
-} from "@/lib/server/auth";
+import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import {
@@ -44,7 +40,7 @@ async function getCachedAuditEvents(params: {
   cacheTag("wildfire:audit");
   cacheLife("dashboard");
 
-  const sessionResult = await getServerSession();
+  const sessionResult = await getCachedServerSession();
   if (sessionResult.status !== "ok") return null;
 
   const res = await serverFetchJson<unknown>({
@@ -66,7 +62,7 @@ async function getCachedUserOptions() {
   cacheTag("wildfire:users-options");
   cacheLife("dashboard");
 
-  const sessionResult = await getServerSession();
+  const sessionResult = await getCachedServerSession();
   if (sessionResult.status !== "ok") return null;
 
   const res = await serverFetchJson<unknown>({
@@ -85,7 +81,7 @@ async function getCachedDisplayOptions() {
   cacheTag("wildfire:displays-options");
   cacheLife("dashboard");
 
-  const sessionResult = await getServerSession();
+  const sessionResult = await getCachedServerSession();
   if (sessionResult.status !== "ok") return null;
 
   const res = await serverFetchJson<unknown>({
