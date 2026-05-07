@@ -150,7 +150,7 @@ export function RolesTable({
           </TableHead>
           <TableHead>Description</TableHead>
           <TableHead
-            className="w-[140px]"
+            className="w-[140px] text-center"
             aria-sort={
               sort.field === "usersCount"
                 ? sort.direction === "asc"
@@ -182,7 +182,7 @@ export function RolesTable({
             <TableCell className="max-w-[40rem] truncate text-muted-foreground">
               {role.description ?? "No description available"}
             </TableCell>
-            <TableCell className="text-muted-foreground tabular-nums">
+            <TableCell className="text-center text-muted-foreground tabular-nums">
               {role.usersCount ?? "—"}
             </TableCell>
             <TableCell className="text-right">
