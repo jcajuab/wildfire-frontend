@@ -5,6 +5,7 @@ import {
   IconBolt,
   IconChevronDown,
   IconFileText,
+  IconPlus,
   IconTrash,
   IconUpload,
   IconX,
@@ -136,6 +137,11 @@ export function ContentToolbar({
                     type="button"
                     className="w-full justify-center sm:w-auto"
                   >
+                    <IconPlus
+                      className="size-4"
+                      aria-hidden="true"
+                      data-icon="inline-start"
+                    />
                     Create Content
                     <IconChevronDown
                       className="size-4"

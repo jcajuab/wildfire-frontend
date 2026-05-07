@@ -80,7 +80,8 @@ export interface RbacUserListQuery {
   readonly page?: number;
   readonly pageSize?: number;
   readonly q?: string;
-  readonly sortBy?: "name" | "lastSeenAt";
+  readonly roleId?: string;
+  readonly sortBy?: "name" | "email" | "lastSeenAt";
   readonly sortDirection?: "asc" | "desc";
 }
 
@@ -380,6 +381,7 @@ export const rbacApi = api.injectEndpoints({
           page: query?.page ?? 1,
           pageSize: query?.pageSize ?? 10,
           q: query?.q,
+          roleId: query?.roleId,
           sortBy: query?.sortBy ?? "name",
           sortDirection: query?.sortDirection ?? "asc",
         },

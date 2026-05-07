@@ -86,7 +86,7 @@ describe("EmergencySlotDropdown", () => {
           },
         ],
       },
-    } as ReturnType<typeof useListEmergencySlotsQuery>);
+    } as unknown as ReturnType<typeof useListEmergencySlotsQuery>);
 
     render(
       <EmergencySlotDropdown
@@ -108,7 +108,7 @@ describe("EmergencySlotDropdown", () => {
 
     useListEmergencySlotsQueryMock.mockReturnValue({
       data: { slots: [] },
-    } as ReturnType<typeof useListEmergencySlotsQuery>);
+    } as unknown as ReturnType<typeof useListEmergencySlotsQuery>);
 
     render(
       <EmergencySlotDropdown

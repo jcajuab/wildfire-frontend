@@ -7,6 +7,7 @@ import {
   createInvitation,
   type CreateInvitationResponse,
   getInvitations,
+  type InvitationListQuery,
   resendInvitation,
   banUser,
   unbanUser,
@@ -19,14 +20,15 @@ import {
 } from "@/lib/api/rbac-api";
 import type { EditUserFormData } from "@/components/users/edit-user-dialog";
 import type { User, UserRole } from "@/types/user";
-import type { InvitationRecord } from "@/types/invitation";
+import type { InvitationListResponse } from "@/types/invitation";
 
 export function useUsersHandlers({
   canCreateUser,
   isAdmin,
   systemRoleIds,
   userRolesByUserId,
-  setInvitations,
+  invitationQuery,
+  setInvitationsData,
   setIsEditDialogOpen,
   setSelectedUser,
   setResetPasswordResult,
@@ -36,7 +38,8 @@ export function useUsersHandlers({
   isAdmin: boolean;
   systemRoleIds: readonly string[];
   userRolesByUserId: Readonly<Record<string, readonly UserRole[]>>;
-  setInvitations: (invitations: readonly InvitationRecord[]) => void;
+  invitationQuery: InvitationListQuery;
+  setInvitationsData: (data: InvitationListResponse | undefined) => void;
   setIsEditDialogOpen: (open: boolean) => void;
   setSelectedUser: (user: User | null) => void;
   setResetPasswordResult: (
@@ -55,20 +58,20 @@ export function useUsersHandlers({
 
   const loadInvitations = useCallback(async (): Promise<void> => {
     if (!canCreateUser) {
-      setInvitations([]);
+      setInvitationsData(undefined);
       return;
     }
 
     setIsInvitationsLoading(true);
     try {
-      const list = await getInvitations();
-      setInvitations(list);
+      const list = await getInvitations(invitationQuery);
+      setInvitationsData(list);
     } catch (err) {
       notifyApiError(err, "Failed to load invitations");
     } finally {
       setIsInvitationsLoading(false);
     }
-  }, [canCreateUser, setInvitations]);
+  }, [canCreateUser, invitationQuery, setInvitationsData]);
 
   const handleInvite = useCallback(
     async (
@@ -107,8 +110,8 @@ export function useUsersHandlers({
             result.status === "fulfilled",
         );
 
-        const latestInvitations = await getInvitations();
-        setInvitations(latestInvitations);
+        const latestInvitations = await getInvitations(invitationQuery);
+        setInvitationsData(latestInvitations);
 
         return firstSuccess?.value ?? null;
       } catch (err) {
@@ -123,7 +126,7 @@ export function useUsersHandlers({
         return null;
       }
     },
-    [setInvitations],
+    [invitationQuery, setInvitationsData],
   );
 
   const handleResendInvitation = useCallback(
@@ -132,15 +135,15 @@ export function useUsersHandlers({
       try {
         await resendInvitation(id);
         toast.success("Invitation link regenerated.");
-        const latestInvitations = await getInvitations();
-        setInvitations(latestInvitations);
+        const latestInvitations = await getInvitations(invitationQuery);
+        setInvitationsData(latestInvitations);
       } catch (err) {
         notifyApiError(err, "Failed to regenerate invite link");
       } finally {
         setResendingInvitationId(null);
       }
     },
-    [setInvitations],
+    [invitationQuery, setInvitationsData],
   );
 
   const handleRoleToggle = useCallback(

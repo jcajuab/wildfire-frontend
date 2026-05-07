@@ -50,6 +50,7 @@ export default async function UsersPage({
     page: q.page,
     pageSize: q.pageSize,
     q: q.q,
+    roleId: q.roleId,
     sortBy: q.sortBy,
     sortDirection: q.sortDirection,
   };
@@ -61,6 +62,7 @@ export default async function UsersPage({
       page: queryArgs.page ?? 1,
       pageSize: queryArgs.pageSize ?? USERS_PAGE_SIZE,
       q: queryArgs.q,
+      roleId: queryArgs.roleId,
       sortBy: queryArgs.sortBy ?? "name",
       sortDirection: queryArgs.sortDirection ?? "asc",
     },

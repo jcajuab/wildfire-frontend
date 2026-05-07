@@ -14,6 +14,7 @@ const baseSchedule = {
   startTime: "05:00",
   endTime: "17:00",
   display: display,
+  createdBy: "@admin",
   createdAt: "2026-03-06T00:00:00.000Z",
   updatedAt: "2026-03-06T00:00:00.000Z",
 } as const;

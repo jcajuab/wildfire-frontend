@@ -5,6 +5,7 @@ import {
   IconChevronDown,
   IconDeviceDesktopPlus,
   IconFolderCog,
+  IconSettings,
   IconTrashX,
   IconX,
 } from "@tabler/icons-react";
@@ -146,6 +147,11 @@ export function DisplaysToolbar({
                     type="button"
                     className="w-full justify-center sm:w-auto"
                   >
+                    <IconSettings
+                      className="size-4"
+                      aria-hidden="true"
+                      data-icon="inline-start"
+                    />
                     Manage Displays
                     <IconChevronDown
                       className="size-4"

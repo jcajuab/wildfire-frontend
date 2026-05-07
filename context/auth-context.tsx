@@ -28,7 +28,10 @@ interface AuthContextValue {
   readonly isLoading: boolean;
   readonly isInitialized: boolean;
   can: (permission: PermissionType) => boolean;
-  login: (credentials: { username: string; password: string }) => Promise<void>;
+  login: (credentials: {
+    username: string;
+    password: string;
+  }) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   bootstrapSession: () => Promise<void>;
   updateSession: (response: AuthResponse) => void;
@@ -57,7 +60,7 @@ export function AuthProvider({
 
   const login = useCallback(
     async (credentials: { username: string; password: string }) => {
-      await loginWithPassword(credentials);
+      return loginWithPassword(credentials);
     },
     [],
   );

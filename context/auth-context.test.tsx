@@ -1,5 +1,5 @@
 import { type ReactElement } from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthProvider, useAuth } from "@/context/auth-context";
@@ -95,22 +95,24 @@ describe("AuthProvider", () => {
     expect(screen.getByTestId("initialized")).toHaveTextContent("loading");
 
     // Simulate bootstrap completing and updating the store
-    resolveBootstrap!();
-    updateSnapshot({
-      accessToken: "test-token",
-      accessTokenExpiresAt: "2099-01-01T00:00:00.000Z",
-      user: {
-        id: "user-1",
-        username: "user",
-        email: "user@example.com",
-        name: "User",
-        isAdmin: false,
-        isInvitedUser: false,
-        timezone: null,
-        avatarUrl: null,
-      },
-      permissions: ["displays:read"],
-      isBootstrapped: true,
+    await act(async () => {
+      resolveBootstrap!();
+      updateSnapshot({
+        accessToken: "test-token",
+        accessTokenExpiresAt: "2099-01-01T00:00:00.000Z",
+        user: {
+          id: "user-1",
+          username: "user",
+          email: "user@example.com",
+          name: "User",
+          isAdmin: false,
+          isInvitedUser: false,
+          timezone: null,
+          avatarUrl: null,
+        },
+        permissions: ["displays:read"],
+        isBootstrapped: true,
+      });
     });
 
     await waitFor(() => {

@@ -7,9 +7,14 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useGetUsersQuery, useGetRoleOptionsQuery } from "@/lib/api/rbac-api";
 import type { RbacUsersListResponse } from "@/lib/api/rbac-api";
 import type { User, UserRole, UserSort } from "@/types/user";
-import type { InvitationRecord } from "@/types/invitation";
+import type {
+  InvitationListResponse,
+  InvitationRecord,
+  InvitationSort,
+  InvitationStatusFilter,
+} from "@/types/invitation";
 import type { EditUserFormData } from "@/components/users/edit-user-dialog";
-import { useUsersFilters } from "./use-users-filters";
+import { useUsersFilters, type UsersPageTab } from "./use-users-filters";
 import { useUsersDialogs } from "./use-users-dialogs";
 import { USERS_PAGE_SIZE } from "@/lib/users-search-params";
 
@@ -32,8 +37,14 @@ export interface UseUsersPageResult {
 
   // Filter state
   search: string;
+  roleId: string;
   page: number;
+  invitationSearch: string;
+  invitationPage: number;
+  invitationStatusFilter: InvitationStatusFilter;
+  activeTab: UsersPageTab;
   sort: UserSort;
+  invitationSort: InvitationSort;
 
   // Query data
   users: User[];
@@ -48,6 +59,7 @@ export interface UseUsersPageResult {
 
   // Invitations
   invitations: readonly InvitationRecord[];
+  invitationsData: InvitationListResponse | undefined;
   isInvitationsLoading: boolean;
   resendingInvitationId: string | null;
 
@@ -64,6 +76,8 @@ export interface UseUsersPageResult {
 
   // Setters
   setPage: (page: number) => void;
+  setInvitationPage: (page: number) => void;
+  setActiveTab: (tab: UsersPageTab) => void;
   setIsInviteDialogOpen: (open: boolean) => void;
   setIsEditDialogOpen: (open: boolean) => void;
   setIsBanDialogOpen: (open: boolean) => void;
@@ -72,7 +86,11 @@ export interface UseUsersPageResult {
 
   // Handlers
   handleSearchChange: (value: string) => void;
+  handleInvitationSearchChange: (value: string) => void;
   handleSortChange: (nextSort: UserSort) => void;
+  handleRoleFilterChange: (roleId: string) => void;
+  handleInvitationStatusFilterChange: (status: InvitationStatusFilter) => void;
+  handleInvitationSortChange: (nextSort: InvitationSort) => void;
   handleInvite: (
     emails: readonly string[],
   ) => Promise<{ id: string; expiresAt: string } | null>;
@@ -98,6 +116,7 @@ export function useUsersPage(): UseUsersPageResult {
 
   const filters = useUsersFilters();
   const debouncedSearch = useDebounce(filters.search, 500);
+  const debouncedInvitationSearch = useDebounce(filters.invitationSearch, 500);
 
   const {
     data: usersData,
@@ -110,7 +129,9 @@ export function useUsersPage(): UseUsersPageResult {
       page: filters.page,
       pageSize: PAGE_SIZE,
       q: debouncedSearch || undefined,
-      sortBy: filters.sortField === "lastSeen" ? "lastSeenAt" : "name",
+      roleId: filters.roleId === "all" ? undefined : filters.roleId,
+      sortBy:
+        filters.sortField === "lastSeen" ? "lastSeenAt" : filters.sortField,
       sortDirection: filters.sortDirection,
     },
     { refetchOnFocus: false, refetchOnReconnect: false },
@@ -123,9 +144,8 @@ export function useUsersPage(): UseUsersPageResult {
 
   const usersLoading = usersQueryLoading || rolesLoading;
 
-  const [invitations, setInvitations] = useState<readonly InvitationRecord[]>(
-    [],
-  );
+  const [invitationsData, setInvitationsData] =
+    useState<InvitationListResponse>();
 
   const dialogs = useUsersDialogs();
 
@@ -148,9 +168,9 @@ export function useUsersPage(): UseUsersPageResult {
 
   const availableRoles = useMemo(() => {
     const roles = rolesData ?? [];
-    const filtered = isAdmin ? roles : roles.filter((role) => !role.isSystem);
+    const filtered = roles.filter((role) => !role.isSystem);
     return filtered.map((role) => ({ id: role.id, name: role.name }));
-  }, [rolesData, isAdmin]);
+  }, [rolesData]);
 
   const systemRoleIds = useMemo(
     () =>
@@ -168,12 +188,31 @@ export function useUsersPage(): UseUsersPageResult {
     [users],
   );
 
+  const invitationQuery = useMemo(
+    () => ({
+      page: filters.invitationPage,
+      pageSize: PAGE_SIZE,
+      q: debouncedInvitationSearch || undefined,
+      status: filters.invitationStatusFilter,
+      sortBy: filters.invitationSort.field,
+      sortDirection: filters.invitationSort.direction,
+    }),
+    [
+      filters.invitationPage,
+      debouncedInvitationSearch,
+      filters.invitationSort.direction,
+      filters.invitationSort.field,
+      filters.invitationStatusFilter,
+    ],
+  );
+
   const handlers = useUsersHandlers({
     canCreateUser,
     isAdmin,
     systemRoleIds,
     userRolesByUserId,
-    setInvitations,
+    invitationQuery,
+    setInvitationsData,
     setIsEditDialogOpen: dialogs.setIsEditDialogOpen,
     setSelectedUser: dialogs.setSelectedUser,
     setResetPasswordResult: dialogs.setResetPasswordResult,
@@ -192,8 +231,14 @@ export function useUsersPage(): UseUsersPageResult {
     canDeleteUser,
     canCreateUser,
     search: filters.search,
+    roleId: filters.roleId,
     page: filters.page,
+    invitationSearch: filters.invitationSearch,
+    invitationPage: filters.invitationPage,
+    invitationStatusFilter: filters.invitationStatusFilter,
+    activeTab: filters.activeTab,
     sort: filters.sort,
+    invitationSort: filters.invitationSort,
     users,
     usersData,
     availableRoles,
@@ -203,7 +248,8 @@ export function useUsersPage(): UseUsersPageResult {
     usersFetching: usersQueryFetching,
     usersError,
     isRoleToggling: handlers.isRoleToggling,
-    invitations,
+    invitations: invitationsData?.items ?? [],
+    invitationsData,
     isInvitationsLoading: handlers.isInvitationsLoading,
     resendingInvitationId: handlers.resendingInvitationId,
     isInviteDialogOpen: dialogs.isInviteDialogOpen,
@@ -214,13 +260,20 @@ export function useUsersPage(): UseUsersPageResult {
     resetPasswordResult: dialogs.resetPasswordResult,
     isResetPasswordDialogOpen: dialogs.isResetPasswordDialogOpen,
     setPage: filters.setPage,
+    setInvitationPage: filters.setInvitationPage,
+    setActiveTab: filters.setActiveTab,
     setIsInviteDialogOpen: dialogs.setIsInviteDialogOpen,
     setIsEditDialogOpen: dialogs.setIsEditDialogOpen,
     setIsBanDialogOpen: dialogs.setIsBanDialogOpen,
     setUserToBan: dialogs.setUserToBan,
     setIsResetPasswordDialogOpen: dialogs.setIsResetPasswordDialogOpen,
     handleSearchChange: filters.handleSearchChange,
+    handleInvitationSearchChange: filters.handleInvitationSearchChange,
     handleSortChange: filters.handleSortChange,
+    handleRoleFilterChange: filters.handleRoleFilterChange,
+    handleInvitationStatusFilterChange:
+      filters.handleInvitationStatusFilterChange,
+    handleInvitationSortChange: filters.handleInvitationSortChange,
     handleInvite: handlers.handleInvite,
     handleResendInvitation: handlers.handleResendInvitation,
     handleRoleToggle: handlers.handleRoleToggle,

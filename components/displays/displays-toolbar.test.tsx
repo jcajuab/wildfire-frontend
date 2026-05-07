@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ComponentProps } from "react";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 
 import { DisplaysToolbar } from "@/components/displays/displays-toolbar";
@@ -11,7 +12,9 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
-const baseProps = {
+type DisplaysToolbarProps = ComponentProps<typeof DisplaysToolbar>;
+
+const baseProps: DisplaysToolbarProps = {
   statusFilter: "all" as const,
   search: "",
   selectedGroups: [],
@@ -35,7 +38,7 @@ const baseProps = {
   onManageGroups: vi.fn(),
 };
 
-function renderToolbar(props: Partial<typeof baseProps> = {}) {
+function renderToolbar(props: Partial<DisplaysToolbarProps> = {}) {
   const mergedProps = {
     ...baseProps,
     ...props,

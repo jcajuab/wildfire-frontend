@@ -260,4 +260,101 @@ describe("refreshAccessToken singleton", () => {
     // bootstrapAccessToken should have cleared the session on 401.
     expect(getAuthSnapshot().accessToken).toBeNull();
   });
+
+  test("login clears cached refresh responses before future refreshes", async () => {
+    let refreshCallCount = 0;
+
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/auth/refresh")) {
+        refreshCallCount += 1;
+        return makeJsonResponse(makeAuthResponse(`refresh-${refreshCallCount}`));
+      }
+      if (url.includes("/auth/login")) {
+        return makeJsonResponse(makeAuthResponse("login-tok"));
+      }
+      return makeJsonResponse({ ok: true });
+    });
+
+    const { refreshAccessToken, loginWithPassword } = await import(
+      "@/lib/auth-session"
+    );
+
+    const first = await refreshAccessToken();
+    expect(first.accessToken).toBe("refresh-1");
+    expect(refreshCallCount).toBe(1);
+
+    await loginWithPassword({ username: "admin", password: "secret" });
+
+    const second = await refreshAccessToken();
+    expect(second.accessToken).toBe("refresh-2");
+    expect(refreshCallCount).toBe(2);
+  });
+
+  test("in-flight refresh cannot overwrite a newer login session", async () => {
+    let resolveRefresh: (response: Response) => void = () => {
+      throw new Error("Refresh promise was not created.");
+    };
+
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/auth/refresh")) {
+        return new Promise<Response>((resolve) => {
+          resolveRefresh = resolve;
+        });
+      }
+      if (url.includes("/auth/login")) {
+        return makeJsonResponse(makeAuthResponse("login-tok"));
+      }
+      return makeJsonResponse({ ok: true });
+    });
+
+    const { refreshAccessToken, loginWithPassword, getAuthSnapshot } =
+      await import("@/lib/auth-session");
+
+    const refresh = refreshAccessToken();
+    await loginWithPassword({ username: "admin", password: "secret" });
+    resolveRefresh(makeJsonResponse(makeAuthResponse("stale-refresh-tok")));
+
+    await expect(refresh).rejects.toThrow("Stale refresh response ignored");
+    expect(getAuthSnapshot().accessToken).toBe("login-tok");
+  });
+
+  test("stale bootstrap refresh failure does not purge a newer login session", async () => {
+    let resolveRefresh: (response: Response) => void = () => {
+      throw new Error("Refresh promise was not created.");
+    };
+
+    vi.stubGlobal("sessionStorage", {
+      getItem: (key: string) => (key === "wildfire_has_session" ? "1" : null),
+      setItem: () => {},
+      removeItem: () => {},
+    });
+
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/auth/refresh")) {
+        return new Promise<Response>((resolve) => {
+          resolveRefresh = resolve;
+        });
+      }
+      if (url.includes("/auth/login")) {
+        return makeJsonResponse(makeAuthResponse("login-tok"));
+      }
+      if (url.includes("/auth/logout")) {
+        return new Response(null, { status: 204 });
+      }
+      return makeJsonResponse({ ok: true });
+    });
+
+    const { bootstrapAccessToken, loginWithPassword, getAuthSnapshot } =
+      await import("@/lib/auth-session");
+
+    const bootstrap = bootstrapAccessToken();
+    await loginWithPassword({ username: "admin", password: "secret" });
+    resolveRefresh(makeErrorResponse(401, "refresh token revoked"));
+    await bootstrap;
+
+    expect(getAuthSnapshot().accessToken).toBe("login-tok");
+  });
 });

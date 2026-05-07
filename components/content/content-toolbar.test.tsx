@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ComponentProps } from "react";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 
 import { ContentToolbar } from "@/components/content/content-toolbar";
@@ -10,7 +11,9 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
-const baseProps = {
+type ContentToolbarProps = ComponentProps<typeof ContentToolbar>;
+
+const baseProps: ContentToolbarProps = {
   statusFilter: "all" as const,
   typeFilter: "all" as const,
   search: "",
@@ -30,7 +33,7 @@ const baseProps = {
   onCreateFlash: vi.fn(),
 };
 
-function renderToolbar(props: Partial<typeof baseProps> = {}) {
+function renderToolbar(props: Partial<ContentToolbarProps> = {}) {
   return render(<ContentToolbar {...baseProps} {...props} />);
 }
 
@@ -147,7 +150,7 @@ describe("ContentToolbar", () => {
     expect(onEnterBulkDelete).toHaveBeenCalledTimes(1);
   });
 
-  test("does not show a leading create icon", () => {
+  test("shows a leading create icon", () => {
     renderToolbar();
 
     const createButton = screen.getByRole("button", {
@@ -157,7 +160,7 @@ describe("ContentToolbar", () => {
     expect(createButton).toHaveAttribute("data-size", "default");
     expect(
       createButton.querySelector(".tabler-icon-plus"),
-    ).not.toBeInTheDocument();
+    ).toBeInTheDocument();
   });
 
   test("places create content after bulk delete in the action group", () => {
