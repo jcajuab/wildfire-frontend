@@ -197,6 +197,9 @@ function parseSseChunk(
   return remainder;
 }
 
+const MAX_RECONNECT_ATTEMPTS = 5;
+const BASE_RECONNECT_DELAY_MS = 1_000;
+
 export function subscribeToDisplayLifecycleEvents(input: {
   readonly onEvent: (event: DisplayLifecycleEvent) => void;
   readonly baseUrl?: string;
@@ -217,44 +220,61 @@ export function subscribeToDisplayLifecycleEvents(input: {
   const controller = new AbortController();
 
   void (async () => {
-    try {
-      await ensureFreshAccessToken();
-      const url = `${input.baseUrl ?? getBaseUrl()}/displays/events`;
-      const response = await fetch(url, {
-        headers: { ...getAuthorizationHeaders() },
-        credentials: "same-origin",
-        signal: controller.signal,
-      });
+    let attempts = 0;
 
-      if (!response.ok || !response.body) return;
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (!controller.signal.aborted) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        buffer = parseSseChunk(buffer, (eventType, data) => {
-          try {
-            const parsed = parseDisplayLifecycleEvent(JSON.parse(data));
-            if (
-              parsed &&
-              DISPLAY_LIFECYCLE_EVENT_TYPES.includes(
-                eventType as DisplayLifecycleEventType,
-              )
-            ) {
-              input.onEvent(parsed);
-            }
-          } catch {
-            // Ignore malformed SSE payloads to keep the stream resilient.
-          }
+    while (!controller.signal.aborted) {
+      try {
+        await ensureFreshAccessToken();
+        const url = `${input.baseUrl ?? getBaseUrl()}/displays/events`;
+        const response = await fetch(url, {
+          headers: { ...getAuthorizationHeaders() },
+          credentials: "same-origin",
+          signal: controller.signal,
         });
+
+        if (!response.ok || !response.body) {
+          throw new Error(`SSE response not ok: ${response.status}`);
+        }
+
+        // Connected successfully — reset retry counter.
+        attempts = 0;
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (!controller.signal.aborted) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          buffer = parseSseChunk(buffer, (eventType, data) => {
+            try {
+              const parsed = parseDisplayLifecycleEvent(JSON.parse(data));
+              if (
+                parsed &&
+                DISPLAY_LIFECYCLE_EVENT_TYPES.includes(
+                  eventType as DisplayLifecycleEventType,
+                )
+              ) {
+                input.onEvent(parsed);
+              }
+            } catch {
+              // Ignore malformed SSE payloads to keep the stream resilient.
+            }
+          });
+        }
+      } catch {
+        // Stream ended or connection failed.
       }
-    } catch {
-      // Stream ended or was aborted — silently exit.
+
+      if (controller.signal.aborted) break;
+
+      attempts += 1;
+      if (attempts > MAX_RECONNECT_ATTEMPTS) break;
+
+      const delay = BASE_RECONNECT_DELAY_MS * 2 ** (attempts - 1);
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   })();
 
