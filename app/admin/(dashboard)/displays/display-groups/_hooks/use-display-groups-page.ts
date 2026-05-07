@@ -6,8 +6,13 @@ import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useCan } from "@/hooks/use-can";
 import {
+  displaysApi,
   useGetDisplaysBootstrapQuery,
   useGetDisplaysQuery,
+  useGetDisplaysInfiniteQuery,
+  useGetDisplayGroupsInfiniteQuery,
+  useGetDisplayGroupsForDisplayQuery,
+  useResolveDisplayGroupsMutation,
   useSetDisplayGroupsMutation,
   useCreateDisplayGroupMutation,
   useUpdateDisplayGroupMutation,
@@ -17,6 +22,7 @@ import {
   type DisplaysBootstrapResponse,
   type DisplaysListQuery,
 } from "@/lib/api/displays-api";
+import { useAppDispatch } from "@/lib/hooks";
 import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
 import { collapseDisplayGroupWhitespace } from "@/lib/display-group-normalization";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
@@ -27,6 +33,10 @@ import {
 import type { Display } from "@/types/display";
 
 export const DISPLAY_PAGE_SIZE = 12;
+export const GROUP_PAGE_SIZE = 12;
+// Internal query for "all groups for a single display" — display can belong
+// to many groups but rarely more than a few dozen; 200 is a safe ceiling.
+const SELECTED_DISPLAY_GROUPS_PAGE_SIZE = 200;
 
 export type Axis = "group" | "display";
 
@@ -52,10 +62,13 @@ export interface UseDisplayGroupsPageResult {
   readonly axis: Axis;
   readonly handleAxisChange: (next: Axis) => void;
 
-  readonly groups: readonly DisplayGroup[];
-  readonly filteredGroups: readonly DisplayGroup[];
+  readonly leftGroups: readonly DisplayGroup[];
   readonly isLoading: boolean;
   readonly isError: boolean;
+
+  readonly hasMoreLeftGroups: boolean;
+  readonly isFetchingMoreLeftGroups: boolean;
+  readonly fetchMoreLeftGroups: () => void;
 
   readonly selectedGroupId: string | null;
   readonly selectedGroup: DisplayGroup | null;
@@ -84,13 +97,15 @@ export interface UseDisplayGroupsPageResult {
   readonly leftDisplaySearch: string;
   readonly handleLeftDisplaySearchChange: (v: string) => void;
   readonly leftDisplays: readonly BackendDisplay[];
-  readonly leftDisplayPage: number;
-  readonly leftDisplayTotal: number;
-  readonly setLeftDisplayPage: (page: number) => void;
   readonly isLeftDisplaysLoading: boolean;
+  readonly hasMoreLeftDisplays: boolean;
+  readonly isFetchingMoreLeftDisplays: boolean;
+  readonly fetchMoreLeftDisplays: () => void;
   readonly selectedGroupIds: ReadonlySet<string>;
   readonly groupsForRightPane: readonly DisplayGroup[];
+  readonly groupsRightPanePage: number;
   readonly groupsRightPaneTotal: number;
+  readonly setGroupsRightPanePage: (page: number) => void;
   readonly handleSelectDisplay: (displayId: string) => void;
   readonly handleToggleGroup: (groupId: string) => void;
   readonly handleConfirmAddGroups: () => Promise<void>;
@@ -130,10 +145,8 @@ export function useDisplayGroupsPage({
 }: UseDisplayGroupsPageOptions = {}): UseDisplayGroupsPageResult {
   const canManageGroups = useCan("displays:update");
 
-  // Always subscribe to the bootstrap query. With initialData passed from SSR,
-  // RTK Query has the cache pre-warmed via the page-level seeder, so the
-  // background fetch is cheap; the subscription is what makes optimistic
-  // patches and tag invalidations from setDisplayGroups actually take effect.
+  // Bootstrap is still subscribed (other consumers seed it), but the
+  // display-groups page no longer depends on `bootstrap.displayGroups`.
   const {
     data: queriedData,
     isLoading: queryIsLoading,
@@ -141,14 +154,15 @@ export function useDisplayGroupsPage({
   } = useGetDisplaysBootstrapQuery(BOOTSTRAP_QUERY);
 
   const bootstrap = queriedData ?? initialData;
-  const isLoading = bootstrap == null && queryIsLoading;
 
+  const dispatch = useAppDispatch();
   const [setDisplayGroupsMutation] = useSetDisplayGroupsMutation();
   const [createDisplayGroupMutation, { isLoading: isCreatePending }] =
     useCreateDisplayGroupMutation();
   const [updateDisplayGroupMutation, { isLoading: isRenamePending }] =
     useUpdateDisplayGroupMutation();
   const [updateDisplayMutation] = useUpdateDisplayMutation();
+  const [resolveDisplayGroupsMutation] = useResolveDisplayGroupsMutation();
 
   const [axis, setAxis] = useState<Axis>("group");
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
@@ -172,7 +186,7 @@ export function useDisplayGroupsPage({
     new Set(),
   );
   const [leftDisplaySearch, setLeftDisplaySearch] = useState("");
-  const [leftDisplayPage, setLeftDisplayPage] = useState(1);
+  const [groupsRightPanePage, setGroupsRightPanePage] = useState(1);
 
   // Edit-display dialog state
   const [editingDisplayId, setEditingDisplayId] = useState<string | null>(null);
@@ -193,30 +207,38 @@ export function useDisplayGroupsPage({
 
   const debouncedDisplaySearch = useDebounce(displaySearch, 500);
   const debouncedLeftDisplaySearch = useDebounce(leftDisplaySearch, 500);
+  const debouncedGroupSearch = useDebounce(groupSearch, 500);
 
-  const groups = useMemo(
-    () => bootstrap?.displayGroups ?? [],
-    [bootstrap?.displayGroups],
+  // ---- Left pane "By group": infinite-scroll groups list ----
+  const groupsInfinite = useGetDisplayGroupsInfiniteQuery(
+    {
+      pageSize: GROUP_PAGE_SIZE,
+      q: debouncedGroupSearch || undefined,
+    },
+    { skip: axis !== "group" },
   );
 
-  const filteredGroups = useMemo(
-    () =>
-      groups
-        .filter((g) =>
-          g.name.toLowerCase().includes(groupSearch.trim().toLowerCase()),
-        )
-        .toSorted((a, b) => a.name.localeCompare(b.name)),
-    [groups, groupSearch],
+  const leftGroups = useMemo<readonly DisplayGroup[]>(
+    () => groupsInfinite.data?.pages.flatMap((p) => p.items) ?? [],
+    [groupsInfinite.data?.pages],
   );
+  const hasMoreLeftGroups = groupsInfinite.hasNextPage;
+  const isFetchingMoreLeftGroups = groupsInfinite.isFetchingNextPage;
+  const fetchMoreLeftGroups = useCallback(() => {
+    void groupsInfinite.fetchNextPage();
+  }, [groupsInfinite]);
+
+  const isLoading =
+    bootstrap == null && queryIsLoading && groupsInfinite.isLoading;
 
   const selectedGroup = useMemo(
-    () => groups.find((g) => g.id === selectedGroupId) ?? null,
-    [groups, selectedGroupId],
+    () => leftGroups.find((g) => g.id === selectedGroupId) ?? null,
+    [leftGroups, selectedGroupId],
   );
 
   const renameGroupInitialName = useMemo(
-    () => groups.find((g) => g.id === renameGroupId)?.name ?? "",
-    [groups, renameGroupId],
+    () => leftGroups.find((g) => g.id === renameGroupId)?.name ?? "",
+    [leftGroups, renameGroupId],
   );
 
   // Normal/Remove mode: server-side paginated query filtered by group
@@ -233,79 +255,88 @@ export function useDisplayGroupsPage({
       { skip: !selectedGroupId || actionMode === "add" },
     );
 
-  // Add mode: server-side text search, client-side group membership filter
+  // Add mode: server-side text search + membership=ungrouped|any filter
   const { data: addModeDisplaysData } = useGetDisplaysQuery(
     {
       q: debouncedDisplaySearch || undefined,
-      page: 1,
-      pageSize: DISPLAYS_BOOTSTRAP_PAGE_SIZE,
+      page: displayPage,
+      pageSize: DISPLAY_PAGE_SIZE,
       sortBy: "name",
       sortDirection: "asc",
+      membership: addFilter === "ungrouped" ? "ungrouped" : "any",
     },
     { skip: !selectedGroupId || actionMode !== "add" },
   );
 
-  const displaysForAddMode = useMemo(() => {
+  const addModePool = useMemo<readonly BackendDisplay[]>(() => {
     if (!selectedGroup) return [];
     const pool = addModeDisplaysData?.items ?? [];
-    if (addFilter === "ungrouped") {
-      return pool.filter(
-        (d) => !groups.some((g) => g.displayIds.includes(d.id)),
-      );
+    // For "all non-members" we still need to exclude the selected group's
+    // current members, since the backend filter is membership=any.
+    if (addFilter !== "ungrouped") {
+      return pool.filter((d) => !selectedGroup.displayIds.includes(d.id));
     }
-    return pool.filter((d) => !selectedGroup.displayIds.includes(d.id));
-  }, [addModeDisplaysData?.items, groups, selectedGroup, addFilter]);
-
-  const addModePaginated = useMemo(() => {
-    const start = (displayPage - 1) * DISPLAY_PAGE_SIZE;
-    return displaysForAddMode.slice(start, start + DISPLAY_PAGE_SIZE);
-  }, [displaysForAddMode, displayPage]);
+    return pool;
+  }, [addModeDisplaysData?.items, selectedGroup, addFilter]);
 
   const paginatedDisplays =
-    actionMode === "add" ? addModePaginated : (groupDisplaysData?.items ?? []);
+    actionMode === "add" ? addModePool : (groupDisplaysData?.items ?? []);
 
   const displayTotal =
     actionMode === "add"
-      ? displaysForAddMode.length
+      ? (addModeDisplaysData?.total ?? 0)
       : (groupDisplaysData?.total ?? 0);
 
   const isDisplaysLoading = actionMode !== "add" && isGroupDisplaysLoading;
 
-  // ---- Display-axis: paginated displays list for the left pane ----
-  const { data: leftDisplaysData, isLoading: isLeftDisplaysLoading } =
-    useGetDisplaysQuery(
-      {
-        q: debouncedLeftDisplaySearch || undefined,
-        page: leftDisplayPage,
-        pageSize: DISPLAY_PAGE_SIZE,
-        sortBy: "name",
-        sortDirection: "asc",
-      },
-      { skip: axis !== "display" },
-    );
+  // ---- Display-axis: infinite-scroll displays list for the left pane ----
+  const displaysInfinite = useGetDisplaysInfiniteQuery(
+    {
+      q: debouncedLeftDisplaySearch || undefined,
+      pageSize: DISPLAY_PAGE_SIZE,
+      sortBy: "name",
+      sortDirection: "asc",
+    },
+    { skip: axis !== "display" },
+  );
 
   const leftDisplays = useMemo<readonly BackendDisplay[]>(
-    () => leftDisplaysData?.items ?? [],
-    [leftDisplaysData?.items],
+    () => displaysInfinite.data?.pages.flatMap((p) => p.items) ?? [],
+    [displaysInfinite.data?.pages],
   );
-  const leftDisplayTotal = leftDisplaysData?.total ?? 0;
+  const isLeftDisplaysLoading = displaysInfinite.isLoading;
+  const hasMoreLeftDisplays = displaysInfinite.hasNextPage;
+  const isFetchingMoreLeftDisplays = displaysInfinite.isFetchingNextPage;
+  const fetchMoreLeftDisplays = useCallback(() => {
+    void displaysInfinite.fetchNextPage();
+  }, [displaysInfinite]);
 
   const selectedDisplayBackend = useMemo<BackendDisplay | null>(() => {
     if (axis !== "display" || !selectedDisplayId) return null;
     return leftDisplays.find((d) => d.id === selectedDisplayId) ?? null;
   }, [axis, leftDisplays, selectedDisplayId]);
 
-  const selectedDisplayGroupIds = useMemo<readonly string[]>(() => {
-    if (!selectedDisplayId) return [];
-    return groups
-      .filter((g) => g.displayIds.includes(selectedDisplayId))
-      .map((g) => g.id);
-  }, [groups, selectedDisplayId]);
+  // ---- Selected display's groups (full list, capped) for derivations like
+  // selectedDisplay.groups and the edit dialog. ----
+  const { data: selectedDisplayGroupsData } =
+    useGetDisplayGroupsForDisplayQuery(
+      {
+        displayId: selectedDisplayId ?? "",
+        page: 1,
+        pageSize: SELECTED_DISPLAY_GROUPS_PAGE_SIZE,
+        membership: "member",
+      },
+      { skip: selectedDisplayId == null },
+    );
 
-  const selectedDisplayGroups = useMemo<readonly DisplayGroup[]>(() => {
-    if (!selectedDisplayId) return [];
-    return groups.filter((g) => g.displayIds.includes(selectedDisplayId));
-  }, [groups, selectedDisplayId]);
+  const selectedDisplayGroups = useMemo<readonly DisplayGroup[]>(
+    () => selectedDisplayGroupsData?.items ?? [],
+    [selectedDisplayGroupsData?.items],
+  );
+  const selectedDisplayGroupIds = useMemo<readonly string[]>(
+    () => selectedDisplayGroups.map((g) => g.id),
+    [selectedDisplayGroups],
+  );
 
   const selectedDisplay = useMemo<Display | null>(() => {
     if (!selectedDisplayBackend) return null;
@@ -315,28 +346,35 @@ export function useDisplayGroupsPage({
     );
   }, [selectedDisplayBackend, selectedDisplayGroups]);
 
-  // Right-pane groups list depends on action mode
-  const groupsForRightPane = useMemo<readonly DisplayGroup[]>(() => {
-    if (axis !== "display" || !selectedDisplayId) return [];
-    const memberSet = new Set(selectedDisplayGroupIds);
-    if (actionMode === "add") {
-      return groups
-        .filter((g) => !memberSet.has(g.id))
-        .toSorted((a, b) => a.name.localeCompare(b.name));
-    }
-    return selectedDisplayGroups.toSorted((a, b) =>
-      a.name.localeCompare(b.name),
-    );
-  }, [
-    axis,
-    selectedDisplayId,
-    actionMode,
-    groups,
-    selectedDisplayGroups,
-    selectedDisplayGroupIds,
-  ]);
+  // ---- Right-pane groups: paginated, filtered by add/remove mode ----
+  const { data: rightPaneGroupsData } = useGetDisplayGroupsForDisplayQuery(
+    {
+      displayId: selectedDisplayId ?? "",
+      page: groupsRightPanePage,
+      pageSize: GROUP_PAGE_SIZE,
+      q: debouncedDisplaySearch || undefined,
+      membership: actionMode === "add" ? "non-member" : "member",
+    },
+    { skip: axis !== "display" || selectedDisplayId == null },
+  );
 
-  // ---- Edit-display dialog: derive Display from current id ----
+  const groupsForRightPane = useMemo<readonly DisplayGroup[]>(
+    () => rightPaneGroupsData?.items ?? [],
+    [rightPaneGroupsData?.items],
+  );
+  const groupsRightPaneTotal = rightPaneGroupsData?.total ?? 0;
+
+  // ---- Edit-display dialog: groups for the editing display id ----
+  const { data: editingDisplayGroupsData } = useGetDisplayGroupsForDisplayQuery(
+    {
+      displayId: editingDisplayId ?? "",
+      page: 1,
+      pageSize: SELECTED_DISPLAY_GROUPS_PAGE_SIZE,
+      membership: "member",
+    },
+    { skip: editingDisplayId == null },
+  );
+
   const editingDisplay = useMemo<Display | null>(() => {
     if (!editingDisplayId) return null;
     const backend =
@@ -345,17 +383,21 @@ export function useDisplayGroupsPage({
         ? selectedDisplayBackend
         : null);
     if (!backend) return null;
-    return withDisplayGroups(
-      mapDisplayApiToDisplay(backend),
-      groups
-        .filter((g) => g.displayIds.includes(editingDisplayId))
-        .map((g) => ({ name: g.name })),
-    );
-  }, [editingDisplayId, leftDisplays, selectedDisplayBackend, groups]);
+    const groupNames = (editingDisplayGroupsData?.items ?? []).map((g) => ({
+      name: g.name,
+    }));
+    return withDisplayGroups(mapDisplayApiToDisplay(backend), groupNames);
+  }, [
+    editingDisplayId,
+    leftDisplays,
+    selectedDisplayBackend,
+    editingDisplayGroupsData?.items,
+  ]);
 
   const handleDisplaySearchChange = useCallback((v: string) => {
     setDisplaySearch(v);
     setDisplayPage(1);
+    setGroupsRightPanePage(1);
   }, []);
 
   const handleSelectGroup = useCallback(
@@ -373,19 +415,24 @@ export function useDisplayGroupsPage({
   const handleEnterAdd = useCallback(() => {
     setActionMode("add");
     setSelectedDisplayIds(new Set());
+    setSelectedGroupIds(new Set());
     setAddFilter("ungrouped");
     setDisplayPage(1);
+    setGroupsRightPanePage(1);
   }, []);
 
   const handleEnterRemove = useCallback(() => {
     setActionMode("remove");
     setSelectedDisplayIds(new Set());
+    setSelectedGroupIds(new Set());
     setDisplayPage(1);
+    setGroupsRightPanePage(1);
   }, []);
 
   const handleCancelAction = useCallback(() => {
     setActionMode(null);
     setSelectedDisplayIds(new Set());
+    setSelectedGroupIds(new Set());
   }, []);
 
   const handleToggleDisplay = useCallback((id: string) => {
@@ -400,17 +447,35 @@ export function useDisplayGroupsPage({
     });
   }, []);
 
+  // Fetch a display's current group membership IDs from the server. Uses the
+  // RTK Query cache when warm; otherwise issues a single paginated request.
+  const fetchDisplayGroupIds = useCallback(
+    async (displayId: string): Promise<readonly string[]> => {
+      const result = await dispatch(
+        displaysApi.endpoints.getDisplayGroupsForDisplay.initiate(
+          {
+            displayId,
+            page: 1,
+            pageSize: SELECTED_DISPLAY_GROUPS_PAGE_SIZE,
+            membership: "member",
+          },
+          { forceRefetch: false },
+        ),
+      ).unwrap();
+      return result.items.map((g) => g.id);
+    },
+    [dispatch],
+  );
+
   const handleConfirmAdd = useCallback(async () => {
     if (!selectedGroupId || selectedDisplayIds.size === 0) return;
     setIsExecuting(true);
     try {
       const results = await Promise.allSettled(
-        [...selectedDisplayIds].map((displayId) => {
-          const currentGroupIds = groups
-            .filter((g) => g.displayIds.includes(displayId))
-            .map((g) => g.id);
+        [...selectedDisplayIds].map(async (displayId) => {
+          const currentGroupIds = await fetchDisplayGroupIds(displayId);
           const newGroupIds = currentGroupIds.includes(selectedGroupId)
-            ? currentGroupIds
+            ? [...currentGroupIds]
             : [...currentGroupIds, selectedGroupId];
           return setDisplayGroupsMutation({
             displayId,
@@ -434,17 +499,20 @@ export function useDisplayGroupsPage({
       setActionMode(null);
       setSelectedDisplayIds(new Set());
     }
-  }, [groups, selectedDisplayIds, selectedGroupId, setDisplayGroupsMutation]);
+  }, [
+    selectedDisplayIds,
+    selectedGroupId,
+    setDisplayGroupsMutation,
+    fetchDisplayGroupIds,
+  ]);
 
   const handleConfirmRemove = useCallback(async () => {
     if (!selectedGroupId || selectedDisplayIds.size === 0) return;
     setIsExecuting(true);
     try {
       const results = await Promise.allSettled(
-        [...selectedDisplayIds].map((displayId) => {
-          const currentGroupIds = groups
-            .filter((g) => g.displayIds.includes(displayId))
-            .map((g) => g.id);
+        [...selectedDisplayIds].map(async (displayId) => {
+          const currentGroupIds = await fetchDisplayGroupIds(displayId);
           return setDisplayGroupsMutation({
             displayId,
             groupIds: currentGroupIds.filter((id) => id !== selectedGroupId),
@@ -467,7 +535,12 @@ export function useDisplayGroupsPage({
       setActionMode(null);
       setSelectedDisplayIds(new Set());
     }
-  }, [groups, selectedDisplayIds, selectedGroupId, setDisplayGroupsMutation]);
+  }, [
+    selectedDisplayIds,
+    selectedGroupId,
+    setDisplayGroupsMutation,
+    fetchDisplayGroupIds,
+  ]);
 
   const handleCreateGroup = useCallback(
     async (name: string) => {
@@ -510,18 +583,19 @@ export function useDisplayGroupsPage({
     setDisplaySearch("");
     setLeftDisplaySearch("");
     setDisplayPage(1);
-    setLeftDisplayPage(1);
+    setGroupsRightPanePage(1);
   }, []);
 
   const handleLeftDisplaySearchChange = useCallback((v: string) => {
     setLeftDisplaySearch(v);
-    setLeftDisplayPage(1);
+    // Infinite query refetches automatically when the q arg changes.
   }, []);
 
   const handleSelectDisplay = useCallback((displayId: string) => {
     setSelectedDisplayId((prev) => (prev === displayId ? null : displayId));
     setActionMode(null);
     setSelectedGroupIds(new Set());
+    setGroupsRightPanePage(1);
   }, []);
 
   const handleToggleGroup = useCallback((groupId: string) => {
@@ -619,27 +693,17 @@ export function useDisplayGroupsPage({
       }
 
       try {
-        // Resolve group names → group IDs, creating any missing ones.
-        const existingByName = new Map<string, string>();
-        for (const g of groups) {
-          existingByName.set(g.name.toLowerCase(), g.id);
-        }
-        const nextGroupIds: string[] = [];
-        for (const label of display.groups) {
-          const normalized = collapseDisplayGroupWhitespace(label.name);
-          if (!normalized) continue;
-          const existingId = existingByName.get(normalized.toLowerCase());
-          if (existingId) {
-            if (!nextGroupIds.includes(existingId)) {
-              nextGroupIds.push(existingId);
-            }
-            continue;
-          }
-          const created = await createDisplayGroupMutation({
-            name: normalized,
+        // Resolve group names → group IDs in one backend round-trip,
+        // creating any missing ones idempotently.
+        const names = display.groups
+          .map((g) => collapseDisplayGroupWhitespace(g.name))
+          .filter((n) => n.length > 0);
+        let nextGroupIds: string[] = [];
+        if (names.length > 0) {
+          const resolved = await resolveDisplayGroupsMutation({
+            names,
           }).unwrap();
-          existingByName.set(created.name.toLowerCase(), created.id);
-          nextGroupIds.push(created.id);
+          nextGroupIds = resolved.items.map((i) => i.id);
         }
         await setDisplayGroupsMutation({
           displayId: display.id,
@@ -658,8 +722,7 @@ export function useDisplayGroupsPage({
     },
     [
       updateDisplayMutation,
-      groups,
-      createDisplayGroupMutation,
+      resolveDisplayGroupsMutation,
       setDisplayGroupsMutation,
     ],
   );
@@ -668,10 +731,12 @@ export function useDisplayGroupsPage({
     canManageGroups,
     axis,
     handleAxisChange,
-    groups,
-    filteredGroups,
+    leftGroups,
     isLoading,
     isError,
+    hasMoreLeftGroups,
+    isFetchingMoreLeftGroups,
+    fetchMoreLeftGroups,
     selectedGroupId,
     selectedGroup,
     groupSearch,
@@ -692,13 +757,15 @@ export function useDisplayGroupsPage({
     leftDisplaySearch,
     handleLeftDisplaySearchChange,
     leftDisplays,
-    leftDisplayPage,
-    leftDisplayTotal,
-    setLeftDisplayPage,
     isLeftDisplaysLoading,
+    hasMoreLeftDisplays,
+    isFetchingMoreLeftDisplays,
+    fetchMoreLeftDisplays,
     selectedGroupIds,
     groupsForRightPane,
-    groupsRightPaneTotal: groupsForRightPane.length,
+    groupsRightPanePage,
+    groupsRightPaneTotal,
+    setGroupsRightPanePage,
     handleSelectDisplay,
     handleToggleGroup,
     handleConfirmAddGroups,

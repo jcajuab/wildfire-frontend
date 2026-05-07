@@ -42,7 +42,9 @@ describe("DisplayRegistrationLinkDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    useGetDisplayGroupsQueryMock.mockReturnValue({ data: [] });
+    useGetDisplayGroupsQueryMock.mockReturnValue({
+      data: { items: [], total: 0, page: 1, pageSize: 100 },
+    });
     useCreateRegistrationLinkMutationMock.mockReturnValue([
       vi.fn(() => ({
         unwrap: vi.fn().mockResolvedValue({

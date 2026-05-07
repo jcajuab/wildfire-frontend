@@ -46,6 +46,30 @@ export interface DisplaysListQuery {
   readonly output?: string;
   readonly sortBy?: "name" | "status";
   readonly sortDirection?: "asc" | "desc";
+  readonly membership?: "ungrouped" | "any";
+}
+
+export interface DisplayGroupsListQuery {
+  readonly page?: number;
+  readonly pageSize?: number;
+  readonly q?: string;
+  readonly displayId?: string;
+  readonly membership?: "member" | "non-member";
+}
+
+export interface DisplayGroupsListResponse {
+  readonly items: readonly DisplayGroup[];
+  readonly total: number;
+  readonly page: number;
+  readonly pageSize: number;
+}
+
+export interface ResolveDisplayGroupsRequest {
+  readonly names: readonly string[];
+}
+
+export interface ResolveDisplayGroupsResponse {
+  readonly items: readonly { readonly id: string; readonly name: string }[];
 }
 
 export interface DisplayOption {
@@ -142,6 +166,7 @@ export const displaysApi = api.injectEndpoints({
         if (query?.sortBy) params.set("sortBy", query.sortBy);
         if (query?.sortDirection)
           params.set("sortDirection", query.sortDirection);
+        if (query?.membership) params.set("membership", query.membership);
         if (query?.groupIds) {
           for (const groupId of query.groupIds) {
             params.append("groupIds", groupId);
@@ -152,6 +177,52 @@ export const displaysApi = api.injectEndpoints({
       transformResponse: (response) =>
         transformPaginatedListResponse<BackendDisplay>(response, "getDisplays"),
       providesTags: createProvidesTags("Display"),
+    }),
+    getDisplaysInfinite: build.infiniteQuery<
+      DisplaysListResponse,
+      Omit<DisplaysListQuery, "page">,
+      number
+    >({
+      infiniteQueryOptions: {
+        initialPageParam: 1,
+        getNextPageParam: (last, _all, lastParam) =>
+          last.items.length < last.pageSize ? undefined : lastParam + 1,
+      },
+      query: ({ queryArg, pageParam }) => {
+        const params = new URLSearchParams();
+        params.set("page", String(pageParam));
+        params.set("pageSize", String(queryArg.pageSize ?? 20));
+        if (queryArg.q) params.set("q", queryArg.q);
+        if (queryArg.status) params.set("status", queryArg.status);
+        if (queryArg.output) params.set("output", queryArg.output);
+        if (queryArg.sortBy) params.set("sortBy", queryArg.sortBy);
+        if (queryArg.sortDirection)
+          params.set("sortDirection", queryArg.sortDirection);
+        if (queryArg.membership) params.set("membership", queryArg.membership);
+        if (queryArg.groupIds) {
+          for (const groupId of queryArg.groupIds) {
+            params.append("groupIds", groupId);
+          }
+        }
+        return `displays?${params.toString()}`;
+      },
+      transformResponse: (response) =>
+        transformPaginatedListResponse<BackendDisplay>(
+          response,
+          "getDisplaysInfinite",
+        ),
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.pages.flatMap((p) =>
+                p.items.map(({ id }) => ({
+                  type: "Display" as const,
+                  id,
+                })),
+              ),
+              { type: "Display", id: "LIST" },
+            ]
+          : [{ type: "Display", id: "LIST" }],
     }),
     getDisplaysBootstrap: build.query<
       DisplaysBootstrapResponse,
@@ -398,20 +469,104 @@ export const displaysApi = api.injectEndpoints({
         },
       },
     ),
-    getDisplayGroups: build.query<DisplayGroup[], void>({
-      query: () => "displays/groups",
+    getDisplayGroups: build.query<
+      DisplayGroupsListResponse,
+      DisplayGroupsListQuery | void
+    >({
+      query: (query) => {
+        const params = new URLSearchParams();
+        params.set("page", String(query?.page ?? 1));
+        params.set("pageSize", String(query?.pageSize ?? 20));
+        if (query?.q) params.set("q", query.q);
+        if (query?.displayId) params.set("displayId", query.displayId);
+        if (query?.membership) params.set("membership", query.membership);
+        return `displays/groups?${params.toString()}`;
+      },
       transformResponse: (response) =>
-        parseApiResponseDataSafe<DisplayGroup[]>(response, "getDisplayGroups"),
+        transformPaginatedListResponse<DisplayGroup>(
+          response,
+          "getDisplayGroups",
+        ),
+      providesTags: createProvidesTags("DisplayGroup"),
+    }),
+    getDisplayGroupsInfinite: build.infiniteQuery<
+      DisplayGroupsListResponse,
+      Omit<DisplayGroupsListQuery, "page">,
+      number
+    >({
+      infiniteQueryOptions: {
+        initialPageParam: 1,
+        getNextPageParam: (last, _all, lastParam) =>
+          last.items.length < last.pageSize ? undefined : lastParam + 1,
+      },
+      query: ({ queryArg, pageParam }) => {
+        const params = new URLSearchParams();
+        params.set("page", String(pageParam));
+        params.set("pageSize", String(queryArg.pageSize ?? 20));
+        if (queryArg.q) params.set("q", queryArg.q);
+        if (queryArg.displayId) params.set("displayId", queryArg.displayId);
+        if (queryArg.membership) params.set("membership", queryArg.membership);
+        return `displays/groups?${params.toString()}`;
+      },
+      transformResponse: (response) =>
+        transformPaginatedListResponse<DisplayGroup>(
+          response,
+          "getDisplayGroupsInfinite",
+        ),
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({
-                type: "DisplayGroup" as const,
-                id,
-              })),
+              ...result.pages.flatMap((p) =>
+                p.items.map(({ id }) => ({
+                  type: "DisplayGroup" as const,
+                  id,
+                })),
+              ),
               { type: "DisplayGroup", id: "LIST" },
             ]
           : [{ type: "DisplayGroup", id: "LIST" }],
+    }),
+    getDisplayGroupsForDisplay: build.query<
+      DisplayGroupsListResponse,
+      {
+        readonly displayId: string;
+        readonly page?: number;
+        readonly pageSize?: number;
+        readonly q?: string;
+        readonly membership?: "member" | "non-member";
+      }
+    >({
+      query: ({ displayId, page, pageSize, q, membership }) => {
+        const params = new URLSearchParams();
+        params.set("page", String(page ?? 1));
+        params.set("pageSize", String(pageSize ?? 20));
+        params.set("displayId", displayId);
+        if (q) params.set("q", q);
+        if (membership) params.set("membership", membership);
+        return `displays/groups?${params.toString()}`;
+      },
+      transformResponse: (response) =>
+        transformPaginatedListResponse<DisplayGroup>(
+          response,
+          "getDisplayGroupsForDisplay",
+        ),
+      providesTags: createProvidesTags("DisplayGroup"),
+    }),
+    resolveDisplayGroups: build.mutation<
+      ResolveDisplayGroupsResponse,
+      ResolveDisplayGroupsRequest
+    >({
+      query: (body) => ({
+        url: "displays/groups/resolve",
+        method: "POST",
+        body,
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<ResolveDisplayGroupsResponse>(
+          response,
+          "resolveDisplayGroups",
+        ),
+      invalidatesTags: [{ type: "DisplayGroup", id: "LIST" }],
     }),
     createDisplayGroup: build.mutation<DisplayGroup, { name: string }>({
       query: (body) => ({
@@ -421,28 +576,15 @@ export const displaysApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<DisplayGroup>(response, "createDisplayGroup"),
+      // Invalidate DisplayGroup LIST so all paginated / infinite caches
+      // (getDisplayGroups, getDisplayGroupsInfinite, getDisplayGroupsForDisplay)
+      // refetch with the new group included.
+      invalidatesTags: [{ type: "DisplayGroup", id: "LIST" }],
       async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
         try {
           const { data: group } = await queryFulfilled;
-          const groupArgs = displaysApi.util.selectCachedArgsForQuery(
-            getState(),
-            "getDisplayGroups",
-          );
-          for (const ga of groupArgs) {
-            dispatch(
-              displaysApi.util.updateQueryData(
-                "getDisplayGroups",
-                ga,
-                (draft) => {
-                  const groups = draft as unknown as DisplayGroup[];
-                  groups.push({
-                    ...group,
-                    displayIds: [...group.displayIds],
-                  });
-                },
-              ),
-            );
-          }
+          // Keep bootstrap.displayGroups consistent for legacy consumers
+          // (use-displays-page, use-schedules-page) that still read it.
           const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
             getState(),
             "getDisplaysBootstrap",
@@ -454,10 +596,12 @@ export const displaysApi = api.injectEndpoints({
                 a,
                 (draft) => {
                   const b = draft as unknown as DisplaysBootstrapMutable;
-                  b.displayGroups.push({
-                    ...group,
-                    displayIds: [...group.displayIds],
-                  });
+                  if (!b.displayGroups.some((g) => g.id === group.id)) {
+                    b.displayGroups.push({
+                      ...group,
+                      displayIds: [...group.displayIds],
+                    });
+                  }
                 },
               ),
             );
@@ -485,6 +629,7 @@ export const displaysApi = api.injectEndpoints({
       ) {
         try {
           const { data } = await queryFulfilled;
+          // Patch paginated getDisplayGroups caches.
           const groupArgs = displaysApi.util.selectCachedArgsForQuery(
             getState(),
             "getDisplayGroups",
@@ -495,8 +640,62 @@ export const displaysApi = api.injectEndpoints({
                 "getDisplayGroups",
                 ga,
                 (draft) => {
-                  const idx = draft.findIndex((g) => g.id === groupId);
-                  if (idx !== -1) draft[idx] = data;
+                  const items = draft.items as DisplayGroup[];
+                  const idx = items.findIndex((g) => g.id === groupId);
+                  if (idx !== -1) {
+                    items[idx] = {
+                      ...data,
+                      displayIds: [...data.displayIds],
+                    };
+                  }
+                },
+              ),
+            );
+          }
+          // Patch infinite getDisplayGroupsInfinite caches.
+          const infiniteArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplayGroupsInfinite",
+          );
+          for (const ia of infiniteArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplayGroupsInfinite",
+                ia,
+                (draft) => {
+                  for (const page of draft.pages) {
+                    const items = page.items as DisplayGroup[];
+                    const idx = items.findIndex((g) => g.id === groupId);
+                    if (idx !== -1) {
+                      items[idx] = {
+                        ...data,
+                        displayIds: [...data.displayIds],
+                      };
+                    }
+                  }
+                },
+              ),
+            );
+          }
+          // Patch getDisplayGroupsForDisplay caches.
+          const perDisplayArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplayGroupsForDisplay",
+          );
+          for (const pa of perDisplayArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplayGroupsForDisplay",
+                pa,
+                (draft) => {
+                  const items = draft.items as DisplayGroup[];
+                  const idx = items.findIndex((g) => g.id === groupId);
+                  if (idx !== -1) {
+                    items[idx] = {
+                      ...data,
+                      displayIds: [...data.displayIds],
+                    };
+                  }
                 },
               ),
             );
@@ -538,6 +737,7 @@ export const displaysApi = api.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { groupId }) => [
         { type: "DisplayGroup", id: groupId },
+        { type: "DisplayGroup", id: "LIST" },
       ],
       async onQueryStarted(
         { groupId },
@@ -554,7 +754,65 @@ export const displaysApi = api.injectEndpoints({
               displaysApi.util.updateQueryData(
                 "getDisplayGroups",
                 ga,
-                (draft) => draft.filter((g) => g.id !== groupId),
+                (draft) => {
+                  const d = draft as unknown as {
+                    items: DisplayGroup[];
+                    total: number;
+                  };
+                  const idx = d.items.findIndex((g) => g.id === groupId);
+                  if (idx !== -1) {
+                    d.items.splice(idx, 1);
+                    d.total = Math.max(0, d.total - 1);
+                  }
+                },
+              ),
+            );
+          }
+          const infiniteArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplayGroupsInfinite",
+          );
+          for (const ia of infiniteArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplayGroupsInfinite",
+                ia,
+                (draft) => {
+                  for (const page of draft.pages) {
+                    const p = page as unknown as {
+                      items: DisplayGroup[];
+                      total: number;
+                    };
+                    const idx = p.items.findIndex((g) => g.id === groupId);
+                    if (idx !== -1) {
+                      p.items.splice(idx, 1);
+                      p.total = Math.max(0, p.total - 1);
+                    }
+                  }
+                },
+              ),
+            );
+          }
+          const perDisplayArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplayGroupsForDisplay",
+          );
+          for (const pa of perDisplayArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplayGroupsForDisplay",
+                pa,
+                (draft) => {
+                  const d = draft as unknown as {
+                    items: DisplayGroup[];
+                    total: number;
+                  };
+                  const idx = d.items.findIndex((g) => g.id === groupId);
+                  if (idx !== -1) {
+                    d.items.splice(idx, 1);
+                    d.total = Math.max(0, d.total - 1);
+                  }
+                },
               ),
             );
           }
@@ -627,9 +885,59 @@ export const displaysApi = api.injectEndpoints({
                 "getDisplayGroups",
                 ga,
                 (draft) => {
-                  syncMembership(draft);
+                  syncMembership(draft.items as DisplayGroup[]);
                 },
               ),
+            );
+          }
+          const infiniteArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplayGroupsInfinite",
+          );
+          for (const ia of infiniteArgs) {
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplayGroupsInfinite",
+                ia,
+                (draft) => {
+                  for (const page of draft.pages) {
+                    syncMembership(page.items as DisplayGroup[]);
+                  }
+                },
+              ),
+            );
+          }
+          // For getDisplayGroupsForDisplay: when membership changes for the
+          // affected displayId, the result set itself shifts (member ↔
+          // non-member), so the synchronous syncMembership patch isn't enough.
+          // Patch OTHER displays' caches (only their nested displayIds need to
+          // change), and force-refetch caches whose displayId matches the
+          // mutated display.
+          const perDisplayArgs = displaysApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getDisplayGroupsForDisplay",
+          );
+          let needsAffectedDisplayRefetch = false;
+          for (const pa of perDisplayArgs) {
+            if (pa.displayId === displayId) {
+              needsAffectedDisplayRefetch = true;
+              continue;
+            }
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplayGroupsForDisplay",
+                pa,
+                (draft) => {
+                  syncMembership(draft.items as DisplayGroup[]);
+                },
+              ),
+            );
+          }
+          if (needsAffectedDisplayRefetch) {
+            dispatch(
+              displaysApi.util.invalidateTags([
+                { type: "DisplayGroup", id: "LIST" },
+              ]),
             );
           }
           const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
@@ -673,6 +981,36 @@ export const displaysApi = api.injectEndpoints({
                   } as BackendDisplay);
                 }
               }),
+            );
+          }
+          // Also patch infinite displays caches whose membership filter no
+          // longer matches.
+          const displaysInfiniteArgs =
+            displaysApi.util.selectCachedArgsForQuery(
+              getState(),
+              "getDisplaysInfinite",
+            );
+          for (const a of displaysInfiniteArgs) {
+            const filterGroupIds = a?.groupIds ?? [];
+            if (filterGroupIds.length === 0) continue;
+            const matchesAfter = filterGroupIds.some((gid) =>
+              groupIds.includes(gid),
+            );
+            if (matchesAfter) continue;
+            dispatch(
+              displaysApi.util.updateQueryData(
+                "getDisplaysInfinite",
+                a,
+                (draft) => {
+                  for (const page of draft.pages) {
+                    if (page.items.some((d) => d.id === displayId)) {
+                      patchPaginatedListById(page, "remove", {
+                        id: displayId,
+                      } as BackendDisplay);
+                    }
+                  }
+                },
+              ),
             );
           }
           await bumpDisplaysNextCache();
@@ -816,6 +1154,15 @@ export const displaysApi = api.injectEndpoints({
   }),
 });
 
+// Infinite-query hooks: TS struggles to surface the auto-generated
+// `useGetXInfiniteQuery` names on the top-level api object (shows up as
+// `Property does not exist`), so we re-export them directly off the endpoint
+// objects, where the type is fully resolved.
+export const useGetDisplaysInfiniteQuery =
+  displaysApi.endpoints.getDisplaysInfinite.useInfiniteQuery;
+export const useGetDisplayGroupsInfiniteQuery =
+  displaysApi.endpoints.getDisplayGroupsInfinite.useInfiniteQuery;
+
 export const {
   useGetDisplaysQuery,
   useLazyGetDisplaysQuery,
@@ -830,6 +1177,8 @@ export const {
   useActivateGlobalEmergencyMutation,
   useDeactivateGlobalEmergencyMutation,
   useGetDisplayGroupsQuery,
+  useGetDisplayGroupsForDisplayQuery,
+  useResolveDisplayGroupsMutation,
   useCreateDisplayGroupMutation,
   useUpdateDisplayGroupMutation,
   useDeleteDisplayGroupMutation,

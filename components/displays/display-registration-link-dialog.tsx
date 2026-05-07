@@ -191,7 +191,14 @@ function DisplayRegistrationLinkDialogBody({
   const [formError, setFormError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const { data: existingGroups = [] } = useGetDisplayGroupsQuery();
+  const { data: existingGroupsData } = useGetDisplayGroupsQuery({
+    page: 1,
+    pageSize: 100,
+  });
+  const existingGroups = useMemo(
+    () => existingGroupsData?.items ?? [],
+    [existingGroupsData?.items],
+  );
   const [createRegistrationLink, { isLoading: isSubmitting }] =
     useCreateRegistrationLinkMutation();
 

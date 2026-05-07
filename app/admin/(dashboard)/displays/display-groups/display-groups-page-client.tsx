@@ -50,8 +50,10 @@ import { CreateDisplayGroupDialog } from "./_components/create-display-group-dia
 import { RenameDisplayGroupDialog } from "./_components/rename-display-group-dialog";
 import {
   DISPLAY_PAGE_SIZE,
+  GROUP_PAGE_SIZE,
   useDisplayGroupsPage,
 } from "./_hooks/use-display-groups-page";
+import { useInfiniteScrollSentinel } from "./_hooks/use-infinite-scroll-sentinel";
 
 const EditDisplayDialog = dynamic(
   () =>
@@ -90,10 +92,12 @@ export function DisplayGroupsPageClient({
     canManageGroups,
     axis,
     handleAxisChange,
-    groups,
-    filteredGroups,
+    leftGroups,
     isLoading,
     isError,
+    hasMoreLeftGroups,
+    isFetchingMoreLeftGroups,
+    fetchMoreLeftGroups,
     selectedGroupId,
     selectedGroup,
     groupSearch,
@@ -114,13 +118,15 @@ export function DisplayGroupsPageClient({
     leftDisplaySearch,
     handleLeftDisplaySearchChange,
     leftDisplays,
-    leftDisplayPage,
-    leftDisplayTotal,
-    setLeftDisplayPage,
     isLeftDisplaysLoading,
+    hasMoreLeftDisplays,
+    isFetchingMoreLeftDisplays,
+    fetchMoreLeftDisplays,
     selectedGroupIds,
     groupsForRightPane,
+    groupsRightPanePage,
     groupsRightPaneTotal,
+    setGroupsRightPanePage,
     handleSelectDisplay,
     handleToggleGroup,
     handleConfirmAddGroups,
@@ -150,6 +156,18 @@ export function DisplayGroupsPageClient({
   } = useDisplayGroupsPage({ initialData });
 
   const isDisplayAxis = axis === "display";
+
+  const leftDisplaysLoadMoreRef = useInfiniteScrollSentinel({
+    hasMore: hasMoreLeftDisplays,
+    isFetching: isFetchingMoreLeftDisplays,
+    onIntersect: fetchMoreLeftDisplays,
+  });
+
+  const leftGroupsLoadMoreRef = useInfiniteScrollSentinel({
+    hasMore: hasMoreLeftGroups,
+    isFetching: isFetchingMoreLeftGroups,
+    onIntersect: fetchMoreLeftGroups,
+  });
 
   const counterText = isDisplayAxis
     ? actionMode
@@ -419,20 +437,20 @@ export function DisplayGroupsPageClient({
           {/* Left pane */}
           <div className="flex w-56 shrink-0 flex-col border-r border-border">
             {isDisplayAxis ? (
-              <>
-                <div className="flex-1 space-y-1 overflow-y-auto p-2">
-                  {isLeftDisplaysLoading && leftDisplays.length === 0 ? (
-                    Array.from({ length: 6 }).map((_, i) => (
-                      <Skeleton key={i} className="h-9 rounded-md" />
-                    ))
-                  ) : leftDisplays.length === 0 ? (
-                    <p className="px-2 py-4 text-center text-xs text-muted-foreground">
-                      {leftDisplaySearch
-                        ? "No matching displays."
-                        : "No displays yet."}
-                    </p>
-                  ) : (
-                    leftDisplays.map((display) => (
+              <div className="flex-1 space-y-1 overflow-y-auto p-2">
+                {isLeftDisplaysLoading && leftDisplays.length === 0 ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-9 rounded-md" />
+                  ))
+                ) : leftDisplays.length === 0 ? (
+                  <p className="px-2 py-4 text-center text-xs text-muted-foreground">
+                    {leftDisplaySearch
+                      ? "No matching displays."
+                      : "No displays yet."}
+                  </p>
+                ) : (
+                  <>
+                    {leftDisplays.map((display) => (
                       <DisplaySidebarCard
                         key={display.id}
                         display={display}
@@ -441,20 +459,14 @@ export function DisplayGroupsPageClient({
                         onSettings={() => handleOpenEditDisplay(display.id)}
                         canManage={canManageGroups}
                       />
-                    ))
-                  )}
-                </div>
-                <footer className="border-t border-border bg-background/80 empty:hidden">
-                  <PaginationFooter
-                    page={leftDisplayPage}
-                    pageSize={DISPLAY_PAGE_SIZE}
-                    total={leftDisplayTotal}
-                    onPageChange={setLeftDisplayPage}
-                    variant="compact"
-                    alwaysShow
-                  />
-                </footer>
-              </>
+                    ))}
+                    {isFetchingMoreLeftDisplays ? (
+                      <Skeleton className="h-9 rounded-md" />
+                    ) : null}
+                    <div ref={leftDisplaysLoadMoreRef} className="h-px" />
+                  </>
+                )}
+              </div>
             ) : (
               <div className="flex-1 space-y-1 overflow-y-auto p-2">
                 {isLoading ? (
@@ -465,23 +477,29 @@ export function DisplayGroupsPageClient({
                   <p className="px-2 py-4 text-center text-xs text-destructive">
                     Failed to load groups.
                   </p>
-                ) : filteredGroups.length === 0 ? (
+                ) : leftGroups.length === 0 ? (
                   <p className="px-2 py-4 text-center text-xs text-muted-foreground">
                     {groupSearch
                       ? "No matching groups."
                       : "No display groups yet."}
                   </p>
                 ) : (
-                  filteredGroups.map((group) => (
-                    <DisplayGroupCard
-                      key={group.id}
-                      group={group}
-                      isSelected={selectedGroupId === group.id}
-                      onSelect={() => handleSelectGroup(group.id)}
-                      onSettings={() => setRenameGroupId(group.id)}
-                      canManage={canManageGroups}
-                    />
-                  ))
+                  <>
+                    {leftGroups.map((group) => (
+                      <DisplayGroupCard
+                        key={group.id}
+                        group={group}
+                        isSelected={selectedGroupId === group.id}
+                        onSelect={() => handleSelectGroup(group.id)}
+                        onSettings={() => setRenameGroupId(group.id)}
+                        canManage={canManageGroups}
+                      />
+                    ))}
+                    {isFetchingMoreLeftGroups ? (
+                      <Skeleton className="h-9 rounded-md" />
+                    ) : null}
+                    <div ref={leftGroupsLoadMoreRef} className="h-px" />
+                  </>
                 )}
               </div>
             )}
@@ -498,61 +516,73 @@ export function DisplayGroupsPageClient({
                   />
                 </div>
               ) : (
-                <div className="min-h-0 flex-1 overflow-auto p-4">
-                  {groupsForRightPane.length === 0 ? (
-                    <div className="flex h-full items-center justify-center">
-                      {actionMode === "add" ? (
-                        <EmptyState
-                          title="No groups available to add"
-                          description="This display already belongs to every group."
-                        />
-                      ) : actionMode === "remove" ? (
-                        <EmptyState
-                          title="No groups available to remove"
-                          description="This display is not a member of any group."
-                        />
-                      ) : (
-                        <EmptyState
-                          title="No groups for this display yet"
-                          description="Use Actions → Add groups to assign this display to a group."
-                        />
-                      )}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
-                      {groupsForRightPane.map((group) => {
-                        const isSelected = selectedGroupIds.has(group.id);
-                        const isInteractive = actionMode !== null;
-                        return (
-                          <button
-                            key={group.id}
-                            type="button"
-                            onClick={() => {
-                              if (isInteractive) handleToggleGroup(group.id);
-                            }}
-                            disabled={!isInteractive || isExecuting}
-                            aria-pressed={
-                              isInteractive ? isSelected : undefined
-                            }
-                            className={cn(
-                              "rounded-md border px-3 py-2.5 text-left text-sm font-medium transition-colors",
-                              isInteractive && !isExecuting
-                                ? "cursor-pointer"
-                                : "cursor-default",
-                              actionMode === "remove" && isSelected
-                                ? "border-destructive bg-destructive/10 text-destructive"
-                                : actionMode === "add" && isSelected
-                                  ? "border-primary bg-primary/10 text-primary"
-                                  : "border-border bg-background hover:bg-muted/50",
-                            )}
-                          >
-                            {group.name}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                <>
+                  <div className="min-h-0 flex-1 overflow-auto p-4">
+                    {groupsForRightPane.length === 0 ? (
+                      <div className="flex h-full items-center justify-center">
+                        {actionMode === "add" ? (
+                          <EmptyState
+                            title="No groups available to add"
+                            description="This display already belongs to every group."
+                          />
+                        ) : actionMode === "remove" ? (
+                          <EmptyState
+                            title="No groups available to remove"
+                            description="This display is not a member of any group."
+                          />
+                        ) : (
+                          <EmptyState
+                            title="No groups for this display yet"
+                            description="Use Actions → Add groups to assign this display to a group."
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
+                        {groupsForRightPane.map((group) => {
+                          const isSelected = selectedGroupIds.has(group.id);
+                          const isInteractive = actionMode !== null;
+                          return (
+                            <button
+                              key={group.id}
+                              type="button"
+                              onClick={() => {
+                                if (isInteractive) handleToggleGroup(group.id);
+                              }}
+                              disabled={!isInteractive || isExecuting}
+                              aria-pressed={
+                                isInteractive ? isSelected : undefined
+                              }
+                              className={cn(
+                                "rounded-md border px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                                isInteractive && !isExecuting
+                                  ? "cursor-pointer"
+                                  : "cursor-default",
+                                actionMode === "remove" && isSelected
+                                  ? "border-destructive bg-destructive/10 text-destructive"
+                                  : actionMode === "add" && isSelected
+                                    ? "border-primary bg-primary/10 text-primary"
+                                    : "border-border bg-background hover:bg-muted/50",
+                              )}
+                            >
+                              {group.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  <footer className="border-t border-border bg-background/80 empty:hidden">
+                    <PaginationFooter
+                      page={groupsRightPanePage}
+                      pageSize={GROUP_PAGE_SIZE}
+                      total={groupsRightPaneTotal}
+                      onPageChange={setGroupsRightPanePage}
+                      variant="compact"
+                      alwaysShow
+                    />
+                  </footer>
+                </>
               )
             ) : !selectedGroup ? (
               <div className="flex flex-1 items-center justify-center p-8">
@@ -655,7 +685,7 @@ export function DisplayGroupsPageClient({
 
       <CreateDisplayGroupDialog
         open={isCreateOpen}
-        existingGroups={groups}
+        existingGroups={[]}
         isPending={isCreatePending}
         onCreate={handleCreateGroup}
         onClose={() => setIsCreateOpen(false)}
@@ -665,7 +695,7 @@ export function DisplayGroupsPageClient({
       {isEditDisplayOpen || editingDisplay != null ? (
         <EditDisplayDialog
           display={editingDisplay}
-          existingGroups={groups}
+          existingGroups={[]}
           open={isEditDisplayOpen}
           onOpenChange={handleEditDisplayOpenChange}
           onSave={handleSaveDisplay}
