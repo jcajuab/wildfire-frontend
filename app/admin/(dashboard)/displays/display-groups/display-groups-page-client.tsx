@@ -311,7 +311,7 @@ export function DisplayGroupsPageClient({
           {/* Right header: 3-column layout */}
           <div className="flex min-w-0 flex-1 py-2">
             {/* container-left (25%): label + search */}
-            <div className="flex w-1/4 shrink-0 flex-col gap-3 px-3">
+            <div className="flex w-1/4 shrink-0 flex-col gap-3 px-2">
               {isDisplayAxis ? (
                 <>
                   <p className="text-xs font-medium text-foreground">
@@ -517,7 +517,7 @@ export function DisplayGroupsPageClient({
                 </div>
               ) : (
                 <>
-                  <div className="min-h-0 flex-1 overflow-auto p-4">
+                  <div className="min-h-0 flex-1 overflow-auto p-2">
                     {groupsForRightPane.length === 0 ? (
                       <div className="flex h-full items-center justify-center">
                         {actionMode === "add" ? (
@@ -554,7 +554,7 @@ export function DisplayGroupsPageClient({
                                 isInteractive ? isSelected : undefined
                               }
                               className={cn(
-                                "rounded-md border px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                                "flex min-h-[2.875rem] items-center rounded-md border px-3 py-2.5 text-left text-sm font-medium transition-colors",
                                 isInteractive && !isExecuting
                                   ? "cursor-pointer"
                                   : "cursor-default",
@@ -593,7 +593,7 @@ export function DisplayGroupsPageClient({
               </div>
             ) : (
               <>
-                <div className="min-h-0 flex-1 overflow-auto p-4">
+                <div className="min-h-0 flex-1 overflow-auto p-2">
                   {isDisplaysLoading ? (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
                       {Array.from({ length: DISPLAY_PAGE_SIZE }).map((_, i) => (
@@ -637,7 +637,7 @@ export function DisplayGroupsPageClient({
                               isInteractive ? isSelected : undefined
                             }
                             className={cn(
-                              "rounded-md border px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                              "flex min-h-[2.875rem] items-center rounded-md border px-3 py-2.5 text-left text-sm font-medium transition-colors",
                               isInteractive && !isExecuting
                                 ? "cursor-pointer"
                                 : "cursor-default",
