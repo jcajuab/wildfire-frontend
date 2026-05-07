@@ -136,7 +136,7 @@ export function LogsPageClient(): ReactElement {
 
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2.5 sm:px-8">
+          <div className="shrink-0 border-b border-border bg-muted/15 p-4">
             <div className="grid grid-cols-1 gap-x-3 gap-y-2 md:grid-cols-2 xl:grid-cols-4">
               <div className="space-y-1">
                 <Label htmlFor="logs-filter-from">From</Label>
@@ -283,7 +283,7 @@ export function LogsPageClient(): ReactElement {
               </div>
             </div>
           </div>
-          <div className="relative min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+          <div className="relative min-h-0 flex-1 overflow-auto p-4">
             {isFetching && logs.length > 0 ? (
               <div
                 className="pointer-events-none absolute inset-0 z-10 flex items-start justify-center bg-background/40 pt-16"

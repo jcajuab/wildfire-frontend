@@ -485,9 +485,7 @@ export function useDisplayGroupsPage({
           }).unwrap();
         }),
       );
-      const succeeded = results.filter(
-        (r) => r.status === "fulfilled",
-      ).length;
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
       const failed = results.filter((r) => r.status === "rejected").length;
       if (failed === 0) {
         toast.success(
@@ -498,9 +496,7 @@ export function useDisplayGroupsPage({
       }
     } finally {
       dispatch(
-        displaysApi.util.invalidateTags([
-          { type: "DisplayGroup", id: "LIST" },
-        ]),
+        displaysApi.util.invalidateTags([{ type: "DisplayGroup", id: "LIST" }]),
       );
       setIsExecuting(false);
       setActionMode(null);
@@ -527,9 +523,7 @@ export function useDisplayGroupsPage({
           }).unwrap();
         }),
       );
-      const succeeded = results.filter(
-        (r) => r.status === "fulfilled",
-      ).length;
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
       const failed = results.filter((r) => r.status === "rejected").length;
       if (failed === 0) {
         toast.success(
@@ -540,9 +534,7 @@ export function useDisplayGroupsPage({
       }
     } finally {
       dispatch(
-        displaysApi.util.invalidateTags([
-          { type: "DisplayGroup", id: "LIST" },
-        ]),
+        displaysApi.util.invalidateTags([{ type: "DisplayGroup", id: "LIST" }]),
       );
       setIsExecuting(false);
       setActionMode(null);

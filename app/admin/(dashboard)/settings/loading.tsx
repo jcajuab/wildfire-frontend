@@ -3,11 +3,11 @@ import type { ReactElement } from "react";
 export default function Loading(): ReactElement {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-auto">
-      <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
+      <div className="shrink-0 border-b border-border bg-muted/15 p-4">
         <div className="h-8 w-24 animate-pulse rounded bg-muted" />
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+      <div className="min-h-0 flex-1 overflow-auto p-4">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
           <div className="border-b border-border pb-8">
             <div className="mb-4 space-y-1">

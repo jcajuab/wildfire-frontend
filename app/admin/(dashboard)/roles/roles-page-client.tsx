@@ -75,7 +75,7 @@ export function RolesPageView(): ReactElement {
         <PageHeader title="Roles" />
         <section className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
               <div className="flex items-center gap-2">
                 <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 <span className="text-sm text-muted-foreground">
@@ -95,7 +95,7 @@ export function RolesPageView(): ReactElement {
         <PageHeader title="Roles" />
         <section className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
               <p className="text-destructive">
                 Failed to load roles. Check the API and try again.
               </p>
@@ -120,7 +120,7 @@ export function RolesPageView(): ReactElement {
       </PageHeader>
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-muted/15 px-6 py-2 sm:px-8">
+          <div className="shrink-0 border-b border-border bg-muted/15 p-4">
             <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-base font-semibold">Search Results</h2>
               <SearchControl
@@ -133,7 +133,7 @@ export function RolesPageView(): ReactElement {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 pt-6 sm:px-8 sm:py-8">
+          <div className="min-h-0 flex-1 overflow-auto p-4">
             {roles.length === 0 ? (
               <EmptyState
                 title="No roles yet"

@@ -91,7 +91,7 @@ export function SettingsPageView({
           key={user?.id ?? "anonymous"}
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
-          <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+          <div className="min-h-0 flex-1 overflow-auto p-4">
             <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
               <section
                 aria-labelledby="account-information-heading"

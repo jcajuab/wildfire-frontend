@@ -4,11 +4,7 @@ import type { ReactElement } from "react";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { collapseDisplayGroupWhitespace } from "@/lib/display-group-normalization";
@@ -41,7 +37,12 @@ export function RenameDisplayGroupDialog({
   }, [canSave, onSave, trimmed]);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-sm">
         <div className="space-y-2">
           <Label htmlFor="group-name-input">Display group name</Label>
@@ -49,7 +50,9 @@ export function RenameDisplayGroupDialog({
             id="group-name-input"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") void handleSave(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void handleSave();
+            }}
             disabled={isPending}
           />
         </div>

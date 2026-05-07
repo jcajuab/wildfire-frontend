@@ -7,7 +7,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, children }: PageHeaderProps): ReactElement {
   return (
-    <header className="flex flex-col gap-2 border-b border-border bg-muted/20 px-6 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+    <header className="flex flex-col gap-2 border-b border-border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
       <h1 className="text-xl font-semibold leading-tight tracking-tight text-balance sm:text-2xl">
         {title}
       </h1>

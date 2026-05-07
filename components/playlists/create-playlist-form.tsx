@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Content } from "@/types/content";
 import type { PlaylistItem } from "@/types/playlist";
@@ -19,12 +19,20 @@ export interface CreatePlaylistDraft {
   readonly totalDuration: number;
 }
 
+export interface CreatePlaylistFormActionState {
+  readonly canCreate: boolean;
+  readonly isSubmitting: boolean;
+  readonly handleCancel: () => void;
+  readonly handleCreate: () => void;
+}
+
 export interface CreatePlaylistFormProps {
   readonly onCreate: (
     playlist: CreatePlaylistDraft,
   ) => Promise<boolean | void> | boolean | void;
   readonly onCancel?: () => void;
   readonly onSuccess?: () => void;
+  readonly onStateChange?: (state: CreatePlaylistFormActionState) => void;
   readonly availableContent: readonly PlaylistSelectableContent[];
   readonly title?: string;
   readonly description?: string;
@@ -38,6 +46,7 @@ export function CreatePlaylistForm({
   onCreate,
   onCancel,
   onSuccess,
+  onStateChange,
   availableContent,
   title = "Create New Playlist",
   description = "Add and organize contents to form a playlist",
@@ -55,6 +64,7 @@ export function CreatePlaylistForm({
   );
 
   const isOverDurationLimit = totalDuration > MAX_BASE_DURATION_SECONDS;
+  const canCreate = name.trim().length > 0 && !isOverDurationLimit;
 
   const resetDraftState = useCallback(() => {
     setName("");
@@ -70,7 +80,7 @@ export function CreatePlaylistForm({
   }, [isSubmitting, onCancel, resetDraftState]);
 
   const handleCreate = useCallback(async () => {
-    if (!name.trim() || isSubmitting || isOverDurationLimit) return;
+    if (!canCreate || isSubmitting) return;
 
     const playlistItems: PlaylistItem[] = items.map((item, index) => ({
       id: item.id,
@@ -97,18 +107,26 @@ export function CreatePlaylistForm({
       setIsSubmitting(false);
     }
   }, [
-    name,
+    canCreate,
     desc,
-    isOverDurationLimit,
     isSubmitting,
     onCreate,
     onSuccess,
     items,
+    name,
     resetDraftState,
     totalDuration,
   ]);
 
-  const canCreate = name.trim().length > 0 && !isOverDurationLimit;
+  useEffect(() => {
+    onStateChange?.({
+      canCreate,
+      isSubmitting,
+      handleCancel,
+      handleCreate,
+    });
+  }, [canCreate, handleCancel, handleCreate, isSubmitting, onStateChange]);
+
   const isPageSurface = surface === "page";
 
   return (
@@ -176,8 +194,8 @@ export function CreatePlaylistForm({
         }
         itemsSubtitleSlot={
           <p className="text-xs text-muted-foreground">
-            The max playlist duration should not exceed more than 60 seconds or
-            1 minute.
+            The max playlist duration should not exceed more than{" "}
+            {MAX_BASE_DURATION_SECONDS} seconds or 1 minute.
           </p>
         }
         emptyItemsMessage="Add content from the library to get started"

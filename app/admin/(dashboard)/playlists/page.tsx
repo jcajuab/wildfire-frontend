@@ -31,7 +31,9 @@ export default async function PlaylistsPage({
 
   const session = resolveSession(await getServerSession(), "/admin/playlists");
   if (!session) {
-    return <PlaylistsPageView initialQueryArgs={queryArgs} initialData={undefined} />;
+    return (
+      <PlaylistsPageView initialQueryArgs={queryArgs} initialData={undefined} />
+    );
   }
   if (!sessionHasPermission(session, "playlists:read")) {
     redirect("/unauthorized");

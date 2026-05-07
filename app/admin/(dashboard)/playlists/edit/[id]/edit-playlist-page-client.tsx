@@ -101,11 +101,7 @@ export function EditPlaylistPageView(): ReactElement {
   const headerActions =
     state.status === "ready" ? (
       <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          onClick={handleCancel}
-          disabled={isSaving}
-        >
+        <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
           Cancel
         </Button>
         <Button onClick={handleSaveClick} disabled={!canSave || isSaving}>

@@ -35,6 +35,12 @@ vi.mock("@/components/common/bulk-delete-confirm-dialog", () => ({
   BulkDeleteConfirmDialog: () => null,
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
+
 vi.mock("@/components/displays/displays-toolbar", () => ({
   DisplaysToolbar: () => (
     <header className="shrink-0 border-b border-border bg-background p-4">
@@ -148,6 +154,7 @@ describe("DisplaysPageView", () => {
     const contentRegion = screen.getByTestId("display-grid").parentElement;
 
     expect(contentRegion).toHaveClass("p-4");
+    expect(contentRegion).not.toHaveClass("p-6");
     expect(contentRegion).not.toHaveClass("px-6");
     expect(contentRegion).not.toHaveClass("py-6");
     expect(contentRegion).not.toHaveClass("sm:px-8");
