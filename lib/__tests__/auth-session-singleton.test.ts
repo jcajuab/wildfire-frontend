@@ -268,7 +268,9 @@ describe("refreshAccessToken singleton", () => {
       const url = String(input);
       if (url.includes("/auth/refresh")) {
         refreshCallCount += 1;
-        return makeJsonResponse(makeAuthResponse(`refresh-${refreshCallCount}`));
+        return makeJsonResponse(
+          makeAuthResponse(`refresh-${refreshCallCount}`),
+        );
       }
       if (url.includes("/auth/login")) {
         return makeJsonResponse(makeAuthResponse("login-tok"));
@@ -276,9 +278,8 @@ describe("refreshAccessToken singleton", () => {
       return makeJsonResponse({ ok: true });
     });
 
-    const { refreshAccessToken, loginWithPassword } = await import(
-      "@/lib/auth-session"
-    );
+    const { refreshAccessToken, loginWithPassword } =
+      await import("@/lib/auth-session");
 
     const first = await refreshAccessToken();
     expect(first.accessToken).toBe("refresh-1");

@@ -120,6 +120,8 @@ describe("RolesTable", () => {
   test("renders an empty state inside the table area", () => {
     renderTable({ roles: [] });
 
-    expect(screen.getByRole("heading", { name: "No roles found" })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "No roles found" }),
+    ).toBeVisible();
   });
 });

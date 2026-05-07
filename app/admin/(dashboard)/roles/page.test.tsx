@@ -157,8 +157,12 @@ describe("RolesPageView", () => {
 
     render(<RolesPageView />);
 
-    expect(screen.getByRole("heading", { name: "No roles found" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Create Role" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "No roles found" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Create Role" }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Create Role" }),
     ).not.toBeInTheDocument();

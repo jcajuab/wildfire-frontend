@@ -158,9 +158,7 @@ describe("ContentToolbar", () => {
     });
 
     expect(createButton).toHaveAttribute("data-size", "default");
-    expect(
-      createButton.querySelector(".tabler-icon-plus"),
-    ).toBeInTheDocument();
+    expect(createButton.querySelector(".tabler-icon-plus")).toBeInTheDocument();
   });
 
   test("places create content after bulk delete in the action group", () => {

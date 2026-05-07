@@ -216,7 +216,9 @@ describe("UsersPageView", () => {
     expect(
       screen.queryByPlaceholderText("Search by name, username, or email"),
     ).not.toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Search by invitee")).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Search by invitee"),
+    ).toBeInTheDocument();
     expect(screen.getByText("new@example.com")).toBeInTheDocument();
     expect(screen.getByText("Showing 1 to 1 of 1 results")).toBeInTheDocument();
   });

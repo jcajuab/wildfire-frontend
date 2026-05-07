@@ -113,7 +113,9 @@ export function LoginContent(): ReactElement | null {
     const credentials = { username, password };
     try {
       const response = await login(credentials);
-      navigateToPostLogin(getPostLoginRedirectFromResponse(response, redirectTo));
+      navigateToPostLogin(
+        getPostLoginRedirectFromResponse(response, redirectTo),
+      );
     } catch (err) {
       if (err instanceof AuthApiError && err.status === 429) {
         setErrorMessage(
