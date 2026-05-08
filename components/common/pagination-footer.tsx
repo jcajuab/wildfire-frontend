@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
+import { cn } from "@/lib/utils";
 import {
   Pagination,
   PaginationContent,
@@ -56,6 +57,7 @@ interface PaginationFooterProps {
   readonly onPageChange: (page: number) => void;
   readonly variant?: PaginationVariant;
   readonly alwaysShow?: boolean;
+  readonly className?: string;
 }
 
 export function PaginationFooter({
@@ -65,6 +67,7 @@ export function PaginationFooter({
   onPageChange,
   variant = "compact",
   alwaysShow = false,
+  className,
 }: PaginationFooterProps): ReactElement | null {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const boundedPage = Math.min(Math.max(page, 1), totalPages);
@@ -83,7 +86,7 @@ export function PaginationFooter({
   };
 
   return (
-    <div className="flex w-full flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className={cn("flex w-full flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between", className)}>
       <p className="text-sm text-muted-foreground sm:text-left">
         Showing {startItem} to {endItem} of {total} results
       </p>

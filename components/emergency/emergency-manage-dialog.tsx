@@ -74,9 +74,9 @@ export function EmergencyManageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 p-0 sm:max-w-5xl">
-        <div className="grid min-h-128 grid-cols-1 sm:grid-cols-[280px_1px_1fr]">
-          <div className="flex min-h-128 flex-col px-6 pt-10 pb-6 sm:py-6 sm:pt-10">
+      <DialogContent className="gap-0 p-0 sm:max-w-5xl max-h-[85vh]">
+        <div className="grid grid-cols-1 sm:grid-cols-[280px_1px_1fr] h-[85vh] overflow-hidden">
+          <div className="flex flex-col overflow-y-auto px-6 pt-10 pb-6 sm:py-6 sm:pt-10">
             <EmergencyAssetList
               slots={slots}
               selectedSlotIndex={selectedSlotIndex}
@@ -86,10 +86,10 @@ export function EmergencyManageDialog({
             />
           </div>
           <div
-            className="hidden min-h-128 w-px shrink-0 bg-border sm:block"
+            className="hidden w-px shrink-0 bg-border sm:block"
             aria-hidden
           />
-          <div className="flex min-h-128 min-w-0 flex-col px-6 pt-10 pb-6 sm:py-6 sm:pt-10">
+          <div className="flex min-h-0 min-w-0 flex-col overflow-hidden px-6 pt-10 pb-6 sm:py-6 sm:pt-10">
             <EmergencyContentPicker
               selectedSlotIndex={selectedSlotIndex}
               onSelect={handleSelectContent}

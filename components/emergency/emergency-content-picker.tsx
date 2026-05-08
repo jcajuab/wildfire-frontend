@@ -70,7 +70,7 @@ export function EmergencyContentPicker({
   const isPickerDisabled = selectedSlotIndex === null;
 
   return (
-    <div className="flex min-h-0 flex-col gap-3">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
       <header className="flex flex-col gap-1">
         <h3 className="text-sm font-medium">Content</h3>
         <p className="text-xs text-muted-foreground">
@@ -84,7 +84,7 @@ export function EmergencyContentPicker({
         placeholder="Search content..."
         className="max-w-none min-w-0 w-full"
       />
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto [scrollbar-gutter:stable]">
         {isFetching && items.length === 0 ? (
           <p className="px-2 py-6 text-center text-xs text-muted-foreground">
             Loading content...
@@ -112,6 +112,7 @@ export function EmergencyContentPicker({
         pageSize={data?.pageSize ?? PAGE_SIZE}
         total={data?.total ?? 0}
         onPageChange={setPage}
+        className="px-0"
       />
     </div>
   );
