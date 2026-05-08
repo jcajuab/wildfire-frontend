@@ -78,7 +78,7 @@ export function EditRolePageView(): ReactElement {
           ) : null}
 
           {state.status === "notFound" ? (
-            <div className="px-6 py-6 sm:px-8 sm:py-8">
+            <div className="p-4">
               <EmptyState
                 title="Role not found"
                 description={state.message}
@@ -92,7 +92,7 @@ export function EditRolePageView(): ReactElement {
           ) : null}
 
           {state.status === "error" ? (
-            <div className="px-6 py-6 sm:px-8 sm:py-8">
+            <div className="p-4">
               <EmptyState
                 title="Unable to load role"
                 description={state.message}
@@ -106,7 +106,7 @@ export function EditRolePageView(): ReactElement {
           ) : null}
 
           {state.status === "nonEditable" ? (
-            <div className="px-6 py-6 sm:px-8 sm:py-8">
+            <div className="p-4">
               <EmptyState
                 title="System role cannot be edited"
                 description={state.message}
@@ -120,7 +120,7 @@ export function EditRolePageView(): ReactElement {
           ) : null}
 
           {state.status === "ready" ? (
-            <div className="px-6 py-6 sm:px-8 sm:py-8">
+            <div className="p-4">
               <RoleForm
                 mode="edit"
                 initialRole={state.role}

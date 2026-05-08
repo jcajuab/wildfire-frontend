@@ -6,7 +6,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { RoleForm, type RoleFormState } from "@/components/roles/role-form";
 import { useGetUserOptionsQuery } from "@/lib/api/rbac-api";
 import { DESIGN_PERMISSIONS } from "@/lib/design-permissions";
-import { formatPermissionReadableLabel } from "@/lib/format-permission";
 import type { PermissionAction, PermissionResource } from "@/types/permission";
 import type { Permission } from "@/types/role";
 
@@ -45,7 +44,7 @@ describe("RoleForm", () => {
     vi.unstubAllGlobals();
   });
 
-  test("renders stacked display, permissions, and users sections without modal actions", () => {
+  test("renders stacked role details, permissions, and users sections without modal actions", () => {
     render(
       <RoleForm
         mode="create"
@@ -58,32 +57,37 @@ describe("RoleForm", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Display" }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Display" })).toHaveAttribute(
-      "id",
-      "role-form-display-heading",
-    );
-    expect(
-      screen.getByRole("heading", { name: "Permissions" }),
+      screen.getByRole("heading", { level: 2, name: "Role Details" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Permissions" }),
+      screen.getByRole("heading", { level: 2, name: "Role Details" }),
+    ).toHaveAttribute("id", "role-form-display-heading");
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Permissions" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Permissions" }),
     ).toHaveAttribute("id", "role-form-permissions-heading");
     expect(
-      screen.getByRole("heading", { name: /Manage Users/ }),
+      screen.getByRole("heading", { level: 2, name: /Manage Users/ }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /Manage Users/ }),
+      screen.getByRole("heading", { level: 2, name: /Manage Users/ }),
     ).toHaveAttribute("id", "role-form-users-heading");
     expect(
-      screen.getByRole("heading", { name: "Display" }).closest("section"),
+      screen
+        .getByRole("heading", { level: 2, name: "Role Details" })
+        .closest("section"),
     ).toHaveAttribute("aria-labelledby", "role-form-display-heading");
     expect(
-      screen.getByRole("heading", { name: "Permissions" }).closest("section"),
+      screen
+        .getByRole("heading", { level: 2, name: "Permissions" })
+        .closest("section"),
     ).toHaveAttribute("aria-labelledby", "role-form-permissions-heading");
     expect(
-      screen.getByRole("heading", { name: /Manage Users/ }).closest("section"),
+      screen
+        .getByRole("heading", { level: 2, name: /Manage Users/ })
+        .closest("section"),
     ).toHaveAttribute("aria-labelledby", "role-form-users-heading");
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
     expect(
@@ -99,6 +103,17 @@ describe("RoleForm", () => {
     expect(
       screen.queryByRole("navigation", { name: "Role form sections" }),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Core/i })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: /Manage/i })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(
+      screen.getByRole("button", { name: /^AI.*permissions$/i }),
+    ).toHaveAttribute("aria-expanded", "false");
   });
 
   test("keeps the legacy bottom summary and live overview removed", () => {
@@ -144,7 +159,8 @@ describe("RoleForm", () => {
     ).not.toBeInTheDocument();
   });
 
-  test("keeps permission resource groups in design order for heading anchors", () => {
+  test("keeps permission groups in sidebar order with compact resource rows", async () => {
+    const user = userEvent.setup();
     const permissions = DESIGN_PERMISSIONS.map((permission, index) => ({
       id: `perm-${index + 1}`,
       resource: permission.resource as PermissionResource,
@@ -162,48 +178,43 @@ describe("RoleForm", () => {
       />,
     );
 
-    const resourceOrder = [
-      "displays",
-      "content",
-      "playlists",
-      "schedules",
-      "users",
-      "roles",
-      "audit",
-      "ai",
-    ] as const;
-
-    const anchors = resourceOrder.map((resource) => {
-      const resourceHeading = screen.queryByRole("heading", {
-        name: new RegExp(`^${resource}$`, "i"),
-      });
-
-      if (resourceHeading) {
-        return resourceHeading;
-      }
-
-      const firstAction =
-        resource === "audit" ? "read" : resource === "ai" ? "access" : "create";
-      return screen.getByText(
-        formatPermissionReadableLabel({ resource, action: firstAction }),
-      );
+    const coreTrigger = screen.getByRole("button", { name: /Core/i });
+    const manageTrigger = screen.getByRole("button", { name: /Manage/i });
+    const aiTrigger = screen.getByRole("button", {
+      name: /^AI.*permissions$/i,
     });
+    expect(coreTrigger.compareDocumentPosition(manageTrigger)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(manageTrigger.compareDocumentPosition(aiTrigger)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(coreTrigger).toHaveAttribute("aria-expanded", "true");
+    expect(manageTrigger).toHaveAttribute("aria-expanded", "false");
+    expect(aiTrigger).toHaveAttribute("aria-expanded", "false");
 
-    for (let index = 1; index < anchors.length; index += 1) {
+    const coreResources = ["Displays", "Content", "Playlists", "Schedules"];
+    const coreAnchors = coreResources.map((resource) =>
+      screen.getByText(resource),
+    );
+    for (let index = 1; index < coreAnchors.length; index += 1) {
       const isFollowing = Boolean(
-        anchors[index - 1].compareDocumentPosition(anchors[index]) &
+        coreAnchors[index - 1].compareDocumentPosition(coreAnchors[index]) &
         Node.DOCUMENT_POSITION_FOLLOWING,
       );
       expect(isFollowing).toBe(true);
     }
 
-    for (const resource of resourceOrder) {
-      expect(
-        screen.getByRole("heading", {
-          name: new RegExp(`^${resource}$`, "i"),
-        }),
-      ).toBeInTheDocument();
-    }
+    await user.click(manageTrigger);
+    expect(screen.getByText("Users")).toBeInTheDocument();
+    expect(screen.getByText("Roles")).toBeInTheDocument();
+    expect(screen.getByText("Logs")).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Access AI" })).toBeNull();
+    await user.click(aiTrigger);
+    expect(screen.getAllByText("AI").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("checkbox", { name: "Access AI" }),
+    ).toBeInTheDocument();
   });
 
   test("keeps users restricted state when canReadUsers is false", () => {
@@ -245,11 +256,111 @@ describe("RoleForm", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Search Users")).toBeInTheDocument();
-    expect(screen.getByLabelText("Select User")).toBeInTheDocument();
+    expect(screen.getByLabelText("Assign User")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Search Users")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Select User")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Add User" }),
     ).toBeInTheDocument();
+  });
+
+  test("selects and adds a user from the assignment combobox", async () => {
+    const user = userEvent.setup();
+    useGetUserOptionsQueryMock.mockReturnValue({
+      data: [
+        {
+          id: "user-2",
+          name: "Bob",
+          username: "bob",
+          email: null,
+        },
+      ],
+    } as unknown as ReturnType<typeof useGetUserOptionsQuery>);
+
+    render(
+      <RoleForm
+        mode="edit"
+        initialRole={{
+          id: "role-1",
+          name: "Editors",
+          description: null,
+          isSystem: false,
+        }}
+        permissions={[]}
+        initialUsers={[]}
+        canReadUsers={true}
+        initialPermissionIds={[]}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    const addUserButton = screen.getByRole("button", { name: "Add User" });
+    expect(addUserButton).toBeDisabled();
+
+    await user.click(screen.getByLabelText("Assign User"));
+    await user.type(screen.getByLabelText("Assign User"), "bob");
+
+    fireEvent.pointerDown(await screen.findByRole("option", { name: /Bob/ }));
+
+    await waitFor(() => {
+      expect(addUserButton).toBeEnabled();
+    });
+
+    fireEvent.click(addUserButton);
+
+    expect(
+      screen.getByRole("region", { name: "Manage Users (1)" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Bob")).toBeInTheDocument();
+    expect(screen.getByText("@bob")).toBeInTheDocument();
+    expect(screen.getByLabelText("Assign User")).toHaveValue("");
+    expect(addUserButton).toBeDisabled();
+  });
+
+  test("clears the selected user when the assignment combobox is edited after selection", async () => {
+    const user = userEvent.setup();
+    useGetUserOptionsQueryMock.mockReturnValue({
+      data: [
+        {
+          id: "user-2",
+          name: "Bob",
+          username: "bob",
+          email: null,
+        },
+      ],
+    } as unknown as ReturnType<typeof useGetUserOptionsQuery>);
+
+    render(
+      <RoleForm
+        mode="edit"
+        initialRole={{
+          id: "role-1",
+          name: "Editors",
+          description: null,
+          isSystem: false,
+        }}
+        permissions={[]}
+        initialUsers={[]}
+        canReadUsers={true}
+        initialPermissionIds={[]}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    const combobox = screen.getByLabelText("Assign User");
+    const addUserButton = screen.getByRole("button", { name: "Add User" });
+
+    await user.click(combobox);
+    await user.type(combobox, "bob");
+    fireEvent.pointerDown(await screen.findByRole("option", { name: /Bob/ }));
+
+    await waitFor(() => {
+      expect(addUserButton).toBeEnabled();
+    });
+
+    await user.clear(combobox);
+
+    expect(addUserButton).toBeDisabled();
   });
 
   test("keeps null-id permissions disabled", () => {
@@ -264,10 +375,10 @@ describe("RoleForm", () => {
       />,
     );
 
-    const permissionSwitches = screen.getAllByRole("switch");
-    expect(permissionSwitches.length).toBeGreaterThan(0);
-    for (const permissionSwitch of permissionSwitches) {
-      expect(permissionSwitch).toBeDisabled();
+    const permissionCheckboxes = screen.getAllByRole("checkbox");
+    expect(permissionCheckboxes.length).toBeGreaterThan(0);
+    for (const permissionCheckbox of permissionCheckboxes) {
+      expect(permissionCheckbox).toBeDisabled();
     }
   });
 
@@ -296,32 +407,38 @@ describe("RoleForm", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("switch", { name: "View Displays" }),
+        screen.getByRole("checkbox", { name: "View Displays" }),
       ).toBeChecked();
       expect(
-        screen.getByRole("switch", { name: "View Content" }),
+        screen.getByRole("checkbox", { name: "View Content" }),
       ).toBeChecked();
       expect(
-        screen.getByRole("switch", { name: "View Playlists" }),
+        screen.getByRole("checkbox", { name: "View Playlists" }),
       ).toBeChecked();
       expect(
-        screen.getByRole("switch", { name: "View Schedules" }),
+        screen.getByRole("checkbox", { name: "View Schedules" }),
       ).toBeChecked();
     });
 
+    await userEvent.click(screen.getByRole("button", { name: /Manage/i }));
+    await userEvent.click(
+      screen.getByRole("button", { name: /^AI.*permissions$/i }),
+    );
     expect(
-      screen.getByRole("switch", { name: "View Users" }),
+      screen.getByRole("checkbox", { name: "View Users" }),
     ).not.toBeChecked();
     expect(
-      screen.getByRole("switch", { name: "View Roles" }),
+      screen.getByRole("checkbox", { name: "View Roles" }),
     ).not.toBeChecked();
     expect(
-      screen.getByRole("switch", { name: "View Audit" }),
+      screen.getByRole("checkbox", { name: "View Audit" }),
     ).not.toBeChecked();
     expect(
-      screen.getByRole("switch", { name: "Delete Audit" }),
+      screen.getByRole("checkbox", { name: "Delete Audit" }),
     ).not.toBeChecked();
-    expect(screen.getByRole("switch", { name: "Access AI" })).not.toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Access AI" }),
+    ).not.toBeChecked();
   });
 
   test("keeps matching view permission selected while write permissions are enabled", async () => {
@@ -338,8 +455,12 @@ describe("RoleForm", () => {
       />,
     );
 
-    const createUsers = screen.getByRole("switch", { name: "Create Users" });
-    const viewUsers = screen.getByRole("switch", { name: "View Users" });
+    await user.click(screen.getByRole("button", { name: /Manage/i }));
+
+    const createUsers = screen.getByRole("checkbox", {
+      name: "Create Users",
+    });
+    const viewUsers = screen.getByRole("checkbox", { name: "View Users" });
 
     expect(viewUsers).not.toBeChecked();
     expect(viewUsers).toBeEnabled();
@@ -380,16 +501,16 @@ describe("RoleForm", () => {
     );
 
     expect(
-      screen.getByRole("switch", { name: "View Displays" }),
+      screen.getByRole("checkbox", { name: "View Displays" }),
     ).not.toBeChecked();
     expect(
-      screen.getByRole("switch", { name: "View Content" }),
+      screen.getByRole("checkbox", { name: "View Content" }),
     ).not.toBeChecked();
     expect(
-      screen.getByRole("switch", { name: "View Playlists" }),
+      screen.getByRole("checkbox", { name: "View Playlists" }),
     ).not.toBeChecked();
     expect(
-      screen.getByRole("switch", { name: "View Schedules" }),
+      screen.getByRole("checkbox", { name: "View Schedules" }),
     ).not.toBeChecked();
   });
 
@@ -413,12 +534,14 @@ describe("RoleForm", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("switch", { name: "Create Users" }),
+        screen.getByRole("checkbox", { name: "Create Users" }),
       ).toBeChecked();
-      expect(screen.getByRole("switch", { name: "View Users" })).toBeChecked();
+      expect(
+        screen.getByRole("checkbox", { name: "View Users" }),
+      ).toBeChecked();
     });
 
-    expect(screen.getByRole("switch", { name: "View Users" })).toBeDisabled();
+    expect(screen.getByRole("checkbox", { name: "View Users" })).toBeDisabled();
   });
 
   test("submits normalized dependency permission ids", async () => {
@@ -524,6 +647,7 @@ describe("RoleForm", () => {
     expect(screen.getByText("Assigned 25")).toBeInTheDocument();
     expect(screen.queryByText("Assigned 26")).not.toBeInTheDocument();
 
+    await user.keyboard("{Escape}");
     await user.click(screen.getByRole("button", { name: "Load More Users" }));
 
     expect(screen.getByText("Assigned 26")).toBeInTheDocument();

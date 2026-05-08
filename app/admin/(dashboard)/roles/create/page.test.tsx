@@ -181,12 +181,7 @@ describe("CreateRolePage", () => {
       "flex-1",
       "overflow-auto",
     ]);
-    const contentPadding = findAncestorWithClasses(roleNameInput, [
-      "px-6",
-      "py-6",
-      "sm:px-8",
-      "sm:py-8",
-    ]);
+    const contentPadding = findAncestorWithClasses(roleNameInput, ["p-4"]);
 
     expect(scrollWrapper).not.toBeNull();
     expect(scrollWrapper?.classList.contains("overflow-y-auto")).toBe(false);
