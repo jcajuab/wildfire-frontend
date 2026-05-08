@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { RolesTable } from "./roles-table";
@@ -60,35 +61,99 @@ describe("RolesTable", () => {
   test("renders compact role columns without user count icons", () => {
     renderTable();
 
-    expect(screen.getByRole("columnheader", { name: "Role" })).toBeVisible();
+    expect(
+      screen.getByRole("columnheader", { name: /Name.*sort descending/ }),
+    ).toBeVisible();
     expect(
       screen.getByRole("columnheader", { name: "Description" }),
     ).toBeVisible();
-    expect(screen.getByRole("columnheader", { name: "Users" })).toBeVisible();
+    expect(
+      screen.getByRole("columnheader", { name: /Users.*sort ascending/ }),
+    ).toBeVisible();
     expect(screen.getByRole("columnheader", { name: "Actions" })).toHaveClass(
       "text-right",
     );
+    for (const row of screen.getAllByRole("row").slice(1)) {
+      expect(row).toHaveClass("h-12");
+    }
+    expect(
+      screen.getByRole("button", { name: /Name.*sort descending/ }),
+    ).toHaveClass("-ml-1");
+    expect(
+      screen.getByRole("button", { name: /Users.*sort ascending/ }),
+    ).toHaveClass("mx-auto");
+    expect(screen.getByRole("cell", { name: "2" })).toHaveClass(
+      "text-center",
+    );
+    expect(screen.getByRole("cell", { name: "2" })).toHaveClass(
+      "tabular-nums",
+    );
     expect(screen.getByText("Ops role")).toHaveClass("text-muted-foreground");
+    expect(screen.getByText("Operators").parentElement).toHaveClass(
+      "min-h-8",
+      "items-center",
+    );
     expect(screen.queryByRole("img", { hidden: true })).not.toBeInTheDocument();
   });
 
-  test("sorts role and users columns", async () => {
+  test("sorts name and users columns", async () => {
     const actor = userEvent.setup();
     const onSortChange = vi.fn();
 
     renderTable({ onSortChange });
 
-    await actor.click(screen.getByRole("button", { name: "Role" }));
+    await actor.click(
+      screen.getByRole("button", { name: /Name.*sort descending/ }),
+    );
     expect(onSortChange).toHaveBeenCalledWith({
       field: "name",
       direction: "desc",
     });
 
-    await actor.click(screen.getByRole("button", { name: "Users" }));
+    await actor.click(
+      screen.getByRole("button", { name: /Users.*sort ascending/ }),
+    );
     expect(onSortChange).toHaveBeenCalledWith({
       field: "usersCount",
       direction: "asc",
     });
+  });
+
+  test("continues toggling name sort after the controlled sort state updates", async () => {
+    const actor = userEvent.setup();
+
+    function ControlledRolesTable() {
+      const [sort, setSort] = useState<RoleSort>({
+        field: "name",
+        direction: "asc",
+      });
+
+      return (
+        <RolesTable
+          roles={roles}
+          sort={sort}
+          onSortChange={setSort}
+          onEdit={vi.fn()}
+          onDelete={vi.fn()}
+        />
+      );
+    }
+
+    render(<ControlledRolesTable />);
+
+    await actor.click(
+      screen.getByRole("button", { name: /Name.*sort descending/ }),
+    );
+    expect(
+      screen.getByRole("button", { name: /Name.*sort ascending/ }),
+    ).toBeVisible();
+
+    await actor.click(
+      screen.getByRole("button", { name: /Name.*sort ascending/ }),
+    );
+    expect(
+      screen.getByRole("button", { name: /Name.*sort descending/ }),
+    ).toBeVisible();
   });
 
   test("shows edit and delete actions for custom roles", async () => {

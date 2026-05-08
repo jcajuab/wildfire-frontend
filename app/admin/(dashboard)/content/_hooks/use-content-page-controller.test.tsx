@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { useContentPageController } from "./use-content-page-controller";
 import { useCan } from "@/hooks/use-can";
 import {
+  contentApi,
   useLazyGetContentJobQuery,
   useLazyGetContentQuery,
   useListContentQuery,
@@ -10,10 +11,16 @@ import {
   useSubmitPdfCropsMutation,
   useCancelPdfUploadMutation,
 } from "@/lib/api/content-api";
+import type {
+  BackendContentListItem,
+  BackendContentListResponse,
+  ContentListQuery,
+} from "@/lib/api/content-api";
 import { useContentJobMonitor } from "./content-job-monitor";
 import { useContentPageFilters } from "./use-content-page-filters";
 import { useContentDialogState } from "./use-content-dialog-state";
 import { useContentCrudHandlers } from "./use-content-crud-handlers";
+import { useAppSelector } from "@/lib/hooks";
 
 vi.mock("next/navigation", () => ({
   useSearchParams: vi.fn(() => ({ get: vi.fn(() => null) })),
@@ -22,6 +29,10 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/hooks/use-can", () => ({
   useCan: vi.fn(() => true),
+}));
+
+vi.mock("@/lib/hooks", () => ({
+  useAppSelector: vi.fn(() => false),
 }));
 
 vi.mock("@/lib/api/content-api", () => ({
@@ -97,12 +108,50 @@ const useContentJobMonitorMock = vi.mocked(useContentJobMonitor);
 const useContentPageFiltersMock = vi.mocked(useContentPageFilters);
 const useContentDialogStateMock = vi.mocked(useContentDialogState);
 const useContentCrudHandlersMock = vi.mocked(useContentCrudHandlers);
+const useAppSelectorMock = vi.mocked(useAppSelector);
+const useListContentQueryStateMock = vi.mocked(
+  contentApi.endpoints.listContent.useQueryState,
+);
+
+function makeContentData(titles: readonly string[]): BackendContentListResponse {
+  return {
+    items: titles.map(
+      (title, index): BackendContentListItem => ({
+        id: `content-${index + 1}`,
+        title,
+        type: "TEXT",
+        status: "READY",
+        thumbnailUrl: undefined,
+        mimeType: "text/html",
+        fileSize: 100,
+        checksum: `checksum-${index + 1}`,
+        width: null,
+        height: null,
+        duration: null,
+        flashMessage: null,
+        flashTone: null,
+        textPreviewText: title,
+        createdAt: "2026-05-08T00:00:00.000Z",
+        updatedAt: "2026-05-08T00:00:00.000Z",
+        owner: {
+          id: "user-1",
+          username: "admin",
+          name: "Admin",
+        },
+      }),
+    ),
+    total: titles.length,
+    page: 1,
+    pageSize: 12,
+  };
+}
 
 describe("useContentPageController", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
     useCanMock.mockReturnValue(true);
+    useAppSelectorMock.mockReturnValue(false);
     useLazyGetContentJobQueryMock.mockReturnValue([
       vi.fn(),
     ] as unknown as ReturnType<typeof useLazyGetContentJobQuery>);
@@ -172,5 +221,97 @@ describe("useContentPageController", () => {
     expect(result.current.canCreateContent).toBe(true);
     expect("sortBy" in result.current.filters).toBe(false);
     expect("handleSortChange" in result.current.filters).toBe(false);
+  });
+
+  test("uses initial content data when returning to the initial query", () => {
+    const initialQuery: ContentListQuery = {
+      page: 1,
+      pageSize: 12,
+      sortBy: "createdAt",
+      sortDirection: "desc",
+    };
+    const initialData = makeContentData(["Announcement"]);
+    const staleFilteredData = makeContentData(["Weather Alert"]);
+
+    useContentPageFiltersMock.mockReturnValue({
+      statusFilter: "all",
+      typeFilter: "all",
+      search: "",
+      page: 1,
+      setPage: vi.fn(),
+      handleStatusFilterChange: vi.fn(),
+      handleTypeFilterChange: vi.fn(),
+      handleSearchChange: vi.fn(),
+      handleClearFilters: vi.fn(),
+    });
+    useListContentQueryMock.mockReturnValue({
+      data: staleFilteredData,
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      error: null,
+    } as unknown as ReturnType<typeof useListContentQuery>);
+
+    const { result } = renderHook(() =>
+      useContentPageController({
+        initialList: {
+          queryArgs: initialQuery,
+          data: initialData,
+          isSeeded: true,
+        },
+      }),
+    );
+
+    expect(useListContentQueryMock).toHaveBeenCalledWith(
+      {
+        ...initialQuery,
+        search: undefined,
+        status: undefined,
+        type: undefined,
+      },
+      {
+        pollingInterval: 300_000,
+        refetchOnFocus: true,
+        skip: true,
+      },
+    );
+    expect(result.current.visibleContents.map((item) => item.title)).toEqual([
+      "Announcement",
+    ]);
+  });
+
+  test("uses active content query data for changed filters", () => {
+    const filteredData = makeContentData(["Weather Alert"]);
+
+    useListContentQueryMock.mockReturnValue({
+      data: filteredData,
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      error: null,
+    } as unknown as ReturnType<typeof useListContentQuery>);
+    useListContentQueryStateMock.mockReturnValue({
+      data: makeContentData(["Announcement"]),
+      isFetching: false,
+    });
+
+    const { result } = renderHook(() =>
+      useContentPageController({
+        initialList: {
+          queryArgs: {
+            page: 1,
+            pageSize: 12,
+            sortBy: "createdAt",
+            sortDirection: "desc",
+          },
+          data: makeContentData(["Announcement"]),
+          isSeeded: true,
+        },
+      }),
+    );
+
+    expect(result.current.visibleContents.map((item) => item.title)).toEqual([
+      "Weather Alert",
+    ]);
   });
 });

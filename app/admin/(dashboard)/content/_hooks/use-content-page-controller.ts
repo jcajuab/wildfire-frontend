@@ -95,9 +95,15 @@ export function useContentPageController({
     refetchOnFocus: true,
     skip: isInitialListQuery && !cacheHasData,
   });
-  const data =
-    queriedData ??
-    (isInitialListQuery ? initialList?.data : undefined);
+  const cachedInitialList = contentApi.endpoints.listContent.useQueryState(
+    queryArgs,
+    {
+      skip: !isInitialListQuery,
+    },
+  );
+  const data = isInitialListQuery
+    ? (cachedInitialList.data ?? initialList?.data)
+    : queriedData;
   const isLoading =
     data == null &&
     (isInitialListQuery ? !initialList?.isSeeded : queryIsLoading);

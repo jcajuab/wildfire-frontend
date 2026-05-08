@@ -142,7 +142,7 @@ export function RolesTable({
             }
           >
             <SortableHeader
-              label="Role"
+              label="Name"
               field="name"
               currentSort={sort}
               onSort={(field, direction) => onSortChange({ field, direction })}
@@ -162,6 +162,7 @@ export function RolesTable({
             <SortableHeader
               label="Users"
               field="usersCount"
+              align="center"
               currentSort={sort}
               onSort={(field, direction) => onSortChange({ field, direction })}
             />
@@ -173,11 +174,13 @@ export function RolesTable({
       </TableHeader>
       <TableBody className="[&_tr:last-child]:border-b">
         {roles.map((role) => (
-          <TableRow key={role.id}>
+          <TableRow key={role.id} className="h-12">
             <TableCell>
-              <span className="block min-w-0 truncate font-medium">
-                {role.name}
-              </span>
+              <div className="flex min-h-8 min-w-0 items-center">
+                <span className="block min-w-0 truncate font-medium">
+                  {role.name}
+                </span>
+              </div>
             </TableCell>
             <TableCell className="max-w-[40rem] truncate text-muted-foreground">
               {role.description ?? "No description available"}
@@ -185,7 +188,7 @@ export function RolesTable({
             <TableCell className="text-center text-muted-foreground tabular-nums">
               {role.usersCount ?? "—"}
             </TableCell>
-            <TableCell className="text-right">
+            <TableCell className="w-[48px] text-right">
               <RoleActionsMenu
                 role={role}
                 onEdit={onEdit}

@@ -101,10 +101,9 @@ export function useLogsPage(options?: {
     filters.listQuery,
     { skip: !isInitialEventsQuery },
   );
-  const effectiveEventsData =
-    eventsData ??
-    cachedInitialEvents.data ??
-    (isInitialEventsQuery ? options?.initialEvents?.data : undefined);
+  const effectiveEventsData = isInitialEventsQuery
+    ? (cachedInitialEvents.data ?? options?.initialEvents?.data)
+    : eventsData;
   const isFetching = isInitialEventsQuery
     ? cachedInitialEvents.isFetching
     : queryIsFetching;

@@ -131,10 +131,9 @@ export function usePlaylistsPage({
     playlistQuery,
     { skip: !isInitialListQuery },
   );
-  const playlistsData =
-    queriedPlaylistsData ??
-    cachedInitialList.data ??
-    (isInitialListQuery ? initialList?.data : undefined);
+  const playlistsData = isInitialListQuery
+    ? (cachedInitialList.data ?? initialList?.data)
+    : queriedPlaylistsData;
   const isLoading =
     playlistsData == null && (isInitialListQuery ? false : queryIsLoading);
   const isFetching = isInitialListQuery

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 interface SortableHeaderProps<T extends string> {
   readonly field: T;
   readonly label: string;
+  readonly align?: "start" | "center";
   readonly currentSort: {
     readonly field: T;
     readonly direction: "asc" | "desc";
@@ -18,23 +19,27 @@ interface SortableHeaderProps<T extends string> {
 export function SortableHeader<T extends string>({
   field,
   label,
+  align = "start",
   currentSort,
   onSort,
 }: SortableHeaderProps<T>): ReactElement {
   const isActive = currentSort.field === field;
   const isAsc = currentSort.direction === "asc";
+  const nextDirection = isActive && isAsc ? "desc" : "asc";
+  const nextDirectionLabel =
+    nextDirection === "asc" ? "ascending" : "descending";
 
   const handleClick = (): void => {
-    if (isActive) {
-      onSort(field, isAsc ? "desc" : "asc");
-    } else {
-      onSort(field, "asc");
-    }
+    onSort(field, nextDirection);
   };
 
   return (
-    <TableHeaderControl onClick={handleClick}>
-      {label}
+    <TableHeaderControl
+      className={cn(align === "center" ? "mx-auto" : "-ml-1")}
+      onClick={handleClick}
+      title={`Sort by ${label} ${nextDirectionLabel}`}
+    >
+      <span>{label}</span>
       <IconArrowsSort
         className={cn(
           "size-3.5",
@@ -42,6 +47,7 @@ export function SortableHeader<T extends string>({
         )}
         aria-hidden="true"
       />
+      <span className="sr-only"> sort {nextDirectionLabel}</span>
     </TableHeaderControl>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -38,6 +38,24 @@ function normalizedUsersQueryKey(query: RbacUserListQuery): string {
     roleId: query.roleId ?? null,
     sortBy: query.sortBy ?? "name",
     sortDirection: query.sortDirection ?? "asc",
+  });
+}
+
+function normalizedInvitationQueryKey(query: {
+  readonly page?: number;
+  readonly pageSize?: number;
+  readonly q?: string;
+  readonly status?: InvitationStatusFilter;
+  readonly sortBy?: InvitationSort["field"];
+  readonly sortDirection?: InvitationSort["direction"];
+}): string {
+  return JSON.stringify({
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? PAGE_SIZE,
+    q: query.q ?? null,
+    status: query.status === "all" ? null : (query.status ?? null),
+    sortBy: query.sortBy ?? "createdAt",
+    sortDirection: query.sortDirection ?? "desc",
   });
 }
 
@@ -172,10 +190,9 @@ export function useUsersPage(options?: {
     usersQueryArgs,
     { skip: !isInitialUsersQuery },
   );
-  const effectiveUsersData =
-    usersData ??
-    cachedInitialUsers.data ??
-    (isInitialUsersQuery ? options?.initialUsers?.data : undefined);
+  const effectiveUsersData = isInitialUsersQuery
+    ? (cachedInitialUsers.data ?? options?.initialUsers?.data)
+    : usersData;
 
   const { data: rolesData, isLoading: rolesLoading } = useGetRoleOptionsQuery(
     undefined,
@@ -186,10 +203,6 @@ export function useUsersPage(options?: {
   const usersLoading =
     effectiveUsersData == null &&
     (isInitialUsersQuery ? false : usersQueryLoading || rolesLoading);
-
-  const [invitationsData, setInvitationsData] = useState<
-    InvitationListResponse | undefined
-  >(options?.initialInvitations);
 
   const dialogs = useUsersDialogs();
 
@@ -251,6 +264,39 @@ export function useUsersPage(options?: {
       filters.invitationStatusFilter,
     ],
   );
+  const invitationQueryKey = useMemo(
+    () => normalizedInvitationQueryKey(invitationQuery),
+    [invitationQuery],
+  );
+  const isInitialInvitationsQuery =
+    options?.initialInvitations != null &&
+    invitationQueryKey ===
+      normalizedInvitationQueryKey({
+        page: 1,
+        pageSize: PAGE_SIZE,
+        sortBy: "createdAt",
+        sortDirection: "desc",
+      });
+  const [loadedInvitations, setLoadedInvitations] = useState<
+    | {
+        readonly queryKey: string;
+        readonly data: InvitationListResponse;
+      }
+    | undefined
+  >(undefined);
+  const setInvitationsData = useCallback(
+    (data: InvitationListResponse | undefined): void => {
+      setLoadedInvitations(
+        data != null ? { queryKey: invitationQueryKey, data } : undefined,
+      );
+    },
+    [invitationQueryKey],
+  );
+  const invitationsData = isInitialInvitationsQuery
+    ? options?.initialInvitations
+    : loadedInvitations?.queryKey === invitationQueryKey
+      ? loadedInvitations.data
+      : undefined;
 
   const handlers = useUsersHandlers({
     canCreateUser,
@@ -267,9 +313,10 @@ export function useUsersPage(options?: {
 
   const { loadInvitations } = handlers;
   useEffect(() => {
-    if (options?.initialInvitations) return;
+    if (!canCreateUser || isInitialInvitationsQuery) return;
+
     void loadInvitations();
-  }, [loadInvitations, options?.initialInvitations]);
+  }, [canCreateUser, isInitialInvitationsQuery, loadInvitations]);
 
   return {
     currentUser,

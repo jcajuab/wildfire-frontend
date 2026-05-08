@@ -36,41 +36,27 @@ export function useRolesFilters() {
     [sortField, sortDirection],
   );
 
-  const setSearch = useCallback(
-    (value: string) => setFilters({ q: value }),
-    [setFilters],
-  );
-
   const setPage = useCallback(
     (value: number) => setFilters({ page: value }),
     [setFilters],
   );
 
-  const setSortField = useCallback(
-    (value: RoleSortField) => setFilters({ sortField: value }),
-    [setFilters],
-  );
-
-  const setSortDirection = useCallback(
-    (value: SortDirection) => setFilters({ sortDir: value }),
-    [setFilters],
-  );
-
   const handleSearchChange = useCallback(
     (value: string) => {
-      setSearch(value);
-      setPage(1);
+      setFilters({ q: value, page: 1 });
     },
-    [setSearch, setPage],
+    [setFilters],
   );
 
   const handleSortChange = useCallback(
     (nextSort: RoleSort) => {
-      setSortField(nextSort.field);
-      setSortDirection(nextSort.direction);
-      setPage(1);
+      setFilters({
+        sortField: nextSort.field,
+        sortDir: nextSort.direction,
+        page: 1,
+      });
     },
-    [setSortField, setSortDirection, setPage],
+    [setFilters],
   );
 
   return {

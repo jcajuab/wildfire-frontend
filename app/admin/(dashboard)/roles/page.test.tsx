@@ -92,11 +92,15 @@ describe("RolesPageView", () => {
     expect(
       screen.getByPlaceholderText("Search by role name or description"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: "Role" })).toBeVisible();
+    expect(
+      screen.getByRole("columnheader", { name: /Name.*sort descending/ }),
+    ).toBeVisible();
     expect(
       screen.getByRole("columnheader", { name: "Description" }),
     ).toBeVisible();
-    expect(screen.getByRole("columnheader", { name: "Users" })).toBeVisible();
+    expect(
+      screen.getByRole("columnheader", { name: /Users.*sort ascending/ }),
+    ).toBeVisible();
     expect(screen.getByText("Showing 1 to 2 of 2 results")).toBeInTheDocument();
   });
 
@@ -117,7 +121,9 @@ describe("RolesPageView", () => {
       screen.getByPlaceholderText("Search by role name or description"),
       "ops",
     );
-    await actor.click(screen.getByRole("button", { name: "Users" }));
+    await actor.click(
+      screen.getByRole("button", { name: /Users.*sort ascending/ }),
+    );
 
     expect(handleSearchChangeMock).toHaveBeenCalledWith("o");
     expect(handleSearchChangeMock).toHaveBeenCalledWith("p");

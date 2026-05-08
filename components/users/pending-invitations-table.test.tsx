@@ -82,6 +82,9 @@ describe("PendingInvitationsTable", () => {
     expect(screen.getByRole("columnheader", { name: "Actions" })).toHaveClass(
       "text-right",
     );
+    for (const row of screen.getAllByRole("row").slice(1)) {
+      expect(row).toHaveClass("h-12");
+    }
     expect(
       screen.queryByRole("columnheader", { name: "Link" }),
     ).not.toBeInTheDocument();
@@ -93,6 +96,11 @@ describe("PendingInvitationsTable", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByText("student@example.com")).toBeVisible();
     expect(screen.getByText("Student User")).toBeVisible();
+    expect(screen.getByText("student@example.com").parentElement).toHaveClass(
+      "min-h-8",
+      "justify-center",
+    );
+    expect(screen.getByText(/May 08, 2026/)).toHaveClass("tabular-nums");
   });
 
   test("sorts invitee and expires columns and filters by status", async () => {
@@ -102,13 +110,17 @@ describe("PendingInvitationsTable", () => {
 
     renderTable({ onSortChange, onStatusFilterChange });
 
-    await actor.click(screen.getByRole("button", { name: "Invitee" }));
+    await actor.click(
+      screen.getByRole("button", { name: /Invitee.*sort ascending/ }),
+    );
     expect(onSortChange).toHaveBeenCalledWith({
       field: "email",
       direction: "asc",
     });
 
-    await actor.click(screen.getByRole("button", { name: "Expires" }));
+    await actor.click(
+      screen.getByRole("button", { name: /Expires.*sort ascending/ }),
+    );
     expect(onSortChange).toHaveBeenCalledWith({
       field: "expiresAt",
       direction: "asc",

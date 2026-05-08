@@ -86,20 +86,29 @@ describe("UsersTable", () => {
   test("renders compact users columns with sortable email and plain roles header", () => {
     renderUsersTable();
 
-    expect(screen.getByRole("columnheader", { name: "Name" })).toBeVisible();
-    expect(screen.getByRole("columnheader", { name: "Email" })).toBeVisible();
+    expect(
+      screen.getByRole("columnheader", { name: /Name.*sort descending/ }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("columnheader", { name: /Email.*sort ascending/ }),
+    ).toBeVisible();
     expect(screen.getByRole("columnheader", { name: "Roles" })).toBeVisible();
     expect(
-      screen.getByRole("columnheader", { name: "Last Seen" }),
+      screen.getByRole("columnheader", {
+        name: /Last Seen.*sort ascending/,
+      }),
     ).toBeVisible();
     expect(screen.getByRole("columnheader", { name: "Actions" })).toHaveClass(
       "text-right",
     );
+    for (const row of screen.getAllByRole("row").slice(1)) {
+      expect(row).toHaveClass("h-12");
+    }
 
     expect(
-      within(screen.getByRole("columnheader", { name: "Email" })).queryByRole(
-        "button",
-      ),
+      within(
+        screen.getByRole("columnheader", { name: /Email.*sort ascending/ }),
+      ).queryByRole("button"),
     ).toBeInTheDocument();
     expect(
       within(screen.getByRole("columnheader", { name: "Roles" })).queryByRole(
@@ -155,12 +164,22 @@ describe("UsersTable", () => {
     expect(screen.getByText("Alice")).toHaveClass("truncate", "font-medium");
     expect(screen.getByText("(You)")).toHaveClass("text-muted-foreground");
     expect(screen.getByText("@alice")).toHaveClass("truncate");
+    expect(screen.getByText("@alice").parentElement).toHaveClass(
+      "min-h-8",
+      "justify-center",
+    );
     expect(screen.getByText("No email available")).toHaveClass(
       "text-muted-foreground",
     );
+    expect(screen.getByText("Never")).toHaveClass("tabular-nums");
     expect(screen.getByText("Never")).toHaveClass("text-muted-foreground");
     expect(screen.getByText("Admin")).toHaveClass("border-blue-200");
     expect(screen.getByText("Admin")).toHaveClass("bg-blue-50");
+    expect(screen.getByText("Admin")).toHaveClass("shrink-0");
+    expect(screen.getByText("Admin").parentElement).toHaveClass(
+      "flex-nowrap",
+      "overflow-hidden",
+    );
   });
 
   test("keeps long names and emails constrained inside the table cells", () => {

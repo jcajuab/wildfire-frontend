@@ -96,9 +96,13 @@ export function useSchedulesPage(options?: {
     refetchOnReconnect: true,
     skip: isInitialBootstrapQuery && !cacheHasData,
   });
-  const effectiveBootstrapData =
-    bootstrapData ??
-    (isInitialBootstrapQuery ? options?.initialBootstrap?.data : undefined);
+  const cachedInitialBootstrap =
+    schedulesApi.endpoints.getSchedulesBootstrap.useQueryState(scheduleWindow, {
+      skip: !isInitialBootstrapQuery,
+    });
+  const effectiveBootstrapData = isInitialBootstrapQuery
+    ? (cachedInitialBootstrap.data ?? options?.initialBootstrap?.data)
+    : bootstrapData;
   const isLoading =
     effectiveBootstrapData == null &&
     (isInitialBootstrapQuery ? false : queryIsLoading);

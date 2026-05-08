@@ -105,10 +105,9 @@ export function useRolesPage(options?: {
     rolesQuery,
     { skip: !isInitialListQuery },
   );
-  const effectiveRolesData =
-    rolesData ??
-    cachedInitialList.data ??
-    (isInitialListQuery ? options?.initialList?.data : undefined);
+  const effectiveRolesData = isInitialListQuery
+    ? (cachedInitialList.data ?? options?.initialList?.data)
+    : rolesData;
   const rolesLoading =
     effectiveRolesData == null &&
     (isInitialListQuery ? false : rolesQueryLoading);

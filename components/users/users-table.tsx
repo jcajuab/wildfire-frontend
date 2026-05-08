@@ -132,9 +132,9 @@ function UserRow({
   const isBanned = Boolean(user.bannedAt);
 
   return (
-    <TableRow>
+    <TableRow className="h-12">
       <TableCell>
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-h-8 min-w-0 items-center gap-2">
           {user?.avatarUrl ? (
             <Image
               src={user.avatarUrl}
@@ -146,7 +146,7 @@ function UserRow({
           ) : (
             <IconUser className="size-5 shrink-0 text-muted-foreground" />
           )}
-          <div className="min-w-0">
+          <div className="flex min-h-8 min-w-0 flex-col justify-center">
             <div className="flex min-w-0 items-center gap-1.5">
               <span className="truncate font-medium">
                 {user.name}
@@ -176,25 +176,27 @@ function UserRow({
         {user.email ?? "No email available"}
       </TableCell>
       <TableCell>
-        <div className="flex flex-wrap gap-1">
+        <div className="flex max-w-[15rem] flex-nowrap gap-1 overflow-hidden">
           {userRoles.length === 0 && (
-            <span className="text-muted-foreground">No roles assigned yet</span>
+            <span className="truncate text-muted-foreground">
+              No roles assigned yet
+            </span>
           )}
           {userRoles.map((role) => (
             <Badge
               key={role.id}
               variant="outline"
-              className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+              className="shrink-0 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
             >
               {role.name}
             </Badge>
           ))}
         </div>
       </TableCell>
-      <TableCell className="text-muted-foreground">
+      <TableCell className="text-muted-foreground tabular-nums">
         {user.lastSeenAt ? formatDateTime(user.lastSeenAt) : "Never"}
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="w-[48px] text-right">
         <UserActionsMenu
           user={user}
           userRoleIds={userRoleIds}

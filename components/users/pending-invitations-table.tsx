@@ -285,9 +285,9 @@ export function PendingInvitationsTable({
         {invitations.map((invitation) => {
           const isResending = resendingInvitationId === invitation.id;
           return (
-            <TableRow key={invitation.id}>
+            <TableRow key={invitation.id} className="h-12">
               <TableCell>
-                <div className="flex min-w-0 flex-col">
+                <div className="flex min-h-8 min-w-0 flex-col justify-center">
                   <span className="truncate font-medium">
                     {invitation.email}
                   </span>
@@ -306,10 +306,10 @@ export function PendingInvitationsTable({
                   {statusLabel[invitation.status]}
                 </Badge>
               </TableCell>
-              <TableCell className="text-muted-foreground">
+              <TableCell className="text-muted-foreground tabular-nums">
                 {formatDateTime(invitation.expiresAt)}
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="w-[48px] text-right">
                 <InvitationActionsMenu
                   invitation={invitation}
                   isResending={isResending}
