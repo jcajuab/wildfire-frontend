@@ -164,7 +164,7 @@ export function SchedulesPageView({
                 <p className="text-xs text-muted-foreground">
                   Some display groups have no displays attached and are hidden.{" "}
                   <Link
-                    href="/admin/displays"
+                    href="/admin/displays/display-groups"
                     className="text-primary underline underline-offset-2"
                   >
                     Manage display groups
