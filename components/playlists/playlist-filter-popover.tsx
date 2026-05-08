@@ -7,6 +7,10 @@ import { IconFilter, IconX } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  UserFilterCombobox,
+  type UserFilterOption,
+} from "@/components/common/user-filter-combobox";
+import {
   Popover,
   PopoverAnchor,
   PopoverContent,
@@ -24,14 +28,31 @@ import { cn } from "@/lib/utils";
 import type { PlaylistStatus } from "@/types/playlist";
 
 export type PlaylistStatusFilter = "all" | PlaylistStatus;
+export type PlaylistSortFilter =
+  | "newest"
+  | "oldest"
+  | "updated-desc"
+  | "name-asc"
+  | "name-desc";
+
+export type PlaylistOwnerFilterOption = UserFilterOption;
 
 interface PlaylistFilterPopoverProps {
   readonly statusFilter: PlaylistStatusFilter;
+  readonly ownerFilter: string;
+  readonly sortFilter: PlaylistSortFilter;
   readonly filteredResultsCount: number;
+  readonly ownerOptions?: readonly PlaylistOwnerFilterOption[];
+  readonly ownerSearch?: string;
+  readonly canFilterByOwner?: boolean;
+  readonly isOwnerOptionsFetching?: boolean;
   readonly isFetching?: boolean;
   readonly embeddedTrigger?: boolean;
   readonly renderEmbeddedAnchor?: (trigger: ReactElement) => ReactElement;
   readonly onStatusFilterChange: (value: PlaylistStatusFilter) => void;
+  readonly onOwnerSearchChange?: (value: string) => void;
+  readonly onOwnerFilterChange: (value: string) => void;
+  readonly onSortFilterChange: (value: PlaylistSortFilter) => void;
   readonly onClearFilters: () => void;
 }
 
@@ -42,6 +63,17 @@ const statusOptions: readonly {
   { value: "all", label: "All statuses" },
   { value: "DRAFT", label: "Draft" },
   { value: "IN_USE", label: "In use" },
+] as const;
+
+const sortOptions: readonly {
+  readonly value: PlaylistSortFilter;
+  readonly label: string;
+}[] = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "updated-desc", label: "Recently updated" },
+  { value: "name-asc", label: "Name A-Z" },
+  { value: "name-desc", label: "Name Z-A" },
 ] as const;
 
 interface FilterChipProps {
@@ -65,19 +97,42 @@ function FilterChip({ label, onRemove }: FilterChipProps): ReactElement {
 
 export function PlaylistFilterPopover({
   statusFilter,
-  filteredResultsCount,
+  ownerFilter,
+  sortFilter,
+  ownerOptions = [],
+  ownerSearch = "",
+  canFilterByOwner = false,
+  isOwnerOptionsFetching = false,
   isFetching = false,
   embeddedTrigger = false,
   renderEmbeddedAnchor,
   onStatusFilterChange,
+  onOwnerSearchChange = () => {},
+  onOwnerFilterChange,
+  onSortFilterChange,
   onClearFilters,
 }: PlaylistFilterPopoverProps): ReactElement {
   const [open, setOpen] = useState(false);
-  const hasActiveFilters = statusFilter !== "all";
+  const activeFilterCount =
+    (statusFilter === "all" ? 0 : 1) +
+    (canFilterByOwner && ownerFilter !== "all" ? 1 : 0) +
+    (sortFilter === "newest" ? 0 : 1);
+  const hasActiveFilters = activeFilterCount > 0;
   const activeStatusLabel =
     statusFilter === "all"
       ? null
       : statusOptions.find((option) => option.value === statusFilter)?.label;
+  const activeSortLabel =
+    sortFilter === "newest"
+      ? null
+      : sortOptions.find((option) => option.value === sortFilter)?.label;
+  const selectedOwner = ownerOptions.find((owner) => owner.id === ownerFilter);
+  const activeOwnerLabel =
+    canFilterByOwner && ownerFilter !== "all"
+      ? selectedOwner
+        ? `@${selectedOwner.username}`
+        : "Selected user"
+      : null;
   const triggerButton = (
     <Button
       variant={embeddedTrigger ? "ghost" : "outline"}
@@ -98,7 +153,7 @@ export function PlaylistFilterPopover({
         <span className="absolute -right-1 -top-1 size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       ) : hasActiveFilters ? (
         <Badge className="absolute -right-1.5 -top-1.5 h-4 min-w-4 px-1 text-[10px] leading-4">
-          1
+          {activeFilterCount}
         </Badge>
       ) : null}
     </Button>
@@ -125,30 +180,73 @@ export function PlaylistFilterPopover({
         aria-label="Playlist filters"
       >
         <div className="flex flex-col gap-4 p-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="playlist-status-filter">Status</Label>
-            <Select
-              value={statusFilter}
-              onValueChange={(value) =>
-                onStatusFilterChange(value as PlaylistStatusFilter)
-              }
-            >
-              <SelectTrigger id="playlist-status-filter" className="w-full">
-                <SelectValue placeholder="All statuses" />
-              </SelectTrigger>
-              <SelectContent
-                position="popper"
-                side="bottom"
-                align="start"
-                avoidCollisions={false}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="playlist-status-filter">Status</Label>
+              <Select
+                value={statusFilter}
+                onValueChange={(value) =>
+                  onStatusFilterChange(value as PlaylistStatusFilter)
+                }
               >
-                {statusOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectTrigger id="playlist-status-filter" className="w-full">
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent
+                  position="popper"
+                  side="bottom"
+                  align="start"
+                  avoidCollisions={false}
+                >
+                  {statusOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="playlist-sort-filter">Sort</Label>
+              <Select
+                value={sortFilter}
+                onValueChange={(value) =>
+                  onSortFilterChange(value as PlaylistSortFilter)
+                }
+              >
+                <SelectTrigger id="playlist-sort-filter" className="w-full">
+                  <SelectValue placeholder="Newest first" />
+                </SelectTrigger>
+                <SelectContent
+                  position="popper"
+                  side="bottom"
+                  align="start"
+                  avoidCollisions={false}
+                >
+                  {sortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {canFilterByOwner ? (
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <Label htmlFor="playlist-owner-filter">Created By</Label>
+                <UserFilterCombobox
+                  id="playlist-owner-filter"
+                  value={ownerFilter}
+                  options={ownerOptions}
+                  inputValue={ownerSearch}
+                  isFetching={isOwnerOptionsFetching}
+                  onInputValueChange={onOwnerSearchChange}
+                  onValueChange={onOwnerFilterChange}
+                />
+              </div>
+            ) : null}
           </div>
         </div>
         {hasActiveFilters ? (
@@ -175,10 +273,19 @@ export function PlaylistFilterPopover({
                   onRemove={() => onStatusFilterChange("all")}
                 />
               ) : null}
+              {activeSortLabel ? (
+                <FilterChip
+                  label={activeSortLabel}
+                  onRemove={() => onSortFilterChange("newest")}
+                />
+              ) : null}
+              {activeOwnerLabel ? (
+                <FilterChip
+                  label={activeOwnerLabel}
+                  onRemove={() => onOwnerFilterChange("all")}
+                />
+              ) : null}
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Showing {filteredResultsCount} matching results
-            </p>
           </div>
         ) : null}
       </PopoverContent>

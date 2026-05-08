@@ -2,6 +2,7 @@ import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { useContentPageController } from "./use-content-page-controller";
 import { useCan } from "@/hooks/use-can";
+import { useAuth } from "@/context/auth-context";
 import {
   contentApi,
   useLazyGetContentJobQuery,
@@ -11,6 +12,7 @@ import {
   useSubmitPdfCropsMutation,
   useCancelPdfUploadMutation,
 } from "@/lib/api/content-api";
+import { useGetUserOptionsQuery, useGetUserQuery } from "@/lib/api/rbac-api";
 import type {
   BackendContentListItem,
   BackendContentListResponse,
@@ -29,6 +31,12 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/hooks/use-can", () => ({
   useCan: vi.fn(() => true),
+}));
+
+vi.mock("@/context/auth-context", () => ({
+  useAuth: vi.fn(() => ({
+    user: { id: "admin-id", username: "admin", isAdmin: true },
+  })),
 }));
 
 vi.mock("@/lib/hooks", () => ({
@@ -58,6 +66,15 @@ vi.mock("@/lib/api/content-api", () => ({
   useUploadPdfMutation: vi.fn(() => [vi.fn()]),
   useSubmitPdfCropsMutation: vi.fn(() => [vi.fn()]),
   useCancelPdfUploadMutation: vi.fn(() => [vi.fn()]),
+}));
+
+vi.mock("@/lib/api/rbac-api", () => ({
+  useGetUserOptionsQuery: vi.fn(() => ({
+    data: [],
+  })),
+  useGetUserQuery: vi.fn(() => ({
+    data: undefined,
+  })),
 }));
 
 vi.mock("./content-job-monitor", () => ({
@@ -98,6 +115,9 @@ vi.mock("./use-content-crud-handlers", () => ({
 }));
 
 const useCanMock = vi.mocked(useCan);
+const useAuthMock = vi.mocked(useAuth);
+const useGetUserOptionsQueryMock = vi.mocked(useGetUserOptionsQuery);
+const useGetUserQueryMock = vi.mocked(useGetUserQuery);
 const useListContentQueryMock = vi.mocked(useListContentQuery);
 const useLazyGetContentJobQueryMock = vi.mocked(useLazyGetContentJobQuery);
 const useLazyGetContentQueryMock = vi.mocked(useLazyGetContentQuery);
@@ -153,6 +173,42 @@ describe("useContentPageController", () => {
     vi.clearAllMocks();
 
     useCanMock.mockReturnValue(true);
+    useAuthMock.mockReturnValue({
+      user: {
+        id: "admin-id",
+        username: "admin",
+        email: null,
+        name: "Admin",
+        isAdmin: true,
+        isInvitedUser: false,
+        timezone: null,
+        avatarUrl: null,
+      },
+      permissions: [],
+      isAuthenticated: true,
+      isLoading: false,
+      isInitialized: true,
+      can: vi.fn(() => true),
+      login: vi.fn(),
+      logout: vi.fn(),
+      bootstrapSession: vi.fn(),
+      updateSession: vi.fn(),
+    } as unknown as ReturnType<typeof useAuth>);
+    useGetUserOptionsQueryMock.mockReturnValue({
+      data: [
+        {
+          id: "00000000-0000-4000-8000-000000000001",
+          username: "admin",
+          email: null,
+          name: "Admin",
+          isActive: true,
+        },
+      ],
+      isFetching: false,
+    } as unknown as ReturnType<typeof useGetUserOptionsQuery>);
+    useGetUserQueryMock.mockReturnValue({
+      data: undefined,
+    } as unknown as ReturnType<typeof useGetUserQuery>);
     useAppSelectorMock.mockReturnValue(false);
     useLazyGetContentJobQueryMock.mockReturnValue([
       vi.fn(),
@@ -173,11 +229,15 @@ describe("useContentPageController", () => {
     useContentPageFiltersMock.mockReturnValue({
       statusFilter: "READY",
       typeFilter: "VIDEO",
+      ownerFilter: "00000000-0000-4000-8000-000000000001",
+      sortFilter: "title-asc",
       search: "weather",
       page: 2,
       setPage: vi.fn(),
       handleStatusFilterChange: vi.fn(),
       handleTypeFilterChange: vi.fn(),
+      handleOwnerFilterChange: vi.fn(),
+      handleSortFilterChange: vi.fn(),
       handleSearchChange: vi.fn(),
       handleClearFilters: vi.fn(),
     });
@@ -205,7 +265,7 @@ describe("useContentPageController", () => {
     });
   });
 
-  test("uses fixed recent sorting and exposes filters without sort state", () => {
+  test("uses selected sort and owner filter in content queries", () => {
     const { result } = renderHook(() => useContentPageController());
 
     expect(useListContentQueryMock).toHaveBeenCalledWith(
@@ -214,15 +274,20 @@ describe("useContentPageController", () => {
         pageSize: 12,
         status: "READY",
         type: "VIDEO",
+        ownerId: "00000000-0000-4000-8000-000000000001",
         search: "weather",
-        sortBy: "createdAt",
-        sortDirection: "desc",
+        sortBy: "title",
+        sortDirection: "asc",
       },
       { pollingInterval: 300_000, refetchOnFocus: true, skip: false },
     );
     expect(result.current.canCreateContent).toBe(true);
-    expect("sortBy" in result.current.filters).toBe(false);
-    expect("handleSortChange" in result.current.filters).toBe(false);
+    expect(result.current.canFilterByOwner).toBe(true);
+    expect(result.current.ownerOptions).toHaveLength(1);
+    expect(useGetUserOptionsQueryMock).toHaveBeenCalledWith(
+      { q: undefined, limit: 25 },
+      { skip: false },
+    );
   });
 
   test("uses initial content data when returning to the initial query", () => {
@@ -238,11 +303,15 @@ describe("useContentPageController", () => {
     useContentPageFiltersMock.mockReturnValue({
       statusFilter: "all",
       typeFilter: "all",
+      ownerFilter: "all",
+      sortFilter: "newest",
       search: "",
       page: 1,
       setPage: vi.fn(),
       handleStatusFilterChange: vi.fn(),
       handleTypeFilterChange: vi.fn(),
+      handleOwnerFilterChange: vi.fn(),
+      handleSortFilterChange: vi.fn(),
       handleSearchChange: vi.fn(),
       handleClearFilters: vi.fn(),
     });

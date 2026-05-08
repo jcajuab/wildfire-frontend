@@ -261,8 +261,14 @@ export function ContentPageView({
           <ContentToolbar
             statusFilter={controller.filters.statusFilter}
             typeFilter={controller.filters.typeFilter}
+            ownerFilter={controller.filters.ownerFilter}
+            sortFilter={controller.filters.sortFilter}
             search={controller.filters.search}
             filteredResultsCount={controller.data?.total ?? 0}
+            ownerOptions={controller.ownerOptions}
+            ownerSearch={controller.ownerSearch}
+            canFilterByOwner={controller.canFilterByOwner}
+            isOwnerOptionsFetching={controller.isOwnerOptionsFetching}
             isFetching={controller.isFetching && !controller.isLoading}
             canCreateContent={controller.canCreateContent}
             canDeleteContent={controller.canDeleteContent}
@@ -282,6 +288,9 @@ export function ContentPageView({
             onSearchChange={controller.filters.handleSearchChange}
             onStatusFilterChange={controller.filters.handleStatusFilterChange}
             onTypeFilterChange={controller.filters.handleTypeFilterChange}
+            onOwnerSearchChange={controller.handleOwnerSearchChange}
+            onOwnerFilterChange={controller.filters.handleOwnerFilterChange}
+            onSortFilterChange={controller.filters.handleSortFilterChange}
             onClearFilters={controller.filters.handleClearFilters}
             onCreateText={() => controller.openCreateDialog("text")}
             onCreateUpload={() => controller.openCreateDialog("upload")}

@@ -75,9 +75,15 @@ export function PlaylistsPageView({
     canCreatePlaylist,
     canUpdatePlaylist,
     canDeletePlaylist,
+    canFilterByOwner,
+    ownerOptions,
+    ownerSearch,
+    isOwnerOptionsFetching,
     isLoading,
     isFetching,
     statusFilter,
+    ownerFilter,
+    sortFilter,
     search,
     page,
     playlists,
@@ -87,6 +93,9 @@ export function PlaylistsPageView({
     setPage,
     setPlaylistToDelete,
     handleStatusFilterChange,
+    handleOwnerSearchChange,
+    handleOwnerFilterChange,
+    handleSortFilterChange,
     handleClearFilters,
     handleSearchChange,
     handleEditPlaylist,
@@ -105,7 +114,7 @@ export function PlaylistsPageView({
 
   useEffect(() => {
     clearSelection();
-  }, [clearSelection, search, statusFilter]);
+  }, [clearSelection, ownerFilter, search, sortFilter, statusFilter]);
 
   const selectedPlaylistLabels = selectedItems.map((item) => item.label);
   const selectedPlaylistCount = selectedCount;
@@ -177,8 +186,14 @@ export function PlaylistsPageView({
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <PlaylistsToolbar
             statusFilter={statusFilter}
+            ownerFilter={ownerFilter}
+            sortFilter={sortFilter}
             search={search}
             filteredResultsCount={totalPlaylists}
+            ownerOptions={ownerOptions}
+            ownerSearch={ownerSearch}
+            canFilterByOwner={canFilterByOwner}
+            isOwnerOptionsFetching={isOwnerOptionsFetching}
             isFetching={isFetching && !isLoading}
             canCreatePlaylist={canCreatePlaylist}
             canDeletePlaylist={canDeletePlaylist}
@@ -197,6 +212,9 @@ export function PlaylistsPageView({
             }
             onSearchChange={handleSearchChange}
             onStatusFilterChange={handleStatusFilterChange}
+            onOwnerSearchChange={handleOwnerSearchChange}
+            onOwnerFilterChange={handleOwnerFilterChange}
+            onSortFilterChange={handleSortFilterChange}
             onClearFilters={handleClearFilters}
           />
 

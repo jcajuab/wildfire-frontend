@@ -13,6 +13,8 @@ import {
 
 import {
   ContentFilterPopover,
+  type ContentOwnerFilterOption,
+  type ContentSortFilter,
   type ContentStatusFilter,
   type TypeFilter,
 } from "@/components/content/content-filter-popover";
@@ -41,8 +43,14 @@ type ContentToolbarBulkState =
 interface ContentToolbarProps {
   readonly statusFilter: ContentStatusFilter;
   readonly typeFilter: TypeFilter;
+  readonly ownerFilter: string;
+  readonly sortFilter: ContentSortFilter;
   readonly search: string;
   readonly filteredResultsCount: number;
+  readonly ownerOptions?: readonly ContentOwnerFilterOption[];
+  readonly ownerSearch?: string;
+  readonly canFilterByOwner?: boolean;
+  readonly isOwnerOptionsFetching?: boolean;
   readonly isFetching?: boolean;
   readonly canCreateContent: boolean;
   readonly canDeleteContent: boolean;
@@ -50,6 +58,9 @@ interface ContentToolbarProps {
   readonly onSearchChange: (value: string) => void;
   readonly onStatusFilterChange: (value: ContentStatusFilter) => void;
   readonly onTypeFilterChange: (value: TypeFilter) => void;
+  readonly onOwnerSearchChange?: (value: string) => void;
+  readonly onOwnerFilterChange: (value: string) => void;
+  readonly onSortFilterChange: (value: ContentSortFilter) => void;
   readonly onClearFilters: () => void;
   readonly onCreateText: () => void;
   readonly onCreateUpload: () => void;
@@ -59,8 +70,14 @@ interface ContentToolbarProps {
 export function ContentToolbar({
   statusFilter,
   typeFilter,
+  ownerFilter,
+  sortFilter,
   search,
   filteredResultsCount,
+  ownerOptions = [],
+  ownerSearch = "",
+  canFilterByOwner = false,
+  isOwnerOptionsFetching = false,
   isFetching = false,
   canCreateContent,
   canDeleteContent,
@@ -68,6 +85,9 @@ export function ContentToolbar({
   onSearchChange,
   onStatusFilterChange,
   onTypeFilterChange,
+  onOwnerSearchChange,
+  onOwnerFilterChange,
+  onSortFilterChange,
   onClearFilters,
   onCreateText,
   onCreateUpload,
@@ -92,7 +112,13 @@ export function ContentToolbar({
             <ContentFilterPopover
               statusFilter={statusFilter}
               typeFilter={typeFilter}
+              ownerFilter={ownerFilter}
+              sortFilter={sortFilter}
               filteredResultsCount={filteredResultsCount}
+              ownerOptions={ownerOptions}
+              ownerSearch={ownerSearch}
+              canFilterByOwner={canFilterByOwner}
+              isOwnerOptionsFetching={isOwnerOptionsFetching}
               isFetching={isFetching}
               embeddedTrigger
               renderEmbeddedAnchor={(trigger) => (
@@ -101,7 +127,7 @@ export function ContentToolbar({
                     value={search}
                     onChange={onSearchChange}
                     ariaLabel="Search content"
-                    placeholder="Search by title or owner"
+                    placeholder="Search by content title"
                     className="max-w-none min-w-0 flex-1"
                     trailingAction={trigger}
                   />
@@ -109,6 +135,9 @@ export function ContentToolbar({
               )}
               onStatusFilterChange={onStatusFilterChange}
               onTypeFilterChange={onTypeFilterChange}
+              onOwnerSearchChange={onOwnerSearchChange}
+              onOwnerFilterChange={onOwnerFilterChange}
+              onSortFilterChange={onSortFilterChange}
               onClearFilters={onClearFilters}
             />
           </div>

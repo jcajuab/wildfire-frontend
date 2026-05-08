@@ -256,7 +256,7 @@ describe("DisplayFilterPopover", () => {
     await user.click(screen.getByRole("button", { name: "Filter displays" }));
 
     expect(
-      screen.getByPlaceholderText("Search display groups"),
+      screen.getByPlaceholderText("Search display groups..."),
     ).toBeInTheDocument();
   });
 

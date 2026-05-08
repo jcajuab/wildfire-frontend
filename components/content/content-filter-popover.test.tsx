@@ -27,9 +27,13 @@ describe("ContentFilterPopover", () => {
       <ContentFilterPopover
         statusFilter="READY"
         typeFilter="VIDEO"
+        ownerFilter="all"
+        sortFilter="newest"
         filteredResultsCount={6}
         onStatusFilterChange={vi.fn()}
         onTypeFilterChange={vi.fn()}
+        onOwnerFilterChange={vi.fn()}
+        onSortFilterChange={vi.fn()}
         onClearFilters={onClearFilters}
       />,
     );
@@ -45,7 +49,7 @@ describe("ContentFilterPopover", () => {
     expect(screen.getByText("Active filters")).toBeInTheDocument();
     expect(screen.getAllByText("Ready").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Videos").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Showing 6 matching results")).toBeInTheDocument();
+    expect(screen.queryByText("Showing 6 matching results")).toBeNull();
     await user.click(screen.getByRole("button", { name: "Clear" }));
 
     expect(onClearFilters).toHaveBeenCalledTimes(1);
@@ -60,9 +64,13 @@ describe("ContentFilterPopover", () => {
       <ContentFilterPopover
         statusFilter="all"
         typeFilter="all"
+        ownerFilter="all"
+        sortFilter="newest"
         filteredResultsCount={12}
         onStatusFilterChange={onStatusFilterChange}
         onTypeFilterChange={onTypeFilterChange}
+        onOwnerFilterChange={vi.fn()}
+        onSortFilterChange={vi.fn()}
         onClearFilters={vi.fn()}
       />,
     );
@@ -92,6 +100,50 @@ describe("ContentFilterPopover", () => {
     expect(onTypeFilterChange).toHaveBeenCalledWith("VIDEO");
   });
 
+  test("changes sort and admin-only owner filters", async () => {
+    const onOwnerFilterChange = vi.fn();
+    const onSortFilterChange = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <ContentFilterPopover
+        statusFilter="all"
+        typeFilter="all"
+        ownerFilter="all"
+        sortFilter="newest"
+        filteredResultsCount={12}
+        canFilterByOwner
+        ownerOptions={[
+          {
+            id: "00000000-0000-4000-8000-000000000001",
+            username: "admin",
+            name: "Admin",
+            email: null,
+          },
+        ]}
+        onStatusFilterChange={vi.fn()}
+        onTypeFilterChange={vi.fn()}
+        onOwnerFilterChange={onOwnerFilterChange}
+        onSortFilterChange={onSortFilterChange}
+        onClearFilters={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Filter content" }));
+    await user.click(screen.getByRole("combobox", { name: "Sort" }));
+    await user.click(screen.getByRole("option", { name: "Title A-Z" }));
+    await user.click(screen.getByRole("combobox", { name: "Created By" }));
+    expect(
+      screen.getByRole("option", { name: "All users" }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("option", { name: "@admin" }));
+
+    expect(onSortFilterChange).toHaveBeenCalledWith("title-asc");
+    expect(onOwnerFilterChange).toHaveBeenCalledWith(
+      "00000000-0000-4000-8000-000000000001",
+    );
+  });
+
   test("removes individual active filters from the footer", async () => {
     const onStatusFilterChange = vi.fn();
     const onTypeFilterChange = vi.fn();
@@ -101,9 +153,20 @@ describe("ContentFilterPopover", () => {
       <ContentFilterPopover
         statusFilter="READY"
         typeFilter="VIDEO"
+        ownerFilter="00000000-0000-4000-8000-000000000001"
+        sortFilter="title-asc"
         filteredResultsCount={6}
+        canFilterByOwner
+        ownerOptions={[
+          {
+            id: "00000000-0000-4000-8000-000000000001",
+            username: "admin",
+          },
+        ]}
         onStatusFilterChange={onStatusFilterChange}
         onTypeFilterChange={onTypeFilterChange}
+        onOwnerFilterChange={vi.fn()}
+        onSortFilterChange={vi.fn()}
         onClearFilters={vi.fn()}
       />,
     );

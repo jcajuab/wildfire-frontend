@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { IconFilter, IconX } from "@tabler/icons-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Combobox,
@@ -210,9 +211,9 @@ export function DisplayFilterPopover({
       {isFetching ? (
         <span className="absolute -right-1 -top-1 size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       ) : hasActiveFilters ? (
-        <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground tabular-nums">
+        <Badge className="absolute -right-1.5 -top-1.5 h-4 min-w-4 px-1 text-[10px] leading-4">
           {activeFilterCount}
-        </span>
+        </Badge>
       ) : null}
     </Button>
   );
@@ -367,7 +368,9 @@ export function DisplayFilterPopover({
                   <ComboboxChipsInput
                     id="display-group-filter"
                     placeholder={
-                      selectedGroups.length === 0 ? "Search display groups" : ""
+                      selectedGroups.length === 0
+                        ? "Search display groups..."
+                        : ""
                     }
                     onFocus={() => setGroupComboOpen(true)}
                     onClick={() => setGroupComboOpen(true)}

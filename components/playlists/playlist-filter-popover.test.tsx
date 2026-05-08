@@ -26,8 +26,12 @@ describe("PlaylistFilterPopover", () => {
     render(
       <PlaylistFilterPopover
         statusFilter="DRAFT"
+        ownerFilter="all"
+        sortFilter="newest"
         filteredResultsCount={6}
         onStatusFilterChange={vi.fn()}
+        onOwnerFilterChange={vi.fn()}
+        onSortFilterChange={vi.fn()}
         onClearFilters={onClearFilters}
       />,
     );
@@ -56,8 +60,12 @@ describe("PlaylistFilterPopover", () => {
     render(
       <PlaylistFilterPopover
         statusFilter="all"
+        ownerFilter="all"
+        sortFilter="newest"
         filteredResultsCount={12}
         onStatusFilterChange={onStatusFilterChange}
+        onOwnerFilterChange={vi.fn()}
+        onSortFilterChange={vi.fn()}
         onClearFilters={vi.fn()}
       />,
     );
@@ -72,12 +80,51 @@ describe("PlaylistFilterPopover", () => {
     expect(onStatusFilterChange).toHaveBeenCalledWith("IN_USE");
   });
 
+  test("changes sort and admin-only owner filters", async () => {
+    const onOwnerFilterChange = vi.fn();
+    const onSortFilterChange = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <PlaylistFilterPopover
+        statusFilter="all"
+        ownerFilter="all"
+        sortFilter="newest"
+        filteredResultsCount={12}
+        canFilterByOwner
+        ownerOptions={[
+          {
+            id: "00000000-0000-4000-8000-000000000001",
+            username: "admin",
+          },
+        ]}
+        onStatusFilterChange={vi.fn()}
+        onOwnerFilterChange={onOwnerFilterChange}
+        onSortFilterChange={onSortFilterChange}
+        onClearFilters={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Filter playlists" }));
+    await user.click(screen.getByRole("combobox", { name: "Sort" }));
+    await user.click(screen.getByRole("option", { name: "Name A-Z" }));
+    await user.click(screen.getByRole("combobox", { name: "Created By" }));
+    await user.click(screen.getByRole("option", { name: "@admin" }));
+
+    expect(onSortFilterChange).toHaveBeenCalledWith("name-asc");
+    expect(onOwnerFilterChange).toHaveBeenCalledWith(
+      "00000000-0000-4000-8000-000000000001",
+    );
+  });
+
   test("renders embedded trigger inside a supplied anchor", async () => {
     const user = userEvent.setup();
 
     render(
       <PlaylistFilterPopover
         statusFilter="all"
+        ownerFilter="all"
+        sortFilter="newest"
         filteredResultsCount={12}
         embeddedTrigger
         renderEmbeddedAnchor={(trigger) => (
@@ -87,6 +134,8 @@ describe("PlaylistFilterPopover", () => {
           </div>
         )}
         onStatusFilterChange={vi.fn()}
+        onOwnerFilterChange={vi.fn()}
+        onSortFilterChange={vi.fn()}
         onClearFilters={vi.fn()}
       />,
     );
