@@ -117,6 +117,15 @@ function InitialDisplaysBootstrapSeeder({
   const store = useAppStore();
 
   useLayoutEffect(() => {
+    const existing =
+      displaysApi.endpoints.getDisplaysBootstrap.select(queryArgs)(
+        store.getState(),
+      );
+    if (existing?.data != null) {
+      onSeeded();
+      return;
+    }
+
     let cancelled = false;
     const rtSlice = displaysApi.endpoints.getRuntimeOverrides.select(undefined)(
       store.getState(),
