@@ -259,7 +259,7 @@ export function PlaylistsPageView({
         onConfirm={async () => {
           if (!playlistToDelete) return;
           await deletePlaylistMutation(playlistToDelete.id);
-          setPlaylistToDelete(null);
+          toast.success("Successfully deleted playlist");
         }}
       />
 

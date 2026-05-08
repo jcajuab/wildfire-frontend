@@ -5,6 +5,7 @@ import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 import type { Schedule } from "@/types/schedule";
 import { formatWeekdayShort, formatMonthDay } from "@/lib/formatters";
 import {
+  computeOverlapCounters,
   createResourceDateKey,
   type ResourceCalendarLaneEvent,
 } from "@/lib/schedules/resource-calendar";
@@ -126,11 +127,10 @@ export function ResourceWeekView({
                   const resourceDateKey = createResourceDateKey(row.id, day);
                   const dayEvents =
                     eventsByResourceDate.get(resourceDateKey) ?? [];
-                  let playlistPos = 0;
-                  const playlistPositions = dayEvents.map((e) =>
-                    e.kind === "FLASH" ? -1 : playlistPos++,
+                  const overlapCounters = computeOverlapCounters(
+                    dayEvents,
+                    schedulesById,
                   );
-                  const playlistCount = playlistPos;
 
                   return (
                     <div
@@ -138,14 +138,15 @@ export function ResourceWeekView({
                       className="relative border-r border-border bg-background/60 p-1.5 last:border-r-0"
                       style={{ minHeight: 72 }}
                     >
-                      {dayEvents.map((event, index) => {
+                      {dayEvents.map((event) => {
                         const schedule = schedulesById.get(event.scheduleId);
                         if (!schedule) {
                           return null;
                         }
 
+                        const counter = overlapCounters.get(event.id);
                         const showCounter =
-                          event.kind !== "FLASH" && playlistCount > 1;
+                          counter !== undefined && counter.groupSize > 1;
 
                         return (
                           <button
@@ -159,7 +160,7 @@ export function ResourceWeekView({
                             }`}
                             aria-label={
                               showCounter
-                                ? `View schedule ${schedule.name} (${playlistPositions[index] + 1} of ${playlistCount}) on ${row.name}, ${event.timeLabel}`
+                                ? `View schedule ${schedule.name} (${counter.position + 1} of ${counter.groupSize}) on ${row.name}, ${event.timeLabel}`
                                 : `View schedule ${schedule.name} on ${row.name}, ${event.timeLabel}`
                             }
                           >
@@ -169,7 +170,7 @@ export function ResourceWeekView({
                                   aria-hidden
                                   className="mr-1 inline-flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold leading-none text-primary-foreground"
                                 >
-                                  {playlistPositions[index] + 1}
+                                  {counter.position + 1}
                                 </span>
                               ) : null}
                               {schedule.name}

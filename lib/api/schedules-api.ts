@@ -1,4 +1,7 @@
-import { revalidateWildfireTagViaRoute } from "@/lib/api/revalidate-via-route";
+import {
+  revalidateWildfireTagViaRoute,
+  revalidateWildfireTagsViaRoute,
+} from "@/lib/api/revalidate-via-route";
 import { api } from "@/lib/api/api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 
@@ -174,6 +177,11 @@ export const schedulesApi = api.injectEndpoints({
             }
           }
           await bumpSchedulesNextCache();
+          dispatch(api.util.invalidateTags([{ type: "Display", id: "LIST" }]));
+          void revalidateWildfireTagsViaRoute([
+            "displays-bootstrap",
+            "displays-options",
+          ]);
         } catch {
           // mutation failed
         }
@@ -211,6 +219,11 @@ export const schedulesApi = api.injectEndpoints({
             }
           }
           await bumpSchedulesNextCache();
+          dispatch(api.util.invalidateTags([{ type: "Display", id: "LIST" }]));
+          void revalidateWildfireTagsViaRoute([
+            "displays-bootstrap",
+            "displays-options",
+          ]);
         } catch {
           // mutation failed
         }
@@ -245,6 +258,11 @@ export const schedulesApi = api.injectEndpoints({
             }
           }
           await bumpSchedulesNextCache();
+          dispatch(api.util.invalidateTags([{ type: "Display", id: "LIST" }]));
+          void revalidateWildfireTagsViaRoute([
+            "displays-bootstrap",
+            "displays-options",
+          ]);
         } catch {
           // mutation failed
         }

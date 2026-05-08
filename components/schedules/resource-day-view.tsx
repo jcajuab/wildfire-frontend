@@ -6,6 +6,7 @@ import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 import { formatLongDate } from "@/lib/formatters";
 import {
   MINUTES_PER_DAY,
+  computeOverlapCounters,
   createResourceDateKey,
   formatMinutesAsTime,
   type ResourceCalendarLaneEvent,
@@ -138,11 +139,10 @@ export function ResourceDayView({
               const resourceDateKey = createResourceDateKey(row.id, day);
               const dayEvents = eventsByResourceDate.get(resourceDateKey) ?? [];
               const laneHeight = getLaneHeight(dayEvents);
-              let playlistPos = 0;
-              const playlistPositions = dayEvents.map((e) =>
-                e.kind === "FLASH" ? -1 : playlistPos++,
+              const overlapCounters = computeOverlapCounters(
+                dayEvents,
+                schedulesById,
               );
-              const playlistCount = playlistPos;
 
               return (
                 <div
@@ -171,7 +171,7 @@ export function ResourceDayView({
                       ))}
                     </div>
 
-                    {dayEvents.map((event, index) => {
+                    {dayEvents.map((event) => {
                       const schedule = schedulesById.get(event.scheduleId);
                       if (!schedule) {
                         return null;
@@ -185,8 +185,9 @@ export function ResourceDayView({
                           100,
                         1.2,
                       );
+                      const counter = overlapCounters.get(event.id);
                       const showCounter =
-                        event.kind !== "FLASH" && playlistCount > 1;
+                        counter !== undefined && counter.groupSize > 1;
 
                       return (
                         <button
@@ -206,7 +207,7 @@ export function ResourceDayView({
                           }}
                           aria-label={
                             showCounter
-                              ? `View schedule ${schedule.name} (${playlistPositions[index] + 1} of ${playlistCount}) on ${row.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`
+                              ? `View schedule ${schedule.name} (${counter.position + 1} of ${counter.groupSize}) on ${row.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`
                               : `View schedule ${schedule.name} on ${row.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`
                           }
                         >
@@ -216,7 +217,7 @@ export function ResourceDayView({
                                 aria-hidden
                                 className="mr-1 inline-flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold leading-none text-primary-foreground"
                               >
-                                {playlistPositions[index] + 1}
+                                {counter.position + 1}
                               </span>
                             ) : null}
                             {schedule.name}

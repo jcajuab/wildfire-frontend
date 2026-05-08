@@ -186,7 +186,8 @@ export function useDisplaysPage({
     initialBootstrap != null &&
     normalizedQueryKey(initialBootstrap.queryArgs) ===
       normalizedQueryKey(currentQueryArgs);
-  const shouldSkipInitialQuery = isInitialBootstrapQuery;
+  const shouldSkipInitialQuery =
+    isInitialBootstrapQuery && !initialBootstrap?.isSeeded;
   const [triggerDisplaysQuery] = useLazyGetDisplaysQuery();
   const [triggerBootstrapQuery] = useLazyGetDisplaysBootstrapQuery();
   const [remainingDisplayRowsState, setRemainingDisplayRowsState] =

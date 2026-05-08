@@ -220,6 +220,98 @@ export function assignEventLanes(
   return laidOut;
 }
 
+export interface OverlapCounter {
+  readonly position: number;
+  readonly groupSize: number;
+}
+
+export function computeOverlapCounters(
+  events: readonly ResourceCalendarEvent[],
+  schedulesById: ReadonlyMap<string, { createdAt: string }>,
+): ReadonlyMap<string, OverlapCounter> {
+  const playlists = events.filter((e) => e.kind !== "FLASH");
+  const result = new Map<string, OverlapCounter>();
+
+  if (playlists.length <= 1) {
+    for (const e of playlists) {
+      result.set(e.id, { position: -1, groupSize: 1 });
+    }
+    return result;
+  }
+
+  const parent = new Array<number>(playlists.length);
+  const rank = new Array<number>(playlists.length);
+  for (let i = 0; i < playlists.length; i++) {
+    parent[i] = i;
+    rank[i] = 0;
+  }
+
+  function find(x: number): number {
+    while (parent[x] !== x) {
+      parent[x] = parent[parent[x]];
+      x = parent[x];
+    }
+    return x;
+  }
+
+  function union(a: number, b: number): void {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra === rb) return;
+    if (rank[ra] < rank[rb]) {
+      parent[ra] = rb;
+    } else if (rank[ra] > rank[rb]) {
+      parent[rb] = ra;
+    } else {
+      parent[rb] = ra;
+      rank[ra]++;
+    }
+  }
+
+  for (let i = 0; i < playlists.length; i++) {
+    for (let j = i + 1; j < playlists.length; j++) {
+      if (
+        playlists[i].startMinutes < playlists[j].endMinutes &&
+        playlists[j].startMinutes < playlists[i].endMinutes
+      ) {
+        union(i, j);
+      }
+    }
+  }
+
+  const components = new Map<number, number[]>();
+  for (let i = 0; i < playlists.length; i++) {
+    const root = find(i);
+    const group = components.get(root) ?? [];
+    group.push(i);
+    components.set(root, group);
+  }
+
+  for (const members of components.values()) {
+    if (members.length === 1) {
+      result.set(playlists[members[0]].id, { position: -1, groupSize: 1 });
+      continue;
+    }
+
+    const sorted = [...members].sort((a, b) => {
+      const dateA =
+        schedulesById.get(playlists[a].scheduleId)?.createdAt ?? "";
+      const dateB =
+        schedulesById.get(playlists[b].scheduleId)?.createdAt ?? "";
+      return dateA.localeCompare(dateB);
+    });
+
+    for (let pos = 0; pos < sorted.length; pos++) {
+      result.set(playlists[sorted[pos]].id, {
+        position: pos,
+        groupSize: sorted.length,
+      });
+    }
+  }
+
+  return result;
+}
+
 export function groupEventsByResourceDate(
   events: readonly ResourceCalendarLaneEvent[],
 ): ReadonlyMap<string, readonly ResourceCalendarLaneEvent[]> {

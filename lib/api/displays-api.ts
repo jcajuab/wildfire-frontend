@@ -1,4 +1,7 @@
-import { revalidateWildfireTagsViaRoute } from "@/lib/api/revalidate-via-route";
+import {
+  revalidateWildfireTagsViaRoute,
+  revalidateWildfireTagViaRoute,
+} from "@/lib/api/revalidate-via-route";
 import { api } from "@/lib/api/api";
 import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
@@ -346,6 +349,8 @@ export const displaysApi = api.injectEndpoints({
             );
           }
           await bumpDisplaysNextCache();
+          dispatch(api.util.invalidateTags([{ type: "Schedule", id: "LIST" }]));
+          void revalidateWildfireTagViaRoute("schedules-bootstrap");
         } catch {
           // mutation failed
         }
@@ -615,6 +620,8 @@ export const displaysApi = api.injectEndpoints({
             );
           }
           await bumpDisplaysNextCache();
+          dispatch(api.util.invalidateTags([{ type: "Schedule", id: "LIST" }]));
+          void revalidateWildfireTagViaRoute("schedules-bootstrap");
         } catch {
           // mutation failed
         }
@@ -734,6 +741,8 @@ export const displaysApi = api.injectEndpoints({
             );
           }
           await bumpDisplaysNextCache();
+          dispatch(api.util.invalidateTags([{ type: "Schedule", id: "LIST" }]));
+          void revalidateWildfireTagViaRoute("schedules-bootstrap");
         } catch {
           // mutation failed
         }
@@ -844,6 +853,8 @@ export const displaysApi = api.injectEndpoints({
             );
           }
           await bumpDisplaysNextCache();
+          dispatch(api.util.invalidateTags([{ type: "Schedule", id: "LIST" }]));
+          void revalidateWildfireTagViaRoute("schedules-bootstrap");
         } catch {
           // mutation failed
         }
@@ -858,11 +869,6 @@ export const displaysApi = api.injectEndpoints({
         method: "PUT",
         body: { groupIds },
       }),
-      invalidatesTags: (_result, _error, { displayId }) => [
-        { type: "Display", id: displayId },
-        { type: "Display", id: "LIST" },
-        { type: "DisplayGroup", id: "LIST" },
-      ],
       async onQueryStarted(
         { displayId, groupIds },
         { dispatch, queryFulfilled, getState },
@@ -926,13 +932,6 @@ export const displaysApi = api.injectEndpoints({
               ),
             );
           }
-          if (needsAffectedDisplayRefetch) {
-            dispatch(
-              displaysApi.util.invalidateTags([
-                { type: "DisplayGroup", id: "LIST" },
-              ]),
-            );
-          }
           const bootstrapArgs = displaysApi.util.selectCachedArgsForQuery(
             getState(),
             "getDisplaysBootstrap",
@@ -950,11 +949,7 @@ export const displaysApi = api.injectEndpoints({
             );
           }
           // Patch any active getDisplays caches whose groupIds filter no longer
-          // matches the display's new membership. The invalidatesTags above
-          // refetches with fresh data; this patch removes the stale row
-          // synchronously so the UI doesn't flash a stale list during the
-          // round-trip. The "add" direction is left to the refetch because we
-          // don't have the full BackendDisplay payload here.
+          // matches the display's new membership.
           const displaysArgs = displaysApi.util.selectCachedArgsForQuery(
             getState(),
             "getDisplays",
@@ -1007,6 +1002,15 @@ export const displaysApi = api.injectEndpoints({
             );
           }
           await bumpDisplaysNextCache();
+          if (needsAffectedDisplayRefetch) {
+            dispatch(
+              displaysApi.util.invalidateTags([
+                { type: "DisplayGroup", id: "LIST" },
+              ]),
+            );
+          }
+          dispatch(api.util.invalidateTags([{ type: "Schedule", id: "LIST" }]));
+          void revalidateWildfireTagViaRoute("schedules-bootstrap");
         } catch {
           // mutation failed
         }
@@ -1058,6 +1062,8 @@ export const displaysApi = api.injectEndpoints({
             );
           }
           await bumpDisplaysNextCache();
+          dispatch(api.util.invalidateTags([{ type: "Schedule", id: "LIST" }]));
+          void revalidateWildfireTagViaRoute("schedules-bootstrap");
         } catch {
           // mutation failed
         }

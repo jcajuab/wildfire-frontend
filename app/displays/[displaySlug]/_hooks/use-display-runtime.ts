@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getBaseUrl } from "@/lib/api/base-query";
 import {
+  ensureFreshAccessToken,
+  getAuthorizationHeaders,
+} from "@/lib/auth-session";
+import {
   createAuthChallenge,
   fetchSignedManifest,
   fetchViewerManifest,
@@ -244,7 +248,7 @@ export function useDisplayRuntime(displaySlug: string) {
     };
   }, [baseUrl, registration]);
 
-  // Viewer mode — JWT auth, polling only, no heartbeat/SSE/snapshots
+  // Viewer mode — JWT auth, SSE + fallback polling, no heartbeat/snapshots
   useEffect(() => {
     if (!isRegistrationResolved || registration || !displaySlug) {
       return;
@@ -280,14 +284,6 @@ export function useDisplayRuntime(displaySlug: string) {
       setIsViewerMode(true);
       setConnectionState("connected");
 
-      const pollTimer = setInterval(() => {
-        void refreshViewerManifest().catch((error) => {
-          setErrorMessage(
-            error instanceof Error ? error.message : "Failed to poll manifest",
-          );
-        });
-      }, VIEWER_POLL_MS);
-
       let boundaryTimer: { clear(): void } | null = null;
 
       const restartBoundaryTimer = (): void => {
@@ -315,10 +311,57 @@ export function useDisplayRuntime(displaySlug: string) {
 
       restartBoundaryTimer();
 
-      return () => {
-        clearInterval(pollTimer);
+      const streamUrl = `${baseUrl}/displays/by-slug/${encodeURIComponent(displaySlug)}/stream`;
+      let latestConnectionState: "connected" | "reconnecting" | "closed" =
+        "connected";
+      let pollTimerId: ReturnType<typeof setInterval> | null = null;
+
+      const teardownAll = () => {
+        if (pollTimerId) clearInterval(pollTimerId);
         boundaryTimer?.clear();
+        sse.close();
       };
+
+      const sse = createDisplaySseClient({
+        streamUrl,
+        credentials: "include",
+        getHeaders: async () => {
+          await ensureFreshAccessToken();
+          return getAuthorizationHeaders();
+        },
+        onStateChange: (nextState) => {
+          latestConnectionState = nextState;
+          setConnectionState(nextState);
+        },
+        onEvent: (eventType) => {
+          setLastEventAt(new Date().toISOString());
+
+          void refreshViewerManifest()
+            .then(() => {
+              restartBoundaryTimer();
+            })
+            .catch((error) => {
+              setErrorMessage(
+                error instanceof Error
+                  ? error.message
+                  : "Failed to refresh manifest",
+              );
+            });
+        },
+      });
+
+      pollTimerId = setInterval(() => {
+        if (latestConnectionState === "connected") {
+          return;
+        }
+        void refreshViewerManifest().catch((error) => {
+          setErrorMessage(
+            error instanceof Error ? error.message : "Failed to poll manifest",
+          );
+        });
+      }, VIEWER_POLL_MS);
+
+      return teardownAll;
     };
 
     let cleanup: (() => void) | null = null;
@@ -341,7 +384,7 @@ export function useDisplayRuntime(displaySlug: string) {
       disposed = true;
       cleanup?.();
     };
-  }, [isRegistrationResolved, registration, displaySlug]);
+  }, [baseUrl, isRegistrationResolved, registration, displaySlug]);
 
   return {
     manifest,

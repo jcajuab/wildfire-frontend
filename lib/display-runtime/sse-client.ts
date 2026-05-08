@@ -5,6 +5,7 @@ export interface DisplaySseClientOptions {
   readonly onStateChange?: (
     state: "connected" | "reconnecting" | "closed",
   ) => void;
+  readonly credentials?: RequestCredentials;
 }
 
 export interface DisplaySseClient {
@@ -84,6 +85,7 @@ export const createDisplaySseClient = (
           Accept: "text/event-stream",
           ...headers,
         },
+        credentials: options.credentials,
         signal: controller.signal,
       });
 
