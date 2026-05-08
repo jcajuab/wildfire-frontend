@@ -117,8 +117,7 @@ export function useSchedulesPage(options?: {
     [canReadPlaylists, effectiveBootstrapData?.playlistOptions],
   );
   const flashContentData = useMemo(
-    () =>
-      canReadContent ? effectiveBootstrapData?.flashContentOptions : [],
+    () => (canReadContent ? effectiveBootstrapData?.flashContentOptions : []),
     [canReadContent, effectiveBootstrapData?.flashContentOptions],
   );
 

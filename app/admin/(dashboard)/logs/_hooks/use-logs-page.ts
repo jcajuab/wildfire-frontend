@@ -92,14 +92,11 @@ export function useLogsPage(options?: {
       normalizedAuditQueryKey(filters.listQuery);
 
   const { data: eventsData, isFetching: queryIsFetching } =
-    useListAuditEventsQuery(
-    filters.listQuery,
-    {
+    useListAuditEventsQuery(filters.listQuery, {
       refetchOnFocus: false,
       refetchOnReconnect: false,
       skip: isInitialEventsQuery,
-    },
-  );
+    });
   const cachedInitialEvents = auditApi.endpoints.listAuditEvents.useQueryState(
     filters.listQuery,
     { skip: !isInitialEventsQuery },

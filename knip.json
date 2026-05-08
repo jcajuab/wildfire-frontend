@@ -1,0 +1,25 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": [
+    "components/ai/**",
+    "components/ai-elements/**",
+    "components/ui/alert.tsx",
+    "components/ui/collapsible.tsx",
+    "components/ui/spinner.tsx",
+    "hooks/use-ai-chat.ts",
+    "lib/slash-commands.ts"
+  ],
+  "ignoreBinaries": ["tar"],
+  "ignoreDependencies": [
+    "@ai-sdk/react",
+    "@streamdown/cjk",
+    "@streamdown/code",
+    "@streamdown/math",
+    "@streamdown/mermaid",
+    "ai",
+    "nanoid",
+    "shiki",
+    "streamdown",
+    "use-stick-to-bottom"
+  ]
+}

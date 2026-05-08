@@ -149,8 +149,7 @@ export function useUsersPage(options?: {
     pageSize: PAGE_SIZE,
     q: debouncedSearch || undefined,
     roleId: filters.roleId === "all" ? undefined : filters.roleId,
-    sortBy:
-      filters.sortField === "lastSeen" ? "lastSeenAt" : filters.sortField,
+    sortBy: filters.sortField === "lastSeen" ? "lastSeenAt" : filters.sortField,
     sortDirection: filters.sortDirection,
   };
   const isInitialUsersQuery =

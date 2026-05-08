@@ -173,9 +173,7 @@ export default async function UsersPage({
       ) : null}
       {roleOptions ? <RoleOptionsCacheSeeder data={roleOptions} /> : null}
       <UsersPageView
-        initialUsers={
-          usersData ? { queryArgs, data: usersData } : undefined
-        }
+        initialUsers={usersData ? { queryArgs, data: usersData } : undefined}
         initialRoles={roleOptions ?? undefined}
         initialInvitations={invitationsData ?? undefined}
       />

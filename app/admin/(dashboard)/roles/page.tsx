@@ -84,9 +84,7 @@ export default async function RolesPage({
         <RolesListCacheSeeder queryArgs={queryArgs} data={rolesData} />
       ) : null}
       <RolesPageView
-        initialList={
-          rolesData ? { queryArgs, data: rolesData } : undefined
-        }
+        initialList={rolesData ? { queryArgs, data: rolesData } : undefined}
       />
     </>
   );

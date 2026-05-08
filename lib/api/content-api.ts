@@ -218,7 +218,15 @@ async function patchContentInPlaylistCaches(
   for (const pa of detailArgs) {
     dispatch(
       playlistsApi.util.updateQueryData("getPlaylist", pa, (draft) => {
-        for (const item of draft.items as { content: { id: string; title: string; type: string; thumbnailUrl?: string | null; textPreviewText?: string | null } }[]) {
+        for (const item of draft.items as {
+          content: {
+            id: string;
+            title: string;
+            type: string;
+            thumbnailUrl?: string | null;
+            textPreviewText?: string | null;
+          };
+        }[]) {
           if (item.content.id === contentId) {
             item.content.title = updated.title;
             item.content.type = updated.type;
@@ -237,7 +245,17 @@ async function patchContentInPlaylistCaches(
   for (const pa of listArgs) {
     dispatch(
       playlistsApi.util.updateQueryData("listPlaylists", pa, (draft) => {
-        for (const playlist of draft.items as { previewItems: { content: { id: string; title: string; type: string; thumbnailUrl?: string | null; textPreviewText?: string | null } }[] }[]) {
+        for (const playlist of draft.items as {
+          previewItems: {
+            content: {
+              id: string;
+              title: string;
+              type: string;
+              thumbnailUrl?: string | null;
+              textPreviewText?: string | null;
+            };
+          }[];
+        }[]) {
           for (const item of playlist.previewItems) {
             if (item.content.id === contentId) {
               item.content.title = updated.title;
