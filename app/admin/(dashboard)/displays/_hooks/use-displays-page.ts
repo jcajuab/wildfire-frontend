@@ -212,7 +212,9 @@ export function useDisplaysPage({
   const bootstrapData =
     queriedBootstrapData ??
     cachedInitialBootstrap.data ??
-    (isInitialBootstrapQuery ? initialBootstrap?.data : undefined);
+    (isInitialBootstrapQuery && !initialBootstrap?.isSeeded
+      ? initialBootstrap?.data
+      : undefined);
   const isLoading =
     bootstrapData == null &&
     (isInitialBootstrapQuery
