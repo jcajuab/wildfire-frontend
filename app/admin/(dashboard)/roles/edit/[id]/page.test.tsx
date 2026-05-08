@@ -204,9 +204,7 @@ describe("EditRolePage", () => {
       "/admin/roles",
     );
     expect(screen.queryByTestId("role-form")).not.toBeInTheDocument();
-    expect(
-      findAncestorWithClasses(heading, ["px-6", "py-6", "sm:px-8", "sm:py-8"]),
-    ).not.toBeNull();
+    expect(findAncestorWithClasses(heading, ["p-4"])).not.toBeNull();
     expect(
       findAncestorWithClasses(heading, ["min-h-0", "flex-1", "overflow-auto"]),
     ).not.toBeNull();
@@ -236,9 +234,7 @@ describe("EditRolePage", () => {
       "/admin/roles",
     );
     expect(screen.queryByTestId("role-form")).not.toBeInTheDocument();
-    expect(
-      findAncestorWithClasses(heading, ["px-6", "py-6", "sm:px-8", "sm:py-8"]),
-    ).not.toBeNull();
+    expect(findAncestorWithClasses(heading, ["p-4"])).not.toBeNull();
     expect(
       findAncestorWithClasses(heading, ["min-h-0", "flex-1", "overflow-auto"]),
     ).not.toBeNull();
@@ -272,9 +268,7 @@ describe("EditRolePage", () => {
       "/admin/roles",
     );
     expect(screen.queryByTestId("role-form")).not.toBeInTheDocument();
-    expect(
-      findAncestorWithClasses(heading, ["px-6", "py-6", "sm:px-8", "sm:py-8"]),
-    ).not.toBeNull();
+    expect(findAncestorWithClasses(heading, ["p-4"])).not.toBeNull();
     expect(
       findAncestorWithClasses(heading, ["min-h-0", "flex-1", "overflow-auto"]),
     ).not.toBeNull();

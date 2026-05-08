@@ -64,7 +64,7 @@ export function CreateRolePageView(): ReactElement {
       </PageHeader>
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="min-h-0 flex-1 overflow-auto">
-          <div className="px-6 py-6 sm:px-8 sm:py-8">
+          <div className="p-4">
             <RoleForm
               mode="create"
               permissions={permissions}
