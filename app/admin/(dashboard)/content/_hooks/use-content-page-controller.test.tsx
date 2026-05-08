@@ -167,7 +167,7 @@ describe("useContentPageController", () => {
         sortBy: "createdAt",
         sortDirection: "desc",
       },
-      { pollingInterval: 300_000, skip: false },
+      { pollingInterval: 300_000, refetchOnFocus: true, skip: false },
     );
     expect(result.current.canCreateContent).toBe(true);
     expect("sortBy" in result.current.filters).toBe(false);

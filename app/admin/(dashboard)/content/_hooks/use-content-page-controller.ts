@@ -13,6 +13,7 @@ import {
   useListContentQuery,
   useUploadPdfMutation,
 } from "@/lib/api/content-api";
+import { useAppSelector } from "@/lib/hooks";
 import {
   getApiErrorMessage,
   notifyApiError,
@@ -77,7 +78,11 @@ export function useContentPageController({
   const isInitialListQuery =
     initialList != null &&
     normalizedQueryKey(initialList.queryArgs) === normalizedQueryKey(queryArgs);
-  const shouldSkipInitialQuery = isInitialListQuery;
+
+  const cacheHasData = useAppSelector(
+    (state) =>
+      contentApi.endpoints.listContent.select(queryArgs)(state).data != null,
+  );
 
   const {
     data: queriedData,
@@ -87,24 +92,16 @@ export function useContentPageController({
     error,
   } = useListContentQuery(queryArgs, {
     pollingInterval: POLLING_FALLBACK_INTERVAL_MS,
-    skip: shouldSkipInitialQuery,
+    refetchOnFocus: true,
+    skip: isInitialListQuery && !cacheHasData,
   });
-  const cachedInitialList = contentApi.endpoints.listContent.useQueryState(
-    queryArgs,
-    {
-      skip: !isInitialListQuery,
-    },
-  );
   const data =
     queriedData ??
-    cachedInitialList.data ??
     (isInitialListQuery ? initialList?.data : undefined);
   const isLoading =
     data == null &&
     (isInitialListQuery ? !initialList?.isSeeded : queryIsLoading);
-  const isFetching = isInitialListQuery
-    ? cachedInitialList.isFetching
-    : queryIsFetching;
+  const isFetching = queryIsFetching;
 
   // SSE lifecycle events patch list rows via AdminEventProvider (no broad LIST invalidation).
   // Polling is a slow fallback if SSE is disconnected.

@@ -348,6 +348,39 @@ export const displaysApi = api.injectEndpoints({
               ),
             );
           }
+          // Eager cross-cache patching: Display → Schedules (Pattern B)
+          const { schedulesApi } = await import("@/lib/api/schedules-api");
+          const scheduleBootstrapArgs =
+            schedulesApi.util.selectCachedArgsForQuery(
+              getState(),
+              "getSchedulesBootstrap",
+            );
+          for (const sa of scheduleBootstrapArgs) {
+            dispatch(
+              schedulesApi.util.updateQueryData(
+                "getSchedulesBootstrap",
+                sa,
+                (draft) => {
+                  for (const opt of draft.displayOptions as {
+                    id: string;
+                    name: string;
+                  }[]) {
+                    if (opt.id === id) {
+                      opt.name = data.name ?? opt.name;
+                    }
+                  }
+                  for (const schedule of draft.schedules as {
+                    display: { id: string; name: string | null };
+                  }[]) {
+                    if (schedule.display.id === id) {
+                      schedule.display.name = data.name ?? null;
+                    }
+                  }
+                },
+              ),
+            );
+          }
+
           await bumpDisplaysNextCache();
           dispatch(api.util.invalidateTags([{ type: "Schedule", id: "LIST" }]));
           void revalidateWildfireTagViaRoute("schedules-bootstrap");

@@ -230,7 +230,9 @@ async function patchContentInPlaylistCaches(
           if (item.content.id === contentId) {
             item.content.title = updated.title;
             item.content.type = updated.type;
-            item.content.thumbnailUrl = updated.thumbnailUrl;
+            if (updated.thumbnailUrl !== undefined) {
+              item.content.thumbnailUrl = updated.thumbnailUrl;
+            }
             item.content.textPreviewText = updated.textPreviewText;
           }
         }
@@ -260,7 +262,9 @@ async function patchContentInPlaylistCaches(
             if (item.content.id === contentId) {
               item.content.title = updated.title;
               item.content.type = updated.type;
-              item.content.thumbnailUrl = updated.thumbnailUrl;
+              if (updated.thumbnailUrl !== undefined) {
+                item.content.thumbnailUrl = updated.thumbnailUrl;
+              }
               item.content.textPreviewText = updated.textPreviewText;
             }
           }
@@ -718,7 +722,15 @@ export const contentApi = api.injectEndpoints({
           for (const args of argsList) {
             dispatch(
               contentApi.util.updateQueryData("listContent", args, (draft) => {
-                patchPaginatedListById(draft, "update", updated);
+                const items = draft.items as BackendContentListItem[];
+                const idx = items.findIndex((x) => x.id === updated.id);
+                if (idx !== -1) {
+                  items[idx] = {
+                    ...(updated as unknown as BackendContentListItem),
+                    thumbnailUrl:
+                      updated.thumbnailUrl ?? items[idx].thumbnailUrl,
+                  };
+                }
               }),
             );
           }
@@ -741,7 +753,8 @@ export const contentApi = api.injectEndpoints({
                       id: updated.id,
                       title: updated.title,
                       type: updated.type,
-                      thumbnailUrl: updated.thumbnailUrl,
+                      thumbnailUrl:
+                        updated.thumbnailUrl ?? draft[idx].thumbnailUrl,
                       textPreviewText: updated.textPreviewText,
                     };
                   }

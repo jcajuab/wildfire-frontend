@@ -10,6 +10,7 @@ import {
   type ScheduleWindowQuery,
   type SchedulesBootstrapResponse,
 } from "@/lib/api/schedules-api";
+import { useAppSelector } from "@/lib/hooks";
 import { mapBackendSchedulesToSchedules } from "@/lib/mappers/schedule-mapper";
 import type { AuthUser } from "@/types/auth";
 import type { Schedule } from "@/types/schedule";
@@ -80,29 +81,28 @@ export function useSchedulesPage(options?: {
     normalizedScheduleWindowKey(options.initialBootstrap.queryArgs) ===
       normalizedScheduleWindowKey(scheduleWindow);
 
+  const cacheHasData = useAppSelector(
+    (state) =>
+      schedulesApi.endpoints.getSchedulesBootstrap.select(scheduleWindow)(state)
+        .data != null,
+  );
+
   const {
     data: bootstrapData,
     isLoading: queryIsLoading,
     isFetching: queryIsFetching,
   } = useGetSchedulesBootstrapQuery(scheduleWindow, {
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
-    skip: isInitialBootstrapQuery,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    skip: isInitialBootstrapQuery && !cacheHasData,
   });
-  const cachedInitialBootstrap =
-    schedulesApi.endpoints.getSchedulesBootstrap.useQueryState(scheduleWindow, {
-      skip: !isInitialBootstrapQuery,
-    });
   const effectiveBootstrapData =
     bootstrapData ??
-    cachedInitialBootstrap.data ??
     (isInitialBootstrapQuery ? options?.initialBootstrap?.data : undefined);
   const isLoading =
     effectiveBootstrapData == null &&
     (isInitialBootstrapQuery ? false : queryIsLoading);
-  const isFetching = isInitialBootstrapQuery
-    ? cachedInitialBootstrap.isFetching
-    : queryIsFetching;
+  const isFetching = queryIsFetching;
   const displaysData = useMemo(
     () => (canReadDisplays ? effectiveBootstrapData?.displayOptions : []),
     [canReadDisplays, effectiveBootstrapData?.displayOptions],
