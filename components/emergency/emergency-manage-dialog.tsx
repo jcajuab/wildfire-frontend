@@ -3,7 +3,15 @@
 import { useCallback, useState, type ReactElement } from "react";
 import { toast } from "sonner";
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import type { BackendContentListItem } from "@/lib/api/content-api";
 import {
@@ -88,9 +96,17 @@ export function EmergencyManageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 p-0 sm:max-w-5xl max-h-[85vh]">
-        <div className="grid grid-cols-1 sm:grid-cols-[280px_1px_1fr] h-[85vh] overflow-hidden">
-          <div className="flex flex-col overflow-y-auto px-6 pt-10 pb-6 sm:py-6 sm:pt-10">
+      <DialogContent className="flex flex-col gap-0 p-0 sm:max-w-5xl max-h-[85vh]">
+        <DialogHeader className="px-4 pt-4 pb-3">
+          <DialogTitle>Manage Emergency Assets</DialogTitle>
+          <DialogDescription>
+            Configure up to five emergency assets that can be activated
+            system-wide across all displays.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="border-t border-border" aria-hidden />
+        <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden sm:grid-cols-[280px_1px_1fr]">
+          <div className="flex flex-col overflow-y-auto p-4">
             <EmergencyAssetList
               slots={slots}
               selectedSlotIndex={selectedSlotIndex}
@@ -103,7 +119,7 @@ export function EmergencyManageDialog({
             className="hidden w-px shrink-0 bg-border sm:block"
             aria-hidden
           />
-          <div className="flex min-h-0 min-w-0 flex-col overflow-hidden px-6 pt-10 pb-6 sm:py-6 sm:pt-10">
+          <div className="flex min-h-0 min-w-0 flex-col overflow-hidden p-4 pb-2">
             <EmergencyContentPicker
               selectedSlotIndex={selectedSlotIndex}
               onSelect={handleSelectContent}
@@ -111,6 +127,11 @@ export function EmergencyManageDialog({
             />
           </div>
         </div>
+        <DialogFooter className="border-t border-border px-4 py-3">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Done
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
