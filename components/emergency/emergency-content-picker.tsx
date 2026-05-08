@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState, type ReactElement } from "react";
 import Image from "next/image";
-import { IconPhoto, IconVideo } from "@tabler/icons-react";
+import { IconLoader2, IconPhoto, IconVideo } from "@tabler/icons-react";
 
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { SearchControl } from "@/components/common/search-control";
@@ -36,13 +36,13 @@ const PAGE_SIZE = 12;
 interface EmergencyContentPickerProps {
   readonly selectedSlotIndex: EmergencySlotIndex | null;
   readonly onSelect: (content: BackendContentListItem) => void;
-  readonly isSubmitting?: boolean;
+  readonly submittingContentId?: string | null;
 }
 
 export function EmergencyContentPicker({
   selectedSlotIndex,
   onSelect,
-  isSubmitting = false,
+  submittingContentId = null,
 }: EmergencyContentPickerProps): ReactElement {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -68,6 +68,7 @@ export function EmergencyContentPicker({
   );
 
   const isPickerDisabled = selectedSlotIndex === null;
+  const isSubmitting = submittingContentId !== null;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -100,6 +101,7 @@ export function EmergencyContentPicker({
                 <CompactContentCard
                   content={item}
                   disabled={isPickerDisabled || isSubmitting}
+                  isSubmitting={submittingContentId === item.id}
                   onSelect={() => onSelect(item)}
                 />
               </li>
@@ -121,12 +123,14 @@ export function EmergencyContentPicker({
 interface CompactContentCardProps {
   readonly content: BackendContentListItem;
   readonly disabled: boolean;
+  readonly isSubmitting: boolean;
   readonly onSelect: () => void;
 }
 
 function CompactContentCard({
   content,
   disabled,
+  isSubmitting,
   onSelect,
 }: CompactContentCardProps): ReactElement {
   const isTextContent = content.type === "TEXT";
@@ -146,7 +150,11 @@ function CompactContentCard({
       disabled={disabled}
       onClick={onSelect}
     >
-      Select
+      {isSubmitting ? (
+        <IconLoader2 className="size-4 animate-spin" />
+      ) : (
+        "Select"
+      )}
     </Button>
   );
 

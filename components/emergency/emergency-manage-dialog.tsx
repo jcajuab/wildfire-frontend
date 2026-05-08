@@ -24,12 +24,18 @@ export function EmergencyManageDialog({
   open,
   onOpenChange,
 }: EmergencyManageDialogProps): ReactElement {
-  const { data } = useListEmergencySlotsQuery(undefined, { skip: !open });
-  const [setSlot, { isLoading: isSetting }] = useSetEmergencySlotMutation();
-  const [clearSlot, { isLoading: isClearing }] =
-    useClearEmergencySlotMutation();
+  const { data, refetch } = useListEmergencySlotsQuery(undefined, {
+    skip: !open,
+  });
+  const [setSlot] = useSetEmergencySlotMutation();
+  const [clearSlot] = useClearEmergencySlotMutation();
 
   const [selectedSlotIndex, setSelectedSlotIndex] =
+    useState<EmergencySlotIndex | null>(null);
+  const [submittingContentId, setSubmittingContentId] = useState<string | null>(
+    null,
+  );
+  const [clearingSlotIndex, setClearingSlotIndex] =
     useState<EmergencySlotIndex | null>(null);
 
   const slots = data?.slots ?? [];
@@ -42,19 +48,24 @@ export function EmergencyManageDialog({
 
   const handleClearSlot = useCallback(
     async (slotIndex: EmergencySlotIndex) => {
+      setClearingSlotIndex(slotIndex);
       try {
         await clearSlot({ slotIndex }).unwrap();
         toast.success(`Cleared Slot ${slotIndex}.`);
+        await refetch();
       } catch (error) {
         notifyApiError(error, "Failed to clear emergency slot.");
+      } finally {
+        setClearingSlotIndex(null);
       }
     },
-    [clearSlot],
+    [clearSlot, refetch],
   );
 
   const handleSelectContent = useCallback(
     async (content: BackendContentListItem) => {
       if (selectedSlotIndex === null) return;
+      setSubmittingContentId(content.id);
       try {
         await setSlot({
           slotIndex: selectedSlotIndex,
@@ -65,11 +76,14 @@ export function EmergencyManageDialog({
           `Assigned "${content.title}" to Slot ${selectedSlotIndex}.`,
         );
         setSelectedSlotIndex(null);
+        await refetch();
       } catch (error) {
         notifyApiError(error, "Failed to assign emergency content.");
+      } finally {
+        setSubmittingContentId(null);
       }
     },
-    [selectedSlotIndex, setSlot],
+    [selectedSlotIndex, setSlot, refetch],
   );
 
   return (
@@ -82,7 +96,7 @@ export function EmergencyManageDialog({
               selectedSlotIndex={selectedSlotIndex}
               onSelectEmptySlot={handleSelectEmptySlot}
               onClearSlot={handleClearSlot}
-              isClearing={isClearing}
+              clearingSlotIndex={clearingSlotIndex}
             />
           </div>
           <div
@@ -93,7 +107,7 @@ export function EmergencyManageDialog({
             <EmergencyContentPicker
               selectedSlotIndex={selectedSlotIndex}
               onSelect={handleSelectContent}
-              isSubmitting={isSetting}
+              submittingContentId={submittingContentId}
             />
           </div>
         </div>

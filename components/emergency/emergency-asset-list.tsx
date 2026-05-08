@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconPlus, IconX } from "@tabler/icons-react";
+import { IconLoader2, IconPlus, IconX } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";
 import type {
@@ -16,7 +16,7 @@ interface EmergencyAssetListProps {
   readonly selectedSlotIndex: EmergencySlotIndex | null;
   readonly onSelectEmptySlot: (slotIndex: EmergencySlotIndex) => void;
   readonly onClearSlot: (slotIndex: EmergencySlotIndex) => void;
-  readonly isClearing?: boolean;
+  readonly clearingSlotIndex?: EmergencySlotIndex | null;
 }
 
 export function EmergencyAssetList({
@@ -24,7 +24,7 @@ export function EmergencyAssetList({
   selectedSlotIndex,
   onSelectEmptySlot,
   onClearSlot,
-  isClearing = false,
+  clearingSlotIndex = null,
 }: EmergencyAssetListProps): ReactElement {
   const slotsByIndex = new Map<EmergencySlotIndex, EmergencySlot>();
   for (const slot of slots) {
@@ -48,6 +48,7 @@ export function EmergencyAssetList({
           if (isFilled && slot != null) {
             const label =
               slot.label ?? slot.content?.title ?? `Slot ${slotIndex}`;
+            const isClearingThis = clearingSlotIndex === slotIndex;
             return (
               <li key={slotIndex}>
                 <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2">
@@ -56,13 +57,20 @@ export function EmergencyAssetList({
                     type="button"
                     aria-label={`Clear ${label}`}
                     onClick={() => onClearSlot(slotIndex)}
-                    disabled={isClearing}
+                    disabled={clearingSlotIndex !== null}
                     className="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <IconX
-                      className="size-3.5 text-current"
-                      aria-hidden="true"
-                    />
+                    {isClearingThis ? (
+                      <IconLoader2
+                        className="size-3.5 animate-spin text-current"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <IconX
+                        className="size-3.5 text-current"
+                        aria-hidden="true"
+                      />
+                    )}
                   </button>
                 </div>
               </li>
