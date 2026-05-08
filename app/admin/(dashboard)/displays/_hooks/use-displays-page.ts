@@ -20,7 +20,10 @@ import {
   mapDisplayApiToDisplay,
   withDisplayGroups,
 } from "@/lib/mappers/display-mapper";
-import type { DisplayStatusFilter } from "@/components/displays/display-filter-popover";
+import type {
+  DisplaySortFilter,
+  DisplayStatusFilter,
+} from "@/components/displays/display-filter-popover";
 import type { Display, DisplayOutputFilter } from "@/types/display";
 import type {
   BackendDisplay,
@@ -71,6 +74,7 @@ export interface UseDisplaysPageResult {
 
   // Filter state
   statusFilter: DisplayStatusFilter;
+  sortFilter: DisplaySortFilter;
   search: string;
   page: number;
   groupFilters: readonly string[];
@@ -102,6 +106,7 @@ export interface UseDisplaysPageResult {
   // Handlers
   refetch: () => void;
   handleStatusFilterChange: (value: DisplayStatusFilter) => void;
+  handleSortFilterChange: (value: DisplaySortFilter) => void;
   handleSearchChange: (value: string) => void;
   handleGroupFilterChange: (value: readonly string[]) => void;
   handleOutputFilterChange: (value: DisplayOutputFilter) => void;
@@ -153,6 +158,47 @@ function displayMatchesOutput(
 ): boolean {
   if (selectedOutput === "all") return true;
   return normalizeDisplayOutputFilter(display.output) === selectedOutput;
+}
+
+function compareDisplayNames(left: Display, right: Display): number {
+  return left.name.localeCompare(right.name, undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
+
+function compareDisplayCreatedDesc(left: Display, right: Display): number {
+  const diff =
+    new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+  return diff === 0 ? compareDisplayNames(left, right) : diff;
+}
+
+function compareDisplaysBySort(
+  left: Display,
+  right: Display,
+  sortFilter: DisplaySortFilter,
+): number {
+  switch (sortFilter) {
+    case "name-desc": {
+      const diff = compareDisplayNames(right, left);
+      return diff === 0 ? compareDisplayCreatedDesc(left, right) : diff;
+    }
+    case "groups-desc": {
+      const diff = right.groups.length - left.groups.length;
+      return diff === 0 ? compareDisplayNames(left, right) : diff;
+    }
+    case "groups-asc": {
+      const diff = left.groups.length - right.groups.length;
+      return diff === 0 ? compareDisplayNames(left, right) : diff;
+    }
+    case "created-desc":
+      return compareDisplayCreatedDesc(left, right);
+    case "name-asc":
+    default: {
+      const diff = compareDisplayNames(left, right);
+      return diff === 0 ? compareDisplayCreatedDesc(left, right) : diff;
+    }
+  }
 }
 
 export function useDisplaysPage({
@@ -375,12 +421,19 @@ export function useDisplaysPage({
         }
         if (!displayMatchesGroups(display, filters.groupFilters)) return false;
         return displayMatchesOutput(display, effectiveOutputFilter);
-      }),
+      }).sort((left, right) =>
+        compareDisplaysBySort(
+          left.display,
+          right.display,
+          filters.sortFilter,
+        ),
+      ),
     [
       allDisplayRows,
       debouncedSearch,
       effectiveOutputFilter,
       filters.groupFilters,
+      filters.sortFilter,
       filters.statusFilter,
     ],
   );
@@ -429,6 +482,7 @@ export function useDisplaysPage({
     canUpdateDisplay,
     canDeleteDisplay,
     statusFilter: filters.statusFilter,
+    sortFilter: filters.sortFilter,
     search: filters.search,
     page: filters.page,
     groupFilters: filters.groupFilters,
@@ -452,6 +506,7 @@ export function useDisplaysPage({
     setPage: filters.setPage,
     refetch: handleRefetch,
     handleStatusFilterChange: filters.handleStatusFilterChange,
+    handleSortFilterChange: filters.handleSortChange,
     handleSearchChange: filters.handleSearchChange,
     handleGroupFilterChange: filters.handleGroupFilterChange,
     handleOutputFilterChange: filters.handleOutputFilterChange,

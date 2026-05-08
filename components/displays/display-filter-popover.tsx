@@ -45,9 +45,16 @@ import { cn } from "@/lib/utils";
 import type { DisplayOutputFilter, DisplayStatus } from "@/types/display";
 
 export type DisplayStatusFilter = "all" | DisplayStatus;
+export type DisplaySortFilter =
+  | "name-asc"
+  | "name-desc"
+  | "groups-desc"
+  | "groups-asc"
+  | "created-desc";
 
 interface DisplayFilterPopoverProps {
   readonly statusFilter: DisplayStatusFilter;
+  readonly sortFilter: DisplaySortFilter;
   readonly selectedGroups: readonly string[];
   readonly selectedOutput: DisplayOutputFilter;
   readonly filteredResultsCount: number;
@@ -58,6 +65,7 @@ interface DisplayFilterPopoverProps {
   readonly showOutputFilter?: boolean;
   readonly renderEmbeddedAnchor?: (trigger: ReactElement) => ReactElement;
   readonly onStatusChange: (nextStatus: DisplayStatusFilter) => void;
+  readonly onSortChange: (nextSort: DisplaySortFilter) => void;
   readonly onGroupsChange: (nextGroups: readonly string[]) => void;
   readonly onOutputChange: (nextOutput: DisplayOutputFilter) => void;
   readonly onClearFilters: () => void;
@@ -71,6 +79,17 @@ const statusOptions: readonly {
   { value: "READY", label: "Ready" },
   { value: "LIVE", label: "Live" },
   { value: "DOWN", label: "Down" },
+] as const;
+
+const sortOptions: readonly {
+  readonly value: DisplaySortFilter;
+  readonly label: string;
+}[] = [
+  { value: "name-asc", label: "Name A-Z" },
+  { value: "name-desc", label: "Name Z-A" },
+  { value: "groups-desc", label: "Most groups" },
+  { value: "groups-asc", label: "Fewest groups" },
+  { value: "created-desc", label: "Newest registered" },
 ] as const;
 
 interface FilterChipProps {
@@ -94,6 +113,7 @@ function FilterChip({ label, onRemove }: FilterChipProps): ReactElement {
 
 export function DisplayFilterPopover({
   statusFilter,
+  sortFilter,
   selectedGroups,
   selectedOutput,
   availableGroups,
@@ -103,6 +123,7 @@ export function DisplayFilterPopover({
   showOutputFilter = true,
   renderEmbeddedAnchor,
   onStatusChange,
+  onSortChange,
   onGroupsChange,
   onOutputChange,
   onClearFilters,
@@ -111,12 +132,17 @@ export function DisplayFilterPopover({
   const activeFilterCount =
     selectedGroups.length +
     (showOutputFilter && selectedOutput !== "all" ? 1 : 0) +
-    (statusFilter === "all" ? 0 : 1);
+    (statusFilter === "all" ? 0 : 1) +
+    (sortFilter === "name-asc" ? 0 : 1);
   const hasActiveFilters = activeFilterCount > 0;
   const activeStatusLabel =
     statusFilter === "all"
       ? null
       : statusOptions.find((option) => option.value === statusFilter)?.label;
+  const activeSortLabel =
+    sortFilter === "name-asc"
+      ? null
+      : sortOptions.find((option) => option.value === sortFilter)?.label;
   const outputTypeOptions = useMemo(() => {
     const values = new Set<DisplayOutputFilter>();
 
@@ -219,12 +245,7 @@ export function DisplayFilterPopover({
         aria-label="Display filters"
       >
         <div className="flex flex-col gap-4 p-4">
-          <div
-            className={cn(
-              "grid gap-4",
-              showOutputFilter ? "grid-cols-2" : "grid-cols-1",
-            )}
-          >
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="display-status-filter">Status</Label>
               <Select
@@ -254,8 +275,34 @@ export function DisplayFilterPopover({
               </Select>
             </div>
 
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="display-sort-filter">Sort</Label>
+              <Select
+                value={sortFilter}
+                onValueChange={(nextValue) =>
+                  onSortChange(nextValue as DisplaySortFilter)
+                }
+              >
+                <SelectTrigger id="display-sort-filter" className="w-full">
+                  <SelectValue placeholder="Name A-Z" />
+                </SelectTrigger>
+                <SelectContent
+                  position="popper"
+                  side="bottom"
+                  align="start"
+                  avoidCollisions={false}
+                >
+                  {sortOptions.map((sortOption) => (
+                    <SelectItem key={sortOption.value} value={sortOption.value}>
+                      {sortOption.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {showOutputFilter ? (
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
                 <Label htmlFor="display-output-filter">Output Type</Label>
                 <Select
                   value={selectedOutput}
@@ -368,6 +415,12 @@ export function DisplayFilterPopover({
                 <FilterChip
                   label={getDisplayOutputFilterLabel(selectedOutput)}
                   onRemove={() => onOutputChange("all")}
+                />
+              ) : null}
+              {activeSortLabel ? (
+                <FilterChip
+                  label={activeSortLabel}
+                  onRemove={() => onSortChange("name-asc")}
                 />
               ) : null}
               {selectedGroups.map((name) => (

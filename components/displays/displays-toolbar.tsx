@@ -20,7 +20,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { DisplayOutputFilter } from "@/types/display";
-import type { DisplayStatusFilter } from "@/components/displays/display-filter-popover";
+import type {
+  DisplaySortFilter,
+  DisplayStatusFilter,
+} from "@/components/displays/display-filter-popover";
 
 type DisplaysToolbarBulkState =
   | {
@@ -36,6 +39,7 @@ type DisplaysToolbarBulkState =
 
 interface DisplaysToolbarProps {
   readonly statusFilter: DisplayStatusFilter;
+  readonly sortFilter: DisplaySortFilter;
   readonly search: string;
   readonly selectedGroups: readonly string[];
   readonly selectedOutput: DisplayOutputFilter;
@@ -43,6 +47,7 @@ interface DisplaysToolbarProps {
   readonly availableGroups: readonly string[];
   readonly availableOutputs: readonly string[];
   readonly onStatusFilterChange: (value: DisplayStatusFilter) => void;
+  readonly onSortFilterChange: (value: DisplaySortFilter) => void;
   readonly onSearchChange: (value: string) => void;
   readonly onGroupFilterChange: (value: readonly string[]) => void;
   readonly onOutputFilterChange: (value: DisplayOutputFilter) => void;
@@ -59,6 +64,7 @@ interface DisplaysToolbarProps {
 
 export function DisplaysToolbar({
   statusFilter,
+  sortFilter,
   search,
   selectedGroups,
   selectedOutput,
@@ -67,6 +73,7 @@ export function DisplaysToolbar({
   availableOutputs,
   isFetching = false,
   onStatusFilterChange,
+  onSortFilterChange,
   onSearchChange,
   onGroupFilterChange,
   onOutputFilterChange,
@@ -98,6 +105,7 @@ export function DisplaysToolbar({
           <div className="flex w-full min-w-0 items-center justify-self-center md:max-w-168">
             <DisplayFilterPopover
               statusFilter={statusFilter}
+              sortFilter={sortFilter}
               selectedGroups={selectedGroups}
               selectedOutput={selectedOutput}
               filteredResultsCount={filteredResultsCount}
@@ -119,6 +127,7 @@ export function DisplaysToolbar({
                 </div>
               )}
               onStatusChange={onStatusFilterChange}
+              onSortChange={onSortFilterChange}
               onGroupsChange={onGroupFilterChange}
               onOutputChange={onOutputFilterChange}
               onClearFilters={onClearFilters}

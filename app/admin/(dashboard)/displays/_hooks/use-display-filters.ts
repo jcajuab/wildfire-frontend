@@ -8,15 +8,26 @@ import {
   parseAsStringLiteral,
   useQueryStates,
 } from "nuqs";
-import type { DisplayStatusFilter } from "@/components/displays/display-filter-popover";
+import type {
+  DisplaySortFilter,
+  DisplayStatusFilter,
+} from "@/components/displays/display-filter-popover";
 import type { DisplayOutputFilter } from "@/types/display";
 import { normalizeDisplayOutputFilter } from "@/lib/display-output";
 
 const DISPLAY_STATUS_VALUES = ["all", "READY", "LIVE", "DOWN"] as const;
+const DISPLAY_SORT_VALUES = [
+  "name-asc",
+  "name-desc",
+  "groups-desc",
+  "groups-asc",
+  "created-desc",
+] as const;
 
 const displayFiltersSchema = {
   q: parseAsString.withDefault(""),
   status: parseAsStringLiteral(DISPLAY_STATUS_VALUES).withDefault("all"),
+  sort: parseAsStringLiteral(DISPLAY_SORT_VALUES).withDefault("name-asc"),
   page: parseAsInteger.withDefault(1),
   groups: parseAsArrayOf(parseAsString, ",").withDefault([]),
   output: parseAsString.withDefault("all"),
@@ -45,6 +56,13 @@ export function useDisplayFilters() {
     [setFilters],
   );
 
+  const handleSortChange = useCallback(
+    (value: DisplaySortFilter) => {
+      setFilters({ sort: value, page: 1 });
+    },
+    [setFilters],
+  );
+
   const handleGroupFilterChange = useCallback(
     (value: readonly string[]) => {
       setFilters({ groups: [...value], page: 1 });
@@ -60,17 +78,25 @@ export function useDisplayFilters() {
   );
 
   const handleClearFilters = useCallback(() => {
-    setFilters({ status: "all", groups: [], output: "all", page: 1 });
+    setFilters({
+      status: "all",
+      sort: "name-asc",
+      groups: [],
+      output: "all",
+      page: 1,
+    });
   }, [setFilters]);
 
   return {
     statusFilter: filters.status,
+    sortFilter: filters.sort,
     search: filters.q,
     page: filters.page,
     setPage: (page: number) => setFilters({ page }),
     groupFilters: filters.groups,
     normalizedOutputFilter,
     handleStatusFilterChange,
+    handleSortChange,
     handleSearchChange,
     handleGroupFilterChange,
     handleOutputFilterChange,

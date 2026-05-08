@@ -198,6 +198,7 @@ export function DisplaysPageView({
     canUpdateDisplay,
     canDeleteDisplay,
     statusFilter,
+    sortFilter,
     search,
     page,
     groupFilters,
@@ -223,6 +224,7 @@ export function DisplaysPageView({
     setPage,
     refetch,
     handleStatusFilterChange,
+    handleSortFilterChange,
     handleSearchChange,
     handleGroupFilterChange,
     handleOutputFilterChange,
@@ -273,6 +275,7 @@ export function DisplaysPageView({
     groupFiltersKey,
     normalizedOutputFilter,
     search,
+    sortFilter,
     statusFilter,
   ]);
 
@@ -329,6 +332,7 @@ export function DisplaysPageView({
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <DisplaysToolbar
             statusFilter={statusFilter}
+            sortFilter={sortFilter}
             search={search}
             selectedGroups={groupFilters}
             selectedOutput={normalizedOutputFilter}
@@ -358,6 +362,7 @@ export function DisplaysPageView({
               router.prefetch("/admin/displays/display-groups")
             }
             onStatusFilterChange={handleStatusFilterChange}
+            onSortFilterChange={handleSortFilterChange}
             onSearchChange={handleSearchChange}
             onGroupFilterChange={handleGroupFilterChange}
             onOutputFilterChange={handleOutputFilterChange}

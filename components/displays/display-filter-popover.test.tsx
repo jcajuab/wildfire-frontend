@@ -38,12 +38,14 @@ describe("DisplayFilterPopover", () => {
       <TooltipProvider>
         <DisplayFilterPopover
           statusFilter="LIVE"
+          sortFilter="name-asc"
           selectedGroups={["Lobby", "Hallway"]}
           selectedOutput="hdmi-*"
           filteredResultsCount={6}
           availableGroups={["Lobby", "Hallway", "Cafe"]}
           availableOutputs={["hdmi-0", "hdmi-1"]}
           onStatusChange={onStatusChange}
+          onSortChange={vi.fn()}
           onGroupsChange={onGroupsChange}
           onOutputChange={onOutputChange}
           onClearFilters={onClearFilters}
@@ -68,7 +70,9 @@ describe("DisplayFilterPopover", () => {
     expect(screen.queryByText("6 matching displays")).not.toBeInTheDocument();
     expect(screen.getByText("Active filters")).toBeInTheDocument();
     expect(screen.getByText("Status")).toBeInTheDocument();
+    expect(screen.getByText("Sort")).toBeInTheDocument();
     expect(screen.getByText("Output Type")).toBeInTheDocument();
+    expect(screen.queryByText("Group Membership")).not.toBeInTheDocument();
     expect(screen.getByText("Display Groups")).toBeInTheDocument();
     expect(
       screen
@@ -91,12 +95,14 @@ describe("DisplayFilterPopover", () => {
       <TooltipProvider>
         <DisplayFilterPopover
           statusFilter="all"
+          sortFilter="name-asc"
           selectedGroups={[]}
           selectedOutput="all"
           filteredResultsCount={20}
           availableGroups={["Lobby"]}
           availableOutputs={["hdmi-0"]}
           onStatusChange={vi.fn()}
+          onSortChange={vi.fn()}
           onGroupsChange={vi.fn()}
           onOutputChange={vi.fn()}
           onClearFilters={vi.fn()}
@@ -117,12 +123,15 @@ describe("DisplayFilterPopover", () => {
       screen.queryByRole("button", { name: "Clear" }),
     ).not.toBeInTheDocument();
     expect(screen.getByText("Status")).toBeInTheDocument();
+    expect(screen.getByText("Sort")).toBeInTheDocument();
     expect(screen.getByText("Output Type")).toBeInTheDocument();
+    expect(screen.queryByText("Group Membership")).not.toBeInTheDocument();
     expect(screen.getByText("Display Groups")).toBeInTheDocument();
   });
 
-  test("changes status and output from the popover selects", async () => {
+  test("changes status, sort, and output from the popover selects", async () => {
     const onStatusChange = vi.fn();
+    const onSortChange = vi.fn();
     const onOutputChange = vi.fn();
     const user = userEvent.setup();
 
@@ -130,12 +139,14 @@ describe("DisplayFilterPopover", () => {
       <TooltipProvider>
         <DisplayFilterPopover
           statusFilter="all"
+          sortFilter="name-asc"
           selectedGroups={[]}
           selectedOutput="all"
           filteredResultsCount={20}
           availableGroups={[]}
           availableOutputs={["hdmi-0", "hdmi-1"]}
           onStatusChange={onStatusChange}
+          onSortChange={onSortChange}
           onGroupsChange={vi.fn()}
           onOutputChange={onOutputChange}
           onClearFilters={vi.fn()}
@@ -150,18 +161,28 @@ describe("DisplayFilterPopover", () => {
     ).toHaveAttribute("data-side", "bottom");
     await user.click(screen.getByRole("option", { name: "Live" }));
 
+    await user.click(screen.getByRole("combobox", { name: "Sort" }));
+    await user.click(screen.getByRole("option", { name: "Most groups" }));
+
     await user.click(screen.getByRole("combobox", { name: "Output Type" }));
     expect(
       document.querySelector('[data-slot="select-content"]'),
     ).toHaveAttribute("data-side", "bottom");
     await user.click(screen.getByRole("option", { name: "dvi-*" }));
 
+    await user.click(screen.getByRole("combobox", { name: "Sort" }));
+    expect(
+      screen.queryByRole("option", { name: "Status" }),
+    ).not.toBeInTheDocument();
+
     expect(onStatusChange).toHaveBeenCalledWith("LIVE");
+    expect(onSortChange).toHaveBeenCalledWith("groups-desc");
     expect(onOutputChange).toHaveBeenCalledWith("dvi-*");
   });
 
   test("renders display group search and removes individual filter chips", async () => {
     const onStatusChange = vi.fn();
+    const onSortChange = vi.fn();
     const onGroupsChange = vi.fn();
     const onOutputChange = vi.fn();
     const user = userEvent.setup();
@@ -170,12 +191,14 @@ describe("DisplayFilterPopover", () => {
       <TooltipProvider>
         <DisplayFilterPopover
           statusFilter="LIVE"
+          sortFilter="created-desc"
           selectedGroups={["Lobby", "Hallway"]}
           selectedOutput="hdmi-*"
           filteredResultsCount={1}
           availableGroups={["Lobby", "Hallway", "Cafe"]}
           availableOutputs={["hdmi-0", "hdmi-1"]}
           onStatusChange={onStatusChange}
+          onSortChange={onSortChange}
           onGroupsChange={onGroupsChange}
           onOutputChange={onOutputChange}
           onClearFilters={vi.fn()}
@@ -194,11 +217,17 @@ describe("DisplayFilterPopover", () => {
       screen.getByRole("button", { name: "Remove hdmi-* filter" }),
     );
     await user.click(
+      screen.getByRole("button", {
+        name: "Remove Newest registered filter",
+      }),
+    );
+    await user.click(
       screen.getByRole("button", { name: "Remove Lobby filter" }),
     );
 
     expect(onStatusChange).toHaveBeenCalledWith("all");
     expect(onOutputChange).toHaveBeenCalledWith("all");
+    expect(onSortChange).toHaveBeenCalledWith("name-asc");
     expect(onGroupsChange).toHaveBeenCalledWith(["Hallway"]);
   });
 
@@ -209,12 +238,14 @@ describe("DisplayFilterPopover", () => {
       <TooltipProvider>
         <DisplayFilterPopover
           statusFilter="all"
+          sortFilter="name-asc"
           selectedGroups={[]}
           selectedOutput="all"
           filteredResultsCount={3}
           availableGroups={["Lobby", "Hallway", "Cafe"]}
           availableOutputs={[]}
           onStatusChange={vi.fn()}
+          onSortChange={vi.fn()}
           onGroupsChange={vi.fn()}
           onOutputChange={vi.fn()}
           onClearFilters={vi.fn()}
@@ -237,6 +268,7 @@ describe("DisplayFilterPopover", () => {
       <TooltipProvider>
         <DisplayFilterPopover
           statusFilter="LIVE"
+          sortFilter="name-asc"
           selectedGroups={["Lobby", "Hallway"]}
           selectedOutput="hdmi-*"
           filteredResultsCount={3}
@@ -244,6 +276,7 @@ describe("DisplayFilterPopover", () => {
           availableOutputs={["hdmi-0"]}
           showOutputFilter={false}
           onStatusChange={vi.fn()}
+          onSortChange={vi.fn()}
           onGroupsChange={vi.fn()}
           onOutputChange={onOutputChange}
           onClearFilters={vi.fn()}
@@ -258,6 +291,8 @@ describe("DisplayFilterPopover", () => {
     await user.click(screen.getByRole("button", { name: "Filter displays" }));
 
     expect(screen.getByText("Status")).toBeInTheDocument();
+    expect(screen.getByText("Sort")).toBeInTheDocument();
+    expect(screen.queryByText("Group Membership")).not.toBeInTheDocument();
     expect(screen.getByText("Display Groups")).toBeInTheDocument();
     expect(screen.queryByText("Output Type")).not.toBeInTheDocument();
     expect(

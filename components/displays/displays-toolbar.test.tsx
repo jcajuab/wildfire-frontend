@@ -16,6 +16,7 @@ type DisplaysToolbarProps = ComponentProps<typeof DisplaysToolbar>;
 
 const baseProps: DisplaysToolbarProps = {
   statusFilter: "all" as const,
+  sortFilter: "name-asc" as const,
   search: "",
   selectedGroups: [],
   selectedOutput: "all",
@@ -30,6 +31,7 @@ const baseProps: DisplaysToolbarProps = {
     onEnterBulkUnregister: vi.fn(),
   },
   onStatusFilterChange: vi.fn(),
+  onSortFilterChange: vi.fn(),
   onSearchChange: vi.fn(),
   onGroupFilterChange: vi.fn(),
   onOutputFilterChange: vi.fn(),
