@@ -131,8 +131,15 @@ function ResetPasswordDialog({
 }
 
 export function UsersPageView({
+  initialUsers,
+  initialRoles,
   initialInvitations,
 }: {
+  readonly initialUsers?: {
+    readonly queryArgs: RbacUserListQuery;
+    readonly data: RbacUsersListResponse;
+  };
+  readonly initialRoles?: readonly RbacRoleSummary[];
   readonly initialInvitations?: InvitationListResponse;
 } = {}): ReactElement {
   const {
@@ -195,7 +202,7 @@ export function UsersPageView({
     banUserById,
     unbanUserById,
     refreshUsers,
-  } = useUsersPage({ initialInvitations });
+  } = useUsersPage({ initialUsers, initialRoles, initialInvitations });
 
   const selectedTab = canCreateUser ? activeTab : "users";
   const invitationsTotal = invitationsData?.total ?? 0;

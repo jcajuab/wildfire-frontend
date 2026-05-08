@@ -45,7 +45,14 @@ export function RolesListCacheSeeder({
   return null;
 }
 
-export function RolesPageView(): ReactElement {
+export function RolesPageView({
+  initialList,
+}: {
+  readonly initialList?: {
+    readonly queryArgs: RbacRoleListQuery;
+    readonly data: RbacRolesListResponse;
+  };
+} = {}): ReactElement {
   const {
     canUpdateRole,
     canDeleteRole,
@@ -67,7 +74,7 @@ export function RolesPageView(): ReactElement {
     handleEdit,
     handleDeleteRole,
     deleteRole,
-  } = useRolesPage();
+  } = useRolesPage({ initialList });
 
   if (rolesLoading) {
     return (

@@ -135,7 +135,18 @@ export function DisplayOptionsCacheSeeder({
   return null;
 }
 
-export function LogsPageClient(): ReactElement {
+export function LogsPageClient({
+  initialEvents,
+  initialUsers,
+  initialDisplays,
+}: {
+  readonly initialEvents?: {
+    readonly queryArgs: AuditListQuery;
+    readonly data: BackendAuditListResponse;
+  };
+  readonly initialUsers?: readonly RbacUser[];
+  readonly initialDisplays?: readonly DisplayOption[];
+} = {}): ReactElement {
   const {
     canExport,
     filters,
@@ -152,7 +163,7 @@ export function LogsPageClient(): ReactElement {
     handleRequestIdChange,
     handleResetFilters,
     selectedStatusValue,
-  } = useLogsPage();
+  } = useLogsPage({ initialEvents, initialUsers, initialDisplays });
   const resourceTypeItems = [
     RESOURCE_TYPE_SELECT_ALL_VALUE,
     ...RESOURCE_TYPE_FILTER_VALUES,

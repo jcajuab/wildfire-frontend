@@ -140,7 +140,13 @@ export default async function LogsPage({
       {displayOptions ? (
         <DisplayOptionsCacheSeeder data={displayOptions} />
       ) : null}
-      <LogsPageClient />
+      <LogsPageClient
+        initialEvents={
+          eventsData ? { queryArgs: listQuery, data: eventsData } : undefined
+        }
+        initialUsers={userOptions ?? undefined}
+        initialDisplays={displayOptions ?? undefined}
+      />
     </>
   );
 }

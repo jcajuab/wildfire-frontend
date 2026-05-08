@@ -91,7 +91,7 @@ export function PlaylistsToolbar({
               <Button
                 type="button"
                 variant="outline"
-                className="w-full justify-center border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/10 dark:hover:bg-destructive/20 sm:w-auto"
+                className="w-full justify-center border-destructive/30 bg-destructive/5 text-destructive [color:oklch(0.45_0.245_27.325)] hover:bg-destructive/10 hover:text-destructive dark:hover:text-destructive focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/10 dark:[color:var(--destructive)] dark:hover:bg-destructive/20 sm:w-auto"
                 onClick={bulkState.onEnterBulkDelete}
               >
                 <IconTrash

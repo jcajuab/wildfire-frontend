@@ -105,16 +105,20 @@ export function EditPlaylistForm({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <label className="flex cursor-pointer items-center gap-1.5">
+                <div className="flex cursor-pointer items-center gap-1.5">
                   <Switch
+                    id="edit-playlist-show-counter"
                     checked={showCounter}
                     onCheckedChange={onShowCounterChange}
                     disabled={isSaving}
                   />
-                  <span className="text-xs text-muted-foreground">
+                  <label
+                    htmlFor="edit-playlist-show-counter"
+                    className="cursor-pointer text-xs text-muted-foreground"
+                  >
                     Show counter
-                  </span>
-                </label>
+                  </label>
+                </div>
               </TooltipTrigger>
               <TooltipContent>
                 <p>

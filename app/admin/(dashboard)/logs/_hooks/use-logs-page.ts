@@ -3,9 +3,17 @@
 import { useCallback, useMemo } from "react";
 
 import { useCan } from "@/hooks/use-can";
-import { useListAuditEventsQuery } from "@/lib/api/audit-api";
-import { useGetUserOptionsQuery } from "@/lib/api/rbac-api";
-import { useGetDisplayOptionsQuery } from "@/lib/api/displays-api";
+import {
+  auditApi,
+  useListAuditEventsQuery,
+  type AuditListQuery,
+  type BackendAuditListResponse,
+} from "@/lib/api/audit-api";
+import { useGetUserOptionsQuery, type RbacUser } from "@/lib/api/rbac-api";
+import {
+  useGetDisplayOptionsQuery,
+  type DisplayOption,
+} from "@/lib/api/displays-api";
 import {
   getResourceTypeFilterLabel,
   getResourceTypeValueFromInput,
@@ -52,17 +60,57 @@ export interface UseLogsPageResult {
 
 const COMMON_STATUS_CODES = ["200", "401", "403", "404", "500"] as const;
 
-export function useLogsPage(): UseLogsPageResult {
+function normalizedAuditQueryKey(query: AuditListQuery | void): string {
+  return JSON.stringify({
+    page: query?.page ?? 1,
+    pageSize: query?.pageSize ?? LOGS_PAGE_SIZE,
+    from: query?.from ?? null,
+    to: query?.to ?? null,
+    action: query?.action ?? null,
+    actorId: query?.actorId ?? null,
+    actorType: query?.actorType ?? null,
+    resourceId: query?.resourceId ?? null,
+    resourceType: query?.resourceType ?? null,
+    status: query?.status ?? null,
+    requestId: query?.requestId ?? null,
+  });
+}
+
+export function useLogsPage(options?: {
+  readonly initialEvents?: {
+    readonly queryArgs: AuditListQuery;
+    readonly data: BackendAuditListResponse;
+  };
+  readonly initialUsers?: readonly RbacUser[];
+  readonly initialDisplays?: readonly DisplayOption[];
+}): UseLogsPageResult {
   const canExport = useCan("audit:read");
   const filters = useAuditLogFilters(PAGE_SIZE);
+  const isInitialEventsQuery =
+    options?.initialEvents != null &&
+    normalizedAuditQueryKey(options.initialEvents.queryArgs) ===
+      normalizedAuditQueryKey(filters.listQuery);
 
-  const { data: eventsData, isFetching } = useListAuditEventsQuery(
+  const { data: eventsData, isFetching: queryIsFetching } =
+    useListAuditEventsQuery(
     filters.listQuery,
     {
       refetchOnFocus: false,
       refetchOnReconnect: false,
+      skip: isInitialEventsQuery,
     },
   );
+  const cachedInitialEvents = auditApi.endpoints.listAuditEvents.useQueryState(
+    filters.listQuery,
+    { skip: !isInitialEventsQuery },
+  );
+  const effectiveEventsData =
+    eventsData ??
+    cachedInitialEvents.data ??
+    (isInitialEventsQuery ? options?.initialEvents?.data : undefined);
+  const isFetching = isInitialEventsQuery
+    ? cachedInitialEvents.isFetching
+    : queryIsFetching;
   const canReadUsers = useCan("users:read");
   const canReadDisplays = useCan("displays:read");
 
@@ -77,21 +125,21 @@ export function useLogsPage(): UseLogsPageResult {
     refetchOnReconnect: false,
   });
 
-  const users = usersData ?? [];
-  const displays = displaysData ?? [];
+  const users = usersData ?? options?.initialUsers ?? [];
+  const displays = displaysData ?? options?.initialDisplays ?? [];
 
   const actorResolver = useActorResolver({ users, displays });
 
   const logs = useMemo<LogEntry[]>(() => {
-    return (eventsData?.items ?? []).map((event) =>
+    return (effectiveEventsData?.items ?? []).map((event) =>
       mapAuditEventToLogEntry(event, {
         getActorName: actorResolver.getActorName,
         getActorAvatarUrl: actorResolver.getActorAvatarUrl,
       }),
     );
-  }, [eventsData?.items, actorResolver]);
+  }, [effectiveEventsData?.items, actorResolver]);
 
-  const total = eventsData?.total ?? 0;
+  const total = effectiveEventsData?.total ?? 0;
 
   const { page, setPage } = filters;
   const {

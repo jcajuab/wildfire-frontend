@@ -126,6 +126,7 @@ export function CreatePlaylistForm({
     items,
     name,
     resetDraftState,
+    showCounter,
     totalDuration,
   ]);
 
@@ -204,16 +205,20 @@ export function CreatePlaylistForm({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <label className="flex cursor-pointer items-center gap-1.5">
+                  <div className="flex cursor-pointer items-center gap-1.5">
                     <Switch
+                      id="playlist-form-show-counter"
                       checked={showCounter}
                       onCheckedChange={setShowCounter}
                       disabled={isSubmitting}
                     />
-                    <span className="text-xs text-muted-foreground">
+                    <label
+                      htmlFor="playlist-form-show-counter"
+                      className="cursor-pointer text-xs text-muted-foreground"
+                    >
                       Show counter
-                    </span>
-                  </label>
+                    </label>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>

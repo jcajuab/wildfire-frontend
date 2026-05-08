@@ -333,7 +333,7 @@ export function useDisplayRuntime(displaySlug: string) {
           latestConnectionState = nextState;
           setConnectionState(nextState);
         },
-        onEvent: (eventType) => {
+        onEvent: () => {
           setLastEventAt(new Date().toISOString());
 
           void refreshViewerManifest()

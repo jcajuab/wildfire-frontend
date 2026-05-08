@@ -57,7 +57,14 @@ export function SchedulesBootstrapCacheSeeder({
   return null;
 }
 
-export function SchedulesPageView(): ReactElement {
+export function SchedulesPageView({
+  initialBootstrap,
+}: {
+  readonly initialBootstrap?: {
+    readonly queryArgs: ScheduleWindowQuery;
+    readonly data: SchedulesBootstrapResponse;
+  };
+} = {}): ReactElement {
   const {
     isLoading,
     isFetching,
@@ -93,7 +100,7 @@ export function SchedulesPageView(): ReactElement {
     handleCreateSchedule,
     handleDeleteSchedule,
     handleSaveSchedule,
-  } = useSchedulesPage();
+  } = useSchedulesPage({ initialBootstrap });
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">

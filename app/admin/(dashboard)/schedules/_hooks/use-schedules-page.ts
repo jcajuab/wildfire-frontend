@@ -4,7 +4,12 @@ import { useMemo } from "react";
 
 import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
-import { useGetSchedulesBootstrapQuery } from "@/lib/api/schedules-api";
+import {
+  schedulesApi,
+  useGetSchedulesBootstrapQuery,
+  type ScheduleWindowQuery,
+  type SchedulesBootstrapResponse,
+} from "@/lib/api/schedules-api";
 import { mapBackendSchedulesToSchedules } from "@/lib/mappers/schedule-mapper";
 import type { AuthUser } from "@/types/auth";
 import type { Schedule } from "@/types/schedule";
@@ -20,7 +25,20 @@ export function canManageScheduleForUser(
   return user.isAdmin || schedule.createdBy === user.id;
 }
 
-export function useSchedulesPage() {
+function normalizedScheduleWindowKey(query: ScheduleWindowQuery): string {
+  return JSON.stringify({
+    from: query.from,
+    to: query.to,
+    displayIds: query.displayIds ?? null,
+  });
+}
+
+export function useSchedulesPage(options?: {
+  readonly initialBootstrap?: {
+    readonly queryArgs: ScheduleWindowQuery;
+    readonly data: SchedulesBootstrapResponse;
+  };
+}) {
   const { user } = useAuth();
   const canEditSchedule = useCan("schedules:update");
   const canDeleteSchedule = useCan("schedules:delete");
@@ -57,30 +75,51 @@ export function useSchedulesPage() {
   const { handleCreateSchedule, handleDeleteSchedule, handleSaveSchedule } =
     useScheduleHandlers();
 
+  const isInitialBootstrapQuery =
+    options?.initialBootstrap != null &&
+    normalizedScheduleWindowKey(options.initialBootstrap.queryArgs) ===
+      normalizedScheduleWindowKey(scheduleWindow);
+
   const {
     data: bootstrapData,
-    isLoading,
-    isFetching,
+    isLoading: queryIsLoading,
+    isFetching: queryIsFetching,
   } = useGetSchedulesBootstrapQuery(scheduleWindow, {
     refetchOnFocus: false,
     refetchOnReconnect: false,
+    skip: isInitialBootstrapQuery,
   });
+  const cachedInitialBootstrap =
+    schedulesApi.endpoints.getSchedulesBootstrap.useQueryState(scheduleWindow, {
+      skip: !isInitialBootstrapQuery,
+    });
+  const effectiveBootstrapData =
+    bootstrapData ??
+    cachedInitialBootstrap.data ??
+    (isInitialBootstrapQuery ? options?.initialBootstrap?.data : undefined);
+  const isLoading =
+    effectiveBootstrapData == null &&
+    (isInitialBootstrapQuery ? false : queryIsLoading);
+  const isFetching = isInitialBootstrapQuery
+    ? cachedInitialBootstrap.isFetching
+    : queryIsFetching;
   const displaysData = useMemo(
-    () => (canReadDisplays ? bootstrapData?.displayOptions : []),
-    [canReadDisplays, bootstrapData?.displayOptions],
+    () => (canReadDisplays ? effectiveBootstrapData?.displayOptions : []),
+    [canReadDisplays, effectiveBootstrapData?.displayOptions],
   );
   const displayGroupsData = useMemo(
-    () => (canReadDisplays ? bootstrapData?.displayGroups : []),
-    [canReadDisplays, bootstrapData?.displayGroups],
+    () => (canReadDisplays ? effectiveBootstrapData?.displayGroups : []),
+    [canReadDisplays, effectiveBootstrapData?.displayGroups],
   );
-  const schedulesData = bootstrapData?.schedules;
+  const schedulesData = effectiveBootstrapData?.schedules;
   const playlistsData = useMemo(
-    () => (canReadPlaylists ? bootstrapData?.playlistOptions : []),
-    [canReadPlaylists, bootstrapData?.playlistOptions],
+    () => (canReadPlaylists ? effectiveBootstrapData?.playlistOptions : []),
+    [canReadPlaylists, effectiveBootstrapData?.playlistOptions],
   );
   const flashContentData = useMemo(
-    () => (canReadContent ? bootstrapData?.flashContentOptions : []),
-    [canReadContent, bootstrapData?.flashContentOptions],
+    () =>
+      canReadContent ? effectiveBootstrapData?.flashContentOptions : [],
+    [canReadContent, effectiveBootstrapData?.flashContentOptions],
   );
 
   const availablePlaylists: readonly { id: string; name: string }[] = useMemo(

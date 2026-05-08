@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement, ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { getAuthSnapshot } from "@/lib/auth-session";
@@ -14,15 +14,13 @@ export function AuthGuard({ children }: AuthGuardProps): ReactElement {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, isInitialized } = useAuth();
-  const [redirecting, setRedirecting] = useState(false);
+  const redirecting = isInitialized && !isAuthenticated;
 
   useEffect(() => {
     if (!isInitialized || isAuthenticated) {
-      setRedirecting(false);
       return;
     }
 
-    setRedirecting(true);
     const timeout = setTimeout(() => {
       const snapshot = getAuthSnapshot();
       if (snapshot.user === null) {
@@ -30,8 +28,6 @@ export function AuthGuard({ children }: AuthGuardProps): ReactElement {
           ? `/login?redirectTo=${encodeURIComponent(pathname)}`
           : "/login";
         router.replace(loginUrl);
-      } else {
-        setRedirecting(false);
       }
     }, 300);
     return () => clearTimeout(timeout);

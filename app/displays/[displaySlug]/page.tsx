@@ -17,6 +17,38 @@ import { useDisplayRuntime } from "./_hooks/use-display-runtime";
 import { useDisplayPlayback } from "./_hooks/use-display-playback";
 import { useSnapshotUploader } from "./_hooks/use-snapshot-uploader";
 
+function PlaybackCountdown({
+  duration,
+  resetKey,
+}: {
+  readonly duration: number;
+  readonly resetKey: string;
+}) {
+  const [countdown, setCountdown] = useState(duration);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountdown((prev) => (prev > 1 ? prev - 1 : prev));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div
+      key={resetKey}
+      className="pointer-events-none absolute bottom-4 right-4 z-30 select-none text-5xl font-bold text-white"
+      style={{
+        textShadow:
+          "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+      }}
+      aria-hidden="true"
+    >
+      {countdown}
+    </div>
+  );
+}
+
 const formatRuntimeTimestamp = (timestamp: string | null): string | null => {
   if (!timestamp) {
     return null;
@@ -81,23 +113,6 @@ export default function DisplayRuntimePage() {
   );
 
   useSnapshotUploader(manifest, currentIndex, registration);
-
-  const [countdown, setCountdown] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!manifest?.showCounter || !currentItem) {
-      setCountdown(null);
-      return;
-    }
-
-    setCountdown(currentItem.duration);
-
-    const interval = setInterval(() => {
-      setCountdown((prev) => (prev !== null && prev > 1 ? prev - 1 : prev));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [tickCount, manifest?.showCounter, currentItem]);
 
   const [viewport, setViewport] = useState({ width: 1920, height: 1080 });
 
@@ -325,17 +340,12 @@ export default function DisplayRuntimePage() {
             html={currentItem.content.textHtmlContent ?? ""}
           />
         ) : null}
-        {countdown !== null ? (
-          <div
-            className="pointer-events-none absolute bottom-4 right-4 z-30 select-none text-5xl font-bold text-white"
-            style={{
-              textShadow:
-                "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
-            }}
-            aria-hidden="true"
-          >
-            {countdown}
-          </div>
+        {manifest?.showCounter && currentItem ? (
+          <PlaybackCountdown
+            key={`${currentItem.id}-${tickCount}`}
+            resetKey={`${currentItem.id}-${tickCount}`}
+            duration={currentItem.duration}
+          />
         ) : null}
       </div>
       <style jsx>{`

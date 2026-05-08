@@ -143,16 +143,20 @@ export function CreatePlaylistPageView(): ReactElement {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <label className="flex cursor-pointer items-center gap-1.5">
+                        <div className="flex cursor-pointer items-center gap-1.5">
                           <Switch
+                            id="create-playlist-show-counter"
                             checked={showCounter}
                             onCheckedChange={setShowCounter}
                             disabled={isSubmitting}
                           />
-                          <span className="text-xs text-muted-foreground">
+                          <label
+                            htmlFor="create-playlist-show-counter"
+                            className="cursor-pointer text-xs text-muted-foreground"
+                          >
                             Show counter
-                          </span>
-                        </label>
+                          </label>
+                        </div>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>

@@ -67,7 +67,11 @@ export default async function SchedulesPage(): Promise<ReactElement> {
           data={bootstrapData}
         />
       ) : null}
-      <SchedulesPageView />
+      <SchedulesPageView
+        initialBootstrap={
+          bootstrapData ? { queryArgs, data: bootstrapData } : undefined
+        }
+      />
     </>
   );
 }

@@ -4,8 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useGetUsersQuery, useGetRoleOptionsQuery } from "@/lib/api/rbac-api";
-import type { RbacUsersListResponse } from "@/lib/api/rbac-api";
+import {
+  rbacApi,
+  useGetUsersQuery,
+  useGetRoleOptionsQuery,
+} from "@/lib/api/rbac-api";
+import type {
+  RbacRoleSummary,
+  RbacUserListQuery,
+  RbacUsersListResponse,
+} from "@/lib/api/rbac-api";
 import type { User, UserRole, UserSort } from "@/types/user";
 import type {
   InvitationListResponse,
@@ -21,6 +29,17 @@ import { USERS_PAGE_SIZE } from "@/lib/users-search-params";
 import { useUsersHandlers } from "./use-users-handlers";
 
 export const PAGE_SIZE = USERS_PAGE_SIZE;
+
+function normalizedUsersQueryKey(query: RbacUserListQuery): string {
+  return JSON.stringify({
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? PAGE_SIZE,
+    q: query.q ?? null,
+    roleId: query.roleId ?? null,
+    sortBy: query.sortBy ?? "name",
+    sortDirection: query.sortDirection ?? "asc",
+  });
+}
 
 export interface UseUsersPageResult {
   // Auth
@@ -107,6 +126,11 @@ export interface UseUsersPageResult {
 }
 
 export function useUsersPage(options?: {
+  initialUsers?: {
+    readonly queryArgs: RbacUserListQuery;
+    readonly data: RbacUsersListResponse;
+  };
+  initialRoles?: readonly RbacRoleSummary[];
   initialInvitations?: InvitationListResponse;
 }): UseUsersPageResult {
   const { user: currentUser } = useAuth();
@@ -120,31 +144,49 @@ export function useUsersPage(options?: {
   const debouncedSearch = useDebounce(filters.search, 500);
   const debouncedInvitationSearch = useDebounce(filters.invitationSearch, 500);
 
+  const usersQueryArgs: RbacUserListQuery = {
+    page: filters.page,
+    pageSize: PAGE_SIZE,
+    q: debouncedSearch || undefined,
+    roleId: filters.roleId === "all" ? undefined : filters.roleId,
+    sortBy:
+      filters.sortField === "lastSeen" ? "lastSeenAt" : filters.sortField,
+    sortDirection: filters.sortDirection,
+  };
+  const isInitialUsersQuery =
+    options?.initialUsers != null &&
+    normalizedUsersQueryKey(options.initialUsers.queryArgs) ===
+      normalizedUsersQueryKey(usersQueryArgs);
+
   const {
     data: usersData,
     isLoading: usersQueryLoading,
     isFetching: usersQueryFetching,
     isError: usersError,
     refetch: refetchUsers,
-  } = useGetUsersQuery(
-    {
-      page: filters.page,
-      pageSize: PAGE_SIZE,
-      q: debouncedSearch || undefined,
-      roleId: filters.roleId === "all" ? undefined : filters.roleId,
-      sortBy:
-        filters.sortField === "lastSeen" ? "lastSeenAt" : filters.sortField,
-      sortDirection: filters.sortDirection,
-    },
-    { refetchOnFocus: false, refetchOnReconnect: false },
+  } = useGetUsersQuery(usersQueryArgs, {
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+    skip: isInitialUsersQuery,
+  });
+  const cachedInitialUsers = rbacApi.endpoints.getUsers.useQueryState(
+    usersQueryArgs,
+    { skip: !isInitialUsersQuery },
   );
+  const effectiveUsersData =
+    usersData ??
+    cachedInitialUsers.data ??
+    (isInitialUsersQuery ? options?.initialUsers?.data : undefined);
 
   const { data: rolesData, isLoading: rolesLoading } = useGetRoleOptionsQuery(
     undefined,
     { skip: !canReadRoles, refetchOnFocus: false, refetchOnReconnect: false },
   );
+  const effectiveRolesData = rolesData ?? options?.initialRoles;
 
-  const usersLoading = usersQueryLoading || rolesLoading;
+  const usersLoading =
+    effectiveUsersData == null &&
+    (isInitialUsersQuery ? false : usersQueryLoading || rolesLoading);
 
   const [invitationsData, setInvitationsData] = useState<
     InvitationListResponse | undefined
@@ -154,7 +196,7 @@ export function useUsersPage(options?: {
 
   const users: User[] = useMemo(
     () =>
-      (usersData?.items ?? []).map((user) => ({
+      (effectiveUsersData?.items ?? []).map((user) => ({
         id: user.id,
         username: user.username,
         email: user.email,
@@ -166,19 +208,21 @@ export function useUsersPage(options?: {
         avatarUrl: user.avatarUrl ?? null,
         roles: user.roles,
       })),
-    [usersData?.items],
+    [effectiveUsersData?.items],
   );
 
   const availableRoles = useMemo(() => {
-    const roles = rolesData ?? [];
+    const roles = effectiveRolesData ?? [];
     const filtered = roles.filter((role) => !role.isSystem);
     return filtered.map((role) => ({ id: role.id, name: role.name }));
-  }, [rolesData]);
+  }, [effectiveRolesData]);
 
   const systemRoleIds = useMemo(
     () =>
-      (rolesData ?? []).filter((role) => role.isSystem).map((role) => role.id),
-    [rolesData],
+      (effectiveRolesData ?? [])
+        .filter((role) => role.isSystem)
+        .map((role) => role.id),
+    [effectiveRolesData],
   );
 
   const userRolesByUserId = useMemo<
@@ -244,7 +288,7 @@ export function useUsersPage(options?: {
     sort: filters.sort,
     invitationSort: filters.invitationSort,
     users,
-    usersData,
+    usersData: effectiveUsersData,
     availableRoles,
     userRolesByUserId,
     systemRoleIds,

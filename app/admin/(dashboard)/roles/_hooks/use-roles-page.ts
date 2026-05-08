@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { useCan } from "@/hooks/use-can";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
+  rbacApi,
   useDeleteRoleMutation,
   useGetRolesQuery,
+  type RbacRoleListQuery,
   type RbacRolesListResponse,
 } from "@/lib/api/rbac-api";
 import { ROLE_CREATE_PATH, getRoleEditPath } from "@/lib/role-paths";
@@ -16,6 +18,16 @@ import { ROLES_PAGE_SIZE } from "@/lib/roles-search-params";
 import { useRolesFilters } from "./use-roles-filters";
 
 export const PAGE_SIZE = ROLES_PAGE_SIZE;
+
+function normalizedRolesQueryKey(query: RbacRoleListQuery): string {
+  return JSON.stringify({
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? PAGE_SIZE,
+    q: query.q ?? null,
+    sortBy: query.sortBy ?? "name",
+    sortDirection: query.sortDirection ?? "asc",
+  });
+}
 
 export interface UseRolesPageResult {
   // Permissions
@@ -51,7 +63,12 @@ export interface UseRolesPageResult {
   deleteRole: (id: string) => Promise<void>;
 }
 
-export function useRolesPage(): UseRolesPageResult {
+export function useRolesPage(options?: {
+  readonly initialList?: {
+    readonly queryArgs: RbacRoleListQuery;
+    readonly data: RbacRolesListResponse;
+  };
+}): UseRolesPageResult {
   const router = useRouter();
   const canUpdateRole = useCan("roles:update");
   const canDeleteRole = useCan("roles:delete");
@@ -62,29 +79,53 @@ export function useRolesPage(): UseRolesPageResult {
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const {
-    data: rolesData,
-    isLoading: rolesLoading,
-    isFetching: rolesFetching,
-    isError: rolesError,
-  } = useGetRolesQuery({
+  const rolesQuery: RbacRoleListQuery = {
     page: filters.page,
     pageSize: PAGE_SIZE,
     q: debouncedSearch || undefined,
     sortBy: filters.sortField,
     sortDirection: filters.sortDirection,
+  };
+  const isInitialListQuery =
+    options?.initialList != null &&
+    normalizedRolesQueryKey(options.initialList.queryArgs) ===
+      normalizedRolesQueryKey(rolesQuery);
+
+  const {
+    data: rolesData,
+    isLoading: rolesQueryLoading,
+    isFetching: rolesQueryFetching,
+    isError: rolesError,
+  } = useGetRolesQuery(rolesQuery, {
+    skip: isInitialListQuery,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
   });
+  const cachedInitialList = rbacApi.endpoints.getRoles.useQueryState(
+    rolesQuery,
+    { skip: !isInitialListQuery },
+  );
+  const effectiveRolesData =
+    rolesData ??
+    cachedInitialList.data ??
+    (isInitialListQuery ? options?.initialList?.data : undefined);
+  const rolesLoading =
+    effectiveRolesData == null &&
+    (isInitialListQuery ? false : rolesQueryLoading);
+  const rolesFetching = isInitialListQuery
+    ? cachedInitialList.isFetching
+    : rolesQueryFetching;
 
   const roles: Role[] = useMemo(
     () =>
-      (rolesData?.items ?? []).map((role) => ({
+      (effectiveRolesData?.items ?? []).map((role) => ({
         id: role.id,
         name: role.name,
         description: role.description,
         isSystem: role.isSystem,
         usersCount: role.usersCount,
       })),
-    [rolesData?.items],
+    [effectiveRolesData?.items],
   );
 
   const handleCreate = useCallback(() => {
@@ -117,7 +158,7 @@ export function useRolesPage(): UseRolesPageResult {
     page: filters.page,
     sort: filters.sort,
     roles,
-    rolesData: rolesData as RbacRolesListResponse | undefined,
+    rolesData: effectiveRolesData as RbacRolesListResponse | undefined,
     rolesLoading,
     rolesFetching,
     rolesError,
