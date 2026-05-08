@@ -42,7 +42,10 @@ async function getCachedSchedulesBootstrap(from: string, to: string) {
 }
 
 export default async function SchedulesPage(): Promise<ReactElement> {
-  const session = resolveSession(await getCachedServerSession(), "/admin/schedules");
+  const session = resolveSession(
+    await getCachedServerSession(),
+    "/admin/schedules",
+  );
   if (!session) {
     return <SchedulesPageView />;
   }

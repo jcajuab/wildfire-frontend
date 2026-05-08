@@ -294,10 +294,8 @@ export function computeOverlapCounters(
     }
 
     const sorted = [...members].sort((a, b) => {
-      const dateA =
-        schedulesById.get(playlists[a].scheduleId)?.createdAt ?? "";
-      const dateB =
-        schedulesById.get(playlists[b].scheduleId)?.createdAt ?? "";
+      const dateA = schedulesById.get(playlists[a].scheduleId)?.createdAt ?? "";
+      const dateB = schedulesById.get(playlists[b].scheduleId)?.createdAt ?? "";
       return dateA.localeCompare(dateB);
     });
 

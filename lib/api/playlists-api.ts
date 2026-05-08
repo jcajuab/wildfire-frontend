@@ -448,8 +448,9 @@ export const playlistsApi = api.injectEndpoints({
                     const schedules = draft.schedules as BackendSchedule[];
                     for (const s of schedules) {
                       if (s.playlist && s.playlist.id === id) {
-                        (s.playlist as { id: string; name: string | null }).name =
-                          data.name;
+                        (
+                          s.playlist as { id: string; name: string | null }
+                        ).name = data.name;
                       }
                     }
                   },

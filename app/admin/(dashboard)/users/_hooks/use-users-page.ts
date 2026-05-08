@@ -146,8 +146,9 @@ export function useUsersPage(options?: {
 
   const usersLoading = usersQueryLoading || rolesLoading;
 
-  const [invitationsData, setInvitationsData] =
-    useState<InvitationListResponse | undefined>(options?.initialInvitations);
+  const [invitationsData, setInvitationsData] = useState<
+    InvitationListResponse | undefined
+  >(options?.initialInvitations);
 
   const dialogs = useUsersDialogs();
 

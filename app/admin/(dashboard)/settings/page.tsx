@@ -15,7 +15,10 @@ import {
 } from "./settings-page-client";
 
 export default async function SettingsPage(): Promise<ReactElement> {
-  const session = resolveSession(await getCachedServerSession(), "/admin/settings");
+  const session = resolveSession(
+    await getCachedServerSession(),
+    "/admin/settings",
+  );
   if (!session) {
     return <SettingsPageView canManageAICredentials={false} />;
   }

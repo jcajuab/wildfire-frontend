@@ -62,7 +62,10 @@ export default async function DisplayGroupsPage(): Promise<ReactElement> {
     getCachedBootstrap(),
   ]);
 
-  const session = resolveSession(sessionResult, "/admin/displays/display-groups");
+  const session = resolveSession(
+    sessionResult,
+    "/admin/displays/display-groups",
+  );
   if (!session) {
     return <DisplayGroupsPageClient />;
   }

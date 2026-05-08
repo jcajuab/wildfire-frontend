@@ -133,9 +133,13 @@ export default async function LogsPage({
 
   return (
     <>
-      {eventsData ? <AuditListCacheSeeder queryArgs={listQuery} data={eventsData} /> : null}
+      {eventsData ? (
+        <AuditListCacheSeeder queryArgs={listQuery} data={eventsData} />
+      ) : null}
       {userOptions ? <UserOptionsCacheSeeder data={userOptions} /> : null}
-      {displayOptions ? <DisplayOptionsCacheSeeder data={displayOptions} /> : null}
+      {displayOptions ? (
+        <DisplayOptionsCacheSeeder data={displayOptions} />
+      ) : null}
       <LogsPageClient />
     </>
   );

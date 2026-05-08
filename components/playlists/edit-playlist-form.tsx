@@ -118,8 +118,7 @@ export function EditPlaylistForm({
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  Turning this on will show a counter for each content
-                  duration
+                  Turning this on will show a counter for each content duration
                 </p>
               </TooltipContent>
             </Tooltip>

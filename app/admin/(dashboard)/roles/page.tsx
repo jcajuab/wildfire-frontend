@@ -42,10 +42,7 @@ async function getCachedRolesList(params: {
   });
 
   if (!res.ok) return null;
-  return transformPaginatedListResponse<RbacRoleListItem>(
-    res.data,
-    "getRoles",
-  );
+  return transformPaginatedListResponse<RbacRoleListItem>(res.data, "getRoles");
 }
 
 export default async function RolesPage({
@@ -83,7 +80,9 @@ export default async function RolesPage({
 
   return (
     <>
-      {rolesData ? <RolesListCacheSeeder queryArgs={queryArgs} data={rolesData} /> : null}
+      {rolesData ? (
+        <RolesListCacheSeeder queryArgs={queryArgs} data={rolesData} />
+      ) : null}
       <RolesPageView />
     </>
   );

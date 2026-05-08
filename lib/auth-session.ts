@@ -379,10 +379,7 @@ export async function bootstrapAccessToken(): Promise<void> {
         await refreshAccessToken();
         return;
       } catch (retryError) {
-        if (
-          retryError instanceof AuthApiError &&
-          retryError.status === 401
-        ) {
+        if (retryError instanceof AuthApiError && retryError.status === 401) {
           await purgeStaleSession();
           return;
         }

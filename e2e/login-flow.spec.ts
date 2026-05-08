@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
 interface RequestTiming {
   url: string;
@@ -9,7 +9,7 @@ interface RequestTiming {
 }
 
 interface LoginMetrics {
-  type: 'cold' | 'warm';
+  type: "cold" | "warm";
   loginPageLoadMs: number;
   loginApiMs: number;
   refreshApiCalls: number;
@@ -23,9 +23,12 @@ interface LoginMetrics {
 
 function createRequestTracker(page: any) {
   const requests: RequestTiming[] = [];
-  const pending = new Map<string, { url: string; method: string; startTime: number }>();
+  const pending = new Map<
+    string,
+    { url: string; method: string; startTime: number }
+  >();
 
-  page.on('request', (req: any) => {
+  page.on("request", (req: any) => {
     const key = `${req.method()}:${req.url()}`;
     pending.set(key, {
       url: req.url(),
@@ -34,7 +37,7 @@ function createRequestTracker(page: any) {
     });
   });
 
-  page.on('response', (res: any) => {
+  page.on("response", (res: any) => {
     const req = res.request();
     const key = `${req.method()}:${req.url()}`;
     const entry = pending.get(key);
@@ -50,36 +53,49 @@ function createRequestTracker(page: any) {
 
   return {
     getAll: () => [...requests],
-    clear: () => { requests.length = 0; pending.clear(); },
-    getByPattern: (pattern: string) => requests.filter(r => r.url.includes(pattern)),
+    clear: () => {
+      requests.length = 0;
+      pending.clear();
+    },
+    getByPattern: (pattern: string) =>
+      requests.filter((r) => r.url.includes(pattern)),
   };
 }
 
 /** Wait for the dashboard to be visually ready: sidebar region + a main heading. */
 async function waitForDashboard(page: any) {
-  await page.waitForSelector('region[aria-label="Sidebar"], [role="region"][aria-label="Sidebar"], aside, nav[aria-label="Main navigation"]', {
-    state: 'visible',
+  await page.waitForSelector(
+    'region[aria-label="Sidebar"], [role="region"][aria-label="Sidebar"], aside, nav[aria-label="Main navigation"]',
+    {
+      state: "visible",
+      timeout: 30000,
+    },
+  );
+  // Also wait for the main content heading to confirm the page rendered
+  await page.waitForSelector("main h1, main h2", {
+    state: "visible",
     timeout: 30000,
   });
-  // Also wait for the main content heading to confirm the page rendered
-  await page.waitForSelector('main h1, main h2', { state: 'visible', timeout: 30000 });
 }
 
-test.describe('Login Performance', () => {
-  test('Cold start login — fresh browser, no cookies', async ({ page }) => {
+test.describe("Login Performance", () => {
+  test("Cold start login — fresh browser, no cookies", async ({ page }) => {
     const tracker = createRequestTracker(page);
 
     // Navigate to login page — use domcontentloaded to avoid networkidle stall on production
     const loginPageStart = Date.now();
-    await page.goto('/login', { waitUntil: 'domcontentloaded' });
+    await page.goto("/login", { waitUntil: "domcontentloaded" });
     const loginPageLoadMs = Date.now() - loginPageStart;
 
     // Wait for login form to be visible
-    await page.waitForSelector('input[name="username"]', { state: 'visible', timeout: 30000 });
+    await page.waitForSelector('input[name="username"]', {
+      state: "visible",
+      timeout: 30000,
+    });
 
     // Fill credentials
-    await page.fill('input[name="username"]', 'admin');
-    await page.fill('input[name="password"]', '7EKWCWL4eBip0THX');
+    await page.fill('input[name="username"]', "admin");
+    await page.fill('input[name="password"]', "7EKWCWL4eBip0THX");
 
     // Clear tracker to isolate login-specific requests
     tracker.clear();
@@ -98,9 +114,13 @@ test.describe('Login Performance', () => {
 
     // Collect performance metrics
     const perfMetrics = await page.evaluate(() => {
-      const entries = performance.getEntriesByType('paint');
-      const fcp = entries.find((e: PerformanceEntry) => e.name === 'first-contentful-paint');
-      const navEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+      const entries = performance.getEntriesByType("paint");
+      const fcp = entries.find(
+        (e: PerformanceEntry) => e.name === "first-contentful-paint",
+      );
+      const navEntries = performance.getEntriesByType(
+        "navigation",
+      ) as PerformanceNavigationTiming[];
       const nav = navEntries[0];
       return {
         fcp: fcp ? fcp.startTime : null,
@@ -119,7 +139,10 @@ test.describe('Login Performance', () => {
           }
         });
         try {
-          observer.observe({ type: 'largest-contentful-paint', buffered: true });
+          observer.observe({
+            type: "largest-contentful-paint",
+            buffered: true,
+          });
           setTimeout(() => {
             observer.disconnect();
             resolve(lcpValue);
@@ -131,14 +154,18 @@ test.describe('Login Performance', () => {
     });
 
     // Analyze auth-specific requests
-    const loginApiRequests = tracker.getByPattern('/auth/login');
-    const refreshApiRequests = tracker.getByPattern('/auth/refresh');
+    const loginApiRequests = tracker.getByPattern("/auth/login");
+    const refreshApiRequests = tracker.getByPattern("/auth/refresh");
 
-    const loginApiMs = loginApiRequests.length > 0 ? loginApiRequests[0].duration : 0;
-    const refreshApiTotalMs = refreshApiRequests.reduce((sum, r) => sum + r.duration, 0);
+    const loginApiMs =
+      loginApiRequests.length > 0 ? loginApiRequests[0].duration : 0;
+    const refreshApiTotalMs = refreshApiRequests.reduce(
+      (sum, r) => sum + r.duration,
+      0,
+    );
 
     const metrics: LoginMetrics = {
-      type: 'cold',
+      type: "cold",
       loginPageLoadMs,
       loginApiMs,
       refreshApiCalls: refreshApiRequests.length,
@@ -150,7 +177,7 @@ test.describe('Login Performance', () => {
       allRequests: tracker.getAll(),
     };
 
-    console.log('\n=== COLD START LOGIN METRICS ===');
+    console.log("\n=== COLD START LOGIN METRICS ===");
     console.log(`Login page load: ${loginPageLoadMs}ms`);
     console.log(`POST /auth/login: ${loginApiMs}ms`);
     console.log(`POST /auth/refresh calls: ${refreshApiRequests.length}`);
@@ -160,33 +187,39 @@ test.describe('Login Performance', () => {
     console.log(`LCP: ${lcp}ms`);
     console.log(`TTFB: ${perfMetrics.ttfb}ms`);
     console.log(`Total requests: ${tracker.getAll().length}`);
-    console.log('================================\n');
+    console.log("================================\n");
 
     // Attach metrics as test artifact
-    await test.info().attach('cold-start-metrics', {
+    await test.info().attach("cold-start-metrics", {
       body: JSON.stringify(metrics, null, 2),
-      contentType: 'application/json',
+      contentType: "application/json",
     });
 
     // Save to file
-    const fs = await import('fs');
-    const path = await import('path');
-    const resultsDir = path.join(process.cwd(), 'perf-results');
-    if (!fs.existsSync(resultsDir)) fs.mkdirSync(resultsDir, { recursive: true });
+    const fs = await import("fs");
+    const path = await import("path");
+    const resultsDir = path.join(process.cwd(), "perf-results");
+    if (!fs.existsSync(resultsDir))
+      fs.mkdirSync(resultsDir, { recursive: true });
     fs.writeFileSync(
-      path.join(resultsDir, 'baseline-e2e-cold.json'),
+      path.join(resultsDir, "baseline-e2e-cold.json"),
       JSON.stringify(metrics, null, 2),
     );
   });
 
-  test('Warm start login — after logout, session hint exists', async ({ page }) => {
+  test("Warm start login — after logout, session hint exists", async ({
+    page,
+  }) => {
     const tracker = createRequestTracker(page);
 
     // First: do an initial login to establish session storage hints
-    await page.goto('/login', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('input[name="username"]', { state: 'visible', timeout: 30000 });
-    await page.fill('input[name="username"]', 'admin');
-    await page.fill('input[name="password"]', '7EKWCWL4eBip0THX');
+    await page.goto("/login", { waitUntil: "domcontentloaded" });
+    await page.waitForSelector('input[name="username"]', {
+      state: "visible",
+      timeout: 30000,
+    });
+    await page.fill('input[name="username"]', "admin");
+    await page.fill('input[name="password"]', "7EKWCWL4eBip0THX");
     await page.click('button[type="submit"]');
     await page.waitForURL(/\/admin/, { timeout: 30000 });
     await waitForDashboard(page);
@@ -194,16 +227,19 @@ test.describe('Login Performance', () => {
     // Simulate logout by clearing cookies so the next visit to /login is unauthenticated
     // but localStorage/sessionStorage hints (e.g. last-used-username) are preserved for "warm" feel
     await page.context().clearCookies();
-    await page.goto('/login', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('input[name="username"]', { state: 'visible', timeout: 30000 });
+    await page.goto("/login", { waitUntil: "domcontentloaded" });
+    await page.waitForSelector('input[name="username"]', {
+      state: "visible",
+      timeout: 30000,
+    });
 
     // Clear tracker for warm start measurement
     tracker.clear();
     const warmStart = Date.now();
 
     // Second login (warm start)
-    await page.fill('input[name="username"]', 'admin');
-    await page.fill('input[name="password"]', '7EKWCWL4eBip0THX');
+    await page.fill('input[name="username"]', "admin");
+    await page.fill('input[name="password"]', "7EKWCWL4eBip0THX");
     await page.click('button[type="submit"]');
 
     await page.waitForURL(/\/admin/, { timeout: 30000 });
@@ -211,13 +247,17 @@ test.describe('Login Performance', () => {
 
     const totalLoginToDashboardMs = Date.now() - warmStart;
 
-    const loginApiRequests = tracker.getByPattern('/auth/login');
-    const refreshApiRequests = tracker.getByPattern('/auth/refresh');
-    const loginApiMs = loginApiRequests.length > 0 ? loginApiRequests[0].duration : 0;
-    const refreshApiTotalMs = refreshApiRequests.reduce((sum, r) => sum + r.duration, 0);
+    const loginApiRequests = tracker.getByPattern("/auth/login");
+    const refreshApiRequests = tracker.getByPattern("/auth/refresh");
+    const loginApiMs =
+      loginApiRequests.length > 0 ? loginApiRequests[0].duration : 0;
+    const refreshApiTotalMs = refreshApiRequests.reduce(
+      (sum, r) => sum + r.duration,
+      0,
+    );
 
     const metrics: LoginMetrics = {
-      type: 'warm',
+      type: "warm",
       loginPageLoadMs: 0, // Already on login page
       loginApiMs,
       refreshApiCalls: refreshApiRequests.length,
@@ -229,25 +269,26 @@ test.describe('Login Performance', () => {
       allRequests: tracker.getAll(),
     };
 
-    console.log('\n=== WARM START LOGIN METRICS ===');
+    console.log("\n=== WARM START LOGIN METRICS ===");
     console.log(`POST /auth/login: ${loginApiMs}ms`);
     console.log(`POST /auth/refresh calls: ${refreshApiRequests.length}`);
     console.log(`POST /auth/refresh total: ${refreshApiTotalMs}ms`);
     console.log(`Total login → dashboard: ${totalLoginToDashboardMs}ms`);
     console.log(`Total requests: ${tracker.getAll().length}`);
-    console.log('================================\n');
+    console.log("================================\n");
 
-    await test.info().attach('warm-start-metrics', {
+    await test.info().attach("warm-start-metrics", {
       body: JSON.stringify(metrics, null, 2),
-      contentType: 'application/json',
+      contentType: "application/json",
     });
 
-    const fs = await import('fs');
-    const path = await import('path');
-    const resultsDir = path.join(process.cwd(), 'perf-results');
-    if (!fs.existsSync(resultsDir)) fs.mkdirSync(resultsDir, { recursive: true });
+    const fs = await import("fs");
+    const path = await import("path");
+    const resultsDir = path.join(process.cwd(), "perf-results");
+    if (!fs.existsSync(resultsDir))
+      fs.mkdirSync(resultsDir, { recursive: true });
     fs.writeFileSync(
-      path.join(resultsDir, 'baseline-e2e-warm.json'),
+      path.join(resultsDir, "baseline-e2e-warm.json"),
       JSON.stringify(metrics, null, 2),
     );
   });

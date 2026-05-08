@@ -6,8 +6,14 @@ import type {
   RbacUser,
   RbacUserListQuery,
 } from "@/lib/api/rbac-api";
-import type { InvitationRecord, InvitationListResponse } from "@/types/invitation";
-import { parseApiResponseDataSafe, parseApiListResponseSafe } from "@/lib/api/contracts";
+import type {
+  InvitationRecord,
+  InvitationListResponse,
+} from "@/types/invitation";
+import {
+  parseApiResponseDataSafe,
+  parseApiListResponseSafe,
+} from "@/lib/api/contracts";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import {
   USERS_PAGE_SIZE,
@@ -114,7 +120,10 @@ async function getCachedInvitations(params: {
 export default async function UsersPage({
   searchParams,
 }: UsersPageProps): Promise<ReactElement> {
-  const session = resolveSession(await getCachedServerSession(), "/admin/users");
+  const session = resolveSession(
+    await getCachedServerSession(),
+    "/admin/users",
+  );
   if (!session) {
     return <UsersPageView />;
   }
@@ -159,7 +168,9 @@ export default async function UsersPage({
 
   return (
     <>
-      {usersData ? <UsersListCacheSeeder queryArgs={queryArgs} data={usersData} /> : null}
+      {usersData ? (
+        <UsersListCacheSeeder queryArgs={queryArgs} data={usersData} />
+      ) : null}
       {roleOptions ? <RoleOptionsCacheSeeder data={roleOptions} /> : null}
       <UsersPageView initialInvitations={invitationsData ?? undefined} />
     </>
