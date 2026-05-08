@@ -10,6 +10,7 @@ import {
   type ScheduleWindowQuery,
 } from "@/lib/api/schedules-api";
 import type { FlashTone } from "@/types/content";
+import type { RootState } from "@/lib/store";
 
 async function bumpContentNextCache(): Promise<void> {
   try {
@@ -200,6 +201,55 @@ export interface SubmitPdfCropsRequest {
   readonly uploadId: string;
   readonly regions: readonly PdfCropRegion[];
   readonly contentName?: string;
+}
+
+async function patchContentInPlaylistCaches(
+  dispatch: (action: unknown) => void,
+  getState: () => RootState,
+  contentId: string,
+  updated: BackendContent,
+): Promise<void> {
+  const { playlistsApi } = await import("@/lib/api/playlists-api");
+
+  const detailArgs = playlistsApi.util.selectCachedArgsForQuery(
+    getState(),
+    "getPlaylist",
+  );
+  for (const pa of detailArgs) {
+    dispatch(
+      playlistsApi.util.updateQueryData("getPlaylist", pa, (draft) => {
+        for (const item of draft.items as { content: { id: string; title: string; type: string; thumbnailUrl?: string | null; textPreviewText?: string | null } }[]) {
+          if (item.content.id === contentId) {
+            item.content.title = updated.title;
+            item.content.type = updated.type;
+            item.content.thumbnailUrl = updated.thumbnailUrl;
+            item.content.textPreviewText = updated.textPreviewText;
+          }
+        }
+      }),
+    );
+  }
+
+  const listArgs = playlistsApi.util.selectCachedArgsForQuery(
+    getState(),
+    "listPlaylists",
+  );
+  for (const pa of listArgs) {
+    dispatch(
+      playlistsApi.util.updateQueryData("listPlaylists", pa, (draft) => {
+        for (const playlist of draft.items as { previewItems: { content: { id: string; title: string; type: string; thumbnailUrl?: string | null; textPreviewText?: string | null } }[] }[]) {
+          for (const item of playlist.previewItems) {
+            if (item.content.id === contentId) {
+              item.content.title = updated.title;
+              item.content.type = updated.type;
+              item.content.thumbnailUrl = updated.thumbnailUrl;
+              item.content.textPreviewText = updated.textPreviewText;
+            }
+          }
+        }
+      }),
+    );
+  }
 }
 
 export const contentApi = api.injectEndpoints({
@@ -681,6 +731,7 @@ export const contentApi = api.injectEndpoints({
               ),
             );
           }
+          await patchContentInPlaylistCaches(dispatch, getState, id, updated);
           await bumpContentNextCache();
         } catch {
           // mutation failed

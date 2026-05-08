@@ -36,7 +36,7 @@ import {
   type ContentOption,
   type ContentOptionsQueryArg,
 } from "@/lib/api/content-api";
-import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector, useAppStore } from "@/lib/hooks";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { runBulkAction } from "@/lib/bulk-action";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
@@ -131,8 +131,17 @@ function InitialContentListSeeder({
   readonly onSeeded: () => void;
 }): null {
   const dispatch = useAppDispatch();
+  const store = useAppStore();
 
   useLayoutEffect(() => {
+    const existing = contentApi.endpoints.listContent.select(queryArgs)(
+      store.getState(),
+    );
+    if (existing?.data != null) {
+      onSeeded();
+      return;
+    }
+
     let cancelled = false;
     const seedResult = dispatch(
       contentApi.util.upsertQueryData("listContent", queryArgs, data),
@@ -145,7 +154,7 @@ function InitialContentListSeeder({
     return () => {
       cancelled = true;
     };
-  }, [data, dispatch, onSeeded, queryArgs]);
+  }, [data, dispatch, onSeeded, queryArgs, store]);
 
   return null;
 }
