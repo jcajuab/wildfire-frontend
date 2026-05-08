@@ -76,7 +76,7 @@ export function ViewScheduleDialog({
                 <>
                   <span className="text-muted-foreground">Playlist</span>
                   <Link
-                    href={`/admin/playlists?manage=${schedule.playlist.id}`}
+                    href={`/admin/playlists/edit/${schedule.playlist.id}`}
                     onClick={() => onOpenChange(false)}
                     className="flex items-center gap-1 text-primary hover:underline"
                   >
@@ -101,7 +101,14 @@ export function ViewScheduleDialog({
               ) : null}
 
               <span className="text-muted-foreground">Target display</span>
-              <span>{schedule.display.name}</span>
+              <Link
+                href={`/admin/displays?selectedDisplay=${schedule.display.id}`}
+                onClick={() => onOpenChange(false)}
+                className="flex items-center gap-1 text-primary hover:underline"
+              >
+                {schedule.display.name}
+                <IconArrowRight className="size-3.5 shrink-0" />
+              </Link>
             </div>
           </div>
 

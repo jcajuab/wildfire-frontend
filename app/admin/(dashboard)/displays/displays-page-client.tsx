@@ -6,10 +6,11 @@ import {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
@@ -22,9 +23,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   displaysApi,
+  useLazyGetDisplayQuery,
   type DisplaysBootstrapResponse,
   type DisplaysListQuery,
 } from "@/lib/api/displays-api";
+import { mapDisplayApiToDisplay } from "@/lib/mappers/display-mapper";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { runBulkAction } from "@/lib/bulk-action";
 import { useAppDispatch, useAppStore } from "@/lib/hooks";
@@ -234,6 +237,30 @@ export function DisplaysPageView({
     unregisterDisplayById,
   } = useDisplaysPage({ initialBootstrap });
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedDisplayId = searchParams.get("selectedDisplay");
+  const handledSelectedDisplayRef = useRef<string | null>(null);
+  const [getDisplayById] = useLazyGetDisplayQuery();
+
+  useEffect(() => {
+    if (!selectedDisplayId) {
+      handledSelectedDisplayRef.current = null;
+      return;
+    }
+    if (handledSelectedDisplayRef.current === selectedDisplayId) return;
+    handledSelectedDisplayRef.current = selectedDisplayId;
+
+    void (async () => {
+      try {
+        const raw = await getDisplayById(selectedDisplayId, true).unwrap();
+        handleEditDisplay(mapDisplayApiToDisplay(raw));
+      } catch {
+        // Display may have been deleted — silently ignore.
+      }
+      router.replace("/admin/displays");
+    })();
+  }, [selectedDisplayId, getDisplayById, handleEditDisplay, router]);
+
   const groupFiltersKey = useMemo(
     () => [...groupFilters].sort().join("\u0000"),
     [groupFilters],
