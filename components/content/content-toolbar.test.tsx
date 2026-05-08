@@ -16,6 +16,8 @@ type ContentToolbarProps = ComponentProps<typeof ContentToolbar>;
 const baseProps: ContentToolbarProps = {
   statusFilter: "all" as const,
   typeFilter: "all" as const,
+  ownerFilter: "all",
+  sortFilter: "newest" as const,
   search: "",
   filteredResultsCount: 8,
   canCreateContent: true,
@@ -27,6 +29,8 @@ const baseProps: ContentToolbarProps = {
   onSearchChange: vi.fn(),
   onStatusFilterChange: vi.fn(),
   onTypeFilterChange: vi.fn(),
+  onOwnerFilterChange: vi.fn(),
+  onSortFilterChange: vi.fn(),
   onClearFilters: vi.fn(),
   onCreateText: vi.fn(),
   onCreateUpload: vi.fn(),
@@ -62,7 +66,7 @@ describe("ContentToolbar", () => {
       screen.getByRole("textbox", { name: "Search content" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText("Search by title or owner"),
+      screen.getByPlaceholderText("Search by content title"),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Filter content" }),

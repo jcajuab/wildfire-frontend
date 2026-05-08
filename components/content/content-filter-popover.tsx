@@ -7,6 +7,10 @@ import { IconFilter, IconX } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  UserFilterCombobox,
+  type UserFilterOption,
+} from "@/components/common/user-filter-combobox";
+import {
   Popover,
   PopoverAnchor,
   PopoverContent,
@@ -25,16 +29,34 @@ import type { ContentStatus, ContentType } from "@/types/content";
 
 export type TypeFilter = "all" | ContentType;
 export type ContentStatusFilter = "all" | ContentStatus;
+export type ContentSortFilter =
+  | "newest"
+  | "oldest"
+  | "title-asc"
+  | "title-desc"
+  | "file-size-desc"
+  | "file-size-asc";
+
+export type ContentOwnerFilterOption = UserFilterOption;
 
 interface ContentFilterPopoverProps {
   readonly statusFilter: ContentStatusFilter;
   readonly typeFilter: TypeFilter;
+  readonly ownerFilter: string;
+  readonly sortFilter: ContentSortFilter;
   readonly filteredResultsCount: number;
+  readonly ownerOptions?: readonly ContentOwnerFilterOption[];
+  readonly ownerSearch?: string;
+  readonly canFilterByOwner?: boolean;
+  readonly isOwnerOptionsFetching?: boolean;
   readonly isFetching?: boolean;
   readonly embeddedTrigger?: boolean;
   readonly renderEmbeddedAnchor?: (trigger: ReactElement) => ReactElement;
   readonly onStatusFilterChange: (value: ContentStatusFilter) => void;
   readonly onTypeFilterChange: (value: TypeFilter) => void;
+  readonly onOwnerSearchChange?: (value: string) => void;
+  readonly onOwnerFilterChange: (value: string) => void;
+  readonly onSortFilterChange: (value: ContentSortFilter) => void;
   readonly onClearFilters: () => void;
 }
 
@@ -78,20 +100,43 @@ const typeOptions: readonly {
   { value: "FLASH", label: "Flash" },
 ] as const;
 
+const sortOptions: readonly {
+  readonly value: ContentSortFilter;
+  readonly label: string;
+}[] = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "title-asc", label: "Title A-Z" },
+  { value: "title-desc", label: "Title Z-A" },
+  { value: "file-size-desc", label: "Largest file" },
+  { value: "file-size-asc", label: "Smallest file" },
+] as const;
+
 export function ContentFilterPopover({
   statusFilter,
   typeFilter,
-  filteredResultsCount,
+  ownerFilter,
+  sortFilter,
+  ownerOptions = [],
+  ownerSearch = "",
+  canFilterByOwner = false,
+  isOwnerOptionsFetching = false,
   isFetching = false,
   embeddedTrigger = false,
   renderEmbeddedAnchor,
   onStatusFilterChange,
   onTypeFilterChange,
+  onOwnerSearchChange = () => {},
+  onOwnerFilterChange,
+  onSortFilterChange,
   onClearFilters,
 }: ContentFilterPopoverProps): ReactElement {
   const [open, setOpen] = useState(false);
   const activeFilterCount =
-    (statusFilter === "all" ? 0 : 1) + (typeFilter === "all" ? 0 : 1);
+    (statusFilter === "all" ? 0 : 1) +
+    (typeFilter === "all" ? 0 : 1) +
+    (canFilterByOwner && ownerFilter !== "all" ? 1 : 0) +
+    (sortFilter === "newest" ? 0 : 1);
   const hasActiveFilters = activeFilterCount > 0;
   const activeStatusLabel =
     statusFilter === "all"
@@ -101,6 +146,17 @@ export function ContentFilterPopover({
     typeFilter === "all"
       ? null
       : typeOptions.find((option) => option.value === typeFilter)?.label;
+  const activeSortLabel =
+    sortFilter === "newest"
+      ? null
+      : sortOptions.find((option) => option.value === sortFilter)?.label;
+  const selectedOwner = ownerOptions.find((owner) => owner.id === ownerFilter);
+  const activeOwnerLabel =
+    canFilterByOwner && ownerFilter !== "all"
+      ? selectedOwner
+        ? `@${selectedOwner.username}`
+        : "Selected user"
+      : null;
   const triggerButton = (
     <Button
       variant={embeddedTrigger ? "ghost" : "outline"}
@@ -148,7 +204,7 @@ export function ContentFilterPopover({
         aria-label="Content filters"
       >
         <div className="flex flex-col gap-4 p-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex min-w-36 flex-1 flex-col gap-1.5">
               <Label htmlFor="content-status-filter">Status</Label>
               <Select
@@ -176,6 +232,36 @@ export function ContentFilterPopover({
             </div>
 
             <div className="flex min-w-36 flex-1 flex-col gap-1.5">
+              <Label htmlFor="content-sort-filter">Sort</Label>
+              <Select
+                value={sortFilter}
+                onValueChange={(value) =>
+                  onSortFilterChange(value as ContentSortFilter)
+                }
+              >
+                <SelectTrigger id="content-sort-filter" className="w-full">
+                  <SelectValue placeholder="Newest first" />
+                </SelectTrigger>
+                <SelectContent
+                  position="popper"
+                  side="bottom"
+                  align="start"
+                  avoidCollisions={false}
+                >
+                  {sortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div
+              className={cn(
+                "flex min-w-36 flex-1 flex-col gap-1.5 sm:col-span-2",
+              )}
+            >
               <Label htmlFor="type-filter">Content Type</Label>
               <Select
                 value={typeFilter}
@@ -200,6 +286,21 @@ export function ContentFilterPopover({
                 </SelectContent>
               </Select>
             </div>
+
+            {canFilterByOwner ? (
+              <div className="flex min-w-36 flex-1 flex-col gap-1.5 sm:col-span-2">
+                <Label htmlFor="content-owner-filter">Created By</Label>
+                <UserFilterCombobox
+                  id="content-owner-filter"
+                  value={ownerFilter}
+                  options={ownerOptions}
+                  inputValue={ownerSearch}
+                  isFetching={isOwnerOptionsFetching}
+                  onInputValueChange={onOwnerSearchChange}
+                  onValueChange={onOwnerFilterChange}
+                />
+              </div>
+            ) : null}
           </div>
         </div>
         {hasActiveFilters ? (
@@ -232,10 +333,19 @@ export function ContentFilterPopover({
                   onRemove={() => onTypeFilterChange("all")}
                 />
               ) : null}
+              {activeOwnerLabel ? (
+                <FilterChip
+                  label={activeOwnerLabel}
+                  onRemove={() => onOwnerFilterChange("all")}
+                />
+              ) : null}
+              {activeSortLabel ? (
+                <FilterChip
+                  label={activeSortLabel}
+                  onRemove={() => onSortFilterChange("newest")}
+                />
+              ) : null}
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Showing {filteredResultsCount} matching results
-            </p>
           </div>
         ) : null}
       </PopoverContent>

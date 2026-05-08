@@ -9,6 +9,8 @@ type PlaylistsToolbarProps = ComponentProps<typeof PlaylistsToolbar>;
 
 const baseProps: PlaylistsToolbarProps = {
   statusFilter: "all" as const,
+  ownerFilter: "all",
+  sortFilter: "newest" as const,
   search: "",
   filteredResultsCount: 4,
   isFetching: false,
@@ -20,6 +22,8 @@ const baseProps: PlaylistsToolbarProps = {
   },
   onSearchChange: vi.fn(),
   onStatusFilterChange: vi.fn(),
+  onOwnerFilterChange: vi.fn(),
+  onSortFilterChange: vi.fn(),
   onClearFilters: vi.fn(),
 };
 
@@ -73,6 +77,7 @@ describe("PlaylistsToolbar", () => {
     expect(
       screen.getByRole("combobox", { name: "Status" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Sort" })).toBeInTheDocument();
   });
 
   test("renders bulk delete row and keeps primary create action visible", () => {

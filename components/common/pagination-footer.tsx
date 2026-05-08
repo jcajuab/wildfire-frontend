@@ -86,7 +86,12 @@ export function PaginationFooter({
   };
 
   return (
-    <div className={cn("flex w-full flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between", className)}>
+    <div
+      className={cn(
+        "flex w-full flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+        className,
+      )}
+    >
       <p className="text-sm text-muted-foreground sm:text-left">
         Showing {startItem} to {endItem} of {total} results
       </p>

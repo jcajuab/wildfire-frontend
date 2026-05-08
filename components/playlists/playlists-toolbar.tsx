@@ -7,6 +7,8 @@ import { IconPlus, IconTrash, IconX } from "@tabler/icons-react";
 import { SearchControl } from "@/components/common/search-control";
 import {
   PlaylistFilterPopover,
+  type PlaylistOwnerFilterOption,
+  type PlaylistSortFilter,
   type PlaylistStatusFilter,
 } from "@/components/playlists/playlist-filter-popover";
 import { Button } from "@/components/ui/button";
@@ -25,27 +27,45 @@ type PlaylistsToolbarBulkState =
 
 interface PlaylistsToolbarProps {
   readonly statusFilter: PlaylistStatusFilter;
+  readonly ownerFilter: string;
+  readonly sortFilter: PlaylistSortFilter;
   readonly search: string;
   readonly filteredResultsCount: number;
+  readonly ownerOptions?: readonly PlaylistOwnerFilterOption[];
+  readonly ownerSearch?: string;
+  readonly canFilterByOwner?: boolean;
+  readonly isOwnerOptionsFetching?: boolean;
   readonly isFetching?: boolean;
   readonly canCreatePlaylist: boolean;
   readonly canDeletePlaylist: boolean;
   readonly bulkState: PlaylistsToolbarBulkState;
   readonly onSearchChange: (value: string) => void;
   readonly onStatusFilterChange: (value: PlaylistStatusFilter) => void;
+  readonly onOwnerSearchChange?: (value: string) => void;
+  readonly onOwnerFilterChange: (value: string) => void;
+  readonly onSortFilterChange: (value: PlaylistSortFilter) => void;
   readonly onClearFilters: () => void;
 }
 
 export function PlaylistsToolbar({
   statusFilter,
+  ownerFilter,
+  sortFilter,
   search,
   filteredResultsCount,
+  ownerOptions = [],
+  ownerSearch = "",
+  canFilterByOwner = false,
+  isOwnerOptionsFetching = false,
   isFetching = false,
   canCreatePlaylist,
   canDeletePlaylist,
   bulkState,
   onSearchChange,
   onStatusFilterChange,
+  onOwnerSearchChange,
+  onOwnerFilterChange,
+  onSortFilterChange,
   onClearFilters,
 }: PlaylistsToolbarProps): ReactElement {
   const isBulkDeleteMode = bulkState.mode === "bulk-delete";
@@ -66,7 +86,13 @@ export function PlaylistsToolbar({
           <div className="flex w-full min-w-0 items-center justify-self-center md:max-w-168">
             <PlaylistFilterPopover
               statusFilter={statusFilter}
+              ownerFilter={ownerFilter}
+              sortFilter={sortFilter}
               filteredResultsCount={filteredResultsCount}
+              ownerOptions={ownerOptions}
+              ownerSearch={ownerSearch}
+              canFilterByOwner={canFilterByOwner}
+              isOwnerOptionsFetching={isOwnerOptionsFetching}
               isFetching={isFetching}
               embeddedTrigger
               renderEmbeddedAnchor={(trigger) => (
@@ -82,6 +108,9 @@ export function PlaylistsToolbar({
                 </div>
               )}
               onStatusFilterChange={onStatusFilterChange}
+              onOwnerSearchChange={onOwnerSearchChange}
+              onOwnerFilterChange={onOwnerFilterChange}
+              onSortFilterChange={onSortFilterChange}
               onClearFilters={onClearFilters}
             />
           </div>

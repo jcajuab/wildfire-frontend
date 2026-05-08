@@ -31,6 +31,7 @@ function contentMatchesListQuery(
   content: BackendContentListItem,
   query: ContentListQuery | void,
 ): boolean {
+  if (query?.ownerId && content.owner.id !== query.ownerId) return false;
   if (query?.status && content.status !== query.status) return false;
   if (query?.type && content.type !== query.type) return false;
   const search = query?.search?.trim().toLowerCase();
@@ -149,6 +150,7 @@ export interface ContentListQuery {
   readonly pageSize?: number;
   readonly status?: "PROCESSING" | "READY" | "FAILED";
   readonly type?: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
+  readonly ownerId?: string;
   readonly search?: string;
   readonly sortBy?: "createdAt" | "title" | "fileSize" | "type";
   readonly sortDirection?: "asc" | "desc";
@@ -304,6 +306,7 @@ export const contentApi = api.injectEndpoints({
           pageSize: query?.pageSize ?? 20,
           status: query?.status,
           type: query?.type,
+          ownerId: query?.ownerId,
           search: query?.search,
           sortBy: query?.sortBy ?? "createdAt",
           sortDirection: query?.sortDirection ?? "desc",

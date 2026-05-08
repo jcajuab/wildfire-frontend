@@ -411,23 +411,26 @@ export function useDisplaysPage({
 
   const filteredDisplayRows = useMemo(
     () =>
-      allDisplayRows.filter(({ display }) => {
-        if (!displayMatchesSearch(display, debouncedSearch)) return false;
-        if (
-          filters.statusFilter !== "all" &&
-          display.status !== filters.statusFilter
-        ) {
-          return false;
-        }
-        if (!displayMatchesGroups(display, filters.groupFilters)) return false;
-        return displayMatchesOutput(display, effectiveOutputFilter);
-      }).sort((left, right) =>
-        compareDisplaysBySort(
-          left.display,
-          right.display,
-          filters.sortFilter,
+      allDisplayRows
+        .filter(({ display }) => {
+          if (!displayMatchesSearch(display, debouncedSearch)) return false;
+          if (
+            filters.statusFilter !== "all" &&
+            display.status !== filters.statusFilter
+          ) {
+            return false;
+          }
+          if (!displayMatchesGroups(display, filters.groupFilters))
+            return false;
+          return displayMatchesOutput(display, effectiveOutputFilter);
+        })
+        .sort((left, right) =>
+          compareDisplaysBySort(
+            left.display,
+            right.display,
+            filters.sortFilter,
+          ),
         ),
-      ),
     [
       allDisplayRows,
       debouncedSearch,

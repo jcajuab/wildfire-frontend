@@ -68,6 +68,7 @@ export interface PlaylistListQuery {
   readonly page?: number;
   readonly pageSize?: number;
   readonly status?: "DRAFT" | "IN_USE";
+  readonly ownerId?: string;
   readonly search?: string;
   readonly sortBy?: "createdAt" | "updatedAt" | "name";
   readonly sortDirection?: "asc" | "desc";
@@ -177,6 +178,10 @@ function playlistMatchesListQuery(
   playlist: BackendPlaylistBase,
   query: PlaylistListQuery | void,
 ): boolean {
+  if (query?.ownerId && playlist.owner.id !== query.ownerId) {
+    return false;
+  }
+
   if (query?.status && playlist.status !== query.status) {
     return false;
   }

@@ -339,36 +339,39 @@ describe("useDisplaysPage", () => {
     ["groups-desc", ["Bravo", "Alpha", "Charlie", "Delta"]],
     ["groups-asc", ["Charlie", "Delta", "Alpha", "Bravo"]],
     ["created-desc", ["Bravo", "Charlie", "Delta", "Alpha"]],
-  ] as const)("sorts display results by %s on the client", (sortFilter, names) => {
-    useDisplayFiltersMock.mockReturnValue({
-      statusFilter: "all",
-      sortFilter,
-      search: "",
-      page: 1,
-      groupFilters: [],
-      normalizedOutputFilter: "all",
-      setPage: setPageMock,
-      handleStatusFilterChange: setStatusFilterMock,
-      handleSortChange: vi.fn(),
-      handleSearchChange: setSearchMock,
-      handleGroupFilterChange: setGroupsMock,
-      handleOutputFilterChange: setOutputFilterMock,
-      handleClearFilters: vi.fn(),
-    });
-    useGetDisplaysBootstrapQueryMock.mockReturnValue({
-      data: sortableBootstrapData,
-      isLoading: false,
-      isError: false,
-      error: null,
-      refetch: refetchMock,
-    } as unknown as ReturnType<typeof useGetDisplaysBootstrapQuery>);
+  ] as const)(
+    "sorts display results by %s on the client",
+    (sortFilter, names) => {
+      useDisplayFiltersMock.mockReturnValue({
+        statusFilter: "all",
+        sortFilter,
+        search: "",
+        page: 1,
+        groupFilters: [],
+        normalizedOutputFilter: "all",
+        setPage: setPageMock,
+        handleStatusFilterChange: setStatusFilterMock,
+        handleSortChange: vi.fn(),
+        handleSearchChange: setSearchMock,
+        handleGroupFilterChange: setGroupsMock,
+        handleOutputFilterChange: setOutputFilterMock,
+        handleClearFilters: vi.fn(),
+      });
+      useGetDisplaysBootstrapQueryMock.mockReturnValue({
+        data: sortableBootstrapData,
+        isLoading: false,
+        isError: false,
+        error: null,
+        refetch: refetchMock,
+      } as unknown as ReturnType<typeof useGetDisplaysBootstrapQuery>);
 
-    const { result } = renderHook(() => useDisplaysPage());
+      const { result } = renderHook(() => useDisplaysPage());
 
-    expect(result.current.displays.map((display) => display.name)).toEqual(
-      names,
-    );
-  });
+      expect(result.current.displays.map((display) => display.name)).toEqual(
+        names,
+      );
+    },
+  );
 
   test("neutralizes output filtering for users without display create permission", async () => {
     useCanMock.mockImplementation(

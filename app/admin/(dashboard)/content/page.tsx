@@ -27,6 +27,7 @@ async function getCachedContentList(params: {
   sortDirection: string;
   status?: string;
   type?: string;
+  ownerId?: string;
   search?: string;
 }) {
   "use cache: private";
@@ -65,6 +66,7 @@ export default async function ContentPage({
       sortDirection: queryArgs.sortDirection ?? "desc",
       status: queryArgs.status,
       type: queryArgs.type,
+      ownerId: queryArgs.ownerId,
       search: queryArgs.search,
     }),
   ]);

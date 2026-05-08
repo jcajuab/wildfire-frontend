@@ -26,6 +26,7 @@ async function getCachedPlaylistsList(params: {
   sortBy: string;
   sortDirection: string;
   status?: string;
+  ownerId?: string;
   search?: string;
 }) {
   "use cache: private";
@@ -63,6 +64,7 @@ export default async function PlaylistsPage({
       sortBy: queryArgs.sortBy ?? "createdAt",
       sortDirection: queryArgs.sortDirection ?? "desc",
       status: queryArgs.status,
+      ownerId: queryArgs.ownerId,
       search: queryArgs.search,
     }),
   ]);

@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCan } from "@/hooks/use-can";
+import { useAuth } from "@/context/auth-context";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   contentApi,
@@ -13,6 +14,7 @@ import {
   useListContentQuery,
   useUploadPdfMutation,
 } from "@/lib/api/content-api";
+import { useGetUserOptionsQuery, useGetUserQuery } from "@/lib/api/rbac-api";
 import { useAppSelector } from "@/lib/hooks";
 import {
   getApiErrorMessage,
@@ -46,10 +48,35 @@ function normalizedQueryKey(query: ContentListQuery): string {
     pageSize: query.pageSize ?? PAGE_SIZE,
     status: query.status ?? null,
     type: query.type ?? null,
+    ownerId: query.ownerId ?? null,
     search: query.search ?? null,
     sortBy: query.sortBy ?? "createdAt",
     sortDirection: query.sortDirection ?? "desc",
   });
+}
+
+function toContentSortQuery(
+  sortFilter: ReturnType<typeof useContentPageFilters>["sortFilter"],
+): {
+  sortBy: NonNullable<ContentListQuery["sortBy"]>;
+  sortDirection: NonNullable<ContentListQuery["sortDirection"]>;
+} {
+  if (sortFilter === "oldest") {
+    return { sortBy: "createdAt", sortDirection: "asc" };
+  }
+  if (sortFilter === "title-asc") {
+    return { sortBy: "title", sortDirection: "asc" };
+  }
+  if (sortFilter === "title-desc") {
+    return { sortBy: "title", sortDirection: "desc" };
+  }
+  if (sortFilter === "file-size-asc") {
+    return { sortBy: "fileSize", sortDirection: "asc" };
+  }
+  if (sortFilter === "file-size-desc") {
+    return { sortBy: "fileSize", sortDirection: "desc" };
+  }
+  return { sortBy: "createdAt", sortDirection: "desc" };
 }
 
 /**
@@ -63,17 +90,51 @@ export function useContentPageController({
   const canUpdateContent = useCan("content:update");
   const canDeleteContent = useCan("content:delete");
   const canDownloadContent = useCan("content:read");
+  const canReadUsers = useCan("users:read");
+  const { user } = useAuth();
   const filters = useContentPageFilters();
+  const canFilterByOwner = user?.isAdmin === true && canReadUsers;
+  const [ownerSearch, setOwnerSearch] = useState("");
+  const debouncedOwnerSearch = useDebounce(ownerSearch.trim(), 250);
+  const {
+    data: searchedOwnerOptions = [],
+    isFetching: isOwnerOptionsFetching,
+  } = useGetUserOptionsQuery(
+    {
+      q: debouncedOwnerSearch.length > 0 ? debouncedOwnerSearch : undefined,
+      limit: 25,
+    },
+    {
+      skip: !canFilterByOwner,
+    },
+  );
+  const selectedOwnerId =
+    filters.ownerFilter === "all" ? undefined : filters.ownerFilter;
+  const selectedOwnerInOptions = searchedOwnerOptions.some(
+    (owner) => owner.id === selectedOwnerId,
+  );
+  const { data: selectedOwner } = useGetUserQuery(selectedOwnerId ?? "", {
+    skip:
+      !canFilterByOwner || selectedOwnerId == null || selectedOwnerInOptions,
+  });
+  const ownerOptions = useMemo(() => {
+    if (!selectedOwner || selectedOwnerInOptions) {
+      return searchedOwnerOptions;
+    }
+    return [selectedOwner, ...searchedOwnerOptions];
+  }, [searchedOwnerOptions, selectedOwner, selectedOwnerInOptions]);
   const dialogState = useContentDialogState();
   const debouncedSearch = useDebounce(filters.search, 500);
+  const sortQuery = toContentSortQuery(filters.sortFilter);
   const queryArgs: ContentListQuery = {
     page: filters.page,
     pageSize: PAGE_SIZE,
     status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
     type: filters.typeFilter === "all" ? undefined : filters.typeFilter,
+    ownerId: filters.ownerFilter === "all" ? undefined : filters.ownerFilter,
     search: debouncedSearch.trim().length > 0 ? debouncedSearch : undefined,
-    sortBy: "createdAt",
-    sortDirection: "desc",
+    sortBy: sortQuery.sortBy,
+    sortDirection: sortQuery.sortDirection,
   };
   const isInitialListQuery =
     initialList != null &&
@@ -225,6 +286,10 @@ export function useContentPageController({
     canUpdateContent,
     canDeleteContent,
     canDownloadContent,
+    canFilterByOwner,
+    ownerOptions,
+    ownerSearch,
+    isOwnerOptionsFetching,
     data,
     error,
     errorMessage: getApiErrorMessage(
@@ -255,5 +320,6 @@ export function useContentPageController({
     handleSaveContent: crudHandlers.handleSaveContent,
     handleConfirmDelete: crudHandlers.handleConfirmDelete,
     deleteContentById: crudHandlers.deleteContentById,
+    handleOwnerSearchChange: setOwnerSearch,
   };
 }
