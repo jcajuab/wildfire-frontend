@@ -196,6 +196,41 @@ describe("ContentCard", () => {
     ).not.toBeInTheDocument();
   });
 
+  test("disables the actions menu during bulk delete mode", async () => {
+    const user = userEvent.setup();
+    const onSelectionChange = vi.fn();
+    render(
+      <ContentCard
+        content={baseContent}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onDownload={vi.fn()}
+        isSelected={false}
+        onSelectionChange={onSelectionChange}
+        isSelectionMode
+      />,
+    );
+
+    const actions = screen.getByRole("button", {
+      name: "Actions for Demo Image",
+    });
+
+    expect(actions).toBeDisabled();
+
+    await user.click(actions);
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Edit Content" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Download File" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Delete Content" }),
+    ).not.toBeInTheDocument();
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
+
   test("shows metadata badges without a separator between status and content type", () => {
     render(<ContentCard content={baseContent} />);
 

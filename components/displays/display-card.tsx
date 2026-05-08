@@ -212,43 +212,53 @@ export const DisplayCard = memo(function DisplayCard({
 
         {showActions ? (
           <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Actions for ${display.name}`}
-                  disabled={isSelectionMode}
-                >
-                  <IconDots className="size-4" aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="start"
-                className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
+            {isSelectionMode ? (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Actions for ${display.name}`}
+                disabled
               >
-                {onEditDisplay ? (
-                  <DropdownMenuItem onClick={() => onEditDisplay(display)}>
-                    <IconEdit className="size-4" aria-hidden="true" />
-                    Edit Display
-                  </DropdownMenuItem>
-                ) : null}
-                {onUnregisterDisplay ? (
-                  <>
-                    {showDestructiveSeparator ? (
-                      <DropdownMenuSeparator />
-                    ) : null}
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={() => onUnregisterDisplay(display)}
-                    >
-                      <IconTrash className="size-4" aria-hidden="true" />
-                      Unregister Display
+                <IconDots className="size-4" aria-hidden="true" />
+              </Button>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Actions for ${display.name}`}
+                  >
+                    <IconDots className="size-4" aria-hidden="true" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
+                >
+                  {onEditDisplay ? (
+                    <DropdownMenuItem onClick={() => onEditDisplay(display)}>
+                      <IconEdit className="size-4" aria-hidden="true" />
+                      Edit Display
                     </DropdownMenuItem>
-                  </>
-                ) : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  ) : null}
+                  {onUnregisterDisplay ? (
+                    <>
+                      {showDestructiveSeparator ? (
+                        <DropdownMenuSeparator />
+                      ) : null}
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => onUnregisterDisplay(display)}
+                      >
+                        <IconTrash className="size-4" aria-hidden="true" />
+                        Unregister Display
+                      </DropdownMenuItem>
+                    </>
+                  ) : null}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         ) : null}
       </header>

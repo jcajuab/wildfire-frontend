@@ -322,4 +322,36 @@ describe("PlaylistCard", () => {
       screen.getByRole("menuitem", { name: "Delete Playlist" }),
     ).toBeInTheDocument();
   });
+
+  test("disables the actions menu during bulk delete mode", async () => {
+    const user = userEvent.setup();
+    const onSelectionChange = vi.fn();
+
+    render(
+      <PlaylistCard
+        playlist={basePlaylist}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        isSelected={false}
+        onSelectionChange={onSelectionChange}
+        isSelectionMode
+      />,
+    );
+
+    const actions = screen.getByRole("button", {
+      name: "Actions for Morning Loop",
+    });
+
+    expect(actions).toBeDisabled();
+
+    await user.click(actions);
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Edit Playlist" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Delete Playlist" }),
+    ).not.toBeInTheDocument();
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
 });

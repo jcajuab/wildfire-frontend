@@ -298,6 +298,33 @@ describe("DisplayCard", () => {
     expect(onSelectionChange).not.toHaveBeenCalled();
   });
 
+  test("disables the actions menu during bulk unregister mode", async () => {
+    const user = userEvent.setup();
+    const onSelectionChange = vi.fn();
+    renderDisplayCard(baseDisplay, {
+      onEditDisplay: vi.fn(),
+      onUnregisterDisplay: vi.fn(),
+      onSelectionChange,
+      isSelectionMode: true,
+    });
+
+    const actions = screen.getByRole("button", {
+      name: "Actions for Lobby Display",
+    });
+
+    expect(actions).toBeDisabled();
+
+    await user.click(actions);
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Edit Display" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Unregister Display" }),
+    ).not.toBeInTheDocument();
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
+
   test("does not render a selection checkbox by default", () => {
     renderDisplayCard();
 

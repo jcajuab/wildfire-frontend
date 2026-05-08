@@ -177,46 +177,57 @@ export const ContentCard = memo(function ContentCard({
           <h2 className="truncate text-base font-semibold">{content.title}</h2>
         </div>
         {showActions ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={`Actions for ${content.title}`}
-                className="shrink-0"
-                disabled={isSelectionMode}
-              >
-                <IconDots className="size-4" aria-hidden="true" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="start"
-              className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
+          isSelectionMode ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Actions for ${content.title}`}
+              className="shrink-0"
+              disabled
             >
-              {showEdit && onEdit ? (
-                <DropdownMenuItem onClick={() => onEdit(content)}>
-                  <IconPencil className="size-4" />
-                  Edit Content
-                </DropdownMenuItem>
-              ) : null}
-              {canDownloadFile ? (
-                <DropdownMenuItem onClick={() => onDownload(content)}>
-                  <IconDownload className="size-4" />
-                  Download File
-                </DropdownMenuItem>
-              ) : null}
-              {showDestructiveSeparator ? <DropdownMenuSeparator /> : null}
-              {showDelete && onDelete ? (
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => onDelete(content)}
+              <IconDots className="size-4" aria-hidden="true" />
+            </Button>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Actions for ${content.title}`}
+                  className="shrink-0"
                 >
-                  <IconTrash className="size-4" />
-                  Delete Content
-                </DropdownMenuItem>
-              ) : null}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <IconDots className="size-4" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
+              >
+                {showEdit && onEdit ? (
+                  <DropdownMenuItem onClick={() => onEdit(content)}>
+                    <IconPencil className="size-4" />
+                    Edit Content
+                  </DropdownMenuItem>
+                ) : null}
+                {canDownloadFile ? (
+                  <DropdownMenuItem onClick={() => onDownload(content)}>
+                    <IconDownload className="size-4" />
+                    Download File
+                  </DropdownMenuItem>
+                ) : null}
+                {showDestructiveSeparator ? <DropdownMenuSeparator /> : null}
+                {showDelete && onDelete ? (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => onDelete(content)}
+                  >
+                    <IconTrash className="size-4" />
+                    Delete Content
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
         ) : null}
       </div>
 

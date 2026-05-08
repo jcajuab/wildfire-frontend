@@ -167,40 +167,51 @@ export const PlaylistCard = memo(function PlaylistCard({
           </div>
         </div>
         {showEdit || showDelete ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={`Actions for ${playlist.name}`}
-                className="shrink-0"
-                disabled={isSelectionMode}
-              >
-                <IconDots className="size-4" aria-hidden="true" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="start"
-              className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
+          isSelectionMode ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Actions for ${playlist.name}`}
+              className="shrink-0"
+              disabled
             >
-              {showEdit && onEdit ? (
-                <DropdownMenuItem onClick={() => onEdit(playlist)}>
-                  <IconListDetails className="size-4" />
-                  Edit Playlist
-                </DropdownMenuItem>
-              ) : null}
-              {showEdit && showDelete ? <DropdownMenuSeparator /> : null}
-              {showDelete && onDelete ? (
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => onDelete(playlist)}
+              <IconDots className="size-4" aria-hidden="true" />
+            </Button>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Actions for ${playlist.name}`}
+                  className="shrink-0"
                 >
-                  <IconTrash className="size-4" />
-                  Delete Playlist
-                </DropdownMenuItem>
-              ) : null}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <IconDots className="size-4" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
+              >
+                {showEdit && onEdit ? (
+                  <DropdownMenuItem onClick={() => onEdit(playlist)}>
+                    <IconListDetails className="size-4" />
+                    Edit Playlist
+                  </DropdownMenuItem>
+                ) : null}
+                {showEdit && showDelete ? <DropdownMenuSeparator /> : null}
+                {showDelete && onDelete ? (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => onDelete(playlist)}
+                  >
+                    <IconTrash className="size-4" />
+                    Delete Playlist
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
         ) : null}
       </div>
 
