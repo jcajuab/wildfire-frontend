@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import CreatePlaylistPage from "./page";
-import { useListContentQuery } from "@/lib/api/content-api";
+import { CreatePlaylistPageView } from "./create-playlist-page-client";
+import { useGetContentOptionsQuery } from "@/lib/api/content-api";
 import {
   useCreatePlaylistMutation,
   useDeletePlaylistMutation,
@@ -17,6 +17,25 @@ const pushMock = vi.fn();
 const createPlaylistMock = vi.fn();
 const deletePlaylistMock = vi.fn();
 const savePlaylistItemsAtomicMock = vi.fn();
+
+function findAncestorWithClasses(
+  element: HTMLElement,
+  classNames: string[],
+): HTMLElement | null {
+  let current = element.parentElement;
+
+  while (current) {
+    if (
+      classNames.every((className) => current!.classList.contains(className))
+    ) {
+      return current;
+    }
+
+    current = current.parentElement;
+  }
+
+  return null;
+}
 
 vi.mock("next/navigation", async () => {
   const actual =
@@ -33,7 +52,7 @@ vi.mock("@/hooks/use-can", () => ({
 }));
 
 vi.mock("@/lib/api/content-api", () => ({
-  useListContentQuery: vi.fn(),
+  useGetContentOptionsQuery: vi.fn(),
 }));
 
 vi.mock("@/lib/api/playlists-api", () => ({
@@ -54,7 +73,7 @@ vi.mock("sonner", () => ({
 
 const useRouterMock = vi.mocked(useRouter);
 const useCanMock = vi.mocked(useCan);
-const useListContentQueryMock = vi.mocked(useListContentQuery);
+const useGetContentOptionsQueryMock = vi.mocked(useGetContentOptionsQuery);
 const useCreatePlaylistMutationMock = vi.mocked(useCreatePlaylistMutation);
 const useDeletePlaylistMutationMock = vi.mocked(useDeletePlaylistMutation);
 const useSavePlaylistItemsAtomicMutationMock = vi.mocked(
@@ -75,32 +94,17 @@ describe("CreatePlaylistPage", () => {
       (permission) => permission === "content:read",
     );
 
-    useListContentQueryMock.mockReturnValue({
-      data: {
-        items: [
-          {
-            id: "content-1",
-            title: "Poster",
-            type: "IMAGE",
-            thumbnailUrl: null,
-            mimeType: "image/png",
-            fileSize: 100,
-            checksum: "checksum-1",
-            width: 1920,
-            height: 1080,
-            duration: 5,
-            flashMessage: null,
-            flashTone: null,
-            textJsonContent: null,
-            textHtmlContent: null,
-            status: "READY",
-            createdAt: "2025-01-01T00:00:00.000Z",
-            updatedAt: "2025-01-01T00:00:00.000Z",
-            owner: { id: "user-1", name: "Owner" },
-          },
-        ],
-      },
-    } as unknown as ReturnType<typeof useListContentQuery>);
+    useGetContentOptionsQueryMock.mockReturnValue({
+      data: [
+        {
+          id: "content-1",
+          title: "Poster",
+          type: "IMAGE",
+          thumbnailUrl: null,
+          textPreviewText: null,
+        },
+      ],
+    } as unknown as ReturnType<typeof useGetContentOptionsQuery>);
 
     createPlaylistMock.mockReturnValue({
       unwrap: async () => ({ id: "playlist-1" }),
@@ -126,25 +130,38 @@ describe("CreatePlaylistPage", () => {
   test("renders the dedicated create page and cancels back to playlists", async () => {
     const user = userEvent.setup();
 
-    render(<CreatePlaylistPage />);
+    render(<CreatePlaylistPageView />);
 
     expect(
       screen.getByRole("heading", { name: "Create Playlist" }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("Name")).toBeInTheDocument();
-    const formRoot = screen.getByTestId("create-playlist-form-root");
+    const nameInput = screen.getByLabelText("Name");
+    expect(nameInput).toBeInTheDocument();
     const header = screen.getByRole("banner");
 
-    expect(formRoot).not.toHaveClass("rounded-md", "border", "bg-background");
-    expect(formRoot.parentElement).toHaveClass(
+    const contentShell = findAncestorWithClasses(nameInput, [
       "flex",
       "min-h-0",
       "flex-1",
       "flex-col",
       "overflow-hidden",
-    );
-    expect(formRoot.parentElement).not.toHaveClass("px-6", "py-6", "sm:px-8");
-    expect(formRoot).toHaveClass("overflow-auto", "px-6", "py-6", "sm:px-8");
+    ]);
+    const scrollWrapper = findAncestorWithClasses(nameInput, [
+      "flex",
+      "min-h-0",
+      "flex-1",
+      "flex-col",
+      "gap-6",
+      "overflow-auto",
+      "px-6",
+      "py-6",
+      "sm:px-8",
+      "sm:py-8",
+    ]);
+
+    expect(contentShell).not.toBeNull();
+    expect(contentShell).not.toHaveClass("px-6", "py-6", "sm:px-8");
+    expect(scrollWrapper).not.toBeNull();
     expect(header).toContainElement(
       screen.getByRole("button", { name: "Cancel" }),
     );
@@ -165,7 +182,7 @@ describe("CreatePlaylistPage", () => {
       },
     });
 
-    render(<CreatePlaylistPage />);
+    render(<CreatePlaylistPageView />);
 
     await user.type(screen.getByLabelText("Name"), "Morning Playlist");
     await user.click(screen.getByRole("button", { name: "Create" }));
@@ -180,17 +197,20 @@ describe("CreatePlaylistPage", () => {
   test("creates a name-only playlist and navigates back to playlists", async () => {
     const user = userEvent.setup();
 
-    render(<CreatePlaylistPage />);
+    render(<CreatePlaylistPageView />);
 
     await user.type(screen.getByLabelText("Name"), "Morning Playlist");
     await user.click(screen.getByRole("button", { name: "Create" }));
 
     await waitFor(() => {
-      expect(toastSuccessMock).toHaveBeenCalledWith("Playlist created.");
+      expect(toastSuccessMock).toHaveBeenCalledWith(
+        "Successfully created playlist",
+      );
     });
     expect(createPlaylistMock).toHaveBeenCalledWith({
       name: "Morning Playlist",
       description: null,
+      showCounter: false,
     });
     expect(savePlaylistItemsAtomicMock).not.toHaveBeenCalled();
     expect(pushMock).toHaveBeenCalledWith("/admin/playlists");
@@ -203,7 +223,7 @@ describe("CreatePlaylistPage", () => {
       unwrap: () => new Promise(() => undefined),
     });
 
-    render(<CreatePlaylistPage />);
+    render(<CreatePlaylistPageView />);
 
     await user.type(screen.getByLabelText("Name"), "Morning Playlist");
     await user.click(screen.getByRole("button", { name: "Create" }));
@@ -221,7 +241,7 @@ describe("CreatePlaylistPage", () => {
       },
     });
 
-    render(<CreatePlaylistPage />);
+    render(<CreatePlaylistPageView />);
 
     await user.type(screen.getByLabelText("Name"), "Morning Playlist");
     await user.click(screen.getByRole("button", { name: "Poster" }));

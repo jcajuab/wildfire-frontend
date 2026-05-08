@@ -14,7 +14,7 @@ import {
   useUpdateRoleMutation,
 } from "@/lib/api/rbac-api";
 import { ROLE_INDEX_PATH } from "@/lib/role-paths";
-import CreateRolePage from "./page";
+import { CreateRolePageView } from "./create-role-page-client";
 
 function findAncestorWithClasses(
   element: HTMLElement,
@@ -163,7 +163,7 @@ describe("CreateRolePage", () => {
   });
 
   test("renders create role page title and header actions", async () => {
-    render(<CreateRolePage />);
+    render(<CreateRolePageView />);
 
     expect(
       await screen.findByRole("heading", { name: "Create Role" }),
@@ -173,14 +173,15 @@ describe("CreateRolePage", () => {
   });
 
   test("keeps the page content as the shell and uses an inner scroll wrapper", () => {
-    render(<CreateRolePage />);
+    render(<CreateRolePageView />);
 
     const roleNameInput = screen.getByLabelText("Role Name");
     const scrollWrapper = findAncestorWithClasses(roleNameInput, [
       "min-h-0",
       "flex-1",
       "overflow-auto",
-      "overscroll-none",
+    ]);
+    const contentPadding = findAncestorWithClasses(roleNameInput, [
       "px-6",
       "py-6",
       "sm:px-8",
@@ -189,6 +190,7 @@ describe("CreateRolePage", () => {
 
     expect(scrollWrapper).not.toBeNull();
     expect(scrollWrapper?.classList.contains("overflow-y-auto")).toBe(false);
+    expect(contentPadding).not.toBeNull();
 
     const contentShell = findAncestorWithClasses(roleNameInput, [
       "flex",
@@ -201,12 +203,13 @@ describe("CreateRolePage", () => {
     expect(contentShell).not.toBeNull();
     expect(contentShell?.classList.contains("overflow-y-auto")).toBe(false);
     expect(contentShell).toContainElement(scrollWrapper);
+    expect(scrollWrapper).toContainElement(contentPadding);
   });
 
   test("navigates back to roles index on cancel", async () => {
     const user = userEvent.setup();
 
-    render(<CreateRolePage />);
+    render(<CreateRolePageView />);
 
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
@@ -219,7 +222,7 @@ describe("CreateRolePage", () => {
     async () => {
       const user = userEvent.setup();
 
-      render(<CreateRolePage />);
+      render(<CreateRolePageView />);
 
       expect(
         screen.getByText(
@@ -265,7 +268,7 @@ describe("CreateRolePage", () => {
         }),
     });
 
-    render(<CreateRolePage />);
+    render(<CreateRolePageView />);
 
     await user.type(screen.getByLabelText("Role Name"), "Moderators");
     await user.click(screen.getByRole("button", { name: "Create" }));
@@ -301,7 +304,7 @@ describe("CreateRolePage", () => {
         },
       });
 
-      render(<CreateRolePage />);
+      render(<CreateRolePageView />);
 
       await user.type(screen.getByLabelText("Role Name"), "Moderators");
       await user.type(screen.getByLabelText("Description"), "Night shift ops");

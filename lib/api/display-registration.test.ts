@@ -1,16 +1,25 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { bootstrapAccessToken, clearAuthSession } from "@/lib/auth-session";
+
+vi.mock("@/lib/api/revalidate-via-route", () => ({
+  revalidateWildfireTagViaRoute: vi.fn(async () => undefined),
+  revalidateWildfireTagsViaRoute: vi.fn(async () => undefined),
+}));
 
 describe("display registration API", () => {
   const originalFetch = global.fetch;
   const originalApiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     process.env.NEXT_PUBLIC_API_URL = "http://example.test";
+    clearAuthSession(false);
+    await bootstrapAccessToken();
   });
 
   afterEach(() => {
     global.fetch = originalFetch;
+    clearAuthSession(false);
     if (originalApiUrl === undefined) {
       delete process.env.NEXT_PUBLIC_API_URL;
     } else {

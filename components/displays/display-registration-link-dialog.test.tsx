@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -203,8 +203,6 @@ describe("DisplayRegistrationLinkDialog", () => {
   });
 
   test("autofills editable slug from display name until slug is manually edited", async () => {
-    const user = userEvent.setup();
-
     render(
       <DisplayRegistrationLinkDialog open={true} onOpenChange={vi.fn()} />,
     );
@@ -212,19 +210,20 @@ describe("DisplayRegistrationLinkDialog", () => {
     const displayNameInput = screen.getByLabelText(/Display Name/);
     const slugInput = screen.getByLabelText(/Display Slug/);
 
-    await user.type(displayNameInput, "LB445");
+    fireEvent.change(displayNameInput, { target: { value: "LB445" } });
     expect(slugInput).toHaveValue("lb445");
 
-    await user.clear(displayNameInput);
-    await user.type(displayNameInput, "Lobby Main Display");
+    fireEvent.change(displayNameInput, {
+      target: { value: "Lobby Main Display" },
+    });
     expect(slugInput).toHaveValue("lobby-main-display");
 
-    await user.clear(slugInput);
-    await user.type(slugInput, "Custom Slug");
+    fireEvent.change(slugInput, { target: { value: "Custom Slug" } });
     expect(slugInput).toHaveValue("custom-slug");
 
-    await user.clear(displayNameInput);
-    await user.type(displayNameInput, "Another Display");
+    fireEvent.change(displayNameInput, {
+      target: { value: "Another Display" },
+    });
     expect(slugInput).toHaveValue("custom-slug");
   });
 });
