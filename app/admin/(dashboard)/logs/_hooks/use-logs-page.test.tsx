@@ -168,9 +168,7 @@ describe("useLogsPage", () => {
       refetchOnReconnect: false,
       skip: true,
     });
-    expect(result.current.logs.map((log) => log.id)).toEqual([
-      "initial-event",
-    ]);
+    expect(result.current.logs.map((log) => log.id)).toEqual(["initial-event"]);
   });
 
   test("uses active audit query data for changed filters", () => {

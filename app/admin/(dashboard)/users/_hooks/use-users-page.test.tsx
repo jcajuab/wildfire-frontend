@@ -199,7 +199,9 @@ describe("useUsersPage", () => {
     useGetUsersQueryStateMock.mockReturnValue({
       data: undefined,
       isFetching: false,
-    } as unknown as ReturnType<typeof rbacApi.endpoints.getUsers.useQueryState>);
+    } as unknown as ReturnType<
+      typeof rbacApi.endpoints.getUsers.useQueryState
+    >);
     getInvitationsMock.mockResolvedValue(makeInvitationsData("pending"));
   });
 

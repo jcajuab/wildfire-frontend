@@ -82,12 +82,8 @@ describe("RolesTable", () => {
     expect(
       screen.getByRole("button", { name: /Users.*sort ascending/ }),
     ).toHaveClass("mx-auto");
-    expect(screen.getByRole("cell", { name: "2" })).toHaveClass(
-      "text-center",
-    );
-    expect(screen.getByRole("cell", { name: "2" })).toHaveClass(
-      "tabular-nums",
-    );
+    expect(screen.getByRole("cell", { name: "2" })).toHaveClass("text-center");
+    expect(screen.getByRole("cell", { name: "2" })).toHaveClass("tabular-nums");
     expect(screen.getByText("Ops role")).toHaveClass("text-muted-foreground");
     expect(screen.getByText("Operators").parentElement).toHaveClass(
       "min-h-8",

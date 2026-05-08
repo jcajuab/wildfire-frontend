@@ -147,7 +147,9 @@ const nextWindow: ScheduleWindowQuery = {
   to: "2026-05-10T00:00:00.000Z",
 };
 
-function makeBootstrapData(names: readonly string[]): SchedulesBootstrapResponse {
+function makeBootstrapData(
+  names: readonly string[],
+): SchedulesBootstrapResponse {
   return {
     schedules: names.map(
       (name, index): BackendSchedule => ({

@@ -113,7 +113,9 @@ const useListContentQueryStateMock = vi.mocked(
   contentApi.endpoints.listContent.useQueryState,
 );
 
-function makeContentData(titles: readonly string[]): BackendContentListResponse {
+function makeContentData(
+  titles: readonly string[],
+): BackendContentListResponse {
   return {
     items: titles.map(
       (title, index): BackendContentListItem => ({

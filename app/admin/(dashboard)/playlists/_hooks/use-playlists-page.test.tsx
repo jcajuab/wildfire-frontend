@@ -95,7 +95,9 @@ function makePlaylistsData(
   };
 }
 
-function mockFilters(overrides: Partial<ReturnType<typeof usePlaylistsFilters>>) {
+function mockFilters(
+  overrides: Partial<ReturnType<typeof usePlaylistsFilters>>,
+) {
   usePlaylistsFiltersMock.mockReturnValue({
     statusFilter: "all",
     search: "",
