@@ -96,17 +96,16 @@ export function EmergencyManageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col gap-0 p-0 sm:max-w-5xl max-h-[85vh]">
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
         <DialogHeader className="px-4 pt-4 pb-3">
           <DialogTitle>Manage Emergency Assets</DialogTitle>
           <DialogDescription>
-            Configure up to five emergency assets that can be activated
-            system-wide across all displays.
+            Choose up to five assets that can be activated across all displays.
           </DialogDescription>
         </DialogHeader>
         <div className="border-t border-border" aria-hidden />
-        <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden sm:grid-cols-[280px_1px_1fr]">
-          <div className="flex flex-col overflow-y-auto p-4">
+        <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden sm:grid-cols-[17.5rem_1px_minmax(0,1fr)]">
+          <div className="flex min-h-0 flex-col overflow-y-auto p-4">
             <EmergencyAssetList
               slots={slots}
               selectedSlotIndex={selectedSlotIndex}
@@ -119,7 +118,7 @@ export function EmergencyManageDialog({
             className="hidden w-px shrink-0 bg-border sm:block"
             aria-hidden
           />
-          <div className="flex min-h-0 min-w-0 flex-col overflow-hidden p-4 pb-2">
+          <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
             <EmergencyContentPicker
               selectedSlotIndex={selectedSlotIndex}
               onSelect={handleSelectContent}
@@ -128,7 +127,11 @@ export function EmergencyManageDialog({
           </div>
         </div>
         <DialogFooter className="border-t border-border px-4 py-3">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
             Done
           </Button>
         </DialogFooter>

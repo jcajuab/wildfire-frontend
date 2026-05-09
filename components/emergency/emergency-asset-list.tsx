@@ -33,11 +33,8 @@ export function EmergencyAssetList({
 
   return (
     <div className="flex flex-col gap-3">
-      <header className="flex flex-col gap-1">
-        <h3 className="text-sm font-medium">Assets</h3>
-        <p className="text-xs text-muted-foreground">
-          Choose up to five emergency assets.
-        </p>
+      <header>
+        <h3 className="text-sm font-medium">Emergency Slots</h3>
       </header>
       <ul className="flex flex-col gap-2">
         {SLOT_INDICES.map((slotIndex) => {
@@ -51,14 +48,21 @@ export function EmergencyAssetList({
             const isClearingThis = clearingSlotIndex === slotIndex;
             return (
               <li key={slotIndex}>
-                <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2">
-                  <span className="truncate text-xs font-medium">{label}</span>
+                <div className="flex min-h-10 items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2 transition-colors">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Slot {slotIndex}
+                    </p>
+                    <p className="truncate text-xs font-medium" title={label}>
+                      {label}
+                    </p>
+                  </div>
                   <button
                     type="button"
                     aria-label={`Clear ${label}`}
                     onClick={() => onClearSlot(slotIndex)}
                     disabled={clearingSlotIndex !== null}
-                    className="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isClearingThis ? (
                       <IconLoader2
@@ -81,22 +85,24 @@ export function EmergencyAssetList({
             <li key={slotIndex}>
               <button
                 type="button"
-                aria-label={`Select or clear selection for empty Slot ${slotIndex}`}
+                aria-label={`Select Slot ${slotIndex}`}
                 aria-pressed={isSelected}
                 onClick={() => onSelectEmptySlot(slotIndex)}
                 className={cn(
-                  "group flex w-full cursor-pointer items-center justify-between gap-3 rounded-md border-2 border-dashed px-3 py-2.5 text-left transition-colors",
-                  "text-muted-foreground hover:text-foreground",
+                  "group flex min-h-10 w-full cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-colors",
+                  "bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                   isSelected
-                    ? "border-primary bg-primary/10 text-primary hover:text-foreground"
-                    : "border-border/90 hover:border-primary/60",
+                    ? "border-primary bg-primary/5 text-primary hover:bg-primary/10"
+                    : "border-border hover:border-border",
                 )}
               >
-                <span className="text-xs text-inherit">Slot {slotIndex}</span>
+                <span className="text-xs font-medium text-inherit">
+                  Slot {slotIndex}
+                </span>
                 <span
                   className={cn(
-                    "inline-flex size-6 shrink-0 items-center justify-center rounded-full transition-colors text-muted-foreground group-hover:text-foreground",
-                    isSelected && "text-primary group-hover:text-foreground",
+                    "inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors group-hover:text-foreground",
+                    isSelected && "text-primary group-hover:text-primary",
                   )}
                 >
                   <IconPlus
