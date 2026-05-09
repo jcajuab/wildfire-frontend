@@ -3,21 +3,13 @@ import type { ReactElement } from "react";
 export default function Loading(): ReactElement {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
-      <div className="shrink-0 border-b border-border bg-muted/20 p-4">
-        <div className="flex items-center justify-between gap-2">
-          <div className="h-8 w-20 animate-pulse rounded bg-muted" />
-          <div className="h-9 w-28 animate-pulse rounded bg-muted" />
-        </div>
-      </div>
-
-      <div className="shrink-0 border-b border-border bg-muted/15 p-4">
-        <div className="grid grid-cols-1 gap-x-3 gap-y-2 md:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="space-y-1">
-              <div className="h-4 w-20 animate-pulse rounded bg-muted" />
-              <div className="h-9 w-full animate-pulse rounded bg-muted" />
-            </div>
-          ))}
+      <div className="shrink-0 border-b border-border bg-background p-4">
+        <div className="grid min-w-0 grid-cols-1 items-center gap-3 md:grid-cols-[auto_minmax(12rem,1fr)_auto]">
+          <div className="h-7 w-16 animate-pulse rounded bg-muted" />
+          <div className="flex min-w-0 justify-center">
+            <div className="h-9 w-full max-w-[44rem] animate-pulse rounded bg-muted" />
+          </div>
+          <div className="h-9 w-32 animate-pulse rounded bg-muted md:justify-self-end" />
         </div>
       </div>
 

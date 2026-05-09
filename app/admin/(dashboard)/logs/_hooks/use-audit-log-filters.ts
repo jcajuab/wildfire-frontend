@@ -28,6 +28,9 @@ export type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
 
 const auditLogFiltersParsers = {
   page: parseAsInteger.withDefault(1),
+  q: parseAsString
+    .withDefault("")
+    .withOptions({ limitUrlUpdates: debounce(500) }),
   from: parseAsString.withDefault(""),
   to: parseAsString.withDefault(""),
   action: parseAsString
@@ -48,6 +51,7 @@ export function useAuditLogFilters(pageSize: number) {
 
   const {
     page,
+    q,
     from,
     to,
     action,
@@ -63,6 +67,10 @@ export function useAuditLogFilters(pageSize: number) {
   );
   const setFrom = useCallback(
     (value: string) => setFilters({ from: value }),
+    [setFilters],
+  );
+  const setSearch = useCallback(
+    (value: string) => setFilters({ q: value }),
     [setFilters],
   );
   const setTo = useCallback(
@@ -95,6 +103,7 @@ export function useAuditLogFilters(pageSize: number) {
   const isResettingRef = useRef(false);
   const debouncedFromDraft = useDebounce(fromDraft, 250);
   const debouncedToDraft = useDebounce(toDraft, 250);
+  const debouncedSearch = useDebounce(q, 500);
   const debouncedAction = useDebounce(action, 500);
   const debouncedRequestId = useDebounce(requestId, 500);
 
@@ -178,6 +187,7 @@ export function useAuditLogFilters(pageSize: number) {
     () => ({
       page,
       pageSize,
+      q: debouncedSearch || undefined,
       from: from && isValidYyyyMmDd(from) ? dateToISOStart(from) : undefined,
       to: to && isValidYyyyMmDd(to) ? dateToISOEnd(to) : undefined,
       action: debouncedAction || undefined,
@@ -187,6 +197,7 @@ export function useAuditLogFilters(pageSize: number) {
       requestId: debouncedRequestId || undefined,
     }),
     [
+      debouncedSearch,
       debouncedAction,
       actorType,
       from,
@@ -215,6 +226,7 @@ export function useAuditLogFilters(pageSize: number) {
     setResourceTypeInput("");
     void setFilters({
       page: null,
+      q: null,
       from: null,
       to: null,
       action: null,
@@ -232,6 +244,8 @@ export function useAuditLogFilters(pageSize: number) {
   return {
     page,
     setPage,
+    search: q,
+    setSearch,
     from,
     setFrom,
     fromDraft,

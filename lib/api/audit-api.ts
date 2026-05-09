@@ -35,6 +35,7 @@ export interface BackendAuditListResponse {
 export interface AuditListQuery {
   readonly page?: number;
   readonly pageSize?: number;
+  readonly q?: string;
   readonly from?: string;
   readonly to?: string;
   readonly action?: string;
@@ -47,6 +48,7 @@ export interface AuditListQuery {
 }
 
 export interface AuditExportQuery {
+  readonly q?: string;
   readonly from?: string;
   readonly to?: string;
   readonly action?: string;
@@ -56,6 +58,23 @@ export interface AuditExportQuery {
   readonly resourceType?: string;
   readonly status?: number;
   readonly requestId?: string;
+}
+
+export type FlushAuditEventsRequest =
+  | {
+      readonly mode: "olderThanDays";
+      readonly days: 7 | 30 | 90;
+    }
+  | {
+      readonly mode: "beforeDate";
+      readonly date: string;
+    }
+  | {
+      readonly mode: "all";
+    };
+
+export interface FlushAuditEventsResponse {
+  readonly deleted: number;
 }
 
 /** Downloads audit CSV bytes from backend export route. */
@@ -110,6 +129,7 @@ export const auditApi = api.injectEndpoints({
         params: {
           page: query?.page ?? 1,
           pageSize: query?.pageSize ?? 20,
+          q: query?.q,
           from: query?.from,
           to: query?.to,
           action: query?.action,
@@ -128,7 +148,28 @@ export const auditApi = api.injectEndpoints({
         ),
       providesTags: createProvidesTags("AuditEvent"),
     }),
+    flushAuditEvents: build.mutation<
+      FlushAuditEventsResponse,
+      FlushAuditEventsRequest
+    >({
+      query: (body) => ({
+        url: "audit/events",
+        method: "DELETE",
+        body,
+      }),
+      transformResponse: (response: { data?: FlushAuditEventsResponse }) => {
+        if (
+          response.data == null ||
+          typeof response.data.deleted !== "number"
+        ) {
+          throw new Error("Invalid audit flush response");
+        }
+        return response.data;
+      },
+      invalidatesTags: [{ type: "AuditEvent", id: "LIST" }],
+    }),
   }),
 });
 
-export const { useListAuditEventsQuery } = auditApi;
+export const { useListAuditEventsQuery, useFlushAuditEventsMutation } =
+  auditApi;

@@ -28,6 +28,7 @@ interface LogsPageProps {
 async function getCachedAuditEvents(params: {
   page: number;
   pageSize: number;
+  q?: string;
   from?: string;
   to?: string;
   action?: string;
@@ -119,6 +120,7 @@ export default async function LogsPage({
     getCachedAuditEvents({
       page: listQuery.page ?? 1,
       pageSize: listQuery.pageSize ?? 20,
+      q: listQuery.q,
       from: listQuery.from,
       to: listQuery.to,
       action: listQuery.action,

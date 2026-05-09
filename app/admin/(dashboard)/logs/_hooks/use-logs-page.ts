@@ -36,6 +36,7 @@ export const PAGE_SIZE = LOGS_PAGE_SIZE;
 export interface UseLogsPageResult {
   // Permissions
   canExport: boolean;
+  canFlush: boolean;
 
   // Filter state
   filters: ReturnType<typeof useAuditLogFilters>;
@@ -46,6 +47,7 @@ export interface UseLogsPageResult {
   isFetching: boolean;
 
   // Handlers
+  handleSearchChange: (nextValue: string) => void;
   handleFromChange: (nextValue: string) => void;
   handleToChange: (nextValue: string) => void;
   handleActionChange: (nextValue: string) => void;
@@ -64,6 +66,7 @@ function normalizedAuditQueryKey(query: AuditListQuery | void): string {
   return JSON.stringify({
     page: query?.page ?? 1,
     pageSize: query?.pageSize ?? LOGS_PAGE_SIZE,
+    q: query?.q ?? null,
     from: query?.from ?? null,
     to: query?.to ?? null,
     action: query?.action ?? null,
@@ -84,7 +87,10 @@ export function useLogsPage(options?: {
   readonly initialUsers?: readonly RbacUser[];
   readonly initialDisplays?: readonly DisplayOption[];
 }): UseLogsPageResult {
-  const canExport = useCan("audit:read");
+  const canReadAudit = useCan("audit:read");
+  const canDeleteAudit = useCan("audit:delete");
+  const canExport = canReadAudit;
+  const canFlush = canReadAudit && canDeleteAudit;
   const filters = useAuditLogFilters(PAGE_SIZE);
   const isInitialEventsQuery =
     options?.initialEvents != null &&
@@ -139,6 +145,7 @@ export function useLogsPage(options?: {
 
   const { page, setPage } = filters;
   const {
+    setSearch,
     setFromDraft,
     setToDraft,
     setAction,
@@ -154,6 +161,14 @@ export function useLogsPage(options?: {
       setPage(1);
     }
   }, [page, setPage]);
+
+  const handleSearchChange = useCallback(
+    (nextValue: string): void => {
+      setSearch(nextValue);
+      resetToFirstPage();
+    },
+    [resetToFirstPage, setSearch],
+  );
 
   const handleFromChange = useCallback(
     (nextValue: string): void => {
@@ -244,10 +259,12 @@ export function useLogsPage(options?: {
 
   return {
     canExport,
+    canFlush,
     filters,
     logs,
     total,
     isFetching,
+    handleSearchChange,
     handleFromChange,
     handleToChange,
     handleActionChange,

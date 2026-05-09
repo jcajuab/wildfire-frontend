@@ -1,16 +1,20 @@
+"use client";
+
 import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
-import { IconFileExport } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { DateInput } from "@/components/ui/date-input";
-import { Label } from "@/components/ui/label";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import type { AuditExportQuery } from "@/lib/api/audit-api";
 import { exportAuditEventsCsv } from "@/lib/api/audit-api";
 import {
@@ -23,7 +27,10 @@ import {
   isValidYyyyMmDd,
 } from "@/lib/formatters";
 
-interface AuditExportPopoverProps {
+interface AuditExportDialogProps {
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly q: string;
   readonly action: string;
   readonly actorType: "all" | "user" | "display";
   readonly resourceType: string;
@@ -32,31 +39,32 @@ interface AuditExportPopoverProps {
   readonly total: number;
 }
 
-export function AuditExportPopover({
+export function AuditExportDialog({
+  open,
+  onOpenChange,
+  q,
   action,
   actorType,
   resourceType,
   parsedStatus,
   requestId,
   total,
-}: AuditExportPopoverProps): ReactElement {
-  const [exportPopoverOpen, setExportPopoverOpen] = useState<boolean>(false);
+}: AuditExportDialogProps): ReactElement {
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [localFrom, setLocalFrom] = useState("");
   const [localTo, setLocalTo] = useState("");
 
   useEffect(() => {
-    if (exportPopoverOpen) {
+    if (open) {
       setLocalFrom("");
       setLocalTo("");
     }
-  }, [exportPopoverOpen]);
+  }, [open]);
 
   const exportRangeValid =
     isValidYyyyMmDd(localFrom.trim()) &&
     isValidYyyyMmDd(localTo.trim()) &&
     localFrom.trim() <= localTo.trim();
-  const canDownload = exportRangeValid;
 
   const handleExportSubmit = async (): Promise<void> => {
     const fromTrimmed = localFrom.trim();
@@ -72,6 +80,7 @@ export function AuditExportPopover({
     setIsExporting(true);
     try {
       const query: AuditExportQuery = {
+        q: q || undefined,
         from: dateToISOStart(fromTrimmed),
         to: dateToISOEnd(toTrimmed),
         action: action || undefined,
@@ -87,7 +96,7 @@ export function AuditExportPopover({
       link.download = "wildfire-audit-events.csv";
       link.click();
       URL.revokeObjectURL(url);
-      setExportPopoverOpen(false);
+      onOpenChange(false);
       toast.success("Logs exported.");
     } catch (err) {
       const message = getApiErrorMessage(err, "Failed to export audit logs.");
@@ -105,61 +114,60 @@ export function AuditExportPopover({
   };
 
   return (
-    <Popover open={exportPopoverOpen} onOpenChange={setExportPopoverOpen}>
-      <PopoverTrigger asChild>
-        <Button>
-          <IconFileExport
-            className="size-4"
-            aria-hidden="true"
-            data-icon="inline-start"
-          />
-          Export Logs
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80" align="end">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Export Logs</DialogTitle>
+          <DialogDescription>
+            Export audit logs within a date range. Active search and filter
+            settings are included.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-1.5">
               <Label htmlFor="export-from">From</Label>
               <DateInput
                 id="export-from"
                 value={localFrom}
-                onChange={(e) => setLocalFrom(e.target.value)}
+                onChange={(event) => setLocalFrom(event.target.value)}
               />
             </div>
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <div className="grid gap-1.5">
               <Label htmlFor="export-to">To</Label>
               <DateInput
                 id="export-to"
                 value={localTo}
-                onChange={(e) => setLocalTo(e.target.value)}
+                onChange={(event) => setLocalTo(event.target.value)}
               />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Export applies your active table filters.
-          </p>
-          {total > 100000 && (
+          {total > 100000 ? (
             <p className="text-xs text-muted-foreground">
-              Current result set may exceed backend export limits.
+              Current results may exceed backend export limits. Narrow the date
+              range if the export fails.
             </p>
-          )}
+          ) : null}
           {!exportRangeValid &&
-            isValidYyyyMmDd(localFrom.trim()) &&
-            isValidYyyyMmDd(localTo.trim()) && (
-              <p className="text-destructive text-xs">
-                From date must be before or equal to To date.
-              </p>
-            )}
+          isValidYyyyMmDd(localFrom.trim()) &&
+          isValidYyyyMmDd(localTo.trim()) ? (
+            <p className="text-destructive text-xs">
+              From date must be before or equal to To date.
+            </p>
+          ) : null}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button
             onClick={handleExportSubmit}
-            disabled={!canDownload || isExporting}
-            className="w-full"
+            disabled={!exportRangeValid || isExporting}
           >
             {isExporting ? "Exporting..." : "Download CSV"}
           </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

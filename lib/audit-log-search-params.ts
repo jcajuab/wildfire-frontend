@@ -60,6 +60,7 @@ export function auditListQueryFromSearchParams(
 
   const from = firstParam(searchParams.from)?.trim() ?? "";
   const to = firstParam(searchParams.to)?.trim() ?? "";
+  const q = firstParam(searchParams.q)?.trim() ?? "";
   const action = firstParam(searchParams.action)?.trim() ?? "";
   const requestId = firstParam(searchParams.requestId)?.trim() ?? "";
   const resourceType = parseResourceType(
@@ -71,6 +72,7 @@ export function auditListQueryFromSearchParams(
   return {
     page,
     pageSize: LOGS_PAGE_SIZE,
+    q: q || undefined,
     from:
       from !== "" && isValidYyyyMmDd(from) ? dateToISOStart(from) : undefined,
     to: to !== "" && isValidYyyyMmDd(to) ? dateToISOEnd(to) : undefined,
