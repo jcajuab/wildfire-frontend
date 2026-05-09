@@ -41,7 +41,7 @@ export function ViewScheduleDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>View Details</DialogTitle>
+            <DialogTitle>Schedule Details</DialogTitle>
             <DialogDescription>
               Review the timing, content, and display assignment for this
               scheduled item.
@@ -112,7 +112,7 @@ export function ViewScheduleDialog({
             </div>
           </div>
 
-          <DialogFooter className="flex items-center justify-between pt-4 sm:justify-between">
+          <DialogFooter className="flex-row justify-end">
             {onDelete ? (
               <Button
                 variant="destructive"
@@ -122,17 +122,15 @@ export function ViewScheduleDialog({
                 Delete
               </Button>
             ) : null}
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Close
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Done
+            </Button>
+            {onEdit ? (
+              <Button onClick={() => onEdit(schedule)}>
+                <IconPencil className="size-4" />
+                Edit
               </Button>
-              {onEdit ? (
-                <Button onClick={() => onEdit(schedule)}>
-                  <IconPencil className="size-4" />
-                  Edit
-                </Button>
-              ) : null}
-            </div>
+            ) : null}
           </DialogFooter>
         </DialogContent>
       </Dialog>

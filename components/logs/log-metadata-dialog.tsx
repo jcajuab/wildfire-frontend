@@ -67,18 +67,18 @@ export function LogMetadataDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="flex flex-col max-h-[85vh] overflow-hidden sm:max-w-2xl">
+      <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-lg">Request metadata</DialogTitle>
+          <DialogTitle>Request Metadata</DialogTitle>
           <DialogDescription>
             Incident details for this audit record.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-          <div className="flex flex-col gap-4 py-2">
-            <div className="flex flex-col gap-3 rounded-md border border-border p-4">
-              <div className="flex flex-col min-w-0">
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+          <div className="space-y-4 py-2">
+            <div className="space-y-3">
+              <div className="flex min-w-0 flex-col">
                 <span className="font-medium">
                   {formatDateTime(log.occurredAt)}
                 </span>
@@ -90,12 +90,12 @@ export function LogMetadataDialog({
                 </span>
               </div>
 
-              <div className="text-sm font-medium pt-1">Summary details</div>
+              <div className="pt-1 text-xs font-medium">Summary Details</div>
 
-              <div className="grid grid-cols-[9rem_1fr] gap-y-2 text-sm">
+              <div className="grid grid-cols-[9rem_1fr] gap-y-2 text-xs">
                 {Object.entries(log.metadata).map(([key, value]) => (
                   <Fragment key={key}>
-                    <span className="text-muted-foreground pr-4">
+                    <span className="pr-4 text-muted-foreground">
                       {formatFieldLabel(key)}
                     </span>
                     <span className="break-all">
@@ -118,13 +118,13 @@ export function LogMetadataDialog({
               </div>
               {showAdvanced && (
                 <>
-                  <div className="text-sm font-medium pt-1">
-                    Technical fields
+                  <div className="pt-1 text-xs font-medium">
+                    Technical Fields
                   </div>
-                  <div className="grid grid-cols-[9rem_1fr] gap-y-2 text-sm">
+                  <div className="grid grid-cols-[9rem_1fr] gap-y-2 text-xs">
                     {Object.entries(log.rawMetadata).map(([key, value]) => (
                       <Fragment key={`raw-${key}`}>
-                        <span className="text-muted-foreground pr-4">
+                        <span className="pr-4 text-muted-foreground">
                           {formatFieldLabel(key)}
                         </span>
                         <span className="break-all">
@@ -139,10 +139,8 @@ export function LogMetadataDialog({
           </div>
         </div>
 
-        <DialogFooter className="sm:justify-between">
-          <Button variant="outline" onClick={handleClose} className="flex-1">
-            Close
-          </Button>
+        <DialogFooter>
+          <Button onClick={handleClose}>Done</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

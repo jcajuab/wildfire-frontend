@@ -4,7 +4,14 @@ import type { ReactElement } from "react";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { collapseDisplayGroupWhitespace } from "@/lib/display-group-normalization";
@@ -40,12 +47,18 @@ export function RenameDisplayGroupDialog({
     <Dialog
       open={open}
       onOpenChange={(o) => {
-        if (!o) onClose();
+        if (!o && !isPending) onClose();
       }}
     >
-      <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-sm">
+      <DialogContent className="sm:max-w-md" showCloseButton={!isPending}>
+        <DialogHeader>
+          <DialogTitle>Rename Display Group</DialogTitle>
+          <DialogDescription>
+            Update the display group name used across display management.
+          </DialogDescription>
+        </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor="group-name-input">Display group name</Label>
+          <Label htmlFor="group-name-input">Display Group Name</Label>
           <Input
             id="group-name-input"
             value={name}

@@ -295,7 +295,7 @@ function InviteUsersDialogContent({
         </div>
 
         {/* CSV buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
             variant="outline"
@@ -348,7 +348,7 @@ export function InviteUsersDialog({
 }: InviteUsersDialogProps): ReactElement {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-hidden sm:max-w-md">
+      <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden sm:max-w-md">
         {open && (
           <InviteUsersDialogContent
             key="invite-users-form"

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { IconBolt, IconList, IconPlus } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
+import { EmptyState } from "@/components/common/empty-state";
 import { CalendarGrid } from "@/components/schedules/calendar-grid";
 import { CalendarHeader } from "@/components/schedules/calendar-header";
 import { CreateScheduleDialog } from "@/components/schedules/create-schedule-dialog";
@@ -95,6 +96,9 @@ export function SchedulesPageView({
     handlePrev,
     handleNext,
     handleToday,
+    isBootstrapError,
+    bootstrapErrorMessage,
+    refetch,
     handleScheduleClick,
     handleEditFromView,
     handleCreateSchedule,
@@ -180,6 +184,18 @@ export function SchedulesPageView({
                     Loading schedules...
                   </span>
                 </div>
+              </div>
+            ) : isBootstrapError ? (
+              <div className="flex flex-1 items-center justify-center">
+                <EmptyState
+                  title="Unable to load schedules"
+                  description={bootstrapErrorMessage}
+                  action={
+                    <Button variant="outline" onClick={() => refetch()}>
+                      Retry
+                    </Button>
+                  }
+                />
               </div>
             ) : (
               <CalendarGrid

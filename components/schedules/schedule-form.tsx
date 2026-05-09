@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { DialogFooter } from "@/components/ui/dialog";
 import {
   Combobox,
   ComboboxChip,
@@ -387,7 +388,7 @@ function ScheduleFormFrame({
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
         {!lockedKind && (
           <div className="space-y-2">
             <Label>Schedule Type</Label>
@@ -427,7 +428,7 @@ function ScheduleFormFrame({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="schedule-start-date">Start Date</Label>
             <Input
@@ -462,7 +463,7 @@ function ScheduleFormFrame({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="schedule-start-time">Start Time</Label>
             <Input
@@ -514,7 +515,7 @@ function ScheduleFormFrame({
         ) : null}
 
         {formData.kind === "PLAYLIST" ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Playlist</Label>
               {isCreate && availablePlaylists.length === 0 ? (
@@ -665,7 +666,7 @@ function ScheduleFormFrame({
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-2">
+      <DialogFooter>
         <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
@@ -675,7 +676,7 @@ function ScheduleFormFrame({
         >
           {isSubmitting ? "Saving…" : submitLabel}
         </Button>
-      </div>
+      </DialogFooter>
     </>
   );
 }

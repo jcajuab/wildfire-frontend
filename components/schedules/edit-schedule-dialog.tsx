@@ -70,11 +70,14 @@ export function EditScheduleDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md" showCloseButton={!isMutating}>
+      <DialogContent
+        className="flex max-h-[85vh] flex-col overflow-hidden sm:max-w-lg"
+        showCloseButton={!isMutating}
+      >
         <DialogHeader>
           <DialogTitle>Edit Schedule</DialogTitle>
           <DialogDescription>
-            Update schedule timing, display assignment, and playlist selection.
+            Update schedule timing, target display, and playback content.
           </DialogDescription>
         </DialogHeader>
 

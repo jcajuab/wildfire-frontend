@@ -30,6 +30,7 @@ import {
   getAuthorizationHeaders,
 } from "@/lib/auth-session";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
+import { revalidateWildfireTagsViaRoute } from "@/lib/api/revalidate-via-route";
 import {
   useCreateRegistrationLinkMutation,
   useGetDisplayGroupsQuery,
@@ -294,6 +295,11 @@ function DisplayRegistrationLinkDialogBody({
                     toast.success(
                       `Display "${payload.slug}" registered successfully.`,
                     );
+                    void revalidateWildfireTagsViaRoute([
+                      "displays-bootstrap",
+                      "displays-options",
+                      "schedules-bootstrap",
+                    ]);
                     onRegistrationSucceeded?.();
                     onOpenChange(false);
                   }

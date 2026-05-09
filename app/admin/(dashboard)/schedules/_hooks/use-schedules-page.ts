@@ -10,7 +10,6 @@ import {
   type ScheduleWindowQuery,
   type SchedulesBootstrapResponse,
 } from "@/lib/api/schedules-api";
-import { useAppSelector } from "@/lib/hooks";
 import { mapBackendSchedulesToSchedules } from "@/lib/mappers/schedule-mapper";
 import type { AuthUser } from "@/types/auth";
 import type { Schedule } from "@/types/schedule";
@@ -40,7 +39,7 @@ export function useSchedulesPage(options?: {
     readonly data: SchedulesBootstrapResponse;
   };
 }) {
-  const { user } = useAuth();
+  const { user, isInitialized } = useAuth();
   const canEditSchedule = useCan("schedules:update");
   const canDeleteSchedule = useCan("schedules:delete");
   const canReadDisplays = useCan("displays:read");
@@ -81,20 +80,15 @@ export function useSchedulesPage(options?: {
     normalizedScheduleWindowKey(options.initialBootstrap.queryArgs) ===
       normalizedScheduleWindowKey(scheduleWindow);
 
-  const cacheHasData = useAppSelector(
-    (state) =>
-      schedulesApi.endpoints.getSchedulesBootstrap.select(scheduleWindow)(state)
-        .data != null,
-  );
-
   const {
     data: bootstrapData,
     isLoading: queryIsLoading,
     isFetching: queryIsFetching,
+    isError: queryIsError,
+    refetch,
   } = useGetSchedulesBootstrapQuery(scheduleWindow, {
     refetchOnFocus: true,
     refetchOnReconnect: true,
-    skip: isInitialBootstrapQuery && !cacheHasData,
   });
   const cachedInitialBootstrap =
     schedulesApi.endpoints.getSchedulesBootstrap.useQueryState(scheduleWindow, {
@@ -104,25 +98,43 @@ export function useSchedulesPage(options?: {
     ? (cachedInitialBootstrap.data ?? options?.initialBootstrap?.data)
     : bootstrapData;
   const isLoading =
-    effectiveBootstrapData == null &&
-    (isInitialBootstrapQuery ? false : queryIsLoading);
+    !isInitialized ||
+    (effectiveBootstrapData == null &&
+      (isInitialBootstrapQuery ? false : queryIsLoading));
+  const isBootstrapError = queryIsError && effectiveBootstrapData == null;
   const isFetching = queryIsFetching;
   const displaysData = useMemo(
-    () => (canReadDisplays ? effectiveBootstrapData?.displayOptions : []),
-    [canReadDisplays, effectiveBootstrapData?.displayOptions],
+    () =>
+      isInitialized && canReadDisplays
+        ? effectiveBootstrapData?.displayOptions
+        : [],
+    [canReadDisplays, effectiveBootstrapData?.displayOptions, isInitialized],
   );
   const displayGroupsData = useMemo(
-    () => (canReadDisplays ? effectiveBootstrapData?.displayGroups : []),
-    [canReadDisplays, effectiveBootstrapData?.displayGroups],
+    () =>
+      isInitialized && canReadDisplays
+        ? effectiveBootstrapData?.displayGroups
+        : [],
+    [canReadDisplays, effectiveBootstrapData?.displayGroups, isInitialized],
   );
   const schedulesData = effectiveBootstrapData?.schedules;
   const playlistsData = useMemo(
-    () => (canReadPlaylists ? effectiveBootstrapData?.playlistOptions : []),
-    [canReadPlaylists, effectiveBootstrapData?.playlistOptions],
+    () =>
+      isInitialized && canReadPlaylists
+        ? effectiveBootstrapData?.playlistOptions
+        : [],
+    [canReadPlaylists, effectiveBootstrapData?.playlistOptions, isInitialized],
   );
   const flashContentData = useMemo(
-    () => (canReadContent ? effectiveBootstrapData?.flashContentOptions : []),
-    [canReadContent, effectiveBootstrapData?.flashContentOptions],
+    () =>
+      isInitialized && canReadContent
+        ? effectiveBootstrapData?.flashContentOptions
+        : [],
+    [
+      canReadContent,
+      effectiveBootstrapData?.flashContentOptions,
+      isInitialized,
+    ],
   );
 
   const availablePlaylists: readonly { id: string; name: string }[] = useMemo(
@@ -184,6 +196,10 @@ export function useSchedulesPage(options?: {
   return {
     isLoading,
     isFetching,
+    isBootstrapError,
+    bootstrapErrorMessage:
+      "Unable to load schedules. Check that playlist and schedule data is available, then try again.",
+    refetch,
     canEditSchedule,
     canDeleteSchedule,
     canEditSelectedSchedule: canEditSchedule && canManageSelectedSchedule,

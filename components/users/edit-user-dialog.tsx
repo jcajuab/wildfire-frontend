@@ -83,24 +83,24 @@ function EditUserForm({
     name.trim().length > 0 && username.trim().length > 0 && isEmailValid;
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="space-y-4">
       <DialogHeader>
         <DialogTitle>Edit User</DialogTitle>
         <DialogDescription>
           Update user identity details and account activation status.
         </DialogDescription>
       </DialogHeader>
-      <div className="mt-4 flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
+      <div className="space-y-4">
+        <div className="space-y-2">
           <Label htmlFor="edit-user-name">Name</Label>
           <Input
             id="edit-user-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Full name"
+            placeholder="Enter full name"
           />
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="space-y-2">
           <Label htmlFor="edit-user-username">Username</Label>
           <Input
             id="edit-user-username"
@@ -111,16 +111,16 @@ function EditUserForm({
             disabled={isSelf || isDcismUser}
           />
           {isSelf ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               You cannot change your own username.
             </p>
           ) : isDcismUser ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Username is managed by DCISM and cannot be changed.
             </p>
           ) : null}
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="space-y-2">
           <Label htmlFor="edit-user-email">Email</Label>
           <Input
             id="edit-user-email"
@@ -139,7 +139,7 @@ function EditUserForm({
         <div className="flex items-center justify-between rounded-md border border-border p-4">
           <div className="space-y-0.5">
             <Label htmlFor="edit-user-active">Active</Label>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Inactive users cannot sign in.
             </p>
           </div>
@@ -151,7 +151,7 @@ function EditUserForm({
           />
         </div>
       </div>
-      <DialogFooter className="mt-6">
+      <DialogFooter>
         <Button
           type="button"
           variant="outline"

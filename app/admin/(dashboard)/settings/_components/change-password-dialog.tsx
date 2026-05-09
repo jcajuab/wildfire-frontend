@@ -94,6 +94,7 @@ export function ChangePasswordDialog({
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
+        if (!nextOpen && isPasswordSubmitting) return;
         onOpenChange(nextOpen);
         if (!nextOpen) {
           setPasswordError(null);
@@ -109,14 +110,12 @@ export function ChangePasswordDialog({
           <DialogHeader>
             <DialogTitle>Change Password</DialogTitle>
             <DialogDescription>
-              Enter your current password and choose a new one (at least 12
-              characters, with uppercase, lowercase, number, and special
-              character).
+              Update the password used to sign in.
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-4 flex flex-col gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="current-password">Current password</Label>
+          <div className="mt-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="current-password">Current Password</Label>
               <Input
                 id="current-password"
                 type="password"
@@ -125,8 +124,8 @@ export function ChangePasswordDialog({
                 className={controlClass}
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="new-password">New password</Label>
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
               <Input
                 id="new-password"
                 type="password"
@@ -134,9 +133,13 @@ export function ChangePasswordDialog({
                 onChange={(event) => setNewPassword(event.target.value)}
                 className={controlClass}
               />
+              <p className="text-xs text-muted-foreground">
+                Use at least 12 characters with uppercase, lowercase, number,
+                and special character.
+              </p>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="confirm-password">Confirm new password</Label>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
               <Input
                 id="confirm-password"
                 type="password"
@@ -161,7 +164,7 @@ export function ChangePasswordDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={!canSubmitPassword}>
-              {isPasswordSubmitting ? "Updating..." : "Update Password"}
+              {isPasswordSubmitting ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>
         </form>

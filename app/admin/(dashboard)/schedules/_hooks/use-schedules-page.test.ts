@@ -13,7 +13,6 @@ import {
   type ScheduleWindowQuery,
   type SchedulesBootstrapResponse,
 } from "@/lib/api/schedules-api";
-import { useAppSelector } from "@/lib/hooks";
 import type { AuthUser } from "@/types/auth";
 import type { Schedule } from "@/types/schedule";
 import { useScheduleFilters } from "./use-schedule-filters";
@@ -26,10 +25,6 @@ vi.mock("@/context/auth-context", () => ({
 
 vi.mock("@/hooks/use-can", () => ({
   useCan: vi.fn(() => true),
-}));
-
-vi.mock("@/lib/hooks", () => ({
-  useAppSelector: vi.fn(() => false),
 }));
 
 vi.mock("@/lib/api/schedules-api", () => ({
@@ -84,7 +79,6 @@ const useGetSchedulesBootstrapQueryMock = vi.mocked(
 const useGetSchedulesBootstrapQueryStateMock = vi.mocked(
   schedulesApi.endpoints.getSchedulesBootstrap.useQueryState,
 );
-const useAppSelectorMock = vi.mocked(useAppSelector);
 const useScheduleFiltersMock = vi.mocked(useScheduleFilters);
 
 const makeUser = (overrides: Partial<AuthUser> = {}): AuthUser => ({
@@ -206,9 +200,9 @@ describe("useSchedulesPage", () => {
 
     useAuthMock.mockReturnValue({
       user: makeUser(),
+      isInitialized: true,
     } as unknown as ReturnType<typeof useAuth>);
     useCanMock.mockReturnValue(true);
-    useAppSelectorMock.mockReturnValue(false);
     mockScheduleFilters(initialWindow);
     useGetSchedulesBootstrapQueryMock.mockReturnValue({
       data: undefined,
@@ -244,7 +238,6 @@ describe("useSchedulesPage", () => {
       {
         refetchOnFocus: true,
         refetchOnReconnect: true,
-        skip: true,
       },
     );
     expect(result.current.schedules.map((schedule) => schedule.name)).toEqual([
@@ -272,5 +265,41 @@ describe("useSchedulesPage", () => {
     expect(result.current.schedules.map((schedule) => schedule.name)).toEqual([
       "Tomorrow",
     ]);
+  });
+
+  test("keeps resource data empty while auth is not initialized", () => {
+    useAuthMock.mockReturnValue({
+      user: null,
+      isInitialized: false,
+    } as unknown as ReturnType<typeof useAuth>);
+
+    const { result } = renderHook(() =>
+      useSchedulesPage({
+        initialBootstrap: {
+          queryArgs: initialWindow,
+          data: makeBootstrapData(["Today"]),
+        },
+      }),
+    );
+
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.availableDisplays).toEqual([]);
+  });
+
+  test("surfaces bootstrap failures instead of treating them as empty resources", () => {
+    const refetch = vi.fn();
+    useGetSchedulesBootstrapQueryMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      isError: true,
+      refetch,
+    } as unknown as ReturnType<typeof useGetSchedulesBootstrapQuery>);
+
+    const { result } = renderHook(() => useSchedulesPage());
+
+    expect(result.current.isBootstrapError).toBe(true);
+    expect(result.current.availableDisplays).toEqual([]);
+    expect(result.current.refetch).toBe(refetch);
   });
 });

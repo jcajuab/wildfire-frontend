@@ -54,7 +54,10 @@ export function CreateScheduleDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md" showCloseButton={!isMutating}>
+      <DialogContent
+        className="flex max-h-[85vh] flex-col overflow-hidden sm:max-w-lg"
+        showCloseButton={!isMutating}
+      >
         <DialogHeader>
           <DialogTitle>
             {kind === "PLAYLIST"
@@ -63,8 +66,8 @@ export function CreateScheduleDialog({
           </DialogTitle>
           <DialogDescription>
             {kind === "PLAYLIST"
-              ? "Configure timing, playlist, and target display."
-              : "Configure timing, flash content, and target display."}
+              ? "Create a playlist schedule for selected displays."
+              : "Create a flash overlay schedule for selected displays."}
           </DialogDescription>
         </DialogHeader>
 

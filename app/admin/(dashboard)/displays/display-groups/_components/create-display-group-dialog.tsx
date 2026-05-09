@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
+  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -54,13 +56,18 @@ export function CreateDisplayGroupDialog({
     <Dialog
       open={open}
       onOpenChange={(o) => {
-        if (!o) onClose();
+        if (!o && !isPending) onClose();
       }}
     >
-      <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-sm">
-        <DialogTitle className="sr-only">Add display group</DialogTitle>
+      <DialogContent className="sm:max-w-md" showCloseButton={!isPending}>
+        <DialogHeader>
+          <DialogTitle>Add Display Group</DialogTitle>
+          <DialogDescription>
+            Create a display group for organizing registered displays.
+          </DialogDescription>
+        </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor="new-group-name-input">Display group name</Label>
+          <Label htmlFor="new-group-name-input">Display Group Name</Label>
           <Input
             id="new-group-name-input"
             value={name}
