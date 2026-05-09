@@ -74,7 +74,7 @@ export function RenameDisplayGroupDialog({
             Cancel
           </Button>
           <Button onClick={() => void handleSave()} disabled={!canSave}>
-            {isPending ? "Saving…" : "Save"}
+            {isPending ? "Saving..." : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>

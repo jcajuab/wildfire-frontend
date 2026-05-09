@@ -78,19 +78,19 @@ export function UserActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${user.name}`}
         >
-          <IconDotsVertical className="size-4" />
+          <IconDotsVertical className="size-4" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {canUpdate && (
           <>
             <DropdownMenuItem onClick={() => onEdit(user)}>
-              <IconEdit className="size-4" />
+              <IconEdit className="size-4" aria-hidden="true" />
               Edit User
             </DropdownMenuItem>
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
-                <IconCircle className="size-4" />
+                <IconCircle className="size-4" aria-hidden="true" />
                 Roles
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
@@ -130,9 +130,14 @@ export function UserActionsMenu({
                     >
                       <span>{role.name}</span>
                       {isLoading ? (
-                        <IconLoader2 className="size-4 animate-spin" />
+                        <IconLoader2
+                          className="size-4 animate-spin"
+                          aria-hidden="true"
+                        />
                       ) : (
-                        isChecked && <IconCheck className="size-4" />
+                        isChecked && (
+                          <IconCheck className="size-4" aria-hidden="true" />
+                        )
                       )}
                     </DropdownMenuItem>
                   );
@@ -141,7 +146,7 @@ export function UserActionsMenu({
             </DropdownMenuSub>
             {isInvitedUser && (
               <DropdownMenuItem onClick={() => void onResetPassword(user.id)}>
-                <IconKey className="size-4" />
+                <IconKey className="size-4" aria-hidden="true" />
                 Reset Password
               </DropdownMenuItem>
             )}
@@ -152,7 +157,7 @@ export function UserActionsMenu({
             {canUpdate && <DropdownMenuSeparator />}
             {isBanned ? (
               <DropdownMenuItem onClick={() => onUnbanUser(user)}>
-                <IconCircleCheck className="size-4" />
+                <IconCircleCheck className="size-4" aria-hidden="true" />
                 Unban User
               </DropdownMenuItem>
             ) : (
@@ -160,7 +165,7 @@ export function UserActionsMenu({
                 variant="destructive"
                 onClick={() => onBanUser(user)}
               >
-                <IconBan className="size-4" />
+                <IconBan className="size-4" aria-hidden="true" />
                 Ban User
               </DropdownMenuItem>
             )}

@@ -99,9 +99,12 @@ function ProviderCredentialRow({
               aria-label="Save API key"
             >
               {isSaving ? (
-                <IconLoader2 className="h-4 w-4 animate-spin" />
+                <IconLoader2
+                  className="h-4 w-4 animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
-                <IconCheck className="h-4 w-4" />
+                <IconCheck className="h-4 w-4" aria-hidden="true" />
               )}
             </Button>
             <Button
@@ -113,7 +116,7 @@ function ProviderCredentialRow({
               disabled={isSaving}
               aria-label="Cancel"
             >
-              <IconX className="h-4 w-4" />
+              <IconX className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         ) : credential ? (
@@ -121,7 +124,10 @@ function ProviderCredentialRow({
             <div
               className={`${controlClass} flex items-center gap-2 rounded-md border border-border bg-muted/60 px-3`}
             >
-              <IconKey className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <IconKey
+                className="h-4 w-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
               <span className="truncate font-mono text-sm text-foreground/80">
                 {credential.keyHint}
               </span>
@@ -135,21 +141,24 @@ function ProviderCredentialRow({
               disabled={isDeletingThis}
               aria-label={`Update ${provider.label} API key`}
             >
-              <IconEdit className="h-4 w-4" />
+              <IconEdit className="h-4 w-4" aria-hidden="true" />
             </Button>
             <Button
               type="button"
-              variant="ghost"
+              variant="destructive"
               size="icon"
-              className="h-10 w-10 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="h-10 w-10 shrink-0"
               onClick={() => setIsDeleteDialogOpen(true)}
               disabled={isDeletingThis}
               aria-label={`Delete ${provider.label} API key`}
             >
               {isDeletingThis ? (
-                <IconLoader2 className="h-4 w-4 animate-spin" />
+                <IconLoader2
+                  className="h-4 w-4 animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
-                <IconTrash className="h-4 w-4" />
+                <IconTrash className="h-4 w-4" aria-hidden="true" />
               )}
             </Button>
           </div>
@@ -169,7 +178,11 @@ function ProviderCredentialRow({
               onClick={() => setIsEditing(true)}
               aria-label={`Add ${provider.label} API key`}
             >
-              <IconKey className="h-4 w-4" />
+              <IconKey
+                className="h-4 w-4"
+                aria-hidden="true"
+                data-icon="inline-start"
+              />
               Add Key
             </Button>
           </div>

@@ -119,7 +119,11 @@ export function RolesPageView({
         <Can permission="roles:create">
           <Button asChild>
             <Link href={ROLE_CREATE_PATH}>
-              <IconPlus className="size-4" />
+              <IconPlus
+                className="size-4"
+                aria-hidden="true"
+                data-icon="inline-start"
+              />
               Create Role
             </Link>
           </Button>
@@ -164,7 +168,11 @@ export function RolesPageView({
                         <Can permission="roles:create">
                           <Button asChild>
                             <Link href={ROLE_CREATE_PATH}>
-                              <IconPlus className="size-4" />
+                              <IconPlus
+                                className="size-4"
+                                aria-hidden="true"
+                                data-icon="inline-start"
+                              />
                               Create Role
                             </Link>
                           </Button>

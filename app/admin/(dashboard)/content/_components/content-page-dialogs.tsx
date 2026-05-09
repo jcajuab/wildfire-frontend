@@ -373,8 +373,8 @@ function EditContentDialogForm({
         >
           {isSaving ? (
             <>
-              <IconLoader2 className="size-4 animate-spin" />
-              Saving…
+              <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
+              Saving...
             </>
           ) : (
             "Save"

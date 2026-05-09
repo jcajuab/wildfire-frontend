@@ -129,28 +129,28 @@ export function TiptapEditor({
               active={editor.isActive("bold")}
               title="Bold"
             >
-              <IconBold className="size-4" />
+              <IconBold className="size-4" aria-hidden="true" />
             </ToolbarButton>
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleItalic().run()}
               active={editor.isActive("italic")}
               title="Italic"
             >
-              <IconItalic className="size-4" />
+              <IconItalic className="size-4" aria-hidden="true" />
             </ToolbarButton>
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleUnderline().run()}
               active={editor.isActive("underline")}
               title="Underline"
             >
-              <IconUnderline className="size-4" />
+              <IconUnderline className="size-4" aria-hidden="true" />
             </ToolbarButton>
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleStrike().run()}
               active={editor.isActive("strike")}
               title="Strikethrough"
             >
-              <IconStrikethrough className="size-4" />
+              <IconStrikethrough className="size-4" aria-hidden="true" />
             </ToolbarButton>
           </ToolbarGroup>
 
@@ -160,21 +160,21 @@ export function TiptapEditor({
               active={editor.isActive("bulletList")}
               title="Bullet List"
             >
-              <IconList className="size-4" />
+              <IconList className="size-4" aria-hidden="true" />
             </ToolbarButton>
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleOrderedList().run()}
               active={editor.isActive("orderedList")}
               title="Numbered List"
             >
-              <IconListNumbers className="size-4" />
+              <IconListNumbers className="size-4" aria-hidden="true" />
             </ToolbarButton>
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleBlockquote().run()}
               active={editor.isActive("blockquote")}
               title="Quote"
             >
-              <IconQuote className="size-4" />
+              <IconQuote className="size-4" aria-hidden="true" />
             </ToolbarButton>
           </ToolbarGroup>
 
@@ -184,7 +184,7 @@ export function TiptapEditor({
               active={editor.isActive({ textAlign: "left" })}
               title="Align Left"
             >
-              <IconAlignLeft className="size-4" />
+              <IconAlignLeft className="size-4" aria-hidden="true" />
             </ToolbarButton>
             <ToolbarButton
               onClick={() =>
@@ -193,14 +193,14 @@ export function TiptapEditor({
               active={editor.isActive({ textAlign: "center" })}
               title="Align Center"
             >
-              <IconAlignCenter className="size-4" />
+              <IconAlignCenter className="size-4" aria-hidden="true" />
             </ToolbarButton>
             <ToolbarButton
               onClick={() => editor.chain().focus().setTextAlign("right").run()}
               active={editor.isActive({ textAlign: "right" })}
               title="Align Right"
             >
-              <IconAlignRight className="size-4" />
+              <IconAlignRight className="size-4" aria-hidden="true" />
             </ToolbarButton>
             <ToolbarButton
               onClick={() =>
@@ -209,7 +209,7 @@ export function TiptapEditor({
               active={editor.isActive({ textAlign: "justify" })}
               title="Justify"
             >
-              <IconAlignJustified className="size-4" />
+              <IconAlignJustified className="size-4" aria-hidden="true" />
             </ToolbarButton>
           </ToolbarGroup>
 

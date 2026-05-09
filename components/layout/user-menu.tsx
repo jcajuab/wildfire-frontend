@@ -103,7 +103,7 @@ export function UserMenu({
         {canAccessSettings ? (
           <DropdownMenuItem asChild>
             <AdminNavLink href="/admin/settings">
-              <IconSettings className="size-4" />
+              <IconSettings className="size-4" aria-hidden="true" />
               Settings
             </AdminNavLink>
           </DropdownMenuItem>
@@ -116,8 +116,8 @@ export function UserMenu({
             void logout();
           }}
         >
-          <IconLogout className="size-4" />
-          {pending ? "Logging out…" : "Log Out"}
+          <IconLogout className="size-4" aria-hidden="true" />
+          {pending ? "Logging out..." : "Log Out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

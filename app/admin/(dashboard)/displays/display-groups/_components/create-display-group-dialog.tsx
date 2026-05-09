@@ -86,7 +86,7 @@ export function CreateDisplayGroupDialog({
             Cancel
           </Button>
           <Button onClick={() => void handleCreate()} disabled={!canCreate}>
-            {isPending ? "Creating…" : "Create"}
+            {isPending ? "Creating..." : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>

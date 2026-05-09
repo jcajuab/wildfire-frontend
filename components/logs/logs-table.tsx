@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/formatters";
 import type { LogEntry } from "@/types/log";
 import { LogMetadataDialog } from "@/components/logs/log-metadata-dialog";
@@ -81,7 +82,10 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
                       className="size-7 rounded-full object-cover"
                     />
                   ) : (
-                    <IconUser className="size-4 text-muted-foreground" />
+                    <IconUser
+                      className="size-4 text-muted-foreground"
+                      aria-hidden="true"
+                    />
                   )}
                   <span>{log.actorName}</span>
                 </div>
@@ -94,15 +98,17 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
                   </p>
                 </div>
               </TableCell>
-              <TableCell className="text-muted-foreground font-mono text-xs">
-                <button
+              <TableCell>
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleMetadataClick(log)}
                   aria-label="View full metadata"
-                  className="w-full -mx-1 rounded px-1 text-left hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="-mx-2 w-full justify-start font-mono text-xs font-normal text-muted-foreground hover:bg-transparent hover:underline"
                 >
                   {formatMetadata(log.metadata)}
-                </button>
+                </Button>
               </TableCell>
             </TableRow>
           ))}

@@ -157,12 +157,12 @@ function InvitationActionsMenu({
           size="icon-sm"
           aria-label={`Actions for invitation to ${invitation.email}`}
         >
-          <IconDotsVertical className="size-4" />
+          <IconDotsVertical className="size-4" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-40">
         <DropdownMenuItem onSelect={() => void handleCopyLink()}>
-          <IconCopy className="size-4" />
+          <IconCopy className="size-4" aria-hidden="true" />
           Copy Invite Link
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -171,9 +171,12 @@ function InvitationActionsMenu({
           onSelect={() => onResend(invitation.id)}
         >
           {isResending ? (
-            <IconLoader2 className="size-4 animate-spin" />
+            <IconLoader2
+              className="size-4 animate-spin"
+              aria-hidden="true"
+            />
           ) : (
-            <IconRefresh className="size-4" />
+            <IconRefresh className="size-4" aria-hidden="true" />
           )}
           {isResending ? "Regenerating..." : "Regenerate Link"}
         </DropdownMenuItem>

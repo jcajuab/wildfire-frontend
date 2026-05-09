@@ -50,7 +50,7 @@ export function TablePopover({
           size="icon-sm"
           title="Table"
         >
-          <IconTable className="size-4" />
+          <IconTable className="size-4" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-48">

@@ -108,7 +108,11 @@ export function AuditExportPopover({
     <Popover open={exportPopoverOpen} onOpenChange={setExportPopoverOpen}>
       <PopoverTrigger asChild>
         <Button>
-          <IconFileExport className="size-4" />
+          <IconFileExport
+            className="size-4"
+            aria-hidden="true"
+            data-icon="inline-start"
+          />
           Export Logs
         </Button>
       </PopoverTrigger>

@@ -3,7 +3,12 @@
 import type { ReactElement } from "react";
 import { useLayoutEffect } from "react";
 import Link from "next/link";
-import { IconBolt, IconList, IconPlus } from "@tabler/icons-react";
+import {
+  IconBolt,
+  IconChevronDown,
+  IconList,
+  IconPlus,
+} from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
 import { EmptyState } from "@/components/common/empty-state";
@@ -113,17 +118,29 @@ export function SchedulesPageView({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button>
-                <IconPlus className="size-4" />
+                <IconPlus
+                  className="size-4"
+                  aria-hidden="true"
+                  data-icon="inline-start"
+                />
                 Create Schedule
+                <IconChevronDown
+                  className="size-4"
+                  aria-hidden="true"
+                  data-icon="inline-end"
+                />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent
+              align="end"
+              className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
+            >
               <DropdownMenuItem onClick={() => setCreateDialogKind("PLAYLIST")}>
-                <IconList className="size-4" />
+                <IconList className="size-4" aria-hidden="true" />
                 Playlist
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setCreateDialogKind("FLASH")}>
-                <IconBolt className="size-4" />
+                <IconBolt className="size-4" aria-hidden="true" />
                 Flash Overlay
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -161,7 +161,7 @@ function EditUserForm({
           Cancel
         </Button>
         <Button type="submit" disabled={!isValid || isSubmitting}>
-          {isSubmitting ? "Saving…" : "Save"}
+          {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </DialogFooter>
     </form>

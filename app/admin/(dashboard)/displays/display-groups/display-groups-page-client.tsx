@@ -18,6 +18,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -265,8 +266,12 @@ export function DisplayGroupsPageClient({
           </Tabs>
           {canManageGroups ? (
             <Button onClick={() => setIsCreateOpen(true)}>
-              <IconPlus className="size-4" aria-hidden="true" />
-              Add display group
+              <IconPlus
+                className="size-4"
+                aria-hidden="true"
+                data-icon="inline-start"
+              />
+              Add Display Group
             </Button>
           ) : null}
         </div>
@@ -387,7 +392,7 @@ export function DisplayGroupsPageClient({
                     }}
                   >
                     {isExecuting
-                      ? "Applying…"
+                      ? "Applying..."
                       : actionMode === "add"
                         ? "Add"
                         : "Remove"}
@@ -398,7 +403,6 @@ export function DisplayGroupsPageClient({
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      size="sm"
                       disabled={
                         isDisplayAxis ? !selectedDisplay : !selectedGroup
                       }
@@ -411,17 +415,21 @@ export function DisplayGroupsPageClient({
                       />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
+                  >
                     <DropdownMenuItem onClick={handleEnterAdd}>
                       <IconPlus className="size-4" aria-hidden="true" />
-                      {isDisplayAxis ? "Add groups" : "Add displays"}
+                      {isDisplayAxis ? "Add Groups" : "Add Displays"}
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                       variant="destructive"
                       onClick={handleEnterRemove}
                     >
                       <IconMinus className="size-4" aria-hidden="true" />
-                      {isDisplayAxis ? "Remove groups" : "Remove displays"}
+                      {isDisplayAxis ? "Remove Groups" : "Remove Displays"}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -531,7 +539,7 @@ export function DisplayGroupsPageClient({
                         ) : (
                           <EmptyState
                             title="No groups for this display yet"
-                            description="Use Actions → Add groups to assign this display to a group."
+                            description="Use Actions → Add Groups to assign this display to a group."
                           />
                         )}
                       </div>
@@ -613,7 +621,7 @@ export function DisplayGroupsPageClient({
                       ) : (
                         <EmptyState
                           title="No displays in this group yet"
-                          description="Use Actions → Add displays to assign displays to this group."
+                          description="Use Actions → Add Displays to assign displays to this group."
                         />
                       )}
                     </div>

@@ -329,8 +329,7 @@ export function LogsPageClient({
                   </ComboboxContent>
                 </Combobox>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="logs-reset-filters">Reset Filters</Label>
+              <div className="flex items-end">
                 <Button
                   id="logs-reset-filters"
                   type="button"
@@ -352,7 +351,7 @@ export function LogsPageClient({
               >
                 <span className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm text-muted-foreground shadow-sm">
                   <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  Updating logs…
+                  Updating Logs...
                 </span>
               </div>
             ) : null}

@@ -33,7 +33,7 @@ export function LinkPopover({
           size="icon-sm"
           title="Link"
         >
-          <IconLink className="size-4" />
+          <IconLink className="size-4" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80">

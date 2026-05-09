@@ -61,7 +61,7 @@ export function DisplaySidebarCard({
       {canManage ? (
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           className="size-6 shrink-0 cursor-pointer text-muted-foreground hover:text-foreground"
           aria-label="Edit display details"
           onClick={(e) => {

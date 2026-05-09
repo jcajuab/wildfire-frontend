@@ -205,13 +205,13 @@ export const ContentCard = memo(function ContentCard({
               >
                 {showEdit && onEdit ? (
                   <DropdownMenuItem onClick={() => onEdit(content)}>
-                    <IconPencil className="size-4" />
+                    <IconPencil className="size-4" aria-hidden="true" />
                     Edit Content
                   </DropdownMenuItem>
                 ) : null}
                 {canDownloadFile ? (
                   <DropdownMenuItem onClick={() => onDownload(content)}>
-                    <IconDownload className="size-4" />
+                    <IconDownload className="size-4" aria-hidden="true" />
                     Download File
                   </DropdownMenuItem>
                 ) : null}
@@ -221,7 +221,7 @@ export const ContentCard = memo(function ContentCard({
                     variant="destructive"
                     onClick={() => onDelete(content)}
                   >
-                    <IconTrash className="size-4" />
+                    <IconTrash className="size-4" aria-hidden="true" />
                     Delete Content
                   </DropdownMenuItem>
                 ) : null}

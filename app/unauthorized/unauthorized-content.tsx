@@ -19,7 +19,7 @@ export function UnauthorizedContent() {
   return (
     <div className="mt-6 flex flex-col gap-3">
       <Button variant="default" onClick={handleLogout} disabled={isLoading}>
-        {isLoading ? "Logging out…" : "Log out"}
+        {isLoading ? "Logging out..." : "Log Out"}
       </Button>
     </div>
   );

@@ -674,7 +674,7 @@ function ScheduleFormFrame({
           onClick={() => void handleSubmit()}
           disabled={!canSubmit || isSubmitting}
         >
-          {isSubmitting ? "Saving…" : submitLabel}
+          {isSubmitting ? "Saving..." : submitLabel}
         </Button>
       </DialogFooter>
     </>

@@ -226,7 +226,11 @@ export function DisplayGroupManagerDialog({
               onClick={() => void createGroup()}
               disabled={isBusy}
             >
-              <IconPlus className="size-4" />
+              <IconPlus
+                className="size-4"
+                aria-hidden="true"
+                data-icon="inline-start"
+              />
               Add
             </Button>
           </div>
@@ -277,7 +281,7 @@ export function DisplayGroupManagerDialog({
                           aria-label={`Rename ${group.name}`}
                           disabled={isBusy}
                         >
-                          <IconPencil className="size-4" />
+                          <IconPencil className="size-4" aria-hidden="true" />
                         </Button>
                         <Button
                           type="button"
@@ -287,7 +291,7 @@ export function DisplayGroupManagerDialog({
                           aria-label={`Delete ${group.name}`}
                           disabled={isBusy}
                         >
-                          <IconTrash className="size-4" />
+                          <IconTrash className="size-4" aria-hidden="true" />
                         </Button>
                       </>
                     ) : (
@@ -300,7 +304,7 @@ export function DisplayGroupManagerDialog({
                           disabled={isRenaming}
                           aria-label="Cancel rename"
                         >
-                          <IconX className="size-4" />
+                          <IconX className="size-4" aria-hidden="true" />
                         </Button>
                         <Button
                           type="button"
@@ -309,7 +313,7 @@ export function DisplayGroupManagerDialog({
                           disabled={isRenaming}
                           aria-label="Save rename"
                         >
-                          <IconCheck className="size-4" />
+                          <IconCheck className="size-4" aria-hidden="true" />
                         </Button>
                       </>
                     )}

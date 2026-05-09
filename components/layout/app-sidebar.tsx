@@ -281,7 +281,10 @@ export function AppSidebar(): ReactElement {
                         </span>
                       </div>
                     </div>
-                    <IconDotsVertical className="size-4 text-sidebar-foreground" />
+                    <IconDotsVertical
+                      className="size-4 text-sidebar-foreground"
+                      aria-hidden="true"
+                    />
                   </SidebarMenuButton>
                 )}
               />

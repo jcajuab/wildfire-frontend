@@ -27,6 +27,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -317,27 +318,35 @@ export function ContentPageView({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button>
-                          <IconPlus className="size-4" />
+                          <IconPlus
+                            className="size-4"
+                            aria-hidden="true"
+                            data-icon="inline-start"
+                          />
                           Create Content
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="center">
+                      <DropdownMenuContent
+                        align="center"
+                        className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
+                      >
                         <DropdownMenuItem
                           onClick={() => controller.openCreateDialog("text")}
                         >
-                          <IconFileText className="size-4" />
+                          <IconFileText className="size-4" aria-hidden="true" />
                           Text
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => controller.openCreateDialog("upload")}
                         >
-                          <IconUpload className="size-4" />
+                          <IconUpload className="size-4" aria-hidden="true" />
                           Upload
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => controller.openCreateDialog("flash")}
                         >
-                          <IconBolt className="size-4" />
+                          <IconBolt className="size-4" aria-hidden="true" />
                           Flash
                         </DropdownMenuItem>
                       </DropdownMenuContent>

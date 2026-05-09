@@ -791,12 +791,16 @@ export function PdfCropEditor({
           <Button onClick={handleSubmit} disabled={!canSubmit || isSubmitting}>
             {isSubmitting ? (
               <>
-                <IconLoader2 className="size-4 animate-spin" />
-                Creating…
+                <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
+                Creating...
               </>
             ) : (
               <>
-                <IconCrop className="size-4" />
+                <IconCrop
+                  className="size-4"
+                  aria-hidden="true"
+                  data-icon="inline-start"
+                />
                 Create
               </>
             )}
@@ -864,8 +868,9 @@ export function PdfCropEditor({
                 size="icon-sm"
                 onClick={() => setCurrentPageIndex((i) => Math.max(0, i - 1))}
                 disabled={currentPageIndex === 0}
+                aria-label="Previous page"
               >
-                <IconChevronLeft className="size-4" />
+                <IconChevronLeft className="size-4" aria-hidden="true" />
               </Button>
               <span className="text-sm font-medium">
                 Page {currentPage.pageNumber} of {pages.length}
@@ -877,12 +882,13 @@ export function PdfCropEditor({
                   setCurrentPageIndex((i) => Math.min(pages.length - 1, i + 1))
                 }
                 disabled={currentPageIndex === pages.length - 1}
+                aria-label="Next page"
               >
-                <IconChevronRight className="size-4" />
+                <IconChevronRight className="size-4" aria-hidden="true" />
               </Button>
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <IconCrop className="size-3.5" />
+              <IconCrop className="size-3.5" aria-hidden="true" />
               Click and drag to crop
             </div>
           </div>
@@ -1094,7 +1100,7 @@ export function PdfCropEditor({
               className="absolute -top-3 -right-3 flex size-7 items-center justify-center rounded-full bg-card text-foreground shadow-md hover:bg-accent"
               aria-label="Close preview"
             >
-              <IconX className="size-4" />
+              <IconX className="size-4" aria-hidden="true" />
             </button>
           </div>
         </div>

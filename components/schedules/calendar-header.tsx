@@ -97,7 +97,7 @@ export function CalendarHeader({
             onClick={onPrev}
             aria-label="Previous period"
           >
-            <IconChevronLeft className="size-4" />
+            <IconChevronLeft className="size-4" aria-hidden="true" />
           </Button>
           <Button
             variant="outline"
@@ -105,7 +105,7 @@ export function CalendarHeader({
             onClick={onNext}
             aria-label="Next period"
           >
-            <IconChevronRight className="size-4" />
+            <IconChevronRight className="size-4" aria-hidden="true" />
           </Button>
         </div>
       </div>

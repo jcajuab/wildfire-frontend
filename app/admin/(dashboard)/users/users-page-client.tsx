@@ -116,9 +116,12 @@ function ResetPasswordDialog({
             aria-label="Copy password"
           >
             {copied ? (
-              <IconCheck className="size-4 text-green-600" />
+              <IconCheck
+                className="size-4 text-green-600"
+                aria-hidden="true"
+              />
             ) : (
-              <IconCopy className="size-4" />
+              <IconCopy className="size-4" aria-hidden="true" />
             )}
           </Button>
         </div>
@@ -255,7 +258,11 @@ export function UsersPageView({
       <PageHeader title="Users">
         <Can permission="users:create">
           <Button onClick={() => setIsInviteDialogOpen(true)}>
-            <IconPlus className="size-4" />
+            <IconPlus
+              className="size-4"
+              aria-hidden="true"
+              data-icon="inline-start"
+            />
             Invite User
           </Button>
         </Can>
@@ -334,7 +341,11 @@ export function UsersPageView({
                         !search ? (
                           <Can permission="users:create">
                             <Button onClick={() => setIsInviteDialogOpen(true)}>
-                              <IconPlus className="size-4" />
+                              <IconPlus
+                                className="size-4"
+                                aria-hidden="true"
+                                data-icon="inline-start"
+                              />
                               Invite User
                             </Button>
                           </Can>

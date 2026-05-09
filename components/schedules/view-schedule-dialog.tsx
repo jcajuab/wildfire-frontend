@@ -112,25 +112,45 @@ export function ViewScheduleDialog({
             </div>
           </div>
 
-          <DialogFooter className="flex-row justify-end">
+          <DialogFooter className="flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {onDelete ? (
+              <div className="flex sm:flex-1">
+                <Button
+                  variant="destructive"
+                  className="w-full sm:w-auto"
+                  onClick={() => setConfirmDeleteOpen(true)}
+                >
+                  <IconTrash
+                    className="size-4"
+                    aria-hidden="true"
+                    data-icon="inline-start"
+                  />
+                  Delete
+                </Button>
+              </div>
+            ) : null}
+            <div className="flex w-full justify-end gap-2 sm:w-auto sm:flex-1">
               <Button
-                variant="destructive"
-                onClick={() => setConfirmDeleteOpen(true)}
+                variant="outline"
+                className={onEdit ? "flex-1 sm:flex-none" : "w-full sm:w-auto"}
+                onClick={() => onOpenChange(false)}
               >
-                <IconTrash className="size-4" />
-                Delete
+                Close
               </Button>
-            ) : null}
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Done
-            </Button>
-            {onEdit ? (
-              <Button onClick={() => onEdit(schedule)}>
-                <IconPencil className="size-4" />
-                Edit
-              </Button>
-            ) : null}
+              {onEdit ? (
+                <Button
+                  className="flex-1 sm:flex-none"
+                  onClick={() => onEdit(schedule)}
+                >
+                  <IconPencil
+                    className="size-4"
+                    aria-hidden="true"
+                    data-icon="inline-start"
+                  />
+                  Edit
+                </Button>
+              ) : null}
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

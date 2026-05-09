@@ -49,7 +49,7 @@ export function GlobalEmergencyButton({
                   void deactivate();
                 }}
               >
-                <IconAlertTriangle className="size-4" />
+                <IconAlertTriangle className="size-4" aria-hidden="true" />
                 <span>{label}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -74,7 +74,7 @@ export function GlobalEmergencyButton({
                       : "border border-sidebar-foreground/35 bg-sidebar/70 text-sidebar-foreground hover:border-transparent hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground focus-visible:border-sidebar-foreground/45 [&_svg]:text-sidebar-foreground"
                   }
                 >
-                  <IconAlertTriangle className="size-4" />
+                  <IconAlertTriangle className="size-4" aria-hidden="true" />
                   <span>{label}</span>
                 </SidebarMenuButton>
               }
@@ -96,7 +96,7 @@ export function GlobalEmergencyButton({
           void deactivate();
         }}
       >
-        <IconAlertTriangle />
+        <IconAlertTriangle aria-hidden="true" />
       </Button>
     );
   }
@@ -116,7 +116,7 @@ export function GlobalEmergencyButton({
               : "border border-border bg-background/80 hover:bg-muted hover:text-foreground"
           }
         >
-          <IconAlertTriangle />
+          <IconAlertTriangle aria-hidden="true" />
         </Button>
       }
     />

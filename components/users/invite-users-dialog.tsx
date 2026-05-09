@@ -89,13 +89,13 @@ function InviteLinkActions({
         >
           {isRevealing ? (
             <>
-              <IconLoader2 className="size-4 animate-spin" />
-              Getting link…
+              <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
+              Getting Link...
             </>
           ) : (
             <>
-              <IconLink className="size-4" />
-              Get link
+              <IconLink className="size-4" aria-hidden="true" />
+              Get Link
             </>
           )}
         </Button>
@@ -110,13 +110,13 @@ function InviteLinkActions({
         >
           {copied ? (
             <>
-              <IconCheck className="size-4 text-green-600" />
-              Link copied
+              <IconCheck className="size-4 text-green-600" aria-hidden="true" />
+              Link Copied
             </>
           ) : (
             <>
-              <IconCopy className="size-4" />
-              Copy link
+              <IconCopy className="size-4" aria-hidden="true" />
+              Copy Link
             </>
           )}
         </Button>
@@ -268,7 +268,7 @@ function InviteUsersDialogContent({
                       onClick={() => handleRemoveEmail(index)}
                       aria-label={`Remove email field ${index + 1}`}
                     >
-                      <IconX className="size-4" />
+                      <IconX className="size-4" aria-hidden="true" />
                     </Button>
                   )}
                 </div>
@@ -277,15 +277,20 @@ function InviteUsersDialogContent({
           </div>
         </div>
 
-        {/* Add another email link */}
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={handleAddEmail}
-          className="focus-visible:ring-ring inline-flex w-fit items-center gap-1 rounded-sm px-1 py-0.5 text-sm text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2"
+          className="w-fit px-1 text-primary hover:bg-transparent hover:text-primary hover:underline"
         >
-          <IconPlus className="size-4" />
-          Add another email
-        </button>
+          <IconPlus
+            className="size-4"
+            aria-hidden="true"
+            data-icon="inline-start"
+          />
+          Add Another Email
+        </Button>
 
         {/* Divider with "Or" */}
         <div className="flex items-center gap-4">
@@ -302,8 +307,8 @@ function InviteUsersDialogContent({
             size="sm"
             onClick={handleDownloadSample}
           >
-            <IconDownload className="size-4" />
-            Download a sample CSV file
+            <IconDownload className="size-4" aria-hidden="true" />
+            Download Sample CSV
           </Button>
           <Button
             type="button"
@@ -311,8 +316,8 @@ function InviteUsersDialogContent({
             size="sm"
             onClick={handleUploadClick}
           >
-            <IconUpload className="size-4" />
-            Upload CSV file
+            <IconUpload className="size-4" aria-hidden="true" />
+            Upload CSV File
           </Button>
           <input
             ref={fileInputRef}
@@ -334,7 +339,7 @@ function InviteUsersDialogContent({
           Cancel
         </Button>
         <Button type="submit" disabled={!hasValidEmail || isSubmitting}>
-          {isSubmitting ? "Inviting…" : "Invite"}
+          {isSubmitting ? "Inviting..." : "Invite"}
         </Button>
       </DialogFooter>
     </form>

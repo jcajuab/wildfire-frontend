@@ -552,11 +552,16 @@ function DisplayRegistrationLinkDialogBody({
               />
               <Button
                 type="button"
+                variant="outline"
                 className="sm:w-auto"
                 onClick={handleCopyLink}
                 disabled={countdown === "Expired"}
               >
-                <IconCopy aria-hidden="true" />
+                <IconCopy
+                  className="size-4"
+                  aria-hidden="true"
+                  data-icon="inline-start"
+                />
                 {copied ? "Copied!" : "Copy Link"}
               </Button>
             </div>

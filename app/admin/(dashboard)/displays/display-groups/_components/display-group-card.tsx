@@ -45,7 +45,7 @@ export function DisplayGroupCard({
       {canManage ? (
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           className="ml-2 size-6 shrink-0 cursor-pointer text-muted-foreground hover:text-foreground"
           aria-label="Group settings"
           onClick={(e) => {
