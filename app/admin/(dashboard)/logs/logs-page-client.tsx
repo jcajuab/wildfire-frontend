@@ -4,7 +4,6 @@ import type { ReactElement } from "react";
 import { useLayoutEffect } from "react";
 import { useState } from "react";
 
-import { EmptyState } from "@/components/common/empty-state";
 import { LogsTable } from "@/components/logs/logs-table";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { SearchControl } from "@/components/common/search-control";
@@ -175,41 +174,39 @@ export function LogsPageClient({
 
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="relative min-h-0 flex-1 overflow-auto p-4">
-            {isFetching && logs.length > 0 ? (
-              <div
-                className="pointer-events-none absolute inset-0 z-10 flex items-start justify-center bg-background/40 pt-16"
-                aria-busy
-                aria-live="polite"
-              >
-                <span className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm text-muted-foreground shadow-sm">
-                  <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  Updating Logs...
-                </span>
+          <div className="flex min-h-0 flex-1 overflow-hidden p-4">
+            <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border">
+              {isFetching ? (
+                <div
+                  className="pointer-events-none absolute inset-0 z-10 flex items-start justify-center bg-background/40 pt-16"
+                  aria-busy
+                  aria-live="polite"
+                >
+                  <span className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm text-muted-foreground shadow-sm">
+                    <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    Updating Logs...
+                  </span>
+                </div>
+              ) : null}
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <LogsTable
+                  logs={logs}
+                  emptyDescription="No audit log entries match the current filters. Try adjusting or resetting your filters."
+                />
               </div>
-            ) : null}
-            {logs.length === 0 ? (
-              <EmptyState
-                title="No logs found"
-                description="No audit log entries match the current filters. Try adjusting or resetting your filters."
-              />
-            ) : (
-              <div className="overflow-hidden rounded-md border border-border">
-                <LogsTable logs={logs} />
-              </div>
-            )}
+              <footer className="border-t border-border bg-background/80">
+                <PaginationFooter
+                  page={filters.page}
+                  pageSize={LOGS_PAGE_SIZE}
+                  total={total}
+                  onPageChange={filters.setPage}
+                  variant="numbered"
+                  alwaysShow
+                />
+              </footer>
+            </section>
           </div>
         </div>
-
-        <footer className="empty:hidden border-t border-border bg-background/80">
-          <PaginationFooter
-            page={filters.page}
-            pageSize={LOGS_PAGE_SIZE}
-            total={total}
-            onPageChange={filters.setPage}
-            variant="numbered"
-          />
-        </footer>
       </section>
       <AuditExportDialog
         open={exportDialogOpen}

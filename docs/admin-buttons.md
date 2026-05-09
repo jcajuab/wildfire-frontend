@@ -167,6 +167,10 @@ Submitting buttons should be disabled while pending and use clear loading copy:
 
 ## Menus And Tables
 
+Use `docs/admin-tables.md` for table frame, header, row, state, and pagination
+rules. This section only covers button and menu behavior inside rows and table
+headers.
+
 Rows and cards should keep action menus compact:
 
 - Three-dot triggers use `variant="ghost"` and `size="icon-sm"`.

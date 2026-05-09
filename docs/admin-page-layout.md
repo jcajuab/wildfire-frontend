@@ -154,7 +154,9 @@ Keep card grids stable:
 
 ### Tables
 
-Users and Roles use a table frame inside the padded page body:
+Users and Roles use a table frame inside the padded page body. See
+`docs/admin-tables.md` for table-specific rules on headers, sorting, filters,
+row height, action menus, empty states, and pagination.
 
 ```tsx
 <div className="flex min-h-0 flex-1 overflow-hidden p-4">
@@ -170,6 +172,7 @@ Users and Roles use a table frame inside the padded page body:
 
 Table rules:
 
+- Follow `docs/admin-tables.md` for detailed table behavior.
 - Integrate tabs and search into the table frame when they only affect that
   table.
 - Do not repeat the page title as a table title unless there are multiple

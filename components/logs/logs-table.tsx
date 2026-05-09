@@ -3,7 +3,12 @@
 import type { ReactElement } from "react";
 import { useState, useCallback } from "react";
 import Image from "next/image";
-import { IconHistory, IconUser } from "@tabler/icons-react";
+import {
+  IconDotsVertical,
+  IconHistory,
+  IconInfoCircle,
+  IconUser,
+} from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import {
@@ -15,12 +20,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatDateTime } from "@/lib/formatters";
 import type { LogEntry } from "@/types/log";
 import { LogMetadataDialog } from "@/components/logs/log-metadata-dialog";
 
 interface LogsTableProps {
   readonly logs: readonly LogEntry[];
+  readonly emptyDescription?: string;
 }
 
 function formatMetadata(metadata: Record<string, unknown>): string {
@@ -31,7 +43,41 @@ function formatMetadata(metadata: Record<string, unknown>): string {
   return str;
 }
 
-export function LogsTable({ logs }: LogsTableProps): ReactElement {
+interface LogActionsMenuProps {
+  readonly log: LogEntry;
+  readonly onViewMetadata: (log: LogEntry) => void;
+}
+
+function LogActionsMenu({
+  log,
+  onViewMetadata,
+}: LogActionsMenuProps): ReactElement {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Actions for log ${log.id}`}
+        >
+          <IconDotsVertical className="size-4" aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-40">
+        <DropdownMenuItem onSelect={() => onViewMetadata(log)}>
+          <IconInfoCircle className="size-4" aria-hidden="true" />
+          View Metadata
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export function LogsTable({
+  logs,
+  emptyDescription = "Logs will appear here as users authenticate and perform actions.",
+}: LogsTableProps): ReactElement {
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
 
   const handleMetadataClick = useCallback((log: LogEntry) => {
@@ -47,7 +93,7 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
       <div className="py-8">
         <EmptyState
           title="No logs found"
-          description="Logs will appear here as users authenticate and perform actions."
+          description={emptyDescription}
           icon={<IconHistory className="size-7" aria-hidden="true" />}
         />
       </div>
@@ -57,22 +103,25 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
   return (
     <>
       <Table>
-        <TableHeader>
+        <TableHeader className="sticky top-0 z-10 bg-background">
           <TableRow>
             <TableHead className="w-[220px]">Timestamp</TableHead>
             <TableHead className="w-[180px]">Author</TableHead>
             <TableHead className="w-[280px]">Description</TableHead>
-            <TableHead>Metadata</TableHead>
+            <TableHead className="min-w-[220px]">Metadata</TableHead>
+            <TableHead className="w-[48px] text-right">
+              <span className="sr-only">Actions</span>
+            </TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody className="[&_tr:last-child]:border-b">
           {logs.map((log) => (
-            <TableRow key={log.id}>
-              <TableCell className="text-muted-foreground">
+            <TableRow key={log.id} className="h-12">
+              <TableCell className="text-muted-foreground tabular-nums">
                 {formatDateTime(log.occurredAt)}
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   {log.actorAvatarUrl ? (
                     <Image
                       src={log.actorAvatarUrl}
@@ -87,28 +136,27 @@ export function LogsTable({ logs }: LogsTableProps): ReactElement {
                       aria-hidden="true"
                     />
                   )}
-                  <span>{log.actorName}</span>
+                  <span className="truncate">{log.actorName}</span>
                 </div>
               </TableCell>
               <TableCell>
-                <div className="space-y-0.5">
-                  <p>{log.description}</p>
-                  <p className="text-xs text-muted-foreground">
+                <div className="max-w-[28rem] space-y-0.5">
+                  <p className="truncate">{log.description}</p>
+                  <p className="truncate text-xs text-muted-foreground">
                     {log.technicalDescription}
                   </p>
                 </div>
               </TableCell>
-              <TableCell>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleMetadataClick(log)}
-                  aria-label="View full metadata"
-                  className="-mx-2 w-full justify-start font-mono text-xs font-normal text-muted-foreground hover:bg-transparent hover:underline"
-                >
+              <TableCell className="max-w-[22rem]">
+                <span className="block truncate font-mono text-xs text-muted-foreground">
                   {formatMetadata(log.metadata)}
-                </Button>
+                </span>
+              </TableCell>
+              <TableCell className="w-[48px] text-right">
+                <LogActionsMenu
+                  log={log}
+                  onViewMetadata={handleMetadataClick}
+                />
               </TableCell>
             </TableRow>
           ))}
