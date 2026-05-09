@@ -119,13 +119,13 @@ export function EditPlaylistPageView(): ReactElement {
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {state.status === "loading" ? (
-            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
               <p className="text-muted-foreground">Loading playlist...</p>
             </div>
           ) : null}
 
           {state.status === "notFound" ? (
-            <div className="flex min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+            <div className="flex min-h-0 flex-1 overflow-auto p-4">
               <EmptyState
                 title="Playlist not found"
                 description={state.message}
@@ -139,7 +139,7 @@ export function EditPlaylistPageView(): ReactElement {
           ) : null}
 
           {state.status === "error" ? (
-            <div className="flex min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+            <div className="flex min-h-0 flex-1 overflow-auto p-4">
               <EmptyState
                 title="Unable to load playlist"
                 description={state.message}
@@ -153,7 +153,7 @@ export function EditPlaylistPageView(): ReactElement {
           ) : null}
 
           {state.status === "ready" ? (
-            <div className="flex min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+            <div className="flex min-h-0 flex-1 overflow-auto p-4">
               <EditPlaylistForm
                 name={name}
                 onNameChange={setName}

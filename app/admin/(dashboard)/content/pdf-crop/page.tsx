@@ -12,6 +12,8 @@ import {
 } from "@/lib/api/content-api";
 import dynamic from "next/dynamic";
 import type { CropRegion } from "@/components/content/pdf-crop-editor";
+import { EmptyState } from "@/components/common/empty-state";
+import { PageHeader } from "@/components/layout/page-header";
 
 const PdfCropEditor = dynamic(
   () =>
@@ -96,19 +98,16 @@ function PdfCropSession({
   }, [uploadId, cancelPdfUpload, router]);
 
   return (
-    <>
-      <h1 className="sr-only">Crop PDF</h1>
-      <PdfCropEditor
-        key={uploadId}
-        pdfUrl={session.pdfUrl}
-        pages={[...session.pages]}
-        filename={session.filename}
-        contentName={contentName}
-        isSubmitting={false}
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-      />
-    </>
+    <PdfCropEditor
+      key={uploadId}
+      pdfUrl={session.pdfUrl}
+      pages={[...session.pages]}
+      filename={session.filename}
+      contentName={contentName}
+      isSubmitting={false}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+    />
   );
 }
 
@@ -153,15 +152,25 @@ export default function PdfCropPage() {
   if (error || (!session && uploadId)) {
     if (error) {
       return (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-muted-foreground">
-          <IconAlertTriangle className="size-10" />
-          <p className="text-sm">PDF crop session not found or expired.</p>
-          <Button
-            variant="outline"
-            onClick={() => router.push("/admin/content")}
-          >
-            Return to content
-          </Button>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
+          <PageHeader title="Crop PDF" />
+          <section className="flex min-h-0 flex-1 flex-col">
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
+              <EmptyState
+                title="PDF crop session expired"
+                description="Return to content and upload the PDF again to continue."
+                icon={<IconAlertTriangle className="size-10" />}
+                action={
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/admin/content")}
+                  >
+                    Return to Content
+                  </Button>
+                }
+              />
+            </div>
+          </section>
         </div>
       );
     }

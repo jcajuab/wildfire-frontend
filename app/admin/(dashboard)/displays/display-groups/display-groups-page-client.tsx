@@ -13,6 +13,7 @@ import {
 import { EmptyState } from "@/components/common/empty-state";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { SearchControl } from "@/components/common/search-control";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -239,23 +240,14 @@ export function DisplayGroupsPageClient({
         />
       ) : null}
 
-      {/* Page header */}
-      <div className="flex items-center justify-between gap-4 border-b border-border p-4">
-        <div>
-          <h1 className="text-sm font-semibold">Manage display groups</h1>
-          <p className="text-xs text-muted-foreground">
-            {isDisplayAxis
-              ? "Pick a display to view and manage the groups it belongs to."
-              : "Assign displays to groups for targeted content scheduling."}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+      <PageHeader title="Display Groups">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <Tabs
             value={axis}
             onValueChange={(v) => handleAxisChange(v as typeof axis)}
             className="!flex-row"
           >
-            <TabsList aria-label="Browse axis">
+            <TabsList aria-label="Browse axis" className="w-full sm:w-auto">
               <TabsTrigger value="group" className="px-3">
                 By group
               </TabsTrigger>
@@ -275,171 +267,181 @@ export function DisplayGroupsPageClient({
             </Button>
           ) : null}
         </div>
-      </div>
+      </PageHeader>
 
-      {/* Subtree keyed by axis so search inputs / scroll position reset cleanly on toggle (rule §5). */}
-      <div key={axis} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {/* Shared pane header — single border-b guarantees horizontal line alignment */}
-        <div className="flex shrink-0 border-b border-border">
-          {/* Left header */}
-          <div className="flex w-56 shrink-0 flex-col gap-3 border-r border-border px-3 py-2">
-            {isDisplayAxis ? (
-              <>
-                <p className="text-xs font-medium text-foreground">Displays</p>
-                <Input
-                  placeholder="Search displays…"
-                  value={leftDisplaySearch}
-                  onChange={(e) =>
-                    handleLeftDisplaySearchChange(e.target.value)
-                  }
-                  className="h-7 text-xs"
-                />
-              </>
-            ) : (
-              <>
-                <p className="text-xs font-medium text-foreground">
-                  Display groups
-                </p>
-                <Input
-                  placeholder="Search groups…"
-                  value={groupSearch}
-                  onChange={(e) => setGroupSearch(e.target.value)}
-                  className="h-7 text-xs"
-                />
-              </>
-            )}
-          </div>
-
-          {/* Right header: 3-column layout */}
-          <div className="flex min-w-0 flex-1 py-2">
-            {/* container-left (25%): label + search */}
-            <div className="flex w-1/4 shrink-0 flex-col gap-3 px-2">
-              {isDisplayAxis ? (
-                <>
-                  <p className="text-xs font-medium text-foreground">
-                    Display groups
-                  </p>
-                  <SearchControl
-                    value={displaySearch}
-                    onChange={handleDisplaySearchChange}
-                    ariaLabel="Search display groups"
-                    placeholder={
-                      selectedDisplay
-                        ? "Search groups…"
-                        : "Select a display first"
-                    }
-                    className="max-w-none"
-                    disabled={!selectedDisplay || isExecuting}
-                  />
-                </>
-              ) : (
-                <>
-                  <p className="text-xs font-medium text-foreground">
-                    Displays
-                  </p>
-                  <SearchControl
-                    value={displaySearch}
-                    onChange={handleDisplaySearchChange}
-                    ariaLabel="Search displays"
-                    placeholder={
-                      selectedGroup
-                        ? "Search displays…"
-                        : "Select a group first"
-                    }
-                    className="max-w-none"
-                    disabled={!selectedGroup || isExecuting}
-                    trailingAction={categoryFilterTrigger}
-                  />
-                </>
-              )}
-            </div>
-
-            {/* container-middle (flex-1): counter text */}
-            <div className="flex flex-1 items-center justify-center px-3">
-              <p className="text-sm text-muted-foreground">{counterText}</p>
-            </div>
-
-            {/* container-right: fixed-width action area */}
-            <div className="flex w-[14rem] shrink-0 items-center justify-end gap-1.5 px-3">
-              {actionMode ? (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCancelAction}
-                    disabled={isExecuting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={
-                      actionMode === "remove" ? "destructive" : "default"
-                    }
-                    disabled={
-                      isDisplayAxis
-                        ? selectedGroupIds.size === 0 || isExecuting
-                        : selectedDisplayIds.size === 0 || isExecuting
-                    }
-                    onClick={() => {
-                      if (isDisplayAxis) {
-                        if (actionMode === "add") void handleConfirmAddGroups();
-                        else void handleConfirmRemoveGroups();
-                      } else {
-                        if (actionMode === "add") void handleConfirmAdd();
-                        else void handleConfirmRemove();
+      <section className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 overflow-auto p-4">
+          {/* Subtree keyed by axis so search inputs / scroll position reset cleanly on toggle (rule §5). */}
+          <div
+            key={axis}
+            className="flex min-h-0 min-w-[44rem] flex-1 flex-col overflow-hidden rounded-md border border-border md:min-w-0"
+          >
+            {/* Shared pane header — single border-b guarantees horizontal line alignment */}
+            <div className="flex shrink-0 border-b border-border">
+              {/* Left header */}
+              <div className="flex w-56 shrink-0 flex-col gap-3 border-r border-border px-3 py-2">
+                {isDisplayAxis ? (
+                  <>
+                    <p className="text-xs font-medium text-foreground">
+                      Displays
+                    </p>
+                    <Input
+                      placeholder="Search displays…"
+                      value={leftDisplaySearch}
+                      onChange={(e) =>
+                        handleLeftDisplaySearchChange(e.target.value)
                       }
-                    }}
-                  >
-                    {isExecuting
-                      ? "Applying..."
-                      : actionMode === "add"
-                        ? "Add"
-                        : "Remove"}
-                  </Button>
-                </>
-              ) : canManageGroups ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      disabled={
-                        isDisplayAxis ? !selectedDisplay : !selectedGroup
-                      }
-                    >
-                      Actions
-                      <IconChevronDown
-                        className="size-4"
-                        aria-hidden="true"
-                        data-icon="inline-end"
+                      className="h-7 text-xs"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs font-medium text-foreground">
+                      Display groups
+                    </p>
+                    <Input
+                      placeholder="Search groups…"
+                      value={groupSearch}
+                      onChange={(e) => setGroupSearch(e.target.value)}
+                      className="h-7 text-xs"
+                    />
+                  </>
+                )}
+              </div>
+
+              {/* Right header: 3-column layout */}
+              <div className="flex min-w-0 flex-1 py-2">
+                {/* container-left (25%): label + search */}
+                <div className="flex w-1/4 shrink-0 flex-col gap-3 px-2">
+                  {isDisplayAxis ? (
+                    <>
+                      <p className="text-xs font-medium text-foreground">
+                        Display groups
+                      </p>
+                      <SearchControl
+                        value={displaySearch}
+                        onChange={handleDisplaySearchChange}
+                        ariaLabel="Search display groups"
+                        placeholder={
+                          selectedDisplay
+                            ? "Search groups…"
+                            : "Select a display first"
+                        }
+                        className="max-w-none"
+                        disabled={!selectedDisplay || isExecuting}
                       />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
-                  >
-                    <DropdownMenuItem onClick={handleEnterAdd}>
-                      <IconPlus className="size-4" aria-hidden="true" />
-                      {isDisplayAxis ? "Add Groups" : "Add Displays"}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={handleEnterRemove}
-                    >
-                      <IconMinus className="size-4" aria-hidden="true" />
-                      {isDisplayAxis ? "Remove Groups" : "Remove Displays"}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : null}
-            </div>
-          </div>
-        </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs font-medium text-foreground">
+                        Displays
+                      </p>
+                      <SearchControl
+                        value={displaySearch}
+                        onChange={handleDisplaySearchChange}
+                        ariaLabel="Search displays"
+                        placeholder={
+                          selectedGroup
+                            ? "Search displays…"
+                            : "Select a group first"
+                        }
+                        className="max-w-none"
+                        disabled={!selectedGroup || isExecuting}
+                        trailingAction={categoryFilterTrigger}
+                      />
+                    </>
+                  )}
+                </div>
 
-        {/* Two-pane scrollable area */}
-        <div className="flex min-h-0 flex-1 overflow-hidden">
+                {/* container-middle (flex-1): counter text */}
+                <div className="flex flex-1 items-center justify-center px-3">
+                  <p className="text-sm text-muted-foreground">
+                    {counterText}
+                  </p>
+                </div>
+
+                {/* container-right: fixed-width action area */}
+                <div className="flex w-[14rem] shrink-0 items-center justify-end gap-1.5 px-3">
+                  {actionMode ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCancelAction}
+                        disabled={isExecuting}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={
+                          actionMode === "remove" ? "destructive" : "default"
+                        }
+                        disabled={
+                          isDisplayAxis
+                            ? selectedGroupIds.size === 0 || isExecuting
+                            : selectedDisplayIds.size === 0 || isExecuting
+                        }
+                        onClick={() => {
+                          if (isDisplayAxis) {
+                            if (actionMode === "add")
+                              void handleConfirmAddGroups();
+                            else void handleConfirmRemoveGroups();
+                          } else {
+                            if (actionMode === "add") void handleConfirmAdd();
+                            else void handleConfirmRemove();
+                          }
+                        }}
+                      >
+                        {isExecuting
+                          ? "Applying..."
+                          : actionMode === "add"
+                            ? "Add"
+                            : "Remove"}
+                      </Button>
+                    </>
+                  ) : canManageGroups ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          disabled={
+                            isDisplayAxis ? !selectedDisplay : !selectedGroup
+                          }
+                        >
+                          Actions
+                          <IconChevronDown
+                            className="size-4"
+                            aria-hidden="true"
+                            data-icon="inline-end"
+                          />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
+                      >
+                        <DropdownMenuItem onClick={handleEnterAdd}>
+                          <IconPlus className="size-4" aria-hidden="true" />
+                          {isDisplayAxis ? "Add Groups" : "Add Displays"}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={handleEnterRemove}
+                        >
+                          <IconMinus className="size-4" aria-hidden="true" />
+                          {isDisplayAxis ? "Remove Groups" : "Remove Displays"}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            {/* Two-pane scrollable area */}
+            <div className="flex min-h-0 flex-1 overflow-hidden">
           {/* Left pane */}
           <div className="flex w-56 shrink-0 flex-col border-r border-border">
             {isDisplayAxis ? (
@@ -674,8 +676,10 @@ export function DisplayGroupsPageClient({
               </>
             )}
           </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Rename dialog — keyed by groupId so it remounts with fresh state */}
       {renameGroupId !== null ? (

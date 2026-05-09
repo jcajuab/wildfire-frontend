@@ -113,7 +113,7 @@ export function CreatePlaylistPageView(): ReactElement {
       </PageHeader>
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
+          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-auto p-4">
             <PlaylistFormBody
               name={name}
               onNameChange={setName}

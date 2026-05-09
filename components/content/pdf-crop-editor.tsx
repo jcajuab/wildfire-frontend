@@ -774,7 +774,7 @@ export function PdfCropEditor({
   return (
     <div className="flex h-full flex-col">
       {/* Header using admin layout pattern */}
-      <header className="flex flex-col gap-2 border-b border-border bg-muted/20 px-6 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+      <header className="flex flex-col gap-2 border-b border-border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h1 className="truncate text-xl font-semibold leading-tight tracking-tight sm:text-2xl">
             {contentName || filename}

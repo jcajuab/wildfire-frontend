@@ -153,10 +153,7 @@ describe("CreatePlaylistPage", () => {
       "flex-col",
       "gap-6",
       "overflow-auto",
-      "px-6",
-      "py-6",
-      "sm:px-8",
-      "sm:py-8",
+      "p-4",
     ]);
 
     expect(contentShell).not.toBeNull();
