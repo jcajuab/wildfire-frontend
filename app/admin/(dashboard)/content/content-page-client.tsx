@@ -394,7 +394,6 @@ export function ContentPageView({
             pageSize={controller.pageSize}
             total={controller.data?.total ?? 0}
             onPageChange={controller.filters.setPage}
-            variant="compact"
             alwaysShow
           />
         </footer>

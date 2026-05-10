@@ -56,7 +56,7 @@ vi.mock("@/components/users/pending-invitations-table", () => ({
 }));
 
 vi.mock("./_hooks/use-users-page", () => ({
-  PAGE_SIZE: 20,
+  PAGE_SIZE: 30,
   useUsersPage: vi.fn(),
 }));
 

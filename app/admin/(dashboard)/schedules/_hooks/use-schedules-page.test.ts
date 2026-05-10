@@ -562,7 +562,7 @@ describe("useSchedulesPage", () => {
   test("paginates visible display resources", () => {
     const bootstrap: SchedulesBootstrapResponse = {
       ...makeBootstrapData([]),
-      displayOptions: Array.from({ length: 9 }, (_, index) => ({
+      displayOptions: Array.from({ length: 21 }, (_, index) => ({
         id: `display-${index + 1}`,
         name: `Display ${index + 1}`,
       })),
@@ -583,21 +583,21 @@ describe("useSchedulesPage", () => {
       }),
     );
 
-    expect(result.current.resourceTotal).toBe(9);
-    expect(result.current.paginatedDisplayResources).toHaveLength(8);
+    expect(result.current.resourceTotal).toBe(21);
+    expect(result.current.paginatedDisplayResources).toHaveLength(20);
 
     act(() => result.current.setResourcePage(2));
 
     expect(result.current.resourcePage).toBe(2);
     expect(result.current.paginatedDisplayResources).toEqual([
-      { id: "display-9", name: "Display 9" },
+      { id: "display-21", name: "Display 21" },
     ]);
   });
 
   test("resets resource pagination when target resources change", () => {
     const bootstrap: SchedulesBootstrapResponse = {
       ...makeBootstrapData([]),
-      displayOptions: Array.from({ length: 9 }, (_, index) => ({
+      displayOptions: Array.from({ length: 21 }, (_, index) => ({
         id: `display-${index + 1}`,
         name: `Display ${index + 1}`,
       })),

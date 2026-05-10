@@ -22,9 +22,18 @@ export default function Loading(): ReactElement {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto p-4">
-        <div className="h-[520px] w-full animate-pulse rounded-md bg-muted" />
-      </div>
+      <section className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 overflow-hidden p-4">
+          <div className="h-full min-h-96 w-full animate-pulse rounded-md bg-muted" />
+        </div>
+
+        <footer className="shrink-0 border-t border-border bg-background/80 p-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="h-5 w-48 animate-pulse rounded bg-muted" />
+            <div className="h-9 w-44 animate-pulse rounded bg-muted" />
+          </div>
+        </footer>
+      </section>
     </div>
   );
 }

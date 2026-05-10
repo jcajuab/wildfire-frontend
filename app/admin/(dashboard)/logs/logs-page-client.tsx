@@ -200,7 +200,6 @@ export function LogsPageClient({
                   pageSize={LOGS_PAGE_SIZE}
                   total={total}
                   onPageChange={filters.setPage}
-                  variant="numbered"
                   alwaysShow
                 />
               </footer>

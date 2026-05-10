@@ -164,7 +164,7 @@ function makeContentData(
     ),
     total: titles.length,
     page: 1,
-    pageSize: 12,
+    pageSize: 20,
   };
 }
 
@@ -271,7 +271,7 @@ describe("useContentPageController", () => {
     expect(useListContentQueryMock).toHaveBeenCalledWith(
       {
         page: 2,
-        pageSize: 12,
+        pageSize: 20,
         status: "READY",
         type: "VIDEO",
         ownerId: "00000000-0000-4000-8000-000000000001",
@@ -293,7 +293,7 @@ describe("useContentPageController", () => {
   test("uses initial content data when returning to the initial query", () => {
     const initialQuery: ContentListQuery = {
       page: 1,
-      pageSize: 12,
+      pageSize: 20,
       sortBy: "createdAt",
       sortDirection: "desc",
     };
@@ -371,7 +371,7 @@ describe("useContentPageController", () => {
         initialList: {
           queryArgs: {
             page: 1,
-            pageSize: 12,
+            pageSize: 20,
             sortBy: "createdAt",
             sortDirection: "desc",
           },

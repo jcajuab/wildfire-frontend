@@ -255,7 +255,6 @@ export function PlaylistsPageView({
             pageSize={PAGE_SIZE}
             total={totalPlaylists}
             onPageChange={setPage}
-            variant="compact"
             alwaysShow
           />
         </footer>

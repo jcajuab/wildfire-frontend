@@ -12,7 +12,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-type PaginationVariant = "compact" | "numbered";
+type PaginationVariant = "auto" | "compact" | "numbered";
 type PaginationToken = number | "start-ellipsis" | "end-ellipsis";
 
 function getNumberedPageTokens(
@@ -65,7 +65,7 @@ export function PaginationFooter({
   pageSize,
   total,
   onPageChange,
-  variant = "compact",
+  variant = "auto",
   alwaysShow = false,
   className,
 }: PaginationFooterProps): ReactElement | null {
@@ -75,6 +75,8 @@ export function PaginationFooter({
   const endItem = Math.min(boundedPage * pageSize, total);
   const canGoPrevious = boundedPage > 1;
   const canGoNext = boundedPage < totalPages;
+  const effectiveVariant =
+    variant === "auto" ? (totalPages >= 3 ? "numbered" : "compact") : variant;
 
   if (!alwaysShow && (total <= pageSize || totalPages <= 1)) {
     return null;
@@ -106,7 +108,7 @@ export function PaginationFooter({
               onClick={handleGo(boundedPage - 1)}
             />
           </PaginationItem>
-          {variant === "numbered" ? (
+          {effectiveVariant === "numbered" ? (
             getNumberedPageTokens(boundedPage, totalPages).map(
               (token, index) =>
                 typeof token === "number" ? (

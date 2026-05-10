@@ -1,8 +1,12 @@
 import type { DisplaysListQuery } from "@/lib/api/displays-api";
+import {
+  ADMIN_BOOTSTRAP_PAGE_SIZE,
+  ADMIN_CARD_PAGE_SIZE,
+} from "@/lib/admin-pagination";
 import { normalizeDisplayOutputFilter } from "@/lib/display-output";
 
-export const DISPLAYS_PAGE_SIZE = 20;
-export const DISPLAYS_BOOTSTRAP_PAGE_SIZE = 100;
+export const DISPLAYS_PAGE_SIZE = ADMIN_CARD_PAGE_SIZE;
+export const DISPLAYS_BOOTSTRAP_PAGE_SIZE = ADMIN_BOOTSTRAP_PAGE_SIZE;
 
 const DISPLAY_STATUS_VALUES = ["all", "READY", "LIVE", "DOWN"] as const;
 

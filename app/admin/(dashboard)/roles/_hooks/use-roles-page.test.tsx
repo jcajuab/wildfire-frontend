@@ -61,7 +61,7 @@ const useRolesFiltersMock = vi.mocked(useRolesFilters);
 
 const initialQuery: RbacRoleListQuery = {
   page: 1,
-  pageSize: 10,
+  pageSize: 30,
   sortBy: "name",
   sortDirection: "asc",
 };
@@ -82,7 +82,7 @@ function makeRolesData(names: readonly string[]): RbacRolesListResponse {
     })),
     total: names.length,
     page: 1,
-    pageSize: 10,
+    pageSize: 30,
   };
 }
 

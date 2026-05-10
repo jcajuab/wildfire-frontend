@@ -24,6 +24,7 @@ import {
 } from "@/lib/api/displays-api";
 import { useAppDispatch } from "@/lib/hooks";
 import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
+import { ADMIN_RESOURCE_PAGE_SIZE } from "@/lib/admin-pagination";
 import { collapseDisplayGroupWhitespace } from "@/lib/display-group-normalization";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
@@ -32,8 +33,8 @@ import {
 } from "@/lib/mappers/display-mapper";
 import type { Display } from "@/types/display";
 
-export const DISPLAY_PAGE_SIZE = 12;
-export const GROUP_PAGE_SIZE = 12;
+export const DISPLAY_PAGE_SIZE = ADMIN_RESOURCE_PAGE_SIZE;
+export const GROUP_PAGE_SIZE = ADMIN_RESOURCE_PAGE_SIZE;
 // Internal query for "all groups for a single display" — display can belong
 // to many groups but rarely more than a few dozen; 100 matches the backend's
 // pageSize cap so requests don't 422.

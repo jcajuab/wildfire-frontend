@@ -1,6 +1,7 @@
 import type { PlaylistListQuery } from "@/lib/api/playlists-api";
+import { ADMIN_CARD_PAGE_SIZE } from "@/lib/admin-pagination";
 
-export const PLAYLISTS_PAGE_SIZE = 12;
+export const PLAYLISTS_PAGE_SIZE = ADMIN_CARD_PAGE_SIZE;
 
 const PLAYLIST_STATUS_VALUES = ["all", "DRAFT", "IN_USE"] as const;
 const PLAYLIST_SORT_VALUES = [

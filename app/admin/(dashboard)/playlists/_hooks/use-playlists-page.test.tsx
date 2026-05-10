@@ -79,7 +79,7 @@ const usePlaylistsFiltersMock = vi.mocked(usePlaylistsFilters);
 
 const initialQuery: PlaylistListQuery = {
   page: 1,
-  pageSize: 12,
+  pageSize: 20,
   sortBy: "createdAt",
   sortDirection: "desc",
 };
@@ -109,7 +109,7 @@ function makePlaylistsData(
     ),
     total: names.length,
     page: 1,
-    pageSize: 12,
+    pageSize: 20,
   };
 }
 
@@ -240,7 +240,7 @@ describe("usePlaylistsPage", () => {
     expect(useListPlaylistsQueryMock).toHaveBeenCalledWith(
       {
         page: 1,
-        pageSize: 12,
+        pageSize: 20,
         status: "DRAFT",
         ownerId: "00000000-0000-4000-8000-000000000001",
         search: undefined,

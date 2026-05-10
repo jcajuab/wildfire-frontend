@@ -80,9 +80,9 @@ export function ResourceDayView({
   const nowFraction = nowMinutes / MINUTES_PER_DAY;
 
   return (
-    <div className="flex max-h-[min(70dvh,calc(100dvh-14rem))] flex-col overflow-hidden rounded-md border border-border">
-      <div className="overflow-auto">
-        <div className="min-w-[920px] lg:min-w-[1100px]">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border">
+      <div className="min-h-0 flex-1 overflow-auto">
+        <div className="w-full min-w-[920px] lg:min-w-[1100px]">
           <div
             className="sticky top-0 z-30 grid border-b border-border bg-muted backdrop-blur-sm max-[52rem]:hidden"
             style={{ gridTemplateColumns: DAY_GRID_TEMPLATE }}

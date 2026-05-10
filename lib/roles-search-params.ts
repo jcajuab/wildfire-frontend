@@ -1,4 +1,6 @@
-export const ROLES_PAGE_SIZE = 10;
+import { ADMIN_TABLE_PAGE_SIZE } from "@/lib/admin-pagination";
+
+export const ROLES_PAGE_SIZE = ADMIN_TABLE_PAGE_SIZE;
 
 const ROLE_SORT_FIELDS = ["name", "usersCount"] as const;
 const ROLE_SORT_DIRECTIONS = ["asc", "desc"] as const;

@@ -4,10 +4,11 @@ import {
   dateToISOStart,
   isValidYyyyMmDd,
 } from "@/lib/formatters";
+import { ADMIN_LOG_PAGE_SIZE } from "@/lib/admin-pagination";
 import type { ResourceTypeFilter } from "@/lib/audit-resource-types";
 import { RESOURCE_TYPE_FILTER_OPTIONS } from "@/lib/audit-resource-types";
 
-export const LOGS_PAGE_SIZE = 20;
+export const LOGS_PAGE_SIZE = ADMIN_LOG_PAGE_SIZE;
 
 const ACTOR_TYPES = ["all", "user", "display"] as const;
 type ActorTypeParam = (typeof ACTOR_TYPES)[number];

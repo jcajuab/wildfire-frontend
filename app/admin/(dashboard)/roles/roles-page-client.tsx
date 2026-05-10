@@ -199,7 +199,6 @@ export function RolesPageView({
                   pageSize={PAGE_SIZE}
                   total={rolesData?.total ?? 0}
                   onPageChange={setPage}
-                  variant="numbered"
                   alwaysShow
                 />
               </footer>

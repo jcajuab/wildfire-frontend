@@ -585,7 +585,6 @@ export function DisplayGroupsPageClient({
                           pageSize={GROUP_PAGE_SIZE}
                           total={groupsRightPaneTotal}
                           onPageChange={setGroupsRightPanePage}
-                          variant="compact"
                           alwaysShow
                         />
                       </footer>
@@ -672,7 +671,6 @@ export function DisplayGroupsPageClient({
                         pageSize={DISPLAY_PAGE_SIZE}
                         total={displayTotal}
                         onPageChange={setDisplayPage}
-                        variant="compact"
                         alwaysShow
                       />
                     </footer>

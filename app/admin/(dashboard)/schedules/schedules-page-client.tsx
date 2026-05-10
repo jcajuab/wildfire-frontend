@@ -235,7 +235,7 @@ export function SchedulesPageView({
             />
           </div>
 
-          <div className="relative flex min-h-0 flex-1 flex-col overflow-auto p-4">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-4">
             {isFetching && !isLoading ? (
               <div className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center">
                 <div className="flex items-center gap-2 rounded-full border border-border bg-background/95 px-4 py-1.5 shadow-sm backdrop-blur-sm">
@@ -290,31 +290,33 @@ export function SchedulesPageView({
                 />
               </div>
             ) : (
-              <CalendarGrid
-                currentDate={currentDate}
-                view={view}
-                schedules={schedules}
-                resources={
-                  resourceMode === "display-group"
-                    ? availableDisplays
-                    : paginatedDisplayResources
-                }
-                onScheduleClick={handleScheduleClick}
-                resourceMode={resourceMode}
-                displayGroups={paginatedDisplayGroups}
-                isSelectionMode={isSelectionMode}
-                selectedIds={isSelectionMode ? selectedIds : undefined}
-                canSelectSchedule={canDeleteScheduleItem}
-                onScheduleSelectionChange={
-                  canDeleteSchedule && isSelectionMode
-                    ? (schedule, checked) =>
-                        setItemSelected(
-                          { id: schedule.id, label: schedule.name },
-                          checked,
-                        )
-                    : undefined
-                }
-              />
+              <div className="min-h-0 flex-1">
+                <CalendarGrid
+                  currentDate={currentDate}
+                  view={view}
+                  schedules={schedules}
+                  resources={
+                    resourceMode === "display-group"
+                      ? availableDisplays
+                      : paginatedDisplayResources
+                  }
+                  onScheduleClick={handleScheduleClick}
+                  resourceMode={resourceMode}
+                  displayGroups={paginatedDisplayGroups}
+                  isSelectionMode={isSelectionMode}
+                  selectedIds={isSelectionMode ? selectedIds : undefined}
+                  canSelectSchedule={canDeleteScheduleItem}
+                  onScheduleSelectionChange={
+                    canDeleteSchedule && isSelectionMode
+                      ? (schedule, checked) =>
+                          setItemSelected(
+                            { id: schedule.id, label: schedule.name },
+                            checked,
+                          )
+                      : undefined
+                  }
+                />
+              </div>
             )}
           </div>
         </div>

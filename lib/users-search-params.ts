@@ -1,4 +1,6 @@
-export const USERS_PAGE_SIZE = 10;
+import { ADMIN_TABLE_PAGE_SIZE } from "@/lib/admin-pagination";
+
+export const USERS_PAGE_SIZE = ADMIN_TABLE_PAGE_SIZE;
 
 const USER_SORT_FIELDS = ["name", "email", "lastSeen"] as const;
 const USER_SORT_DIRECTIONS = ["asc", "desc"] as const;

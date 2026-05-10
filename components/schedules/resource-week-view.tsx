@@ -73,8 +73,8 @@ export function ResourceWeekView({
   onScheduleSelectionChange,
 }: ResourceGridSharedProps): ReactElement {
   return (
-    <div className="flex max-h-[min(70dvh,calc(100dvh-14rem))] flex-col overflow-hidden rounded-md border border-border">
-      <div className="overflow-auto">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border">
+      <div className="min-h-0 flex-1 overflow-auto">
         <div className="w-full min-w-0 max-[52rem]:min-w-[56rem]">
           <div
             className="sticky top-0 z-30 grid border-b border-border bg-muted backdrop-blur-sm max-[52rem]:hidden"

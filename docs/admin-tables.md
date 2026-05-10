@@ -163,6 +163,10 @@ Table states must preserve the frame:
 - Pagination stays fixed below the body and should use `PaginationFooter` with
   `alwaysShow` for paginated table pages.
 - Result count stays on the left; page controls stay on the right.
+- Use the shared table density page size of `30` rows. Tables are more compact
+  than card grids and should expose more data per page.
+- Pagination uses the shared auto behavior: compact controls for one or two
+  pages, numbered controls with ellipses for three or more pages.
 
 For loading skeletons, mirror the final table frame, toolbar, header heights,
 row heights, and footer placement.

@@ -425,7 +425,6 @@ export function DisplaysPageView({
             pageSize={PAGE_SIZE}
             total={displaysData?.total ?? 0}
             onPageChange={setPage}
-            variant="compact"
             alwaysShow
           />
         </footer>

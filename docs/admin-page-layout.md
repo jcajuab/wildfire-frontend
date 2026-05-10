@@ -220,6 +220,14 @@ Pagination footers should be fixed below the scrollable body:
 - Always show pagination on pages where pagination is part of the page pattern,
   even when there is only one page.
 - Keep result count on the left and page controls on the right.
+- Use shared admin density constants instead of page-local magic numbers:
+  card/grid pages use `20`, resource-style calendar/list panes use `20`, and
+  compact table/log pages use `30`.
+- Keep bootstrap/prefetch batch sizes separate from visible page sizes. Large
+  bootstrap reads can use `100` when the page needs a wider client-side working
+  set.
+- Pagination controls should stay compact for one or two pages and switch to
+  numbered controls with ellipses once there are three or more pages.
 
 ## Loading And Error States
 

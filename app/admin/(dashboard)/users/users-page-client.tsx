@@ -436,7 +436,6 @@ export function UsersPageView({
                     onPageChange={
                       selectedTab === "users" ? setPage : setInvitationPage
                     }
-                    variant="numbered"
                     alwaysShow
                   />
                 </footer>

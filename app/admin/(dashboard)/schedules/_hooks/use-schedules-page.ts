@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
+import { ADMIN_RESOURCE_PAGE_SIZE } from "@/lib/admin-pagination";
 import {
   schedulesApi,
   useGetSchedulesBootstrapQuery,
@@ -21,7 +22,7 @@ import { useScheduleFilters } from "./use-schedule-filters";
 import { useScheduleDialogs } from "./use-schedule-dialogs";
 import { useScheduleHandlers } from "./use-schedule-handlers";
 
-export const SCHEDULE_RESOURCE_PAGE_SIZE = 8;
+export const SCHEDULE_RESOURCE_PAGE_SIZE = ADMIN_RESOURCE_PAGE_SIZE;
 
 export function canManageScheduleForUser(
   schedule: Schedule | null,

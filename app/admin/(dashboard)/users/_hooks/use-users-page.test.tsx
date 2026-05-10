@@ -113,7 +113,7 @@ const useUsersFiltersMock = vi.mocked(useUsersFilters);
 
 const initialUsersQuery: RbacUserListQuery = {
   page: 1,
-  pageSize: 10,
+  pageSize: 30,
   sortBy: "name",
   sortDirection: "asc",
 };
@@ -136,7 +136,7 @@ function makeUsersData(names: readonly string[]): RbacUsersListResponse {
     ),
     total: names.length,
     page: 1,
-    pageSize: 10,
+    pageSize: 30,
   };
 }
 
@@ -156,7 +156,7 @@ function makeInvitationsData(
     ],
     total: 1,
     page: 1,
-    pageSize: 10,
+    pageSize: 30,
   };
 }
 
@@ -274,7 +274,7 @@ describe("useUsersPage", () => {
     expect(useListInvitationsQueryMock).toHaveBeenCalledWith(
       {
         page: 1,
-        pageSize: 10,
+        pageSize: 30,
         q: undefined,
         status: "pending",
         sortBy: "createdAt",

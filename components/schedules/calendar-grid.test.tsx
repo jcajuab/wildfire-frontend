@@ -49,6 +49,54 @@ const schedules: Schedule[] = [
 ];
 
 describe("CalendarGrid", () => {
+  test("lets the day calendar fill its parent and span the available timeline width", () => {
+    const { container } = render(
+      <CalendarGrid
+        currentDate={new Date("2026-03-06T00:00:00.000Z")}
+        view="resource-day"
+        schedules={schedules}
+        resources={[display]}
+        resourceMode="display"
+        displayGroups={[]}
+        onScheduleClick={vi.fn()}
+      />,
+    );
+
+    const calendarRoot = container.firstElementChild;
+    const scrollRegion = calendarRoot?.firstElementChild;
+    const timeline = scrollRegion?.firstElementChild;
+
+    expect(calendarRoot).toHaveClass("h-full", "min-h-0", "flex-1");
+    expect(calendarRoot?.className).not.toContain("max-h-");
+    expect(scrollRegion).toHaveClass("min-h-0", "flex-1", "overflow-auto");
+    expect(timeline).toHaveClass(
+      "w-full",
+      "min-w-[920px]",
+      "lg:min-w-[1100px]",
+    );
+  });
+
+  test("lets the week calendar fill its parent without a fixed height cap", () => {
+    const { container } = render(
+      <CalendarGrid
+        currentDate={new Date("2026-03-06T00:00:00.000Z")}
+        view="resource-week"
+        schedules={schedules}
+        resources={[display]}
+        resourceMode="display"
+        displayGroups={[]}
+        onScheduleClick={vi.fn()}
+      />,
+    );
+
+    const calendarRoot = container.firstElementChild;
+    const scrollRegion = calendarRoot?.firstElementChild;
+
+    expect(calendarRoot).toHaveClass("h-full", "min-h-0", "flex-1");
+    expect(calendarRoot?.className).not.toContain("max-h-");
+    expect(scrollRegion).toHaveClass("min-h-0", "flex-1", "overflow-auto");
+  });
+
   test("renders overlapping day schedules on distinct vertical lanes", () => {
     render(
       <CalendarGrid

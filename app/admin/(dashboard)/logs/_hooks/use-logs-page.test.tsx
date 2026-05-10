@@ -67,7 +67,7 @@ const useAuditLogFiltersMock = vi.mocked(useAuditLogFilters);
 
 const initialQuery: AuditListQuery = {
   page: 1,
-  pageSize: 20,
+  pageSize: 30,
 };
 
 function makeAuditData(ids: readonly string[]): BackendAuditListResponse {
@@ -93,14 +93,14 @@ function makeAuditData(ids: readonly string[]): BackendAuditListResponse {
     ),
     total: ids.length,
     page: 1,
-    pageSize: 20,
+    pageSize: 30,
   };
 }
 
 function mockFilters(query: AuditListQuery) {
   useAuditLogFiltersMock.mockReturnValue({
     page: query.page ?? 1,
-    pageSize: query.pageSize ?? 20,
+    pageSize: query.pageSize ?? 30,
     listQuery: query,
     exportQuery: query,
     fromDraft: "",
@@ -168,7 +168,7 @@ describe("useLogsPage", () => {
   test("uses active audit query data for changed filters", () => {
     const filteredQuery: AuditListQuery = {
       page: 1,
-      pageSize: 20,
+      pageSize: 30,
       status: 500,
     };
     mockFilters(filteredQuery);

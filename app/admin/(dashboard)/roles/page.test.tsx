@@ -16,7 +16,7 @@ vi.mock("@/components/common/confirm-action-dialog", () => ({
 }));
 
 vi.mock("./_hooks/use-roles-page", () => ({
-  PAGE_SIZE: 10,
+  PAGE_SIZE: 30,
   useRolesPage: vi.fn(),
 }));
 
@@ -56,7 +56,7 @@ function makePageResult(
       items: [],
       total: 2,
       page: 1,
-      pageSize: 10,
+      pageSize: 30,
     },
     rolesLoading: false,
     rolesFetching: false,
