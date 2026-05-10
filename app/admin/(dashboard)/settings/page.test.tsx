@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { ReactElement } from "react";
-import type { ServerSession } from "@/lib/server/auth";
+import type { ServerSession, ServerSessionResult } from "@/lib/server/auth";
 
 const { getServerSessionMock, redirectMock, serverFetchJsonMock } = vi.hoisted(
   () => ({
@@ -20,15 +20,9 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/server/auth", () => ({
   getServerSession: getServerSessionMock,
   getCachedServerSession: getServerSessionMock,
-  resolveSession: (
-    result: ServerSession | null,
-    redirectTarget: string,
-  ): ServerSession | null => {
-    if (!result) {
-      redirectMock(`/login?redirectTo=${encodeURIComponent(redirectTarget)}`);
-    }
-    return result;
-  },
+  resolveOptionalDashboardSession: (
+    result: ServerSessionResult,
+  ): ServerSession | null => (result.status === "ok" ? result.session : null),
 }));
 
 vi.mock("@/lib/server/api", () => ({
@@ -92,13 +86,22 @@ const makeSession = (
   permissions,
 });
 
+const makeSessionResult = (
+  permissions: ServerSession["permissions"],
+): ServerSessionResult => ({
+  status: "ok",
+  session: makeSession(permissions),
+});
+
 describe("SettingsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   test("renders settings without fetching AI credentials when ai access is missing", async () => {
-    getServerSessionMock.mockResolvedValue(makeSession(["displays:read"]));
+    getServerSessionMock.mockResolvedValue(
+      makeSessionResult(["displays:read"]),
+    );
 
     render(await SettingsPage());
 
@@ -113,7 +116,7 @@ describe("SettingsPage", () => {
   });
 
   test("bootstraps AI credentials when ai access is present", async () => {
-    getServerSessionMock.mockResolvedValue(makeSession(["ai:access"]));
+    getServerSessionMock.mockResolvedValue(makeSessionResult(["ai:access"]));
     serverFetchJsonMock.mockResolvedValue({
       ok: true,
       data: { data: [{ id: "credential-1" }] },
@@ -131,11 +134,13 @@ describe("SettingsPage", () => {
     );
   });
 
-  test("redirects unauthenticated users to login", async () => {
-    getServerSessionMock.mockResolvedValue(null);
+  test("renders guarded fallback when server session is unauthenticated", async () => {
+    getServerSessionMock.mockResolvedValue({ status: "unauthenticated" });
 
-    await expect(SettingsPage()).rejects.toThrow(
-      "REDIRECT:/login?redirectTo=%2Fadmin%2Fsettings",
-    );
+    render(await SettingsPage());
+
+    expect(screen.getByRole("heading", { name: "Settings" })).toBeVisible();
+    expect(redirectMock).not.toHaveBeenCalled();
+    expect(serverFetchJsonMock).not.toHaveBeenCalled();
   });
 });

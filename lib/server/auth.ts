@@ -131,6 +131,17 @@ export function resolveSession(
 }
 
 /**
+ * Dashboard routes are already protected by the edge proxy and client AuthGuard.
+ * Avoid hard RSC redirects here so transient server-side refresh misses do not
+ * boot a still-refreshable client session back to `/login`.
+ */
+export function resolveOptionalDashboardSession(
+  result: ServerSessionResult,
+): ServerSession | null {
+  return result.status === "ok" ? result.session : null;
+}
+
+/**
  * Cached variant of {@link getServerSession} for page-level auth checks.
  *
  * Keyed per-user (cookies are part of the `"use cache: private"` key) and

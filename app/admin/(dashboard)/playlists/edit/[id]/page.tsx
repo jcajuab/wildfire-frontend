@@ -5,7 +5,10 @@ import type { BackendPlaylistWithItems } from "@/lib/api/playlists-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY } from "@/lib/content-search-params";
 import { getPlaylistEditPath } from "@/lib/playlist-paths";
-import { getServerSession, resolveSession } from "@/lib/server/auth";
+import {
+  getServerSession,
+  resolveOptionalDashboardSession,
+} from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
@@ -29,7 +32,7 @@ export default async function EditPlaylistPage({
   const { id: playlistId } = await params;
   const editPath = getPlaylistEditPath(playlistId);
 
-  const session = resolveSession(await getServerSession(), editPath);
+  const session = resolveOptionalDashboardSession(await getServerSession());
   if (!session) {
     return <EditPlaylistPageView />;
   }

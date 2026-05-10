@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
 import { CalendarGrid } from "@/components/schedules/calendar-grid";
 import type { Schedule, ScheduleDisplay } from "@/types/schedule";
@@ -74,5 +75,66 @@ describe("CalendarGrid", () => {
     expect(Number.isFinite(playlistTop)).toBe(true);
     expect(Number.isFinite(flashTop)).toBe(true);
     expect(Math.abs(playlistTop - flashTop)).toBeGreaterThanOrEqual(44);
+  });
+
+  test("toggles schedule selection instead of opening details in bulk mode", async () => {
+    const user = userEvent.setup();
+    const onScheduleClick = vi.fn();
+    const onScheduleSelectionChange = vi.fn();
+
+    render(
+      <CalendarGrid
+        currentDate={new Date("2026-03-06T00:00:00.000Z")}
+        view="resource-day"
+        schedules={schedules}
+        resources={[display]}
+        resourceMode="display"
+        displayGroups={[]}
+        onScheduleClick={onScheduleClick}
+        isSelectionMode
+        selectedIds={new Set()}
+        canSelectSchedule={() => true}
+        onScheduleSelectionChange={onScheduleSelectionChange}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /select schedule test schedule/i,
+      }),
+    );
+
+    expect(onScheduleClick).not.toHaveBeenCalled();
+    expect(onScheduleSelectionChange).toHaveBeenCalledWith(schedules[0], true);
+  });
+
+  test("disables schedule selection for non-deletable schedules in bulk mode", async () => {
+    const user = userEvent.setup();
+    const onScheduleSelectionChange = vi.fn();
+
+    render(
+      <CalendarGrid
+        currentDate={new Date("2026-03-06T00:00:00.000Z")}
+        view="resource-day"
+        schedules={schedules}
+        resources={[display]}
+        resourceMode="display"
+        displayGroups={[]}
+        onScheduleClick={vi.fn()}
+        isSelectionMode
+        selectedIds={new Set()}
+        canSelectSchedule={() => false}
+        onScheduleSelectionChange={onScheduleSelectionChange}
+      />,
+    );
+
+    const event = screen.getByRole("button", {
+      name: /select schedule test schedule/i,
+    });
+
+    expect(event).toBeDisabled();
+    await user.click(event);
+
+    expect(onScheduleSelectionChange).not.toHaveBeenCalled();
   });
 });

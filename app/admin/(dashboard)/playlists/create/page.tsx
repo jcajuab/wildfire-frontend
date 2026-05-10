@@ -3,17 +3,17 @@ import type { ReactElement } from "react";
 import type { ContentOption } from "@/lib/api/content-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY } from "@/lib/content-search-params";
-import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
-import { getServerSession, resolveSession } from "@/lib/server/auth";
+import {
+  getServerSession,
+  resolveOptionalDashboardSession,
+} from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import { ContentOptionsCacheSeeder } from "../../content/content-page-client";
 import { CreatePlaylistPageView } from "./create-playlist-page-client";
 
-const CREATE_REDIRECT = `${PLAYLIST_INDEX_PATH}/create`;
-
 export default async function CreatePlaylistPage(): Promise<ReactElement> {
-  const session = resolveSession(await getServerSession(), CREATE_REDIRECT);
+  const session = resolveOptionalDashboardSession(await getServerSession());
   if (!session) {
     return <CreatePlaylistPageView />;
   }

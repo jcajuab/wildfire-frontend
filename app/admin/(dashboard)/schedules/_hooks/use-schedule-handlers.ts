@@ -31,6 +31,7 @@ function isConflictError(err: unknown): boolean {
 
 export interface UseScheduleHandlersResult {
   handleCreateSchedule: (data: ScheduleFormData) => Promise<void>;
+  deleteScheduleById: (id: string) => Promise<void>;
   handleDeleteSchedule: (schedule: Schedule) => Promise<void>;
   handleSaveSchedule: (
     schedule: Schedule,
@@ -73,16 +74,23 @@ export function useScheduleHandlers(): UseScheduleHandlersResult {
     [createSchedule],
   );
 
+  const deleteScheduleById = useCallback(
+    async (id: string) => {
+      await deleteSchedule(id).unwrap();
+    },
+    [deleteSchedule],
+  );
+
   const handleDeleteSchedule = useCallback(
     async (schedule: Schedule) => {
       try {
-        await deleteSchedule(schedule.id).unwrap();
+        await deleteScheduleById(schedule.id);
         toast.success("Successfully deleted schedule");
       } catch (err) {
         notifyApiError(err, "Failed to delete schedule.");
       }
     },
-    [deleteSchedule],
+    [deleteScheduleById],
   );
 
   const handleSaveSchedule = useCallback(
@@ -103,6 +111,7 @@ export function useScheduleHandlers(): UseScheduleHandlersResult {
 
   return {
     handleCreateSchedule,
+    deleteScheduleById,
     handleDeleteSchedule,
     handleSaveSchedule,
   };

@@ -4,27 +4,19 @@ import type { ReactElement, ReactNode } from "react";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { formatLongDate, formatMonthDay } from "@/lib/formatters";
-import type {
-  CalendarView,
-  DisplayGroupSortField,
-  ResourceMode,
-} from "@/types/schedule";
-import { ScheduleFilterPopover } from "./schedule-filter-popover";
+import type { CalendarView, ResourceMode } from "@/types/schedule";
 
 interface CalendarHeaderProps {
   readonly currentDate: Date;
   readonly view: CalendarView;
   readonly onViewChange: (view: CalendarView) => void;
+  readonly resourceMode: ResourceMode;
+  readonly onResourceModeChange: (mode: ResourceMode) => void;
   readonly onPrev: () => void;
   readonly onNext: () => void;
   readonly onToday: () => void;
-  readonly resourcesCount: number;
-  readonly resourceMode: ResourceMode;
-  readonly onResourceModeChange: (mode: ResourceMode) => void;
-  readonly displayGroupsCount: number;
-  readonly displayGroupSort: DisplayGroupSortField;
-  readonly onDisplayGroupSortChange: (sort: DisplayGroupSortField) => void;
 }
 
 function formatDateRange(date: Date, view: CalendarView): ReactNode {
@@ -66,25 +58,16 @@ export function CalendarHeader({
   currentDate,
   view,
   onViewChange,
+  resourceMode,
+  onResourceModeChange,
   onPrev,
   onNext,
   onToday,
-  resourcesCount,
-  resourceMode,
-  onResourceModeChange,
-  displayGroupsCount,
-  displayGroupSort,
-  onDisplayGroupSortChange,
 }: CalendarHeaderProps): ReactElement {
   const label = formatDateRange(currentDate, view);
 
-  const resourcesLabel =
-    resourceMode === "display-group"
-      ? `${displayGroupsCount} ${displayGroupsCount === 1 ? "group" : "groups"}`
-      : `${resourcesCount} ${resourcesCount === 1 ? "display" : "displays"}`;
-
   return (
-    <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 sm:items-center sm:gap-3">
+    <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-3">
       {/* Left: Today + Navigation */}
       <div className="flex justify-start">
         <div className="flex items-center gap-1">
@@ -110,24 +93,44 @@ export function CalendarHeader({
         </div>
       </div>
 
-      {/* Center: Date Range + Resource Count */}
-      <div className="flex items-center justify-start gap-2 sm:justify-center">
+      <div className="flex items-center justify-start sm:justify-center">
         <h2 className="truncate text-base font-semibold">{label}</h2>
-        <span className="shrink-0 rounded-md border border-border bg-muted/30 px-2 py-1 text-xs text-foreground">
-          {resourcesLabel}
-        </span>
       </div>
 
-      {/* Right: Filter Popover */}
-      <div className="flex justify-start sm:justify-end">
-        <ScheduleFilterPopover
-          resourceMode={resourceMode}
-          onResourceModeChange={onResourceModeChange}
-          view={view}
-          onViewChange={onViewChange}
-          displayGroupSort={displayGroupSort}
-          onDisplayGroupSortChange={onDisplayGroupSortChange}
-        />
+      <div className="flex flex-wrap justify-start gap-2 sm:justify-end">
+        <ToggleGroup
+          type="single"
+          value={resourceMode}
+          onValueChange={(nextMode) => {
+            if (nextMode) onResourceModeChange(nextMode as ResourceMode);
+          }}
+          variant="outline"
+          aria-label="Schedule resources"
+        >
+          <ToggleGroupItem value="display" aria-label="Displays">
+            Displays
+          </ToggleGroupItem>
+          <ToggleGroupItem value="display-group" aria-label="Display groups">
+            Groups
+          </ToggleGroupItem>
+        </ToggleGroup>
+
+        <ToggleGroup
+          type="single"
+          value={view}
+          onValueChange={(nextView) => {
+            if (nextView) onViewChange(nextView as CalendarView);
+          }}
+          variant="outline"
+          aria-label="Calendar view"
+        >
+          <ToggleGroupItem value="resource-day" aria-label="Day view">
+            Day
+          </ToggleGroupItem>
+          <ToggleGroupItem value="resource-week" aria-label="Week view">
+            Week
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
     </div>
   );

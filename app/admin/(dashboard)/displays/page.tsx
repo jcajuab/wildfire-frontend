@@ -9,7 +9,10 @@ import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
 import { cacheLife, cacheTag } from "next/cache";
 
 import type { ServerSearchParamValue } from "@/lib/server/api";
-import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
+import {
+  getCachedServerSession,
+  resolveOptionalDashboardSession,
+} from "@/lib/server/auth";
 import { serverFetchJson } from "@/lib/server/api";
 
 import { DisplaysPageView } from "./displays-page-client";
@@ -69,7 +72,7 @@ export default async function DisplaysPage(): Promise<ReactElement> {
     getCachedDisplaysBootstrap(),
   ]);
 
-  const session = resolveSession(sessionResult, "/admin/displays");
+  const session = resolveOptionalDashboardSession(sessionResult);
   if (!session) {
     return (
       <DisplaysPageView

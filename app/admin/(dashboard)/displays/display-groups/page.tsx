@@ -8,7 +8,10 @@ import type {
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
 import type { ServerSearchParamValue } from "@/lib/server/api";
-import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
+import {
+  getCachedServerSession,
+  resolveOptionalDashboardSession,
+} from "@/lib/server/auth";
 import { serverFetchJson } from "@/lib/server/api";
 
 import { DisplayGroupsPageClient } from "./display-groups-page-client";
@@ -61,10 +64,7 @@ export default async function DisplayGroupsPage(): Promise<ReactElement> {
     getCachedBootstrap(),
   ]);
 
-  const session = resolveSession(
-    sessionResult,
-    "/admin/displays/display-groups",
-  );
+  const session = resolveOptionalDashboardSession(sessionResult);
   if (!session) {
     return <DisplayGroupsPageClient />;
   }

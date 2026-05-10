@@ -1,4 +1,4 @@
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   canManageScheduleForUser,
@@ -66,6 +66,7 @@ vi.mock("./use-schedule-dialogs", () => ({
 vi.mock("./use-schedule-handlers", () => ({
   useScheduleHandlers: vi.fn(() => ({
     handleCreateSchedule: vi.fn(),
+    deleteScheduleById: vi.fn(),
     handleDeleteSchedule: vi.fn(),
     handleSaveSchedule: vi.fn(),
   })),
@@ -178,7 +179,10 @@ function makeBootstrapData(
   };
 }
 
-function mockScheduleFilters(scheduleWindow: ScheduleWindowQuery) {
+function mockScheduleFilters(
+  scheduleWindow: ScheduleWindowQuery,
+  overrides: Partial<ReturnType<typeof useScheduleFilters>> = {},
+) {
   useScheduleFiltersMock.mockReturnValue({
     currentDate: new Date("2026-05-08T00:00:00.000Z"),
     view: "resource-day",
@@ -187,10 +191,18 @@ function mockScheduleFilters(scheduleWindow: ScheduleWindowQuery) {
     setResourceMode: vi.fn(),
     displayGroupSort: "alphabetical",
     setDisplayGroupSort: vi.fn(),
+    scheduleTypeFilter: "all",
+    setScheduleTypeFilter: vi.fn(),
+    timeFilter: "all",
+    setTimeFilter: vi.fn(),
+    targetResourceId: null,
+    setTargetResourceId: vi.fn(),
     scheduleWindow,
+    handleClearFilters: vi.fn(),
     handlePrev: vi.fn(),
     handleNext: vi.fn(),
     handleToday: vi.fn(),
+    ...overrides,
   });
 }
 
@@ -264,6 +276,163 @@ describe("useSchedulesPage", () => {
 
     expect(result.current.schedules.map((schedule) => schedule.name)).toEqual([
       "Tomorrow",
+    ]);
+  });
+
+  test("filters schedules by schedule, display, playlist, and flash content text", () => {
+    const baseBootstrap = makeBootstrapData(["Morning Loop", "Flash Alert"]);
+    const bootstrap: SchedulesBootstrapResponse = {
+      ...baseBootstrap,
+      schedules: [
+        {
+          ...baseBootstrap.schedules[0],
+          id: "schedule-1",
+          name: "Morning Loop",
+          display: { id: "display-1", name: "Lobby Screen" },
+          playlist: { id: "playlist-1", name: "Welcome Playlist" },
+          content: null,
+        },
+        {
+          ...baseBootstrap.schedules[1],
+          id: "schedule-2",
+          name: "Flash Alert",
+          kind: "FLASH",
+          display: { id: "display-2", name: "Gym Display" },
+          playlist: null,
+          content: {
+            id: "content-1",
+            title: "Emergency Ticker",
+            type: "FLASH",
+            flashMessage: "Proceed to exits",
+            flashTone: "WARNING",
+          },
+        },
+      ],
+    };
+    useGetSchedulesBootstrapQueryStateMock.mockReturnValue({
+      data: bootstrap,
+      isFetching: false,
+    } as unknown as ReturnType<
+      typeof schedulesApi.endpoints.getSchedulesBootstrap.useQueryState
+    >);
+
+    const { result } = renderHook(() =>
+      useSchedulesPage({
+        initialBootstrap: {
+          queryArgs: initialWindow,
+          data: bootstrap,
+        },
+      }),
+    );
+
+    act(() => result.current.setSearch("gym"));
+    expect(result.current.schedules.map((schedule) => schedule.name)).toEqual([
+      "Flash Alert",
+    ]);
+
+    act(() => result.current.setSearch("welcome"));
+    expect(result.current.schedules.map((schedule) => schedule.name)).toEqual([
+      "Morning Loop",
+    ]);
+
+    act(() => result.current.setSearch("ticker"));
+    expect(result.current.schedules.map((schedule) => schedule.name)).toEqual([
+      "Flash Alert",
+    ]);
+  });
+
+  test("filters schedules by schedule type", () => {
+    mockScheduleFilters(initialWindow, { scheduleTypeFilter: "flash" });
+    const baseBootstrap = makeBootstrapData(["Morning Loop", "Flash Alert"]);
+    const bootstrap: SchedulesBootstrapResponse = {
+      ...baseBootstrap,
+      schedules: [
+        {
+          ...baseBootstrap.schedules[0],
+          id: "schedule-1",
+          name: "Morning Loop",
+          kind: "PLAYLIST",
+          displayId: "display-1",
+          display: { id: "display-1", name: "Lobby" },
+        },
+        {
+          ...baseBootstrap.schedules[1],
+          id: "schedule-2",
+          name: "Flash Alert",
+          kind: "FLASH",
+          displayId: "display-2",
+          playlist: null,
+          content: {
+            id: "content-1",
+            title: "Emergency Ticker",
+            type: "FLASH",
+            flashMessage: "Proceed to exits",
+            flashTone: "WARNING",
+          },
+          display: { id: "display-2", name: "Gym" },
+        },
+      ],
+      displayOptions: [
+        { id: "display-1", name: "Lobby" },
+        { id: "display-2", name: "Gym" },
+      ],
+    };
+    useGetSchedulesBootstrapQueryStateMock.mockReturnValue({
+      data: bootstrap,
+      isFetching: false,
+    } as unknown as ReturnType<
+      typeof schedulesApi.endpoints.getSchedulesBootstrap.useQueryState
+    >);
+
+    const { result } = renderHook(() =>
+      useSchedulesPage({
+        initialBootstrap: {
+          queryArgs: initialWindow,
+          data: bootstrap,
+        },
+      }),
+    );
+
+    expect(result.current.schedules.map((schedule) => schedule.name)).toEqual([
+      "Flash Alert",
+    ]);
+    expect(result.current.filteredDisplayResources).toEqual([
+      { id: "display-2", name: "Gym" },
+    ]);
+  });
+
+  test("paginates visible display resources", () => {
+    const bootstrap: SchedulesBootstrapResponse = {
+      ...makeBootstrapData([]),
+      displayOptions: Array.from({ length: 9 }, (_, index) => ({
+        id: `display-${index + 1}`,
+        name: `Display ${index + 1}`,
+      })),
+    };
+    useGetSchedulesBootstrapQueryStateMock.mockReturnValue({
+      data: bootstrap,
+      isFetching: false,
+    } as unknown as ReturnType<
+      typeof schedulesApi.endpoints.getSchedulesBootstrap.useQueryState
+    >);
+
+    const { result } = renderHook(() =>
+      useSchedulesPage({
+        initialBootstrap: {
+          queryArgs: initialWindow,
+          data: bootstrap,
+        },
+      }),
+    );
+
+    expect(result.current.resourceTotal).toBe(9);
+    expect(result.current.paginatedDisplayResources).toHaveLength(8);
+
+    act(() => result.current.setResourcePage(2));
+
+    expect(result.current.resourcePage).toBe(2);
+    expect(result.current.paginatedDisplayResources).toEqual([
+      { id: "display-9", name: "Display 9" },
     ]);
   });
 

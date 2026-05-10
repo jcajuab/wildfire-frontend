@@ -8,7 +8,10 @@ import {
 } from "@/lib/roles-search-params";
 import { cacheLife, cacheTag } from "next/cache";
 
-import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
+import {
+  getCachedServerSession,
+  resolveOptionalDashboardSession,
+} from "@/lib/server/auth";
 import { serverFetchJson } from "@/lib/server/api";
 
 import { RolesListCacheSeeder, RolesPageView } from "./roles-page-client";
@@ -69,7 +72,7 @@ export default async function RolesPage({
     }),
   ]);
 
-  const session = resolveSession(sessionResult, "/admin/roles");
+  const session = resolveOptionalDashboardSession(sessionResult);
   if (!session) {
     return <RolesPageView />;
   }

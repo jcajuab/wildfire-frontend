@@ -8,7 +8,10 @@ import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { defaultSchedulesBootstrapWindow } from "@/lib/schedule-window";
 import { cacheLife, cacheTag } from "next/cache";
 
-import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
+import {
+  getCachedServerSession,
+  resolveOptionalDashboardSession,
+} from "@/lib/server/auth";
 import { serverFetchJson } from "@/lib/server/api";
 
 import {
@@ -41,9 +44,8 @@ async function getCachedSchedulesBootstrap(from: string, to: string) {
 }
 
 export default async function SchedulesPage(): Promise<ReactElement> {
-  const session = resolveSession(
+  const session = resolveOptionalDashboardSession(
     await getCachedServerSession(),
-    "/admin/schedules",
   );
   if (!session) {
     return <SchedulesPageView />;

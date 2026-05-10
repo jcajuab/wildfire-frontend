@@ -8,7 +8,10 @@ import { transformPaginatedListResponse } from "@/lib/api/response-transformers"
 import { auditListQueryFromSearchParams } from "@/lib/audit-log-search-params";
 import { cacheLife, cacheTag } from "next/cache";
 
-import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
+import {
+  getCachedServerSession,
+  resolveOptionalDashboardSession,
+} from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import {
@@ -104,7 +107,9 @@ export default async function LogsPage({
   const sp = (await searchParams) ?? {};
   const listQuery = auditListQueryFromSearchParams(sp);
 
-  const session = resolveSession(await getCachedServerSession(), "/admin/logs");
+  const session = resolveOptionalDashboardSession(
+    await getCachedServerSession(),
+  );
   if (!session) {
     return <LogsPageClient />;
   }

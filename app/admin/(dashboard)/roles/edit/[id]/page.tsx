@@ -3,7 +3,10 @@ import type { ReactElement } from "react";
 import type { RoleEditBootstrapResponse } from "@/lib/api/rbac-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { getRoleEditPath } from "@/lib/role-paths";
-import { getServerSession, resolveSession } from "@/lib/server/auth";
+import {
+  getServerSession,
+  resolveOptionalDashboardSession,
+} from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
@@ -25,7 +28,7 @@ export default async function EditRolePage({
   const { id: roleId } = await params;
   const editPath = getRoleEditPath(roleId);
 
-  const session = resolveSession(await getServerSession(), editPath);
+  const session = resolveOptionalDashboardSession(await getServerSession());
   if (!session) {
     return <EditRolePageView />;
   }

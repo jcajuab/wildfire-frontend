@@ -8,7 +8,10 @@ import {
 } from "@/lib/playlists-search-params";
 import { cacheLife, cacheTag } from "next/cache";
 
-import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
+import {
+  getCachedServerSession,
+  resolveOptionalDashboardSession,
+} from "@/lib/server/auth";
 import { serverFetchJson } from "@/lib/server/api";
 
 import { PlaylistsPageView } from "./playlists-page-client";
@@ -68,7 +71,7 @@ export default async function PlaylistsPage({
     }),
   ]);
 
-  const session = resolveSession(sessionResult, "/admin/playlists");
+  const session = resolveOptionalDashboardSession(sessionResult);
   if (!session) {
     return (
       <PlaylistsPageView initialQueryArgs={queryArgs} initialData={undefined} />

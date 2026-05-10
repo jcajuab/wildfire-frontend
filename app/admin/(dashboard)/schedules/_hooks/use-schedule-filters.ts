@@ -6,6 +6,8 @@ import type {
   CalendarView,
   ResourceMode,
   DisplayGroupSortField,
+  ScheduleTimeFilter,
+  ScheduleTypeFilter,
 } from "@/types/schedule";
 
 export interface UseScheduleFiltersResult {
@@ -16,7 +18,14 @@ export interface UseScheduleFiltersResult {
   setResourceMode: (mode: ResourceMode) => void;
   displayGroupSort: DisplayGroupSortField;
   setDisplayGroupSort: (sort: DisplayGroupSortField) => void;
+  scheduleTypeFilter: ScheduleTypeFilter;
+  setScheduleTypeFilter: (type: ScheduleTypeFilter) => void;
+  timeFilter: ScheduleTimeFilter;
+  setTimeFilter: (time: ScheduleTimeFilter) => void;
+  targetResourceId: string | null;
+  setTargetResourceId: (id: string | null) => void;
   scheduleWindow: { from: string; to: string };
+  handleClearFilters: () => void;
   handlePrev: () => void;
   handleNext: () => void;
   handleToday: () => void;
@@ -28,6 +37,15 @@ export function useScheduleFilters(): UseScheduleFiltersResult {
   const [resourceMode, setResourceMode] = useState<ResourceMode>("display");
   const [displayGroupSort, setDisplayGroupSort] =
     useState<DisplayGroupSortField>("alphabetical");
+  const [scheduleTypeFilter, setScheduleTypeFilter] =
+    useState<ScheduleTypeFilter>("all");
+  const [timeFilter, setTimeFilter] = useState<ScheduleTimeFilter>("all");
+  const [targetResourceId, setTargetResourceId] = useState<string | null>(null);
+
+  const handleResourceModeChange = useCallback((mode: ResourceMode) => {
+    setResourceMode(mode);
+    setTargetResourceId(null);
+  }, []);
 
   const scheduleWindow = useMemo(
     () => getScheduleWindow(currentDate, view),
@@ -56,15 +74,29 @@ export function useScheduleFilters(): UseScheduleFiltersResult {
     setCurrentDate(new Date());
   }, []);
 
+  const handleClearFilters = useCallback(() => {
+    setDisplayGroupSort("alphabetical");
+    setScheduleTypeFilter("all");
+    setTimeFilter("all");
+    setTargetResourceId(null);
+  }, []);
+
   return {
     currentDate,
     view,
     setView,
     resourceMode,
-    setResourceMode,
+    setResourceMode: handleResourceModeChange,
     displayGroupSort,
     setDisplayGroupSort,
+    scheduleTypeFilter,
+    setScheduleTypeFilter,
+    timeFilter,
+    setTimeFilter,
+    targetResourceId,
+    setTargetResourceId,
     scheduleWindow,
+    handleClearFilters,
     handlePrev,
     handleNext,
     handleToday,

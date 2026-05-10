@@ -33,6 +33,13 @@ interface CalendarGridProps {
   readonly onScheduleClick: (schedule: Schedule) => void;
   readonly resourceMode: ResourceMode;
   readonly displayGroups: readonly DisplayGroup[];
+  readonly isSelectionMode?: boolean;
+  readonly selectedIds?: ReadonlySet<string>;
+  readonly canSelectSchedule?: (schedule: Schedule) => boolean;
+  readonly onScheduleSelectionChange?: (
+    schedule: Schedule,
+    checked: boolean,
+  ) => void;
 }
 
 function EmptyResourcesState(): ReactElement {
@@ -62,6 +69,10 @@ export function CalendarGrid({
   onScheduleClick,
   resourceMode,
   displayGroups,
+  isSelectionMode = false,
+  selectedIds,
+  canSelectSchedule,
+  onScheduleSelectionChange,
 }: CalendarGridProps): ReactElement {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
@@ -166,6 +177,10 @@ export function CalendarGrid({
         schedulesById={schedulesById}
         onScheduleClick={onScheduleClick}
         onGroupToggle={handleGroupToggle}
+        isSelectionMode={isSelectionMode}
+        selectedIds={selectedIds}
+        canSelectSchedule={canSelectSchedule}
+        onScheduleSelectionChange={onScheduleSelectionChange}
       />
     );
   }
@@ -178,6 +193,10 @@ export function CalendarGrid({
       schedulesById={schedulesById}
       onScheduleClick={onScheduleClick}
       onGroupToggle={handleGroupToggle}
+      isSelectionMode={isSelectionMode}
+      selectedIds={selectedIds}
+      canSelectSchedule={canSelectSchedule}
+      onScheduleSelectionChange={onScheduleSelectionChange}
     />
   );
 }

@@ -1,36 +1,29 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useLayoutEffect } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import Link from "next/link";
-import {
-  IconBolt,
-  IconChevronDown,
-  IconList,
-  IconPlus,
-} from "@tabler/icons-react";
+import { toast } from "sonner";
 
-import { Can } from "@/components/common/can";
+import { BulkDeleteConfirmDialog } from "@/components/common/bulk-delete-confirm-dialog";
 import { EmptyState } from "@/components/common/empty-state";
+import { PaginationFooter } from "@/components/common/pagination-footer";
 import { CalendarGrid } from "@/components/schedules/calendar-grid";
 import { CalendarHeader } from "@/components/schedules/calendar-header";
 import { CreateScheduleDialog } from "@/components/schedules/create-schedule-dialog";
 import { EditScheduleDialog } from "@/components/schedules/edit-schedule-dialog";
+import { SchedulesToolbar } from "@/components/schedules/schedules-toolbar";
 import { ViewScheduleDialog } from "@/components/schedules/view-schedule-dialog";
-import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   schedulesApi,
   type ScheduleWindowQuery,
   type SchedulesBootstrapResponse,
 } from "@/lib/api/schedules-api";
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
+import { runBulkAction } from "@/lib/bulk-action";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { useSchedulesPage } from "./_hooks/use-schedules-page";
 
 export function SchedulesBootstrapCacheSeeder({
@@ -74,8 +67,13 @@ export function SchedulesPageView({
   const {
     isLoading,
     isFetching,
+    canCreateSchedule,
+    canDeleteSchedule,
     canEditSelectedSchedule,
     canDeleteSelectedSchedule,
+    canDeleteScheduleItem,
+    search,
+    setSearch,
     currentDate,
     view,
     setView,
@@ -83,13 +81,25 @@ export function SchedulesPageView({
     setResourceMode,
     displayGroupSort,
     setDisplayGroupSort,
+    scheduleTypeFilter,
+    setScheduleTypeFilter,
+    timeFilter,
+    setTimeFilter,
+    targetResourceId,
+    setTargetResourceId,
+    targetResourceOptions,
+    handleClearFilters,
+    resourcePage,
+    setResourcePage,
+    resourcePageSize,
+    resourceTotal,
     availablePlaylists,
     availableDisplays,
+    paginatedDisplayResources,
     availableFlashContents,
     schedules,
-    sortedDisplayGroups,
+    paginatedDisplayGroups,
     hasEmptyDisplayGroups,
-    displayGroupsData,
     availableDisplayGroups,
     createDialogKind,
     setCreateDialogKind,
@@ -107,46 +117,113 @@ export function SchedulesPageView({
     handleScheduleClick,
     handleEditFromView,
     handleCreateSchedule,
+    deleteScheduleById,
     handleDeleteSchedule,
     handleSaveSchedule,
   } = useSchedulesPage({ initialBootstrap });
+  const {
+    selectedItems,
+    selectedIds,
+    selectedCount,
+    clearSelection,
+    removeSelectedIds,
+    setItemSelected,
+  } = useBulkSelection();
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+  useEffect(() => {
+    clearSelection();
+  }, [
+    clearSelection,
+    currentDate,
+    displayGroupSort,
+    resourceMode,
+    scheduleTypeFilter,
+    search,
+    targetResourceId,
+    timeFilter,
+    view,
+  ]);
+
+  const selectedScheduleLabels = selectedItems.map((item) => item.label);
+  const deleteSelectedLabel =
+    selectedCount === 1
+      ? "Delete 1 schedule"
+      : `Delete ${selectedCount} schedules`;
+
+  const handleConfirmBulkDelete = useCallback(async () => {
+    if (selectedItems.length === 0) return;
+
+    const result = await runBulkAction(selectedItems, (item) =>
+      deleteScheduleById(item.id),
+    );
+
+    if (result.successfulItems.length > 0) {
+      removeSelectedIds(result.successfulItems.map((item) => item.id));
+      toast.success(
+        result.successfulItems.length === 1
+          ? "Successfully deleted 1 schedule"
+          : `Successfully deleted ${result.successfulItems.length} schedules`,
+      );
+    }
+
+    const firstFailure = result.failedItems[0];
+    if (firstFailure) {
+      const message = getApiErrorMessage(
+        firstFailure.error,
+        "Some schedules could not be deleted.",
+      );
+      toast.error(
+        `Failed to delete ${result.failedItems.length} of ${selectedItems.length} schedules. ${message}`,
+      );
+    }
+
+    if (result.failedItems.length === 0) {
+      setIsSelectionMode(false);
+      clearSelection();
+    }
+  }, [clearSelection, deleteScheduleById, removeSelectedIds, selectedItems]);
+
+  const handleCancelSelectionMode = useCallback(() => {
+    clearSelection();
+    setIsSelectionMode(false);
+  }, [clearSelection]);
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
-      <PageHeader title="Schedules">
-        <Can permission="schedules:create">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>
-                <IconPlus
-                  className="size-4"
-                  aria-hidden="true"
-                  data-icon="inline-start"
-                />
-                Create Schedule
-                <IconChevronDown
-                  className="size-4"
-                  aria-hidden="true"
-                  data-icon="inline-end"
-                />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
-            >
-              <DropdownMenuItem onClick={() => setCreateDialogKind("PLAYLIST")}>
-                <IconList className="size-4" aria-hidden="true" />
-                Playlist
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCreateDialogKind("FLASH")}>
-                <IconBolt className="size-4" aria-hidden="true" />
-                Flash Overlay
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </Can>
-      </PageHeader>
+      <SchedulesToolbar
+        search={search}
+        resourceMode={resourceMode}
+        displayGroupSort={displayGroupSort}
+        scheduleTypeFilter={scheduleTypeFilter}
+        timeFilter={timeFilter}
+        targetResourceId={targetResourceId}
+        targetResourceOptions={targetResourceOptions}
+        canCreateSchedule={canCreateSchedule}
+        canDeleteSchedule={canDeleteSchedule}
+        bulkState={
+          isSelectionMode
+            ? {
+                mode: "bulk-delete",
+                selectedCount,
+                onDelete: () => setIsBulkDeleteDialogOpen(true),
+                onCancel: handleCancelSelectionMode,
+              }
+            : {
+                mode: "normal",
+                onEnterBulkDelete: () => setIsSelectionMode(true),
+              }
+        }
+        onSearchChange={setSearch}
+        onDisplayGroupSortChange={setDisplayGroupSort}
+        onScheduleTypeFilterChange={setScheduleTypeFilter}
+        onTimeFilterChange={setTimeFilter}
+        onTargetResourceChange={setTargetResourceId}
+        onClearFilters={handleClearFilters}
+        onCreatePlaylistSchedule={() => setCreateDialogKind("PLAYLIST")}
+        onCreateFlashSchedule={() => setCreateDialogKind("FLASH")}
+      />
 
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -155,15 +232,11 @@ export function SchedulesPageView({
               currentDate={currentDate}
               view={view}
               onViewChange={setView}
+              resourceMode={resourceMode}
+              onResourceModeChange={setResourceMode}
               onPrev={handlePrev}
               onNext={handleNext}
               onToday={handleToday}
-              resourcesCount={availableDisplays.length}
-              resourceMode={resourceMode}
-              onResourceModeChange={setResourceMode}
-              displayGroupsCount={displayGroupsData?.length ?? 0}
-              displayGroupSort={displayGroupSort}
-              onDisplayGroupSortChange={setDisplayGroupSort}
             />
           </div>
 
@@ -214,22 +287,51 @@ export function SchedulesPageView({
                   }
                 />
               </div>
+            ) : resourceTotal === 0 && availableDisplays.length > 0 ? (
+              <div className="flex flex-1 items-center justify-center">
+                <EmptyState
+                  title="No matching schedules"
+                  description="Adjust the search or filters to show schedule resources."
+                />
+              </div>
             ) : (
               <CalendarGrid
                 currentDate={currentDate}
                 view={view}
                 schedules={schedules}
-                resources={availableDisplays}
+                resources={
+                  resourceMode === "display-group"
+                    ? availableDisplays
+                    : paginatedDisplayResources
+                }
                 onScheduleClick={handleScheduleClick}
                 resourceMode={resourceMode}
-                displayGroups={sortedDisplayGroups}
+                displayGroups={paginatedDisplayGroups}
+                isSelectionMode={isSelectionMode}
+                selectedIds={isSelectionMode ? selectedIds : undefined}
+                canSelectSchedule={canDeleteScheduleItem}
+                onScheduleSelectionChange={
+                  canDeleteSchedule && isSelectionMode
+                    ? (schedule, checked) =>
+                        setItemSelected(
+                          { id: schedule.id, label: schedule.name },
+                          checked,
+                        )
+                    : undefined
+                }
               />
             )}
           </div>
         </div>
 
-        <footer className="empty:hidden border-t border-border bg-background/80">
-          {null}
+        <footer className="border-t border-border bg-background/80">
+          <PaginationFooter
+            page={resourcePage}
+            pageSize={resourcePageSize}
+            total={resourceTotal}
+            onPageChange={setResourcePage}
+            alwaysShow
+          />
         </footer>
       </section>
 
@@ -252,8 +354,16 @@ export function SchedulesPageView({
         schedule={selectedSchedule}
         open={viewDialogOpen}
         onOpenChange={setViewDialogOpen}
-        onEdit={canEditSelectedSchedule ? handleEditFromView : undefined}
-        onDelete={canDeleteSelectedSchedule ? handleDeleteSchedule : undefined}
+        onEdit={
+          !isSelectionMode && canEditSelectedSchedule
+            ? handleEditFromView
+            : undefined
+        }
+        onDelete={
+          !isSelectionMode && canDeleteSelectedSchedule
+            ? handleDeleteSchedule
+            : undefined
+        }
       />
 
       {/* Edit Schedule Dialog */}
@@ -265,6 +375,18 @@ export function SchedulesPageView({
         availablePlaylists={availablePlaylists}
         availableFlashContents={availableFlashContents}
         availableDisplays={availableDisplays}
+      />
+
+      <BulkDeleteConfirmDialog
+        open={isBulkDeleteDialogOpen}
+        onOpenChange={setIsBulkDeleteDialogOpen}
+        selectedLabels={selectedScheduleLabels}
+        title="Delete selected schedules?"
+        itemName="schedule"
+        itemNamePlural="schedules"
+        confirmLabel={deleteSelectedLabel}
+        actionDescription="This will permanently delete"
+        onConfirm={handleConfirmBulkDelete}
       />
     </div>
   );

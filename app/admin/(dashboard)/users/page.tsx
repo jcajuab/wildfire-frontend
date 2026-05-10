@@ -20,7 +20,10 @@ import {
 } from "@/lib/users-search-params";
 import { cacheLife, cacheTag } from "next/cache";
 
-import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
+import {
+  getCachedServerSession,
+  resolveOptionalDashboardSession,
+} from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import {
@@ -120,9 +123,8 @@ async function getCachedInvitations(params: {
 export default async function UsersPage({
   searchParams,
 }: UsersPageProps): Promise<ReactElement> {
-  const session = resolveSession(
+  const session = resolveOptionalDashboardSession(
     await getCachedServerSession(),
-    "/admin/users",
   );
   if (!session) {
     return <UsersPageView />;

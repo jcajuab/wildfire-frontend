@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
@@ -12,10 +12,17 @@ import {
 } from "@/lib/api/schedules-api";
 import { mapBackendSchedulesToSchedules } from "@/lib/mappers/schedule-mapper";
 import type { AuthUser } from "@/types/auth";
-import type { Schedule } from "@/types/schedule";
+import type {
+  ResourceMode,
+  Schedule,
+  ScheduleTimeFilter,
+  ScheduleTypeFilter,
+} from "@/types/schedule";
 import { useScheduleFilters } from "./use-schedule-filters";
 import { useScheduleDialogs } from "./use-schedule-dialogs";
 import { useScheduleHandlers } from "./use-schedule-handlers";
+
+export const SCHEDULE_RESOURCE_PAGE_SIZE = 8;
 
 export function canManageScheduleForUser(
   schedule: Schedule | null,
@@ -33,6 +40,63 @@ function normalizedScheduleWindowKey(query: ScheduleWindowQuery): string {
   });
 }
 
+function scheduleMatchesSearch(schedule: Schedule, search: string): boolean {
+  const query = search.trim().toLowerCase();
+  if (query.length === 0) return true;
+
+  const searchable = [
+    schedule.name,
+    schedule.display.name,
+    schedule.playlist?.name,
+    schedule.content?.title,
+  ];
+
+  return searchable.some((value) => value?.toLowerCase().includes(query));
+}
+
+function scheduleMatchesType(
+  schedule: Schedule,
+  filter: ScheduleTypeFilter,
+): boolean {
+  if (filter === "all") return true;
+  if (filter === "playlist") return schedule.kind === "PLAYLIST";
+  return schedule.kind === "FLASH";
+}
+
+function getScheduleDateTime(date: string, time: string): Date {
+  return new Date(`${date}T${time}`);
+}
+
+function scheduleMatchesTime(
+  schedule: Schedule,
+  filter: ScheduleTimeFilter,
+): boolean {
+  if (filter === "all") return true;
+
+  const now = new Date();
+  const start = getScheduleDateTime(schedule.startDate, schedule.startTime);
+  const end = getScheduleDateTime(schedule.endDate, schedule.endTime);
+
+  if (filter === "active") return start <= now && end >= now;
+  if (filter === "upcoming") return start > now;
+  return end < now;
+}
+
+function scheduleMatchesTarget(
+  schedule: Schedule,
+  resourceMode: ResourceMode,
+  targetResourceId: string | null,
+  groupDisplayIdsById: ReadonlyMap<string, readonly string[]>,
+): boolean {
+  if (!targetResourceId) return true;
+  if (resourceMode === "display")
+    return schedule.display.id === targetResourceId;
+  return (
+    groupDisplayIdsById.get(targetResourceId)?.includes(schedule.display.id) ===
+    true
+  );
+}
+
 export function useSchedulesPage(options?: {
   readonly initialBootstrap?: {
     readonly queryArgs: ScheduleWindowQuery;
@@ -40,6 +104,9 @@ export function useSchedulesPage(options?: {
   };
 }) {
   const { user, isInitialized } = useAuth();
+  const [search, setSearch] = useState("");
+  const [resourcePage, setResourcePage] = useState(1);
+  const canCreateSchedule = useCan("schedules:create");
   const canEditSchedule = useCan("schedules:update");
   const canDeleteSchedule = useCan("schedules:delete");
   const canReadDisplays = useCan("displays:read");
@@ -49,15 +116,22 @@ export function useSchedulesPage(options?: {
   const {
     currentDate,
     view,
-    setView,
+    setView: setCalendarView,
     resourceMode,
-    setResourceMode,
+    setResourceMode: setScheduleResourceMode,
     displayGroupSort,
-    setDisplayGroupSort,
+    setDisplayGroupSort: setScheduleDisplayGroupSort,
+    scheduleTypeFilter,
+    setScheduleTypeFilter: setScheduleTypeFilterState,
+    timeFilter,
+    setTimeFilter: setTimeFilterState,
+    targetResourceId,
+    setTargetResourceId: setTargetResourceIdState,
     scheduleWindow,
-    handlePrev,
-    handleNext,
-    handleToday,
+    handleClearFilters: clearScheduleFilters,
+    handlePrev: goToPreviousPeriod,
+    handleNext: goToNextPeriod,
+    handleToday: goToToday,
   } = useScheduleFilters();
 
   const {
@@ -72,8 +146,85 @@ export function useSchedulesPage(options?: {
     handleEditFromView,
   } = useScheduleDialogs();
 
-  const { handleCreateSchedule, handleDeleteSchedule, handleSaveSchedule } =
-    useScheduleHandlers();
+  const {
+    handleCreateSchedule,
+    deleteScheduleById,
+    handleDeleteSchedule,
+    handleSaveSchedule,
+  } = useScheduleHandlers();
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value);
+    setResourcePage(1);
+  }, []);
+
+  const handleViewChange = useCallback(
+    (nextView: typeof view) => {
+      setCalendarView(nextView);
+      setResourcePage(1);
+    },
+    [setCalendarView],
+  );
+
+  const handleResourceModeChange = useCallback(
+    (nextMode: typeof resourceMode) => {
+      setScheduleResourceMode(nextMode);
+      setResourcePage(1);
+    },
+    [setScheduleResourceMode],
+  );
+
+  const handleDisplayGroupSortChange = useCallback(
+    (nextSort: typeof displayGroupSort) => {
+      setScheduleDisplayGroupSort(nextSort);
+      setResourcePage(1);
+    },
+    [setScheduleDisplayGroupSort],
+  );
+
+  const handleScheduleTypeFilterChange = useCallback(
+    (nextType: typeof scheduleTypeFilter) => {
+      setScheduleTypeFilterState(nextType);
+      setResourcePage(1);
+    },
+    [setScheduleTypeFilterState],
+  );
+
+  const handleTimeFilterChange = useCallback(
+    (nextTime: typeof timeFilter) => {
+      setTimeFilterState(nextTime);
+      setResourcePage(1);
+    },
+    [setTimeFilterState],
+  );
+
+  const handleTargetResourceChange = useCallback(
+    (nextTargetId: string | null) => {
+      setTargetResourceIdState(nextTargetId);
+      setResourcePage(1);
+    },
+    [setTargetResourceIdState],
+  );
+
+  const handleClearFilters = useCallback(() => {
+    clearScheduleFilters();
+    setResourcePage(1);
+  }, [clearScheduleFilters]);
+
+  const handlePrev = useCallback(() => {
+    goToPreviousPeriod();
+    setResourcePage(1);
+  }, [goToPreviousPeriod]);
+
+  const handleNext = useCallback(() => {
+    goToNextPeriod();
+    setResourcePage(1);
+  }, [goToNextPeriod]);
+
+  const handleToday = useCallback(() => {
+    goToToday();
+    setResourcePage(1);
+  }, [goToToday]);
 
   const isInitialBootstrapQuery =
     options?.initialBootstrap != null &&
@@ -168,14 +319,17 @@ export function useSchedulesPage(options?: {
       [flashContentData],
     );
 
-  const schedules: Schedule[] = useMemo(
+  const allSchedules: Schedule[] = useMemo(
     () => mapBackendSchedulesToSchedules(schedulesData ?? []),
     [schedulesData],
   );
 
-  const canManageSelectedSchedule = canManageScheduleForUser(
-    selectedSchedule,
-    user,
+  const groupDisplayIdsById = useMemo(
+    () =>
+      new Map(
+        (displayGroupsData ?? []).map((group) => [group.id, group.displayIds]),
+      ),
+    [displayGroupsData],
   );
 
   const sortedDisplayGroups = useMemo(() => {
@@ -187,6 +341,156 @@ export function useSchedulesPage(options?: {
     }
     return groups.sort((a, b) => b.displayIds.length - a.displayIds.length);
   }, [displayGroupsData, displayGroupSort]);
+
+  const schedules: Schedule[] = useMemo(
+    () =>
+      allSchedules.filter(
+        (schedule) =>
+          scheduleMatchesType(schedule, scheduleTypeFilter) &&
+          scheduleMatchesTime(schedule, timeFilter) &&
+          scheduleMatchesTarget(
+            schedule,
+            resourceMode,
+            targetResourceId,
+            groupDisplayIdsById,
+          ) &&
+          scheduleMatchesSearch(schedule, search),
+      ),
+    [
+      allSchedules,
+      groupDisplayIdsById,
+      resourceMode,
+      scheduleTypeFilter,
+      search,
+      targetResourceId,
+      timeFilter,
+    ],
+  );
+
+  const searchQuery = search.trim().toLowerCase();
+  const hasSearchFilter = searchQuery.length > 0;
+  const hasStructuredScheduleFilter =
+    scheduleTypeFilter !== "all" ||
+    timeFilter !== "all" ||
+    targetResourceId !== null;
+  const shouldFilterResources = hasSearchFilter || hasStructuredScheduleFilter;
+
+  const scheduleDisplayIds = useMemo(
+    () => new Set(schedules.map((schedule) => schedule.display.id)),
+    [schedules],
+  );
+
+  const filteredDisplayResources = useMemo(
+    () =>
+      availableDisplays.filter((display) => {
+        if (resourceMode === "display" && targetResourceId) {
+          return display.id === targetResourceId;
+        }
+
+        if (!shouldFilterResources) return true;
+
+        if (
+          hasSearchFilter &&
+          display.name.toLowerCase().includes(searchQuery)
+        ) {
+          return true;
+        }
+
+        return scheduleDisplayIds.has(display.id);
+      }),
+    [
+      availableDisplays,
+      hasSearchFilter,
+      resourceMode,
+      scheduleDisplayIds,
+      searchQuery,
+      shouldFilterResources,
+      targetResourceId,
+    ],
+  );
+
+  const filteredDisplayGroups = useMemo(
+    () =>
+      sortedDisplayGroups.filter((group) => {
+        if (resourceMode === "display-group" && targetResourceId) {
+          return group.id === targetResourceId;
+        }
+
+        if (!shouldFilterResources) return true;
+
+        if (hasSearchFilter && group.name.toLowerCase().includes(searchQuery)) {
+          return true;
+        }
+
+        return group.displayIds.some((displayId) =>
+          scheduleDisplayIds.has(displayId),
+        );
+      }),
+    [
+      hasSearchFilter,
+      resourceMode,
+      scheduleDisplayIds,
+      searchQuery,
+      shouldFilterResources,
+      sortedDisplayGroups,
+      targetResourceId,
+    ],
+  );
+
+  const resourceTotal =
+    resourceMode === "display"
+      ? filteredDisplayResources.length
+      : filteredDisplayGroups.length;
+  const resourceTotalPages = Math.max(
+    1,
+    Math.ceil(resourceTotal / SCHEDULE_RESOURCE_PAGE_SIZE),
+  );
+  const boundedResourcePage = Math.min(resourcePage, resourceTotalPages);
+  const resourcePageStart =
+    (boundedResourcePage - 1) * SCHEDULE_RESOURCE_PAGE_SIZE;
+
+  const paginatedDisplayResources = useMemo(
+    () =>
+      filteredDisplayResources.slice(
+        resourcePageStart,
+        resourcePageStart + SCHEDULE_RESOURCE_PAGE_SIZE,
+      ),
+    [filteredDisplayResources, resourcePageStart],
+  );
+
+  const paginatedDisplayGroups = useMemo(
+    () =>
+      filteredDisplayGroups.slice(
+        resourcePageStart,
+        resourcePageStart + SCHEDULE_RESOURCE_PAGE_SIZE,
+      ),
+    [filteredDisplayGroups, resourcePageStart],
+  );
+
+  const targetResourceOptions = useMemo(
+    () =>
+      resourceMode === "display"
+        ? availableDisplays.map((display) => ({
+            id: display.id,
+            name: display.name,
+          }))
+        : sortedDisplayGroups.map((group) => ({
+            id: group.id,
+            name: group.name,
+          })),
+    [availableDisplays, resourceMode, sortedDisplayGroups],
+  );
+
+  const canManageSelectedSchedule = canManageScheduleForUser(
+    selectedSchedule,
+    user,
+  );
+
+  const canDeleteScheduleItem = useCallback(
+    (schedule: Schedule) =>
+      canDeleteSchedule && canManageScheduleForUser(schedule, user),
+    [canDeleteSchedule, user],
+  );
 
   const hasEmptyDisplayGroups = useMemo(
     () => (displayGroupsData ?? []).some((g) => g.displayIds.length === 0),
@@ -200,23 +504,43 @@ export function useSchedulesPage(options?: {
     bootstrapErrorMessage:
       "Unable to load schedules. Check that playlist and schedule data is available, then try again.",
     refetch,
+    canCreateSchedule,
     canEditSchedule,
     canDeleteSchedule,
     canEditSelectedSchedule: canEditSchedule && canManageSelectedSchedule,
     canDeleteSelectedSchedule: canDeleteSchedule && canManageSelectedSchedule,
+    canDeleteScheduleItem,
+    search,
+    setSearch: handleSearchChange,
     currentDate,
     view,
-    setView,
+    setView: handleViewChange,
     resourceMode,
-    setResourceMode,
+    setResourceMode: handleResourceModeChange,
     displayGroupSort,
-    setDisplayGroupSort,
+    setDisplayGroupSort: handleDisplayGroupSortChange,
+    scheduleTypeFilter,
+    setScheduleTypeFilter: handleScheduleTypeFilterChange,
+    timeFilter,
+    setTimeFilter: handleTimeFilterChange,
+    targetResourceId,
+    setTargetResourceId: handleTargetResourceChange,
+    targetResourceOptions,
+    handleClearFilters,
+    resourcePage: boundedResourcePage,
+    setResourcePage,
+    resourcePageSize: SCHEDULE_RESOURCE_PAGE_SIZE,
+    resourceTotal,
     availablePlaylists,
     availableDisplays,
+    paginatedDisplayResources,
     availableDisplayGroups,
     availableFlashContents,
     schedules,
     sortedDisplayGroups,
+    paginatedDisplayGroups,
+    filteredDisplayResources,
+    filteredDisplayGroups,
     hasEmptyDisplayGroups,
     displayGroupsData,
     createDialogKind,
@@ -232,6 +556,7 @@ export function useSchedulesPage(options?: {
     handleScheduleClick,
     handleEditFromView,
     handleCreateSchedule,
+    deleteScheduleById,
     handleDeleteSchedule,
     handleSaveSchedule,
   };

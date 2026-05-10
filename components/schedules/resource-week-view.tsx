@@ -1,7 +1,11 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconChevronDown,
+  IconChevronRight,
+} from "@tabler/icons-react";
 import type { Schedule } from "@/types/schedule";
 import { formatWeekdayShort, formatMonthDay } from "@/lib/formatters";
 import {
@@ -9,6 +13,7 @@ import {
   createResourceDateKey,
   type ResourceCalendarLaneEvent,
 } from "@/lib/schedules/resource-calendar";
+import { cn } from "@/lib/utils";
 
 const WEEK_GRID_TEMPLATE = "minmax(6rem, 14rem) repeat(7, minmax(0, 1fr))";
 
@@ -46,6 +51,13 @@ export interface ResourceGridSharedProps {
   readonly schedulesById: ReadonlyMap<string, Schedule>;
   readonly onScheduleClick: (schedule: Schedule) => void;
   readonly onGroupToggle?: (groupId: string) => void;
+  readonly isSelectionMode?: boolean;
+  readonly selectedIds?: ReadonlySet<string>;
+  readonly canSelectSchedule?: (schedule: Schedule) => boolean;
+  readonly onScheduleSelectionChange?: (
+    schedule: Schedule,
+    checked: boolean,
+  ) => void;
 }
 
 export function ResourceWeekView({
@@ -55,6 +67,10 @@ export function ResourceWeekView({
   schedulesById,
   onScheduleClick,
   onGroupToggle,
+  isSelectionMode = false,
+  selectedIds,
+  canSelectSchedule,
+  onScheduleSelectionChange,
 }: ResourceGridSharedProps): ReactElement {
   return (
     <div className="flex max-h-[min(70dvh,calc(100dvh-14rem))] flex-col overflow-hidden rounded-md border border-border">
@@ -147,24 +163,68 @@ export function ResourceWeekView({
                         const counter = overlapCounters.get(event.id);
                         const showCounter =
                           counter !== undefined && counter.groupSize > 1;
+                        const isSelected =
+                          selectedIds?.has(schedule.id) ?? false;
+                        const canSelect =
+                          !isSelectionMode ||
+                          (canSelectSchedule?.(schedule) ?? true);
+                        const selectionLabel = isSelected
+                          ? "Deselect schedule"
+                          : "Select schedule";
 
                         return (
                           <button
                             key={event.id}
                             type="button"
-                            onClick={() => onScheduleClick(schedule)}
-                            className={`mb-1 block w-full cursor-pointer overflow-hidden rounded border-l-4 px-1.5 py-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                            disabled={isSelectionMode && !canSelect}
+                            onClick={() => {
+                              if (isSelectionMode) {
+                                if (canSelect) {
+                                  onScheduleSelectionChange?.(
+                                    schedule,
+                                    !isSelected,
+                                  );
+                                }
+                                return;
+                              }
+                              onScheduleClick(schedule);
+                            }}
+                            className={cn(
+                              "mb-1 block w-full cursor-pointer overflow-hidden rounded border-l-4 px-1.5 py-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                               schedule.kind === "FLASH"
                                 ? "border-amber-600 bg-amber-500/10 hover:bg-amber-500/20"
-                                : "border-primary bg-primary/10 hover:bg-primary/15"
-                            }`}
+                                : "border-primary bg-primary/10 hover:bg-primary/15",
+                              isSelectionMode &&
+                                "cursor-pointer opacity-75 grayscale hover:opacity-100 hover:grayscale-0",
+                              isSelectionMode &&
+                                !canSelect &&
+                                "cursor-not-allowed opacity-40 hover:opacity-40",
+                              isSelected &&
+                                "border-primary bg-primary/20 opacity-100 grayscale-0 ring-2 ring-primary/25",
+                            )}
                             aria-label={
-                              showCounter
-                                ? `View schedule ${schedule.name} (${counter.position + 1} of ${counter.groupSize}) on ${row.name}, ${event.timeLabel}`
-                                : `View schedule ${schedule.name} on ${row.name}, ${event.timeLabel}`
+                              isSelectionMode
+                                ? `${selectionLabel} ${schedule.name} on ${row.name}, ${event.timeLabel}`
+                                : showCounter
+                                  ? `View schedule ${schedule.name} (${counter.position + 1} of ${counter.groupSize}) on ${row.name}, ${event.timeLabel}`
+                                  : `View schedule ${schedule.name} on ${row.name}, ${event.timeLabel}`
                             }
                           >
                             <span className="block truncate text-xs font-medium max-[52rem]:line-clamp-2 max-[52rem]:overflow-hidden max-[52rem]:whitespace-normal">
+                              {isSelectionMode ? (
+                                <span
+                                  aria-hidden="true"
+                                  className={cn(
+                                    "mr-1 inline-flex size-4 items-center justify-center rounded border border-primary/35 bg-background text-primary",
+                                    isSelected &&
+                                      "bg-primary text-primary-foreground",
+                                  )}
+                                >
+                                  {isSelected ? (
+                                    <IconCheck className="size-3" />
+                                  ) : null}
+                                </span>
+                              ) : null}
                               {showCounter ? (
                                 <span
                                   aria-hidden

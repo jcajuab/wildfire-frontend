@@ -8,7 +8,10 @@ import {
 } from "@/lib/content-search-params";
 import { cacheLife, cacheTag } from "next/cache";
 
-import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
+import {
+  getCachedServerSession,
+  resolveOptionalDashboardSession,
+} from "@/lib/server/auth";
 import { serverFetchJson } from "@/lib/server/api";
 
 import { ContentPageView } from "./content-page-client";
@@ -70,7 +73,7 @@ export default async function ContentPage({
     }),
   ]);
 
-  const session = resolveSession(sessionResult, "/admin/content");
+  const session = resolveOptionalDashboardSession(sessionResult);
   if (!session) {
     return (
       <ContentPageView initialQueryArgs={queryArgs} initialData={undefined} />
