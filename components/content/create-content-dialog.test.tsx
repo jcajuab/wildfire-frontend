@@ -14,6 +14,7 @@ const onOpenChange = vi.fn();
 const onUploadFile = vi.fn();
 const onCreateFlash = vi.fn();
 const onCreateText = vi.fn();
+const oversizedFileBytes = 10 * 1024 * 1024 + 1;
 
 const expectClassTokens = (element: HTMLElement, className: string): void => {
   className
@@ -37,6 +38,12 @@ const renderDialog = (mode: "upload" | "flash" | "text" = "upload"): void => {
   );
 };
 
+const createFile = (name: string, type: string, size: number): File => {
+  const file = new File(["x"], name, { type });
+  Object.defineProperty(file, "size", { value: size });
+  return file;
+};
+
 describe("CreateContentDialog", () => {
   beforeAll(() => {
     if (!Element.prototype.hasPointerCapture) {
@@ -54,6 +61,7 @@ describe("CreateContentDialog", () => {
   });
 
   afterEach(() => {
+    vi.clearAllMocks();
     vi.useRealTimers();
   });
 
@@ -167,6 +175,61 @@ describe("CreateContentDialog", () => {
     expect(
       screen.queryByRole("button", { name: /Upload file/i }),
     ).not.toBeInTheDocument();
+  });
+
+  test("rejects oversized upload files before submit", async () => {
+    const user = userEvent.setup();
+    renderDialog("upload");
+
+    await user.type(screen.getByLabelText("Content Title"), "Lobby Poster");
+    await user.upload(
+      screen.getByLabelText("Choose a file"),
+      createFile("too-large.mp4", "video/mp4", oversizedFileBytes),
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "File must be 10 MB or smaller.",
+    );
+    expect(screen.queryByText(/Selected:/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    expect(onUploadFile).not.toHaveBeenCalled();
+  });
+
+  test("rejects oversized dropped upload files and clears the error after a valid file", async () => {
+    const user = userEvent.setup();
+    renderDialog("upload");
+
+    await user.type(screen.getByLabelText("Content Title"), "Lobby Poster");
+    const dropzone = screen
+      .getByText("Choose a file")
+      .closest(".border-dashed");
+    expect(dropzone).not.toBeNull();
+
+    fireEvent.drop(dropzone as HTMLElement, {
+      dataTransfer: {
+        files: [createFile("too-large.png", "image/png", oversizedFileBytes)],
+      },
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "File must be 10 MB or smaller.",
+    );
+    expect(screen.queryByText(/Selected:/)).not.toBeInTheDocument();
+
+    await user.upload(
+      screen.getByLabelText("Choose a file"),
+      createFile("lobby-poster.png", "image/png", 1024),
+    );
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByText("Selected: lobby-poster.png")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onUploadFile).toHaveBeenCalledWith(
+      "Lobby Poster",
+      expect.objectContaining({ name: "lobby-poster.png" }),
+    );
   });
 
   test("uses expanded text content layout and concise editor metadata", async () => {

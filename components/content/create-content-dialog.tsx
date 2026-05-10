@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IconLoader2, IconUpload, IconX } from "@tabler/icons-react";
 import { FlashTonePreview } from "@/components/content/flash-tone-preview";
 import {
+  CONTENT_FILE_MAX_LABEL,
+  getContentFileValidationError,
   SUPPORTED_CONTENT_FILE_LABELS,
   SUPPORTED_CONTENT_FILE_MIME_TYPES,
 } from "@/components/content/content-file-types";
@@ -40,7 +42,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { FLASH_MESSAGE_MAX_LENGTH, type FlashTone } from "@/types/content";
 
 const FLASH_PREVIEW_DEBOUNCE_MS = 500;
-const FILE_MAX_BYTES = 10 * 1024 * 1024;
 
 interface CreateContentDialogProps {
   readonly open: boolean;
@@ -78,6 +79,15 @@ export function CreateContentDialog({
   const [fileError, setFileError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const clearSelectedFile = useCallback(() => {
+    setSelectedFile(null);
+    setFileError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
 
   const resetState = useCallback(() => {
     setTitle("");
@@ -91,6 +101,9 @@ export function CreateContentDialog({
     setFileError(null);
     setIsSubmitting(false);
     submittingRef.current = false;
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }, []);
 
   const handleClose = useCallback(() => {
@@ -131,6 +144,18 @@ export function CreateContentDialog({
 
   const handleSubmit = useCallback(async () => {
     if (!canSubmit || submittingRef.current) return;
+
+    if (isUploadMode && selectedFile) {
+      const validationError = getContentFileValidationError(selectedFile);
+      if (validationError) {
+        setFileError(validationError);
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        return;
+      }
+    }
 
     submittingRef.current = true;
     setIsSubmitting(true);
@@ -174,19 +199,16 @@ export function CreateContentDialog({
   ]);
 
   const handleFileSelect = useCallback((file: File) => {
-    const supportedMimes = SUPPORTED_CONTENT_FILE_MIME_TYPES.split(",");
-    if (!supportedMimes.includes(file.type)) {
-      setFileError(
-        `File type not supported. Accepted: ${SUPPORTED_CONTENT_FILE_LABELS}`,
-      );
+    const validationError = getContentFileValidationError(file);
+    if (validationError) {
+      setFileError(validationError);
       setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       return;
     }
-    if (file.size > FILE_MAX_BYTES) {
-      setFileError("Files cannot exceed 10 MB.");
-      setSelectedFile(null);
-      return;
-    }
+
     setFileError(null);
     setSelectedFile(file);
   }, []);
@@ -331,19 +353,30 @@ export function CreateContentDialog({
                     or drag it here.
                   </p>
                   <input
+                    ref={fileInputRef}
                     id="file-upload"
                     type="file"
                     className="sr-only"
                     accept={SUPPORTED_CONTENT_FILE_MIME_TYPES}
                     onChange={handleFileInputChange}
+                    aria-invalid={fileError ? true : undefined}
+                    aria-describedby={
+                      fileError ? "file-upload-error" : undefined
+                    }
                   />
                   <p className="text-xs text-muted-foreground">
                     {SUPPORTED_CONTENT_FILE_LABELS}
                   </p>
-                  <p className="text-xs text-muted-foreground">Max 10 MB</p>
+                  <p className="text-xs text-muted-foreground">
+                    Max {CONTENT_FILE_MAX_LABEL}
+                  </p>
                 </div>
                 {fileError ? (
-                  <p className="text-xs font-medium text-destructive">
+                  <p
+                    id="file-upload-error"
+                    role="alert"
+                    className="text-xs font-medium text-destructive"
+                  >
                     {fileError}
                   </p>
                 ) : null}
@@ -354,10 +387,11 @@ export function CreateContentDialog({
                     </span>
                     <button
                       type="button"
-                      onClick={() => setSelectedFile(null)}
+                      onClick={clearSelectedFile}
                       className="text-primary hover:text-destructive transition-colors"
+                      aria-label="Remove selected file"
                     >
-                      <IconX className="size-3.5" />
+                      <IconX className="size-3.5" aria-hidden="true" />
                     </button>
                   </div>
                 ) : null}

@@ -1,9 +1,11 @@
 "use client";
 
 import type { ChangeEvent, DragEvent, ReactElement } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { IconLoader2, IconUpload, IconX } from "@tabler/icons-react";
 import {
+  CONTENT_FILE_MAX_LABEL,
+  getContentFileValidationError,
   SUPPORTED_CONTENT_FILE_LABELS,
   SUPPORTED_CONTENT_FILE_MIME_TYPES,
 } from "@/components/content/content-file-types";
@@ -137,8 +139,10 @@ function EditContentDialogForm({
     content.textHtmlContent ?? "",
   );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -151,7 +155,26 @@ function EditContentDialogForm({
   const isFlashContent = content.type === "FLASH";
   const isTextContent = content.type === "TEXT";
 
+  const clearSelectedFile = useCallback(() => {
+    setSelectedFile(null);
+    setFileError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
   const handleFileSelect = useCallback((file: File) => {
+    const validationError = getContentFileValidationError(file);
+    if (validationError) {
+      setFileError(validationError);
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+
+    setFileError(null);
     setSelectedFile(file);
   }, []);
 
@@ -302,17 +325,35 @@ function EditContentDialogForm({
                     or drag it here.
                   </p>
                   <input
+                    ref={fileInputRef}
                     id={`edit-content-file-${content.id}`}
                     type="file"
                     className="sr-only"
                     accept={SUPPORTED_CONTENT_FILE_MIME_TYPES}
                     onChange={handleFileInputChange}
+                    aria-invalid={fileError ? true : undefined}
+                    aria-describedby={
+                      fileError
+                        ? `edit-content-file-error-${content.id}`
+                        : undefined
+                    }
                   />
                   <p className="text-xs text-muted-foreground">
                     {SUPPORTED_CONTENT_FILE_LABELS}
                   </p>
-                  <p className="text-xs text-muted-foreground">Max 10 MB</p>
+                  <p className="text-xs text-muted-foreground">
+                    Max {CONTENT_FILE_MAX_LABEL}
+                  </p>
                 </div>
+                {fileError ? (
+                  <p
+                    id={`edit-content-file-error-${content.id}`}
+                    role="alert"
+                    className="text-xs font-medium text-destructive"
+                  >
+                    {fileError}
+                  </p>
+                ) : null}
                 {selectedFile ? (
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-medium leading-none text-primary">
@@ -320,7 +361,7 @@ function EditContentDialogForm({
                     </span>
                     <button
                       type="button"
-                      onClick={() => setSelectedFile(null)}
+                      onClick={clearSelectedFile}
                       className="text-primary transition-colors hover:text-destructive"
                       aria-label="Remove selected file"
                     >
@@ -347,6 +388,19 @@ function EditContentDialogForm({
         </Button>
         <Button
           onClick={async () => {
+            if (selectedFile) {
+              const validationError =
+                getContentFileValidationError(selectedFile);
+              if (validationError) {
+                setFileError(validationError);
+                setSelectedFile(null);
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+                return;
+              }
+            }
+
             setIsSaving(true);
             onSubmittingChange?.(true);
             try {
@@ -368,6 +422,7 @@ function EditContentDialogForm({
           disabled={
             title.trim().length === 0 ||
             (isFlashContent && flashMessage.trim().length === 0) ||
+            fileError !== null ||
             isSaving
           }
         >

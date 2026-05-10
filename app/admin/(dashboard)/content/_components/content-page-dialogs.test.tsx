@@ -1,8 +1,17 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { EditContentDialog } from "./content-page-dialogs";
 import { SUPPORTED_CONTENT_FILE_LABELS } from "@/components/content/content-file-types";
 import type { Content } from "@/types/content";
+
+const oversizedFileBytes = 10 * 1024 * 1024 + 1;
+
+const createFile = (name: string, type: string, size: number): File => {
+  const file = new File(["x"], name, { type });
+  Object.defineProperty(file, "size", { value: size });
+  return file;
+};
 
 const richTextJson = JSON.stringify({
   type: "doc",
@@ -188,5 +197,69 @@ describe("EditContentDialog", () => {
 
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+  });
+
+  test("rejects oversized replacement files before save", async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn();
+
+    render(
+      <EditContentDialog
+        open
+        content={imageContent}
+        onOpenChange={vi.fn()}
+        onSave={onSave}
+      />,
+    );
+
+    await user.upload(
+      screen.getByLabelText("Choose a file"),
+      createFile("too-large.png", "image/png", oversizedFileBytes),
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "File must be 10 MB or smaller.",
+    );
+    expect(screen.queryByText(/Selected:/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  test("clears replacement file errors after selecting a valid file", async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <EditContentDialog
+        open
+        content={imageContent}
+        onOpenChange={vi.fn()}
+        onSave={onSave}
+      />,
+    );
+
+    const input = screen.getByLabelText("Choose a file");
+    await user.upload(
+      input,
+      createFile("too-large.png", "image/png", oversizedFileBytes),
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "File must be 10 MB or smaller.",
+    );
+
+    await user.upload(input, createFile("replacement.png", "image/png", 1024));
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByText("Selected: replacement.png")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentId: imageContent.id,
+        title: imageContent.title,
+        file: expect.objectContaining({ name: "replacement.png" }),
+      }),
+    );
   });
 });
