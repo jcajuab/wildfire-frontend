@@ -1,11 +1,16 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconLoader2, IconPlus, IconX } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconLoader2,
+  IconPlus,
+  IconTrash,
+  IconX,
+} from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type {
   EmergencySlot,
@@ -23,6 +28,7 @@ interface EmergencyAssetListProps {
   readonly onSelectSlot: (slotIndex: EmergencySlotIndex) => void;
   readonly onSlotLabelChange: (value: string) => void;
   readonly onSaveSlotLabel: () => void;
+  readonly onCancelSlotLabel: () => void;
   readonly onClearSlot: (slotIndex: EmergencySlotIndex) => void;
   readonly clearingSlotIndex?: EmergencySlotIndex | null;
 }
@@ -36,6 +42,7 @@ export function EmergencyAssetList({
   onSelectSlot,
   onSlotLabelChange,
   onSaveSlotLabel,
+  onCancelSlotLabel,
   onClearSlot,
   clearingSlotIndex = null,
 }: EmergencyAssetListProps): ReactElement {
@@ -55,48 +62,100 @@ export function EmergencyAssetList({
           const isFilled = slot != null && slot.contentId != null;
           const isSelected = selectedSlotIndex === slotIndex;
 
-          if (isFilled && slot != null) {
-            const label =
-              slot.label ?? slot.content?.title ?? `Slot ${slotIndex}`;
-            const isClearingThis = clearingSlotIndex === slotIndex;
+          const label = slot?.label ?? slot?.content?.title ?? "";
+          const displayLabel = label || `Slot ${slotIndex}`;
+          const isClearingThis = clearingSlotIndex === slotIndex;
+
+          if (isSelected) {
             return (
               <li key={slotIndex}>
                 <div
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Select Slot ${slotIndex}`}
-                  aria-pressed={isSelected}
-                  onClick={() => onSelectSlot(slotIndex)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      onSelectSlot(slotIndex);
-                    }
-                  }}
                   className={cn(
-                    "flex min-h-10 cursor-pointer items-center justify-between gap-2 rounded-md border px-3 py-2 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none",
-                    isSelected
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-card hover:bg-muted/50",
+                    "flex min-h-10 items-center gap-2 rounded-md border border-primary bg-primary/5 px-3 py-2 text-left transition-colors",
+                    "min-h-[3.75rem]",
                   )}
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-muted-foreground">
-                      Slot {slotIndex}
-                    </p>
-                    <p className="truncate text-xs font-medium" title={label}>
-                      {label}
-                    </p>
+                    <label
+                      htmlFor={`emergency-slot-label-${slotIndex}`}
+                      className="sr-only"
+                    >
+                      Slot name
+                    </label>
+                    <Input
+                      id={`emergency-slot-label-${slotIndex}`}
+                      aria-label="Slot name"
+                      value={slotLabel}
+                      maxLength={64}
+                      placeholder={isFilled ? "Enter slot name" : displayLabel}
+                      onChange={(event) =>
+                        onSlotLabelChange(event.target.value)
+                      }
+                      className="h-8"
+                    />
                   </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Save Slot ${slotIndex} name`}
+                      onClick={onSaveSlotLabel}
+                      disabled={
+                        !canSaveSlotLabel ||
+                        isSavingSlotLabel ||
+                        clearingSlotIndex !== null
+                      }
+                      className="size-7 text-primary hover:bg-primary/10 hover:text-primary"
+                    >
+                      {isSavingSlotLabel ? (
+                        <IconLoader2
+                          className="size-3.5 animate-spin"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <IconCheck className="size-3.5" aria-hidden="true" />
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Cancel Slot ${slotIndex} name edit`}
+                      onClick={onCancelSlotLabel}
+                      disabled={isSavingSlotLabel || clearingSlotIndex !== null}
+                      className="size-7 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    >
+                      <IconX className="size-3.5" aria-hidden="true" />
+                    </Button>
+                  </div>
+                </div>
+              </li>
+            );
+          }
+
+          if (isFilled && slot != null) {
+            return (
+              <li key={slotIndex}>
+                <div className="flex min-h-10 items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/50">
                   <button
                     type="button"
-                    aria-label={`Clear ${label}`}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onClearSlot(slotIndex);
-                    }}
+                    aria-label={`Select Slot ${slotIndex}`}
+                    aria-pressed={false}
+                    onClick={() => onSelectSlot(slotIndex)}
+                    className="min-w-0 flex-1 cursor-pointer text-left text-xs font-medium focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
+                    title={displayLabel}
+                  >
+                    <span className="block truncate">{displayLabel}</span>
+                  </button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Clear ${displayLabel}`}
+                    onClick={() => onClearSlot(slotIndex)}
                     disabled={clearingSlotIndex !== null}
-                    className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                    className="size-7 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
                   >
                     {isClearingThis ? (
                       <IconLoader2
@@ -104,12 +163,12 @@ export function EmergencyAssetList({
                         aria-hidden="true"
                       />
                     ) : (
-                      <IconX
+                      <IconTrash
                         className="size-3.5 text-current"
                         aria-hidden="true"
                       />
                     )}
-                  </button>
+                  </Button>
                 </div>
               </li>
             );
@@ -149,33 +208,6 @@ export function EmergencyAssetList({
           );
         })}
       </ul>
-      {selectedSlotIndex !== null ? (
-        <div className="rounded-md border border-border bg-muted/20 p-3">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="emergency-slot-label">Slot Name</Label>
-            <Input
-              id="emergency-slot-label"
-              value={slotLabel}
-              maxLength={64}
-              placeholder="Enter slot name"
-              onChange={(event) => onSlotLabelChange(event.target.value)}
-            />
-          </div>
-          <div className="mt-2 flex items-center justify-between gap-2">
-            <p className="text-xs text-muted-foreground">
-              Used when activating Slot {selectedSlotIndex}.
-            </p>
-            <Button
-              type="button"
-              size="sm"
-              onClick={onSaveSlotLabel}
-              disabled={!canSaveSlotLabel || isSavingSlotLabel}
-            >
-              {isSavingSlotLabel ? "Saving..." : "Save"}
-            </Button>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

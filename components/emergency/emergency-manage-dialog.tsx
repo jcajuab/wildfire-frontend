@@ -74,7 +74,8 @@ export function EmergencyManageDialog({
     (slotIndex: EmergencySlotIndex) => {
       setSelectedSlotIndex((current) => {
         if (current === slotIndex) {
-          setSlotLabel("");
+          const slot = slots.find((entry) => entry.slotIndex === slotIndex);
+          setSlotLabel(getSlotDisplayLabel(slot));
           return null;
         }
 
@@ -85,6 +86,19 @@ export function EmergencyManageDialog({
     },
     [slots],
   );
+
+  const handleCancelSlotLabel = useCallback(() => {
+    if (selectedSlotIndex === null) return;
+
+    const slot = slots.find((entry) => entry.slotIndex === selectedSlotIndex);
+    if (slot?.contentId) {
+      setSlotLabel(getSlotDisplayLabel(slot));
+      return;
+    }
+
+    setSelectedSlotIndex(null);
+    setSlotLabel("");
+  }, [selectedSlotIndex, slots]);
 
   const handleClearSlot = useCallback(
     async (slotIndex: EmergencySlotIndex) => {
@@ -185,6 +199,7 @@ export function EmergencyManageDialog({
               onSelectSlot={handleSelectSlot}
               onSlotLabelChange={setSlotLabel}
               onSaveSlotLabel={handleSaveSlotLabel}
+              onCancelSlotLabel={handleCancelSlotLabel}
               onClearSlot={handleClearSlot}
               clearingSlotIndex={clearingSlotIndex}
             />

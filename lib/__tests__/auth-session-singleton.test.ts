@@ -47,6 +47,14 @@ function makeErrorResponse(status: number, message: string): Response {
   );
 }
 
+function requireAbortSignal(signal: AbortSignal | null): AbortSignal {
+  expect(signal).not.toBeNull();
+  if (signal == null) {
+    throw new Error("Expected refresh request to capture an AbortSignal.");
+  }
+  return signal;
+}
+
 // ---------------------------------------------------------------------------
 // Setup / teardown
 // ---------------------------------------------------------------------------
@@ -345,12 +353,12 @@ describe("refreshAccessToken singleton", () => {
     const refresh = refreshAccessToken();
     await Promise.resolve();
 
-    expect(refreshSignal).not.toBeNull();
-    expect(refreshSignal?.aborted).toBe(false);
+    const signal = requireAbortSignal(refreshSignal);
+    expect(signal.aborted).toBe(false);
 
     seedAuthSession(makeAuthResponse("server-seed-tok"));
 
-    expect(refreshSignal?.aborted).toBe(false);
+    expect(signal.aborted).toBe(false);
     expect(getAuthSnapshot().accessToken).toBe("server-seed-tok");
 
     resolveRefresh(makeJsonResponse(makeAuthResponse("stale-refresh-tok")));
