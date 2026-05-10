@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent, FormEvent, ReactElement, ReactNode } from "react";
+import type { ChangeEvent, FormEvent, ReactElement } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { RequiredLabel } from "@/components/common/required-label";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -100,24 +101,6 @@ function normalizeEditableDisplaySlug(value: string): string {
     .replace(/['''']/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+/g, "");
-}
-
-function RequiredFieldLabel({
-  htmlFor,
-  children,
-}: {
-  readonly htmlFor: string;
-  readonly children: ReactNode;
-}): ReactElement {
-  return (
-    <Label htmlFor={htmlFor} className="gap-0">
-      {children}
-      <span aria-hidden="true" className="text-destructive">
-        *
-      </span>
-      <span className="sr-only"> required</span>
-    </Label>
-  );
 }
 
 const isRegistrationSucceededEvent = (
@@ -420,9 +403,9 @@ function DisplayRegistrationLinkDialogBody({
           ) : null}
 
           <div className="space-y-2">
-            <RequiredFieldLabel htmlFor="reg-display-name">
+            <RequiredLabel htmlFor="reg-display-name">
               Display Name
-            </RequiredFieldLabel>
+            </RequiredLabel>
             <Input
               id="reg-display-name"
               type="text"
@@ -436,9 +419,7 @@ function DisplayRegistrationLinkDialogBody({
           </div>
 
           <div className="space-y-2">
-            <RequiredFieldLabel htmlFor="reg-slug">
-              Display Slug
-            </RequiredFieldLabel>
+            <RequiredLabel htmlFor="reg-slug">Display Slug</RequiredLabel>
             <Input
               id="reg-slug"
               type="text"
@@ -467,9 +448,9 @@ function DisplayRegistrationLinkDialogBody({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <RequiredFieldLabel htmlFor="reg-output-type">
+              <RequiredLabel htmlFor="reg-output-type">
                 Output Type
-              </RequiredFieldLabel>
+              </RequiredLabel>
               <Select
                 value={formState.outputType}
                 onValueChange={(value) =>
@@ -493,9 +474,9 @@ function DisplayRegistrationLinkDialogBody({
               </Select>
             </div>
             <div className="space-y-2">
-              <RequiredFieldLabel htmlFor="reg-output-index">
+              <RequiredLabel htmlFor="reg-output-index">
                 Output Index
-              </RequiredFieldLabel>
+              </RequiredLabel>
               <Input
                 id="reg-output-index"
                 type="number"

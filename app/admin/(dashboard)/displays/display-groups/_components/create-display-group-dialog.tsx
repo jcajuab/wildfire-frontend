@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { RequiredLabel } from "@/components/common/required-label";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +14,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   collapseDisplayGroupWhitespace,
   toDisplayGroupKey,
@@ -67,7 +67,9 @@ export function CreateDisplayGroupDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor="new-group-name-input">Display Group Name</Label>
+          <RequiredLabel htmlFor="new-group-name-input">
+            Display Group Name
+          </RequiredLabel>
           <Input
             id="new-group-name-input"
             value={name}

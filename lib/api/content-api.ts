@@ -12,6 +12,13 @@ import {
 import type { FlashTone } from "@/types/content";
 import type { RootState } from "@/lib/store";
 
+export type ContentListStatusFilter =
+  | "DRAFT"
+  | "IN_USE"
+  | "PROCESSING"
+  | "READY"
+  | "FAILED";
+
 async function bumpContentNextCache(): Promise<void> {
   try {
     await revalidateWildfireTagsViaRoute(["content-list", "content-options"]);
@@ -45,7 +52,13 @@ function contentMatchesListQuery(
   query: ContentListQuery | void,
 ): boolean {
   if (query?.ownerId && content.owner.id !== query.ownerId) return false;
-  if (query?.status && content.status !== query.status) return false;
+  if (query?.status === "DRAFT") {
+    if (content.status !== "READY" || content.isUsedInPlaylist) return false;
+  } else if (query?.status === "IN_USE") {
+    if (content.status !== "READY" || !content.isUsedInPlaylist) return false;
+  } else if (query?.status && content.status !== query.status) {
+    return false;
+  }
   if (query?.type && content.type !== query.type) return false;
   if (query?.excludeType && content.type === query.excludeType) return false;
   const search = query?.search?.trim().toLowerCase();
@@ -170,7 +183,7 @@ export interface BackendContentListResponse {
 export interface ContentListQuery {
   readonly page?: number;
   readonly pageSize?: number;
-  readonly status?: "PROCESSING" | "READY" | "FAILED";
+  readonly status?: ContentListStatusFilter;
   readonly type?: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
   readonly excludeType?: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
   readonly ownerId?: string;

@@ -2,6 +2,7 @@
 
 import type { ReactElement } from "react";
 import { IconLink, IconLinkOff } from "@tabler/icons-react";
+import { RequiredLabel } from "@/components/common/required-label";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -9,7 +10,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 interface LinkPopoverProps {
   isActive: boolean;
@@ -38,7 +38,7 @@ export function LinkPopover({
       </PopoverTrigger>
       <PopoverContent className="w-80">
         <div className="space-y-2">
-          <Label htmlFor="link-url">URL</Label>
+          <RequiredLabel htmlFor="link-url">URL</RequiredLabel>
           <Input
             id="link-url"
             placeholder="https://example.com"

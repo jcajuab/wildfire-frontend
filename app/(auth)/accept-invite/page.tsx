@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RequiredLabel } from "@/components/common/required-label";
 import { acceptInvitation, AuthApiError } from "@/lib/api-client";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 
@@ -111,7 +112,7 @@ function AcceptInvitePageBody(): ReactElement {
         ) : null}
 
         <div className="space-y-2">
-          <Label htmlFor="token">Invite token</Label>
+          <RequiredLabel htmlFor="token">Invite token</RequiredLabel>
           <Input
             id="token"
             type="text"
@@ -137,7 +138,7 @@ function AcceptInvitePageBody(): ReactElement {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="username">Username</Label>
+          <RequiredLabel htmlFor="username">Username</RequiredLabel>
           <Input
             id="username"
             type="text"
@@ -151,7 +152,7 @@ function AcceptInvitePageBody(): ReactElement {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <RequiredLabel htmlFor="password">Password</RequiredLabel>
           <Input
             id="password"
             type="password"
@@ -165,7 +166,9 @@ function AcceptInvitePageBody(): ReactElement {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm password</Label>
+          <RequiredLabel htmlFor="confirmPassword">
+            Confirm password
+          </RequiredLabel>
           <Input
             id="confirmPassword"
             type="password"

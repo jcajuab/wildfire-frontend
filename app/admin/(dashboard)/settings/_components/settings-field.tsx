@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 
 interface SettingsFieldProps {
-  readonly label: string;
+  readonly label: ReactNode;
   readonly children: ReactNode;
 }
 

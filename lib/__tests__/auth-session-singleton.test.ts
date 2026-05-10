@@ -336,16 +336,20 @@ describe("refreshAccessToken singleton", () => {
       throw new Error("Refresh promise was not created.");
     };
 
-    vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      if (url.includes("/auth/refresh")) {
-        refreshSignal = init?.signal instanceof AbortSignal ? init.signal : null;
-        return new Promise<Response>((resolve) => {
-          resolveRefresh = resolve;
-        });
-      }
-      return makeJsonResponse({ ok: true });
-    });
+    vi.stubGlobal(
+      "fetch",
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/auth/refresh")) {
+          refreshSignal =
+            init?.signal instanceof AbortSignal ? init.signal : null;
+          return new Promise<Response>((resolve) => {
+            resolveRefresh = resolve;
+          });
+        }
+        return makeJsonResponse({ ok: true });
+      },
+    );
 
     const { refreshAccessToken, seedAuthSession, getAuthSnapshot } =
       await import("@/lib/auth-session");
@@ -370,7 +374,7 @@ describe("refreshAccessToken singleton", () => {
   test("refresh lock rechecks session state before rotating the cookie", async () => {
     let refreshCallCount = 0;
     const lockRequest = vi.fn(
-      async <T,>(
+      async <T>(
         _name: string,
         _options: { mode: "exclusive" },
         callback: () => Promise<T>,
@@ -395,7 +399,7 @@ describe("refreshAccessToken singleton", () => {
       await import("@/lib/auth-session");
 
     lockRequest.mockImplementationOnce(
-      async <T,>(
+      async <T>(
         _name: string,
         _options: { mode: "exclusive" },
         callback: () => Promise<T>,

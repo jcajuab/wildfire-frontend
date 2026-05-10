@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { IconInfoCircle } from "@tabler/icons-react";
 
 import { DisplayGroupsTagsInput } from "@/components/displays/display-groups-tags-input";
+import { RequiredLabel } from "@/components/common/required-label";
 import { Button } from "@/components/ui/button";
 import {
   DialogDescription,
@@ -162,9 +163,9 @@ export function EditDisplayForm({
 
       <div className="flex flex-col gap-4">
         <div className="space-y-2">
-          <FieldLabelRow htmlFor="edit-display-name">
+          <RequiredLabel htmlFor="edit-display-name">
             Display Name
-          </FieldLabelRow>
+          </RequiredLabel>
           <Input
             id="edit-display-name"
             value={formData.displayName}
@@ -213,9 +214,9 @@ export function EditDisplayForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <FieldLabelRow htmlFor="edit-output-type">
+            <RequiredLabel htmlFor="edit-output-type">
               Output Type
-            </FieldLabelRow>
+            </RequiredLabel>
             <Select
               value={formData.outputType}
               onValueChange={(value) =>
@@ -239,9 +240,9 @@ export function EditDisplayForm({
             </Select>
           </div>
           <div className="space-y-2">
-            <FieldLabelRow htmlFor="edit-output-index">
+            <RequiredLabel htmlFor="edit-output-index">
               Output Index
-            </FieldLabelRow>
+            </RequiredLabel>
             <Input
               id="edit-output-index"
               type="number"

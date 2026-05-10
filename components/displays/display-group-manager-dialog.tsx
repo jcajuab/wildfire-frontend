@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { RequiredLabel } from "@/components/common/required-label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -210,29 +211,34 @@ export function DisplayGroupManagerDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex gap-2">
-            <Input
-              value={createName}
-              onChange={(event) => setCreateName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void createGroup();
-              }}
-              placeholder="New group name"
-              aria-label="New group name"
-              disabled={isBusy}
-            />
-            <Button
-              type="button"
-              onClick={() => void createGroup()}
-              disabled={isBusy}
-            >
-              <IconPlus
-                className="size-4"
-                aria-hidden="true"
-                data-icon="inline-start"
+          <div className="space-y-2">
+            <RequiredLabel htmlFor="manager-new-group-name">
+              Display Group Name
+            </RequiredLabel>
+            <div className="flex gap-2">
+              <Input
+                id="manager-new-group-name"
+                value={createName}
+                onChange={(event) => setCreateName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void createGroup();
+                }}
+                placeholder="New group name"
+                disabled={isBusy}
               />
-              Add
-            </Button>
+              <Button
+                type="button"
+                onClick={() => void createGroup()}
+                disabled={isBusy}
+              >
+                <IconPlus
+                  className="size-4"
+                  aria-hidden="true"
+                  data-icon="inline-start"
+                />
+                Add
+              </Button>
+            </div>
           </div>
           {createNameError ? (
             <p className="text-xs text-destructive">{createNameError}</p>

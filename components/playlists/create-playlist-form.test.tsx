@@ -57,15 +57,13 @@ describe("CreatePlaylistForm", () => {
     );
 
     expect(screen.getByLabelText("Name")).toBeInTheDocument();
-    expect(screen.getByLabelText("Description (Optional)")).toBeInTheDocument();
+    expect(screen.getByLabelText("Description")).toBeInTheDocument();
     expect(screen.getByText("Playlist Items")).toBeInTheDocument();
     expect(screen.getByText("Content Library")).toBeInTheDocument();
     expect(
-      screen.getByText("Playlists can run up to 60 seconds."),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByLabelText("Display Target (Optional)"),
+      screen.queryByText("Playlists can run up to 60 seconds."),
     ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Display Target")).not.toBeInTheDocument();
     expect(screen.queryByText("Effective Duration:")).not.toBeInTheDocument();
     expect(screen.queryByText(/Base Duration:/)).not.toBeInTheDocument();
     expect(

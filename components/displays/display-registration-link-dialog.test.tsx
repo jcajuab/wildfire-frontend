@@ -100,7 +100,7 @@ describe("DisplayRegistrationLinkDialog", () => {
       screen.getByPlaceholderText("Auto-generated from display name"),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText("Display Groups (Optional)"),
+      screen.queryByText("Display Groups Optional"),
     ).not.toBeInTheDocument();
     for (const label of [
       "Display Name",
@@ -109,8 +109,9 @@ describe("DisplayRegistrationLinkDialog", () => {
       "Output Index",
     ]) {
       const labelElement = screen.getByText(label, { exact: false });
-      expect(labelElement).toHaveTextContent(`${label}*`);
       expect(labelElement).toHaveClass("gap-0");
+      expect(labelElement).toHaveClass("after:content-['*']");
+      expect(labelElement).toHaveClass("after:text-destructive");
     }
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
     expect(

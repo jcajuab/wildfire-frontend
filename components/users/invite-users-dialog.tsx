@@ -26,7 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { RequiredLabel } from "@/components/common/required-label";
 import { Separator } from "@/components/ui/separator";
 
 interface InviteUsersDialogProps {
@@ -250,7 +250,7 @@ function InviteUsersDialogContent({
       <div className="flex min-h-0 flex-1 flex-col gap-4 py-4">
         {/* Email inputs */}
         <div className="flex min-h-0 flex-col gap-2">
-          <Label>Email</Label>
+          <RequiredLabel>Email</RequiredLabel>
           <div className="max-h-56 overflow-y-auto pr-1">
             <div className="flex flex-col gap-2">
               {emails.map((email, index) => (

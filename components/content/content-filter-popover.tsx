@@ -25,10 +25,15 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import type { ContentStatus, ContentType } from "@/types/content";
+import type { ContentType } from "@/types/content";
 
 export type TypeFilter = "all" | ContentType;
-export type ContentStatusFilter = "all" | ContentStatus;
+export type ContentStatusFilter =
+  | "all"
+  | "DRAFT"
+  | "IN_USE"
+  | "PROCESSING"
+  | "FAILED";
 export type ContentSortFilter =
   | "newest"
   | "oldest"
@@ -65,8 +70,9 @@ const statusOptions: readonly {
   readonly label: string;
 }[] = [
   { value: "all", label: "All statuses" },
+  { value: "DRAFT", label: "Draft" },
+  { value: "IN_USE", label: "In Use" },
   { value: "PROCESSING", label: "Processing" },
-  { value: "READY", label: "Ready" },
   { value: "FAILED", label: "Failed" },
 ] as const;
 

@@ -5,6 +5,7 @@ import { useLayoutEffect } from "react";
 import { IconPencil } from "@tabler/icons-react";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { RequiredLabel } from "@/components/common/required-label";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -151,7 +152,13 @@ export function SettingsPageView({
                   />
 
                   {isWildfireUser && (
-                    <SettingsField label="Username">
+                    <SettingsField
+                      label={
+                        <RequiredLabel htmlFor="username">
+                          Username
+                        </RequiredLabel>
+                      }
+                    >
                       <div className={controlContainerClass}>
                         {profileEditor.isEditingUsername ? (
                           <div className="flex items-start gap-2">

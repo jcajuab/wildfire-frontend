@@ -16,6 +16,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 
+import { RequiredLabel } from "@/components/common/required-label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -685,12 +686,7 @@ export function RoleForm({
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="roleName" className="gap-0">
-                  Role Name
-                  <span aria-hidden="true" className="text-destructive">
-                    *
-                  </span>
-                </Label>
+                <RequiredLabel htmlFor="roleName">Role Name</RequiredLabel>
                 <Input
                   id="roleName"
                   aria-label="Role Name"
@@ -706,7 +702,7 @@ export function RoleForm({
                   id="roleDescription"
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
-                  placeholder="Optional description"
+                  placeholder="Enter role description"
                   rows={3}
                   className="resize-none"
                   disabled={isSubmitting}

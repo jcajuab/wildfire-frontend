@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RequiredLabel } from "@/components/common/required-label";
 import {
   Select,
   SelectContent,
@@ -233,13 +234,13 @@ function EditContentDialogForm({
       </DialogHeader>
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="edit-content-title">
+          <RequiredLabel htmlFor="edit-content-title">
             {isFlashContent
               ? "Flash Content Title"
               : isTextContent
                 ? "Text Content Title"
                 : "Content Title"}
-          </Label>
+          </RequiredLabel>
           <Input
             id="edit-content-title"
             placeholder={
@@ -252,7 +253,9 @@ function EditContentDialogForm({
         {isFlashContent ? (
           <>
             <div className="space-y-2">
-              <Label htmlFor="edit-flash-message">Flash Content Message</Label>
+              <RequiredLabel htmlFor="edit-flash-message">
+                Flash Content Message
+              </RequiredLabel>
               <Textarea
                 id="edit-flash-message"
                 value={flashMessage}
@@ -263,7 +266,9 @@ function EditContentDialogForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-flash-tone">Flash Content Tone</Label>
+              <RequiredLabel htmlFor="edit-flash-tone">
+                Flash Content Tone
+              </RequiredLabel>
               <Select
                 value={flashTone}
                 onValueChange={(value: FlashTone) => setFlashTone(value)}
@@ -289,7 +294,7 @@ function EditContentDialogForm({
           </>
         ) : isTextContent ? (
           <div className="space-y-2">
-            <Label>Text Content Message</Label>
+            <RequiredLabel>Text Content Message</RequiredLabel>
             <TiptapEditor
               content={textJsonContent}
               onChange={(json, html) => {

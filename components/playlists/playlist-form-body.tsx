@@ -21,6 +21,7 @@ import { IconPhoto, IconPlus } from "@tabler/icons-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { SearchControl } from "@/components/common/search-control";
+import { RequiredLabel } from "@/components/common/required-label";
 import { Badge } from "@/components/ui/badge";
 import { getTextThumbnailText } from "@/lib/content-thumbnail-preview";
 import { formatDuration } from "@/lib/formatters";
@@ -116,17 +117,11 @@ export function PlaylistDurationBudget({
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <p
-        className={cn(
-          "text-xs text-muted-foreground md:text-right",
-          tone === "warning" && "text-amber-700",
-          tone === "destructive" && "font-medium text-destructive",
-        )}
-      >
-        {isOverLimit
-          ? "Over 60 second limit"
-          : "Playlists can run up to 60 seconds."}
-      </p>
+      {isOverLimit ? (
+        <p className="text-xs font-medium text-destructive md:text-right">
+          Over 60 second limit
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -285,7 +280,7 @@ export function PlaylistFormBody({
 
           <div className="flex flex-col gap-4 p-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="playlist-name">Name</Label>
+              <RequiredLabel htmlFor="playlist-name">Name</RequiredLabel>
               <Input
                 id="playlist-name"
                 placeholder="Demo Playlist"
@@ -296,9 +291,7 @@ export function PlaylistFormBody({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="playlist-description">
-                Description (Optional)
-              </Label>
+              <Label htmlFor="playlist-description">Description</Label>
               <Textarea
                 id="playlist-description"
                 placeholder="Enter playlist description"
@@ -314,7 +307,9 @@ export function PlaylistFormBody({
         <section className="flex min-h-[28rem] flex-col overflow-hidden rounded-md border border-border bg-background xl:min-h-0 xl:flex-1">
           <div className="flex flex-col gap-3 border-b border-border bg-muted/15 p-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-col gap-1">
-              <h2 className="text-sm font-semibold">Playlist Items</h2>
+              <RequiredLabel className="text-sm font-semibold">
+                Playlist Items
+              </RequiredLabel>
               {itemsSubtitleSlot}
             </div>
             {itemsHeaderSlot ? (

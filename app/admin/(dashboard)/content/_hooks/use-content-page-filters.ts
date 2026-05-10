@@ -13,7 +13,13 @@ import type {
   TypeFilter,
 } from "@/components/content/content-filter-popover";
 
-const CONTENT_STATUS_VALUES = ["all", "PROCESSING", "READY", "FAILED"] as const;
+const CONTENT_STATUS_VALUES = [
+  "all",
+  "DRAFT",
+  "IN_USE",
+  "PROCESSING",
+  "FAILED",
+] as const;
 const CONTENT_TYPE_VALUES = ["all", "IMAGE", "VIDEO", "FLASH", "TEXT"] as const;
 const CONTENT_SORT_VALUES = [
   "newest",

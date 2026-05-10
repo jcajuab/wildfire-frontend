@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { DateInput } from "@/components/ui/date-input";
+import { RequiredLabel } from "@/components/common/required-label";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -98,7 +98,7 @@ export function FlushLogsDialog({
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid gap-1.5">
-            <Label>Flush Range</Label>
+            <RequiredLabel>Flush Range</RequiredLabel>
             <Select
               value={range}
               onValueChange={(value) => setRange(value as FlushRange)}
@@ -120,7 +120,9 @@ export function FlushLogsDialog({
           </div>
           {range === "custom" ? (
             <div className="grid gap-1.5">
-              <Label htmlFor="flush-before-date">Delete logs before</Label>
+              <RequiredLabel htmlFor="flush-before-date">
+                Delete logs before
+              </RequiredLabel>
               <DateInput
                 id="flush-before-date"
                 value={customDate}

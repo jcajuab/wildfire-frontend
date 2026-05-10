@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { RequiredLabel } from "@/components/common/required-label";
 import { Button } from "@/components/ui/button";
 
 const controlClass = "h-10 w-full";
@@ -115,7 +115,9 @@ export function ChangePasswordDialog({
           </DialogHeader>
           <div className="mt-4 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="current-password">Current Password</Label>
+              <RequiredLabel htmlFor="current-password">
+                Current Password
+              </RequiredLabel>
               <Input
                 id="current-password"
                 type="password"
@@ -125,7 +127,7 @@ export function ChangePasswordDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
+              <RequiredLabel htmlFor="new-password">New Password</RequiredLabel>
               <Input
                 id="new-password"
                 type="password"
@@ -139,7 +141,9 @@ export function ChangePasswordDialog({
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <RequiredLabel htmlFor="confirm-password">
+                Confirm New Password
+              </RequiredLabel>
               <Input
                 id="confirm-password"
                 type="password"

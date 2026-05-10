@@ -30,7 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { RequiredLabel } from "@/components/common/required-label";
 import {
   Select,
   SelectContent,
@@ -304,13 +304,13 @@ export function CreateContentDialog({
 
         <div className="min-w-0 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="content-title">
+            <RequiredLabel htmlFor="content-title">
               {isUploadMode
                 ? "Content Title"
                 : isFlashMode
                   ? "Flash Content Title"
                   : "Text Content Title"}
-            </Label>
+            </RequiredLabel>
             <Input
               id="content-title"
               placeholder={
@@ -327,6 +327,7 @@ export function CreateContentDialog({
 
           {isUploadMode ? (
             <div className="space-y-4">
+              <RequiredLabel htmlFor="file-upload">Media File</RequiredLabel>
               <div
                 className={`flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-8 transition-colors ${
                   isDragging
@@ -400,7 +401,9 @@ export function CreateContentDialog({
           ) : isFlashMode ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="flash-message">Flash Content Message</Label>
+                <RequiredLabel htmlFor="flash-message">
+                  Flash Content Message
+                </RequiredLabel>
                 <Textarea
                   id="flash-message"
                   value={flashMessage}
@@ -414,7 +417,9 @@ export function CreateContentDialog({
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="flash-tone">Flash Content Tone</Label>
+                <RequiredLabel htmlFor="flash-tone">
+                  Flash Content Tone
+                </RequiredLabel>
                 <Select
                   value={flashTone}
                   onValueChange={(value: FlashTone) => setFlashTone(value)}
@@ -437,7 +442,7 @@ export function CreateContentDialog({
             </div>
           ) : (
             <div className="space-y-2">
-              <Label>Text Content Message</Label>
+              <RequiredLabel>Text Content Message</RequiredLabel>
               <TiptapEditor
                 onChange={(json, html) => {
                   setTextJsonContent(json);

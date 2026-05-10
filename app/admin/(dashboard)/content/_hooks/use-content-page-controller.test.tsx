@@ -222,7 +222,7 @@ describe("useContentPageController", () => {
     ] as unknown as ReturnType<typeof useCancelPdfUploadMutation>);
     useContentJobMonitorMock.mockReturnValue({ trackContentJob: vi.fn() });
     useContentPageFiltersMock.mockReturnValue({
-      statusFilter: "READY",
+      statusFilter: "IN_USE",
       typeFilter: "VIDEO",
       ownerFilter: "00000000-0000-4000-8000-000000000001",
       sortFilter: "title-asc",
@@ -267,7 +267,7 @@ describe("useContentPageController", () => {
       {
         page: 2,
         pageSize: 20,
-        status: "READY",
+        status: "IN_USE",
         type: "VIDEO",
         ownerId: "00000000-0000-4000-8000-000000000001",
         search: "weather",

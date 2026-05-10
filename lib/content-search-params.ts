@@ -4,7 +4,13 @@ import { ADMIN_CARD_PAGE_SIZE } from "@/lib/admin-pagination";
 /** Matches admin content grid page size (paginated grid UX). */
 export const CONTENT_PAGE_SIZE = ADMIN_CARD_PAGE_SIZE;
 
-const CONTENT_STATUS_VALUES = ["all", "PROCESSING", "READY", "FAILED"] as const;
+const CONTENT_STATUS_VALUES = [
+  "all",
+  "DRAFT",
+  "IN_USE",
+  "PROCESSING",
+  "FAILED",
+] as const;
 const CONTENT_TYPE_VALUES = ["all", "IMAGE", "VIDEO", "FLASH", "TEXT"] as const;
 const CONTENT_SORT_VALUES = [
   "newest",

@@ -52,7 +52,9 @@ export function EmergencyAssetList({
                 <div
                   className={cn(
                     "flex min-h-10 items-center gap-2 rounded-md border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/50",
-                    isSelected ? "border-primary bg-primary/5" : "border-border",
+                    isSelected
+                      ? "border-primary bg-primary/5"
+                      : "border-border",
                   )}
                 >
                   <button

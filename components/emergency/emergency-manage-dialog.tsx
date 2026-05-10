@@ -48,17 +48,14 @@ export function EmergencyManageDialog({
 
   const slots = useMemo(() => data?.slots ?? [], [data?.slots]);
 
-  const handleSelectSlot = useCallback(
-    (slotIndex: EmergencySlotIndex) => {
-      setSelectedSlotIndex((current) => {
-        if (current === slotIndex) {
-          return null;
-        }
-        return slotIndex;
-      });
-    },
-    [],
-  );
+  const handleSelectSlot = useCallback((slotIndex: EmergencySlotIndex) => {
+    setSelectedSlotIndex((current) => {
+      if (current === slotIndex) {
+        return null;
+      }
+      return slotIndex;
+    });
+  }, []);
 
   const handleClearSlot = useCallback(
     async (slotIndex: EmergencySlotIndex) => {

@@ -25,7 +25,7 @@ describe("ContentFilterPopover", () => {
 
     render(
       <ContentFilterPopover
-        statusFilter="READY"
+        statusFilter="DRAFT"
         typeFilter="VIDEO"
         ownerFilter="all"
         sortFilter="newest"
@@ -47,7 +47,7 @@ describe("ContentFilterPopover", () => {
       document.querySelector('[data-slot="popover-content"]'),
     ).toHaveAttribute("data-side", "bottom");
     expect(screen.getByText("Active filters")).toBeInTheDocument();
-    expect(screen.getAllByText("Ready").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Draft").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Videos").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("Showing 6 matching results")).toBeNull();
     await user.click(screen.getByRole("button", { name: "Clear" }));
@@ -83,7 +83,11 @@ describe("ContentFilterPopover", () => {
     expect(
       screen.getByRole("option", { name: "All statuses" }),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole("option", { name: "Ready" }));
+    expect(
+      screen.getAllByRole("option").map((option) => option.textContent),
+    ).toEqual(["All statuses", "Draft", "In Use", "Processing", "Failed"]);
+    expect(screen.queryByRole("option", { name: "Ready" })).toBeNull();
+    await user.click(screen.getByRole("option", { name: "In Use" }));
     await user.click(screen.getByRole("combobox", { name: "Content Type" }));
     expect(
       document.querySelector('[data-slot="select-content"]'),
@@ -96,7 +100,7 @@ describe("ContentFilterPopover", () => {
     ).toEqual(["All content types", "Text", "Images", "Videos", "Flash"]);
     await user.click(screen.getByRole("option", { name: "Videos" }));
 
-    expect(onStatusFilterChange).toHaveBeenCalledWith("READY");
+    expect(onStatusFilterChange).toHaveBeenCalledWith("IN_USE");
     expect(onTypeFilterChange).toHaveBeenCalledWith("VIDEO");
   });
 
@@ -151,7 +155,7 @@ describe("ContentFilterPopover", () => {
 
     render(
       <ContentFilterPopover
-        statusFilter="READY"
+        statusFilter="DRAFT"
         typeFilter="VIDEO"
         ownerFilter="00000000-0000-4000-8000-000000000001"
         sortFilter="title-asc"
@@ -173,7 +177,7 @@ describe("ContentFilterPopover", () => {
 
     await user.click(screen.getByRole("button", { name: "Filter content" }));
     await user.click(
-      screen.getByRole("button", { name: "Remove Ready filter" }),
+      screen.getByRole("button", { name: "Remove Draft filter" }),
     );
     await user.click(
       screen.getByRole("button", { name: "Remove Videos filter" }),

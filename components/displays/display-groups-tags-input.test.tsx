@@ -36,7 +36,7 @@ describe("DisplayGroupsTagsInput", () => {
 
     expect(screen.getByRole("option", { name: "Lobby" })).toBeInTheDocument();
     expect(
-      screen.queryByText("Display Groups (Optional)"),
+      screen.queryByText("Display Groups Optional"),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("No groups found.")).not.toBeInTheDocument();
   });

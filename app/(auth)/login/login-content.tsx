@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { RequiredLabel } from "@/components/common/required-label";
 import { useAuth } from "@/context/auth-context";
 import { AuthApiError } from "@/lib/api-client";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
@@ -137,7 +137,7 @@ export function LoginContent(): ReactElement | null {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="username">Username</Label>
+          <RequiredLabel htmlFor="username">Username</RequiredLabel>
           <Input
             id="username"
             type="text"
@@ -153,7 +153,7 @@ export function LoginContent(): ReactElement | null {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
-            <Label htmlFor="password">Password</Label>
+            <RequiredLabel htmlFor="password">Password</RequiredLabel>
           </div>
           <Input
             id="password"

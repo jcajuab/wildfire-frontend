@@ -72,7 +72,11 @@ export function EditPlaylistPageView(): ReactElement {
 
   const totalDuration = items.reduce((sum, item) => sum + item.duration, 0);
   const isOverDurationLimit = totalDuration > MAX_BASE_DURATION_SECONDS;
-  const canSave = !isSaving && items.length > 0 && !isOverDurationLimit;
+  const canSave =
+    !isSaving &&
+    name.trim().length > 0 &&
+    items.length > 0 &&
+    !isOverDurationLimit;
 
   const handleSaveClick = useCallback(() => {
     const snapshot: PlaylistItemsAtomicSnapshot = items.map((item) =>

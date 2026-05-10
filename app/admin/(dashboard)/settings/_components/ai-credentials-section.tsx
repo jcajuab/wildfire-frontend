@@ -12,6 +12,7 @@ import {
 } from "@tabler/icons-react";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
+import { RequiredLabel } from "@/components/common/required-label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAICredentials } from "@/hooks/use-ai-credentials";
@@ -73,12 +74,23 @@ function ProviderCredentialRow({
     await onDelete(provider.id);
   };
 
+  const inputId = `${provider.id}-api-key`;
+
   return (
-    <SettingsField label={provider.label}>
+    <SettingsField
+      label={
+        isEditing ? (
+          <RequiredLabel htmlFor={inputId}>{provider.label}</RequiredLabel>
+        ) : (
+          provider.label
+        )
+      }
+    >
       <div className={controlContainerClass}>
         {isEditing ? (
           <div className="flex items-center gap-2">
             <Input
+              id={inputId}
               type="password"
               autoComplete="off"
               placeholder="Paste API key"

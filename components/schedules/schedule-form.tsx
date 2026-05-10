@@ -3,6 +3,7 @@
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { RequiredLabel } from "@/components/common/required-label";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import {
@@ -17,7 +18,6 @@ import {
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -391,7 +391,7 @@ function ScheduleFormFrame({
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
         {!lockedKind && (
           <div className="space-y-2">
-            <Label>Schedule Type</Label>
+            <RequiredLabel>Schedule Type</RequiredLabel>
             <Tabs
               value={formData.kind}
               onValueChange={(value) =>
@@ -416,7 +416,7 @@ function ScheduleFormFrame({
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="schedule-name">Name</Label>
+          <RequiredLabel htmlFor="schedule-name">Name</RequiredLabel>
           <Input
             id="schedule-name"
             placeholder="Lobby daytime"
@@ -430,7 +430,9 @@ function ScheduleFormFrame({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="schedule-start-date">Start Date</Label>
+            <RequiredLabel htmlFor="schedule-start-date">
+              Start Date
+            </RequiredLabel>
             <Input
               id="schedule-start-date"
               type="date"
@@ -447,7 +449,7 @@ function ScheduleFormFrame({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="schedule-end-date">End Date</Label>
+            <RequiredLabel htmlFor="schedule-end-date">End Date</RequiredLabel>
             <Input
               id="schedule-end-date"
               type="date"
@@ -465,7 +467,9 @@ function ScheduleFormFrame({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="schedule-start-time">Start Time</Label>
+            <RequiredLabel htmlFor="schedule-start-time">
+              Start Time
+            </RequiredLabel>
             <Input
               id="schedule-start-time"
               type="time"
@@ -487,7 +491,7 @@ function ScheduleFormFrame({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="schedule-end-time">End Time</Label>
+            <RequiredLabel htmlFor="schedule-end-time">End Time</RequiredLabel>
             <Input
               id="schedule-end-time"
               type="time"
@@ -517,7 +521,7 @@ function ScheduleFormFrame({
         {formData.kind === "PLAYLIST" ? (
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Playlist</Label>
+              <RequiredLabel>Playlist</RequiredLabel>
               {isCreate && availablePlaylists.length === 0 ? (
                 <EmptyResourceCta
                   message="No playlists yet."
@@ -553,7 +557,7 @@ function ScheduleFormFrame({
           </div>
         ) : (
           <div className="space-y-2">
-            <Label>Flash Content</Label>
+            <RequiredLabel>Flash Content</RequiredLabel>
             {isCreate && availableFlashContents.length === 0 ? (
               <EmptyResourceCta
                 message="No flash content yet."
@@ -589,7 +593,7 @@ function ScheduleFormFrame({
         )}
 
         <div className="space-y-2">
-          <Label>Target</Label>
+          <RequiredLabel>Target</RequiredLabel>
           {isCreate ? (
             <>
               <Tabs

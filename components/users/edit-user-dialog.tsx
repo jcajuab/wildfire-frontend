@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RequiredLabel } from "@/components/common/required-label";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/context/auth-context";
 import type { User } from "@/types/user";
@@ -92,7 +93,7 @@ function EditUserForm({
       </DialogHeader>
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="edit-user-name">Name</Label>
+          <RequiredLabel htmlFor="edit-user-name">Name</RequiredLabel>
           <Input
             id="edit-user-name"
             value={name}
@@ -101,7 +102,7 @@ function EditUserForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="edit-user-username">Username</Label>
+          <RequiredLabel htmlFor="edit-user-username">Username</RequiredLabel>
           <Input
             id="edit-user-username"
             type="text"
