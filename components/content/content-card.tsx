@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  type KeyboardEvent,
-  type MouseEvent,
-  type ReactElement,
-  memo,
-} from "react";
+import { type PointerEvent, type ReactElement, memo } from "react";
 import Image from "next/image";
 import {
   IconDots,
@@ -124,7 +119,7 @@ export const ContentCard = memo(function ContentCard({
 
   const ThumbnailFallbackIcon =
     content.type === "VIDEO" ? IconVideo : IconPhoto;
-  const handleCardClick = (event: MouseEvent<HTMLElement>): void => {
+  const handleCardPointerUp = (event: PointerEvent<HTMLElement>): void => {
     if (
       !showSelection ||
       shouldIgnoreCardSelection(event.target, event.currentTarget)
@@ -134,32 +129,14 @@ export const ContentCard = memo(function ContentCard({
 
     onSelectionChange?.(content, !isSelected);
   };
-  const handleCardKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
-    if (
-      !showSelection ||
-      event.target !== event.currentTarget ||
-      (event.key !== "Enter" && event.key !== " ")
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-    onSelectionChange?.(content, !isSelected);
-  };
-
   return (
     <div
       id={`content-card-${content.id}`}
       data-state={isSelected ? "selected" : undefined}
       data-selection-mode={showSelection ? "true" : undefined}
       data-selection-muted={showSelection && !isSelected ? "true" : undefined}
-      onClick={handleCardClick}
-      onKeyDown={handleCardKeyDown}
-      role={showSelection ? "button" : undefined}
-      tabIndex={showSelection ? 0 : undefined}
-      aria-pressed={showSelection ? isSelected : undefined}
-      aria-label={showSelection ? `Select ${content.title}` : undefined}
-      className={`group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-[border-color,background-color,filter,opacity] duration-150 data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5 data-[state=selected]:opacity-100 data-[state=selected]:grayscale-0 motion-reduce:transition-none ${showSelection ? "cursor-pointer focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30" : ""} ${showSelection && !isSelected ? "border-border/60 bg-muted/25 opacity-55 grayscale hover:border-primary/35 hover:bg-card hover:opacity-90 hover:grayscale-0" : ""}`}
+      onPointerUp={handleCardPointerUp}
+      className={`group flex min-h-28 flex-col overflow-hidden rounded-lg border border-border bg-card transition-[border-color,background-color,filter,opacity] duration-150 data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5 data-[state=selected]:opacity-100 data-[state=selected]:grayscale-0 motion-reduce:transition-none ${showSelection ? "cursor-pointer" : ""} ${showSelection && !isSelected ? "border-border/60 bg-muted/25 opacity-55 grayscale hover:border-primary/35 hover:bg-card hover:opacity-90 hover:grayscale-0" : ""}`}
     >
       {/* Zone A — Card header */}
       <div className="flex items-center justify-between px-3 py-2">

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
-  debounce,
   parseAsInteger,
   parseAsString,
   parseAsStringLiteral,
@@ -28,17 +27,11 @@ export type ActorTypeFilter = (typeof ACTOR_TYPE_FILTERS)[number];
 
 const auditLogFiltersParsers = {
   page: parseAsInteger.withDefault(1),
-  q: parseAsString
-    .withDefault("")
-    .withOptions({ limitUrlUpdates: debounce(500) }),
+  q: parseAsString.withDefault(""),
   from: parseAsString.withDefault(""),
   to: parseAsString.withDefault(""),
-  action: parseAsString
-    .withDefault("")
-    .withOptions({ limitUrlUpdates: debounce(500) }),
-  requestId: parseAsString
-    .withDefault("")
-    .withOptions({ limitUrlUpdates: debounce(500) }),
+  action: parseAsString.withDefault(""),
+  requestId: parseAsString.withDefault(""),
   resourceType: parseAsStringLiteral(RESOURCE_TYPE_FILTER_OPTIONS).withDefault(
     "",
   ),

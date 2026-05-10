@@ -426,7 +426,10 @@ export function CreateContentDialog({
           <Button onClick={handleSubmit} disabled={!canSubmit || isSubmitting}>
             {isSubmitting ? (
               <>
-                <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
+                <IconLoader2
+                  className="size-4 animate-spin"
+                  aria-hidden="true"
+                />
                 Saving...
               </>
             ) : (

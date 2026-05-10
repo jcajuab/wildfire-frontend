@@ -101,7 +101,7 @@ export function ResourceWeekView({
                       <IconChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
                     )}
                     <span className="text-sm font-semibold">{row.name}</span>
-                    <span className="rounded-md border border-border bg-muted/40 px-1.5 py-0.5 text-xs text-muted-foreground">
+                    <span className="rounded-md border border-border bg-muted/30 px-1.5 py-0.5 text-xs text-foreground">
                       {row.displayCount}
                     </span>
                   </button>
@@ -155,8 +155,8 @@ export function ResourceWeekView({
                             onClick={() => onScheduleClick(schedule)}
                             className={`mb-1 block w-full cursor-pointer overflow-hidden rounded border-l-4 px-1.5 py-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                               schedule.kind === "FLASH"
-                                ? "border-amber-500 bg-amber-500/12 hover:bg-amber-500/20"
-                                : "border-primary bg-primary/12 hover:bg-primary/20"
+                                ? "border-amber-600 bg-amber-500/10 hover:bg-amber-500/20"
+                                : "border-primary bg-primary/10 hover:bg-primary/15"
                             }`}
                             aria-label={
                               showCounter
@@ -168,14 +168,14 @@ export function ResourceWeekView({
                               {showCounter ? (
                                 <span
                                   aria-hidden
-                                  className="mr-1 inline-flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold leading-none text-primary-foreground"
+                                  className="mr-1 inline-flex size-4 items-center justify-center rounded-full border border-primary/25 bg-background text-[10px] font-semibold leading-none text-primary"
                                 >
                                   {counter.position + 1}
                                 </span>
                               ) : null}
                               {schedule.name}
                             </span>
-                            <span className="block truncate text-xs text-foreground/60 max-[52rem]:whitespace-normal">
+                            <span className="block truncate text-xs text-foreground/80 max-[52rem]:whitespace-normal">
                               {event.timeLabel}
                             </span>
                           </button>

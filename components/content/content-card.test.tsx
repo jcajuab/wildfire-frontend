@@ -107,12 +107,16 @@ describe("ContentCard", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Select Demo Image" }));
+    const card = screen
+      .getByRole("heading", { name: "Demo Image" })
+      .closest("[data-selection-mode='true']");
+    expect(card).toBeInstanceOf(HTMLElement);
+    await user.click(card as HTMLElement);
 
     expect(onSelectionChange).toHaveBeenCalledWith(baseContent, true);
   });
 
-  test("supports keyboard selection from the focused card", async () => {
+  test("supports keyboard selection from the selection checkbox", async () => {
     const user = userEvent.setup();
     const onSelectionChange = vi.fn();
     render(
@@ -124,13 +128,13 @@ describe("ContentCard", () => {
       />,
     );
 
-    const card = screen.getByRole("button", { name: "Select Demo Image" });
-    card.focus();
-    await user.keyboard("{Enter}");
+    const checkbox = screen.getByRole("checkbox", {
+      name: "Select Demo Image",
+    });
+    checkbox.focus();
     await user.keyboard(" ");
 
-    expect(onSelectionChange).toHaveBeenNthCalledWith(1, baseContent, true);
-    expect(onSelectionChange).toHaveBeenNthCalledWith(2, baseContent, true);
+    expect(onSelectionChange).toHaveBeenCalledWith(baseContent, true);
   });
 
   test("does not double-toggle when selecting from the checkbox", async () => {
@@ -163,7 +167,10 @@ describe("ContentCard", () => {
       />,
     );
 
-    const card = screen.getByRole("button", { name: "Select Demo Image" });
+    const card = screen
+      .getByRole("heading", { name: "Demo Image" })
+      .closest("[data-selection-mode='true']");
+    expect(card).toBeInstanceOf(HTMLElement);
     expect(card).toHaveAttribute("data-selection-muted", "true");
     expect(card).toHaveClass("opacity-55", "grayscale");
 

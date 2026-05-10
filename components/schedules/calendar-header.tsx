@@ -113,7 +113,7 @@ export function CalendarHeader({
       {/* Center: Date Range + Resource Count */}
       <div className="flex items-center justify-start gap-2 sm:justify-center">
         <h2 className="truncate text-base font-semibold">{label}</h2>
-        <span className="shrink-0 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+        <span className="shrink-0 rounded-md border border-border bg-muted/30 px-2 py-1 text-xs text-foreground">
           {resourcesLabel}
         </span>
       </div>

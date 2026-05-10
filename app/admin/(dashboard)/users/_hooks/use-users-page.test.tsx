@@ -1,9 +1,9 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
-import { getInvitations } from "@/lib/api-client";
+import { useListInvitationsQuery } from "@/lib/api/invitations-api";
 import {
   rbacApi,
   useGetRoleOptionsQuery,
@@ -32,7 +32,19 @@ vi.mock("@/hooks/use-debounce", () => ({
 }));
 
 vi.mock("@/lib/api-client", () => ({
-  getInvitations: vi.fn(),
+  AuthApiError: class AuthApiError extends Error {
+    status = 500;
+  },
+}));
+
+vi.mock("@/lib/api/invitations-api", () => ({
+  useCreateInvitationMutation: vi.fn(() => [vi.fn()]),
+  useListInvitationsQuery: vi.fn(() => ({
+    data: undefined,
+    isLoading: false,
+    isFetching: false,
+  })),
+  useResendInvitationMutation: vi.fn(() => [vi.fn()]),
 }));
 
 vi.mock("@/lib/api/rbac-api", () => ({
@@ -58,6 +70,8 @@ vi.mock("@/lib/api/rbac-api", () => ({
     refetch: vi.fn(),
   })),
   useSetUserRolesMutation: vi.fn(() => [vi.fn()]),
+  useSetUserStatusMutation: vi.fn(() => [vi.fn()]),
+  useResetUserPasswordMutation: vi.fn(() => [vi.fn()]),
   useUpdateUserMutation: vi.fn(() => [vi.fn()]),
 }));
 
@@ -89,7 +103,7 @@ vi.mock("./use-users-filters", () => ({
 
 const useAuthMock = vi.mocked(useAuth);
 const useCanMock = vi.mocked(useCan);
-const getInvitationsMock = vi.mocked(getInvitations);
+const useListInvitationsQueryMock = vi.mocked(useListInvitationsQuery);
 const useGetRoleOptionsQueryMock = vi.mocked(useGetRoleOptionsQuery);
 const useGetUsersQueryMock = vi.mocked(useGetUsersQuery);
 const useGetUsersQueryStateMock = vi.mocked(
@@ -202,7 +216,11 @@ describe("useUsersPage", () => {
     } as unknown as ReturnType<
       typeof rbacApi.endpoints.getUsers.useQueryState
     >);
-    getInvitationsMock.mockResolvedValue(makeInvitationsData("pending"));
+    useListInvitationsQueryMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+    } as unknown as ReturnType<typeof useListInvitationsQuery>);
   });
 
   test("uses initial users when returning to the default name sort", () => {
@@ -253,20 +271,34 @@ describe("useUsersPage", () => {
       }),
     );
 
-    expect(result.current.invitations).toEqual([]);
-
-    await waitFor(() => {
-      expect(getInvitationsMock).toHaveBeenCalledWith({
+    expect(useListInvitationsQueryMock).toHaveBeenCalledWith(
+      {
         page: 1,
         pageSize: 10,
         q: undefined,
         status: "pending",
         sortBy: "createdAt",
         sortDirection: "desc",
-      });
-    });
-    await waitFor(() => {
-      expect(result.current.invitations[0]?.status).toBe("pending");
-    });
+      },
+      {
+        skip: false,
+        refetchOnFocus: false,
+        refetchOnReconnect: false,
+      },
+    );
+    expect(result.current.invitations).toEqual([]);
+
+    useListInvitationsQueryMock.mockReturnValue({
+      data: makeInvitationsData("pending"),
+      isLoading: false,
+      isFetching: false,
+    } as unknown as ReturnType<typeof useListInvitationsQuery>);
+
+    const { result: nextResult } = renderHook(() =>
+      useUsersPage({
+        initialInvitations: makeInvitationsData("expired"),
+      }),
+    );
+    expect(nextResult.current.invitations[0]?.status).toBe("pending");
   });
 });

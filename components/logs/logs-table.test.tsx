@@ -102,7 +102,9 @@ describe("LogsTable", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "No logs found" })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "No logs found" }),
+    ).toBeVisible();
     expect(
       screen.getByText("No audit log entries match the current filters."),
     ).toBeVisible();

@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  type KeyboardEvent,
-  type MouseEvent,
-  type ReactElement,
-  memo,
-} from "react";
+import { type PointerEvent, type ReactElement, memo } from "react";
 import { IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -135,7 +130,7 @@ export const DisplayCard = memo(function DisplayCard({
   const showDestructiveSeparator = Boolean(
     onEditDisplay && onUnregisterDisplay,
   );
-  const handleCardClick = (event: MouseEvent<HTMLElement>): void => {
+  const handleCardPointerUp = (event: PointerEvent<HTMLElement>): void => {
     if (
       !showSelection ||
       shouldIgnoreCardSelection(event.target, event.currentTarget)
@@ -145,31 +140,13 @@ export const DisplayCard = memo(function DisplayCard({
 
     onSelectionChange?.(display, !isSelected);
   };
-  const handleCardKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
-    if (
-      !showSelection ||
-      event.target !== event.currentTarget ||
-      (event.key !== "Enter" && event.key !== " ")
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-    onSelectionChange?.(display, !isSelected);
-  };
-
   return (
     <div
       data-state={isSelected ? "selected" : undefined}
       data-selection-mode={showSelection ? "true" : undefined}
       data-selection-muted={showSelection && !isSelected ? "true" : undefined}
-      onClick={handleCardClick}
-      onKeyDown={handleCardKeyDown}
-      role={showSelection ? "button" : undefined}
-      tabIndex={showSelection ? 0 : undefined}
-      aria-pressed={showSelection ? isSelected : undefined}
-      aria-label={showSelection ? `Select ${display.name}` : undefined}
-      className={`group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-[border-color,background-color,filter,opacity] duration-200 hover:border-border hover:bg-muted/10 data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5 data-[state=selected]:opacity-100 data-[state=selected]:grayscale-0 motion-reduce:transition-none ${showSelection ? "cursor-pointer focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30" : ""} ${showSelection && !isSelected ? "border-border/60 bg-muted/25 opacity-55 grayscale hover:border-border hover:bg-card hover:opacity-90 hover:grayscale-0" : ""}`}
+      onPointerUp={handleCardPointerUp}
+      className={`group flex h-full flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 transition-[border-color,background-color,filter,opacity] duration-200 hover:border-border hover:bg-muted/10 data-[state=selected]:border-primary/60 data-[state=selected]:bg-primary/5 data-[state=selected]:opacity-100 data-[state=selected]:grayscale-0 motion-reduce:transition-none ${showSelection ? "cursor-pointer" : ""} ${showSelection && !isSelected ? "border-border/60 bg-muted/25 opacity-55 grayscale hover:border-border hover:bg-card hover:opacity-90 hover:grayscale-0" : ""}`}
     >
       <header className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">

@@ -78,6 +78,7 @@ const makeSession = (
   permissions: ServerSession["permissions"],
 ): ServerSession => ({
   accessToken: "access-token",
+  accessTokenExpiresAt: "2099-01-01T00:00:00.000Z",
   user: {
     id: "user-1",
     username: "alice",

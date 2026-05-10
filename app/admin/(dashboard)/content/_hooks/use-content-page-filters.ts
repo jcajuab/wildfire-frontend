@@ -6,7 +6,6 @@ import {
   parseAsString,
   parseAsInteger,
   parseAsStringLiteral,
-  debounce,
 } from "nuqs";
 import type {
   ContentSortFilter,
@@ -27,9 +26,7 @@ const CONTENT_SORT_VALUES = [
 
 export function useContentPageFilters() {
   const [filters, setFilters] = useQueryStates({
-    q: parseAsString
-      .withDefault("")
-      .withOptions({ limitUrlUpdates: debounce(500) }),
+    q: parseAsString.withDefault(""),
     status: parseAsStringLiteral(CONTENT_STATUS_VALUES).withDefault("all"),
     type: parseAsStringLiteral(CONTENT_TYPE_VALUES).withDefault("all"),
     ownerId: parseAsString.withDefault("all"),

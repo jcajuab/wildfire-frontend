@@ -5,7 +5,6 @@ import {
   parseAsInteger,
   parseAsStringLiteral,
   useQueryStates,
-  debounce,
   parseAsString,
 } from "nuqs";
 import type { SortDirection } from "@/types/common";
@@ -15,9 +14,7 @@ const ROLE_SORT_FIELDS = ["name", "usersCount"] as const;
 const ROLE_SORT_DIRECTIONS = ["asc", "desc"] as const;
 
 const rolesFiltersParsers = {
-  q: parseAsString
-    .withDefault("")
-    .withOptions({ limitUrlUpdates: debounce(500) }),
+  q: parseAsString.withDefault(""),
   sortField: parseAsStringLiteral(ROLE_SORT_FIELDS).withDefault("name"),
   sortDir: parseAsStringLiteral(ROLE_SORT_DIRECTIONS).withDefault("asc"),
   page: parseAsInteger.withDefault(1),

@@ -20,6 +20,19 @@ async function bumpContentNextCache(): Promise<void> {
   }
 }
 
+async function bumpContentDependentNextCache(): Promise<void> {
+  try {
+    await revalidateWildfireTagsViaRoute([
+      "content-list",
+      "content-options",
+      "playlists",
+      "schedules-bootstrap",
+    ]);
+  } catch {
+    // best-effort
+  }
+}
+
 type ContentListMutable = {
   items: BackendContentListItem[];
   total: number;
@@ -35,6 +48,17 @@ function contentMatchesListQuery(
   if (query?.status && content.status !== query.status) return false;
   if (query?.type && content.type !== query.type) return false;
   const search = query?.search?.trim().toLowerCase();
+  if (search && !content.title.toLowerCase().includes(search)) return false;
+  return true;
+}
+
+function contentMatchesOptionsQuery(
+  content: BackendContent,
+  query: ContentOptionsQueryArg,
+): boolean {
+  if (query?.status && content.status !== query.status) return false;
+  if (query?.type && content.type !== query.type) return false;
+  const search = query?.q?.trim().toLowerCase();
   if (search && !content.title.toLowerCase().includes(search)) return false;
   return true;
 }
@@ -347,6 +371,17 @@ export const contentApi = api.injectEndpoints({
           response,
           "createFlashContent",
         ),
+      invalidatesTags: (result) =>
+        result
+          ? [
+              { type: "Content", id: "LIST" },
+              { type: "Content", id: result.id },
+              { type: "Schedule", id: "LIST" },
+            ]
+          : [
+              { type: "Content", id: "LIST" },
+              { type: "Schedule", id: "LIST" },
+            ],
       async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
         try {
           const { data: created } = await queryFulfilled;
@@ -370,6 +405,7 @@ export const contentApi = api.injectEndpoints({
             "getContentOptions",
           );
           for (const oa of optionArgs) {
+            if (!contentMatchesOptionsQuery(created, oa)) continue;
             dispatch(
               contentApi.util.updateQueryData(
                 "getContentOptions",
@@ -412,7 +448,8 @@ export const contentApi = api.injectEndpoints({
               );
             }
           }
-          await bumpContentNextCache();
+          dispatch(api.util.invalidateTags([{ type: "Schedule", id: "LIST" }]));
+          await bumpContentDependentNextCache();
         } catch {
           // mutation failed
         }
@@ -430,6 +467,13 @@ export const contentApi = api.injectEndpoints({
             response,
             "createTextContent",
           ),
+        invalidatesTags: (result) =>
+          result
+            ? [
+                { type: "Content", id: "LIST" },
+                { type: "Content", id: result.id },
+              ]
+            : [{ type: "Content", id: "LIST" }],
         async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
           try {
             const { data: created } = await queryFulfilled;
@@ -457,6 +501,7 @@ export const contentApi = api.injectEndpoints({
               "getContentOptions",
             );
             for (const oa of optionArgs) {
+              if (!contentMatchesOptionsQuery(created, oa)) continue;
               dispatch(
                 contentApi.util.updateQueryData(
                   "getContentOptions",
@@ -473,7 +518,7 @@ export const contentApi = api.injectEndpoints({
                 ),
               );
             }
-            await bumpContentNextCache();
+            await bumpContentDependentNextCache();
           } catch {
             // mutation failed
           }
@@ -610,7 +655,8 @@ export const contentApi = api.injectEndpoints({
                 : `PDF content created successfully (${count} items).`,
             );
           }
-          await bumpContentNextCache();
+          dispatch(api.util.invalidateTags([{ type: "Content", id: "LIST" }]));
+          await bumpContentDependentNextCache();
         } catch {
           clearTimeout(timeoutId);
           if (!timedOut) {
@@ -624,10 +670,11 @@ export const contentApi = api.injectEndpoints({
         url: `content/pdf-crops/${uploadId}`,
         method: "DELETE",
       }),
-      async onQueryStarted(_arg, { queryFulfilled }) {
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
-          await bumpContentNextCache();
+          dispatch(api.util.invalidateTags([{ type: "Schedule", id: "LIST" }]));
+          await bumpContentDependentNextCache();
         } catch {
           // mutation failed
         }
@@ -638,7 +685,12 @@ export const contentApi = api.injectEndpoints({
         url: `content/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: (_result, _error, id) => [{ type: "Content", id }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: "Content", id },
+        { type: "Content", id: "LIST" },
+        { type: "Playlist", id: "LIST" },
+        { type: "Schedule", id: "LIST" },
+      ],
       async onQueryStarted(id, { dispatch, queryFulfilled, getState }) {
         try {
           await queryFulfilled;
@@ -715,6 +767,19 @@ export const contentApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<BackendContent>(response, "updateContent"),
+      invalidatesTags: (result, _error, { id }) =>
+        result
+          ? [
+              { type: "Content", id },
+              { type: "Content", id: result.id },
+              { type: "Content", id: "LIST" },
+              { type: "Playlist", id: "LIST" },
+              { type: "Schedule", id: "LIST" },
+            ]
+          : [
+              { type: "Content", id },
+              { type: "Content", id: "LIST" },
+            ],
       async onQueryStarted({ id }, { dispatch, queryFulfilled, getState }) {
         try {
           const { data: updated } = await queryFulfilled;
@@ -766,7 +831,7 @@ export const contentApi = api.injectEndpoints({
             );
           }
           await patchContentInPlaylistCaches(dispatch, getState, id, updated);
-          await bumpContentNextCache();
+          await bumpContentDependentNextCache();
         } catch {
           // mutation failed
         }
@@ -808,7 +873,7 @@ export const contentApi = api.injectEndpoints({
       async onQueryStarted(_arg, { queryFulfilled }) {
         try {
           await queryFulfilled;
-          await bumpContentNextCache();
+          await bumpContentDependentNextCache();
         } catch {
           // mutation failed
         }

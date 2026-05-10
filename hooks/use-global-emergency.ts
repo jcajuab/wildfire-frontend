@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/context/auth-context";
+import { useDeferredDashboardStartup } from "@/hooks/use-deferred-dashboard-startup";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   useActivateGlobalEmergencyMutation,
@@ -25,11 +26,12 @@ export function useGlobalEmergency(): UseGlobalEmergencyReturn {
 
   const canRead = isInitialized && can("displays:read");
   const canUpdate = isInitialized && can("displays:update");
+  const canStartRuntimeOverrides = useDeferredDashboardStartup(canRead);
 
   const { data: runtimeOverrides } = useGetRuntimeOverridesQuery(undefined, {
     pollingInterval: 120_000,
     skipPollingIfUnfocused: true,
-    skip: !canRead,
+    skip: !canRead || !canStartRuntimeOverrides,
     refetchOnFocus: false,
     refetchOnReconnect: false,
   });

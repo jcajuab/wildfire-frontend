@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/formatters";
-import { revealInviteLink } from "@/lib/api-client";
+import { useRevealInviteLinkMutation } from "@/lib/api/invitations-api";
 import type {
   InvitationRecord,
   InvitationSort,
@@ -137,11 +137,13 @@ function InvitationActionsMenu({
   readonly isResending: boolean;
   readonly onResend: (invitationId: string) => void;
 }): ReactElement | null {
+  const [revealInviteLink] = useRevealInviteLinkMutation();
+
   if (invitation.status !== "pending") return null;
 
   const handleCopyLink = async (): Promise<void> => {
     try {
-      const { inviteUrl } = await revealInviteLink(invitation.id);
+      const { inviteUrl } = await revealInviteLink(invitation.id).unwrap();
       await navigator.clipboard.writeText(inviteUrl);
       toast.success("Invitation link copied.");
     } catch {
@@ -171,10 +173,7 @@ function InvitationActionsMenu({
           onSelect={() => onResend(invitation.id)}
         >
           {isResending ? (
-            <IconLoader2
-              className="size-4 animate-spin"
-              aria-hidden="true"
-            />
+            <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
           ) : (
             <IconRefresh className="size-4" aria-hidden="true" />
           )}

@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/api";
+import { applyMutationCacheEffects } from "@/lib/api/cache-side-effects";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 
 export type EmergencySlotIndex = 1 | 2 | 3 | 4 | 5;
@@ -59,7 +60,23 @@ export const emergencySlotsApi = api.injectEndpoints({
       invalidatesTags: [
         { type: "EmergencySlots", id: "LIST" },
         { type: "RuntimeOverrides", id: "GLOBAL" },
+        { type: "Display", id: "LIST" },
       ],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await applyMutationCacheEffects(dispatch, {
+            invalidate: [
+              { type: "EmergencySlots", id: "LIST" },
+              { type: "RuntimeOverrides", id: "GLOBAL" },
+              { type: "Display", id: "LIST" },
+            ],
+            revalidate: ["displays-bootstrap", "displays-options"],
+          });
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     clearEmergencySlot: build.mutation<void, ClearEmergencySlotRequest>({
       query: ({ slotIndex }) => ({
@@ -69,7 +86,23 @@ export const emergencySlotsApi = api.injectEndpoints({
       invalidatesTags: [
         { type: "EmergencySlots", id: "LIST" },
         { type: "RuntimeOverrides", id: "GLOBAL" },
+        { type: "Display", id: "LIST" },
       ],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await applyMutationCacheEffects(dispatch, {
+            invalidate: [
+              { type: "EmergencySlots", id: "LIST" },
+              { type: "RuntimeOverrides", id: "GLOBAL" },
+              { type: "Display", id: "LIST" },
+            ],
+            revalidate: ["displays-bootstrap", "displays-options"],
+          });
+        } catch {
+          // mutation failed
+        }
+      },
     }),
   }),
 });

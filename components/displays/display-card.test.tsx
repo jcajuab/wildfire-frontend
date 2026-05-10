@@ -224,7 +224,10 @@ describe("DisplayCard", () => {
       onSelectionChange: vi.fn(),
     });
 
-    const card = screen.getByRole("button", { name: "Select Lobby Display" });
+    const card = screen
+      .getByRole("heading", { name: "Lobby Display" })
+      .closest("[data-selection-mode='true']");
+    expect(card).toBeInstanceOf(HTMLElement);
     expect(card).toHaveAttribute("data-selection-mode", "true");
     expect(card).toHaveAttribute("data-selection-muted", "true");
     expect(card).toHaveClass("opacity-55");
@@ -240,7 +243,10 @@ describe("DisplayCard", () => {
       onSelectionChange: vi.fn(),
     });
 
-    const card = screen.getByRole("button", { name: "Select Lobby Display" });
+    const card = screen
+      .getByRole("heading", { name: "Lobby Display" })
+      .closest("[data-selection-mode='true']");
+    expect(card).toBeInstanceOf(HTMLElement);
     expect(card).toHaveAttribute("data-state", "selected");
     expect(card).not.toHaveAttribute("data-selection-muted");
     expect(card).toHaveClass("data-[state=selected]:opacity-100");
@@ -269,7 +275,7 @@ describe("DisplayCard", () => {
     expect(onViewPage).not.toHaveBeenCalled();
   });
 
-  test("toggles selection from the keyboard when the card is focused", async () => {
+  test("toggles selection from the keyboard when the checkbox is focused", async () => {
     const user = userEvent.setup();
     const onSelectionChange = vi.fn();
     renderDisplayCard(baseDisplay, {
@@ -277,8 +283,8 @@ describe("DisplayCard", () => {
       onSelectionChange,
     });
 
-    screen.getByRole("button", { name: "Select Lobby Display" }).focus();
-    await user.keyboard("{Enter}");
+    screen.getByRole("checkbox", { name: "Select Lobby Display" }).focus();
+    await user.keyboard(" ");
 
     expect(onSelectionChange).toHaveBeenCalledWith(baseDisplay, true);
   });

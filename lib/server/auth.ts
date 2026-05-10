@@ -35,6 +35,7 @@ async function hasRefreshCookie(): Promise<boolean> {
 
 export interface ServerSession {
   readonly accessToken: string;
+  readonly accessTokenExpiresAt: string;
   readonly user: AuthResponse["user"];
   readonly permissions: PermissionType[];
 }
@@ -97,6 +98,7 @@ export const getServerSession = cache(
         status: "ok",
         session: {
           accessToken: data.accessToken,
+          accessTokenExpiresAt: data.accessTokenExpiresAt,
           user: data.user,
           permissions: data.permissions,
         },

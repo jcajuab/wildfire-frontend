@@ -98,17 +98,6 @@ export interface DisplayGroup {
   readonly updatedAt: string;
 }
 
-export interface DisplayRegistrationAttemptResponse {
-  readonly attemptId: string;
-  readonly code: string;
-  readonly expiresAt: string;
-}
-
-export interface DisplayRegistrationAttemptRotateResponse {
-  readonly code: string;
-  readonly expiresAt: string;
-}
-
 export interface CreateRegistrationLinkRequest {
   readonly slug: string;
   readonly displayName: string;
@@ -287,6 +276,13 @@ export const displaysApi = api.injectEndpoints({
           response,
           "getDisplayOptions",
         ),
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: "Display" as const, id })),
+              { type: "Display", id: "LIST" },
+            ]
+          : [{ type: "Display", id: "LIST" }],
     }),
     getDisplayOutputOptions: build.query<DisplayOutputOption[], void>({
       query: () => "displays/options/outputs",
@@ -295,6 +291,7 @@ export const displaysApi = api.injectEndpoints({
           response,
           "getDisplayOutputOptions",
         ),
+      providesTags: [{ type: "Display", id: "LIST" }],
     }),
     getDisplay: build.query<BackendDisplay, string>({
       query: (id) => `displays/${id}`,
@@ -310,6 +307,11 @@ export const displaysApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<BackendDisplay>(response, "updateDisplay"),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Display", id },
+        { type: "Display", id: "LIST" },
+        { type: "Schedule", id: "LIST" },
+      ],
       async onQueryStarted({ id }, { dispatch, queryFulfilled, getState }) {
         try {
           const { data } = await queryFulfilled;
@@ -408,6 +410,10 @@ export const displaysApi = api.injectEndpoints({
         method: "PUT",
         body: { active: true, slotIndex, ...(reason ? { reason } : {}) },
       }),
+      invalidatesTags: [
+        { type: "RuntimeOverrides", id: "GLOBAL" },
+        { type: "Display", id: "LIST" },
+      ],
       async onQueryStarted(
         { slotIndex },
         { dispatch, queryFulfilled, getState },
@@ -452,6 +458,7 @@ export const displaysApi = api.injectEndpoints({
               ),
             );
           }
+          await bumpDisplaysNextCache();
         } catch {
           // mutation failed
         }
@@ -464,6 +471,10 @@ export const displaysApi = api.injectEndpoints({
           method: "PUT",
           body: { active: false, ...(body ?? {}) },
         }),
+        invalidatesTags: [
+          { type: "RuntimeOverrides", id: "GLOBAL" },
+          { type: "Display", id: "LIST" },
+        ],
         async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
           try {
             await queryFulfilled;
@@ -503,6 +514,7 @@ export const displaysApi = api.injectEndpoints({
                 ),
               );
             }
+            await bumpDisplaysNextCache();
           } catch {
             // mutation failed
           }
@@ -612,7 +624,23 @@ export const displaysApi = api.injectEndpoints({
           response,
           "resolveDisplayGroups",
         ),
-      invalidatesTags: [{ type: "DisplayGroup", id: "LIST" }],
+      invalidatesTags: [
+        { type: "DisplayGroup", id: "LIST" },
+        { type: "Display", id: "LIST" },
+        { type: "Schedule", id: "LIST" },
+      ],
+      async onQueryStarted(_arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await revalidateWildfireTagsViaRoute([
+            "displays-bootstrap",
+            "displays-options",
+            "schedules-bootstrap",
+          ]);
+        } catch {
+          // mutation failed
+        }
+      },
     }),
     createDisplayGroup: build.mutation<DisplayGroup, { name: string }>({
       query: (body) => ({
@@ -622,10 +650,11 @@ export const displaysApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<DisplayGroup>(response, "createDisplayGroup"),
-      // Invalidate DisplayGroup LIST so all paginated / infinite caches
-      // (getDisplayGroups, getDisplayGroupsInfinite, getDisplayGroupsForDisplay)
-      // refetch with the new group included.
-      invalidatesTags: [{ type: "DisplayGroup", id: "LIST" }],
+      invalidatesTags: [
+        { type: "DisplayGroup", id: "LIST" },
+        { type: "Display", id: "LIST" },
+        { type: "Schedule", id: "LIST" },
+      ],
       async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
         try {
           const { data: group } = await queryFulfilled;
@@ -671,7 +700,11 @@ export const displaysApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<DisplayGroup>(response, "updateDisplayGroup"),
-      invalidatesTags: [{ type: "DisplayGroup", id: "LIST" }],
+      invalidatesTags: [
+        { type: "DisplayGroup", id: "LIST" },
+        { type: "Display", id: "LIST" },
+        { type: "Schedule", id: "LIST" },
+      ],
       async onQueryStarted(
         { groupId },
         { dispatch, queryFulfilled, getState },
@@ -789,6 +822,8 @@ export const displaysApi = api.injectEndpoints({
       invalidatesTags: (_result, _error, { groupId }) => [
         { type: "DisplayGroup", id: groupId },
         { type: "DisplayGroup", id: "LIST" },
+        { type: "Display", id: "LIST" },
+        { type: "Schedule", id: "LIST" },
       ],
       async onQueryStarted(
         { groupId },
@@ -902,6 +937,12 @@ export const displaysApi = api.injectEndpoints({
         method: "PUT",
         body: { groupIds },
       }),
+      invalidatesTags: (_result, _error, { displayId }) => [
+        { type: "Display", id: displayId },
+        { type: "Display", id: "LIST" },
+        { type: "DisplayGroup", id: "LIST" },
+        { type: "Schedule", id: "LIST" },
+      ],
       async onQueryStarted(
         { displayId, groupIds },
         { dispatch, queryFulfilled, getState },
@@ -1056,6 +1097,9 @@ export const displaysApi = api.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { displayId }) => [
         { type: "Display", id: displayId },
+        { type: "Display", id: "LIST" },
+        { type: "DisplayGroup", id: "LIST" },
+        { type: "Schedule", id: "LIST" },
       ],
       async onQueryStarted(
         { displayId },
@@ -1097,64 +1141,6 @@ export const displaysApi = api.injectEndpoints({
           await bumpDisplaysNextCache();
           dispatch(api.util.invalidateTags([{ type: "Schedule", id: "LIST" }]));
           void revalidateWildfireTagViaRoute("schedules-bootstrap");
-        } catch {
-          // mutation failed
-        }
-      },
-    }),
-    createRegistrationAttempt: build.mutation<
-      DisplayRegistrationAttemptResponse,
-      void
-    >({
-      query: () => ({
-        url: "displays/registration-attempts",
-        method: "POST",
-      }),
-      transformResponse: (response) =>
-        parseApiResponseDataSafe<DisplayRegistrationAttemptResponse>(
-          response,
-          "createRegistrationAttempt",
-        ),
-      async onQueryStarted(_arg, { queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          await bumpDisplaysNextCache();
-        } catch {
-          // mutation failed
-        }
-      },
-    }),
-    rotateRegistrationAttempt: build.mutation<
-      DisplayRegistrationAttemptRotateResponse,
-      { attemptId: string }
-    >({
-      query: ({ attemptId }) => ({
-        url: `displays/registration-attempts/${attemptId}/rotate`,
-        method: "POST",
-      }),
-      transformResponse: (response) =>
-        parseApiResponseDataSafe<DisplayRegistrationAttemptRotateResponse>(
-          response,
-          "rotateRegistrationAttempt",
-        ),
-      async onQueryStarted(_arg, { queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          await bumpDisplaysNextCache();
-        } catch {
-          // mutation failed
-        }
-      },
-    }),
-    closeRegistrationAttempt: build.mutation<void, { attemptId: string }>({
-      query: ({ attemptId }) => ({
-        url: `displays/registration-attempts/${attemptId}`,
-        method: "DELETE",
-      }),
-      async onQueryStarted(_arg, { queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          await bumpDisplaysNextCache();
         } catch {
           // mutation failed
         }
@@ -1216,8 +1202,5 @@ export const {
   useDeleteDisplayGroupMutation,
   useSetDisplayGroupsMutation,
   useUnregisterDisplayMutation,
-  useCreateRegistrationAttemptMutation,
-  useRotateRegistrationAttemptMutation,
-  useCloseRegistrationAttemptMutation,
   useCreateRegistrationLinkMutation,
 } = displaysApi;

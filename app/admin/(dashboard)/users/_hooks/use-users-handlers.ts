@@ -2,44 +2,34 @@
 
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import {
-  AuthApiError,
-  createInvitation,
-  type CreateInvitationResponse,
-  getInvitations,
-  type InvitationListQuery,
-  resendInvitation,
-  banUser,
-  unbanUser,
-  adminResetPassword,
-} from "@/lib/api-client";
+import { AuthApiError } from "@/lib/api-client";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
+  useResetUserPasswordMutation,
+  useSetUserStatusMutation,
   useUpdateUserMutation,
   useSetUserRolesMutation,
 } from "@/lib/api/rbac-api";
+import {
+  useCreateInvitationMutation,
+  type CreateInvitationResponse,
+  useResendInvitationMutation,
+} from "@/lib/api/invitations-api";
 import type { EditUserFormData } from "@/components/users/edit-user-dialog";
 import type { User, UserRole } from "@/types/user";
-import type { InvitationListResponse } from "@/types/invitation";
 
 export function useUsersHandlers({
-  canCreateUser,
   isAdmin,
   systemRoleIds,
   userRolesByUserId,
-  invitationQuery,
-  setInvitationsData,
   setIsEditDialogOpen,
   setSelectedUser,
   setResetPasswordResult,
   setIsResetPasswordDialogOpen,
 }: {
-  canCreateUser: boolean;
   isAdmin: boolean;
   systemRoleIds: readonly string[];
   userRolesByUserId: Readonly<Record<string, readonly UserRole[]>>;
-  invitationQuery: InvitationListQuery;
-  setInvitationsData: (data: InvitationListResponse | undefined) => void;
   setIsEditDialogOpen: (open: boolean) => void;
   setSelectedUser: (user: User | null) => void;
   setResetPasswordResult: (
@@ -47,31 +37,17 @@ export function useUsersHandlers({
   ) => void;
   setIsResetPasswordDialogOpen: (open: boolean) => void;
 }) {
-  const [isInvitationsLoading, setIsInvitationsLoading] = useState(false);
   const [resendingInvitationId, setResendingInvitationId] = useState<
     string | null
   >(null);
 
   const [isRoleToggling, setIsRoleToggling] = useState(false);
+  const [createInvitation] = useCreateInvitationMutation();
+  const [resendInvitation] = useResendInvitationMutation();
   const [updateUser] = useUpdateUserMutation();
   const [setUserRoles] = useSetUserRolesMutation();
-
-  const loadInvitations = useCallback(async (): Promise<void> => {
-    if (!canCreateUser) {
-      setInvitationsData(undefined);
-      return;
-    }
-
-    setIsInvitationsLoading(true);
-    try {
-      const list = await getInvitations(invitationQuery);
-      setInvitationsData(list);
-    } catch (err) {
-      notifyApiError(err, "Failed to load invitations");
-    } finally {
-      setIsInvitationsLoading(false);
-    }
-  }, [canCreateUser, invitationQuery, setInvitationsData]);
+  const [setUserStatus] = useSetUserStatusMutation();
+  const [resetUserPassword] = useResetUserPasswordMutation();
 
   const handleInvite = useCallback(
     async (
@@ -79,7 +55,7 @@ export function useUsersHandlers({
     ): Promise<{ id: string; expiresAt: string } | null> => {
       try {
         const results = await Promise.allSettled(
-          emails.map((email) => createInvitation({ email })),
+          emails.map((email) => createInvitation({ email }).unwrap()),
         );
 
         const failedInvites = results.filter(
@@ -110,9 +86,6 @@ export function useUsersHandlers({
             result.status === "fulfilled",
         );
 
-        const latestInvitations = await getInvitations(invitationQuery);
-        setInvitationsData(latestInvitations);
-
         return firstSuccess?.value ?? null;
       } catch (err) {
         if (err instanceof AuthApiError && err.status === 429) {
@@ -126,24 +99,22 @@ export function useUsersHandlers({
         return null;
       }
     },
-    [invitationQuery, setInvitationsData],
+    [createInvitation],
   );
 
   const handleResendInvitation = useCallback(
     async (id: string) => {
       setResendingInvitationId(id);
       try {
-        await resendInvitation(id);
+        await resendInvitation(id).unwrap();
         toast.success("Invitation link regenerated.");
-        const latestInvitations = await getInvitations(invitationQuery);
-        setInvitationsData(latestInvitations);
       } catch (err) {
         notifyApiError(err, "Failed to regenerate invite link");
       } finally {
         setResendingInvitationId(null);
       }
     },
-    [invitationQuery, setInvitationsData],
+    [resendInvitation],
   );
 
   const handleRoleToggle = useCallback(
@@ -193,32 +164,36 @@ export function useUsersHandlers({
     [updateUser, setIsEditDialogOpen, setSelectedUser],
   );
 
-  const banUserById = useCallback(async (id: string) => {
-    await banUser(id);
-  }, []);
+  const banUserById = useCallback(
+    async (id: string) => {
+      await setUserStatus({ userId: id, banned: true }).unwrap();
+    },
+    [setUserStatus],
+  );
 
-  const unbanUserById = useCallback(async (id: string) => {
-    await unbanUser(id);
-  }, []);
+  const unbanUserById = useCallback(
+    async (id: string) => {
+      await setUserStatus({ userId: id, banned: false }).unwrap();
+    },
+    [setUserStatus],
+  );
 
   const handleResetPassword = useCallback(
     async (userId: string) => {
       try {
-        const result = await adminResetPassword(userId);
+        const result = await resetUserPassword(userId).unwrap();
         setResetPasswordResult({ userId, password: result.password });
         setIsResetPasswordDialogOpen(true);
       } catch (err) {
         notifyApiError(err, "Failed to reset password");
       }
     },
-    [setResetPasswordResult, setIsResetPasswordDialogOpen],
+    [resetUserPassword, setResetPasswordResult, setIsResetPasswordDialogOpen],
   );
 
   return {
-    isInvitationsLoading,
     isRoleToggling,
     resendingInvitationId,
-    loadInvitations,
     handleInvite,
     handleResendInvitation,
     handleRoleToggle,

@@ -6,7 +6,6 @@ import {
   parseAsString,
   parseAsInteger,
   parseAsStringLiteral,
-  debounce,
 } from "nuqs";
 import type {
   PlaylistSortFilter,
@@ -38,9 +37,7 @@ export interface UsePlaylistsFiltersResult {
 
 export function usePlaylistsFilters(): UsePlaylistsFiltersResult {
   const [filters, setFilters] = useQueryStates({
-    q: parseAsString
-      .withDefault("")
-      .withOptions({ limitUrlUpdates: debounce(500) }),
+    q: parseAsString.withDefault(""),
     status: parseAsStringLiteral(PLAYLIST_STATUS_VALUES).withDefault("all"),
     ownerId: parseAsString.withDefault("all"),
     sort: parseAsStringLiteral(PLAYLIST_SORT_VALUES).withDefault("newest"),

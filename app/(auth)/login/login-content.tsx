@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { AuthApiError } from "@/lib/api-client";
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
-import { purgeStaleSession, refreshAccessToken } from "@/lib/auth-session";
 import { can as canPermission } from "@/lib/permissions";
 import {
   getFirstPermittedAdminRoute,
@@ -68,20 +67,8 @@ export function LoginContent(): ReactElement | null {
     didRedirect.current = true;
 
     if (redirectTo != null && redirectTo.length > 0) {
-      let cancelled = false;
-      void refreshAccessToken()
-        .then(() => {
-          if (!cancelled) navigateToPostLogin(redirectTo);
-        })
-        .catch(async (err: unknown) => {
-          if (cancelled) return;
-          if (err instanceof AuthApiError && err.status === 401) {
-            await purgeStaleSession();
-          }
-        });
-      return () => {
-        cancelled = true;
-      };
+      navigateToPostLogin(redirectTo);
+      return;
     }
 
     const target = getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE;

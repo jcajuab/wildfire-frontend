@@ -55,6 +55,11 @@ export function AuthProvider({
   );
 
   useEffect(() => {
+    const current = getAuthSnapshot();
+    if (current.isBootstrapped) {
+      return;
+    }
+
     void bootstrapAccessToken();
   }, []);
 

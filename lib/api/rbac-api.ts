@@ -8,6 +8,7 @@ import { createPaginatedQueryFn } from "@/lib/api/paginated-query-factory";
 import { refreshAuthAfterMutation } from "@/lib/api/auth-refresh.helpers";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
+import { applyMutationCacheEffects } from "@/lib/api/cache-side-effects";
 
 async function bumpRbacNextCache(
   tags: readonly ServerCacheTag[],
@@ -138,6 +139,13 @@ export const rbacApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacRoleSummary[]>(response, "getRoleOptions"),
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: "Role" as const, id })),
+              { type: "Role", id: "LIST" },
+            ]
+          : [{ type: "Role", id: "LIST" }],
     }),
     getRole: build.query<RbacRoleSummary, string>({
       query: (id) => `roles/${id}`,
@@ -169,6 +177,7 @@ export const rbacApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacRoleSummary>(response, "createRole"),
+      invalidatesTags: [{ type: "Role", id: "LIST" }],
       async onQueryStarted(_arg, api) {
         try {
           const { data } = await api.queryFulfilled;
@@ -204,6 +213,11 @@ export const rbacApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacRoleSummary>(response, "updateRole"),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Role", id },
+        { type: "Role", id: "LIST" },
+        { type: "User", id: "LIST" },
+      ],
       async onQueryStarted(arg, api) {
         try {
           const { data } = await api.queryFulfilled;
@@ -277,7 +291,11 @@ export const rbacApi = api.injectEndpoints({
     }),
     deleteRole: build.mutation<void, string>({
       query: (id) => ({ url: `roles/${id}`, method: "DELETE" }),
-      invalidatesTags: (_result, _error, id) => [{ type: "Role", id }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: "Role", id },
+        { type: "Role", id: "LIST" },
+        { type: "User", id: "LIST" },
+      ],
       async onQueryStarted(id, api) {
         try {
           await api.queryFulfilled;
@@ -330,6 +348,12 @@ export const rbacApi = api.injectEndpoints({
           response,
           "setRolePermissions",
         ),
+      invalidatesTags: (_result, _error, { roleId }) => [
+        { type: "Role", id: roleId },
+        { type: "Role", id: "LIST" },
+        { type: "Permission", id: "LIST" },
+        { type: "User", id: "LIST" },
+      ],
       async onQueryStarted({ roleId }, api) {
         try {
           const { data } = await api.queryFulfilled;
@@ -343,7 +367,14 @@ export const rbacApi = api.injectEndpoints({
               },
             ),
           );
-          await bumpRbacNextCache(["role-edit-bootstrap"]);
+          await bumpRbacNextCache([
+            "role-edit-bootstrap",
+            "roles-list",
+            "roles-options",
+            "users-list",
+            "users-options",
+            "permissions-options",
+          ]);
         } catch {
           // mutation failed
         }
@@ -404,6 +435,13 @@ export const rbacApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacUser[]>(response, "getUserOptions"),
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: "User" as const, id })),
+              { type: "User", id: "LIST" },
+            ]
+          : [{ type: "User", id: "LIST" }],
     }),
     getUser: build.query<RbacUser, string>({
       query: (id) => `users/${id}`,
@@ -427,6 +465,7 @@ export const rbacApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacUser>(response, "createUser"),
+      invalidatesTags: [{ type: "User", id: "LIST" }],
       async onQueryStarted(_arg, api) {
         try {
           const { data } = await api.queryFulfilled;
@@ -467,6 +506,10 @@ export const rbacApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacUser>(response, "updateUser"),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "User", id },
+        { type: "User", id: "LIST" },
+      ],
       async onQueryStarted(arg, api) {
         try {
           const { data: updatedUser } = await api.queryFulfilled;
@@ -496,7 +539,11 @@ export const rbacApi = api.injectEndpoints({
     }),
     deleteUser: build.mutation<void, string>({
       query: (id) => ({ url: `users/${id}`, method: "DELETE" }),
-      invalidatesTags: (_result, _error, id) => [{ type: "User", id }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: "User", id },
+        { type: "User", id: "LIST" },
+        { type: "Role", id: "LIST" },
+      ],
       async onQueryStarted(id, api) {
         try {
           await api.queryFulfilled;
@@ -511,7 +558,12 @@ export const rbacApi = api.injectEndpoints({
               }),
             );
           }
-          await bumpRbacNextCache(["users-list", "users-options"]);
+          await bumpRbacNextCache([
+            "users-list",
+            "users-options",
+            "roles-list",
+            "roles-options",
+          ]);
         } catch {
           // mutation failed
         }
@@ -540,6 +592,11 @@ export const rbacApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<RbacRoleSummary[]>(response, "setUserRoles"),
+      invalidatesTags: (_result, _error, { userId }) => [
+        { type: "User", id: userId },
+        { type: "User", id: "LIST" },
+        { type: "Role", id: "LIST" },
+      ],
       async onQueryStarted({ userId }, api) {
         try {
           const { data: roles } = await api.queryFulfilled;
@@ -572,11 +629,106 @@ export const rbacApi = api.injectEndpoints({
             "users-list",
             "users-options",
             "roles-list",
+            "roles-options",
           ]);
         } catch {
           // mutation failed
         }
         await refreshAuthAfterMutation({ userId }, api);
+      },
+    }),
+    setUserStatus: build.mutation<
+      { success: boolean },
+      { userId: string; banned: boolean }
+    >({
+      query: ({ userId, banned }) => ({
+        url: `users/${userId}/status`,
+        method: "PUT",
+        body: { banned },
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<{ success: boolean }>(
+          response,
+          "setUserStatus",
+        ),
+      invalidatesTags: (_result, _error, { userId }) => [
+        { type: "User", id: userId },
+        { type: "User", id: "LIST" },
+        { type: "Role", id: "LIST" },
+      ],
+      async onQueryStarted({ userId, banned }, api) {
+        const patchResults = [
+          ...rbacApi.util
+            .selectCachedArgsForQuery(api.getState(), "getUsers")
+            .map((args) =>
+              api.dispatch(
+                rbacApi.util.updateQueryData("getUsers", args, (draft) => {
+                  const user = draft.items.find((item) => item.id === userId);
+                  if (user) {
+                    (user as RbacUser & { bannedAt?: string | null }).bannedAt =
+                      banned ? new Date().toISOString() : null;
+                  }
+                }),
+              ),
+            ),
+          api.dispatch(
+            rbacApi.util.updateQueryData("getUser", userId, (draft) => {
+              (draft as RbacUser & { bannedAt?: string | null }).bannedAt =
+                banned ? new Date().toISOString() : null;
+            }),
+          ),
+        ];
+
+        try {
+          await api.queryFulfilled;
+          await applyMutationCacheEffects(api.dispatch, {
+            invalidate: [
+              { type: "User", id: userId },
+              { type: "User", id: "LIST" },
+              { type: "Role", id: "LIST" },
+              { type: "AuditEvent", id: "LIST" },
+            ],
+            revalidate: [
+              "users-list",
+              "users-options",
+              "roles-list",
+              "roles-options",
+              "audit",
+            ],
+          });
+        } catch {
+          for (const patch of patchResults) {
+            patch.undo();
+          }
+        }
+        await refreshAuthAfterMutation({ userId, banned }, api);
+      },
+    }),
+    resetUserPassword: build.mutation<{ password: string }, string>({
+      query: (userId) => ({
+        url: `users/${userId}/reset-password`,
+        method: "POST",
+      }),
+      transformResponse: (response) =>
+        parseApiResponseDataSafe<{ password: string }>(
+          response,
+          "resetUserPassword",
+        ),
+      async onQueryStarted(userId, api) {
+        try {
+          await api.queryFulfilled;
+          await applyMutationCacheEffects(api.dispatch, {
+            invalidate: [
+              { type: "User", id: userId },
+              { type: "User", id: "LIST" },
+              { type: "AuditEvent", id: "LIST" },
+            ],
+            revalidate: ["users-list", "users-options", "audit"],
+          });
+        } catch {
+          // mutation failed
+        }
+        await refreshAuthAfterMutation(userId, api);
       },
     }),
   }),
@@ -603,4 +755,6 @@ export const {
   useGetUserRolesQuery,
   useLazyGetUserRolesQuery,
   useSetUserRolesMutation,
+  useSetUserStatusMutation,
+  useResetUserPasswordMutation,
 } = rbacApi;

@@ -149,11 +149,6 @@ describe("useLogsPage", () => {
   });
 
   test("uses initial audit data when returning to the initial query", () => {
-    useListAuditEventsQueryMock.mockReturnValue({
-      data: makeAuditData(["stale-event"]),
-      isFetching: false,
-    } as unknown as ReturnType<typeof useListAuditEventsQuery>);
-
     const { result } = renderHook(() =>
       useLogsPage({
         initialEvents: {
@@ -166,7 +161,6 @@ describe("useLogsPage", () => {
     expect(useListAuditEventsQueryMock).toHaveBeenCalledWith(initialQuery, {
       refetchOnFocus: false,
       refetchOnReconnect: false,
-      skip: true,
     });
     expect(result.current.logs.map((log) => log.id)).toEqual(["initial-event"]);
   });

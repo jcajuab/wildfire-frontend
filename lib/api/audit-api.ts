@@ -4,6 +4,7 @@ import { extractApiError } from "@/lib/api/contracts";
 import { authFetch } from "@/lib/auth-session";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
 import { createProvidesTags } from "@/lib/api/provide-tags";
+import { applyMutationCacheEffects } from "@/lib/api/cache-side-effects";
 
 export interface BackendAuditEvent {
   readonly id: string;
@@ -167,9 +168,23 @@ export const auditApi = api.injectEndpoints({
         return response.data;
       },
       invalidatesTags: [{ type: "AuditEvent", id: "LIST" }],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          await applyMutationCacheEffects(dispatch, {
+            invalidate: [{ type: "AuditEvent", id: "LIST" }],
+            revalidate: ["audit"],
+          });
+        } catch {
+          // mutation failed
+        }
+      },
     }),
   }),
 });
 
-export const { useListAuditEventsQuery, useFlushAuditEventsMutation } =
-  auditApi;
+export const {
+  useListAuditEventsQuery,
+  useLazyListAuditEventsQuery,
+  useFlushAuditEventsMutation,
+} = auditApi;

@@ -1,4 +1,4 @@
-import { revalidateWildfireTagViaRoute } from "@/lib/api/revalidate-via-route";
+import { revalidateWildfireTagsViaRoute } from "@/lib/api/revalidate-via-route";
 import { api } from "@/lib/api/api";
 import { patchPaginatedListById } from "@/lib/api/cache-patches";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
@@ -194,6 +194,18 @@ function playlistMatchesListQuery(
   return true;
 }
 
+function playlistMatchesOptionsQuery(
+  playlist: BackendPlaylistBase,
+  query: { q?: string; status?: "DRAFT" | "IN_USE" } | void,
+): boolean {
+  if (query?.status && playlist.status !== query.status) return false;
+
+  const search = query?.q?.trim().toLowerCase();
+  if (search && !playlist.name.toLowerCase().includes(search)) return false;
+
+  return true;
+}
+
 function isFirstListPage(query: PlaylistListQuery | void): boolean {
   return (query?.page ?? 1) === 1;
 }
@@ -282,9 +294,9 @@ function getPreviewItems(
   return [...items].sort((a, b) => a.sequence - b.sequence).slice(0, 3);
 }
 
-async function bumpPlaylistsNextCache(): Promise<void> {
+async function bumpPlaylistsAndSchedulesNextCache(): Promise<void> {
   try {
-    await revalidateWildfireTagViaRoute("playlists");
+    await revalidateWildfireTagsViaRoute(["playlists", "schedules-bootstrap"]);
   } catch {
     // best-effort
   }
@@ -367,6 +379,23 @@ export const playlistsApi = api.injectEndpoints({
               ),
             );
           }
+          const optionArgs = playlistsApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getPlaylistOptions",
+          );
+          for (const oa of optionArgs) {
+            if (!playlistMatchesOptionsQuery(created, oa)) continue;
+            dispatch(
+              playlistsApi.util.updateQueryData(
+                "getPlaylistOptions",
+                oa,
+                (draft) => {
+                  if (draft.some((option) => option.id === created.id)) return;
+                  draft.push({ id: created.id, name: created.name });
+                },
+              ),
+            );
+          }
           const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
             { type: "Schedule", id: "LIST" },
           ]);
@@ -385,6 +414,12 @@ export const playlistsApi = api.injectEndpoints({
               );
             }
           }
+          dispatch(
+            schedulesApi.util.invalidateTags([
+              { type: "Schedule", id: "LIST" },
+            ]),
+          );
+          await bumpPlaylistsAndSchedulesNextCache();
         } catch {
           // mutation failed
         }
@@ -434,6 +469,31 @@ export const playlistsApi = api.injectEndpoints({
               });
             }),
           );
+          const optionArgs = playlistsApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getPlaylistOptions",
+          );
+          for (const oa of optionArgs) {
+            dispatch(
+              playlistsApi.util.updateQueryData(
+                "getPlaylistOptions",
+                oa,
+                (draft) => {
+                  const idx = draft.findIndex((option) => option.id === id);
+                  const matches = playlistMatchesOptionsQuery(data, oa);
+                  if (idx === -1) {
+                    if (matches) draft.push({ id, name: data.name });
+                    return;
+                  }
+                  if (matches) {
+                    draft[idx] = { id, name: data.name };
+                  } else {
+                    draft.splice(idx, 1);
+                  }
+                },
+              ),
+            );
+          }
           const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
             { type: "Schedule", id: "LIST" },
           ]);
@@ -463,6 +523,12 @@ export const playlistsApi = api.injectEndpoints({
               );
             }
           }
+          dispatch(
+            schedulesApi.util.invalidateTags([
+              { type: "Schedule", id: "LIST" },
+            ]),
+          );
+          await bumpPlaylistsAndSchedulesNextCache();
         } catch {
           // mutation failed
         }
@@ -473,7 +539,6 @@ export const playlistsApi = api.injectEndpoints({
         url: `playlists/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: (_result, _error, id) => [{ type: "Playlist", id }],
       async onQueryStarted(id, { dispatch, queryFulfilled, getState }) {
         try {
           await queryFulfilled;
@@ -491,6 +556,19 @@ export const playlistsApi = api.injectEndpoints({
                     id,
                   } as BackendPlaylistSummary);
                 },
+              ),
+            );
+          }
+          const optionArgs = playlistsApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getPlaylistOptions",
+          );
+          for (const oa of optionArgs) {
+            dispatch(
+              playlistsApi.util.updateQueryData(
+                "getPlaylistOptions",
+                oa,
+                (draft) => draft.filter((option) => option.id !== id),
               ),
             );
           }
@@ -515,7 +593,12 @@ export const playlistsApi = api.injectEndpoints({
               );
             }
           }
-          await bumpPlaylistsNextCache();
+          dispatch(
+            schedulesApi.util.invalidateTags([
+              { type: "Schedule", id: "LIST" },
+            ]),
+          );
+          await bumpPlaylistsAndSchedulesNextCache();
         } catch {
           // mutation failed
         }
@@ -582,7 +665,12 @@ export const playlistsApi = api.injectEndpoints({
               ),
             );
           }
-          await bumpPlaylistsNextCache();
+          dispatch(
+            schedulesApi.util.invalidateTags([
+              { type: "Schedule", id: "LIST" },
+            ]),
+          );
+          await bumpPlaylistsAndSchedulesNextCache();
         } catch {
           // mutation failed
         }
@@ -653,7 +741,12 @@ export const playlistsApi = api.injectEndpoints({
               );
             }
           }
-          await bumpPlaylistsNextCache();
+          dispatch(
+            schedulesApi.util.invalidateTags([
+              { type: "Schedule", id: "LIST" },
+            ]),
+          );
+          await bumpPlaylistsAndSchedulesNextCache();
         } catch {
           // mutation failed
         }
@@ -714,7 +807,12 @@ export const playlistsApi = api.injectEndpoints({
               ),
             );
           }
-          await bumpPlaylistsNextCache();
+          dispatch(
+            schedulesApi.util.invalidateTags([
+              { type: "Schedule", id: "LIST" },
+            ]),
+          );
+          await bumpPlaylistsAndSchedulesNextCache();
         } catch {
           // mutation failed
         }
@@ -730,24 +828,32 @@ export const playlistsApi = api.injectEndpoints({
         { playlistId, orderedItemIds },
         { dispatch, queryFulfilled },
       ) {
+        const detailPatch = dispatch(
+          playlistsApi.util.updateQueryData(
+            "getPlaylist",
+            playlistId,
+            (draft) => {
+              const d = draft as unknown as PlaylistDetailMutable;
+              const byId = new Map(d.items.map((i) => [i.id, i]));
+              d.items = orderedItemIds
+                .map((oid, index) => {
+                  const item = byId.get(oid);
+                  return item ? { ...item, sequence: index + 1 } : undefined;
+                })
+                .filter((x): x is BackendPlaylistItem => x != null);
+            },
+          ),
+        );
         try {
           await queryFulfilled;
           dispatch(
-            playlistsApi.util.updateQueryData(
-              "getPlaylist",
-              playlistId,
-              (draft) => {
-                const d = draft as unknown as PlaylistDetailMutable;
-                const byId = new Map(d.items.map((i) => [i.id, i]));
-                d.items = orderedItemIds
-                  .map((oid) => byId.get(oid))
-                  .filter((x): x is BackendPlaylistItem => x != null);
-              },
-            ),
+            schedulesApi.util.invalidateTags([
+              { type: "Schedule", id: "LIST" },
+            ]),
           );
-          await bumpPlaylistsNextCache();
+          await bumpPlaylistsAndSchedulesNextCache();
         } catch {
-          // mutation failed
+          detailPatch.undo();
         }
       },
     }),
@@ -812,6 +918,12 @@ export const playlistsApi = api.injectEndpoints({
               ),
             );
           }
+          dispatch(
+            schedulesApi.util.invalidateTags([
+              { type: "Schedule", id: "LIST" },
+            ]),
+          );
+          await bumpPlaylistsAndSchedulesNextCache();
         } catch {
           // mutation failed
         }

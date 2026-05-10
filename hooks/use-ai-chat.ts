@@ -5,6 +5,7 @@ import { DefaultChatTransport } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { contentApi } from "@/lib/api/content-api";
 import { playlistsApi } from "@/lib/api/playlists-api";
+import { revalidateWildfireTagsViaRoute } from "@/lib/api/revalidate-via-route";
 import { schedulesApi } from "@/lib/api/schedules-api";
 import { getAuthorizationHeaders } from "@/lib/auth-session";
 import { useAppDispatch } from "@/lib/hooks";
@@ -38,7 +39,7 @@ export function useAIChat({
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
-        api: "/api/v1/ai/chat",
+        api: "/api/ai/chat",
         headers: () => getAuthorizationHeaders(),
         prepareSendMessagesRequest: ({
           messages,
@@ -80,22 +81,34 @@ export function useAIChat({
     [],
   );
 
-  const invalidateAffectedTags = useCallback(
-    (resourceTypes: ReadonlySet<AffectedResourceType>) => {
+  const refreshAffectedCaches = useCallback(
+    async (resourceTypes: ReadonlySet<AffectedResourceType>) => {
+      const serverTags = new Set<
+        Parameters<typeof revalidateWildfireTagsViaRoute>[0][number]
+      >();
       if (resourceTypes.has("content")) {
         dispatch(
           contentApi.util.invalidateTags([{ type: "Content", id: "LIST" }]),
         );
+        serverTags.add("content-list");
+        serverTags.add("content-options");
       }
       if (resourceTypes.has("playlist")) {
         dispatch(
           playlistsApi.util.invalidateTags([{ type: "Playlist", id: "LIST" }]),
         );
+        serverTags.add("playlists");
       }
       if (resourceTypes.has("schedule")) {
         dispatch(
           schedulesApi.util.invalidateTags([{ type: "Schedule", id: "LIST" }]),
         );
+        serverTags.add("schedules-bootstrap");
+        serverTags.add("displays-bootstrap");
+        serverTags.add("displays-options");
+      }
+      if (serverTags.size > 0) {
+        await revalidateWildfireTagsViaRoute([...serverTags]);
       }
     },
     [dispatch],
@@ -122,7 +135,9 @@ export function useAIChat({
         const toolParts = allMessages
           .filter((m) => m.role === "assistant")
           .flatMap((m) => m.parts);
-        invalidateAffectedTags(getAffectedResourceTypesFromParts(toolParts));
+        void refreshAffectedCaches(
+          getAffectedResourceTypesFromParts(toolParts),
+        );
       },
     });
 

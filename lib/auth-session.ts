@@ -146,7 +146,7 @@ async function parseAuthResponse(response: Response): Promise<AuthResponse> {
 function applyAuthResponse(
   response: AuthResponse,
   shouldBroadcast: boolean,
-  options: { advanceGeneration?: boolean } = {},
+  options: { advanceGeneration?: boolean; markBootstrapped?: boolean } = {},
 ): void {
   if (options.advanceGeneration === true) {
     authGeneration += 1;
@@ -165,6 +165,10 @@ function applyAuthResponse(
     // sessionStorage may be unavailable (SSR, private browsing quota).
   }
 
+  if (options.markBootstrapped === true) {
+    markBootstrapped();
+  }
+
   notifyListeners();
 
   if (shouldBroadcast) {
@@ -175,6 +179,23 @@ function applyAuthResponse(
 export function setAuthSession(response: AuthResponse): void {
   resetRefreshState({ abort: true });
   applyAuthResponse(response, true, { advanceGeneration: true });
+}
+
+export function seedAuthSession(response: AuthResponse): void {
+  if (
+    isBootstrapped &&
+    state.accessToken === response.accessToken &&
+    state.accessTokenExpiresAt === response.accessTokenExpiresAt &&
+    state.user?.id === response.user.id
+  ) {
+    return;
+  }
+
+  resetRefreshState({ abort: true });
+  applyAuthResponse(response, false, {
+    advanceGeneration: true,
+    markBootstrapped: true,
+  });
 }
 
 export function clearAuthSession(shouldBroadcast = true): void {
@@ -372,18 +393,8 @@ export async function bootstrapAccessToken(): Promise<void> {
       return;
     }
     if (error instanceof AuthApiError && error.status === 401) {
-      // Retry once — a transient race between server/client token rotation
-      // can produce a spurious 401 that resolves on the next attempt.
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      try {
-        await refreshAccessToken();
-        return;
-      } catch (retryError) {
-        if (retryError instanceof AuthApiError && retryError.status === 401) {
-          await purgeStaleSession();
-          return;
-        }
-      }
+      await purgeStaleSession();
+      return;
     }
     throw error;
   } finally {

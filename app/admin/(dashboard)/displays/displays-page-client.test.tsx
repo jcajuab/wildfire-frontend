@@ -35,10 +35,33 @@ vi.mock("@/components/common/bulk-delete-confirm-dialog", () => ({
   BulkDeleteConfirmDialog: () => null,
 }));
 
+vi.mock("@/lib/api/displays-api", () => ({
+  displaysApi: {
+    endpoints: {
+      getDisplaysBootstrap: {
+        select: vi.fn(() => vi.fn(() => ({ data: undefined }))),
+      },
+      getRuntimeOverrides: {
+        select: vi.fn(() => vi.fn(() => ({ data: undefined }))),
+      },
+    },
+    util: {
+      upsertQueryData: vi.fn(() => Promise.resolve()),
+    },
+  },
+  useLazyGetDisplayQuery: () => [
+    vi.fn(() => ({
+      unwrap: vi.fn(),
+    })),
+  ],
+}));
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
+    replace: vi.fn(),
   }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock("@/components/displays/displays-toolbar", () => ({

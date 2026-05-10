@@ -13,7 +13,7 @@ import {
   IconLink,
 } from "@tabler/icons-react";
 import { INVITE_LINK_DISPLAY_PLACEHOLDER } from "@/lib/invite";
-import { revealInviteLink } from "@/lib/api-client";
+import { useRevealInviteLinkMutation } from "@/lib/api/invitations-api";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,7 @@ function InviteLinkActions({
 }: {
   readonly invitationId: string;
 }): ReactElement {
+  const [revealInviteLink] = useRevealInviteLinkMutation();
   const [revealedUrl, setRevealedUrl] = useState<string | null>(null);
   const [isRevealing, setIsRevealing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -55,7 +56,7 @@ function InviteLinkActions({
     if (revealedUrl) return;
     setIsRevealing(true);
     try {
-      const { inviteUrl } = await revealInviteLink(invitationId);
+      const { inviteUrl } = await revealInviteLink(invitationId).unwrap();
       setRevealedUrl(inviteUrl);
     } catch {
       toast.error("Failed to get invite link");

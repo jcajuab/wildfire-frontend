@@ -4,7 +4,6 @@ import { useCallback, useMemo } from "react";
 
 import { useCan } from "@/hooks/use-can";
 import {
-  auditApi,
   useListAuditEventsQuery,
   type AuditListQuery,
   type BackendAuditListResponse,
@@ -97,22 +96,16 @@ export function useLogsPage(options?: {
     normalizedAuditQueryKey(options.initialEvents.queryArgs) ===
       normalizedAuditQueryKey(filters.listQuery);
 
-  const { data: eventsData, isFetching: queryIsFetching } =
-    useListAuditEventsQuery(filters.listQuery, {
+  const { data: eventsData, isFetching } = useListAuditEventsQuery(
+    filters.listQuery,
+    {
       refetchOnFocus: false,
       refetchOnReconnect: false,
-      skip: isInitialEventsQuery,
-    });
-  const cachedInitialEvents = auditApi.endpoints.listAuditEvents.useQueryState(
-    filters.listQuery,
-    { skip: !isInitialEventsQuery },
+    },
   );
-  const effectiveEventsData = isInitialEventsQuery
-    ? (cachedInitialEvents.data ?? options?.initialEvents?.data)
-    : eventsData;
-  const isFetching = isInitialEventsQuery
-    ? cachedInitialEvents.isFetching
-    : queryIsFetching;
+  const effectiveEventsData =
+    eventsData ??
+    (isInitialEventsQuery ? options?.initialEvents?.data : undefined);
   const canReadUsers = useCan("users:read");
   const canReadDisplays = useCan("displays:read");
 

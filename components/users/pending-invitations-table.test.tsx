@@ -3,15 +3,15 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { PendingInvitationsTable } from "./pending-invitations-table";
-import { revealInviteLink } from "@/lib/api-client";
+import { useRevealInviteLinkMutation } from "@/lib/api/invitations-api";
 import type {
   InvitationRecord,
   InvitationSort,
   InvitationStatusFilter,
 } from "@/types/invitation";
 
-vi.mock("@/lib/api-client", () => ({
-  revealInviteLink: vi.fn(),
+vi.mock("@/lib/api/invitations-api", () => ({
+  useRevealInviteLinkMutation: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
@@ -21,7 +21,8 @@ vi.mock("sonner", () => ({
   },
 }));
 
-const revealInviteLinkMock = vi.mocked(revealInviteLink);
+const useRevealInviteLinkMutationMock = vi.mocked(useRevealInviteLinkMutation);
+const revealInviteLinkMock = vi.fn();
 const writeTextMock = vi.fn();
 
 function mockClipboard(): void {
@@ -71,6 +72,14 @@ describe("PendingInvitationsTable", () => {
     vi.clearAllMocks();
     mockClipboard();
     writeTextMock.mockResolvedValue(undefined);
+    revealInviteLinkMock.mockReturnValue({
+      unwrap: vi.fn().mockResolvedValue({
+        inviteUrl: "https://example.com/accept-invite?token=abc",
+      }),
+    });
+    useRevealInviteLinkMutationMock.mockReturnValue([
+      revealInviteLinkMock,
+    ] as unknown as ReturnType<typeof useRevealInviteLinkMutation>);
   });
 
   test("renders compact invitation columns without link, created, or visible action headers", () => {
@@ -139,10 +148,6 @@ describe("PendingInvitationsTable", () => {
   test("copies invitation link from the dropdown", async () => {
     const actor = userEvent.setup();
     mockClipboard();
-    revealInviteLinkMock.mockResolvedValue({
-      inviteUrl: "https://example.com/accept-invite?token=abc",
-    });
-
     renderTable();
 
     await actor.click(

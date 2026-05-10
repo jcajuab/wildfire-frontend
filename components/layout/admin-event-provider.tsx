@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type ReactElement, type ReactNode } from "react";
+import { useDeferredDashboardStartup } from "@/hooks/use-deferred-dashboard-startup";
 import { handleDisplayLifecycleEvent } from "@/lib/api/admin-lifecycle-cache";
 import {
   subscribeToDisplayLifecycleEvents,
@@ -25,9 +26,10 @@ export function AdminEventProvider({
   const dispatch = useAppDispatch();
   const store = useAppStore();
   const canReadDisplays = useCan("displays:read");
+  const canStartEvents = useDeferredDashboardStartup(canReadDisplays);
 
   useEffect(() => {
-    if (!canReadDisplays) return;
+    if (!canStartEvents) return;
 
     const subscription = subscribeToDisplayLifecycleEvents({
       onEvent: (event: DisplayLifecycleEvent) => {
@@ -36,7 +38,7 @@ export function AdminEventProvider({
     });
 
     return () => subscription.close();
-  }, [canReadDisplays, dispatch, store]);
+  }, [canStartEvents, dispatch, store]);
 
   return <>{children}</>;
 }

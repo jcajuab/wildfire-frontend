@@ -85,7 +85,7 @@ describe("LoginPage", () => {
     setPostLoginNavigatorForTest(null);
   });
 
-  test("already-authenticated login redirect refreshes before navigating", async () => {
+  test("already-authenticated login redirect navigates without refresh", async () => {
     const navigate = vi.fn();
     searchParams = new URLSearchParams([["redirectTo", "/admin/content"]]);
     isAuthenticated = true;
@@ -97,26 +97,27 @@ describe("LoginPage", () => {
     render(<LoginPage />);
 
     await waitFor(() => {
-      expect(refreshAccessTokenMock).toHaveBeenCalledTimes(1);
+      expect(navigate).toHaveBeenCalledWith("/admin/content");
     });
-    expect(navigate).toHaveBeenCalledWith("/admin/content");
+    expect(refreshAccessTokenMock).not.toHaveBeenCalled();
     setPostLoginNavigatorForTest(null);
   });
 
-  test("stale authenticated login state is purged when refresh returns 401", async () => {
+  test("already-authenticated login redirect leaves stale-session cleanup to bootstrap", async () => {
+    const navigate = vi.fn();
     searchParams = new URLSearchParams([["redirectTo", "/admin/users"]]);
     isAuthenticated = true;
-    const { AuthApiError } = await import("@/lib/api-client");
-    refreshAccessTokenMock.mockRejectedValue(
-      new AuthApiError("Unauthorized", 401),
-    );
-    await import("./login-content");
+    const { setPostLoginNavigatorForTest } = await import("./login-content");
     const { default: LoginPage } = await import("./page");
+    setPostLoginNavigatorForTest(navigate);
 
     render(<LoginPage />);
 
     await waitFor(() => {
-      expect(purgeStaleSessionMock).toHaveBeenCalledTimes(1);
+      expect(navigate).toHaveBeenCalledWith("/admin/users");
     });
+    expect(refreshAccessTokenMock).not.toHaveBeenCalled();
+    expect(purgeStaleSessionMock).not.toHaveBeenCalled();
+    setPostLoginNavigatorForTest(null);
   });
 });

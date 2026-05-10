@@ -31,6 +31,10 @@ import {
   type RbacUserListQuery,
   type RbacUsersListResponse,
 } from "@/lib/api/rbac-api";
+import {
+  invitationsApi,
+  type InvitationListQuery,
+} from "@/lib/api/invitations-api";
 import type { InvitationListResponse } from "@/types/invitation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { PAGE_SIZE, useUsersPage } from "./_hooks/use-users-page";
@@ -79,6 +83,31 @@ export function RoleOptionsCacheSeeder({
   return null;
 }
 
+export function InvitationsListCacheSeeder({
+  queryArgs,
+  data,
+}: {
+  readonly queryArgs: InvitationListQuery;
+  readonly data: InvitationListResponse;
+}): null {
+  const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) =>
+      invitationsApi.endpoints.listInvitations.select(queryArgs)(state).data,
+  );
+
+  useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
+    dispatch(
+      invitationsApi.util.upsertQueryData("listInvitations", queryArgs, data),
+    );
+  }, [dispatch, queryArgs, data, cachedData]);
+  return null;
+}
+
 function ResetPasswordDialog({
   open,
   password,
@@ -116,10 +145,7 @@ function ResetPasswordDialog({
             aria-label="Copy password"
           >
             {copied ? (
-              <IconCheck
-                className="size-4 text-green-600"
-                aria-hidden="true"
-              />
+              <IconCheck className="size-4 text-green-600" aria-hidden="true" />
             ) : (
               <IconCopy className="size-4" aria-hidden="true" />
             )}

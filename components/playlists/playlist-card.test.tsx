@@ -60,9 +60,11 @@ describe("PlaylistCard", () => {
       />,
     );
 
-    await user.click(
-      screen.getByRole("button", { name: "Select Morning Loop" }),
-    );
+    const card = screen
+      .getByRole("heading", { name: "Morning Loop" })
+      .closest("[data-selection-mode='true']");
+    expect(card).toBeInstanceOf(HTMLElement);
+    await user.click(card as HTMLElement);
 
     expect(onSelectionChange).toHaveBeenCalledWith(basePlaylist, true);
   });
@@ -138,10 +140,14 @@ describe("PlaylistCard", () => {
       />,
     );
 
-    const card = screen.getByRole("button", { name: "Select Morning Loop" });
+    const card = screen
+      .getByRole("heading", { name: "Morning Loop" })
+      .closest("[data-selection-mode='true']");
+    expect(card).toBeInstanceOf(HTMLElement);
+    const cardElement = card as HTMLElement;
 
-    expect(card).toHaveClass("hover:border-border");
-    expect(card.className).not.toContain("hover:border-primary");
+    expect(cardElement).toHaveClass("hover:border-border");
+    expect(cardElement.className).not.toContain("hover:border-primary");
   });
 
   test("falls back to the owner name when username is unavailable", () => {

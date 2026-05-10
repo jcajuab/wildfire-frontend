@@ -2,8 +2,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { createSignedHeaders } from "@/lib/crypto/request-signer";
 import {
   createAuthChallenge,
-  createRegistrationSession,
-  fetchDisplayRegistrationConstraints,
   fetchSignedManifest,
 } from "@/lib/display-api/client";
 
@@ -40,68 +38,6 @@ describe("display-api client contract validation", () => {
     } else {
       process.env.NEXT_PUBLIC_API_VERSION = originalApiVersion;
     }
-  });
-
-  test("fetchDisplayRegistrationConstraints parses backend constraints", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: {
-            slugPattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
-            minSlugLength: 3,
-            maxSlugLength: 120,
-          },
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        },
-      ),
-    );
-    global.fetch = fetchMock as unknown as typeof fetch;
-
-    const constraints = await fetchDisplayRegistrationConstraints();
-
-    expect(constraints).toEqual({
-      slugPattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
-      minSlugLength: 3,
-      maxSlugLength: 120,
-    });
-    const { authFetch: authFetchMock } = await import("@/lib/auth-session");
-    expect(authFetchMock).toHaveBeenCalledWith(
-      "http://example.test/v1/displays/registration-constraints",
-      expect.objectContaining({
-        method: "GET",
-      }),
-    );
-  });
-
-  test("createRegistrationSession rejects invalid constraints payloads", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: {
-            registrationSessionId: "session-1",
-            expiresAt: "2026-01-01T00:00:00.000Z",
-            challengeNonce: "nonce-1",
-            constraints: {
-              slugPattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
-              minSlugLength: 10,
-              maxSlugLength: 3,
-            },
-          },
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        },
-      ),
-    );
-    global.fetch = fetchMock as unknown as typeof fetch;
-
-    await expect(createRegistrationSession("123456")).rejects.toThrow(
-      "maxSlugLength",
-    );
   });
 
   test("createAuthChallenge parses envelope challenge payloads", async () => {

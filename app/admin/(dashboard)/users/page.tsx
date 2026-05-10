@@ -24,6 +24,7 @@ import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
 import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 
 import {
+  InvitationsListCacheSeeder,
   RoleOptionsCacheSeeder,
   UsersListCacheSeeder,
   UsersPageView,
@@ -140,6 +141,12 @@ export default async function UsersPage({
 
   const canReadRoles = sessionHasPermission(session, "roles:read");
   const canCreateUser = sessionHasPermission(session, "users:create");
+  const initialInvitationQuery = {
+    page: 1,
+    pageSize: USERS_PAGE_SIZE,
+    sortBy: "createdAt",
+    sortDirection: "desc",
+  } as const;
 
   const [usersData, roleOptions, invitationsData] = await Promise.all([
     getCachedUsersList({
@@ -151,14 +158,7 @@ export default async function UsersPage({
       roleId: queryArgs.roleId,
     }),
     canReadRoles ? getCachedRoleOptions() : null,
-    canCreateUser
-      ? getCachedInvitations({
-          page: 1,
-          pageSize: USERS_PAGE_SIZE,
-          sortBy: "createdAt",
-          sortDirection: "desc",
-        })
-      : null,
+    canCreateUser ? getCachedInvitations(initialInvitationQuery) : null,
   ]);
 
   return (
@@ -167,6 +167,12 @@ export default async function UsersPage({
         <UsersListCacheSeeder queryArgs={queryArgs} data={usersData} />
       ) : null}
       {roleOptions ? <RoleOptionsCacheSeeder data={roleOptions} /> : null}
+      {invitationsData ? (
+        <InvitationsListCacheSeeder
+          queryArgs={initialInvitationQuery}
+          data={invitationsData}
+        />
+      ) : null}
       <UsersPageView
         initialUsers={usersData ? { queryArgs, data: usersData } : undefined}
         initialRoles={roleOptions ?? undefined}

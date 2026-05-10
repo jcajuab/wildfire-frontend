@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -21,6 +21,7 @@ import type {
   InvitationSort,
   InvitationStatusFilter,
 } from "@/types/invitation";
+import { useListInvitationsQuery } from "@/lib/api/invitations-api";
 import type { EditUserFormData } from "@/components/users/edit-user-dialog";
 import { useUsersFilters, type UsersPageTab } from "./use-users-filters";
 import { useUsersDialogs } from "./use-users-dialogs";
@@ -264,59 +265,37 @@ export function useUsersPage(options?: {
       filters.invitationStatusFilter,
     ],
   );
-  const invitationQueryKey = useMemo(
-    () => normalizedInvitationQueryKey(invitationQuery),
-    [invitationQuery],
-  );
   const isInitialInvitationsQuery =
     options?.initialInvitations != null &&
-    invitationQueryKey ===
+    normalizedInvitationQueryKey(invitationQuery) ===
       normalizedInvitationQueryKey({
         page: 1,
         pageSize: PAGE_SIZE,
         sortBy: "createdAt",
         sortDirection: "desc",
       });
-  const [loadedInvitations, setLoadedInvitations] = useState<
-    | {
-        readonly queryKey: string;
-        readonly data: InvitationListResponse;
-      }
-    | undefined
-  >(undefined);
-  const setInvitationsData = useCallback(
-    (data: InvitationListResponse | undefined): void => {
-      setLoadedInvitations(
-        data != null ? { queryKey: invitationQueryKey, data } : undefined,
-      );
-    },
-    [invitationQueryKey],
-  );
-  const invitationsData = isInitialInvitationsQuery
-    ? options?.initialInvitations
-    : loadedInvitations?.queryKey === invitationQueryKey
-      ? loadedInvitations.data
-      : undefined;
+  const {
+    data: invitationsQueryData,
+    isLoading: invitationsQueryLoading,
+    isFetching: invitationsQueryFetching,
+  } = useListInvitationsQuery(invitationQuery, {
+    skip: !canCreateUser,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+  });
+  const invitationsData =
+    invitationsQueryData ??
+    (isInitialInvitationsQuery ? options?.initialInvitations : undefined);
 
   const handlers = useUsersHandlers({
-    canCreateUser,
     isAdmin,
     systemRoleIds,
     userRolesByUserId,
-    invitationQuery,
-    setInvitationsData,
     setIsEditDialogOpen: dialogs.setIsEditDialogOpen,
     setSelectedUser: dialogs.setSelectedUser,
     setResetPasswordResult: dialogs.setResetPasswordResult,
     setIsResetPasswordDialogOpen: dialogs.setIsResetPasswordDialogOpen,
   });
-
-  const { loadInvitations } = handlers;
-  useEffect(() => {
-    if (!canCreateUser || isInitialInvitationsQuery) return;
-
-    void loadInvitations();
-  }, [canCreateUser, isInitialInvitationsQuery, loadInvitations]);
 
   return {
     currentUser,
@@ -344,7 +323,10 @@ export function useUsersPage(options?: {
     isRoleToggling: handlers.isRoleToggling,
     invitations: invitationsData?.items ?? [],
     invitationsData,
-    isInvitationsLoading: handlers.isInvitationsLoading,
+    isInvitationsLoading:
+      canCreateUser &&
+      invitationsData == null &&
+      (invitationsQueryLoading || invitationsQueryFetching),
     resendingInvitationId: handlers.resendingInvitationId,
     isInviteDialogOpen: dialogs.isInviteDialogOpen,
     isEditDialogOpen: dialogs.isEditDialogOpen,

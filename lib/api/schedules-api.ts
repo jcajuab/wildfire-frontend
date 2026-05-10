@@ -93,6 +93,47 @@ export interface SchedulesBootstrapResponse {
   }[];
 }
 
+function dateOnly(value: string): string {
+  return value.slice(0, 10);
+}
+
+function scheduleMatchesWindow(
+  schedule: BackendSchedule,
+  query: ScheduleWindowQuery,
+): boolean {
+  const from = dateOnly(query.from);
+  const to = dateOnly(query.to);
+  const scheduleStart = dateOnly(schedule.startDate);
+  const scheduleEnd = dateOnly(schedule.endDate);
+  if (scheduleEnd < from || scheduleStart > to) return false;
+  if (
+    query.displayIds &&
+    query.displayIds.length > 0 &&
+    !query.displayIds.includes(schedule.displayId)
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function upsertScheduleIntoWindow(
+  schedules: BackendSchedule[],
+  schedule: BackendSchedule,
+  query: ScheduleWindowQuery,
+): void {
+  const index = schedules.findIndex((item) => item.id === schedule.id);
+  const matches = scheduleMatchesWindow(schedule, query);
+  if (index === -1) {
+    if (matches) schedules.push(schedule);
+    return;
+  }
+  if (matches) {
+    schedules[index] = schedule;
+  } else {
+    schedules.splice(index, 1);
+  }
+}
+
 export const schedulesApi = api.injectEndpoints({
   endpoints: (build) => ({
     listSchedules: build.query<readonly BackendSchedule[], ScheduleWindowQuery>(
@@ -156,25 +197,57 @@ export const schedulesApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<BackendSchedule>(response, "createSchedule"),
+      invalidatesTags: (result) =>
+        result
+          ? [
+              { type: "Schedule", id: "LIST" },
+              { type: "Schedule", id: result.id },
+              { type: "Display", id: "LIST" },
+            ]
+          : [
+              { type: "Schedule", id: "LIST" },
+              { type: "Display", id: "LIST" },
+            ],
       async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
         try {
           const { data: created } = await queryFulfilled;
-          // Patch all cached getSchedulesBootstrap queries
-          const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
-            { type: "Schedule", id: "LIST" },
-          ]);
-          for (const entry of entries) {
-            if (entry.endpointName === "getSchedulesBootstrap") {
-              dispatch(
-                schedulesApi.util.updateQueryData(
-                  "getSchedulesBootstrap",
-                  entry.originalArgs as ScheduleWindowQuery,
-                  (draft) => {
-                    (draft.schedules as BackendSchedule[]).push(created);
-                  },
-                ),
-              );
-            }
+          const bootstrapArgs = schedulesApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getSchedulesBootstrap",
+          );
+          for (const query of bootstrapArgs) {
+            dispatch(
+              schedulesApi.util.updateQueryData(
+                "getSchedulesBootstrap",
+                query,
+                (draft) => {
+                  upsertScheduleIntoWindow(
+                    draft.schedules as BackendSchedule[],
+                    created,
+                    query,
+                  );
+                },
+              ),
+            );
+          }
+          const listArgs = schedulesApi.util.selectCachedArgsForQuery(
+            getState(),
+            "listSchedules",
+          );
+          for (const query of listArgs) {
+            dispatch(
+              schedulesApi.util.updateQueryData(
+                "listSchedules",
+                query,
+                (draft) => {
+                  upsertScheduleIntoWindow(
+                    draft as BackendSchedule[],
+                    created,
+                    query,
+                  );
+                },
+              ),
+            );
           }
           await bumpSchedulesNextCache();
           dispatch(api.util.invalidateTags([{ type: "Display", id: "LIST" }]));
@@ -195,29 +268,66 @@ export const schedulesApi = api.injectEndpoints({
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<BackendSchedule>(response, "updateSchedule"),
+      invalidatesTags: (result, _error, { id }) =>
+        result
+          ? [
+              { type: "Schedule", id },
+              { type: "Schedule", id: result.id },
+              { type: "Schedule", id: "LIST" },
+              { type: "Display", id: "LIST" },
+            ]
+          : [
+              { type: "Schedule", id },
+              { type: "Schedule", id: "LIST" },
+            ],
       async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
         try {
           const { data: updated } = await queryFulfilled;
-          const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
-            { type: "Schedule", id: "LIST" },
-          ]);
-          for (const entry of entries) {
-            if (entry.endpointName === "getSchedulesBootstrap") {
-              dispatch(
-                schedulesApi.util.updateQueryData(
-                  "getSchedulesBootstrap",
-                  entry.originalArgs as ScheduleWindowQuery,
-                  (draft) => {
-                    const schedules = draft.schedules as BackendSchedule[];
-                    const idx = schedules.findIndex((s) => s.id === arg.id);
-                    if (idx !== -1) {
-                      schedules[idx] = updated;
-                    }
-                  },
-                ),
-              );
-            }
+          const bootstrapArgs = schedulesApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getSchedulesBootstrap",
+          );
+          for (const query of bootstrapArgs) {
+            dispatch(
+              schedulesApi.util.updateQueryData(
+                "getSchedulesBootstrap",
+                query,
+                (draft) => {
+                  upsertScheduleIntoWindow(
+                    draft.schedules as BackendSchedule[],
+                    updated,
+                    query,
+                  );
+                },
+              ),
+            );
           }
+          const listArgs = schedulesApi.util.selectCachedArgsForQuery(
+            getState(),
+            "listSchedules",
+          );
+          for (const query of listArgs) {
+            dispatch(
+              schedulesApi.util.updateQueryData(
+                "listSchedules",
+                query,
+                (draft) => {
+                  upsertScheduleIntoWindow(
+                    draft as BackendSchedule[],
+                    updated,
+                    query,
+                  );
+                },
+              ),
+            );
+          }
+          dispatch(
+            schedulesApi.util.updateQueryData(
+              "getSchedule",
+              arg.id,
+              () => updated,
+            ),
+          );
           await bumpSchedulesNextCache();
           dispatch(api.util.invalidateTags([{ type: "Display", id: "LIST" }]));
           void revalidateWildfireTagsViaRoute([
@@ -234,28 +344,45 @@ export const schedulesApi = api.injectEndpoints({
         url: `schedules/${id}`,
         method: "DELETE",
       }),
+      invalidatesTags: (_result, _error, id) => [
+        { type: "Schedule", id },
+        { type: "Schedule", id: "LIST" },
+        { type: "Display", id: "LIST" },
+      ],
       async onQueryStarted(id, { dispatch, queryFulfilled, getState }) {
         try {
           await queryFulfilled;
-          const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
-            { type: "Schedule", id: "LIST" },
-          ]);
-          for (const entry of entries) {
-            if (entry.endpointName === "getSchedulesBootstrap") {
-              dispatch(
-                schedulesApi.util.updateQueryData(
-                  "getSchedulesBootstrap",
-                  entry.originalArgs as ScheduleWindowQuery,
-                  (draft) => {
-                    const schedules = draft.schedules as BackendSchedule[];
-                    const idx = schedules.findIndex((s) => s.id === id);
-                    if (idx !== -1) {
-                      schedules.splice(idx, 1);
-                    }
-                  },
-                ),
-              );
+          const removeSchedule = (schedules: BackendSchedule[]) => {
+            const idx = schedules.findIndex((s) => s.id === id);
+            if (idx !== -1) {
+              schedules.splice(idx, 1);
             }
+          };
+          const bootstrapArgs = schedulesApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getSchedulesBootstrap",
+          );
+          for (const query of bootstrapArgs) {
+            dispatch(
+              schedulesApi.util.updateQueryData(
+                "getSchedulesBootstrap",
+                query,
+                (draft) => removeSchedule(draft.schedules as BackendSchedule[]),
+              ),
+            );
+          }
+          const listArgs = schedulesApi.util.selectCachedArgsForQuery(
+            getState(),
+            "listSchedules",
+          );
+          for (const query of listArgs) {
+            dispatch(
+              schedulesApi.util.updateQueryData(
+                "listSchedules",
+                query,
+                (draft) => removeSchedule(draft as BackendSchedule[]),
+              ),
+            );
           }
           await bumpSchedulesNextCache();
           dispatch(api.util.invalidateTags([{ type: "Display", id: "LIST" }]));

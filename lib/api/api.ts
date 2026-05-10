@@ -14,6 +14,7 @@ export const api = createApi({
     "Display",
     "DisplayGroup",
     "EmergencySlots",
+    "Invitation",
     "Permission",
     "Playlist",
     "Role",

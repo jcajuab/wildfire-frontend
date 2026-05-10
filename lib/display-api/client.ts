@@ -4,26 +4,6 @@ import { authFetch } from "@/lib/auth-session";
 import { createSignedHeaders } from "@/lib/crypto/request-signer";
 import type { DisplayRegistrationRecord } from "@/lib/display-identity/registration-store";
 
-export interface RegistrationSessionResponse {
-  readonly registrationSessionId: string;
-  readonly expiresAt: string;
-  readonly challengeNonce: string;
-  readonly constraints: DisplayRegistrationConstraints;
-}
-
-export interface DisplayRegistrationConstraints {
-  readonly slugPattern: string;
-  readonly minSlugLength: number;
-  readonly maxSlugLength: number;
-}
-
-export interface RegisterDisplayResponse {
-  readonly displayId: string;
-  readonly slug: string;
-  readonly state: "registered";
-  readonly keyId: string;
-}
-
 export interface AuthChallengeResponse {
   readonly challengeToken: string;
   readonly expiresAt: string;
@@ -185,68 +165,6 @@ const readOptionalNullableUrl = (
     return null;
   }
   return readUrl(value, path);
-};
-
-const parseDisplayRegistrationConstraints = (
-  payload: unknown,
-): DisplayRegistrationConstraints => {
-  const root = readRecord(payload, "constraints");
-  const slugPattern = readString(root.slugPattern, "constraints.slugPattern");
-  const minSlugLength = readInteger(
-    root.minSlugLength,
-    "constraints.minSlugLength",
-  );
-  const maxSlugLength = readInteger(
-    root.maxSlugLength,
-    "constraints.maxSlugLength",
-  );
-  if (minSlugLength < 1) {
-    throw new Error("constraints.minSlugLength must be positive");
-  }
-  if (maxSlugLength < minSlugLength) {
-    throw new Error(
-      "constraints.maxSlugLength must be greater than or equal to minSlugLength",
-    );
-  }
-  return {
-    slugPattern,
-    minSlugLength,
-    maxSlugLength,
-  };
-};
-
-const parseRegistrationSessionResponse = (
-  payload: unknown,
-): RegistrationSessionResponse => {
-  const root = readRecord(payload, "registrationSession");
-  return {
-    registrationSessionId: readString(
-      root.registrationSessionId,
-      "registrationSession.registrationSessionId",
-    ),
-    expiresAt: readString(root.expiresAt, "registrationSession.expiresAt"),
-    challengeNonce: readString(
-      root.challengeNonce,
-      "registrationSession.challengeNonce",
-    ),
-    constraints: parseDisplayRegistrationConstraints(root.constraints),
-  };
-};
-
-const parseRegisterDisplayResponse = (
-  payload: unknown,
-): RegisterDisplayResponse => {
-  const root = readRecord(payload, "registerDisplay");
-  return {
-    displayId: readString(root.displayId, "registerDisplay.displayId"),
-    slug: readString(root.slug, "registerDisplay.slug"),
-    keyId: readString(root.keyId, "registerDisplay.keyId"),
-    state: readEnum(
-      root.state,
-      ["registered"] as const,
-      "registerDisplay.state",
-    ),
-  };
 };
 
 const parseAuthChallengeResponse = (
@@ -439,76 +357,6 @@ const parseErrorMessage = async (response: Response): Promise<string> => {
     return `Request failed with status ${response.status}`;
   }
 };
-
-export async function createRegistrationSession(
-  registrationCode: string,
-): Promise<RegistrationSessionResponse> {
-  const baseUrl = getBaseUrl();
-  const response = await authFetch(
-    `${baseUrl}/displays/registration-sessions`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ registrationCode }),
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(await parseErrorMessage(response));
-  }
-
-  return parseRegistrationSessionResponse(
-    parseApiResponseData<unknown>(await response.json()),
-  );
-}
-
-export async function fetchDisplayRegistrationConstraints(): Promise<DisplayRegistrationConstraints> {
-  const baseUrl = getBaseUrl();
-  const response = await authFetch(
-    `${baseUrl}/displays/registration-constraints`,
-    {
-      method: "GET",
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(await parseErrorMessage(response));
-  }
-
-  return parseDisplayRegistrationConstraints(
-    parseApiResponseData<unknown>(await response.json()),
-  );
-}
-
-export async function registerDisplay(input: {
-  registrationSessionId: string;
-  slug: string;
-  displayName: string;
-  output: string;
-  fingerprint: string;
-  publicKey: string;
-  keyAlgorithm: "ed25519";
-  registrationSignature: string;
-}): Promise<RegisterDisplayResponse> {
-  const baseUrl = getBaseUrl();
-  const response = await authFetch(`${baseUrl}/displays/registrations`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(input),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseErrorMessage(response));
-  }
-
-  return parseRegisterDisplayResponse(
-    parseApiResponseData<unknown>(await response.json()),
-  );
-}
 
 export async function createAuthChallenge(input: {
   slug: string;
