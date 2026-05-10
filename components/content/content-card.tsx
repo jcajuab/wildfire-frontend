@@ -30,12 +30,15 @@ import {
 import { cn } from "@/lib/utils";
 import { useCanModifyResource } from "@/hooks/use-can-modify-resource";
 import {
-  formatContentStatus,
   formatDateWithTime,
   formatFileSize,
   formatRelativeTime,
   getContentStatusBadgeClassName,
 } from "@/lib/formatters";
+import {
+  RESOURCE_DRAFT_BADGE_CLASSNAME,
+  RESOURCE_IN_USE_BADGE_CLASSNAME,
+} from "@/lib/resource-status-badges";
 import {
   getFlashThumbnailText,
   getTextThumbnailFallbackHtml,
@@ -86,6 +89,22 @@ function getContentActivityLabel(content: Content): "Created" | "Updated" {
 function getContentOwnerHandle(content: Content): string {
   const username = content.owner.username?.trim();
   return username && username.length > 0 ? username : content.owner.name;
+}
+
+function getContentResourceStatusLabel(content: Content): string {
+  if (content.status === "PROCESSING") return "Processing";
+  if (content.status === "FAILED") return "Failed";
+  return content.isUsedInPlaylist ? "In Use" : "Draft";
+}
+
+function getContentResourceStatusBadgeClassName(content: Content): string {
+  if (content.status === "PROCESSING" || content.status === "FAILED") {
+    return getContentStatusBadgeClassName(content.status);
+  }
+
+  return content.isUsedInPlaylist
+    ? RESOURCE_IN_USE_BADGE_CLASSNAME
+    : RESOURCE_DRAFT_BADGE_CLASSNAME;
 }
 
 function subscribeToHydration(callback: () => void): () => void {
@@ -301,9 +320,9 @@ export const ContentCard = memo(function ContentCard({
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge
             variant="outline"
-            className={cn(getContentStatusBadgeClassName(content.status))}
+            className={cn(getContentResourceStatusBadgeClassName(content))}
           >
-            {formatContentStatus(content.status)}
+            {getContentResourceStatusLabel(content)}
           </Badge>
           <Badge variant="outline">{CONTENT_TYPE_LABEL[content.type]}</Badge>
           <Badge variant="outline">{formatFileSize(content.fileSize)}</Badge>

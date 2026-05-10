@@ -78,8 +78,7 @@ export function EmergencySlotDropdown({
               {SLOT_INDICES.map((slotIndex) => {
                 const slot = slotsByIndex.get(slotIndex);
                 const isFilled = slot != null && slot.contentId != null;
-                const label =
-                  slot?.label ?? slot?.content?.title ?? `Slot ${slotIndex}`;
+                const label = slot?.content?.title ?? `Slot ${slotIndex}`;
 
                 if (!isFilled) {
                   return (

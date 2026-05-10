@@ -42,6 +42,12 @@ export interface CreatePlaylistFormProps {
   readonly onSuccess?: () => void;
   readonly onStateChange?: (state: CreatePlaylistFormActionState) => void;
   readonly availableContent: readonly PlaylistSelectableContent[];
+  readonly contentSearch?: string;
+  readonly onContentSearchChange?: (value: string) => void;
+  readonly isContentLibraryLoading?: boolean;
+  readonly isContentLibraryFetching?: boolean;
+  readonly hasMoreContent?: boolean;
+  readonly onLoadMoreContent?: () => void;
   readonly title?: string;
   readonly description?: string;
   readonly showHeader?: boolean;
@@ -56,6 +62,12 @@ export function CreatePlaylistForm({
   onSuccess,
   onStateChange,
   availableContent,
+  contentSearch,
+  onContentSearchChange,
+  isContentLibraryLoading,
+  isContentLibraryFetching,
+  hasMoreContent,
+  onLoadMoreContent,
   title = "Create New Playlist",
   description = "Add and organize contents to form a playlist",
   showHeader = true,
@@ -185,46 +197,39 @@ export function CreatePlaylistForm({
         items={items}
         onItemsChange={setItems}
         availableContent={availableContent}
+        contentSearch={contentSearch}
+        onContentSearchChange={onContentSearchChange}
+        isContentLibraryLoading={isContentLibraryLoading}
+        isContentLibraryFetching={isContentLibraryFetching}
+        hasMoreContent={hasMoreContent}
+        onLoadMoreContent={onLoadMoreContent}
         isOverDurationLimit={isOverDurationLimit}
         itemsHeaderSlot={
-          <>
-            {items.length > 0 ? (
-              <Button
-                variant="ghost"
-                type="button"
-                onClick={() => setItems([])}
-                disabled={isSubmitting}
-              >
-                Remove All
-              </Button>
-            ) : null}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex cursor-pointer items-center gap-1.5">
-                    <Switch
-                      id="playlist-form-show-counter"
-                      checked={showCounter}
-                      onCheckedChange={setShowCounter}
-                      disabled={isSubmitting}
-                    />
-                    <label
-                      htmlFor="playlist-form-show-counter"
-                      className="cursor-pointer text-xs text-muted-foreground"
-                    >
-                      Show counter
-                    </label>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    Turning this on will show a counter for each content
-                    duration
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex cursor-pointer items-center gap-1.5">
+                  <Switch
+                    id="playlist-form-show-counter"
+                    checked={showCounter}
+                    onCheckedChange={setShowCounter}
+                    disabled={isSubmitting}
+                  />
+                  <label
+                    htmlFor="playlist-form-show-counter"
+                    className="cursor-pointer text-xs text-muted-foreground"
+                  >
+                    Show counter
+                  </label>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  Turning this on will show a counter for each content duration
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         }
         itemsStatusSlot={
           <PlaylistDurationBudget

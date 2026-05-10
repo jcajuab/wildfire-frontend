@@ -1,13 +1,5 @@
-import type {
-  ContentListQuery,
-  ContentOptionsQueryArg,
-} from "@/lib/api/content-api";
+import type { ContentListQuery } from "@/lib/api/content-api";
 import { ADMIN_CARD_PAGE_SIZE } from "@/lib/admin-pagination";
-
-/** Matches playlist pickers (`getContentOptions` / SSR `content/options`). */
-export const PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY = {
-  status: "READY" as const,
-} satisfies Extract<ContentOptionsQueryArg, object>;
 
 /** Matches admin content grid page size (paginated grid UX). */
 export const CONTENT_PAGE_SIZE = ADMIN_CARD_PAGE_SIZE;

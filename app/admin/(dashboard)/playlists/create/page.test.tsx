@@ -2,15 +2,21 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { CreatePlaylistPageView } from "./create-playlist-page-client";
-import { useGetContentOptionsQuery } from "@/lib/api/content-api";
-import { useCreatePlaylistMutation } from "@/lib/api/playlists-api";
+import { useListContentQuery } from "@/lib/api/content-api";
+import {
+  playlistsApi,
+  useCreatePlaylistMutation,
+} from "@/lib/api/playlists-api";
 import { useCan } from "@/hooks/use-can";
 import { useRouter } from "next/navigation";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
+import { useAppDispatch } from "@/lib/hooks";
 import { toast } from "sonner";
+import type { BackendContentListItem } from "@/lib/api/content-api";
 
 const pushMock = vi.fn();
 const createPlaylistMock = vi.fn();
+const dispatchMock = vi.fn((action: unknown) => action);
 
 function findAncestorWithClasses(
   element: HTMLElement,
@@ -31,6 +37,33 @@ function findAncestorWithClasses(
   return null;
 }
 
+function makeContentItem(
+  overrides: Partial<BackendContentListItem> = {},
+): BackendContentListItem {
+  return {
+    id: "content-1",
+    title: "Poster",
+    type: "IMAGE",
+    status: "READY",
+    thumbnailUrl: undefined,
+    mimeType: "image/png",
+    fileSize: 100,
+    checksum: "checksum-1",
+    width: 1920,
+    height: 1080,
+    duration: null,
+    flashMessage: null,
+    flashTone: null,
+    textHtmlContent: null,
+    textPreviewText: null,
+    isUsedInPlaylist: false,
+    createdAt: "2025-01-01T00:00:00.000Z",
+    updatedAt: "2025-01-01T00:00:00.000Z",
+    owner: { id: "user-1", username: "owner", name: "Owner" },
+    ...overrides,
+  };
+}
+
 vi.mock("next/navigation", async () => {
   const actual =
     await vi.importActual<typeof import("next/navigation")>("next/navigation");
@@ -46,15 +79,28 @@ vi.mock("@/hooks/use-can", () => ({
 }));
 
 vi.mock("@/lib/api/content-api", () => ({
-  useGetContentOptionsQuery: vi.fn(),
+  useListContentQuery: vi.fn(),
 }));
 
 vi.mock("@/lib/api/playlists-api", () => ({
+  playlistsApi: {
+    endpoints: {
+      listPlaylists: {
+        initiate: vi.fn(() => ({
+          unwrap: async () => undefined,
+        })),
+      },
+    },
+  },
   useCreatePlaylistMutation: vi.fn(),
 }));
 
 vi.mock("@/lib/api/get-api-error-message", () => ({
   notifyApiError: vi.fn(),
+}));
+
+vi.mock("@/lib/hooks", () => ({
+  useAppDispatch: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
@@ -65,9 +111,13 @@ vi.mock("sonner", () => ({
 
 const useRouterMock = vi.mocked(useRouter);
 const useCanMock = vi.mocked(useCan);
-const useGetContentOptionsQueryMock = vi.mocked(useGetContentOptionsQuery);
+const useListContentQueryMock = vi.mocked(useListContentQuery);
+const listPlaylistsInitiateMock = vi.mocked(
+  playlistsApi.endpoints.listPlaylists.initiate,
+);
 const useCreatePlaylistMutationMock = vi.mocked(useCreatePlaylistMutation);
 const notifyApiErrorMock = vi.mocked(notifyApiError);
+const useAppDispatchMock = vi.mocked(useAppDispatch);
 const toastSuccessMock = vi.mocked(toast.success);
 
 describe("CreatePlaylistPage", () => {
@@ -81,18 +131,26 @@ describe("CreatePlaylistPage", () => {
     useCanMock.mockImplementation(
       (permission) => permission === "content:read",
     );
+    useAppDispatchMock.mockReturnValue(
+      dispatchMock as unknown as ReturnType<typeof useAppDispatch>,
+    );
 
-    useGetContentOptionsQueryMock.mockReturnValue({
-      data: [
-        {
-          id: "content-1",
-          title: "Poster",
-          type: "IMAGE",
-          thumbnailUrl: null,
-          textPreviewText: null,
-        },
-      ],
-    } as unknown as ReturnType<typeof useGetContentOptionsQuery>);
+    listPlaylistsInitiateMock.mockReturnValue({
+      unwrap: async () => undefined,
+    } as unknown as ReturnType<
+      typeof playlistsApi.endpoints.listPlaylists.initiate
+    >);
+
+    useListContentQueryMock.mockReturnValue({
+      currentData: {
+        items: [makeContentItem()],
+        page: 1,
+        pageSize: 20,
+        total: 1,
+      },
+      isLoading: false,
+      isFetching: false,
+    } as unknown as ReturnType<typeof useListContentQuery>);
 
     createPlaylistMock.mockReturnValue({
       unwrap: async () => ({ id: "playlist-1" }),
@@ -182,6 +240,29 @@ describe("CreatePlaylistPage", () => {
     await user.click(screen.getByRole("button", { name: "Poster" }));
 
     expect(screen.getByRole("button", { name: "Create" })).toBeEnabled();
+  });
+
+  test("queries the content library with backend search parameters", async () => {
+    const user = userEvent.setup();
+
+    render(<CreatePlaylistPageView />);
+
+    await user.type(screen.getByLabelText("Search content library"), "poster");
+
+    await waitFor(() => {
+      expect(useListContentQueryMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          page: 1,
+          pageSize: 20,
+          status: "READY",
+          excludeType: "FLASH",
+          search: "poster",
+          sortBy: "title",
+          sortDirection: "asc",
+        }),
+        expect.objectContaining({ skip: false }),
+      );
+    });
   });
 
   test("creates a playlist with content and navigates back to playlists", async () => {

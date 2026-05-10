@@ -18,7 +18,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { IconPhoto, IconPlus } from "@tabler/icons-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { SearchControl } from "@/components/common/search-control";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,12 @@ export interface PlaylistFormBodyProps {
   readonly items: DraftItem[];
   readonly onItemsChange: (items: DraftItem[]) => void;
   readonly availableContent: readonly PlaylistSelectableContent[];
+  readonly contentSearch?: string;
+  readonly onContentSearchChange?: (value: string) => void;
+  readonly isContentLibraryLoading?: boolean;
+  readonly isContentLibraryFetching?: boolean;
+  readonly hasMoreContent?: boolean;
+  readonly onLoadMoreContent?: () => void;
   readonly isOverDurationLimit: boolean;
   /** Optional action slot rendered in the Playlist Items section header. */
   readonly itemsHeaderSlot?: ReactNode;
@@ -133,6 +139,12 @@ export function PlaylistFormBody({
   items,
   onItemsChange,
   availableContent,
+  contentSearch,
+  onContentSearchChange,
+  isContentLibraryLoading = false,
+  isContentLibraryFetching = false,
+  hasMoreContent = false,
+  onLoadMoreContent,
   isOverDurationLimit,
   itemsHeaderSlot,
   itemsStatusSlot,
@@ -140,7 +152,21 @@ export function PlaylistFormBody({
   emptyItemsMessage = "Add content from the library to get started",
   disabled = false,
 }: PlaylistFormBodyProps): ReactElement {
-  const [contentSearch, setContentSearch] = useState("");
+  const [localContentSearch, setLocalContentSearch] = useState("");
+  const controlledContentSearch =
+    contentSearch !== undefined && onContentSearchChange !== undefined;
+  const effectiveContentSearch = controlledContentSearch
+    ? (contentSearch ?? "")
+    : localContentSearch;
+  const handleContentSearchChange = controlledContentSearch
+    ? onContentSearchChange
+    : setLocalContentSearch;
+  const loadMoreContentRef = useRef(onLoadMoreContent);
+  const contentSentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    loadMoreContentRef.current = onLoadMoreContent;
+  }, [onLoadMoreContent]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -209,17 +235,43 @@ export function PlaylistFormBody({
   const filteredContent = useMemo(() => {
     const addedIds = new Set(items.map((item) => item.content.id));
     return availableContent.filter((content) => {
-      const matchesSearch = content.title
-        .toLowerCase()
-        .includes(contentSearch.toLowerCase());
+      const matchesSearch =
+        controlledContentSearch ||
+        content.title
+          .toLowerCase()
+          .includes(effectiveContentSearch.toLowerCase());
       return matchesSearch && !addedIds.has(content.id);
     });
-  }, [availableContent, items, contentSearch]);
+  }, [
+    availableContent,
+    controlledContentSearch,
+    effectiveContentSearch,
+    items,
+  ]);
 
-  const libraryEmptyMessage =
-    availableContent.length === 0
+  useEffect(() => {
+    if (!hasMoreContent) return;
+    const sentinel = contentSentinelRef.current;
+    if (!sentinel || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          loadMoreContentRef.current?.();
+        }
+      },
+      { rootMargin: "160px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMoreContent, isContentLibraryFetching]);
+
+  const libraryEmptyMessage = isContentLibraryLoading
+    ? "Loading content..."
+    : availableContent.length === 0
       ? "No content available"
-      : contentSearch.trim().length > 0
+      : effectiveContentSearch.trim().length > 0
         ? "No matching content"
         : "All available content has been added";
 
@@ -317,8 +369,8 @@ export function PlaylistFormBody({
 
         <div className="border-b border-border p-4">
           <SearchControl
-            value={contentSearch}
-            onChange={setContentSearch}
+            value={effectiveContentSearch}
+            onChange={handleContentSearchChange}
             placeholder="Search content library"
             ariaLabel="Search content library"
             className="max-w-none"
@@ -327,52 +379,64 @@ export function PlaylistFormBody({
         </div>
 
         <div className="flex min-h-64 flex-1 flex-col gap-2 p-4 xl:min-h-0 xl:overflow-y-auto">
-          {filteredContent.length === 0 ? (
+          {filteredContent.length === 0 && !hasMoreContent ? (
             <div className="flex flex-1 items-center justify-center px-4 py-10 text-center text-sm text-muted-foreground">
               {libraryEmptyMessage}
             </div>
           ) : (
-            filteredContent.map((content) => (
-              <button
-                key={content.id}
-                type="button"
-                aria-label={content.title}
-                onClick={() => handleAddContent(content)}
-                disabled={disabled || isOverDurationLimit}
-                className={`focus-visible:ring-ring flex items-center gap-3 rounded-md border border-border bg-background p-3 text-left transition-colors hover:border-primary/30 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 ${disabled || isOverDurationLimit ? "cursor-not-allowed opacity-50" : ""}`}
-              >
-                <div
-                  data-testid={`content-library-thumbnail-${content.id}`}
-                  className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded bg-muted"
+            <>
+              {filteredContent.map((content) => (
+                <button
+                  key={content.id}
+                  type="button"
+                  aria-label={content.title}
+                  onClick={() => handleAddContent(content)}
+                  disabled={disabled || isOverDurationLimit}
+                  className={`focus-visible:ring-ring flex items-center gap-3 rounded-md border border-border bg-background p-3 text-left transition-colors hover:border-primary/30 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 ${disabled || isOverDurationLimit ? "cursor-not-allowed opacity-50" : ""}`}
                 >
-                  {content.thumbnailUrl ? (
-                    <Image
-                      src={content.thumbnailUrl}
-                      alt={`${content.title} thumbnail`}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : content.type === "TEXT" &&
-                    (content.textPreviewText || content.textHtmlContent) ? (
-                    <div className="flex size-full items-start overflow-hidden p-1">
-                      <p className="line-clamp-4 text-[6px] leading-tight text-foreground">
-                        {getTextThumbnailText(content)}
-                      </p>
-                    </div>
-                  ) : (
-                    <IconPhoto
-                      className="size-4 text-muted-foreground"
-                      aria-hidden="true"
-                    />
-                  )}
+                  <div
+                    data-testid={`content-library-thumbnail-${content.id}`}
+                    className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded bg-muted"
+                  >
+                    {content.thumbnailUrl ? (
+                      <Image
+                        src={content.thumbnailUrl}
+                        alt={`${content.title} thumbnail`}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : content.type === "TEXT" &&
+                      (content.textPreviewText || content.textHtmlContent) ? (
+                      <div className="flex size-full items-start overflow-hidden p-1">
+                        <p className="line-clamp-4 text-[6px] leading-tight text-foreground">
+                          {getTextThumbnailText(content)}
+                        </p>
+                      </div>
+                    ) : (
+                      <IconPhoto
+                        className="size-4 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </div>
+                  <span className="flex-1 truncate text-sm">
+                    {content.title}
+                  </span>
+                  <IconPlus
+                    className="size-4 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </button>
+              ))}
+              {hasMoreContent ? (
+                <div
+                  ref={contentSentinelRef}
+                  className="flex min-h-12 items-center justify-center text-xs text-muted-foreground"
+                >
+                  {isContentLibraryFetching ? "Loading more..." : "Load more"}
                 </div>
-                <span className="flex-1 truncate text-sm">{content.title}</span>
-                <IconPlus
-                  className="size-4 text-muted-foreground"
-                  aria-hidden="true"
-                />
-              </button>
-            ))
+              ) : null}
+            </>
           )}
         </div>
       </aside>

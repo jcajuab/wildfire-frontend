@@ -1,16 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import type {
-  PlaylistEditorSavePayload,
-  PlaylistSelectableContent,
-} from "@/components/playlists/edit-playlist-form";
-import { useCan } from "@/hooks/use-can";
-import { useGetContentOptionsQuery } from "@/lib/api/content-api";
-import { PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY } from "@/lib/content-search-params";
+import type { PlaylistEditorSavePayload } from "@/components/playlists/edit-playlist-form";
+import {
+  type PlaylistContentLibraryState,
+  usePlaylistContentLibrary,
+} from "@/components/playlists/use-playlist-content-library";
 import {
   getApiErrorMessage,
   notifyApiError,
@@ -22,7 +20,6 @@ import {
   useUpdatePlaylistMutation,
 } from "@/lib/api/playlists-api";
 import { isNotFoundError } from "@/lib/api/error-guards";
-import { mapContentOptionToPlaylistSelectable } from "@/lib/playlists/map-content-option-to-selectable";
 import { mapBackendPlaylistWithItems } from "@/lib/mappers/playlist-mapper";
 import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
 import { useAppDispatch } from "@/lib/hooks";
@@ -45,7 +42,7 @@ export type EditPlaylistPageState =
 
 export interface UseEditPlaylistPageResult {
   readonly state: EditPlaylistPageState;
-  readonly availableContent: readonly PlaylistSelectableContent[];
+  readonly contentLibrary: PlaylistContentLibraryState;
   readonly isSaving: boolean;
   handleCancel: () => void;
   handleSave: (payload: PlaylistEditorSavePayload) => Promise<void>;
@@ -56,12 +53,7 @@ export function useEditPlaylistPage(
 ): UseEditPlaylistPageResult {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const canReadContent = useCan("content:read");
-
-  const { data: optionsData } = useGetContentOptionsQuery(
-    PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY,
-    { skip: !canReadContent },
-  );
+  const contentLibrary = usePlaylistContentLibrary();
 
   const [loadPlaylist] = useLazyGetPlaylistQuery();
   const [updatePlaylist] = useUpdatePlaylistMutation();
@@ -72,15 +64,6 @@ export function useEditPlaylistPage(
   });
   const [isSaving, setIsSaving] = useState(false);
   const isSavingRef = useRef(false);
-
-  const availableContent = useMemo(() => {
-    const rows: PlaylistSelectableContent[] = [];
-    for (const opt of optionsData ?? []) {
-      const row = mapContentOptionToPlaylistSelectable(opt);
-      if (row) rows.push(row);
-    }
-    return rows;
-  }, [optionsData]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -195,7 +178,7 @@ export function useEditPlaylistPage(
 
   return {
     state,
-    availableContent,
+    contentLibrary,
     isSaving,
     handleCancel,
     handleSave,

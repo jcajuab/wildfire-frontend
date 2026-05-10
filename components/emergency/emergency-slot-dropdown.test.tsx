@@ -72,16 +72,26 @@ describe("EmergencySlotDropdown", () => {
         slots: [
           {
             slotIndex: 1,
-            label: "Earthquake",
             contentId: "content-1",
-            content: null,
+            content: {
+              id: "content-1",
+              title: "Lobby Poster",
+              type: "IMAGE",
+              status: "READY",
+              thumbnailKey: null,
+            },
             updatedAt: "2025-01-01T00:00:00.000Z",
           },
           {
             slotIndex: 3,
-            label: "Flood",
             contentId: "content-2",
-            content: null,
+            content: {
+              id: "content-2",
+              title: "Weather Alert",
+              type: "TEXT",
+              status: "READY",
+              thumbnailKey: null,
+            },
             updatedAt: "2025-01-01T00:00:00.000Z",
           },
         ],
@@ -95,7 +105,7 @@ describe("EmergencySlotDropdown", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Earthquake" }));
+    await user.click(screen.getByRole("button", { name: "Lobby Poster" }));
 
     expect(activate).toHaveBeenCalledWith(1);
     expect(screen.getByRole("button", { name: "Slot 2" })).toBeDisabled();

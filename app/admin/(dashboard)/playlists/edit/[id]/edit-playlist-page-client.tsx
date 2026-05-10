@@ -50,7 +50,7 @@ export function PlaylistDetailCacheSeeder({
 
 export function EditPlaylistPageView(): ReactElement {
   const params = useParams<{ id: string }>();
-  const { state, availableContent, handleCancel, handleSave, isSaving } =
+  const { state, contentLibrary, handleCancel, handleSave, isSaving } =
     useEditPlaylistPage(params?.id);
 
   // Form state owned here so canSave is computed during render with no effects.
@@ -163,7 +163,13 @@ export function EditPlaylistPageView(): ReactElement {
                 onShowCounterChange={setShowCounter}
                 items={items}
                 onItemsChange={setItems}
-                availableContent={availableContent}
+                availableContent={contentLibrary.availableContent}
+                contentSearch={contentLibrary.search}
+                onContentSearchChange={contentLibrary.onSearchChange}
+                isContentLibraryLoading={contentLibrary.isLoading}
+                isContentLibraryFetching={contentLibrary.isFetching}
+                hasMoreContent={contentLibrary.hasMore}
+                onLoadMoreContent={contentLibrary.onLoadMore}
                 isOverDurationLimit={isOverDurationLimit}
                 totalDuration={totalDuration}
                 isSaving={isSaving}

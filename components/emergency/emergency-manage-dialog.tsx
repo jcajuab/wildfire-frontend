@@ -18,7 +18,6 @@ import {
   useClearEmergencySlotMutation,
   useListEmergencySlotsQuery,
   useSetEmergencySlotMutation,
-  type EmergencySlot,
   type EmergencySlotIndex,
 } from "@/lib/api/emergency-slots-api";
 import { EmergencyAssetList } from "./emergency-asset-list";
@@ -46,59 +45,20 @@ export function EmergencyManageDialog({
   );
   const [clearingSlotIndex, setClearingSlotIndex] =
     useState<EmergencySlotIndex | null>(null);
-  const [savingSlotIndex, setSavingSlotIndex] =
-    useState<EmergencySlotIndex | null>(null);
-  const [slotLabel, setSlotLabel] = useState("");
 
   const slots = useMemo(() => data?.slots ?? [], [data?.slots]);
-  const selectedSlot = useMemo(
-    () =>
-      selectedSlotIndex == null
-        ? null
-        : (slots.find((slot) => slot.slotIndex === selectedSlotIndex) ?? null),
-    [selectedSlotIndex, slots],
-  );
-  const selectedSlotSavedLabel = getSlotDisplayLabel(selectedSlot);
-  const trimmedSlotLabel = slotLabel.trim();
-  const canSaveSlotLabel =
-    selectedSlot != null &&
-    selectedSlot.contentId != null &&
-    trimmedSlotLabel.length > 0 &&
-    trimmedSlotLabel.length <= 64 &&
-    trimmedSlotLabel !== selectedSlotSavedLabel &&
-    savingSlotIndex === null &&
-    submittingContentId === null &&
-    clearingSlotIndex === null;
 
   const handleSelectSlot = useCallback(
     (slotIndex: EmergencySlotIndex) => {
       setSelectedSlotIndex((current) => {
         if (current === slotIndex) {
-          const slot = slots.find((entry) => entry.slotIndex === slotIndex);
-          setSlotLabel(getSlotDisplayLabel(slot));
           return null;
         }
-
-        const slot = slots.find((entry) => entry.slotIndex === slotIndex);
-        setSlotLabel(getSlotDisplayLabel(slot));
         return slotIndex;
       });
     },
-    [slots],
+    [],
   );
-
-  const handleCancelSlotLabel = useCallback(() => {
-    if (selectedSlotIndex === null) return;
-
-    const slot = slots.find((entry) => entry.slotIndex === selectedSlotIndex);
-    if (slot?.contentId) {
-      setSlotLabel(getSlotDisplayLabel(slot));
-      return;
-    }
-
-    setSelectedSlotIndex(null);
-    setSlotLabel("");
-  }, [selectedSlotIndex, slots]);
 
   const handleClearSlot = useCallback(
     async (slotIndex: EmergencySlotIndex) => {
@@ -108,7 +68,6 @@ export function EmergencyManageDialog({
         toast.success(`Cleared Slot ${slotIndex}.`);
         if (selectedSlotIndex === slotIndex) {
           setSelectedSlotIndex(null);
-          setSlotLabel("");
         }
         await refetch();
       } catch (error) {
@@ -123,19 +82,16 @@ export function EmergencyManageDialog({
   const handleSelectContent = useCallback(
     async (content: BackendContentListItem) => {
       if (selectedSlotIndex === null) return;
-      const label = trimmedSlotLabel.length > 0 ? trimmedSlotLabel : content.title;
       setSubmittingContentId(content.id);
       try {
         await setSlot({
           slotIndex: selectedSlotIndex,
           contentId: content.id,
-          label,
         }).unwrap();
         toast.success(
-          `Assigned "${label}" to Slot ${selectedSlotIndex}.`,
+          `Assigned "${content.title}" to Slot ${selectedSlotIndex}.`,
         );
         setSelectedSlotIndex(null);
-        setSlotLabel("");
         await refetch();
       } catch (error) {
         notifyApiError(error, "Failed to assign emergency content.");
@@ -143,40 +99,8 @@ export function EmergencyManageDialog({
         setSubmittingContentId(null);
       }
     },
-    [selectedSlotIndex, setSlot, refetch, trimmedSlotLabel],
+    [selectedSlotIndex, setSlot, refetch],
   );
-
-  const handleSaveSlotLabel = useCallback(async () => {
-    if (
-      selectedSlotIndex === null ||
-      selectedSlot?.contentId == null ||
-      !canSaveSlotLabel
-    ) {
-      return;
-    }
-
-    setSavingSlotIndex(selectedSlotIndex);
-    try {
-      await setSlot({
-        slotIndex: selectedSlotIndex,
-        contentId: selectedSlot.contentId,
-        label: trimmedSlotLabel,
-      }).unwrap();
-      toast.success(`Renamed Slot ${selectedSlotIndex}.`);
-      await refetch();
-    } catch (error) {
-      notifyApiError(error, "Failed to rename emergency slot.");
-    } finally {
-      setSavingSlotIndex(null);
-    }
-  }, [
-    canSaveSlotLabel,
-    refetch,
-    selectedSlot,
-    selectedSlotIndex,
-    setSlot,
-    trimmedSlotLabel,
-  ]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -193,13 +117,7 @@ export function EmergencyManageDialog({
             <EmergencyAssetList
               slots={slots}
               selectedSlotIndex={selectedSlotIndex}
-              slotLabel={slotLabel}
-              canSaveSlotLabel={canSaveSlotLabel}
-              isSavingSlotLabel={savingSlotIndex !== null}
               onSelectSlot={handleSelectSlot}
-              onSlotLabelChange={setSlotLabel}
-              onSaveSlotLabel={handleSaveSlotLabel}
-              onCancelSlotLabel={handleCancelSlotLabel}
               onClearSlot={handleClearSlot}
               clearingSlotIndex={clearingSlotIndex}
             />
@@ -228,8 +146,4 @@ export function EmergencyManageDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-function getSlotDisplayLabel(slot: EmergencySlot | null | undefined): string {
-  return slot?.label ?? slot?.content?.title ?? "";
 }

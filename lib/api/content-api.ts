@@ -116,6 +116,7 @@ export interface BackendContent {
   readonly textJsonContent: string | null;
   readonly textHtmlContent: string | null;
   readonly textPreviewText: string | null;
+  readonly isUsedInPlaylist: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly owner: {
@@ -148,7 +149,6 @@ export interface ContentOption {
   readonly textPreviewText?: string | null;
 }
 
-/** Cache key for `getContentOptions` (playlist picker SSR uses `PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY`). */
 export type ContentOptionsQueryArg = {
   readonly q?: string;
   readonly status?: "PROCESSING" | "READY" | "FAILED";

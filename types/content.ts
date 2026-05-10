@@ -31,6 +31,7 @@ export interface Content {
   readonly textHtmlContent: string | null;
   readonly textPreviewText?: string | null;
   readonly status: ContentStatus;
+  readonly isUsedInPlaylist: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly owner: ContentOwner;

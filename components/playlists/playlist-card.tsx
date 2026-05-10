@@ -25,6 +25,10 @@ import {
   formatDuration,
   formatRelativeTime,
 } from "@/lib/formatters";
+import {
+  RESOURCE_DRAFT_BADGE_CLASSNAME,
+  RESOURCE_IN_USE_BADGE_CLASSNAME,
+} from "@/lib/resource-status-badges";
 import { getTextThumbnailText } from "@/lib/content-thumbnail-preview";
 import { useCanModifyResource } from "@/hooks/use-can-modify-resource";
 
@@ -45,10 +49,6 @@ const CARD_SELECTION_IGNORE_SELECTOR =
 const MAX_VISIBLE_PREVIEW_ITEMS = 2;
 const PLAYLIST_META_BADGE_CLASSNAME =
   "border-foreground/15 bg-background text-foreground";
-const PLAYLIST_IN_USE_BADGE_CLASSNAME =
-  "border-destructive/30 bg-destructive/10 text-destructive";
-const PLAYLIST_DRAFT_BADGE_CLASSNAME =
-  "border-border bg-muted/70 text-muted-foreground";
 
 function shouldIgnoreCardSelection(
   target: EventTarget | null,
@@ -78,8 +78,8 @@ function getPlaylistStatusBadgeClassName(
   status: PlaylistSummary["status"],
 ): string {
   return status === "IN_USE"
-    ? PLAYLIST_IN_USE_BADGE_CLASSNAME
-    : PLAYLIST_DRAFT_BADGE_CLASSNAME;
+    ? RESOURCE_IN_USE_BADGE_CLASSNAME
+    : RESOURCE_DRAFT_BADGE_CLASSNAME;
 }
 
 export const PlaylistCard = memo(function PlaylistCard({

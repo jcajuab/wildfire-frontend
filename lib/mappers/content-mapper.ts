@@ -24,6 +24,7 @@ export function mapBackendContentToContent(
     textHtmlContent: "textHtmlContent" in item ? item.textHtmlContent : null,
     textPreviewText: item.textPreviewText ?? null,
     status: item.status,
+    isUsedInPlaylist: item.isUsedInPlaylist,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
     owner: {

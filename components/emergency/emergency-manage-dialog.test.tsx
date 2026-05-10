@@ -137,7 +137,6 @@ describe("EmergencyManageDialog", () => {
         slots: [
           {
             slotIndex: 1,
-            label: "Existing Poster",
             contentId: "content-existing",
             content: {
               id: "content-existing",
@@ -213,9 +212,10 @@ describe("EmergencyManageDialog", () => {
     expect(
       screen.getByRole("link", { name: "Go to next page" }),
     ).toHaveAttribute("aria-disabled", "true");
-    expect(screen.getByRole("button", { name: "Select Slot 1" })).toHaveTextContent(
-      "Existing Poster",
-    );
+    expect(
+      screen.getByRole("button", { name: "Select Slot 1" }),
+    ).toHaveTextContent("Existing Poster");
+    expect(screen.queryByLabelText("Slot name")).not.toBeInTheDocument();
   });
 
   test("clears filled slots immediately", async () => {
@@ -250,83 +250,20 @@ describe("EmergencyManageDialog", () => {
     expect(setSlotMock).toHaveBeenCalledWith({
       slotIndex: 2,
       contentId: "content-image",
-      label: "Lobby Poster",
     });
     await waitFor(() => expect(refetchSlotsMock).toHaveBeenCalled());
   });
 
-  test("assigns content with a custom slot name", async () => {
-    const user = userEvent.setup();
-    renderDialog();
-
-    await user.click(screen.getByRole("button", { name: "Select Slot 2" }));
-    await user.type(screen.getByLabelText("Slot name"), "Earthquake");
-    await user.click(
-      screen.getByRole("button", {
-        name: "Select Lobby Poster as emergency content",
-      }),
-    );
-
-    expect(setSlotMock).toHaveBeenCalledWith({
-      slotIndex: 2,
-      contentId: "content-image",
-      label: "Earthquake",
-    });
-  });
-
-  test("renames a filled slot", async () => {
+  test("selecting a filled slot does not show custom name editing", async () => {
     const user = userEvent.setup();
     renderDialog();
 
     await user.click(screen.getByRole("button", { name: "Select Slot 1" }));
-    expect(screen.queryByText("Slot 1")).not.toBeInTheDocument();
-    const slotNameInput = screen.getByLabelText("Slot name");
-    expect(slotNameInput).toHaveValue("Existing Poster");
 
-    await user.clear(slotNameInput);
-    await user.type(slotNameInput, "Earthquake");
-    await user.click(
-      screen.getByRole("button", { name: "Save Slot 1 name" }),
-    );
-
-    expect(setSlotMock).toHaveBeenCalledWith({
-      slotIndex: 1,
-      contentId: "content-existing",
-      label: "Earthquake",
-    });
-    await waitFor(() => expect(refetchSlotsMock).toHaveBeenCalled());
-  });
-
-  test("keeps rename save disabled without a changed valid label", async () => {
-    const user = userEvent.setup();
-    renderDialog();
-
-    await user.click(screen.getByRole("button", { name: "Select Slot 1" }));
+    expect(screen.queryByLabelText("Slot name")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Save Slot 1 name" }),
-    ).toBeDisabled();
-
-    const slotNameInput = screen.getByLabelText("Slot name");
-    await user.clear(slotNameInput);
-    expect(
-      screen.getByRole("button", { name: "Save Slot 1 name" }),
-    ).toBeDisabled();
-  });
-
-  test("cancels inline slot name edits", async () => {
-    const user = userEvent.setup();
-    renderDialog();
-
-    await user.click(screen.getByRole("button", { name: "Select Slot 1" }));
-    const slotNameInput = screen.getByLabelText("Slot name");
-
-    await user.clear(slotNameInput);
-    await user.type(slotNameInput, "Earthquake");
-    await user.click(
-      screen.getByRole("button", { name: "Cancel Slot 1 name edit" }),
-    );
-
-    expect(slotNameInput).toHaveValue("Existing Poster");
+      screen.queryByRole("button", { name: "Save Slot 1 name" }),
+    ).not.toBeInTheDocument();
     expect(setSlotMock).not.toHaveBeenCalled();
   });
 

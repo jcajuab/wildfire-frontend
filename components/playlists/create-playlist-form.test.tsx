@@ -40,6 +40,7 @@ const availableContent = [
     textJsonContent: null,
     textHtmlContent: null,
     status: "READY",
+    isUsedInPlaylist: false,
     createdAt: "2025-01-01T00:00:00.000Z",
     updatedAt: "2025-01-01T00:00:00.000Z",
     owner: { id: "user-1", name: "Owner" },
@@ -211,6 +212,9 @@ describe("CreatePlaylistForm", () => {
     expect(screen.getByText("Poster")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Poster" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Remove All" }),
     ).not.toBeInTheDocument();
 
     await user.click(

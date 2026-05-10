@@ -255,12 +255,24 @@ function getPreviewItems(
   return [...items].sort((a, b) => a.sequence - b.sequence).slice(0, 3);
 }
 
-async function bumpPlaylistsAndSchedulesNextCache(): Promise<void> {
+async function bumpPlaylistsAndSchedulesNextCache({
+  includeContentUsage = false,
+}: { includeContentUsage?: boolean } = {}): Promise<void> {
   try {
-    await revalidateWildfireTagsViaRoute(["playlists", "schedules-bootstrap"]);
+    await revalidateWildfireTagsViaRoute(
+      includeContentUsage
+        ? ["playlists", "schedules-bootstrap", "content-list"]
+        : ["playlists", "schedules-bootstrap"],
+    );
   } catch {
     // best-effort
   }
+}
+
+function invalidateContentUsageTags(
+  dispatch: (action: ReturnType<typeof api.util.invalidateTags>) => unknown,
+): void {
+  dispatch(api.util.invalidateTags([{ type: "Content", id: "LIST" }]));
 }
 
 export const playlistsApi = api.injectEndpoints({
@@ -318,7 +330,7 @@ export const playlistsApi = api.injectEndpoints({
           response,
           "createPlaylist",
         ),
-      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
           dispatch(
@@ -331,7 +343,12 @@ export const playlistsApi = api.injectEndpoints({
               { type: "Schedule", id: "LIST" },
             ]),
           );
-          await bumpPlaylistsAndSchedulesNextCache();
+          if (arg.items.length > 0) {
+            invalidateContentUsageTags(dispatch);
+          }
+          await bumpPlaylistsAndSchedulesNextCache({
+            includeContentUsage: arg.items.length > 0,
+          });
         } catch {
           // mutation failed
         }
@@ -522,7 +539,10 @@ export const playlistsApi = api.injectEndpoints({
               { type: "Schedule", id: "LIST" },
             ]),
           );
-          await bumpPlaylistsAndSchedulesNextCache();
+          invalidateContentUsageTags(dispatch);
+          await bumpPlaylistsAndSchedulesNextCache({
+            includeContentUsage: true,
+          });
         } catch {
           // mutation failed
         }
@@ -600,7 +620,10 @@ export const playlistsApi = api.injectEndpoints({
               { type: "Schedule", id: "LIST" },
             ]),
           );
-          await bumpPlaylistsAndSchedulesNextCache();
+          invalidateContentUsageTags(dispatch);
+          await bumpPlaylistsAndSchedulesNextCache({
+            includeContentUsage: true,
+          });
         } catch {
           // mutation failed
         }
@@ -754,7 +777,10 @@ export const playlistsApi = api.injectEndpoints({
               { type: "Schedule", id: "LIST" },
             ]),
           );
-          await bumpPlaylistsAndSchedulesNextCache();
+          invalidateContentUsageTags(dispatch);
+          await bumpPlaylistsAndSchedulesNextCache({
+            includeContentUsage: true,
+          });
         } catch {
           // mutation failed
         }
@@ -877,7 +903,10 @@ export const playlistsApi = api.injectEndpoints({
               { type: "Schedule", id: "LIST" },
             ]),
           );
-          await bumpPlaylistsAndSchedulesNextCache();
+          invalidateContentUsageTags(dispatch);
+          await bumpPlaylistsAndSchedulesNextCache({
+            includeContentUsage: true,
+          });
         } catch {
           // mutation failed
         }

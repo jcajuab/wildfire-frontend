@@ -18,7 +18,6 @@ export interface EmergencySlotContent {
 
 export interface EmergencySlot {
   readonly slotIndex: EmergencySlotIndex;
-  readonly label: string | null;
   readonly contentId: string | null;
   readonly content: EmergencySlotContent | null;
   readonly updatedAt: string | null;
@@ -30,7 +29,6 @@ export interface ListEmergencySlotsResponse {
 
 export interface SetEmergencySlotRequest {
   readonly slotIndex: EmergencySlotIndex;
-  readonly label: string;
   readonly contentId: string;
 }
 
@@ -50,10 +48,10 @@ export const emergencySlotsApi = api.injectEndpoints({
       providesTags: [{ type: "EmergencySlots", id: "LIST" }],
     }),
     setEmergencySlot: build.mutation<EmergencySlot, SetEmergencySlotRequest>({
-      query: ({ slotIndex, label, contentId }) => ({
+      query: ({ slotIndex, contentId }) => ({
         url: `displays/emergency-slots/${slotIndex}`,
         method: "PUT",
-        body: { label, contentId },
+        body: { contentId },
       }),
       transformResponse: (response) =>
         parseApiResponseDataSafe<EmergencySlot>(response, "setEmergencySlot"),

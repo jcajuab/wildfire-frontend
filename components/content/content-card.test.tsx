@@ -32,6 +32,7 @@ const baseContent: Content = {
   textJsonContent: null,
   textHtmlContent: null,
   status: "READY",
+  isUsedInPlaylist: false,
   createdAt: "2024-01-01T00:00:00.000Z",
   updatedAt: "2024-01-01T00:00:00.000Z",
   owner: {
@@ -244,10 +245,31 @@ describe("ContentCard", () => {
   test("shows metadata badges without a separator between status and content type", () => {
     render(<ContentCard content={baseContent} />);
 
-    expect(screen.getByText("Ready")).toBeInTheDocument();
+    expect(screen.getByText("Draft")).toBeInTheDocument();
     expect(screen.getByText("Image")).toBeInTheDocument();
     expect(screen.getByText("123 B")).toBeInTheDocument();
     expect(screen.queryByRole("separator")).not.toBeInTheDocument();
+  });
+
+  test("shows in use when ready content is assigned to a playlist", () => {
+    render(
+      <ContentCard content={{ ...baseContent, isUsedInPlaylist: true }} />,
+    );
+
+    expect(screen.getByText("In Use")).toBeInTheDocument();
+    expect(screen.queryByText("Draft")).not.toBeInTheDocument();
+  });
+
+  test("keeps processing and failed statuses for ingestion state", () => {
+    const { rerender } = render(
+      <ContentCard content={{ ...baseContent, status: "PROCESSING" }} />,
+    );
+
+    expect(screen.getByText("Processing")).toBeInTheDocument();
+
+    rerender(<ContentCard content={{ ...baseContent, status: "FAILED" }} />);
+
+    expect(screen.getByText("Failed")).toBeInTheDocument();
   });
 
   test("shows owner and relative created activity on one row", () => {

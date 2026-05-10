@@ -26,7 +26,7 @@ import { useCreatePlaylistPage } from "./use-create-playlist-page";
 
 export function CreatePlaylistPageView(): ReactElement {
   const {
-    availableContent,
+    contentLibrary,
     handleCancel: navigateToList,
     handleCreatePlaylist,
   } = useCreatePlaylistPage();
@@ -125,47 +125,41 @@ export function CreatePlaylistPageView(): ReactElement {
               onDescriptionChange={setDesc}
               items={items}
               onItemsChange={setItems}
-              availableContent={availableContent}
+              availableContent={contentLibrary.availableContent}
+              contentSearch={contentLibrary.search}
+              onContentSearchChange={contentLibrary.onSearchChange}
+              isContentLibraryLoading={contentLibrary.isLoading}
+              isContentLibraryFetching={contentLibrary.isFetching}
+              hasMoreContent={contentLibrary.hasMore}
+              onLoadMoreContent={contentLibrary.onLoadMore}
               isOverDurationLimit={isOverDurationLimit}
               itemsHeaderSlot={
-                <>
-                  {items.length > 0 ? (
-                    <Button
-                      variant="ghost"
-                      type="button"
-                      onClick={() => setItems([])}
-                      disabled={isSubmitting}
-                    >
-                      Remove All
-                    </Button>
-                  ) : null}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex cursor-pointer items-center gap-1.5">
-                          <Switch
-                            id="create-playlist-show-counter"
-                            checked={showCounter}
-                            onCheckedChange={setShowCounter}
-                            disabled={isSubmitting}
-                          />
-                          <label
-                            htmlFor="create-playlist-show-counter"
-                            className="cursor-pointer text-xs text-muted-foreground"
-                          >
-                            Show counter
-                          </label>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          Turning this on will show a counter for each content
-                          duration
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex cursor-pointer items-center gap-1.5">
+                        <Switch
+                          id="create-playlist-show-counter"
+                          checked={showCounter}
+                          onCheckedChange={setShowCounter}
+                          disabled={isSubmitting}
+                        />
+                        <label
+                          htmlFor="create-playlist-show-counter"
+                          className="cursor-pointer text-xs text-muted-foreground"
+                        >
+                          Show counter
+                        </label>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Turning this on will show a counter for each content
+                        duration
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               }
               itemsStatusSlot={
                 <PlaylistDurationBudget

@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
@@ -55,6 +54,12 @@ export interface EditPlaylistFormProps {
   readonly items: DraftItem[];
   readonly onItemsChange: (items: DraftItem[]) => void;
   readonly availableContent: readonly PlaylistSelectableContent[];
+  readonly contentSearch?: string;
+  readonly onContentSearchChange?: (value: string) => void;
+  readonly isContentLibraryLoading?: boolean;
+  readonly isContentLibraryFetching?: boolean;
+  readonly hasMoreContent?: boolean;
+  readonly onLoadMoreContent?: () => void;
   readonly isOverDurationLimit: boolean;
   readonly totalDuration: number;
   readonly isSaving: boolean;
@@ -70,6 +75,12 @@ export function EditPlaylistForm({
   items,
   onItemsChange,
   availableContent,
+  contentSearch,
+  onContentSearchChange,
+  isContentLibraryLoading,
+  isContentLibraryFetching,
+  hasMoreContent,
+  onLoadMoreContent,
   isOverDurationLimit,
   totalDuration,
   isSaving,
@@ -83,45 +94,39 @@ export function EditPlaylistForm({
       items={items}
       onItemsChange={onItemsChange}
       availableContent={availableContent}
+      contentSearch={contentSearch}
+      onContentSearchChange={onContentSearchChange}
+      isContentLibraryLoading={isContentLibraryLoading}
+      isContentLibraryFetching={isContentLibraryFetching}
+      hasMoreContent={hasMoreContent}
+      onLoadMoreContent={onLoadMoreContent}
       isOverDurationLimit={isOverDurationLimit}
       itemsHeaderSlot={
-        <>
-          {items.length > 0 ? (
-            <Button
-              variant="ghost"
-              type="button"
-              onClick={() => onItemsChange([])}
-              disabled={isSaving}
-            >
-              Remove All
-            </Button>
-          ) : null}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex cursor-pointer items-center gap-1.5">
-                  <Switch
-                    id="edit-playlist-show-counter"
-                    checked={showCounter}
-                    onCheckedChange={onShowCounterChange}
-                    disabled={isSaving}
-                  />
-                  <label
-                    htmlFor="edit-playlist-show-counter"
-                    className="cursor-pointer text-xs text-muted-foreground"
-                  >
-                    Show counter
-                  </label>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  Turning this on will show a counter for each content duration
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex cursor-pointer items-center gap-1.5">
+                <Switch
+                  id="edit-playlist-show-counter"
+                  checked={showCounter}
+                  onCheckedChange={onShowCounterChange}
+                  disabled={isSaving}
+                />
+                <label
+                  htmlFor="edit-playlist-show-counter"
+                  className="cursor-pointer text-xs text-muted-foreground"
+                >
+                  Show counter
+                </label>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                Turning this on will show a counter for each content duration
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       }
       itemsStatusSlot={
         <PlaylistDurationBudget

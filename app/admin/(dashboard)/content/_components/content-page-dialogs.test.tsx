@@ -39,6 +39,7 @@ const textContent: Content = {
   textJsonContent: richTextJson,
   textHtmlContent: "<p>Lorem ipsum</p>",
   status: "READY",
+  isUsedInPlaylist: false,
   createdAt: "2026-05-01T00:00:00.000Z",
   updatedAt: "2026-05-01T00:00:00.000Z",
   owner: {
