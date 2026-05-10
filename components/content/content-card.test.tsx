@@ -372,6 +372,27 @@ describe("ContentCard", () => {
     ).not.toBeInTheDocument();
   });
 
+  test("falls back to text preview text when list data has no rich text html", () => {
+    const textContent: Content = {
+      ...baseContent,
+      id: "content-text-preview-only",
+      title: "Announcement title",
+      type: "TEXT",
+      mimeType: "text/html",
+      textHtmlContent: null,
+      textPreviewText: "Flattened announcement preview",
+    };
+
+    render(<ContentCard content={textContent} />);
+
+    const previewMatches = screen.getAllByText(
+      "Flattened announcement preview",
+    );
+    expect(previewMatches.some((element) => element.tagName === "P")).toBe(
+      true,
+    );
+  });
+
   test("falls back to content title when rich text content has no text", () => {
     const textContent: Content = {
       ...baseContent,

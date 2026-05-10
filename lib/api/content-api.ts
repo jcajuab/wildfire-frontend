@@ -125,10 +125,7 @@ export interface BackendContent {
   };
 }
 
-export type BackendContentListItem = Omit<
-  BackendContent,
-  "textJsonContent" | "textHtmlContent"
->;
+export type BackendContentListItem = Omit<BackendContent, "textJsonContent">;
 
 export interface BackendContentJob {
   readonly id: string;
