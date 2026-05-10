@@ -17,19 +17,17 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import {
-  IconInfoCircle,
-  IconPhoto,
-  IconPlaylist,
-  IconPlus,
-} from "@tabler/icons-react";
+import { IconPhoto, IconPlus } from "@tabler/icons-react";
 import { useCallback, useMemo, useState } from "react";
 
 import { SearchControl } from "@/components/common/search-control";
+import { Badge } from "@/components/ui/badge";
 import { getTextThumbnailText } from "@/lib/content-thumbnail-preview";
+import { formatDuration } from "@/lib/formatters";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { SortableItemRow, type DraftItem } from "./sortable-item-row";
 import type { PlaylistSelectableContent } from "./create-playlist-form";
 
@@ -42,14 +40,89 @@ export interface PlaylistFormBodyProps {
   readonly onItemsChange: (items: DraftItem[]) => void;
   readonly availableContent: readonly PlaylistSelectableContent[];
   readonly isOverDurationLimit: boolean;
-  /** Optional slot rendered in the Playlist Items section header (e.g. duration summary) */
+  /** Optional action slot rendered in the Playlist Items section header. */
   readonly itemsHeaderSlot?: ReactNode;
-  /** Optional slot rendered below the header row with a red separator before items */
+  /** Optional status slot rendered below the Playlist Items section header. */
+  readonly itemsStatusSlot?: ReactNode;
+  /** Optional helper copy rendered under the Playlist Items heading. */
   readonly itemsSubtitleSlot?: ReactNode;
   /** Empty state message shown when no items have been added */
   readonly emptyItemsMessage?: string;
   /** When true, all fields are non-interactive (e.g. while creating the playlist). */
   readonly disabled?: boolean;
+}
+
+export interface PlaylistDurationBudgetProps {
+  readonly itemCount: number;
+  readonly totalDuration: number;
+  readonly durationLimit: number;
+  readonly className?: string;
+}
+
+export function PlaylistDurationBudget({
+  itemCount,
+  totalDuration,
+  durationLimit,
+  className,
+}: PlaylistDurationBudgetProps): ReactElement {
+  const percentage =
+    durationLimit > 0
+      ? Math.min(100, Math.round((totalDuration / durationLimit) * 100))
+      : 0;
+  const isWarning = totalDuration >= durationLimit - 10;
+  const isOverLimit = totalDuration > durationLimit;
+  const tone = isOverLimit ? "destructive" : isWarning ? "warning" : "normal";
+
+  return (
+    <div
+      className={cn(
+        "grid gap-3 rounded-md border px-3 py-2 md:grid-cols-[auto_minmax(12rem,1fr)_auto] md:items-center",
+        isOverLimit
+          ? "border-destructive/20 bg-destructive/5"
+          : "border-border bg-background",
+        className,
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="outline" className="bg-background font-normal">
+          {itemCount} {itemCount === 1 ? "item" : "items"}
+        </Badge>
+        <Badge
+          variant={isOverLimit ? "destructive" : "outline"}
+          className={cn(
+            "bg-background font-normal tabular-nums",
+            tone === "warning" && "border-amber-300 bg-amber-50 text-amber-700",
+          )}
+        >
+          {formatDuration(totalDuration)} / {formatDuration(durationLimit)}
+        </Badge>
+      </div>
+      <div
+        aria-label="Playlist duration budget"
+        className="h-2 min-w-0 overflow-hidden rounded-full bg-muted"
+      >
+        <div
+          className={cn(
+            "h-full rounded-full bg-primary transition-[width]",
+            tone === "warning" && "bg-amber-500",
+            tone === "destructive" && "bg-destructive",
+          )}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+      <p
+        className={cn(
+          "text-xs text-muted-foreground md:text-right",
+          tone === "warning" && "text-amber-700",
+          tone === "destructive" && "font-medium text-destructive",
+        )}
+      >
+        {isOverLimit
+          ? "Over 60 second limit"
+          : "Playlists can run up to 60 seconds."}
+      </p>
+    </div>
+  );
 }
 
 export function PlaylistFormBody({
@@ -62,6 +135,7 @@ export function PlaylistFormBody({
   availableContent,
   isOverDurationLimit,
   itemsHeaderSlot,
+  itemsStatusSlot,
   itemsSubtitleSlot,
   emptyItemsMessage = "Add content from the library to get started",
   disabled = false,
@@ -142,16 +216,22 @@ export function PlaylistFormBody({
     });
   }, [availableContent, items, contentSearch]);
 
+  const libraryEmptyMessage =
+    availableContent.length === 0
+      ? "No content available"
+      : contentSearch.trim().length > 0
+        ? "No matching content"
+        : "All available content has been added";
+
   return (
-    <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,1fr)_20rem] xl:overflow-hidden">
-      <div className="flex flex-col gap-4 xl:min-h-0 xl:overflow-hidden">
-        <div className="flex flex-col gap-4 rounded-md border border-border p-4">
-          <div className="flex items-center gap-2">
-            <IconInfoCircle className="size-4" />
-            <span className="text-sm font-semibold">Playlist Information</span>
+    <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[minmax(0,1fr)_20rem] xl:overflow-hidden">
+      <div className="flex min-h-0 flex-col gap-4 xl:overflow-hidden">
+        <section className="overflow-hidden rounded-md border border-border bg-background">
+          <div className="flex items-center border-b border-border bg-muted/15 p-4">
+            <h2 className="text-sm font-semibold">Playlist Information</h2>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4 p-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="playlist-name">Name</Label>
               <Input
@@ -177,25 +257,28 @@ export function PlaylistFormBody({
               />
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="flex flex-col gap-4 rounded-md border border-border p-4 xl:min-h-0 xl:flex-1 xl:overflow-hidden">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IconPlaylist className="size-4" />
-              <span className="text-sm font-semibold">Playlist Items</span>
+        <section className="flex min-h-[28rem] flex-col overflow-hidden rounded-md border border-border bg-background xl:min-h-0 xl:flex-1">
+          <div className="flex flex-col gap-3 border-b border-border bg-muted/15 p-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-sm font-semibold">Playlist Items</h2>
+              {itemsSubtitleSlot}
             </div>
-            {itemsHeaderSlot}
+            {itemsHeaderSlot ? (
+              <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                {itemsHeaderSlot}
+              </div>
+            ) : null}
           </div>
 
-          {itemsSubtitleSlot && (
-            <div className="flex flex-col gap-4 -mt-2">
-              {itemsSubtitleSlot}
-              <hr className="-mx-4 border-border" />
+          {itemsStatusSlot ? (
+            <div className="border-b border-border bg-background p-4">
+              {itemsStatusSlot}
             </div>
-          )}
+          ) : null}
 
-          <div className="flex flex-col gap-2 xl:flex-1 xl:overflow-y-auto">
+          <div className="flex min-h-0 flex-1 flex-col gap-2 p-4 xl:overflow-y-auto">
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -206,8 +289,8 @@ export function PlaylistFormBody({
                 strategy={verticalListSortingStrategy}
               >
                 {items.length === 0 ? (
-                  <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-                    {emptyItemsMessage}
+                  <div className="flex min-h-64 flex-1 items-center justify-center rounded-md border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
+                    <span>{emptyItemsMessage}</span>
                   </div>
                 ) : (
                   items.map((item) => (
@@ -224,28 +307,29 @@ export function PlaylistFormBody({
               </SortableContext>
             </DndContext>
           </div>
-        </div>
+        </section>
       </div>
 
-      <div className="flex w-full flex-col gap-4 rounded-md border border-border p-4 xl:min-h-0 xl:w-80 xl:overflow-hidden">
-        <div className="flex items-center gap-2">
-          <IconPhoto className="size-4" />
-          <span className="text-sm font-semibold">Content Library</span>
+      <aside className="flex w-full flex-col overflow-hidden rounded-md border border-border bg-background xl:min-h-0 xl:w-80">
+        <div className="flex items-center border-b border-border bg-muted/15 p-4">
+          <h2 className="text-sm font-semibold">Content Library</h2>
         </div>
 
-        <SearchControl
-          value={contentSearch}
-          onChange={setContentSearch}
-          placeholder="Search contents..."
-          ariaLabel="Search content library"
-          className="max-w-none"
-          disabled={disabled}
-        />
+        <div className="border-b border-border p-4">
+          <SearchControl
+            value={contentSearch}
+            onChange={setContentSearch}
+            placeholder="Search content library"
+            ariaLabel="Search content library"
+            className="max-w-none"
+            disabled={disabled}
+          />
+        </div>
 
-        <div className="flex flex-col gap-2 xl:flex-1 xl:overflow-y-auto">
+        <div className="flex min-h-64 flex-1 flex-col gap-2 p-4 xl:min-h-0 xl:overflow-y-auto">
           {filteredContent.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-              No content available
+            <div className="flex flex-1 items-center justify-center px-4 py-10 text-center text-sm text-muted-foreground">
+              {libraryEmptyMessage}
             </div>
           ) : (
             filteredContent.map((content) => (
@@ -255,7 +339,7 @@ export function PlaylistFormBody({
                 aria-label={content.title}
                 onClick={() => handleAddContent(content)}
                 disabled={disabled || isOverDurationLimit}
-                className={`focus-visible:ring-ring flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 ${disabled || isOverDurationLimit ? "cursor-not-allowed opacity-50" : ""}`}
+                className={`focus-visible:ring-ring flex items-center gap-3 rounded-md border border-border bg-background p-3 text-left transition-colors hover:border-primary/30 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 ${disabled || isOverDurationLimit ? "cursor-not-allowed opacity-50" : ""}`}
               >
                 <div
                   data-testid={`content-library-thumbnail-${content.id}`}
@@ -283,12 +367,15 @@ export function PlaylistFormBody({
                   )}
                 </div>
                 <span className="flex-1 truncate text-sm">{content.title}</span>
-                <IconPlus className="size-4 text-muted-foreground" />
+                <IconPlus
+                  className="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />
               </button>
             ))
           )}
         </div>
-      </div>
+      </aside>
     </div>
   );
 }

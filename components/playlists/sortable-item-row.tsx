@@ -73,7 +73,7 @@ export function SortableItemRow({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3 sm:flex-row sm:items-center"
+      className="flex flex-col gap-3 rounded-md border border-border bg-background p-3 transition-colors hover:bg-muted/30 sm:flex-row sm:items-center"
     >
       <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
         <div
@@ -129,7 +129,7 @@ export function SortableItemRow({
                   setRawValue(String(clamped));
                   onUpdateDuration(item.id, clamped);
                 }}
-                className="h-8 w-24 px-2 text-center sm:w-16"
+                className="h-8 w-24 px-2 text-center tabular-nums sm:w-16"
                 onPointerDown={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
               />

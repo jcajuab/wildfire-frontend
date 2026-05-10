@@ -7,13 +7,27 @@ import { useCan } from "@/hooks/use-can";
 import { useGetContentOptionsQuery } from "@/lib/api/content-api";
 import { PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY } from "@/lib/content-search-params";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
-import { useCreatePlaylistMutation } from "@/lib/api/playlists-api";
+import {
+  playlistsApi,
+  useCreatePlaylistMutation,
+} from "@/lib/api/playlists-api";
 import {
   type CreatePlaylistDraft,
   type PlaylistSelectableContent,
 } from "@/components/playlists/create-playlist-form";
 import { mapContentOptionToPlaylistSelectable } from "@/lib/playlists/map-content-option-to-selectable";
 import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
+import { useAppDispatch } from "@/lib/hooks";
+import {
+  PLAYLISTS_PAGE_SIZE,
+  playlistsListQueryFromSearchParams,
+} from "@/lib/playlists-search-params";
+
+const DEFAULT_PLAYLIST_LIST_QUERY = playlistsListQueryFromSearchParams(
+  {},
+  PLAYLISTS_PAGE_SIZE,
+);
+
 export interface UseCreatePlaylistPageResult {
   readonly availableContent: readonly PlaylistSelectableContent[];
   handleCreatePlaylist: (data: CreatePlaylistDraft) => Promise<boolean>;
@@ -22,6 +36,7 @@ export interface UseCreatePlaylistPageResult {
 
 export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const canReadContent = useCan("content:read");
   const { data: optionsData } = useGetContentOptionsQuery(
     PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY,
@@ -57,6 +72,20 @@ export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
           })),
         }).unwrap();
 
+        try {
+          await dispatch(
+            playlistsApi.endpoints.listPlaylists.initiate(
+              DEFAULT_PLAYLIST_LIST_QUERY,
+              {
+                forceRefetch: true,
+                subscribe: false,
+              },
+            ),
+          ).unwrap();
+        } catch {
+          // The list page has an active query and will retry on mount/focus.
+        }
+
         toast.success("Successfully created playlist");
         return true;
       } catch (error) {
@@ -64,7 +93,7 @@ export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
         return false;
       }
     },
-    [createPlaylist],
+    [createPlaylist, dispatch],
   );
 
   return {

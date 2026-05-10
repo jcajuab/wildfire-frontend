@@ -3,6 +3,9 @@
 import type { ReactElement } from "react";
 import { IconLoader2, IconPlus, IconX } from "@tabler/icons-react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type {
   EmergencySlot,
@@ -14,7 +17,12 @@ const SLOT_INDICES: readonly EmergencySlotIndex[] = [1, 2, 3, 4, 5] as const;
 interface EmergencyAssetListProps {
   readonly slots: readonly EmergencySlot[];
   readonly selectedSlotIndex: EmergencySlotIndex | null;
-  readonly onSelectEmptySlot: (slotIndex: EmergencySlotIndex) => void;
+  readonly slotLabel: string;
+  readonly canSaveSlotLabel: boolean;
+  readonly isSavingSlotLabel?: boolean;
+  readonly onSelectSlot: (slotIndex: EmergencySlotIndex) => void;
+  readonly onSlotLabelChange: (value: string) => void;
+  readonly onSaveSlotLabel: () => void;
   readonly onClearSlot: (slotIndex: EmergencySlotIndex) => void;
   readonly clearingSlotIndex?: EmergencySlotIndex | null;
 }
@@ -22,7 +30,12 @@ interface EmergencyAssetListProps {
 export function EmergencyAssetList({
   slots,
   selectedSlotIndex,
-  onSelectEmptySlot,
+  slotLabel,
+  canSaveSlotLabel,
+  isSavingSlotLabel = false,
+  onSelectSlot,
+  onSlotLabelChange,
+  onSaveSlotLabel,
   onClearSlot,
   clearingSlotIndex = null,
 }: EmergencyAssetListProps): ReactElement {
@@ -48,8 +61,26 @@ export function EmergencyAssetList({
             const isClearingThis = clearingSlotIndex === slotIndex;
             return (
               <li key={slotIndex}>
-                <div className="flex min-h-10 items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2 transition-colors">
-                  <div className="min-w-0">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Select Slot ${slotIndex}`}
+                  aria-pressed={isSelected}
+                  onClick={() => onSelectSlot(slotIndex)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelectSlot(slotIndex);
+                    }
+                  }}
+                  className={cn(
+                    "flex min-h-10 cursor-pointer items-center justify-between gap-2 rounded-md border px-3 py-2 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none",
+                    isSelected
+                      ? "border-primary bg-primary/5"
+                      : "border-border bg-card hover:bg-muted/50",
+                  )}
+                >
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-muted-foreground">
                       Slot {slotIndex}
                     </p>
@@ -60,7 +91,10 @@ export function EmergencyAssetList({
                   <button
                     type="button"
                     aria-label={`Clear ${label}`}
-                    onClick={() => onClearSlot(slotIndex)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onClearSlot(slotIndex);
+                    }}
                     disabled={clearingSlotIndex !== null}
                     className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                   >
@@ -87,7 +121,7 @@ export function EmergencyAssetList({
                 type="button"
                 aria-label={`Select Slot ${slotIndex}`}
                 aria-pressed={isSelected}
-                onClick={() => onSelectEmptySlot(slotIndex)}
+                onClick={() => onSelectSlot(slotIndex)}
                 className={cn(
                   "group flex min-h-10 w-full cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-colors",
                   "bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground",
@@ -115,6 +149,33 @@ export function EmergencyAssetList({
           );
         })}
       </ul>
+      {selectedSlotIndex !== null ? (
+        <div className="rounded-md border border-border bg-muted/20 p-3">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="emergency-slot-label">Slot Name</Label>
+            <Input
+              id="emergency-slot-label"
+              value={slotLabel}
+              maxLength={64}
+              placeholder="Enter slot name"
+              onChange={(event) => onSlotLabelChange(event.target.value)}
+            />
+          </div>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              Used when activating Slot {selectedSlotIndex}.
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              onClick={onSaveSlotLabel}
+              disabled={!canSaveSlotLabel || isSavingSlotLabel}
+            >
+              {isSavingSlotLabel ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

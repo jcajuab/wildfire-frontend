@@ -285,7 +285,6 @@ describe("useDisplaysPage", () => {
         refetchOnMountOrArgChange: true,
         refetchOnFocus: true,
         refetchOnReconnect: true,
-        skip: false,
       },
     );
 
@@ -460,7 +459,6 @@ describe("useDisplaysPage", () => {
         refetchOnMountOrArgChange: true,
         refetchOnFocus: true,
         refetchOnReconnect: true,
-        skip: true,
       },
     );
     expect(result.current.isLoading).toBe(false);

@@ -210,7 +210,6 @@ describe("usePlaylistsPage", () => {
       refetchOnMountOrArgChange: true,
       refetchOnFocus: true,
       refetchOnReconnect: true,
-      skip: true,
     });
     expect(result.current.playlists.map((playlist) => playlist.name)).toEqual([
       "Morning Loop",
@@ -243,7 +242,6 @@ describe("usePlaylistsPage", () => {
       refetchOnMountOrArgChange: true,
       refetchOnFocus: true,
       refetchOnReconnect: true,
-      skip: false,
     });
     expect(result.current.playlists.map((playlist) => playlist.name)).toEqual([
       "Cached playlist",
@@ -286,7 +284,6 @@ describe("usePlaylistsPage", () => {
         refetchOnMountOrArgChange: true,
         refetchOnFocus: true,
         refetchOnReconnect: true,
-        skip: false,
       },
     );
     expect(result.current.canFilterByOwner).toBe(true);

@@ -232,8 +232,6 @@ export function useDisplaysPage({
     initialBootstrap != null &&
     normalizedQueryKey(initialBootstrap.queryArgs) ===
       normalizedQueryKey(currentQueryArgs);
-  const shouldSkipInitialQuery =
-    isInitialBootstrapQuery && !initialBootstrap?.isSeeded;
   const [triggerDisplaysQuery] = useLazyGetDisplaysQuery();
   const [triggerBootstrapQuery] = useLazyGetDisplaysBootstrapQuery();
   const [remainingDisplayRowsState, setRemainingDisplayRowsState] =
@@ -250,7 +248,6 @@ export function useDisplaysPage({
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
     refetchOnReconnect: true,
-    skip: shouldSkipInitialQuery,
   });
   const cachedInitialBootstrap =
     displaysApi.endpoints.getDisplaysBootstrap.useQueryState(currentQueryArgs, {

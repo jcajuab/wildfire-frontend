@@ -16,6 +16,7 @@ import {
   notifyApiError,
 } from "@/lib/api/get-api-error-message";
 import {
+  playlistsApi,
   useLazyGetPlaylistQuery,
   useSavePlaylistItemsAtomicMutation,
   useUpdatePlaylistMutation,
@@ -24,7 +25,17 @@ import { isNotFoundError } from "@/lib/api/error-guards";
 import { mapContentOptionToPlaylistSelectable } from "@/lib/playlists/map-content-option-to-selectable";
 import { mapBackendPlaylistWithItems } from "@/lib/mappers/playlist-mapper";
 import { PLAYLIST_INDEX_PATH } from "@/lib/playlist-paths";
+import { useAppDispatch } from "@/lib/hooks";
+import {
+  PLAYLISTS_PAGE_SIZE,
+  playlistsListQueryFromSearchParams,
+} from "@/lib/playlists-search-params";
 import type { PlaylistDetail } from "@/types/playlist";
+
+const DEFAULT_PLAYLIST_LIST_QUERY = playlistsListQueryFromSearchParams(
+  {},
+  PLAYLISTS_PAGE_SIZE,
+);
 
 export type EditPlaylistPageState =
   | { readonly status: "loading" }
@@ -44,6 +55,7 @@ export function useEditPlaylistPage(
   playlistId: string | null | undefined,
 ): UseEditPlaylistPageResult {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const canReadContent = useCan("content:read");
 
   const { data: optionsData } = useGetContentOptionsQuery(
@@ -150,6 +162,19 @@ export function useEditPlaylistPage(
             playlistId: state.playlist.id,
             items: payload.items,
           }).unwrap();
+          try {
+            await dispatch(
+              playlistsApi.endpoints.listPlaylists.initiate(
+                DEFAULT_PLAYLIST_LIST_QUERY,
+                {
+                  forceRefetch: true,
+                  subscribe: false,
+                },
+              ),
+            ).unwrap();
+          } catch {
+            // The list page has an active query and will retry on mount/focus.
+          }
           toast.success("Successfully updated playlist");
           router.push(PLAYLIST_INDEX_PATH);
         } catch (error) {
@@ -165,7 +190,7 @@ export function useEditPlaylistPage(
         setIsSaving(false);
       }
     },
-    [router, savePlaylistItemsAtomic, state, updatePlaylist],
+    [dispatch, router, savePlaylistItemsAtomic, state, updatePlaylist],
   );
 
   return {

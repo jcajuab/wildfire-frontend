@@ -175,7 +175,7 @@ describe("EmergencyManageDialog", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Emergency Slots")).toBeInTheDocument();
-    expect(screen.getByText("Available Content")).toBeInTheDocument();
+    expect(screen.getByText("Content Library")).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText("Search available content..."),
     ).toBeInTheDocument();
@@ -250,6 +250,57 @@ describe("EmergencyManageDialog", () => {
       label: "Lobby Poster",
     });
     await waitFor(() => expect(refetchSlotsMock).toHaveBeenCalled());
+  });
+
+  test("assigns content with a custom slot name", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    await user.click(screen.getByRole("button", { name: "Select Slot 2" }));
+    await user.type(screen.getByLabelText("Slot Name"), "Earthquake");
+    await user.click(
+      screen.getByRole("button", {
+        name: "Select Lobby Poster as emergency content",
+      }),
+    );
+
+    expect(setSlotMock).toHaveBeenCalledWith({
+      slotIndex: 2,
+      contentId: "content-image",
+      label: "Earthquake",
+    });
+  });
+
+  test("renames a filled slot", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    await user.click(screen.getByRole("button", { name: "Select Slot 1" }));
+    const slotNameInput = screen.getByLabelText("Slot Name");
+    expect(slotNameInput).toHaveValue("Existing Poster");
+
+    await user.clear(slotNameInput);
+    await user.type(slotNameInput, "Earthquake");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(setSlotMock).toHaveBeenCalledWith({
+      slotIndex: 1,
+      contentId: "content-existing",
+      label: "Earthquake",
+    });
+    await waitFor(() => expect(refetchSlotsMock).toHaveBeenCalled());
+  });
+
+  test("keeps rename save disabled without a changed valid label", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    await user.click(screen.getByRole("button", { name: "Select Slot 1" }));
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+
+    const slotNameInput = screen.getByLabelText("Slot Name");
+    await user.clear(slotNameInput);
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   });
 
   test("done closes the dialog without saving staged changes", async () => {

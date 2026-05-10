@@ -60,6 +60,9 @@ describe("CreatePlaylistForm", () => {
     expect(screen.getByText("Playlist Items")).toBeInTheDocument();
     expect(screen.getByText("Content Library")).toBeInTheDocument();
     expect(
+      screen.getByText("Playlists can run up to 60 seconds."),
+    ).toBeInTheDocument();
+    expect(
       screen.queryByLabelText("Display Target (Optional)"),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Effective Duration:")).not.toBeInTheDocument();
@@ -215,7 +218,7 @@ describe("CreatePlaylistForm", () => {
     );
 
     expect(
-      screen.getByText("Add at least one content item to create this playlist"),
+      screen.getByText("Add content from the library to build this playlist."),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Poster" })).toBeInTheDocument();
   });
@@ -240,6 +243,28 @@ describe("CreatePlaylistForm", () => {
     await user.click(screen.getByRole("button", { name: "Poster" }));
 
     expect(screen.getByRole("button", { name: "Create" })).toBeEnabled();
+  });
+
+  test("disables creation and highlights the duration budget over 60 seconds", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <CreatePlaylistForm
+        onCreate={vi.fn()}
+        availableContent={[
+          {
+            ...availableContent[0],
+            duration: 61,
+          },
+        ]}
+      />,
+    );
+
+    await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.click(screen.getByRole("button", { name: "Poster" }));
+
+    expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
+    expect(screen.getByText("Over 60 second limit")).toBeInTheDocument();
   });
 
   test("keeps the draft when creation fails", async () => {

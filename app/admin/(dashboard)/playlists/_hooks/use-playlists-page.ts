@@ -212,7 +212,6 @@ export function usePlaylistsPage({
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
     refetchOnReconnect: true,
-    skip: isInitialListQuery && cachedInitialList.data == null,
   });
   const playlistsData = isInitialListQuery
     ? (cachedInitialList.data ?? initialList?.data)

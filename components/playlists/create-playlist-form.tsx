@@ -13,7 +13,7 @@ import {
 import type { Content } from "@/types/content";
 import type { PlaylistItem } from "@/types/playlist";
 import { type DraftItem } from "./sortable-item-row";
-import { PlaylistFormBody } from "./playlist-form-body";
+import { PlaylistDurationBudget, PlaylistFormBody } from "./playlist-form-body";
 
 export type PlaylistSelectableContent = Content & {
   readonly type: PlaylistItem["content"]["type"];
@@ -187,22 +187,17 @@ export function CreatePlaylistForm({
         availableContent={availableContent}
         isOverDurationLimit={isOverDurationLimit}
         itemsHeaderSlot={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              type="button"
-              onClick={() => setItems([])}
-              disabled={isSubmitting}
-              className={items.length === 0 ? "invisible" : ""}
-            >
-              Remove All
-            </Button>
-            <span
-              className={`text-sm ${isOverDurationLimit ? "text-red-500" : "text-muted-foreground"}`}
-            >
-              {totalDuration}s / 60s
-            </span>
+          <>
+            {items.length > 0 ? (
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => setItems([])}
+                disabled={isSubmitting}
+              >
+                Remove All
+              </Button>
+            ) : null}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -229,15 +224,21 @@ export function CreatePlaylistForm({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          </div>
+          </>
+        }
+        itemsStatusSlot={
+          <PlaylistDurationBudget
+            itemCount={items.length}
+            totalDuration={totalDuration}
+            durationLimit={MAX_BASE_DURATION_SECONDS}
+          />
         }
         itemsSubtitleSlot={
           <p className="text-xs text-muted-foreground">
-            The max playlist duration should not exceed more than{" "}
-            {MAX_BASE_DURATION_SECONDS} seconds or 1 minute.
+            Add content and set durations. Playlists cannot exceed 60 seconds.
           </p>
         }
-        emptyItemsMessage="Add at least one content item to create this playlist"
+        emptyItemsMessage="Add content from the library to build this playlist."
         disabled={isSubmitting}
       />
     </div>

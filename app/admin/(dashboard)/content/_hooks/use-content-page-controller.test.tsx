@@ -22,7 +22,6 @@ import { useContentJobMonitor } from "./content-job-monitor";
 import { useContentPageFilters } from "./use-content-page-filters";
 import { useContentDialogState } from "./use-content-dialog-state";
 import { useContentCrudHandlers } from "./use-content-crud-handlers";
-import { useAppSelector } from "@/lib/hooks";
 
 vi.mock("next/navigation", () => ({
   useSearchParams: vi.fn(() => ({ get: vi.fn(() => null) })),
@@ -37,10 +36,6 @@ vi.mock("@/context/auth-context", () => ({
   useAuth: vi.fn(() => ({
     user: { id: "admin-id", username: "admin", isAdmin: true },
   })),
-}));
-
-vi.mock("@/lib/hooks", () => ({
-  useAppSelector: vi.fn(() => false),
 }));
 
 vi.mock("@/lib/api/content-api", () => ({
@@ -128,7 +123,6 @@ const useContentJobMonitorMock = vi.mocked(useContentJobMonitor);
 const useContentPageFiltersMock = vi.mocked(useContentPageFilters);
 const useContentDialogStateMock = vi.mocked(useContentDialogState);
 const useContentCrudHandlersMock = vi.mocked(useContentCrudHandlers);
-const useAppSelectorMock = vi.mocked(useAppSelector);
 const useListContentQueryStateMock = vi.mocked(
   contentApi.endpoints.listContent.useQueryState,
 );
@@ -210,7 +204,6 @@ describe("useContentPageController", () => {
     useGetUserQueryMock.mockReturnValue({
       data: undefined,
     } as unknown as ReturnType<typeof useGetUserQuery>);
-    useAppSelectorMock.mockReturnValue(false);
     useLazyGetContentJobQueryMock.mockReturnValue([
       vi.fn(),
     ] as unknown as ReturnType<typeof useLazyGetContentJobQuery>);
@@ -280,7 +273,11 @@ describe("useContentPageController", () => {
         sortBy: "title",
         sortDirection: "asc",
       },
-      { pollingInterval: 300_000, refetchOnFocus: true, skip: false },
+      {
+        pollingInterval: 300_000,
+        refetchOnMountOrArgChange: true,
+        refetchOnFocus: true,
+      },
     );
     expect(result.current.canCreateContent).toBe(true);
     expect(result.current.canFilterByOwner).toBe(true);
@@ -343,8 +340,8 @@ describe("useContentPageController", () => {
       },
       {
         pollingInterval: 300_000,
+        refetchOnMountOrArgChange: true,
         refetchOnFocus: true,
-        skip: true,
       },
     );
     expect(result.current.visibleContents.map((item) => item.title)).toEqual([

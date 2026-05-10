@@ -15,7 +15,6 @@ import {
   useUploadPdfMutation,
 } from "@/lib/api/content-api";
 import { useGetUserOptionsQuery, useGetUserQuery } from "@/lib/api/rbac-api";
-import { useAppSelector } from "@/lib/hooks";
 import {
   getApiErrorMessage,
   notifyApiError,
@@ -140,11 +139,6 @@ export function useContentPageController({
     initialList != null &&
     normalizedQueryKey(initialList.queryArgs) === normalizedQueryKey(queryArgs);
 
-  const cacheHasData = useAppSelector(
-    (state) =>
-      contentApi.endpoints.listContent.select(queryArgs)(state).data != null,
-  );
-
   const {
     data: queriedData,
     isLoading: queryIsLoading,
@@ -153,8 +147,8 @@ export function useContentPageController({
     error,
   } = useListContentQuery(queryArgs, {
     pollingInterval: POLLING_FALLBACK_INTERVAL_MS,
+    refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
-    skip: isInitialListQuery && !cacheHasData,
   });
   const cachedInitialList = contentApi.endpoints.listContent.useQueryState(
     queryArgs,
