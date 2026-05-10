@@ -282,8 +282,9 @@ describe("useDisplaysPage", () => {
         sortDirection: "asc",
       },
       {
-        refetchOnFocus: false,
-        refetchOnReconnect: false,
+        refetchOnMountOrArgChange: true,
+        refetchOnFocus: true,
+        refetchOnReconnect: true,
         skip: false,
       },
     );
@@ -456,8 +457,9 @@ describe("useDisplaysPage", () => {
         sortDirection: "asc",
       },
       {
-        refetchOnFocus: false,
-        refetchOnReconnect: false,
+        refetchOnMountOrArgChange: true,
+        refetchOnFocus: true,
+        refetchOnReconnect: true,
         skip: true,
       },
     );

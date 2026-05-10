@@ -247,8 +247,9 @@ export function useDisplaysPage({
     error,
     refetch,
   } = useGetDisplaysBootstrapQuery(currentQueryArgs, {
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
     skip: shouldSkipInitialQuery,
   });
   const cachedInitialBootstrap =
@@ -267,7 +268,7 @@ export function useDisplaysPage({
       ? cachedInitialBootstrap.isLoading
       : queryIsLoading);
   const isFetching = isInitialBootstrapQuery
-    ? cachedInitialBootstrap.isFetching
+    ? cachedInitialBootstrap.isFetching || queryIsFetching
     : queryIsFetching;
   const handleRefetch = useCallback(() => {
     if (isInitialBootstrapQuery) {

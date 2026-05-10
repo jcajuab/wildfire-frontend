@@ -176,6 +176,10 @@ export function useUsersPage(options?: {
     normalizedUsersQueryKey(options.initialUsers.queryArgs) ===
       normalizedUsersQueryKey(usersQueryArgs);
 
+  const cachedInitialUsers = rbacApi.endpoints.getUsers.useQueryState(
+    usersQueryArgs,
+    { skip: !isInitialUsersQuery },
+  );
   const {
     data: usersData,
     isLoading: usersQueryLoading,
@@ -183,14 +187,11 @@ export function useUsersPage(options?: {
     isError: usersError,
     refetch: refetchUsers,
   } = useGetUsersQuery(usersQueryArgs, {
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
-    skip: isInitialUsersQuery,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    skip: isInitialUsersQuery && cachedInitialUsers.data == null,
   });
-  const cachedInitialUsers = rbacApi.endpoints.getUsers.useQueryState(
-    usersQueryArgs,
-    { skip: !isInitialUsersQuery },
-  );
   const effectiveUsersData = isInitialUsersQuery
     ? (cachedInitialUsers.data ?? options?.initialUsers?.data)
     : usersData;

@@ -144,14 +144,52 @@ describe("useRolesPage", () => {
 
     expect(useGetRolesQueryMock).toHaveBeenCalledWith(initialQuery, {
       skip: true,
-      refetchOnFocus: false,
-      refetchOnReconnect: false,
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
     });
     expect(result.current.roles.map((role) => role.name)).toEqual([
       "Admin",
       "Editor",
       "Viewer",
     ]);
+  });
+
+  test("subscribes to the initial roles query after the seeded cache is available", () => {
+    mockFilters("asc");
+    useGetRolesQueryStateMock.mockReturnValue({
+      data: makeRolesData(["Cached Admin", "Cached Editor"]),
+      isFetching: false,
+    } as unknown as ReturnType<
+      typeof rbacApi.endpoints.getRoles.useQueryState
+    >);
+    useGetRolesQueryMock.mockReturnValue({
+      data: descendingRoles,
+      isLoading: false,
+      isFetching: true,
+      isError: false,
+    } as unknown as ReturnType<typeof useGetRolesQuery>);
+
+    const { result } = renderHook(() =>
+      useRolesPage({
+        initialList: {
+          queryArgs: initialQuery,
+          data: ascendingRoles,
+        },
+      }),
+    );
+
+    expect(useGetRolesQueryMock).toHaveBeenCalledWith(initialQuery, {
+      skip: false,
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    });
+    expect(result.current.roles.map((role) => role.name)).toEqual([
+      "Cached Admin",
+      "Cached Editor",
+    ]);
+    expect(result.current.rolesFetching).toBe(true);
   });
 
   test("uses active query data for non-initial name sorts", () => {
@@ -174,8 +212,9 @@ describe("useRolesPage", () => {
 
     expect(useGetRolesQueryMock).toHaveBeenCalledWith(descendingQuery, {
       skip: false,
-      refetchOnFocus: false,
-      refetchOnReconnect: false,
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
     });
     expect(result.current.roles.map((role) => role.name)).toEqual([
       "Viewer",

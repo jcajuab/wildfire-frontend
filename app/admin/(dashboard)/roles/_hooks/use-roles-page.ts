@@ -91,20 +91,21 @@ export function useRolesPage(options?: {
     normalizedRolesQueryKey(options.initialList.queryArgs) ===
       normalizedRolesQueryKey(rolesQuery);
 
+  const cachedInitialList = rbacApi.endpoints.getRoles.useQueryState(
+    rolesQuery,
+    { skip: !isInitialListQuery },
+  );
   const {
     data: rolesData,
     isLoading: rolesQueryLoading,
     isFetching: rolesQueryFetching,
     isError: rolesError,
   } = useGetRolesQuery(rolesQuery, {
-    skip: isInitialListQuery,
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    skip: isInitialListQuery && cachedInitialList.data == null,
   });
-  const cachedInitialList = rbacApi.endpoints.getRoles.useQueryState(
-    rolesQuery,
-    { skip: !isInitialListQuery },
-  );
   const effectiveRolesData = isInitialListQuery
     ? (cachedInitialList.data ?? options?.initialList?.data)
     : rolesData;
@@ -112,7 +113,7 @@ export function useRolesPage(options?: {
     effectiveRolesData == null &&
     (isInitialListQuery ? false : rolesQueryLoading);
   const rolesFetching = isInitialListQuery
-    ? cachedInitialList.isFetching
+    ? cachedInitialList.isFetching || rolesQueryFetching
     : rolesQueryFetching;
 
   const roles: Role[] = useMemo(

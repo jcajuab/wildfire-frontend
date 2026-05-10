@@ -207,13 +207,48 @@ describe("usePlaylistsPage", () => {
     );
 
     expect(useListPlaylistsQueryMock).toHaveBeenCalledWith(initialQuery, {
-      refetchOnFocus: false,
-      refetchOnReconnect: false,
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
       skip: true,
     });
     expect(result.current.playlists.map((playlist) => playlist.name)).toEqual([
       "Morning Loop",
     ]);
+  });
+
+  test("subscribes to the initial playlist query after the seeded cache is available", () => {
+    useListPlaylistsQueryStateMock.mockReturnValue({
+      data: makePlaylistsData(["Cached playlist"]),
+      isFetching: false,
+    } as unknown as ReturnType<
+      typeof playlistsApi.endpoints.listPlaylists.useQueryState
+    >);
+    useListPlaylistsQueryMock.mockReturnValue({
+      data: makePlaylistsData(["Refetched playlist"]),
+      isLoading: false,
+      isFetching: true,
+    } as unknown as ReturnType<typeof useListPlaylistsQuery>);
+
+    const { result } = renderHook(() =>
+      usePlaylistsPage({
+        initialList: {
+          queryArgs: initialQuery,
+          data: makePlaylistsData(["Morning Loop"]),
+        },
+      }),
+    );
+
+    expect(useListPlaylistsQueryMock).toHaveBeenCalledWith(initialQuery, {
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      skip: false,
+    });
+    expect(result.current.playlists.map((playlist) => playlist.name)).toEqual([
+      "Cached playlist",
+    ]);
+    expect(result.current.isFetching).toBe(true);
   });
 
   test("uses active playlist data for changed filters", () => {
@@ -248,8 +283,9 @@ describe("usePlaylistsPage", () => {
         sortDirection: "asc",
       },
       {
-        refetchOnFocus: false,
-        refetchOnReconnect: false,
+        refetchOnMountOrArgChange: true,
+        refetchOnFocus: true,
+        refetchOnReconnect: true,
         skip: false,
       },
     );

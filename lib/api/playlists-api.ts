@@ -406,6 +406,12 @@ export const playlistsApi = api.injectEndpoints({
               ),
             );
           }
+          dispatch(
+            playlistsApi.util.invalidateTags([
+              { type: "Playlist", id },
+              { type: "Playlist", id: "LIST" },
+            ]),
+          );
           const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
             { type: "Schedule", id: "LIST" },
           ]);
@@ -484,6 +490,12 @@ export const playlistsApi = api.injectEndpoints({
               ),
             );
           }
+          dispatch(
+            playlistsApi.util.invalidateTags([
+              { type: "Playlist", id },
+              { type: "Playlist", id: "LIST" },
+            ]),
+          );
           const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
             { type: "Schedule", id: "LIST" },
           ]);
@@ -578,6 +590,12 @@ export const playlistsApi = api.injectEndpoints({
             );
           }
           dispatch(
+            playlistsApi.util.invalidateTags([
+              { type: "Playlist", id: playlistId },
+              { type: "Playlist", id: "LIST" },
+            ]),
+          );
+          dispatch(
             schedulesApi.util.invalidateTags([
               { type: "Schedule", id: "LIST" },
             ]),
@@ -654,6 +672,12 @@ export const playlistsApi = api.injectEndpoints({
             }
           }
           dispatch(
+            playlistsApi.util.invalidateTags([
+              { type: "Playlist", id: playlistId },
+              { type: "Playlist", id: "LIST" },
+            ]),
+          );
+          dispatch(
             schedulesApi.util.invalidateTags([
               { type: "Schedule", id: "LIST" },
             ]),
@@ -720,6 +744,12 @@ export const playlistsApi = api.injectEndpoints({
             );
           }
           dispatch(
+            playlistsApi.util.invalidateTags([
+              { type: "Playlist", id: playlistId },
+              { type: "Playlist", id: "LIST" },
+            ]),
+          );
+          dispatch(
             schedulesApi.util.invalidateTags([
               { type: "Schedule", id: "LIST" },
             ]),
@@ -758,6 +788,12 @@ export const playlistsApi = api.injectEndpoints({
         );
         try {
           await queryFulfilled;
+          dispatch(
+            playlistsApi.util.invalidateTags([
+              { type: "Playlist", id: playlistId },
+              { type: "Playlist", id: "LIST" },
+            ]),
+          );
           dispatch(
             schedulesApi.util.invalidateTags([
               { type: "Schedule", id: "LIST" },
@@ -830,6 +866,12 @@ export const playlistsApi = api.injectEndpoints({
               ),
             );
           }
+          dispatch(
+            playlistsApi.util.invalidateTags([
+              { type: "Playlist", id: playlistId },
+              { type: "Playlist", id: "LIST" },
+            ]),
+          );
           dispatch(
             schedulesApi.util.invalidateTags([
               { type: "Schedule", id: "LIST" },

@@ -19,7 +19,6 @@ import {
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   useListContentQuery,
-  type BackendContent,
   type BackendContentListItem,
 } from "@/lib/api/content-api";
 import {
@@ -30,12 +29,7 @@ import { RICH_TEXT_PREVIEW_CLASSES } from "@/lib/rich-text-preview-classes";
 import type { EmergencySlotIndex } from "@/lib/api/emergency-slots-api";
 import { cn } from "@/lib/utils";
 
-const ALLOWED_TYPES = new Set<BackendContent["type"]>([
-  "IMAGE",
-  "VIDEO",
-  "TEXT",
-]);
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 9;
 
 interface EmergencyContentPickerProps {
   readonly selectedSlotIndex: EmergencySlotIndex | null;
@@ -61,15 +55,12 @@ export function EmergencyContentPicker({
     page,
     pageSize: PAGE_SIZE,
     status: "READY",
+    excludeType: "FLASH",
     search: debouncedSearch || undefined,
     sortBy: "createdAt",
     sortDirection: "desc",
   });
-
-  const items = useMemo(
-    () => (data?.items ?? []).filter((item) => ALLOWED_TYPES.has(item.type)),
-    [data?.items],
-  );
+  const items = useMemo(() => data?.items ?? [], [data?.items]);
 
   const isPickerDisabled = selectedSlotIndex === null;
   const isSubmitting = submittingContentId !== null;

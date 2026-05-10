@@ -47,6 +47,7 @@ function contentMatchesListQuery(
   if (query?.ownerId && content.owner.id !== query.ownerId) return false;
   if (query?.status && content.status !== query.status) return false;
   if (query?.type && content.type !== query.type) return false;
+  if (query?.excludeType && content.type === query.excludeType) return false;
   const search = query?.search?.trim().toLowerCase();
   if (search && !content.title.toLowerCase().includes(search)) return false;
   return true;
@@ -174,6 +175,7 @@ export interface ContentListQuery {
   readonly pageSize?: number;
   readonly status?: "PROCESSING" | "READY" | "FAILED";
   readonly type?: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
+  readonly excludeType?: "IMAGE" | "VIDEO" | "FLASH" | "TEXT";
   readonly ownerId?: string;
   readonly search?: string;
   readonly sortBy?: "createdAt" | "title" | "fileSize" | "type";
@@ -330,6 +332,7 @@ export const contentApi = api.injectEndpoints({
           pageSize: query?.pageSize ?? 20,
           status: query?.status,
           type: query?.type,
+          excludeType: query?.excludeType,
           ownerId: query?.ownerId,
           search: query?.search,
           sortBy: query?.sortBy ?? "createdAt",

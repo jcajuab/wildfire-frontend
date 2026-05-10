@@ -286,7 +286,7 @@ describe("playlists api cache patches", () => {
     ]);
   });
 
-  test("updatePlaylist patches existing cached rows and removes rows that no longer match search", async () => {
+  test("updatePlaylist invalidates cached rows and revalidates the Next cache", async () => {
     const store = makeStore();
     const searchQuery: PlaylistListQuery = {
       ...defaultQuery,
@@ -342,23 +342,15 @@ describe("playlists api cache patches", () => {
       )
       .unwrap();
 
-    const defaultItems = selectList(store, defaultQuery)?.items ?? [];
-    expect(defaultItems[0]).toMatchObject({
-      id: "playlist-1",
-      name: "Evening Playlist",
-      description: "Updated",
-      itemsCount: 4,
-      totalDuration: 44,
-    });
-    expect(selectList(store, searchQuery)?.items).toEqual([]);
-    expect(selectList(store, searchQuery)?.total).toBe(0);
+    expect(selectList(store, defaultQuery)).toBeUndefined();
+    expect(selectList(store, searchQuery)).toBeUndefined();
     expect(revalidateWildfireTagsViaRoute).toHaveBeenCalledWith([
       "playlists",
       "schedules-bootstrap",
     ]);
   });
 
-  test("savePlaylistItemsAtomic patches list counts, duration, and preview items", async () => {
+  test("savePlaylistItemsAtomic invalidates cached lists and revalidates the Next cache", async () => {
     const store = makeStore();
     const existing = playlistSummary({
       id: "playlist-1",
@@ -401,12 +393,7 @@ describe("playlists api cache patches", () => {
       )
       .unwrap();
 
-    const patched = selectList(store, defaultQuery)?.items[0];
-    expect(patched?.itemsCount).toBe(4);
-    expect(patched?.totalDuration).toBe(100);
-    expect(patched?.previewItems.map((item) => item.sequence)).toEqual([
-      10, 20, 30,
-    ]);
+    expect(selectList(store, defaultQuery)).toBeUndefined();
     expect(revalidateWildfireTagsViaRoute).toHaveBeenCalledWith([
       "playlists",
       "schedules-bootstrap",

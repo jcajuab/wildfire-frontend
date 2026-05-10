@@ -157,7 +157,7 @@ describe("EmergencyManageDialog", () => {
         items: contentItems,
         total: contentItems.length,
         page: 1,
-        pageSize: 12,
+        pageSize: 9,
       },
       isFetching: false,
     } as unknown as ReturnType<typeof useListContentQuery>);
@@ -179,9 +179,25 @@ describe("EmergencyManageDialog", () => {
     expect(
       screen.getByPlaceholderText("Search available content..."),
     ).toBeInTheDocument();
+    expect(useListContentQueryMock).toHaveBeenCalledWith({
+      page: 1,
+      pageSize: 9,
+      status: "READY",
+      excludeType: "FLASH",
+      search: undefined,
+      sortBy: "createdAt",
+      sortDirection: "desc",
+    });
     expect(screen.queryByText("Assets")).not.toBeInTheDocument();
     expect(screen.queryByText("Content")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Select" })).toBeNull();
+    expect(screen.getByRole("dialog")).toHaveClass(
+      "h-[min(85vh,42rem)]",
+      "max-h-[85vh]",
+    );
+    expect(
+      screen.getByText("Lobby Poster").closest("ul")?.parentElement,
+    ).toHaveClass("min-h-0", "flex-1", "overflow-auto");
     const paginationFooter = screen.getByText(
       "Showing 1 to 2 of 2 results",
     ).parentElement;

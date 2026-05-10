@@ -200,26 +200,27 @@ export function usePlaylistsPage({
   const isInitialListQuery =
     initialListQueryKey != null && initialListQueryKey === playlistQueryKey;
 
+  const cachedInitialList = playlistsApi.endpoints.listPlaylists.useQueryState(
+    playlistQuery,
+    { skip: !isInitialListQuery },
+  );
   const {
     data: queriedPlaylistsData,
     isLoading: queryIsLoading,
     isFetching: queryIsFetching,
   } = useListPlaylistsQuery(playlistQuery, {
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
-    skip: isInitialListQuery,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    skip: isInitialListQuery && cachedInitialList.data == null,
   });
-  const cachedInitialList = playlistsApi.endpoints.listPlaylists.useQueryState(
-    playlistQuery,
-    { skip: !isInitialListQuery },
-  );
   const playlistsData = isInitialListQuery
     ? (cachedInitialList.data ?? initialList?.data)
     : queriedPlaylistsData;
   const isLoading =
     playlistsData == null && (isInitialListQuery ? false : queryIsLoading);
   const isFetching = isInitialListQuery
-    ? cachedInitialList.isFetching
+    ? cachedInitialList.isFetching || queryIsFetching
     : queryIsFetching;
   const [deletePlaylist] = useDeletePlaylistMutation();
 

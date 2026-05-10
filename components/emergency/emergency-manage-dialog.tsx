@@ -96,8 +96,8 @@ export function EmergencyManageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
-        <DialogHeader className="px-4 pt-4 pb-3">
+      <DialogContent className="flex h-[min(85vh,42rem)] max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
+        <DialogHeader className="shrink-0 px-4 pt-4 pb-3">
           <DialogTitle>Manage Emergency Assets</DialogTitle>
           <DialogDescription>
             Choose up to five assets that can be activated across all displays.
@@ -126,7 +126,7 @@ export function EmergencyManageDialog({
             />
           </div>
         </div>
-        <DialogFooter className="border-t border-border px-4 py-3">
+        <DialogFooter className="shrink-0 border-t border-border px-4 py-3">
           <Button
             type="button"
             variant="outline"

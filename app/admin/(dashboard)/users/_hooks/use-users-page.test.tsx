@@ -247,8 +247,9 @@ describe("useUsersPage", () => {
     );
 
     expect(useGetUsersQueryMock).toHaveBeenCalledWith(initialUsersQuery, {
-      refetchOnFocus: false,
-      refetchOnReconnect: false,
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
       skip: true,
     });
     expect(result.current.users.map((user) => user.name)).toEqual([
@@ -256,6 +257,48 @@ describe("useUsersPage", () => {
       "Alice",
       "Bob",
     ]);
+  });
+
+  test("subscribes to the initial users query after the seeded cache is available", () => {
+    mockFilters({
+      sort: { field: "name", direction: "asc" },
+      sortField: "name",
+      sortDirection: "asc",
+    });
+    useGetUsersQueryStateMock.mockReturnValue({
+      data: makeUsersData(["Cached Admin", "Cached Alice"]),
+      isFetching: false,
+    } as unknown as ReturnType<
+      typeof rbacApi.endpoints.getUsers.useQueryState
+    >);
+    useGetUsersQueryMock.mockReturnValue({
+      data: makeUsersData(["Refetched Admin"]),
+      isLoading: false,
+      isFetching: true,
+      isError: false,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useGetUsersQuery>);
+
+    const { result } = renderHook(() =>
+      useUsersPage({
+        initialUsers: {
+          queryArgs: initialUsersQuery,
+          data: makeUsersData(["Admin", "Alice", "Bob"]),
+        },
+      }),
+    );
+
+    expect(useGetUsersQueryMock).toHaveBeenCalledWith(initialUsersQuery, {
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      skip: false,
+    });
+    expect(result.current.users.map((user) => user.name)).toEqual([
+      "Cached Admin",
+      "Cached Alice",
+    ]);
+    expect(result.current.usersFetching).toBe(true);
   });
 
   test("refetches invitations when invitation filters differ from initial data", async () => {
