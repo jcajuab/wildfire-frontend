@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { redirect } from "next/navigation";
 
 import type { BackendContentListItem } from "@/lib/api/content-api";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
@@ -10,7 +9,7 @@ import {
 import { cacheLife, cacheTag } from "next/cache";
 
 import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import { serverFetchJson } from "@/lib/server/api";
 
 import { ContentPageView } from "./content-page-client";
 
@@ -77,10 +76,6 @@ export default async function ContentPage({
       <ContentPageView initialQueryArgs={queryArgs} initialData={undefined} />
     );
   }
-  if (!sessionHasPermission(session, "content:read")) {
-    redirect("/unauthorized");
-  }
-
   return (
     <ContentPageView
       initialQueryArgs={queryArgs}

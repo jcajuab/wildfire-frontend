@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { redirect } from "next/navigation";
 
 import type { RoleEditBootstrapResponse } from "@/lib/api/rbac-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
@@ -8,7 +7,6 @@ import { getServerSession, resolveSession } from "@/lib/server/auth";
 import {
   handleBootstrapResult,
   serverFetchJson,
-  sessionHasPermission,
   WILDFIRE_SERVER_REVALIDATE_SECONDS,
 } from "@/lib/server/api";
 
@@ -31,10 +29,6 @@ export default async function EditRolePage({
   if (!session) {
     return <EditRolePageView />;
   }
-  if (!sessionHasPermission(session, "roles:update")) {
-    redirect("/unauthorized");
-  }
-
   const bootstrapRes = await serverFetchJson<unknown>({
     session,
     path: `roles/${encodeURIComponent(roleId)}/bootstrap`,

@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { redirect } from "next/navigation";
 
 import type { BackendAuditEvent } from "@/lib/api/audit-api";
 import type { DisplayOption } from "@/lib/api/displays-api";
@@ -109,10 +108,6 @@ export default async function LogsPage({
   if (!session) {
     return <LogsPageClient />;
   }
-  if (!sessionHasPermission(session, "audit:read")) {
-    redirect("/unauthorized");
-  }
-
   const canReadUsers = sessionHasPermission(session, "users:read");
   const canReadDisplays = sessionHasPermission(session, "displays:read");
 

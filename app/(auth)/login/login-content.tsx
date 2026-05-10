@@ -13,6 +13,7 @@ import { purgeStaleSession, refreshAccessToken } from "@/lib/auth-session";
 import { can as canPermission } from "@/lib/permissions";
 import {
   getFirstPermittedAdminRoute,
+  getRequiredReadPermission,
   UNAUTHORIZED_ROUTE,
 } from "@/lib/route-permissions";
 import type { AuthResponse } from "@/types/auth";
@@ -34,12 +35,15 @@ function getPostLoginRedirectFromResponse(
   response: AuthResponse,
   redirectTo: string | null,
 ): string {
-  if (redirectTo != null && redirectTo.length > 0) {
-    return redirectTo;
-  }
-
   const hasPermission = (permission: Parameters<typeof canPermission>[0]) =>
     canPermission(permission, response.permissions, response.user.isAdmin);
+
+  if (redirectTo != null && redirectTo.length > 0) {
+    const required = getRequiredReadPermission(redirectTo);
+    if (required === null || hasPermission(required)) {
+      return redirectTo;
+    }
+  }
 
   return getFirstPermittedAdminRoute(hasPermission) ?? UNAUTHORIZED_ROUTE;
 }
@@ -51,41 +55,26 @@ export function LoginContent(): ReactElement | null {
   const [password, setPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const handledRedirectRef = useRef<string | null>(null);
+  const didLoginHere = useRef(false);
+  const didRedirect = useRef(false);
   const redirectTo = searchParams.get("redirectTo");
-  const postLoginRedirect =
-    redirectTo ?? getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE;
 
+  // §4: Mount-only external sync — redirect users who arrive already authenticated.
+  // Does NOT handle post-login navigation (that is handleSubmit's responsibility per §3).
   useEffect(() => {
-    if (!isInitialized || !isAuthenticated) {
-      handledRedirectRef.current = null;
-      return;
-    }
+    if (didLoginHere.current || didRedirect.current) return;
+    if (!isInitialized || !isAuthenticated) return;
 
-    if (isLoggingIn) {
-      return;
-    }
+    didRedirect.current = true;
 
-    const redirectKey = `${redirectTo ?? "__default__"}::${postLoginRedirect}`;
-    if (handledRedirectRef.current === redirectKey) {
-      return;
-    }
-    handledRedirectRef.current = redirectKey;
-
-    // Server sent us here, but client memory may still hold a stale session.
-    // Refresh from the cookie before redirecting an already-authenticated user.
     if (redirectTo != null && redirectTo.length > 0) {
       let cancelled = false;
       void refreshAccessToken()
         .then(() => {
-          if (!cancelled) {
-            navigateToPostLogin(postLoginRedirect);
-          }
+          if (!cancelled) navigateToPostLogin(redirectTo);
         })
         .catch(async (err: unknown) => {
-          if (cancelled) {
-            return;
-          }
+          if (cancelled) return;
           if (err instanceof AuthApiError && err.status === 401) {
             await purgeStaleSession();
           }
@@ -95,26 +84,24 @@ export function LoginContent(): ReactElement | null {
       };
     }
 
-    navigateToPostLogin(postLoginRedirect);
-  }, [
-    isInitialized,
-    isAuthenticated,
-    isLoggingIn,
-    redirectTo,
-    postLoginRedirect,
-  ]);
+    const target = getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE;
+    navigateToPostLogin(target);
+  }, [isInitialized, isAuthenticated, redirectTo, can]);
 
+  // §3: User-driven login — handle redirect entirely in the event handler.
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     setErrorMessage(null);
     setIsLoggingIn(true);
     const credentials = { username, password };
     try {
+      didLoginHere.current = true;
       const response = await login(credentials);
       navigateToPostLogin(
         getPostLoginRedirectFromResponse(response, redirectTo),
       );
     } catch (err) {
+      didLoginHere.current = false;
       if (err instanceof AuthApiError && err.status === 429) {
         setErrorMessage(
           "Too many login attempts. Wait a moment before trying again.",

@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { redirect } from "next/navigation";
 
 import type { ContentOption } from "@/lib/api/content-api";
 import type { BackendPlaylistWithItems } from "@/lib/api/playlists-api";
@@ -34,10 +33,6 @@ export default async function EditPlaylistPage({
   if (!session) {
     return <EditPlaylistPageView />;
   }
-  if (!sessionHasPermission(session, "playlists:update")) {
-    redirect("/unauthorized");
-  }
-
   const playlistRes = await serverFetchJson<unknown>({
     session,
     path: `playlists/${encodeURIComponent(playlistId)}`,

@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { redirect } from "next/navigation";
 
 import type {
   DisplaysBootstrapResponse,
@@ -11,7 +10,7 @@ import { cacheLife, cacheTag } from "next/cache";
 
 import type { ServerSearchParamValue } from "@/lib/server/api";
 import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import { serverFetchJson } from "@/lib/server/api";
 
 import { DisplaysPageView } from "./displays-page-client";
 
@@ -79,10 +78,6 @@ export default async function DisplaysPage(): Promise<ReactElement> {
       />
     );
   }
-  if (!sessionHasPermission(session, "displays:read")) {
-    redirect("/unauthorized");
-  }
-
   return (
     <DisplaysPageView
       initialQueryArgs={INITIAL_DISPLAYS_BOOTSTRAP_QUERY}

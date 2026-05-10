@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { redirect } from "next/navigation";
 
 import type { RbacRoleListItem, RbacRoleListQuery } from "@/lib/api/rbac-api";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
@@ -10,7 +9,7 @@ import {
 import { cacheLife, cacheTag } from "next/cache";
 
 import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import { serverFetchJson } from "@/lib/server/api";
 
 import { RolesListCacheSeeder, RolesPageView } from "./roles-page-client";
 
@@ -74,10 +73,6 @@ export default async function RolesPage({
   if (!session) {
     return <RolesPageView />;
   }
-  if (!sessionHasPermission(session, "roles:read")) {
-    redirect("/unauthorized");
-  }
-
   return (
     <>
       {rolesData ? (

@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { redirect } from "next/navigation";
 
 import type { BackendPlaylistSummary } from "@/lib/api/playlists-api";
 import { transformPaginatedListResponse } from "@/lib/api/response-transformers";
@@ -10,7 +9,7 @@ import {
 import { cacheLife, cacheTag } from "next/cache";
 
 import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import { serverFetchJson } from "@/lib/server/api";
 
 import { PlaylistsPageView } from "./playlists-page-client";
 
@@ -75,10 +74,6 @@ export default async function PlaylistsPage({
       <PlaylistsPageView initialQueryArgs={queryArgs} initialData={undefined} />
     );
   }
-  if (!sessionHasPermission(session, "playlists:read")) {
-    redirect("/unauthorized");
-  }
-
   return (
     <PlaylistsPageView
       initialQueryArgs={queryArgs}

@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { redirect } from "next/navigation";
 import { cacheLife, cacheTag } from "next/cache";
 
 import type {
@@ -10,7 +9,7 @@ import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
 import type { ServerSearchParamValue } from "@/lib/server/api";
 import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import { serverFetchJson } from "@/lib/server/api";
 
 import { DisplayGroupsPageClient } from "./display-groups-page-client";
 
@@ -69,10 +68,6 @@ export default async function DisplayGroupsPage(): Promise<ReactElement> {
   if (!session) {
     return <DisplayGroupsPageClient />;
   }
-  if (!sessionHasPermission(session, "displays:read")) {
-    redirect("/unauthorized");
-  }
-
   return (
     <DisplayGroupsPageClient
       initialQueryArgs={DISPLAY_GROUPS_BOOTSTRAP_QUERY}

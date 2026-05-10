@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { redirect } from "next/navigation";
 
 import type { ContentOption } from "@/lib/api/content-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
@@ -18,10 +17,6 @@ export default async function CreatePlaylistPage(): Promise<ReactElement> {
   if (!session) {
     return <CreatePlaylistPageView />;
   }
-  if (!sessionHasPermission(session, "playlists:create")) {
-    redirect("/unauthorized");
-  }
-
   let contentSeeder: ReactElement | null = null;
   if (sessionHasPermission(session, "content:read")) {
     const optionsRes = await serverFetchJson<unknown>({

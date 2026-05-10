@@ -1,15 +1,10 @@
 import type { ReactElement } from "react";
-import { redirect } from "next/navigation";
 
 import type { RbacPermission } from "@/lib/api/rbac-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { ROLE_CREATE_PATH } from "@/lib/role-paths";
 import { getServerSession, resolveSession } from "@/lib/server/auth";
-import {
-  handleBootstrapResult,
-  serverFetchJson,
-  sessionHasPermission,
-} from "@/lib/server/api";
+import { handleBootstrapResult, serverFetchJson } from "@/lib/server/api";
 
 import {
   CreateRolePageView,
@@ -21,10 +16,6 @@ export default async function CreateRolePage(): Promise<ReactElement> {
   if (!session) {
     return <CreateRolePageView />;
   }
-  if (!sessionHasPermission(session, "roles:create")) {
-    redirect("/unauthorized");
-  }
-
   const permissionsRes = await serverFetchJson<unknown>({
     session,
     path: "permissions/options",

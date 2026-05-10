@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { redirect } from "next/navigation";
 
 import type {
   ScheduleWindowQuery,
@@ -10,7 +9,7 @@ import { defaultSchedulesBootstrapWindow } from "@/lib/schedule-window";
 import { cacheLife, cacheTag } from "next/cache";
 
 import { getCachedServerSession, resolveSession } from "@/lib/server/auth";
-import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
+import { serverFetchJson } from "@/lib/server/api";
 
 import {
   SchedulesBootstrapCacheSeeder,
@@ -49,10 +48,6 @@ export default async function SchedulesPage(): Promise<ReactElement> {
   if (!session) {
     return <SchedulesPageView />;
   }
-  if (!sessionHasPermission(session, "schedules:read")) {
-    redirect("/unauthorized");
-  }
-
   const queryArgs: ScheduleWindowQuery = defaultSchedulesBootstrapWindow();
   const bootstrapData = await getCachedSchedulesBootstrap(
     queryArgs.from,

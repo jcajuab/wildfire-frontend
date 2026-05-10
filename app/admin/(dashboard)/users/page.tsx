@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { redirect } from "next/navigation";
 
 import type {
   RbacRoleSummary,
@@ -127,10 +126,6 @@ export default async function UsersPage({
   if (!session) {
     return <UsersPageView />;
   }
-  if (!sessionHasPermission(session, "users:read")) {
-    redirect("/unauthorized");
-  }
-
   const sp = (await searchParams) ?? {};
   const q = usersListQueryFromSearchParams(sp, USERS_PAGE_SIZE);
 
