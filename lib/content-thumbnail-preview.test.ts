@@ -3,6 +3,7 @@ import {
   extractPlainTextFromHtml,
   getFlashThumbnailText,
   getFlashTypographyClass,
+  getTextThumbnailFallbackHtml,
   getTextThumbnailHtml,
   getTextThumbnailText,
 } from "@/lib/content-thumbnail-preview";
@@ -89,6 +90,18 @@ describe("thumbnail preview text helpers", () => {
     ).toBe(
       '<p style="text-align:center;color:#0f172a">Hello <strong>world</strong> and <em>team</em></p>',
     );
+  });
+
+  test("returns deterministic escaped fallback html for hydration", () => {
+    expect(
+      getTextThumbnailFallbackHtml({
+        ...baseContent,
+        title: "Ignored fallback title",
+        textPreviewText: "A <preview> & summary",
+        textHtmlContent:
+          '<p style="color:#16a34a">A <strong>preview</strong> &amp; summary</p>',
+      }),
+    ).toBe("<p>A &lt;preview&gt; &amp; summary</p>");
   });
 
   test("falls back to escaped title when rich text has no visible text", () => {

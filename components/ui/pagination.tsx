@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
+const PAGINATION_CONTROL_CLASSNAME = "h-7 min-w-7";
+
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
     <nav
@@ -49,7 +51,7 @@ function PaginationLink({
       asChild
       variant={isActive ? "outline" : "ghost"}
       size={size}
-      className={cn(className)}
+      className={cn(PAGINATION_CONTROL_CLASSNAME, className)}
     >
       {/* eslint-disable-next-line jsx-a11y/anchor-has-content -- content is forwarded via asChild from Button */}
       <a
@@ -107,7 +109,8 @@ function PaginationEllipsis({
       aria-hidden
       data-slot="pagination-ellipsis"
       className={cn(
-        "flex size-9 items-center justify-center text-sm text-muted-foreground",
+        PAGINATION_CONTROL_CLASSNAME,
+        "flex items-center justify-center text-sm text-muted-foreground",
         className,
       )}
       {...props}

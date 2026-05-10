@@ -1,4 +1,7 @@
+import { act } from "react";
 import { render, screen } from "@testing-library/react";
+import { hydrateRoot, type Root } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { ContentCard } from "@/components/content/content-card";
@@ -370,6 +373,50 @@ describe("ContentCard", () => {
     expect(
       screen.queryByAltText(`${textContent.title} preview`),
     ).not.toBeInTheDocument();
+  });
+
+  test("hydrates text thumbnails without mismatching rich text html", async () => {
+    const textContent: Content = {
+      ...baseContent,
+      id: "content-text-hydration",
+      title: "ASD",
+      type: "TEXT",
+      mimeType: "text/html",
+      textPreviewText: "ASD",
+      textHtmlContent:
+        '<p style="text-align: center;"><span style="color: rgb(239, 68, 68);">ASD</span></p>',
+    };
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    container.innerHTML = renderToString(<ContentCard content={textContent} />);
+
+    let root: Root | undefined;
+    await act(async () => {
+      root = hydrateRoot(container, <ContentCard content={textContent} />);
+      await Promise.resolve();
+    });
+
+    const hydrationErrors = consoleErrorSpy.mock.calls.filter((call) =>
+      call
+        .map((part) => String(part))
+        .join(" ")
+        .includes("hydrated but some attributes"),
+    );
+    expect(hydrationErrors).toHaveLength(0);
+
+    const richText = Array.from(container.querySelectorAll("span")).find(
+      (element) => element.textContent === "ASD",
+    );
+    expect(richText).toHaveStyle({ color: "rgb(239, 68, 68)" });
+
+    await act(async () => {
+      root?.unmount();
+    });
+    container.remove();
+    consoleErrorSpy.mockRestore();
   });
 
   test("falls back to text preview text when list data has no rich text html", () => {

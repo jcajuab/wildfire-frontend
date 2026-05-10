@@ -1,6 +1,12 @@
 "use client";
 
-import { type PointerEvent, type ReactElement, memo } from "react";
+import {
+  type PointerEvent,
+  type ReactElement,
+  memo,
+  useMemo,
+  useSyncExternalStore,
+} from "react";
 import Image from "next/image";
 import {
   IconDots,
@@ -32,6 +38,7 @@ import {
 } from "@/lib/formatters";
 import {
   getFlashThumbnailText,
+  getTextThumbnailFallbackHtml,
   getTextThumbnailHtml,
   getTextThumbnailText,
 } from "@/lib/content-thumbnail-preview";
@@ -81,6 +88,49 @@ function getContentOwnerHandle(content: Content): string {
   return username && username.length > 0 ? username : content.owner.name;
 }
 
+function subscribeToHydration(callback: () => void): () => void {
+  const timeoutId = window.setTimeout(callback, 0);
+  return () => window.clearTimeout(timeoutId);
+}
+
+function getHydratedSnapshot(): boolean {
+  return true;
+}
+
+function getServerHydrationSnapshot(): boolean {
+  return false;
+}
+
+function HydratedTextThumbnail({
+  content,
+  className,
+}: {
+  readonly content: Content;
+  readonly className: string;
+}): ReactElement {
+  const isHydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getHydratedSnapshot,
+    getServerHydrationSnapshot,
+  );
+  const fallbackHtml = useMemo(
+    () => getTextThumbnailFallbackHtml(content),
+    [content],
+  );
+  const html = useMemo(
+    () => (isHydrated ? getTextThumbnailHtml(content) : fallbackHtml),
+    [content, fallbackHtml, isHydrated],
+  );
+
+  return (
+    <div
+      className={className}
+      aria-label={getTextThumbnailText(content)}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+
 export const ContentCard = memo(function ContentCard({
   content,
   onEdit,
@@ -102,12 +152,6 @@ export const ContentCard = memo(function ContentCard({
   const isTextContent = content.type === "TEXT";
   const flashThumbnailText = isFlashContent
     ? getFlashThumbnailText(content)
-    : null;
-  const textThumbnailText = isTextContent
-    ? getTextThumbnailText(content)
-    : null;
-  const textThumbnailHtml = isTextContent
-    ? getTextThumbnailHtml(content)
     : null;
   const flashTone = content.flashTone ?? "INFO";
   const activityLabel = getContentActivityLabel(content);
@@ -222,13 +266,12 @@ export const ContentCard = memo(function ContentCard({
           />
         ) : isTextContent ? (
           <div className="relative flex h-full w-full items-start overflow-hidden p-2">
-            <div
+            <HydratedTextThumbnail
+              content={content}
               className={cn(
                 RICH_TEXT_PREVIEW_CLASSES,
                 "text-xs leading-snug [&_blockquote]:my-1 [&_blockquote]:border-l [&_blockquote]:border-border [&_blockquote]:pl-2 [&_ol]:my-1 [&_ol]:ml-4 [&_td]:px-1 [&_td]:py-0.5 [&_th]:px-1 [&_th]:py-0.5 [&_ul]:my-1 [&_ul]:ml-4",
               )}
-              aria-label={textThumbnailText ?? content.title}
-              dangerouslySetInnerHTML={{ __html: textThumbnailHtml ?? "" }}
             />
             <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-muted/90 to-transparent" />
           </div>

@@ -22,7 +22,9 @@ import {
   IconTrash,
   IconX,
 } from "@tabler/icons-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/layout/page-header";
 import { cn } from "@/lib/utils";
 
 GlobalWorkerOptions.workerSrc = new URL(
@@ -68,6 +70,11 @@ type Corner = "tl" | "tr" | "bl" | "br";
 interface Rect {
   x: number;
   y: number;
+  width: number;
+  height: number;
+}
+
+interface Size {
   width: number;
   height: number;
 }
@@ -362,6 +369,47 @@ function extractCropPreview(
 const HANDLE_SIZE = 12;
 const HANDLE_HIT = 14; // slightly larger for easier clicking
 const CROP_PADDING = 40; // px of interactive padding around the PDF page
+const CROP_ACTION_TOOLBAR_SIZE: Size = { width: 56, height: 24 };
+const CROP_ACTION_TOOLBAR_INSET = 6;
+const PDF_CROP_CONTROL_BAND_CLASSNAME =
+  "flex min-h-16 shrink-0 items-center gap-2 border-b border-border bg-background p-4";
+
+function clampNumber(value: number, min: number, max: number): number {
+  if (max < min) return min;
+  return Math.max(min, Math.min(value, max));
+}
+
+export function getCropActionToolbarStyle(
+  rect: Rect,
+  canvasSize: Size,
+): React.CSSProperties {
+  const desiredLeft = rect.x + rect.width - CROP_ACTION_TOOLBAR_SIZE.width;
+  const desiredTop =
+    rect.y + rect.height + CROP_ACTION_TOOLBAR_INSET <=
+    canvasSize.height - CROP_ACTION_TOOLBAR_SIZE.height
+      ? rect.y + rect.height + CROP_ACTION_TOOLBAR_INSET
+      : rect.y - CROP_ACTION_TOOLBAR_SIZE.height - CROP_ACTION_TOOLBAR_INSET;
+
+  return {
+    position: "absolute",
+    left:
+      clampNumber(
+        desiredLeft,
+        CROP_ACTION_TOOLBAR_INSET,
+        canvasSize.width -
+          CROP_ACTION_TOOLBAR_SIZE.width -
+          CROP_ACTION_TOOLBAR_INSET,
+      ) + CROP_PADDING,
+    top:
+      clampNumber(
+        desiredTop,
+        CROP_ACTION_TOOLBAR_INSET,
+        canvasSize.height -
+          CROP_ACTION_TOOLBAR_SIZE.height -
+          CROP_ACTION_TOOLBAR_INSET,
+      ) + CROP_PADDING,
+  };
+}
 
 function getCornerPositions(
   rect: Rect,
@@ -725,65 +773,47 @@ export function PdfCropEditor({
 
   // Edge-aware button positioning for confirm/discard
   const renderActionButtons = (rect: Rect) => {
-    const nearBottom = rect.y + rect.height > canvasSize.height - 40;
-    const nearRight = rect.x + rect.width > canvasSize.width - 40;
-    const renderInside = nearBottom || nearRight;
-
-    const style: React.CSSProperties = renderInside
-      ? {
-          position: "absolute",
-          top: rect.y + 4 + CROP_PADDING,
-          left: rect.x + rect.width - 60 + CROP_PADDING,
-        }
-      : {
-          position: "absolute",
-          top: rect.y + rect.height + 4 + CROP_PADDING,
-          left: rect.x + rect.width - 56 + CROP_PADDING,
-        };
+    const style = getCropActionToolbarStyle(rect, canvasSize);
 
     return (
-      <div style={style} className="flex items-center gap-1 z-10">
-        <button
+      <div
+        style={style}
+        className="pointer-events-auto z-20 flex items-center gap-1"
+      >
+        <Button
           type="button"
+          size="icon-sm"
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
             handleConfirm();
           }}
-          className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+          className="rounded-full shadow-sm"
           aria-label="Confirm crop"
         >
-          <IconCheck className="size-3.5" />
-        </button>
-        <button
+          <IconCheck className="size-3.5" aria-hidden="true" />
+        </Button>
+        <Button
           type="button"
+          variant="destructive"
+          size="icon-sm"
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
             handleDiscard();
           }}
-          className="flex size-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90"
+          className="rounded-full shadow-sm"
           aria-label="Discard crop"
         >
-          <IconX className="size-3.5" />
-        </button>
+          <IconX className="size-3.5" aria-hidden="true" />
+        </Button>
       </div>
     );
   };
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header using admin layout pattern */}
-      <header className="flex flex-col gap-2 border-b border-border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="truncate text-xl font-semibold leading-tight tracking-tight sm:text-2xl">
-            {contentName || filename}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Draw crop regions on each page. Confirm each crop before drawing the
-            next.
-          </p>
-        </div>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <PageHeader title={contentName || filename}>
         <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
           <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Cancel
@@ -804,17 +834,17 @@ export function PdfCropEditor({
                   aria-hidden="true"
                   data-icon="inline-start"
                 />
-                Create
+                Create Content
               </>
             )}
           </Button>
         </div>
-      </header>
+      </PageHeader>
 
-      <div className="flex min-h-0 flex-1 gap-4 p-4">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
         {/* Left panel: Page thumbnails */}
         {pages.length > 1 && (
-          <div className="flex w-24 shrink-0 flex-col gap-2 overflow-y-auto">
+          <div className="hidden w-28 shrink-0 flex-col gap-2 overflow-y-auto border-r border-border bg-background p-3 md:flex">
             {pages.map((page, index) => {
               const isActive = index === currentPageIndex;
               const thumb = thumbnails[page.pageNumber];
@@ -827,18 +857,20 @@ export function PdfCropEditor({
                   type="button"
                   onClick={() => setCurrentPageIndex(index)}
                   className={cn(
-                    "relative rounded-md border-2 overflow-hidden transition-colors",
+                    "relative overflow-hidden rounded-md border bg-card text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
                     isActive
-                      ? "border-primary"
+                      ? "border-primary ring-1 ring-primary/30"
                       : "border-border hover:border-primary/50",
                   )}
+                  aria-label={`Go to page ${page.pageNumber}`}
+                  aria-current={isActive ? "page" : undefined}
                 >
-                  <div className="aspect-[3/4] relative w-full bg-muted">
+                  <div className="relative aspect-[3/4] w-full bg-muted">
                     {thumb ? (
                       /* eslint-disable-next-line @next/next/no-img-element -- data URL from canvas */
                       <img
                         src={thumb}
-                        alt={`Page ${page.pageNumber}`}
+                        alt=""
                         className="absolute inset-0 h-full w-full object-contain"
                       />
                     ) : (
@@ -847,14 +879,12 @@ export function PdfCropEditor({
                       </div>
                     )}
                   </div>
-                  <div className="bg-card px-1 py-0.5 text-center text-xs font-medium">
-                    {page.pageNumber}
+                  <div className="flex items-center justify-between px-2 py-1 text-xs font-medium">
+                    <span>Page {page.pageNumber}</span>
+                    {cropsOnPage > 0 ? (
+                      <Badge variant="default">{cropsOnPage}</Badge>
+                    ) : null}
                   </div>
-                  {cropsOnPage > 0 && (
-                    <div className="absolute top-1 right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                      {cropsOnPage}
-                    </div>
-                  )}
                 </button>
               );
             })}
@@ -862,25 +892,30 @@ export function PdfCropEditor({
         )}
 
         {/* Center panel: PDF canvas */}
-        <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-muted/10">
           {/* Page nav */}
-          <div className="flex items-center justify-between">
+          <div
+            className={cn(
+              PDF_CROP_CONTROL_BAND_CLASSNAME,
+              "flex-col sm:flex-row sm:justify-between",
+            )}
+          >
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                size="icon-sm"
+                size="icon"
                 onClick={() => setCurrentPageIndex((i) => Math.max(0, i - 1))}
                 disabled={currentPageIndex === 0}
                 aria-label="Previous page"
               >
                 <IconChevronLeft className="size-4" aria-hidden="true" />
               </Button>
-              <span className="text-sm font-medium">
+              <span className="min-w-24 text-sm font-medium tabular-nums">
                 Page {currentPage.pageNumber} of {pages.length}
               </span>
               <Button
                 variant="outline"
-                size="icon-sm"
+                size="icon"
                 onClick={() =>
                   setCurrentPageIndex((i) => Math.min(pages.length - 1, i + 1))
                 }
@@ -890,16 +925,16 @@ export function PdfCropEditor({
                 <IconChevronRight className="size-4" aria-hidden="true" />
               </Button>
             </div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <IconCrop className="size-3.5" aria-hidden="true" />
-              Click and drag to crop
+              Click and drag on the PDF to draw a crop region.
             </div>
           </div>
 
           {/* PDF canvas + crop overlay */}
           <div
             ref={canvasAreaRef}
-            className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg border border-border bg-neutral-700"
+            className="relative m-4 flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-md border border-border bg-neutral-800"
           >
             <div className="relative inline-block">
               <div ref={canvasContainerRef} className="relative" />
@@ -1024,59 +1059,68 @@ export function PdfCropEditor({
         </div>
 
         {/* Right panel: Cropped content */}
-        <div className="flex w-56 shrink-0 flex-col gap-3">
-          <h3 className="text-sm font-semibold">
-            Cropped Content
-            {collectedCrops.length > 0 && (
-              <span className="ml-1.5 font-normal text-muted-foreground">
-                ({collectedCrops.length})
-              </span>
-            )}
-          </h3>
-          <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
+        <aside className="flex min-h-56 shrink-0 flex-col overflow-hidden border-t border-border bg-background lg:w-72 lg:border-l lg:border-t-0">
+          <div
+            className={cn(PDF_CROP_CONTROL_BAND_CLASSNAME, "justify-between")}
+          >
+            <h2 className="text-sm font-semibold">Cropped Content</h2>
+            <Badge variant={collectedCrops.length > 0 ? "default" : "outline"}>
+              {collectedCrops.length}
+            </Badge>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-4">
             {collectedCrops.length === 0 ? (
-              <p className="py-8 text-center text-xs text-muted-foreground">
+              <div className="flex h-full min-h-36 items-center justify-center rounded-md border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-xs text-muted-foreground">
                 Draw a crop region on the PDF to add content items here.
-              </p>
+              </div>
             ) : (
-              collectedCrops.map((crop, index) => (
-                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                <div
-                  key={crop.id}
-                  className="group relative cursor-pointer overflow-hidden rounded-md border border-border bg-card"
-                  onClick={() => setLightboxCropId(crop.id)}
-                >
-                  <div className="relative h-28 w-full bg-muted">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- data URL from canvas */}
-                    <img
-                      src={crop.previewDataUrl}
-                      alt={`Crop ${index + 1}`}
-                      className="absolute inset-0 h-full w-full object-contain"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between px-2 py-1">
-                    <span className="text-xs text-muted-foreground">
-                      {contentName
-                        ? `${contentName} - ${index + 1}`
-                        : `Page ${crop.pageNumber} \u00B7 Crop ${index + 1}`}
-                    </span>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                {collectedCrops.map((crop, index) => (
+                  <div
+                    key={crop.id}
+                    className="group relative overflow-hidden rounded-md border border-border bg-card"
+                  >
                     <button
                       type="button"
+                      className="block w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                      onClick={() => setLightboxCropId(crop.id)}
+                      aria-label={`Preview crop ${index + 1}`}
+                    >
+                      <div className="relative h-32 w-full bg-muted">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- data URL from canvas */}
+                        <img
+                          src={crop.previewDataUrl}
+                          alt={`Crop ${index + 1}`}
+                          className="absolute inset-0 h-full w-full object-contain"
+                        />
+                      </div>
+                      <div className="px-3 py-2">
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {contentName
+                            ? `${contentName} - ${index + 1}`
+                            : `Page ${crop.pageNumber} \u00B7 Crop ${index + 1}`}
+                        </span>
+                      </div>
+                    </button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteCrop(crop.id);
                       }}
-                      className="flex items-center justify-center rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                      className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                       aria-label={`Delete crop ${index + 1}`}
                     >
-                      <IconTrash className="size-3.5" />
-                    </button>
+                      <IconTrash className="size-3.5" aria-hidden="true" />
+                    </Button>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
-        </div>
+        </aside>
       </div>
 
       {/* Lightbox */}
@@ -1096,15 +1140,17 @@ export function PdfCropEditor({
               alt="Crop preview"
               className="max-h-[80vh] max-w-[80vw] object-contain"
             />
-            <button
+            <Button
               ref={lightboxCloseRef}
               type="button"
+              variant="outline"
+              size="icon"
               onClick={() => setLightboxCropId(null)}
-              className="absolute -top-3 -right-3 flex size-7 items-center justify-center rounded-full bg-card text-foreground shadow-md hover:bg-accent"
+              className="absolute -right-3 -top-3 rounded-full bg-card shadow-md"
               aria-label="Close preview"
             >
               <IconX className="size-4" aria-hidden="true" />
-            </button>
+            </Button>
           </div>
         </div>
       )}

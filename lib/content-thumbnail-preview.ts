@@ -36,7 +36,7 @@ function decodeHtmlEntities(value: string): string {
   });
 }
 
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -123,17 +123,19 @@ export function getTextThumbnailText(content: TextThumbnailContent): string {
   return textContent.length > 0 ? textContent : content.title;
 }
 
+export function getTextThumbnailFallbackHtml(
+  content: TextThumbnailContent,
+): string {
+  return `<p>${escapeHtml(getTextThumbnailText(content))}</p>`;
+}
+
 export function getTextThumbnailHtml(content: TextThumbnailContent): string {
   const htmlContent = content.textHtmlContent ?? "";
   const sanitized = sanitizeRichTextHtml(htmlContent);
   if (extractPlainTextFromHtml(sanitized).length > 0) {
     return sanitized;
   }
-  const previewText = content.textPreviewText?.trim() ?? "";
-  if (previewText.length > 0) {
-    return `<p>${escapeHtml(previewText)}</p>`;
-  }
-  return `<p>${escapeHtml(content.title)}</p>`;
+  return getTextThumbnailFallbackHtml(content);
 }
 
 export function getFlashTypographyClass(messageLength: number): string {
