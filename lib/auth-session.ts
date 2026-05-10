@@ -19,6 +19,7 @@ const AUTH_CHANNEL_NAME = "wildfire_auth";
 const ACCESS_TOKEN_REFRESH_THRESHOLD_MS = 60_000;
 const MIN_REFRESH_INTERVAL_MS = 2000;
 const SESSION_HINT_KEY = "wildfire_has_session";
+const REFRESH_LOCK_NAME = "wildfire-auth-refresh";
 
 interface InternalAuthState {
   accessToken: string | null;
@@ -46,6 +47,14 @@ let lastRefreshResponse: AuthResponse | null = null;
 let refreshAbortController: AbortController | null = null;
 let authGeneration = 0;
 
+interface BrowserLockManager {
+  request<T>(
+    name: string,
+    options: { mode: "exclusive" },
+    callback: () => Promise<T>,
+  ): Promise<T>;
+}
+
 class StaleRefreshError extends Error {
   constructor() {
     super("Stale refresh response ignored");
@@ -63,11 +72,11 @@ function isRefreshInterruption(error: unknown): boolean {
 function resetRefreshState({ abort = false }: { abort?: boolean } = {}): void {
   lastRefreshAt = null;
   lastRefreshResponse = null;
-  refreshPromise = null;
   if (abort) {
+    refreshPromise = null;
     refreshAbortController?.abort();
+    refreshAbortController = null;
   }
-  refreshAbortController = null;
 }
 
 function markBootstrapped(): void {
@@ -191,7 +200,7 @@ export function seedAuthSession(response: AuthResponse): void {
     return;
   }
 
-  resetRefreshState({ abort: true });
+  resetRefreshState();
   applyAuthResponse(response, false, {
     advanceGeneration: true,
     markBootstrapped: true,
@@ -278,6 +287,43 @@ export function getAuthorizationHeaders(): Record<string, string> {
   return authorization == null ? {} : { Authorization: authorization };
 }
 
+function getAuthResponseFromState(): AuthResponse | null {
+  if (
+    state.accessToken == null ||
+    state.accessTokenExpiresAt == null ||
+    state.user == null
+  ) {
+    return null;
+  }
+
+  return {
+    type: "bearer",
+    accessToken: state.accessToken,
+    accessTokenExpiresAt: state.accessTokenExpiresAt,
+    user: state.user,
+    permissions: clonePermissions(state.permissions),
+  };
+}
+
+function getRefreshLockManager(): BrowserLockManager | null {
+  if (typeof navigator === "undefined") {
+    return null;
+  }
+
+  const maybeLocks = (navigator as Navigator & { locks?: BrowserLockManager })
+    .locks;
+  return maybeLocks ?? null;
+}
+
+async function withRefreshLock<T>(callback: () => Promise<T>): Promise<T> {
+  const locks = getRefreshLockManager();
+  if (locks == null) {
+    return callback();
+  }
+
+  return locks.request(REFRESH_LOCK_NAME, { mode: "exclusive" }, callback);
+}
+
 export async function loginWithPassword(
   credentials: LoginCredentials,
 ): Promise<AuthResponse> {
@@ -314,11 +360,33 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
     return Promise.resolve(lastRefreshResponse);
   }
 
-  const generationAtStart = authGeneration;
-  const controller = new AbortController();
-  refreshAbortController = controller;
+  const canReuseFreshSessionAfterLock =
+    state.accessToken == null || shouldRefreshAccessToken();
+  let controllerForPromise: AbortController | null = null;
 
-  const promise = (async () => {
+  const promise = withRefreshLock(async () => {
+    const currentAuth = getAuthResponseFromState();
+    if (
+      canReuseFreshSessionAfterLock &&
+      currentAuth != null &&
+      !shouldRefreshAccessToken()
+    ) {
+      return currentAuth;
+    }
+
+    if (
+      lastRefreshAt != null &&
+      lastRefreshResponse != null &&
+      Date.now() - lastRefreshAt < MIN_REFRESH_INTERVAL_MS
+    ) {
+      return lastRefreshResponse;
+    }
+
+    const generationAtStart = authGeneration;
+    const controller = new AbortController();
+    controllerForPromise = controller;
+    refreshAbortController = controller;
+
     const response = await fetch(`${getBaseUrl()}/auth/refresh`, {
       method: "POST",
       credentials: "include",
@@ -338,7 +406,7 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
     lastRefreshResponse = auth;
     applyAuthResponse(auth, true);
     return auth;
-  })();
+  });
 
   refreshPromise = promise;
 
@@ -347,7 +415,10 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
       if (refreshPromise === promise) {
         refreshPromise = null;
       }
-      if (refreshAbortController === controller) {
+      if (
+        controllerForPromise != null &&
+        refreshAbortController === controllerForPromise
+      ) {
         refreshAbortController = null;
       }
     },
@@ -355,7 +426,10 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
       if (refreshPromise === promise) {
         refreshPromise = null;
       }
-      if (refreshAbortController === controller) {
+      if (
+        controllerForPromise != null &&
+        refreshAbortController === controllerForPromise
+      ) {
         refreshAbortController = null;
       }
     },

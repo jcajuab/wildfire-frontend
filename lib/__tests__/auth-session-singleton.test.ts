@@ -72,6 +72,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   vi.useRealTimers();
 });
 
@@ -319,6 +320,92 @@ describe("refreshAccessToken singleton", () => {
 
     await expect(refresh).rejects.toThrow("Stale refresh response ignored");
     expect(getAuthSnapshot().accessToken).toBe("login-tok");
+  });
+
+  test("server session seeding does not abort an in-flight refresh response", async () => {
+    let refreshSignal: AbortSignal | null = null;
+    let resolveRefresh: (response: Response) => void = () => {
+      throw new Error("Refresh promise was not created.");
+    };
+
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/auth/refresh")) {
+        refreshSignal = init?.signal instanceof AbortSignal ? init.signal : null;
+        return new Promise<Response>((resolve) => {
+          resolveRefresh = resolve;
+        });
+      }
+      return makeJsonResponse({ ok: true });
+    });
+
+    const { refreshAccessToken, seedAuthSession, getAuthSnapshot } =
+      await import("@/lib/auth-session");
+
+    const refresh = refreshAccessToken();
+    await Promise.resolve();
+
+    expect(refreshSignal).not.toBeNull();
+    expect(refreshSignal?.aborted).toBe(false);
+
+    seedAuthSession(makeAuthResponse("server-seed-tok"));
+
+    expect(refreshSignal?.aborted).toBe(false);
+    expect(getAuthSnapshot().accessToken).toBe("server-seed-tok");
+
+    resolveRefresh(makeJsonResponse(makeAuthResponse("stale-refresh-tok")));
+
+    await expect(refresh).rejects.toThrow("Stale refresh response ignored");
+    expect(getAuthSnapshot().accessToken).toBe("server-seed-tok");
+  });
+
+  test("refresh lock rechecks session state before rotating the cookie", async () => {
+    let refreshCallCount = 0;
+    const lockRequest = vi.fn(
+      async <T,>(
+        _name: string,
+        _options: { mode: "exclusive" },
+        callback: () => Promise<T>,
+      ) => callback(),
+    );
+
+    Object.defineProperty(navigator, "locks", {
+      configurable: true,
+      value: { request: lockRequest },
+    });
+
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/auth/refresh")) {
+        refreshCallCount += 1;
+        return makeJsonResponse(makeAuthResponse("fresh-tok"));
+      }
+      return makeJsonResponse({ ok: true });
+    });
+
+    const { refreshAccessToken, seedAuthSession } =
+      await import("@/lib/auth-session");
+
+    lockRequest.mockImplementationOnce(
+      async <T,>(
+        _name: string,
+        _options: { mode: "exclusive" },
+        callback: () => Promise<T>,
+      ) => {
+        seedAuthSession(makeAuthResponse("broadcast-tok"));
+        return callback();
+      },
+    );
+
+    const result = await refreshAccessToken();
+
+    expect(lockRequest).toHaveBeenCalledWith(
+      "wildfire-auth-refresh",
+      { mode: "exclusive" },
+      expect.any(Function),
+    );
+    expect(refreshCallCount).toBe(0);
+    expect(result.accessToken).toBe("broadcast-tok");
   });
 
   test("stale bootstrap refresh failure does not purge a newer login session", async () => {
