@@ -7,11 +7,7 @@ import { useCan } from "@/hooks/use-can";
 import { useGetContentOptionsQuery } from "@/lib/api/content-api";
 import { PLAYLIST_CONTENT_PICKER_OPTIONS_QUERY } from "@/lib/content-search-params";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
-import {
-  useCreatePlaylistMutation,
-  useDeletePlaylistMutation,
-  useSavePlaylistItemsAtomicMutation,
-} from "@/lib/api/playlists-api";
+import { useCreatePlaylistMutation } from "@/lib/api/playlists-api";
 import {
   type CreatePlaylistDraft,
   type PlaylistSelectableContent,
@@ -33,8 +29,6 @@ export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
   );
 
   const [createPlaylist] = useCreatePlaylistMutation();
-  const [deletePlaylist] = useDeletePlaylistMutation();
-  const [savePlaylistItemsAtomic] = useSavePlaylistItemsAtomicMutation();
 
   const availableContent = useMemo(() => {
     const rows: PlaylistSelectableContent[] = [];
@@ -51,46 +45,26 @@ export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
 
   const handleCreatePlaylist = useCallback(
     async (data: CreatePlaylistDraft) => {
-      let createdPlaylistId: string | null = null;
-
       try {
-        const created = await createPlaylist({
+        await createPlaylist({
           name: data.name,
           description: data.description,
           showCounter: data.showCounter,
+          items: data.items.map((item) => ({
+            contentId: item.content.id,
+            duration: item.duration,
+            loop: item.loop,
+          })),
         }).unwrap();
-        createdPlaylistId = created.id;
-
-        if (data.items.length > 0) {
-          await savePlaylistItemsAtomic({
-            playlistId: created.id,
-            items: data.items.map((item) => ({
-              kind: "new" as const,
-              contentId: item.content.id,
-              duration: item.duration,
-              loop: item.loop,
-            })),
-          }).unwrap();
-        }
 
         toast.success("Successfully created playlist");
         return true;
       } catch (error) {
-        if (createdPlaylistId) {
-          try {
-            await deletePlaylist(createdPlaylistId).unwrap();
-          } catch {
-            toast.error(
-              "Failed to roll back playlist creation after item-save failure.",
-            );
-          }
-        }
-
         notifyApiError(error, "Failed to create playlist.");
         return false;
       }
     },
-    [createPlaylist, deletePlaylist, savePlaylistItemsAtomic],
+    [createPlaylist],
   );
 
   return {

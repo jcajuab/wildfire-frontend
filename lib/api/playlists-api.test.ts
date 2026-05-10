@@ -10,7 +10,7 @@ vi.mock("@/lib/api/revalidate-via-route", () => ({
   revalidateWildfireTagsViaRoute: vi.fn(async () => undefined),
 }));
 
-import { revalidateWildfireTagViaRoute } from "@/lib/api/revalidate-via-route";
+import { revalidateWildfireTagsViaRoute } from "@/lib/api/revalidate-via-route";
 import { bootstrapAccessToken, clearAuthSession } from "@/lib/auth-session";
 import type { AppStore } from "@/lib/store";
 import {
@@ -143,7 +143,7 @@ describe("playlists api cache patches", () => {
     process.env.NEXT_PUBLIC_API_URL = "http://example.test";
     clearAuthSession(false);
     await bootstrapAccessToken();
-    vi.mocked(revalidateWildfireTagViaRoute).mockClear();
+    vi.mocked(revalidateWildfireTagsViaRoute).mockClear();
   });
 
   afterEach(() => {
@@ -156,7 +156,7 @@ describe("playlists api cache patches", () => {
     }
   });
 
-  test("createPlaylist patches matching first-page caches without revalidating the Next cache", async () => {
+  test("createPlaylist invalidates cached lists and revalidates the Next cache", async () => {
     const store = makeStore();
     const matchingStatusQuery: PlaylistListQuery = {
       ...defaultQuery,
@@ -226,27 +226,23 @@ describe("playlists api cache patches", () => {
         playlistsApi.endpoints.createPlaylist.initiate({
           name: created.name,
           description: created.description,
+          items: [{ contentId: "content-1", duration: 5 }],
         }),
       )
       .unwrap();
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(revalidateWildfireTagViaRoute).not.toHaveBeenCalled();
-    expect(selectList(store, defaultQuery)?.items.map((p) => p.id)).toEqual([
-      "playlist-new",
-      "playlist-old",
+    expect(revalidateWildfireTagsViaRoute).toHaveBeenCalledWith([
+      "playlists",
+      "schedules-bootstrap",
     ]);
-    expect(
-      selectList(store, matchingStatusQuery)?.items.map((p) => p.id),
-    ).toEqual(["playlist-new", "playlist-old"]);
-    expect(selectList(store, nonMatchingStatusQuery)?.items).toEqual([]);
-    expect(
-      selectList(store, nonFirstPageQuery)?.items.map((p) => p.id),
-    ).toEqual(["playlist-old"]);
-    expect(selectList(store, nonFirstPageQuery)?.total).toBe(2);
+    expect(selectList(store, defaultQuery)).toBeUndefined();
+    expect(selectList(store, matchingStatusQuery)).toBeUndefined();
+    expect(selectList(store, nonMatchingStatusQuery)).toBeUndefined();
+    expect(selectList(store, nonFirstPageQuery)).toBeUndefined();
   });
 
-  test("createPlaylist skips cached search pages that do not match the created playlist name", async () => {
+  test("createPlaylist does not manually insert into filtered search pages", async () => {
     const store = makeStore();
     const searchQuery: PlaylistListQuery = {
       ...defaultQuery,
@@ -278,12 +274,16 @@ describe("playlists api cache patches", () => {
         playlistsApi.endpoints.createPlaylist.initiate({
           name: created.name,
           description: created.description,
+          items: [{ contentId: "content-1", duration: 5 }],
         }),
       )
       .unwrap();
 
-    expect(selectList(store, searchQuery)?.items).toEqual([]);
-    expect(selectList(store, searchQuery)?.total).toBe(0);
+    expect(selectList(store, searchQuery)).toBeUndefined();
+    expect(revalidateWildfireTagsViaRoute).toHaveBeenCalledWith([
+      "playlists",
+      "schedules-bootstrap",
+    ]);
   });
 
   test("updatePlaylist patches existing cached rows and removes rows that no longer match search", async () => {
@@ -352,7 +352,10 @@ describe("playlists api cache patches", () => {
     });
     expect(selectList(store, searchQuery)?.items).toEqual([]);
     expect(selectList(store, searchQuery)?.total).toBe(0);
-    expect(revalidateWildfireTagViaRoute).not.toHaveBeenCalled();
+    expect(revalidateWildfireTagsViaRoute).toHaveBeenCalledWith([
+      "playlists",
+      "schedules-bootstrap",
+    ]);
   });
 
   test("savePlaylistItemsAtomic patches list counts, duration, and preview items", async () => {
@@ -393,7 +396,7 @@ describe("playlists api cache patches", () => {
       .dispatch(
         playlistsApi.endpoints.savePlaylistItemsAtomic.initiate({
           playlistId: "playlist-1",
-          items: [],
+          items: [{ kind: "new", contentId: "content-1", duration: 10 }],
         }),
       )
       .unwrap();
@@ -404,6 +407,9 @@ describe("playlists api cache patches", () => {
     expect(patched?.previewItems.map((item) => item.sequence)).toEqual([
       10, 20, 30,
     ]);
-    expect(revalidateWildfireTagViaRoute).not.toHaveBeenCalled();
+    expect(revalidateWildfireTagsViaRoute).toHaveBeenCalledWith([
+      "playlists",
+      "schedules-bootstrap",
+    ]);
   });
 });

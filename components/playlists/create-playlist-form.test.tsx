@@ -215,9 +215,31 @@ describe("CreatePlaylistForm", () => {
     );
 
     expect(
-      screen.getByText("Add content from the library to get started"),
+      screen.getByText("Add at least one content item to create this playlist"),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Poster" })).toBeInTheDocument();
+  });
+
+  test("requires at least one playlist item before creation", async () => {
+    const user = userEvent.setup();
+    const onCreate = vi.fn();
+
+    render(
+      <CreatePlaylistForm
+        onCreate={onCreate}
+        availableContent={availableContent}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+
+    expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Poster" }));
+
+    expect(screen.getByRole("button", { name: "Create" })).toBeEnabled();
   });
 
   test("keeps the draft when creation fails", async () => {
@@ -231,6 +253,7 @@ describe("CreatePlaylistForm", () => {
     );
 
     await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.click(screen.getByRole("button", { name: "Poster" }));
     await user.click(screen.getByRole("button", { name: "Create" }));
 
     expect(screen.getByLabelText("Name")).toHaveValue("Morning Playlist");

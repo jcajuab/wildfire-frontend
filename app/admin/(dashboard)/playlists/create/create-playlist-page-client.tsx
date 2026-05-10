@@ -36,7 +36,8 @@ export function CreatePlaylistPageView(): ReactElement {
 
   const totalDuration = items.reduce((sum, item) => sum + item.duration, 0);
   const isOverDurationLimit = totalDuration > MAX_BASE_DURATION_SECONDS;
-  const canCreate = name.trim().length > 0 && !isOverDurationLimit;
+  const canCreate =
+    name.trim().length > 0 && items.length > 0 && !isOverDurationLimit;
 
   const handleCreate = useCallback(async () => {
     if (!canCreate || isSubmitting) return;
@@ -174,7 +175,7 @@ export function CreatePlaylistPageView(): ReactElement {
                   seconds or 1 minute.
                 </p>
               }
-              emptyItemsMessage="Add content from the library to get started"
+              emptyItemsMessage="Add at least one content item to create this playlist"
               disabled={isSubmitting}
             />
           </div>

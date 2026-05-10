@@ -78,6 +78,11 @@ export interface CreatePlaylistRequest {
   readonly name: string;
   readonly description?: string | null;
   readonly showCounter?: boolean;
+  readonly items: readonly {
+    readonly contentId: string;
+    readonly duration: number;
+    readonly loop?: boolean;
+  }[];
 }
 
 export interface UpdatePlaylistRequest {
@@ -206,50 +211,6 @@ function playlistMatchesOptionsQuery(
   return true;
 }
 
-function isFirstListPage(query: PlaylistListQuery | void): boolean {
-  return (query?.page ?? 1) === 1;
-}
-
-function canInsertCreatedPlaylist(query: PlaylistListQuery | void): boolean {
-  return (
-    isFirstListPage(query) &&
-    (query?.sortBy ?? "createdAt") === "createdAt" &&
-    (query?.sortDirection ?? "desc") === "desc"
-  );
-}
-
-function trimListToPageSize(draft: PlaylistListMutable): void {
-  const pageSize = draft.pageSize;
-  if (pageSize > 0 && draft.items.length > pageSize) {
-    draft.items.splice(pageSize);
-  }
-}
-
-function patchCreatedPlaylistList(
-  draft: BackendPlaylistListResponse,
-  query: PlaylistListQuery | void,
-  playlist: BackendPlaylistSummary,
-): void {
-  if (!playlistMatchesListQuery(playlist, query)) {
-    return;
-  }
-
-  const d = draft as unknown as PlaylistListMutable;
-  const idx = d.items.findIndex((p) => p.id === playlist.id);
-  if (idx !== -1) {
-    d.items[idx] = playlist;
-    return;
-  }
-
-  d.total += 1;
-  if (!canInsertCreatedPlaylist(query)) {
-    return;
-  }
-
-  d.items.unshift(playlist);
-  trimListToPageSize(d);
-}
-
 function applyPlaylistBaseToSummary(
   summary: BackendPlaylistSummary,
   playlist: BackendPlaylistBase,
@@ -357,63 +318,14 @@ export const playlistsApi = api.injectEndpoints({
           response,
           "createPlaylist",
         ),
-      async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
-          const { data: created } = await queryFulfilled;
-          const summary: BackendPlaylistSummary = {
-            ...created,
-            previewItems: [],
-          };
-          const listArgs = playlistsApi.util.selectCachedArgsForQuery(
-            getState(),
-            "listPlaylists",
+          await queryFulfilled;
+          dispatch(
+            playlistsApi.util.invalidateTags([
+              { type: "Playlist", id: "LIST" },
+            ]),
           );
-          for (const la of listArgs) {
-            dispatch(
-              playlistsApi.util.updateQueryData(
-                "listPlaylists",
-                la,
-                (draft) => {
-                  patchCreatedPlaylistList(draft, la, summary);
-                },
-              ),
-            );
-          }
-          const optionArgs = playlistsApi.util.selectCachedArgsForQuery(
-            getState(),
-            "getPlaylistOptions",
-          );
-          for (const oa of optionArgs) {
-            if (!playlistMatchesOptionsQuery(created, oa)) continue;
-            dispatch(
-              playlistsApi.util.updateQueryData(
-                "getPlaylistOptions",
-                oa,
-                (draft) => {
-                  if (draft.some((option) => option.id === created.id)) return;
-                  draft.push({ id: created.id, name: created.name });
-                },
-              ),
-            );
-          }
-          const entries = schedulesApi.util.selectInvalidatedBy(getState(), [
-            { type: "Schedule", id: "LIST" },
-          ]);
-          for (const entry of entries) {
-            if (entry.endpointName === "getSchedulesBootstrap") {
-              dispatch(
-                schedulesApi.util.updateQueryData(
-                  "getSchedulesBootstrap",
-                  entry.originalArgs as ScheduleWindowQuery,
-                  (draft) => {
-                    (
-                      draft.playlistOptions as { id: string; name: string }[]
-                    ).push({ id: created.id, name: created.name });
-                  },
-                ),
-              );
-            }
-          }
           dispatch(
             schedulesApi.util.invalidateTags([
               { type: "Schedule", id: "LIST" },

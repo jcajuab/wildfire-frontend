@@ -73,7 +73,8 @@ export function CreatePlaylistForm({
   );
 
   const isOverDurationLimit = totalDuration > MAX_BASE_DURATION_SECONDS;
-  const canCreate = name.trim().length > 0 && !isOverDurationLimit;
+  const canCreate =
+    name.trim().length > 0 && items.length > 0 && !isOverDurationLimit;
 
   const resetDraftState = useCallback(() => {
     setName("");
@@ -236,7 +237,7 @@ export function CreatePlaylistForm({
             {MAX_BASE_DURATION_SECONDS} seconds or 1 minute.
           </p>
         }
-        emptyItemsMessage="Add content from the library to get started"
+        emptyItemsMessage="Add at least one content item to create this playlist"
         disabled={isSubmitting}
       />
     </div>

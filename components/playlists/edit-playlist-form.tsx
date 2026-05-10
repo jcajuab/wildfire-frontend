@@ -135,7 +135,7 @@ export function EditPlaylistForm({
           {MAX_BASE_DURATION_SECONDS} seconds or 1 minute.
         </p>
       }
-      emptyItemsMessage="No items - add content from the library"
+      emptyItemsMessage="Add at least one content item before saving"
       disabled={isSaving}
     />
   );

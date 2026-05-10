@@ -3,11 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { CreatePlaylistPageView } from "./create-playlist-page-client";
 import { useGetContentOptionsQuery } from "@/lib/api/content-api";
-import {
-  useCreatePlaylistMutation,
-  useDeletePlaylistMutation,
-  useSavePlaylistItemsAtomicMutation,
-} from "@/lib/api/playlists-api";
+import { useCreatePlaylistMutation } from "@/lib/api/playlists-api";
 import { useCan } from "@/hooks/use-can";
 import { useRouter } from "next/navigation";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
@@ -15,8 +11,6 @@ import { toast } from "sonner";
 
 const pushMock = vi.fn();
 const createPlaylistMock = vi.fn();
-const deletePlaylistMock = vi.fn();
-const savePlaylistItemsAtomicMock = vi.fn();
 
 function findAncestorWithClasses(
   element: HTMLElement,
@@ -57,8 +51,6 @@ vi.mock("@/lib/api/content-api", () => ({
 
 vi.mock("@/lib/api/playlists-api", () => ({
   useCreatePlaylistMutation: vi.fn(),
-  useDeletePlaylistMutation: vi.fn(),
-  useSavePlaylistItemsAtomicMutation: vi.fn(),
 }));
 
 vi.mock("@/lib/api/get-api-error-message", () => ({
@@ -75,10 +67,6 @@ const useRouterMock = vi.mocked(useRouter);
 const useCanMock = vi.mocked(useCan);
 const useGetContentOptionsQueryMock = vi.mocked(useGetContentOptionsQuery);
 const useCreatePlaylistMutationMock = vi.mocked(useCreatePlaylistMutation);
-const useDeletePlaylistMutationMock = vi.mocked(useDeletePlaylistMutation);
-const useSavePlaylistItemsAtomicMutationMock = vi.mocked(
-  useSavePlaylistItemsAtomicMutation,
-);
 const notifyApiErrorMock = vi.mocked(notifyApiError);
 const toastSuccessMock = vi.mocked(toast.success);
 
@@ -109,22 +97,10 @@ describe("CreatePlaylistPage", () => {
     createPlaylistMock.mockReturnValue({
       unwrap: async () => ({ id: "playlist-1" }),
     });
-    deletePlaylistMock.mockReturnValue({
-      unwrap: async () => undefined,
-    });
-    savePlaylistItemsAtomicMock.mockReturnValue({
-      unwrap: async () => [],
-    });
 
     useCreatePlaylistMutationMock.mockReturnValue([
       createPlaylistMock,
     ] as unknown as ReturnType<typeof useCreatePlaylistMutation>);
-    useDeletePlaylistMutationMock.mockReturnValue([
-      deletePlaylistMock,
-    ] as unknown as ReturnType<typeof useDeletePlaylistMutation>);
-    useSavePlaylistItemsAtomicMutationMock.mockReturnValue([
-      savePlaylistItemsAtomicMock,
-    ] as unknown as ReturnType<typeof useSavePlaylistItemsAtomicMutation>);
   });
 
   test("renders the dedicated create page and cancels back to playlists", async () => {
@@ -182,6 +158,7 @@ describe("CreatePlaylistPage", () => {
     render(<CreatePlaylistPageView />);
 
     await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.click(screen.getByRole("button", { name: "Poster" }));
     await user.click(screen.getByRole("button", { name: "Create" }));
 
     await waitFor(() => {
@@ -191,12 +168,29 @@ describe("CreatePlaylistPage", () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  test("creates a name-only playlist and navigates back to playlists", async () => {
+  test("keeps create disabled until at least one content item is added", async () => {
+    const user = userEvent.setup();
+
+    render(<CreatePlaylistPageView />);
+
+    expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+
+    expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Poster" }));
+
+    expect(screen.getByRole("button", { name: "Create" })).toBeEnabled();
+  });
+
+  test("creates a playlist with content and navigates back to playlists", async () => {
     const user = userEvent.setup();
 
     render(<CreatePlaylistPageView />);
 
     await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.click(screen.getByRole("button", { name: "Poster" }));
     await user.click(screen.getByRole("button", { name: "Create" }));
 
     await waitFor(() => {
@@ -208,8 +202,14 @@ describe("CreatePlaylistPage", () => {
       name: "Morning Playlist",
       description: null,
       showCounter: false,
+      items: [
+        {
+          contentId: "content-1",
+          duration: 5,
+          loop: false,
+        },
+      ],
     });
-    expect(savePlaylistItemsAtomicMock).not.toHaveBeenCalled();
     expect(pushMock).toHaveBeenCalledWith("/admin/playlists");
   });
 
@@ -223,18 +223,19 @@ describe("CreatePlaylistPage", () => {
     render(<CreatePlaylistPageView />);
 
     await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.click(screen.getByRole("button", { name: "Poster" }));
     await user.click(screen.getByRole("button", { name: "Create" }));
 
     expect(screen.getByRole("button", { name: "Creating..." })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
   });
 
-  test("rolls back the playlist when saving added items fails", async () => {
+  test("keeps added items on the page when creation fails", async () => {
     const user = userEvent.setup();
 
-    savePlaylistItemsAtomicMock.mockReturnValueOnce({
+    createPlaylistMock.mockReturnValueOnce({
       unwrap: async () => {
-        throw new Error("item save failed");
+        throw new Error("create failed");
       },
     });
 
@@ -245,10 +246,8 @@ describe("CreatePlaylistPage", () => {
     await user.click(screen.getByRole("button", { name: "Create" }));
 
     await waitFor(() => {
-      expect(deletePlaylistMock).toHaveBeenCalled();
+      expect(notifyApiErrorMock).toHaveBeenCalled();
     });
-
-    expect(deletePlaylistMock).toHaveBeenCalledWith("playlist-1");
     expect(notifyApiErrorMock).toHaveBeenCalled();
     expect(pushMock).not.toHaveBeenCalled();
     expect(screen.getByLabelText("Name")).toHaveValue("Morning Playlist");
