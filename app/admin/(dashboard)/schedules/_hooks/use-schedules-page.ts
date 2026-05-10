@@ -15,7 +15,6 @@ import type { AuthUser } from "@/types/auth";
 import type {
   ResourceMode,
   Schedule,
-  ScheduleTimeFilter,
   ScheduleTypeFilter,
 } from "@/types/schedule";
 import { useScheduleFilters } from "./use-schedule-filters";
@@ -63,37 +62,20 @@ function scheduleMatchesType(
   return schedule.kind === "FLASH";
 }
 
-function getScheduleDateTime(date: string, time: string): Date {
-  return new Date(`${date}T${time}`);
-}
-
-function scheduleMatchesTime(
-  schedule: Schedule,
-  filter: ScheduleTimeFilter,
-): boolean {
-  if (filter === "all") return true;
-
-  const now = new Date();
-  const start = getScheduleDateTime(schedule.startDate, schedule.startTime);
-  const end = getScheduleDateTime(schedule.endDate, schedule.endTime);
-
-  if (filter === "active") return start <= now && end >= now;
-  if (filter === "upcoming") return start > now;
-  return end < now;
-}
-
 function scheduleMatchesTarget(
   schedule: Schedule,
   resourceMode: ResourceMode,
-  targetResourceId: string | null,
+  targetResourceIds: readonly string[],
   groupDisplayIdsById: ReadonlyMap<string, readonly string[]>,
 ): boolean {
-  if (!targetResourceId) return true;
+  if (targetResourceIds.length === 0) return true;
   if (resourceMode === "display")
-    return schedule.display.id === targetResourceId;
-  return (
-    groupDisplayIdsById.get(targetResourceId)?.includes(schedule.display.id) ===
-    true
+    return targetResourceIds.includes(schedule.display.id);
+  return targetResourceIds.some(
+    (targetResourceId) =>
+      groupDisplayIdsById
+        .get(targetResourceId)
+        ?.includes(schedule.display.id) === true,
   );
 }
 
@@ -123,10 +105,8 @@ export function useSchedulesPage(options?: {
     setDisplayGroupSort: setScheduleDisplayGroupSort,
     scheduleTypeFilter,
     setScheduleTypeFilter: setScheduleTypeFilterState,
-    timeFilter,
-    setTimeFilter: setTimeFilterState,
-    targetResourceId,
-    setTargetResourceId: setTargetResourceIdState,
+    targetResourceIds,
+    setTargetResourceIds: setTargetResourceIdsState,
     scheduleWindow,
     handleClearFilters: clearScheduleFilters,
     handlePrev: goToPreviousPeriod,
@@ -190,20 +170,12 @@ export function useSchedulesPage(options?: {
     [setScheduleTypeFilterState],
   );
 
-  const handleTimeFilterChange = useCallback(
-    (nextTime: typeof timeFilter) => {
-      setTimeFilterState(nextTime);
-      setResourcePage(1);
-    },
-    [setTimeFilterState],
-  );
-
   const handleTargetResourceChange = useCallback(
-    (nextTargetId: string | null) => {
-      setTargetResourceIdState(nextTargetId);
+    (nextTargetIds: string[]) => {
+      setTargetResourceIdsState(nextTargetIds);
       setResourcePage(1);
     },
-    [setTargetResourceIdState],
+    [setTargetResourceIdsState],
   );
 
   const handleClearFilters = useCallback(() => {
@@ -347,11 +319,10 @@ export function useSchedulesPage(options?: {
       allSchedules.filter(
         (schedule) =>
           scheduleMatchesType(schedule, scheduleTypeFilter) &&
-          scheduleMatchesTime(schedule, timeFilter) &&
           scheduleMatchesTarget(
             schedule,
             resourceMode,
-            targetResourceId,
+            targetResourceIds,
             groupDisplayIdsById,
           ) &&
           scheduleMatchesSearch(schedule, search),
@@ -362,17 +333,14 @@ export function useSchedulesPage(options?: {
       resourceMode,
       scheduleTypeFilter,
       search,
-      targetResourceId,
-      timeFilter,
+      targetResourceIds,
     ],
   );
 
   const searchQuery = search.trim().toLowerCase();
   const hasSearchFilter = searchQuery.length > 0;
   const hasStructuredScheduleFilter =
-    scheduleTypeFilter !== "all" ||
-    timeFilter !== "all" ||
-    targetResourceId !== null;
+    scheduleTypeFilter !== "all" || targetResourceIds.length > 0;
   const shouldFilterResources = hasSearchFilter || hasStructuredScheduleFilter;
 
   const scheduleDisplayIds = useMemo(
@@ -383,8 +351,8 @@ export function useSchedulesPage(options?: {
   const filteredDisplayResources = useMemo(
     () =>
       availableDisplays.filter((display) => {
-        if (resourceMode === "display" && targetResourceId) {
-          return display.id === targetResourceId;
+        if (resourceMode === "display" && targetResourceIds.length > 0) {
+          return targetResourceIds.includes(display.id);
         }
 
         if (!shouldFilterResources) return true;
@@ -405,15 +373,15 @@ export function useSchedulesPage(options?: {
       scheduleDisplayIds,
       searchQuery,
       shouldFilterResources,
-      targetResourceId,
+      targetResourceIds,
     ],
   );
 
   const filteredDisplayGroups = useMemo(
     () =>
       sortedDisplayGroups.filter((group) => {
-        if (resourceMode === "display-group" && targetResourceId) {
-          return group.id === targetResourceId;
+        if (resourceMode === "display-group" && targetResourceIds.length > 0) {
+          return targetResourceIds.includes(group.id);
         }
 
         if (!shouldFilterResources) return true;
@@ -433,7 +401,7 @@ export function useSchedulesPage(options?: {
       searchQuery,
       shouldFilterResources,
       sortedDisplayGroups,
-      targetResourceId,
+      targetResourceIds,
     ],
   );
 
@@ -521,10 +489,8 @@ export function useSchedulesPage(options?: {
     setDisplayGroupSort: handleDisplayGroupSortChange,
     scheduleTypeFilter,
     setScheduleTypeFilter: handleScheduleTypeFilterChange,
-    timeFilter,
-    setTimeFilter: handleTimeFilterChange,
-    targetResourceId,
-    setTargetResourceId: handleTargetResourceChange,
+    targetResourceIds,
+    setTargetResourceIds: handleTargetResourceChange,
     targetResourceOptions,
     handleClearFilters,
     resourcePage: boundedResourcePage,

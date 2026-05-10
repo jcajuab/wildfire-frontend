@@ -83,10 +83,8 @@ export function SchedulesPageView({
     setDisplayGroupSort,
     scheduleTypeFilter,
     setScheduleTypeFilter,
-    timeFilter,
-    setTimeFilter,
-    targetResourceId,
-    setTargetResourceId,
+    targetResourceIds,
+    setTargetResourceIds,
     targetResourceOptions,
     handleClearFilters,
     resourcePage,
@@ -141,8 +139,7 @@ export function SchedulesPageView({
     resourceMode,
     scheduleTypeFilter,
     search,
-    targetResourceId,
-    timeFilter,
+    targetResourceIds,
     view,
   ]);
 
@@ -197,8 +194,7 @@ export function SchedulesPageView({
         resourceMode={resourceMode}
         displayGroupSort={displayGroupSort}
         scheduleTypeFilter={scheduleTypeFilter}
-        timeFilter={timeFilter}
-        targetResourceId={targetResourceId}
+        targetResourceIds={targetResourceIds}
         targetResourceOptions={targetResourceOptions}
         canCreateSchedule={canCreateSchedule}
         canDeleteSchedule={canDeleteSchedule}
@@ -218,8 +214,7 @@ export function SchedulesPageView({
         onSearchChange={setSearch}
         onDisplayGroupSortChange={setDisplayGroupSort}
         onScheduleTypeFilterChange={setScheduleTypeFilter}
-        onTimeFilterChange={setTimeFilter}
-        onTargetResourceChange={setTargetResourceId}
+        onTargetResourceChange={setTargetResourceIds}
         onClearFilters={handleClearFilters}
         onCreatePlaylistSchedule={() => setCreateDialogKind("PLAYLIST")}
         onCreateFlashSchedule={() => setCreateDialogKind("FLASH")}

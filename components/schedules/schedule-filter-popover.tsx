@@ -8,11 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
   ComboboxContent,
   ComboboxEmpty,
-  ComboboxInput,
   ComboboxItem,
   ComboboxList,
+  useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import {
@@ -32,7 +35,6 @@ import { cn } from "@/lib/utils";
 import type {
   DisplayGroupSortField,
   ResourceMode,
-  ScheduleTimeFilter,
   ScheduleTypeFilter,
 } from "@/types/schedule";
 
@@ -42,11 +44,9 @@ interface ScheduleFilterPopoverProps {
   readonly onDisplayGroupSortChange: (sort: DisplayGroupSortField) => void;
   readonly scheduleTypeFilter: ScheduleTypeFilter;
   readonly onScheduleTypeFilterChange: (type: ScheduleTypeFilter) => void;
-  readonly timeFilter: ScheduleTimeFilter;
-  readonly onTimeFilterChange: (time: ScheduleTimeFilter) => void;
-  readonly targetResourceId: string | null;
+  readonly targetResourceIds: string[];
   readonly targetResourceOptions: readonly { id: string; name: string }[];
-  readonly onTargetResourceChange: (id: string | null) => void;
+  readonly onTargetResourceChange: (ids: string[]) => void;
   readonly embeddedTrigger?: boolean;
   readonly renderEmbeddedAnchor?: (trigger: ReactElement) => ReactElement;
   readonly onClearFilters: () => void;
@@ -59,16 +59,6 @@ const scheduleTypeOptions: readonly {
   { value: "all", label: "All schedule types" },
   { value: "playlist", label: "Playlist schedules" },
   { value: "flash", label: "Flash overlays" },
-];
-
-const timeOptions: readonly {
-  readonly value: ScheduleTimeFilter;
-  readonly label: string;
-}[] = [
-  { value: "all", label: "All times" },
-  { value: "active", label: "Active now" },
-  { value: "upcoming", label: "Upcoming" },
-  { value: "ended", label: "Ended" },
 ];
 
 const displayGroupSortOptions: readonly {
@@ -86,9 +76,9 @@ interface FilterChipProps {
 
 interface TargetResourceComboboxProps {
   readonly resourceMode: ResourceMode;
-  readonly value: string | null;
+  readonly value: string[];
   readonly options: readonly { id: string; name: string }[];
-  readonly onChange: (id: string | null) => void;
+  readonly onChange: (ids: string[]) => void;
 }
 
 function TargetResourceCombobox({
@@ -97,13 +87,16 @@ function TargetResourceCombobox({
   options,
   onChange,
 }: TargetResourceComboboxProps): ReactElement {
-  const [draftInputValue, setDraftInputValue] = useState<string | null>(null);
-  const selectedOption = options.find((option) => option.id === value);
-  const inputValue = draftInputValue ?? selectedOption?.name ?? "";
+  const [inputValue, setInputValue] = useState("");
+  const anchorRef = useComboboxAnchor();
+  const optionsById = useMemo(
+    () => new Map(options.map((option) => [option.id, option])),
+    [options],
+  );
   const label =
-    resourceMode === "display" ? "Target Display" : "Target Display Group";
+    resourceMode === "display" ? "Target Displays" : "Target Display Groups";
   const placeholder =
-    resourceMode === "display" ? "All displays" : "All display groups";
+    resourceMode === "display" ? "Search displays" : "Search display groups";
   const emptyLabel =
     resourceMode === "display"
       ? "No displays found."
@@ -111,41 +104,40 @@ function TargetResourceCombobox({
 
   const filteredOptions = useMemo(() => {
     const query = inputValue.trim().toLowerCase();
-    if (!query || selectedOption?.name === inputValue) return options;
+    if (!query) return options;
     return options.filter((option) =>
       option.name.toLowerCase().includes(query),
     );
-  }, [inputValue, options, selectedOption?.name]);
-
-  const handleSelect = (id: string | null) => {
-    onChange(id);
-    setDraftInputValue(null);
-  };
+  }, [inputValue, options]);
 
   return (
     <div className="flex min-w-0 flex-col gap-1.5 sm:col-span-2">
       <Label htmlFor="schedule-target-filter">{label}</Label>
       <Combobox
-        value={value ?? ""}
+        multiple
+        value={value}
         items={options.map((option) => option.id)}
         filteredItems={filteredOptions.map((option) => option.id)}
         inputValue={inputValue}
-        onInputValueChange={(nextValue) => {
-          const nextInput = nextValue ?? "";
-          setDraftInputValue(nextInput);
-          if (nextInput === "") onChange(null);
-        }}
         onValueChange={(nextValue) => {
-          handleSelect(typeof nextValue === "string" ? nextValue : null);
+          onChange(Array.isArray(nextValue) ? (nextValue as string[]) : []);
+          setInputValue("");
         }}
+        onInputValueChange={(nextValue) => setInputValue(nextValue ?? "")}
       >
-        <ComboboxInput
-          id="schedule-target-filter"
-          className="w-full"
-          showClear
-          placeholder={placeholder}
-        />
-        <ComboboxContent>
+        <ComboboxChips ref={anchorRef}>
+          {value.map((id) => (
+            <ComboboxChip key={id}>
+              {optionsById.get(id)?.name ?? id}
+            </ComboboxChip>
+          ))}
+          <ComboboxChipsInput
+            id="schedule-target-filter"
+            aria-label={label}
+            placeholder={value.length === 0 ? placeholder : ""}
+          />
+        </ComboboxChips>
+        <ComboboxContent anchor={anchorRef}>
           <ComboboxList>
             {filteredOptions.map((option) => (
               <ComboboxItem key={option.id} value={option.id}>
@@ -180,9 +172,7 @@ export function ScheduleFilterPopover({
   onDisplayGroupSortChange,
   scheduleTypeFilter,
   onScheduleTypeFilterChange,
-  timeFilter,
-  onTimeFilterChange,
-  targetResourceId,
+  targetResourceIds,
   targetResourceOptions,
   onTargetResourceChange,
   embeddedTrigger = false,
@@ -191,32 +181,27 @@ export function ScheduleFilterPopover({
 }: ScheduleFilterPopoverProps): ReactElement {
   const [open, setOpen] = useState(false);
   const hasTypeFilter = scheduleTypeFilter !== "all";
-  const hasTimeFilter = timeFilter !== "all";
-  const hasTargetFilter = targetResourceId !== null;
+  const hasTargetFilter = targetResourceIds.length > 0;
   const hasSortFilter =
     resourceMode === "display-group" && displayGroupSort !== "alphabetical";
   const activeFilterCount =
     (hasTypeFilter ? 1 : 0) +
-    (hasTimeFilter ? 1 : 0) +
-    (hasTargetFilter ? 1 : 0) +
+    targetResourceIds.length +
     (hasSortFilter ? 1 : 0);
   const hasActiveFilters = activeFilterCount > 0;
   const activeTypeLabel = hasTypeFilter
     ? scheduleTypeOptions.find((option) => option.value === scheduleTypeFilter)
         ?.label
     : null;
-  const activeTimeLabel = hasTimeFilter
-    ? timeOptions.find((option) => option.value === timeFilter)?.label
-    : null;
   const activeSortLabel = hasSortFilter
     ? displayGroupSortOptions.find(
         (option) => option.value === displayGroupSort,
       )?.label
     : null;
-  const activeTargetLabel = hasTargetFilter
-    ? targetResourceOptions.find((option) => option.id === targetResourceId)
-        ?.name
-    : null;
+  const targetOptionsById = useMemo(
+    () => new Map(targetResourceOptions.map((option) => [option.id, option])),
+    [targetResourceOptions],
+  );
 
   const triggerButton = (
     <Button
@@ -292,32 +277,6 @@ export function ScheduleFilterPopover({
               </Select>
             </div>
 
-            <div className="flex min-w-36 flex-1 flex-col gap-1.5">
-              <Label htmlFor="schedule-time-filter">Time</Label>
-              <Select
-                value={timeFilter}
-                onValueChange={(value) =>
-                  onTimeFilterChange(value as ScheduleTimeFilter)
-                }
-              >
-                <SelectTrigger id="schedule-time-filter" className="w-full">
-                  <SelectValue placeholder="All times" />
-                </SelectTrigger>
-                <SelectContent
-                  position="popper"
-                  side="bottom"
-                  align="start"
-                  avoidCollisions={false}
-                >
-                  {timeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             {resourceMode === "display-group" ? (
               <div className="flex min-w-36 flex-1 flex-col gap-1.5">
                 <Label htmlFor="schedule-display-group-sort-filter">
@@ -353,7 +312,7 @@ export function ScheduleFilterPopover({
 
             <TargetResourceCombobox
               resourceMode={resourceMode}
-              value={targetResourceId}
+              value={targetResourceIds}
               options={targetResourceOptions}
               onChange={onTargetResourceChange}
             />
@@ -383,18 +342,24 @@ export function ScheduleFilterPopover({
                   onRemove={() => onScheduleTypeFilterChange("all")}
                 />
               ) : null}
-              {activeTimeLabel ? (
-                <FilterChip
-                  label={activeTimeLabel}
-                  onRemove={() => onTimeFilterChange("all")}
-                />
-              ) : null}
-              {activeTargetLabel ? (
-                <FilterChip
-                  label={activeTargetLabel}
-                  onRemove={() => onTargetResourceChange(null)}
-                />
-              ) : null}
+              {hasTargetFilter
+                ? targetResourceIds.map((targetResourceId) => (
+                    <FilterChip
+                      key={targetResourceId}
+                      label={
+                        targetOptionsById.get(targetResourceId)?.name ??
+                        targetResourceId
+                      }
+                      onRemove={() =>
+                        onTargetResourceChange(
+                          targetResourceIds.filter(
+                            (id) => id !== targetResourceId,
+                          ),
+                        )
+                      }
+                    />
+                  ))
+                : null}
               {activeSortLabel ? (
                 <FilterChip
                   label={activeSortLabel}

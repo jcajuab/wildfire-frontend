@@ -3,7 +3,6 @@ export type ResourceMode = "display" | "display-group";
 export type DisplayGroupSortField = "alphabetical" | "display-count";
 export type ScheduleKind = "PLAYLIST" | "FLASH";
 export type ScheduleTypeFilter = "all" | "playlist" | "flash";
-export type ScheduleTimeFilter = "all" | "active" | "upcoming" | "ended";
 
 export interface SchedulePlaylist {
   readonly id: string;

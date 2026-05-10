@@ -22,7 +22,6 @@ import {
 import type {
   DisplayGroupSortField,
   ResourceMode,
-  ScheduleTimeFilter,
   ScheduleTypeFilter,
 } from "@/types/schedule";
 
@@ -43,8 +42,7 @@ interface SchedulesToolbarProps {
   readonly resourceMode: ResourceMode;
   readonly displayGroupSort: DisplayGroupSortField;
   readonly scheduleTypeFilter: ScheduleTypeFilter;
-  readonly timeFilter: ScheduleTimeFilter;
-  readonly targetResourceId: string | null;
+  readonly targetResourceIds: string[];
   readonly targetResourceOptions: readonly { id: string; name: string }[];
   readonly canCreateSchedule: boolean;
   readonly canDeleteSchedule: boolean;
@@ -52,8 +50,7 @@ interface SchedulesToolbarProps {
   readonly onSearchChange: (value: string) => void;
   readonly onDisplayGroupSortChange: (sort: DisplayGroupSortField) => void;
   readonly onScheduleTypeFilterChange: (type: ScheduleTypeFilter) => void;
-  readonly onTimeFilterChange: (time: ScheduleTimeFilter) => void;
-  readonly onTargetResourceChange: (id: string | null) => void;
+  readonly onTargetResourceChange: (ids: string[]) => void;
   readonly onClearFilters: () => void;
   readonly onCreatePlaylistSchedule: () => void;
   readonly onCreateFlashSchedule: () => void;
@@ -64,8 +61,7 @@ export function SchedulesToolbar({
   resourceMode,
   displayGroupSort,
   scheduleTypeFilter,
-  timeFilter,
-  targetResourceId,
+  targetResourceIds,
   targetResourceOptions,
   canCreateSchedule,
   canDeleteSchedule,
@@ -73,7 +69,6 @@ export function SchedulesToolbar({
   onSearchChange,
   onDisplayGroupSortChange,
   onScheduleTypeFilterChange,
-  onTimeFilterChange,
   onTargetResourceChange,
   onClearFilters,
   onCreatePlaylistSchedule,
@@ -101,9 +96,7 @@ export function SchedulesToolbar({
               onDisplayGroupSortChange={onDisplayGroupSortChange}
               scheduleTypeFilter={scheduleTypeFilter}
               onScheduleTypeFilterChange={onScheduleTypeFilterChange}
-              timeFilter={timeFilter}
-              onTimeFilterChange={onTimeFilterChange}
-              targetResourceId={targetResourceId}
+              targetResourceIds={targetResourceIds}
               targetResourceOptions={targetResourceOptions}
               onTargetResourceChange={onTargetResourceChange}
               onClearFilters={onClearFilters}

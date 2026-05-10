@@ -193,10 +193,8 @@ function mockScheduleFilters(
     setDisplayGroupSort: vi.fn(),
     scheduleTypeFilter: "all",
     setScheduleTypeFilter: vi.fn(),
-    timeFilter: "all",
-    setTimeFilter: vi.fn(),
-    targetResourceId: null,
-    setTargetResourceId: vi.fn(),
+    targetResourceIds: [],
+    setTargetResourceIds: vi.fn(),
     scheduleWindow,
     handleClearFilters: vi.fn(),
     handlePrev: vi.fn(),
@@ -401,6 +399,166 @@ describe("useSchedulesPage", () => {
     ]);
   });
 
+  test("filters schedules and resources by multiple target displays", () => {
+    mockScheduleFilters(initialWindow, {
+      targetResourceIds: ["display-1", "display-3"],
+    });
+    const baseBootstrap = makeBootstrapData(["Lobby Loop", "Gym Alert"]);
+    const bootstrap: SchedulesBootstrapResponse = {
+      ...baseBootstrap,
+      schedules: [
+        {
+          ...baseBootstrap.schedules[0],
+          id: "schedule-1",
+          name: "Lobby Loop",
+          displayId: "display-1",
+          display: { id: "display-1", name: "Lobby" },
+        },
+        {
+          ...baseBootstrap.schedules[1],
+          id: "schedule-2",
+          name: "Gym Alert",
+          displayId: "display-2",
+          display: { id: "display-2", name: "Gym" },
+        },
+        {
+          ...baseBootstrap.schedules[0],
+          id: "schedule-3",
+          name: "Cafeteria Loop",
+          displayId: "display-3",
+          display: { id: "display-3", name: "Cafeteria" },
+        },
+      ],
+      displayOptions: [
+        { id: "display-1", name: "Lobby" },
+        { id: "display-2", name: "Gym" },
+        { id: "display-3", name: "Cafeteria" },
+      ],
+    };
+    useGetSchedulesBootstrapQueryStateMock.mockReturnValue({
+      data: bootstrap,
+      isFetching: false,
+    } as unknown as ReturnType<
+      typeof schedulesApi.endpoints.getSchedulesBootstrap.useQueryState
+    >);
+
+    const { result } = renderHook(() =>
+      useSchedulesPage({
+        initialBootstrap: {
+          queryArgs: initialWindow,
+          data: bootstrap,
+        },
+      }),
+    );
+
+    expect(result.current.schedules.map((schedule) => schedule.name)).toEqual([
+      "Lobby Loop",
+      "Cafeteria Loop",
+    ]);
+    expect(result.current.filteredDisplayResources).toEqual([
+      { id: "display-1", name: "Lobby" },
+      { id: "display-3", name: "Cafeteria" },
+    ]);
+  });
+
+  test("filters schedules and resources by multiple target display groups", () => {
+    mockScheduleFilters(initialWindow, {
+      resourceMode: "display-group",
+      targetResourceIds: ["group-1", "group-3"],
+    });
+    const baseBootstrap = makeBootstrapData(["Lobby Loop", "Gym Alert"]);
+    const bootstrap: SchedulesBootstrapResponse = {
+      ...baseBootstrap,
+      schedules: [
+        {
+          ...baseBootstrap.schedules[0],
+          id: "schedule-1",
+          name: "Lobby Loop",
+          displayId: "display-1",
+          display: { id: "display-1", name: "Lobby" },
+        },
+        {
+          ...baseBootstrap.schedules[1],
+          id: "schedule-2",
+          name: "Gym Alert",
+          displayId: "display-2",
+          display: { id: "display-2", name: "Gym" },
+        },
+        {
+          ...baseBootstrap.schedules[0],
+          id: "schedule-3",
+          name: "Cafeteria Loop",
+          displayId: "display-3",
+          display: { id: "display-3", name: "Cafeteria" },
+        },
+      ],
+      displayOptions: [
+        { id: "display-1", name: "Lobby" },
+        { id: "display-2", name: "Gym" },
+        { id: "display-3", name: "Cafeteria" },
+      ],
+      displayGroups: [
+        {
+          id: "group-1",
+          name: "Public Areas",
+          displayIds: ["display-1"],
+          createdAt: "2026-05-08T00:00:00.000Z",
+          updatedAt: "2026-05-08T00:00:00.000Z",
+        },
+        {
+          id: "group-2",
+          name: "Athletics",
+          displayIds: ["display-2"],
+          createdAt: "2026-05-08T00:00:00.000Z",
+          updatedAt: "2026-05-08T00:00:00.000Z",
+        },
+        {
+          id: "group-3",
+          name: "Dining",
+          displayIds: ["display-3"],
+          createdAt: "2026-05-08T00:00:00.000Z",
+          updatedAt: "2026-05-08T00:00:00.000Z",
+        },
+      ],
+    };
+    useGetSchedulesBootstrapQueryStateMock.mockReturnValue({
+      data: bootstrap,
+      isFetching: false,
+    } as unknown as ReturnType<
+      typeof schedulesApi.endpoints.getSchedulesBootstrap.useQueryState
+    >);
+
+    const { result } = renderHook(() =>
+      useSchedulesPage({
+        initialBootstrap: {
+          queryArgs: initialWindow,
+          data: bootstrap,
+        },
+      }),
+    );
+
+    expect(result.current.schedules.map((schedule) => schedule.name)).toEqual([
+      "Lobby Loop",
+      "Cafeteria Loop",
+    ]);
+    expect(result.current.filteredDisplayGroups).toEqual([
+      {
+        id: "group-3",
+        name: "Dining",
+        displayIds: ["display-3"],
+        createdAt: "2026-05-08T00:00:00.000Z",
+        updatedAt: "2026-05-08T00:00:00.000Z",
+      },
+      {
+        id: "group-1",
+        name: "Public Areas",
+        displayIds: ["display-1"],
+        createdAt: "2026-05-08T00:00:00.000Z",
+        updatedAt: "2026-05-08T00:00:00.000Z",
+      },
+    ]);
+  });
+
   test("paginates visible display resources", () => {
     const bootstrap: SchedulesBootstrapResponse = {
       ...makeBootstrapData([]),
@@ -434,6 +592,38 @@ describe("useSchedulesPage", () => {
     expect(result.current.paginatedDisplayResources).toEqual([
       { id: "display-9", name: "Display 9" },
     ]);
+  });
+
+  test("resets resource pagination when target resources change", () => {
+    const bootstrap: SchedulesBootstrapResponse = {
+      ...makeBootstrapData([]),
+      displayOptions: Array.from({ length: 9 }, (_, index) => ({
+        id: `display-${index + 1}`,
+        name: `Display ${index + 1}`,
+      })),
+    };
+    useGetSchedulesBootstrapQueryStateMock.mockReturnValue({
+      data: bootstrap,
+      isFetching: false,
+    } as unknown as ReturnType<
+      typeof schedulesApi.endpoints.getSchedulesBootstrap.useQueryState
+    >);
+
+    const { result } = renderHook(() =>
+      useSchedulesPage({
+        initialBootstrap: {
+          queryArgs: initialWindow,
+          data: bootstrap,
+        },
+      }),
+    );
+
+    act(() => result.current.setResourcePage(2));
+    expect(result.current.resourcePage).toBe(2);
+
+    act(() => result.current.setTargetResourceIds(["display-1"]));
+
+    expect(result.current.resourcePage).toBe(1);
   });
 
   test("keeps resource data empty while auth is not initialized", () => {

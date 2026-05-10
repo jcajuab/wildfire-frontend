@@ -12,8 +12,7 @@ const baseProps: SchedulesToolbarProps = {
   resourceMode: "display",
   displayGroupSort: "alphabetical",
   scheduleTypeFilter: "all",
-  timeFilter: "all",
-  targetResourceId: null,
+  targetResourceIds: [],
   targetResourceOptions: [
     { id: "display-1", name: "Lobby Screen" },
     { id: "display-2", name: "Gym Display" },
@@ -27,7 +26,6 @@ const baseProps: SchedulesToolbarProps = {
   onSearchChange: vi.fn(),
   onDisplayGroupSortChange: vi.fn(),
   onScheduleTypeFilterChange: vi.fn(),
-  onTimeFilterChange: vi.fn(),
   onTargetResourceChange: vi.fn(),
   onClearFilters: vi.fn(),
   onCreatePlaylistSchedule: vi.fn(),
@@ -87,10 +85,50 @@ describe("SchedulesToolbar", () => {
     expect(
       screen.getByRole("combobox", { name: "Schedule Type" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Time" })).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Time" })).toBeNull();
     expect(
-      screen.getByRole("combobox", { name: "Target Display" }),
+      screen.getByRole("combobox", { name: "Target Displays" }),
     ).toBeInTheDocument();
+  });
+
+  test("uses readable multi-select target display chips", async () => {
+    const user = userEvent.setup();
+    const onTargetResourceChange = vi.fn();
+    renderToolbar({
+      targetResourceIds: ["display-1", "display-2"],
+      onTargetResourceChange,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Filter schedules" }));
+
+    expect(screen.getAllByText("Lobby Screen")).toHaveLength(2);
+    expect(screen.getAllByText("Gym Display")).toHaveLength(2);
+    expect(screen.queryByText("display-1")).not.toBeInTheDocument();
+    expect(screen.queryByText("display-2")).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Remove Lobby Screen filter" }),
+    );
+
+    expect(onTargetResourceChange).toHaveBeenCalledWith(["display-2"]);
+  });
+
+  test("selects multiple target displays from the filter picker", async () => {
+    const user = userEvent.setup();
+    const onTargetResourceChange = vi.fn();
+    renderToolbar({
+      targetResourceIds: ["display-1"],
+      onTargetResourceChange,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Filter schedules" }));
+    await user.click(screen.getByRole("combobox", { name: "Target Displays" }));
+    await user.click(screen.getByRole("option", { name: "Gym Display" }));
+
+    expect(onTargetResourceChange).toHaveBeenCalledWith([
+      "display-1",
+      "display-2",
+    ]);
   });
 
   test("routes create menu items to handlers", async () => {

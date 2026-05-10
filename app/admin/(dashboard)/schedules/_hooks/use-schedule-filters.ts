@@ -6,7 +6,6 @@ import type {
   CalendarView,
   ResourceMode,
   DisplayGroupSortField,
-  ScheduleTimeFilter,
   ScheduleTypeFilter,
 } from "@/types/schedule";
 
@@ -20,10 +19,8 @@ export interface UseScheduleFiltersResult {
   setDisplayGroupSort: (sort: DisplayGroupSortField) => void;
   scheduleTypeFilter: ScheduleTypeFilter;
   setScheduleTypeFilter: (type: ScheduleTypeFilter) => void;
-  timeFilter: ScheduleTimeFilter;
-  setTimeFilter: (time: ScheduleTimeFilter) => void;
-  targetResourceId: string | null;
-  setTargetResourceId: (id: string | null) => void;
+  targetResourceIds: string[];
+  setTargetResourceIds: (ids: string[]) => void;
   scheduleWindow: { from: string; to: string };
   handleClearFilters: () => void;
   handlePrev: () => void;
@@ -39,12 +36,11 @@ export function useScheduleFilters(): UseScheduleFiltersResult {
     useState<DisplayGroupSortField>("alphabetical");
   const [scheduleTypeFilter, setScheduleTypeFilter] =
     useState<ScheduleTypeFilter>("all");
-  const [timeFilter, setTimeFilter] = useState<ScheduleTimeFilter>("all");
-  const [targetResourceId, setTargetResourceId] = useState<string | null>(null);
+  const [targetResourceIds, setTargetResourceIds] = useState<string[]>([]);
 
   const handleResourceModeChange = useCallback((mode: ResourceMode) => {
     setResourceMode(mode);
-    setTargetResourceId(null);
+    setTargetResourceIds([]);
   }, []);
 
   const scheduleWindow = useMemo(
@@ -77,8 +73,7 @@ export function useScheduleFilters(): UseScheduleFiltersResult {
   const handleClearFilters = useCallback(() => {
     setDisplayGroupSort("alphabetical");
     setScheduleTypeFilter("all");
-    setTimeFilter("all");
-    setTargetResourceId(null);
+    setTargetResourceIds([]);
   }, []);
 
   return {
@@ -91,10 +86,8 @@ export function useScheduleFilters(): UseScheduleFiltersResult {
     setDisplayGroupSort,
     scheduleTypeFilter,
     setScheduleTypeFilter,
-    timeFilter,
-    setTimeFilter,
-    targetResourceId,
-    setTargetResourceId,
+    targetResourceIds,
+    setTargetResourceIds,
     scheduleWindow,
     handleClearFilters,
     handlePrev,
