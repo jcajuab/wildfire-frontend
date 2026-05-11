@@ -67,79 +67,76 @@ export function LogMetadataDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+        <DialogHeader className="px-4 pb-3 pt-4">
           <DialogTitle>Request Metadata</DialogTitle>
           <DialogDescription>
             Incident details for this audit record.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-          <div className="space-y-4 py-2">
-            <div className="space-y-3">
-              <div className="flex min-w-0 flex-col">
-                <span className="font-medium">
-                  {formatDateTime(log.occurredAt)}
-                </span>
-                <span className="text-xs text-muted-foreground wrap-break-word">
-                  {log.description}
-                </span>
-                <span className="text-xs text-muted-foreground wrap-break-word">
-                  {log.technicalDescription}
-                </span>
-              </div>
+        <div className="min-h-0 flex-1 overflow-y-auto border-t border-border p-4">
+          <div className="space-y-4">
+            <section className="space-y-1">
+              <p className="text-sm font-medium">
+                {formatDateTime(log.occurredAt)}
+              </p>
+              <p className="text-xs text-muted-foreground wrap-break-word">
+                {log.description}
+              </p>
+              <p className="text-xs text-muted-foreground wrap-break-word">
+                {log.technicalDescription}
+              </p>
+            </section>
 
-              <div className="pt-1 text-xs font-medium">Summary Details</div>
-
-              <div className="grid grid-cols-[9rem_1fr] gap-y-2 text-xs">
+            <section className="space-y-3">
+              <h3 className="text-xs font-medium">Summary Details</h3>
+              <dl className="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-x-4 gap-y-2 text-xs">
                 {Object.entries(log.metadata).map(([key, value]) => (
                   <Fragment key={key}>
-                    <span className="pr-4 text-muted-foreground">
+                    <dt className="text-muted-foreground">
                       {formatFieldLabel(key)}
-                    </span>
-                    <span className="break-all">
+                    </dt>
+                    <dd className="break-all text-foreground">
                       {formatMetadataValue(value)}
-                    </span>
+                    </dd>
                   </Fragment>
                 ))}
-              </div>
-              <div className="pt-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-auto px-0 text-xs cursor-pointer hover:text-primary hover:bg-transparent"
-                  onClick={() => setShowAdvanced((prev) => !prev)}
-                >
-                  {showAdvanced
-                    ? "Hide advanced fields"
-                    : "Show advanced fields"}
-                </Button>
-              </div>
-              {showAdvanced && (
-                <>
-                  <div className="pt-1 text-xs font-medium">
-                    Technical Fields
-                  </div>
-                  <div className="grid grid-cols-[9rem_1fr] gap-y-2 text-xs">
-                    {Object.entries(log.rawMetadata).map(([key, value]) => (
-                      <Fragment key={`raw-${key}`}>
-                        <span className="pr-4 text-muted-foreground">
-                          {formatFieldLabel(key)}
-                        </span>
-                        <span className="break-all">
-                          {formatMetadataValue(value)}
-                        </span>
-                      </Fragment>
-                    ))}
-                  </div>
-                </>
-              )}
+              </dl>
+            </section>
+
+            <div>
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-auto cursor-pointer px-0 text-xs hover:bg-transparent hover:text-primary"
+                onClick={() => setShowAdvanced((prev) => !prev)}
+              >
+                {showAdvanced ? "Hide advanced fields" : "Show advanced fields"}
+              </Button>
             </div>
+
+            {showAdvanced && (
+              <section className="space-y-3">
+                <h3 className="text-xs font-medium">Technical Fields</h3>
+                <dl className="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-x-4 gap-y-2 text-xs">
+                  {Object.entries(log.rawMetadata).map(([key, value]) => (
+                    <Fragment key={`raw-${key}`}>
+                      <dt className="text-muted-foreground">
+                        {formatFieldLabel(key)}
+                      </dt>
+                      <dd className="break-all text-foreground">
+                        {formatMetadataValue(value)}
+                      </dd>
+                    </Fragment>
+                  ))}
+                </dl>
+              </section>
+            )}
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-t border-border px-4 py-3">
           <Button onClick={handleClose}>Done</Button>
         </DialogFooter>
       </DialogContent>

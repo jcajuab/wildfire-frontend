@@ -44,7 +44,7 @@ export function GlobalEmergencyButton({
               <SidebarMenuButton
                 size="default"
                 disabled={!canUpdate || isBusy}
-                className="h-8 rounded-md bg-destructive px-2.5 text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
+                className="h-8 rounded-none bg-destructive px-2.5 text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
                 onClick={() => {
                   void deactivate();
                 }}
@@ -70,8 +70,8 @@ export function GlobalEmergencyButton({
                   disabled={!canUpdate || isBusy}
                   className={
                     isActive
-                      ? "h-8 rounded-md bg-destructive px-2.5 text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
-                      : "h-8 rounded-md border border-sidebar-foreground/24 bg-sidebar-foreground/6 px-2.5 text-sidebar-foreground/92 transition-colors hover:border-sidebar-foreground/34 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground focus-visible:border-sidebar-foreground/45 [&_svg]:text-sidebar-foreground/86"
+                      ? "h-8 rounded-none bg-destructive px-2.5 text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
+                      : "h-8 rounded-none border border-sidebar-foreground/24 bg-sidebar-foreground/6 px-2.5 text-sidebar-foreground/92 transition-colors hover:border-sidebar-foreground/34 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground focus-visible:border-sidebar-foreground/45 [&_svg]:text-sidebar-foreground/86"
                   }
                 >
                   <IconAlertTriangle className="size-4" aria-hidden="true" />

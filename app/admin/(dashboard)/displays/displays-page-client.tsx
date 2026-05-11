@@ -477,9 +477,21 @@ export function DisplaysPageView({
           onOpenChange={handleUnregisterDialogOpenChange}
           title="Unregister display?"
           description={
-            displayToUnregister
-              ? `This will disconnect \"${displayToUnregister.name}\" and revoke its runtime authentication key.`
-              : "This will disconnect the display and revoke its runtime authentication key."
+            displayToUnregister ? (
+              <>
+                <p>
+                  This will disconnect the display and revoke its runtime key.
+                </p>
+                <p className="mt-2">
+                  Display:{" "}
+                  <span className="font-medium text-foreground">
+                    {displayToUnregister.name}
+                  </span>
+                </p>
+              </>
+            ) : (
+              "This will disconnect the display and revoke its runtime authentication key."
+            )
           }
           confirmLabel="Unregister Display"
           errorFallback="Failed to unregister display."

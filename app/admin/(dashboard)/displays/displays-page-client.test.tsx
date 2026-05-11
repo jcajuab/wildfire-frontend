@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -28,7 +28,24 @@ vi.mock("@/components/displays/edit-display-dialog", () => ({
 }));
 
 vi.mock("@/components/common/confirm-action-dialog", () => ({
-  ConfirmActionDialog: () => null,
+  ConfirmActionDialog: ({
+    open,
+    title,
+    description,
+    confirmLabel,
+  }: {
+    readonly open: boolean;
+    readonly title: string;
+    readonly description?: ReactNode;
+    readonly confirmLabel: string;
+  }) =>
+    open ? (
+      <div role="alertdialog" aria-label={title}>
+        <h2>{title}</h2>
+        <div>{description}</div>
+        <button type="button">{confirmLabel}</button>
+      </div>
+    ) : null,
 }));
 
 vi.mock("@/components/common/bulk-delete-confirm-dialog", () => ({
@@ -62,6 +79,29 @@ vi.mock("next/navigation", () => ({
     replace: vi.fn(),
   }),
   useSearchParams: () => new URLSearchParams(),
+}));
+
+vi.mock("next/dynamic", () => ({
+  default:
+    () =>
+    ({
+      open,
+      title,
+      description,
+      confirmLabel,
+    }: {
+      readonly open?: boolean;
+      readonly title?: string;
+      readonly description?: ReactNode;
+      readonly confirmLabel?: string;
+    }) =>
+      open && title != null && confirmLabel != null ? (
+        <div role="alertdialog" aria-label={title}>
+          <h2>{title}</h2>
+          <div>{description}</div>
+          <button type="button">{confirmLabel}</button>
+        </div>
+      ) : null,
 }));
 
 vi.mock("@/components/displays/displays-toolbar", () => ({
@@ -282,5 +322,31 @@ describe("DisplaysPageView", () => {
       "data-show-output-metadata",
       "false",
     );
+  });
+
+  test("renders unregister display copy without embedding the display name in the warning sentence", () => {
+    useDisplaysPageMock.mockReturnValue(
+      makePageResult({
+        isUnregisterDialogOpen: true,
+        displayToUnregister: display,
+      }),
+    );
+
+    render(<DisplaysPageView />);
+
+    const dialog = screen.getByRole("alertdialog", {
+      name: "Unregister display?",
+    });
+    expect(dialog).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(
+        "This will disconnect the display and revoke its runtime key.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByText("Display:")).toBeInTheDocument();
+    expect(within(dialog).getByText("Lobby Display")).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("button", { name: "Unregister Display" }),
+    ).toBeInTheDocument();
   });
 });

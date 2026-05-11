@@ -92,6 +92,24 @@ describe("LogsTable", () => {
         "PATCH /roles/role-1 returned 200",
       ),
     ).toBeVisible();
+    expect(
+      within(screen.getByRole("dialog")).getByText("Summary Details"),
+    ).toBeVisible();
+    expect(
+      within(screen.getByRole("dialog")).queryByText("Technical Fields"),
+    ).not.toBeInTheDocument();
+
+    await actor.click(
+      screen.getByRole("button", { name: "Show advanced fields" }),
+    );
+
+    expect(
+      within(screen.getByRole("dialog")).getByText("Technical Fields"),
+    ).toBeVisible();
+    expect(
+      within(screen.getByRole("dialog")).getByText("User Agent"),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Done" })).toBeVisible();
   });
 
   test("renders empty state inside the table region", () => {
