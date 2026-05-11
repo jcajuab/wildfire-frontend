@@ -1,10 +1,17 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import Link from "next/link";
 import { RequiredLabel } from "@/components/common/required-label";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { DialogFooter } from "@/components/ui/dialog";
 import {
   Combobox,
@@ -14,10 +21,16 @@ import {
   ComboboxContent,
   ComboboxEmpty,
   ComboboxItem,
+  ComboboxInput,
   ComboboxVirtualList,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -26,7 +39,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useListContentQuery } from "@/lib/api/content-api";
+import { useListPlaylistsQuery } from "@/lib/api/playlists-api";
+import { cn } from "@/lib/utils";
 import type { ScheduleFormData, ScheduleKind } from "@/types/schedule";
+import { IconCalendar } from "@tabler/icons-react";
 
 interface DisplayPickerProps {
   value: string[];
@@ -95,7 +112,12 @@ function DisplayGroupPicker({
           disabled={disabled}
         />
       </ComboboxChips>
-      <ComboboxContent anchor={anchorRef}>
+      <ComboboxContent
+        anchor={anchorRef}
+        className="min-w-(--anchor-width)"
+        collisionAvoidance={DROPDOWN_COLLISION_AVOIDANCE}
+        matchTriggerWidth
+      >
         <ComboboxVirtualList
           items={filtered}
           getItemKey={(option) => option.id}
@@ -164,7 +186,12 @@ function DisplayPicker({
           disabled={disabled}
         />
       </ComboboxChips>
-      <ComboboxContent anchor={anchorRef}>
+      <ComboboxContent
+        anchor={anchorRef}
+        className="min-w-(--anchor-width)"
+        collisionAvoidance={DROPDOWN_COLLISION_AVOIDANCE}
+        matchTriggerWidth
+      >
         <ComboboxVirtualList
           items={filtered}
           getItemKey={(option) => option.id}
@@ -175,6 +202,445 @@ function DisplayPicker({
         <ComboboxEmpty>No displays found.</ComboboxEmpty>
       </ComboboxContent>
     </Combobox>
+  );
+}
+
+type ScheduleResourceOption = {
+  readonly id: string;
+  readonly label: string;
+};
+
+const RESOURCE_OPTION_PAGE_SIZE = 20;
+const DROPDOWN_COLLISION_AVOIDANCE = {
+  side: "shift",
+  align: "shift",
+  fallbackAxisSide: "none",
+} as const;
+
+function mergeResourceOptions(
+  existing: readonly ScheduleResourceOption[],
+  incoming: readonly ScheduleResourceOption[],
+): ScheduleResourceOption[] {
+  const seen = new Set<string>();
+  const merged: ScheduleResourceOption[] = [];
+  for (const option of [...existing, ...incoming]) {
+    if (seen.has(option.id)) continue;
+    seen.add(option.id);
+    merged.push(option);
+  }
+  return merged;
+}
+
+function haveSameResourceOptionIds(
+  left: readonly ScheduleResourceOption[],
+  right: readonly ScheduleResourceOption[],
+): boolean {
+  return (
+    left.length === right.length &&
+    left.every((option, index) => option.id === right[index]?.id)
+  );
+}
+
+function useInfinitePlaylistScheduleOptions({
+  enabled,
+  search,
+  initialOptions,
+}: {
+  readonly enabled: boolean;
+  readonly search: string;
+  readonly initialOptions: readonly { id: string; name: string }[];
+}): {
+  readonly options: readonly ScheduleResourceOption[];
+  readonly isFetching: boolean;
+  readonly isLoadingMore: boolean;
+  readonly hasMore: boolean;
+  readonly loadMore: () => void;
+} {
+  const normalizedSearch = search.trim();
+  const [page, setPage] = useState(1);
+  const [options, setOptions] = useState<readonly ScheduleResourceOption[]>([]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset loaded pages when the server-side playlist option query changes.
+    setPage(1);
+    setOptions([]);
+  }, [enabled, normalizedSearch]);
+
+  const { data, isFetching } = useListPlaylistsQuery(
+    {
+      page,
+      pageSize: RESOURCE_OPTION_PAGE_SIZE,
+      search: normalizedSearch.length > 0 ? normalizedSearch : undefined,
+      sortBy: "name",
+      sortDirection: "asc",
+    },
+    { skip: !enabled },
+  );
+
+  useEffect(() => {
+    if (!enabled || data == null) return;
+    const incoming = data.items.map((playlist) => ({
+      id: playlist.id,
+      label: playlist.name,
+    }));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Accumulate paginated RTK Query results for infinite scrolling.
+    setOptions((current) => {
+      const next =
+        data.page <= 1 ? incoming : mergeResourceOptions(current, incoming);
+      return haveSameResourceOptionIds(current, next) ? current : next;
+    });
+  }, [data, enabled]);
+
+  const fallbackOptions = useMemo(
+    () =>
+      initialOptions
+        .filter((playlist) =>
+          normalizedSearch.length === 0
+            ? true
+            : playlist.name
+                .toLowerCase()
+                .includes(normalizedSearch.toLowerCase()),
+        )
+        .map((playlist) => ({
+          id: playlist.id,
+          label: playlist.name,
+        })),
+    [initialOptions, normalizedSearch],
+  );
+  const visibleOptions = useMemo(
+    () => mergeResourceOptions(options, fallbackOptions),
+    [fallbackOptions, options],
+  );
+  const hasMore = data != null ? data.page * data.pageSize < data.total : false;
+  const loadMore = useCallback(() => {
+    if (!enabled || isFetching || !hasMore) return;
+    setPage((currentPage) => currentPage + 1);
+  }, [enabled, hasMore, isFetching]);
+
+  return {
+    options: visibleOptions,
+    isFetching,
+    isLoadingMore: isFetching && page > 1,
+    hasMore,
+    loadMore,
+  };
+}
+
+function useInfiniteFlashScheduleOptions({
+  enabled,
+  search,
+  initialOptions,
+}: {
+  readonly enabled: boolean;
+  readonly search: string;
+  readonly initialOptions: readonly { id: string; title: string }[];
+}): {
+  readonly options: readonly ScheduleResourceOption[];
+  readonly isFetching: boolean;
+  readonly isLoadingMore: boolean;
+  readonly hasMore: boolean;
+  readonly loadMore: () => void;
+} {
+  const normalizedSearch = search.trim();
+  const [page, setPage] = useState(1);
+  const [options, setOptions] = useState<readonly ScheduleResourceOption[]>([]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset loaded pages when the server-side flash content option query changes.
+    setPage(1);
+    setOptions([]);
+  }, [enabled, normalizedSearch]);
+
+  const { data, isFetching } = useListContentQuery(
+    {
+      page,
+      pageSize: RESOURCE_OPTION_PAGE_SIZE,
+      search: normalizedSearch.length > 0 ? normalizedSearch : undefined,
+      sortBy: "title",
+      sortDirection: "asc",
+      status: "READY",
+      type: "FLASH",
+    },
+    { skip: !enabled },
+  );
+
+  useEffect(() => {
+    if (!enabled || data == null) return;
+    const incoming = data.items.map((content) => ({
+      id: content.id,
+      label: content.title,
+    }));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Accumulate paginated RTK Query results for infinite scrolling.
+    setOptions((current) => {
+      const next =
+        data.page <= 1 ? incoming : mergeResourceOptions(current, incoming);
+      return haveSameResourceOptionIds(current, next) ? current : next;
+    });
+  }, [data, enabled]);
+
+  const fallbackOptions = useMemo(
+    () =>
+      initialOptions
+        .filter((content) =>
+          normalizedSearch.length === 0
+            ? true
+            : content.title
+                .toLowerCase()
+                .includes(normalizedSearch.toLowerCase()),
+        )
+        .map((content) => ({
+          id: content.id,
+          label: content.title,
+        })),
+    [initialOptions, normalizedSearch],
+  );
+  const visibleOptions = useMemo(
+    () => mergeResourceOptions(options, fallbackOptions),
+    [fallbackOptions, options],
+  );
+  const hasMore = data != null ? data.page * data.pageSize < data.total : false;
+  const loadMore = useCallback(() => {
+    if (!enabled || isFetching || !hasMore) return;
+    setPage((currentPage) => currentPage + 1);
+  }, [enabled, hasMore, isFetching]);
+
+  return {
+    options: visibleOptions,
+    isFetching,
+    isLoadingMore: isFetching && page > 1,
+    hasMore,
+    loadMore,
+  };
+}
+
+function ResourceCombobox({
+  id,
+  value,
+  options,
+  placeholder,
+  emptyMessage,
+  loadingMessage,
+  disabled = false,
+  isFetching = false,
+  isLoadingMore = false,
+  hasMore = false,
+  onLoadMore,
+  onSearchChange,
+  onValueChange,
+}: {
+  readonly id: string;
+  readonly value: string | null;
+  readonly options: readonly ScheduleResourceOption[];
+  readonly placeholder: string;
+  readonly emptyMessage: string;
+  readonly loadingMessage: string;
+  readonly disabled?: boolean;
+  readonly isFetching?: boolean;
+  readonly isLoadingMore?: boolean;
+  readonly hasMore?: boolean;
+  readonly onLoadMore?: () => void;
+  readonly onSearchChange: (value: string) => void;
+  readonly onValueChange: (value: string) => void;
+}): ReactElement {
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const anchorRef = useComboboxAnchor();
+  const [selectedOptionFallback, setSelectedOptionFallback] =
+    useState<ScheduleResourceOption | null>(null);
+  const selectedOption =
+    options.find((option) => option.id === value) ??
+    (selectedOptionFallback?.id === value ? selectedOptionFallback : undefined);
+  const visibleInputValue = open ? inputValue : (selectedOption?.label ?? "");
+  const itemValues = useMemo(
+    () => options.map((option) => option.id),
+    [options],
+  );
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (nextOpen) {
+      setInputValue("");
+      onSearchChange("");
+    }
+  };
+
+  const handleInputValueChange = (nextValue: string | null) => {
+    const normalizedValue = nextValue ?? "";
+    setInputValue(normalizedValue);
+    onSearchChange(normalizedValue);
+  };
+
+  const handleValueChange = (nextValue: string | null) => {
+    if (!nextValue) return;
+    setSelectedOptionFallback(
+      options.find((option) => option.id === nextValue) ?? null,
+    );
+    onValueChange(nextValue);
+    setInputValue("");
+    onSearchChange("");
+    setOpen(false);
+  };
+
+  return (
+    <Combobox
+      open={open}
+      onOpenChange={handleOpenChange}
+      value={value ?? ""}
+      items={itemValues}
+      filteredItems={itemValues}
+      inputValue={visibleInputValue}
+      onInputValueChange={handleInputValueChange}
+      onValueChange={handleValueChange}
+      disabled={disabled}
+    >
+      <ComboboxInput
+        id={id}
+        anchorRef={anchorRef}
+        className="w-full"
+        placeholder={placeholder}
+        disabled={disabled}
+      />
+      <ComboboxContent
+        anchor={anchorRef}
+        collisionAvoidance={DROPDOWN_COLLISION_AVOIDANCE}
+        matchTriggerWidth
+      >
+        <ComboboxVirtualList
+          items={options}
+          hasMore={hasMore}
+          isLoadingMore={isLoadingMore}
+          onLoadMore={onLoadMore}
+          getItemKey={(option) => option.id}
+          renderItem={(option) => (
+            <ComboboxItem value={option.id}>
+              <span className="truncate pr-5">{option.label}</span>
+            </ComboboxItem>
+          )}
+        />
+        {isFetching && !isLoadingMore ? (
+          <div className="px-3 py-2 text-xs text-muted-foreground">
+            {loadingMessage}
+          </div>
+        ) : (
+          <ComboboxEmpty>{emptyMessage}</ComboboxEmpty>
+        )}
+      </ComboboxContent>
+    </Combobox>
+  );
+}
+
+function ScheduleTimeInput({
+  id,
+  value,
+  min,
+  max,
+  disabled = false,
+  invalid = false,
+  onChange,
+}: {
+  readonly id: string;
+  readonly value: string;
+  readonly min?: string;
+  readonly max?: string;
+  readonly disabled?: boolean;
+  readonly invalid?: boolean;
+  readonly onChange: (value: string) => void;
+}): ReactElement {
+  return (
+    <Input
+      id={id}
+      type="time"
+      value={value}
+      min={min}
+      max={max}
+      step={60}
+      disabled={disabled}
+      aria-invalid={invalid}
+      className="tabular-nums"
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
+}
+
+function parseDateString(value: string): Date | undefined {
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return undefined;
+  return new Date(year, month - 1, day);
+}
+
+function formatDateForDisplay(value: string): string {
+  const date = parseDateString(value);
+  if (!date) return "Select date";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
+function ScheduleDatePicker({
+  id,
+  value,
+  min,
+  disabled = false,
+  invalid = false,
+  onChange,
+}: {
+  readonly id: string;
+  readonly value: string;
+  readonly min?: string;
+  readonly disabled?: boolean;
+  readonly invalid?: boolean;
+  readonly onChange: (value: string) => void;
+}): ReactElement {
+  const [open, setOpen] = useState(false);
+  const selectedDate = parseDateString(value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          id={id}
+          type="button"
+          variant="outline"
+          className={cn(
+            "h-8 w-full justify-between px-2 text-left font-normal tabular-nums",
+            !selectedDate && "text-muted-foreground",
+          )}
+          disabled={disabled}
+          aria-invalid={invalid}
+        >
+          <span>{formatDateForDisplay(value)}</span>
+          <IconCalendar className="size-3.5 text-muted-foreground" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-(--radix-popover-trigger-width) p-0"
+        align="start"
+        side="bottom"
+      >
+        <Calendar
+          mode="single"
+          selected={selectedDate}
+          className="w-full"
+          classNames={{
+            root: "w-full",
+            months: "w-full",
+            month: "w-full",
+            month_grid: "w-full",
+          }}
+          disabled={(date) => {
+            if (!min) return false;
+            return getTodayDateString(date) < min;
+          }}
+          onSelect={(date) => {
+            if (!date) return;
+            onChange(getTodayDateString(date));
+            setOpen(false);
+          }}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -266,6 +732,18 @@ function getCurrentTimeString(now = new Date()): string {
   return `${hours}:${minutes}`;
 }
 
+function addOneMinute(value: string): string | undefined {
+  const [hourRaw, minuteRaw] = value.split(":");
+  const hour = Number.parseInt(hourRaw ?? "", 10);
+  const minute = Number.parseInt(minuteRaw ?? "", 10);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return undefined;
+  const total = hour * 60 + minute + 1;
+  if (total >= 24 * 60) return undefined;
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(
+    total % 60,
+  ).padStart(2, "0")}`;
+}
+
 function isScheduleStartBeforeNow(
   data: Pick<ScheduleFormData, "startDate" | "startTime">,
   now = new Date(),
@@ -309,6 +787,31 @@ function ScheduleFormFrame({
     [],
   );
   const [currentMinute, setCurrentMinute] = useState(() => new Date());
+  const [playlistSearch, setPlaylistSearch] = useState("");
+  const [flashContentSearch, setFlashContentSearch] = useState("");
+  const deferredPlaylistSearch = useDeferredValue(playlistSearch);
+  const deferredFlashContentSearch = useDeferredValue(flashContentSearch);
+
+  const playlistOptions = useInfinitePlaylistScheduleOptions({
+    enabled: formData.kind === "PLAYLIST",
+    search: deferredPlaylistSearch,
+    initialOptions: availablePlaylists,
+  });
+  const flashContentOptions = useInfiniteFlashScheduleOptions({
+    enabled: formData.kind === "FLASH",
+    search: deferredFlashContentSearch,
+    initialOptions: availableFlashContents,
+  });
+  const showPlaylistEmptyCta =
+    isCreate &&
+    availablePlaylists.length === 0 &&
+    playlistOptions.options.length === 0 &&
+    !playlistOptions.isFetching;
+  const showFlashContentEmptyCta =
+    isCreate &&
+    availableFlashContents.length === 0 &&
+    flashContentOptions.options.length === 0 &&
+    !flashContentOptions.isFetching;
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -335,8 +838,15 @@ function ScheduleFormFrame({
 
   const isEndTimeBeforeStartTime = useMemo(() => {
     if (!formData.startTime || !formData.endTime) return false;
+    if (formData.endDate !== formData.startDate) return false;
     return formData.endTime <= formData.startTime;
-  }, [formData.startTime, formData.endTime]);
+  }, [
+    formData.endDate,
+    formData.endTime,
+    formData.startDate,
+    formData.startTime,
+  ]);
+  const isEndDateBeforeStartDate = formData.endDate < formData.startDate;
 
   const isStartTimeBeforeNow = isScheduleStartBeforeNow(
     formData,
@@ -355,6 +865,9 @@ function ScheduleFormFrame({
     if (isEndTimeBeforeStartTime) {
       return false;
     }
+    if (isEndDateBeforeStartDate) {
+      return false;
+    }
     if (isStartTimeBeforeNow) {
       return false;
     }
@@ -365,6 +878,7 @@ function ScheduleFormFrame({
   }, [
     formData,
     isEndTimeBeforeStartTime,
+    isEndDateBeforeStartDate,
     isStartTimeBeforeNow,
     isCreate,
     targetMode,
@@ -411,7 +925,7 @@ function ScheduleFormFrame({
                   Playlist
                 </TabsTrigger>
                 <TabsTrigger value="FLASH" disabled={isSubmitting}>
-                  Flash Overlay
+                  Flash
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -436,32 +950,33 @@ function ScheduleFormFrame({
             <RequiredLabel htmlFor="schedule-start-date">
               Start Date
             </RequiredLabel>
-            <Input
+            <ScheduleDatePicker
               id="schedule-start-date"
-              type="date"
               value={formData.startDate}
               min={getTodayDateString(currentMinute)}
               disabled={isSubmitting}
-              aria-invalid={isStartTimeBeforeNow}
-              onChange={(event) =>
+              invalid={isStartTimeBeforeNow}
+              onChange={(value) =>
                 setFormData((prev) => ({
                   ...prev,
-                  startDate: event.target.value,
+                  startDate: value,
+                  endDate: prev.endDate < value ? value : prev.endDate,
                 }))
               }
             />
           </div>
           <div className="space-y-2">
             <RequiredLabel htmlFor="schedule-end-date">End Date</RequiredLabel>
-            <Input
+            <ScheduleDatePicker
               id="schedule-end-date"
-              type="date"
               value={formData.endDate}
+              min={formData.startDate}
               disabled={isSubmitting}
-              onChange={(event) =>
+              invalid={isEndDateBeforeStartDate}
+              onChange={(value) =>
                 setFormData((prev) => ({
                   ...prev,
-                  endDate: event.target.value,
+                  endDate: value,
                 }))
               }
             />
@@ -473,9 +988,8 @@ function ScheduleFormFrame({
             <RequiredLabel htmlFor="schedule-start-time">
               Start Time
             </RequiredLabel>
-            <Input
+            <ScheduleTimeInput
               id="schedule-start-time"
-              type="time"
               value={formData.startTime}
               min={
                 formData.startDate === getTodayDateString(currentMinute)
@@ -483,32 +997,41 @@ function ScheduleFormFrame({
                   : undefined
               }
               disabled={isSubmitting}
-              aria-invalid={isStartTimeBeforeNow}
-              onChange={(event) =>
+              invalid={isStartTimeBeforeNow}
+              onChange={(value) =>
                 setFormData((prev) => ({
                   ...prev,
-                  startTime: event.target.value,
+                  startTime: value,
                 }))
               }
             />
           </div>
           <div className="space-y-2">
             <RequiredLabel htmlFor="schedule-end-time">End Time</RequiredLabel>
-            <Input
+            <ScheduleTimeInput
               id="schedule-end-time"
-              type="time"
               value={formData.endTime}
+              min={
+                formData.endDate === formData.startDate
+                  ? addOneMinute(formData.startTime)
+                  : undefined
+              }
               disabled={isSubmitting}
-              onChange={(event) =>
+              invalid={isEndTimeBeforeStartTime}
+              onChange={(value) =>
                 setFormData((prev) => ({
                   ...prev,
-                  endTime: event.target.value,
+                  endTime: value,
                 }))
               }
-              aria-invalid={isEndTimeBeforeStartTime}
             />
           </div>
         </div>
+        {isEndDateBeforeStartDate ? (
+          <p className="text-xs text-destructive">
+            End date must be on or after start date.
+          </p>
+        ) : null}
         {isEndTimeBeforeStartTime ? (
           <p className="text-xs text-destructive">
             End time must be later than start time.
@@ -521,46 +1044,45 @@ function ScheduleFormFrame({
         ) : null}
 
         {formData.kind === "PLAYLIST" ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <RequiredLabel>Playlist</RequiredLabel>
-              {isCreate && availablePlaylists.length === 0 ? (
-                <EmptyResourceCta
-                  message="No playlists yet."
-                  href="/admin/playlists/create"
-                  onNavigate={onCancel}
-                  disabled={isSubmitting}
-                />
-              ) : (
-                <Select
-                  value={formData.playlistId ?? ""}
-                  disabled={isSubmitting}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      playlistId: value,
-                      contentId: null,
-                    }))
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a playlist" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availablePlaylists.map((playlist) => (
-                      <SelectItem key={playlist.id} value={playlist.id}>
-                        {playlist.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
+          <div className="space-y-2">
+            <RequiredLabel htmlFor="schedule-playlist">Playlist</RequiredLabel>
+            {showPlaylistEmptyCta ? (
+              <EmptyResourceCta
+                message="No playlists yet."
+                href="/admin/playlists/create"
+                onNavigate={onCancel}
+                disabled={isSubmitting}
+              />
+            ) : (
+              <ResourceCombobox
+                id="schedule-playlist"
+                value={formData.playlistId}
+                options={playlistOptions.options}
+                placeholder="Search playlists..."
+                emptyMessage="No playlists found."
+                loadingMessage="Loading playlists..."
+                disabled={isSubmitting}
+                isFetching={playlistOptions.isFetching}
+                isLoadingMore={playlistOptions.isLoadingMore}
+                hasMore={playlistOptions.hasMore}
+                onLoadMore={playlistOptions.loadMore}
+                onSearchChange={setPlaylistSearch}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    playlistId: value,
+                    contentId: null,
+                  }))
+                }
+              />
+            )}
           </div>
         ) : (
           <div className="space-y-2">
-            <RequiredLabel>Flash Content</RequiredLabel>
-            {isCreate && availableFlashContents.length === 0 ? (
+            <RequiredLabel htmlFor="schedule-flash-content">
+              Flash Content
+            </RequiredLabel>
+            {showFlashContentEmptyCta ? (
               <EmptyResourceCta
                 message="No flash content yet."
                 href="/admin/content?create=flash"
@@ -568,9 +1090,19 @@ function ScheduleFormFrame({
                 disabled={isSubmitting}
               />
             ) : (
-              <Select
+              <ResourceCombobox
+                id="schedule-flash-content"
                 value={formData.contentId ?? ""}
+                options={flashContentOptions.options}
+                placeholder="Search flash content..."
+                emptyMessage="No ready flash content found."
+                loadingMessage="Loading flash content..."
                 disabled={isSubmitting}
+                isFetching={flashContentOptions.isFetching}
+                isLoadingMore={flashContentOptions.isLoadingMore}
+                hasMore={flashContentOptions.hasMore}
+                onLoadMore={flashContentOptions.loadMore}
+                onSearchChange={setFlashContentSearch}
                 onValueChange={(value) =>
                   setFormData((prev) => ({
                     ...prev,
@@ -578,18 +1110,7 @@ function ScheduleFormFrame({
                     playlistId: null,
                   }))
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select flash content" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableFlashContents.map((content) => (
-                    <SelectItem key={content.id} value={content.id}>
-                      {content.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             )}
           </div>
         )}

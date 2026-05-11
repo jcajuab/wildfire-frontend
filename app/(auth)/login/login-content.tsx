@@ -12,7 +12,7 @@ import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { can as canPermission } from "@/lib/permissions";
 import {
   getFirstPermittedAdminRoute,
-  getRequiredReadPermission,
+  getRequiredReadPermissions,
   UNAUTHORIZED_ROUTE,
 } from "@/lib/route-permissions";
 import type { AuthResponse } from "@/types/auth";
@@ -38,8 +38,11 @@ function getPostLoginRedirectFromResponse(
     canPermission(permission, response.permissions, response.user.isAdmin);
 
   if (redirectTo != null && redirectTo.length > 0) {
-    const required = getRequiredReadPermission(redirectTo);
-    if (required === null || hasPermission(required)) {
+    const required = getRequiredReadPermissions(redirectTo);
+    if (
+      required.length === 0 ||
+      required.every((permission) => hasPermission(permission))
+    ) {
       return redirectTo;
     }
   }

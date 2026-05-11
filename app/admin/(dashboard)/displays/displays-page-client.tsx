@@ -247,6 +247,11 @@ export function DisplaysPageView({
       handledSelectedDisplayRef.current = null;
       return;
     }
+    if (!canUpdateDisplay) {
+      handledSelectedDisplayRef.current = selectedDisplayId;
+      router.replace("/admin/displays");
+      return;
+    }
     if (handledSelectedDisplayRef.current === selectedDisplayId) return;
     handledSelectedDisplayRef.current = selectedDisplayId;
 
@@ -259,7 +264,13 @@ export function DisplaysPageView({
       }
       router.replace("/admin/displays");
     })();
-  }, [selectedDisplayId, getDisplayById, handleEditDisplay, router]);
+  }, [
+    canUpdateDisplay,
+    selectedDisplayId,
+    getDisplayById,
+    handleEditDisplay,
+    router,
+  ]);
 
   const groupFiltersKey = useMemo(
     () => [...groupFilters].sort().join("\u0000"),

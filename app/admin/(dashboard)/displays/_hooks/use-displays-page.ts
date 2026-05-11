@@ -217,7 +217,7 @@ export function useDisplaysPage({
   );
   const isAdmin = authSnapshot.user?.isAdmin === true;
   const canCreateDisplay = hasCreatePermission;
-  const canManageDisplayGroups = hasUpdatePermission;
+  const canManageDisplayGroups = hasCreatePermission && hasUpdatePermission;
   const canUpdateDisplay = isAdmin && hasUpdatePermission;
   const canDeleteDisplay = isAdmin && hasDeletePermission;
 

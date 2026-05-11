@@ -93,8 +93,12 @@ export function useSchedulesPage(options?: {
   const canEditSchedule = useCan("schedules:update");
   const canDeleteSchedule = useCan("schedules:delete");
   const canReadDisplays = useCan("displays:read");
+  const canCreateDisplays = useCan("displays:create");
+  const canUpdateDisplays = useCan("displays:update");
   const canReadPlaylists = useCan("playlists:read");
+  const canUpdatePlaylists = useCan("playlists:update");
   const canReadContent = useCan("content:read");
+  const canUpdateContent = useCan("content:update");
 
   const {
     currentDate,
@@ -476,6 +480,11 @@ export function useSchedulesPage(options?: {
     canCreateSchedule,
     canEditSchedule,
     canDeleteSchedule,
+    canViewAssignmentDetails: canCreateSchedule && canEditSchedule,
+    canOpenPlaylistLink: canUpdatePlaylists,
+    canOpenContentLink: canUpdateContent,
+    canOpenDisplayLink: user?.isAdmin === true && canUpdateDisplays,
+    canManageDisplayGroups: canCreateDisplays && canUpdateDisplays,
     canEditSelectedSchedule: canEditSchedule && canManageSelectedSchedule,
     canDeleteSelectedSchedule: canDeleteSchedule && canManageSelectedSchedule,
     canDeleteScheduleItem,

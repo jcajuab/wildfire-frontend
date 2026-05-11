@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import {
-  getRequiredReadPermission,
+  getRequiredReadPermissions,
   getFirstPermittedAdminRoute,
   UNAUTHORIZED_ROUTE,
 } from "@/lib/route-permissions";
@@ -27,11 +27,10 @@ export function PageReadGuard({ children }: PageReadGuardProps): ReactElement {
   const { can, isInitialized } = useAuth();
   const fallbackRoute = getFirstPermittedAdminRoute(can) ?? UNAUTHORIZED_ROUTE;
 
-  const requiredPermission = getRequiredReadPermission(pathname ?? "");
-  const hasAccess =
-    requiredPermission === null ? true : can(requiredPermission);
+  const requiredPermissions = getRequiredReadPermissions(pathname ?? "");
+  const hasAccess = requiredPermissions.every((permission) => can(permission));
 
-  if (isInitialized && !hasAccess && requiredPermission !== null) {
+  if (isInitialized && !hasAccess && requiredPermissions.length > 0) {
     return (
       <div className="flex flex-1 items-center justify-center p-8">
         <EmptyState

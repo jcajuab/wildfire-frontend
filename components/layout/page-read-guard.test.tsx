@@ -124,4 +124,19 @@ describe("PageReadGuard", () => {
       screen.queryByText("You don't have access to this page"),
     ).not.toBeInTheDocument();
   });
+
+  test("requires every permission for display group management", () => {
+    usePathnameMock.mockReturnValue("/admin/displays/display-groups");
+    useAuthMock.mockReturnValue({
+      can: allowOnly("displays:create", "displays:read"),
+      isInitialized: true,
+    } as unknown as ReturnType<typeof useAuth>);
+
+    render(renderGuard());
+
+    expect(
+      screen.getByText("You don't have access to this page"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Allowed content")).not.toBeInTheDocument();
+  });
 });

@@ -125,4 +125,39 @@ describe("ViewScheduleDialog", () => {
       within(footer).getByRole("button", { name: "Close" }),
     ).toBeInTheDocument();
   });
+
+  test("hides assignment details for users without schedule management permissions", () => {
+    renderDialog({
+      canViewAssignmentDetails: false,
+      onEdit: undefined,
+      onDelete: undefined,
+    });
+
+    expect(screen.getByText("Title")).toBeInTheDocument();
+    expect(screen.getByText("Scheduled for")).toBeInTheDocument();
+    expect(screen.getByText("Time")).toBeInTheDocument();
+    expect(screen.queryByText("Mode")).toBeNull();
+    expect(screen.queryByText("Playlist")).toBeNull();
+    expect(screen.queryByText("Target display")).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: /Cafeteria North/i }),
+    ).toBeNull();
+  });
+
+  test("renders assignment values without links when link permissions are unavailable", () => {
+    renderDialog({
+      canOpenPlaylistLink: false,
+      canOpenDisplayLink: false,
+      onEdit: undefined,
+      onDelete: undefined,
+    });
+
+    expect(screen.getByText("Mode")).toBeInTheDocument();
+    expect(screen.getByText("Morning Loop")).toBeInTheDocument();
+    expect(screen.getByText("Cafeteria North")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Morning Loop/i })).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: /Cafeteria North/i }),
+    ).toBeNull();
+  });
 });

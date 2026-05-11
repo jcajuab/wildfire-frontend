@@ -11,6 +11,7 @@ export type SidebarSection = "core" | "manage";
 export interface DashboardRouteReadPermissionEntry {
   readonly path: string;
   readonly permission?: PermissionType;
+  readonly permissions?: readonly PermissionType[];
   readonly sidebarPermissions?: readonly PermissionType[];
   readonly title: string;
   readonly match: RouteMatchMode;
@@ -93,6 +94,13 @@ const MANAGE_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
 const NON_NAV_ROUTE_READ_ENTRIES: readonly DashboardRouteReadPermissionEntry[] =
   [
     {
+      path: "/admin/displays/display-groups",
+      permissions: ["displays:create", "displays:update"],
+      title: "Manage Display Groups",
+      match: "exact",
+      section: "core",
+    },
+    {
       path: "/admin/playlists/create",
       permission: "playlists:create",
       title: "Create Playlist",
@@ -160,6 +168,12 @@ export const isPathMatch = (
 export const getRequiredReadPermission = (
   pathname: string,
 ): PermissionType | null => {
+  return getRequiredReadPermissions(pathname)[0] ?? null;
+};
+
+export const getRequiredReadPermissions = (
+  pathname: string,
+): readonly PermissionType[] => {
   const normalizedPath = normalizeRoutePath(pathname);
 
   let bestMatch: DashboardRouteReadPermissionEntry | undefined;
@@ -174,7 +188,9 @@ export const getRequiredReadPermission = (
     }
   }
 
-  return bestMatch?.permission ?? null;
+  if (bestMatch == null) return [];
+  if (bestMatch.permissions != null) return bestMatch.permissions;
+  return bestMatch.permission == null ? [] : [bestMatch.permission];
 };
 
 export const getRoutesBySection = (
@@ -196,6 +212,10 @@ export const getSidebarVisibilityPermissions = (
 ): readonly PermissionType[] => {
   if (entry.sidebarPermissions != null) {
     return entry.sidebarPermissions;
+  }
+
+  if (entry.permissions != null) {
+    return entry.permissions;
   }
 
   return entry.permission == null ? [] : [entry.permission];

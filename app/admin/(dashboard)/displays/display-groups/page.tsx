@@ -7,12 +7,12 @@ import type {
 } from "@/lib/api/displays-api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
+import { serverFetchJson, sessionHasPermission } from "@/lib/server/api";
 import type { ServerSearchParamValue } from "@/lib/server/api";
 import {
   getCachedServerSession,
   resolveOptionalDashboardSession,
 } from "@/lib/server/auth";
-import { serverFetchJson } from "@/lib/server/api";
 
 import { DisplayGroupsPageClient } from "./display-groups-page-client";
 
@@ -59,15 +59,18 @@ async function getCachedBootstrap(): Promise<DisplaysBootstrapResponse | null> {
 }
 
 export default async function DisplayGroupsPage(): Promise<ReactElement> {
-  const [sessionResult, bootstrapData] = await Promise.all([
-    getCachedServerSession(),
-    getCachedBootstrap(),
-  ]);
+  const sessionResult = await getCachedServerSession();
 
   const session = resolveOptionalDashboardSession(sessionResult);
-  if (!session) {
+  const canManageDisplayGroups =
+    session != null &&
+    sessionHasPermission(session, "displays:create") &&
+    sessionHasPermission(session, "displays:update");
+  if (!session || !canManageDisplayGroups) {
     return <DisplayGroupsPageClient />;
   }
+  const bootstrapData = await getCachedBootstrap();
+
   return (
     <DisplayGroupsPageClient
       initialQueryArgs={DISPLAY_GROUPS_BOOTSTRAP_QUERY}

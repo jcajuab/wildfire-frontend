@@ -22,6 +22,10 @@ interface ViewScheduleDialogProps {
   readonly schedule: Schedule | null;
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
+  readonly canViewAssignmentDetails?: boolean;
+  readonly canOpenPlaylistLink?: boolean;
+  readonly canOpenContentLink?: boolean;
+  readonly canOpenDisplayLink?: boolean;
   readonly onEdit?: (schedule: Schedule) => void;
   readonly onDelete?: (schedule: Schedule) => void;
 }
@@ -30,6 +34,10 @@ export function ViewScheduleDialog({
   schedule,
   open,
   onOpenChange,
+  canViewAssignmentDetails = true,
+  canOpenPlaylistLink = false,
+  canOpenContentLink = false,
+  canOpenDisplayLink = false,
   onEdit,
   onDelete,
 }: ViewScheduleDialogProps): ReactElement | null {
@@ -65,50 +73,64 @@ export function ViewScheduleDialog({
                 {formatClockTime(schedule.endTime)}
               </span>
 
-              <span className="text-muted-foreground">Mode</span>
-              <span>
-                {schedule.kind === "PLAYLIST"
-                  ? "Base playlist"
-                  : "Flash overlay"}
-              </span>
-
-              {schedule.playlist ? (
+              {canViewAssignmentDetails ? (
                 <>
-                  <span className="text-muted-foreground">Playlist</span>
-                  <Link
-                    href={`/admin/playlists/edit/${schedule.playlist.id}`}
-                    onClick={() => onOpenChange(false)}
-                    className="flex items-center gap-1 text-primary hover:underline"
-                  >
-                    {schedule.playlist.name}
-                    <IconArrowRight className="size-3.5 shrink-0" />
-                  </Link>
+                  <span className="text-muted-foreground">Mode</span>
+                  <span>
+                    {schedule.kind === "PLAYLIST" ? "Base playlist" : "Flash"}
+                  </span>
+
+                  {schedule.playlist ? (
+                    <>
+                      <span className="text-muted-foreground">Playlist</span>
+                      {canOpenPlaylistLink ? (
+                        <Link
+                          href={`/admin/playlists/edit/${schedule.playlist.id}`}
+                          onClick={() => onOpenChange(false)}
+                          className="flex items-center gap-1 text-primary hover:underline"
+                        >
+                          {schedule.playlist.name}
+                          <IconArrowRight className="size-3.5 shrink-0" />
+                        </Link>
+                      ) : (
+                        <span>{schedule.playlist.name}</span>
+                      )}
+                    </>
+                  ) : null}
+
+                  {schedule.content ? (
+                    <>
+                      <span className="text-muted-foreground">Content</span>
+                      {canOpenContentLink ? (
+                        <Link
+                          href={`/admin/content?edit=${schedule.content.id}`}
+                          onClick={() => onOpenChange(false)}
+                          className="flex items-center gap-1 text-primary hover:underline"
+                        >
+                          {schedule.content.title}
+                          <IconArrowRight className="size-3.5 shrink-0" />
+                        </Link>
+                      ) : (
+                        <span>{schedule.content.title}</span>
+                      )}
+                    </>
+                  ) : null}
+
+                  <span className="text-muted-foreground">Target display</span>
+                  {canOpenDisplayLink ? (
+                    <Link
+                      href={`/admin/displays?selectedDisplay=${schedule.display.id}`}
+                      onClick={() => onOpenChange(false)}
+                      className="flex items-center gap-1 text-primary hover:underline"
+                    >
+                      {schedule.display.name}
+                      <IconArrowRight className="size-3.5 shrink-0" />
+                    </Link>
+                  ) : (
+                    <span>{schedule.display.name}</span>
+                  )}
                 </>
               ) : null}
-
-              {schedule.content ? (
-                <>
-                  <span className="text-muted-foreground">Content</span>
-                  <Link
-                    href={`/admin/content?edit=${schedule.content.id}`}
-                    onClick={() => onOpenChange(false)}
-                    className="flex items-center gap-1 text-primary hover:underline"
-                  >
-                    {schedule.content.title}
-                    <IconArrowRight className="size-3.5 shrink-0" />
-                  </Link>
-                </>
-              ) : null}
-
-              <span className="text-muted-foreground">Target display</span>
-              <Link
-                href={`/admin/displays?selectedDisplay=${schedule.display.id}`}
-                onClick={() => onOpenChange(false)}
-                className="flex items-center gap-1 text-primary hover:underline"
-              >
-                {schedule.display.name}
-                <IconArrowRight className="size-3.5 shrink-0" />
-              </Link>
             </div>
           </div>
 

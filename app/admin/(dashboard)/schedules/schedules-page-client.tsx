@@ -76,6 +76,11 @@ export function SchedulesPageView({
     isFetching,
     canCreateSchedule,
     canDeleteSchedule,
+    canViewAssignmentDetails,
+    canOpenPlaylistLink,
+    canOpenContentLink,
+    canOpenDisplayLink,
+    canManageDisplayGroups,
     canEditSelectedSchedule,
     canDeleteSelectedSchedule,
     canDeleteScheduleItem,
@@ -307,6 +312,7 @@ export function SchedulesPageView({
             ) : null}
             {hasEmptyDisplayGroups &&
             !isLoading &&
+            canManageDisplayGroups &&
             resourceMode === "display-group" ? (
               <div className="mb-3 rounded-md border border-border bg-muted/30 px-3 py-2">
                 <p className="text-xs text-muted-foreground">
@@ -400,6 +406,10 @@ export function SchedulesPageView({
         schedule={selectedSchedule}
         open={viewDialogOpen}
         onOpenChange={setViewDialogOpen}
+        canViewAssignmentDetails={canViewAssignmentDetails}
+        canOpenPlaylistLink={canOpenPlaylistLink}
+        canOpenContentLink={canOpenContentLink}
+        canOpenDisplayLink={canOpenDisplayLink}
         onEdit={
           !isSelectionMode && canEditSelectedSchedule
             ? handleEditFromView

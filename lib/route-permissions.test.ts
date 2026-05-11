@@ -4,6 +4,7 @@ import {
   getFirstVisibleAdminRoute,
   getFirstPermittedAdminRoute,
   getRequiredReadPermission,
+  getRequiredReadPermissions,
   getRoutesBySection,
   isSidebarRouteVisible,
 } from "@/lib/route-permissions";
@@ -23,6 +24,12 @@ describe("getRequiredReadPermission", () => {
 
   test("keeps content index on the read permission", () => {
     expect(getRequiredReadPermission("/admin/content")).toBe("content:read");
+  });
+
+  test("requires display create and update for display group management", () => {
+    expect(getRequiredReadPermissions("/admin/displays/display-groups")).toEqual(
+      ["displays:create", "displays:update"],
+    );
   });
 
   test("keeps role index on the read permission", () => {
