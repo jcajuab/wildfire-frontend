@@ -73,6 +73,7 @@ vi.mock("@/lib/api/rbac-api", () => ({
   useSetUserStatusMutation: vi.fn(() => [vi.fn()]),
   useResetUserPasswordMutation: vi.fn(() => [vi.fn()]),
   useUpdateUserMutation: vi.fn(() => [vi.fn()]),
+  useDeleteUserMutation: vi.fn(() => [vi.fn()]),
 }));
 
 vi.mock("./use-users-dialogs", () => ({
@@ -82,6 +83,8 @@ vi.mock("./use-users-dialogs", () => ({
     selectedUser: null,
     userToBan: null,
     isBanDialogOpen: false,
+    userToDelete: null,
+    isDeleteDialogOpen: false,
     resetPasswordResult: null,
     isResetPasswordDialogOpen: false,
     setIsInviteDialogOpen: vi.fn(),
@@ -89,11 +92,14 @@ vi.mock("./use-users-dialogs", () => ({
     setSelectedUser: vi.fn(),
     setIsBanDialogOpen: vi.fn(),
     setUserToBan: vi.fn(),
+    setIsDeleteDialogOpen: vi.fn(),
+    setUserToDelete: vi.fn(),
     setResetPasswordResult: vi.fn(),
     setIsResetPasswordDialogOpen: vi.fn(),
     handleEdit: vi.fn(),
     handleRequestBanUser: vi.fn(),
     handleRequestUnbanUser: vi.fn(),
+    handleRequestDeleteUser: vi.fn(),
   })),
 }));
 

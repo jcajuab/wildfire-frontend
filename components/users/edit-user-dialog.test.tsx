@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,11 @@ vi.mock("@/context/auth-context", () => ({
     user: { id: "admin-user" },
   }),
 }));
+
+const roles = [
+  { id: "role-editor", name: "Editor" },
+  { id: "role-viewer", name: "Viewer" },
+];
 
 const baseUser: User = {
   id: "user-1",
@@ -30,6 +36,9 @@ function renderDialog(user: User = baseUser) {
         onOpenChange={vi.fn()}
         onSubmit={vi.fn()}
         canManageStatus
+        canManageRoles
+        availableRoles={roles}
+        selectedRoleIds={["role-viewer"]}
       />
     </TooltipProvider>,
   );
@@ -84,6 +93,7 @@ describe("EditUserDialog", () => {
       .map((label) => label.textContent);
 
     expect(labels).toEqual(["Name", "Username", "Email", "User Type"]);
+    expect(screen.getByText("Role Assignment")).toBeInTheDocument();
   });
 
   test("keeps form completion actions ordered after the status action", () => {
@@ -94,5 +104,42 @@ describe("EditUserDialog", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+  });
+
+  test("submits staged role assignment changes with identity details", async () => {
+    const actor = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    render(
+      <TooltipProvider>
+        <EditUserDialog
+          user={{
+            ...baseUser,
+            isInvitedUser: true,
+          }}
+          open
+          onOpenChange={vi.fn()}
+          onSubmit={onSubmit}
+          canManageRoles
+          availableRoles={roles}
+          selectedRoleIds={["role-viewer"]}
+        />
+      </TooltipProvider>,
+    );
+
+    await actor.click(screen.getByRole("button", { name: "Role Assignment" }));
+    await actor.click(screen.getByRole("menuitemcheckbox", { name: "Editor" }));
+    await actor.keyboard("{Escape}");
+    await actor.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "user-1",
+        username: "alice",
+        name: "Alice Example",
+        email: "alice@example.com",
+        roleIds: ["role-viewer", "role-editor"],
+      }),
+    );
   });
 });

@@ -40,6 +40,7 @@ interface UsersTableProps {
   ) => Promise<string[]>;
   readonly onBanUser: (user: User) => void;
   readonly onUnbanUser: (user: User) => void;
+  readonly onDeleteUser: (user: User) => void;
   readonly onResetPassword: (userId: string) => Promise<void>;
   readonly roleFilter?: string;
   readonly onRoleFilterChange?: (roleId: string) => void;
@@ -190,6 +191,7 @@ interface UserRowProps {
   ) => Promise<string[]>;
   readonly onBanUser: (user: User) => void;
   readonly onUnbanUser: (user: User) => void;
+  readonly onDeleteUser: (user: User) => void;
   readonly onResetPassword: (userId: string) => Promise<void>;
   readonly canUpdate: boolean;
   readonly canDelete: boolean;
@@ -204,6 +206,7 @@ function UserRow({
   onRoleToggle,
   onBanUser,
   onUnbanUser,
+  onDeleteUser,
   onResetPassword,
   canUpdate,
   canDelete,
@@ -281,6 +284,7 @@ function UserRow({
           onRoleToggle={onRoleToggle}
           onBanUser={onBanUser}
           onUnbanUser={onUnbanUser}
+          onDeleteUser={onDeleteUser}
           onResetPassword={onResetPassword}
           canUpdate={canUpdate}
           canDelete={canDelete}
@@ -300,6 +304,7 @@ export function UsersTable({
   onRoleToggle,
   onBanUser,
   onUnbanUser,
+  onDeleteUser,
   onResetPassword,
   roleFilter = "all",
   onRoleFilterChange,
@@ -429,6 +434,7 @@ export function UsersTable({
               onRoleToggle={onRoleToggle}
               onBanUser={onBanUser}
               onUnbanUser={onUnbanUser}
+              onDeleteUser={onDeleteUser}
               onResetPassword={onResetPassword}
               canUpdate={canUpdateRow}
               canDelete={canDeleteRow}

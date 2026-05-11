@@ -9,6 +9,7 @@ import {
   useSetUserStatusMutation,
   useUpdateUserMutation,
   useSetUserRolesMutation,
+  useDeleteUserMutation,
 } from "@/lib/api/rbac-api";
 import {
   useCreateInvitationMutation,
@@ -47,6 +48,7 @@ export function useUsersHandlers({
   const [setUserRoles] = useSetUserRolesMutation();
   const [setUserStatus] = useSetUserStatusMutation();
   const [resetUserPassword] = useResetUserPasswordMutation();
+  const [deleteUser] = useDeleteUserMutation();
 
   const handleInvite = useCallback(
     async (emails: readonly string[]): Promise<boolean> => {
@@ -143,6 +145,24 @@ export function useUsersHandlers({
           name: data.name,
           email: data.email,
         }).unwrap();
+
+        if (data.roleIds != null) {
+          const roleIdsToSend = isAdmin
+            ? data.roleIds
+            : (() => {
+                const currentIds =
+                  userRolesByUserId[data.id]?.map((r) => r.id) ?? [];
+                const preservedSystem = currentIds.filter((id) =>
+                  systemRoleIds.includes(id),
+                );
+                return [...new Set([...data.roleIds, ...preservedSystem])];
+              })();
+
+          await setUserRoles({
+            userId: data.id,
+            roleIds: roleIdsToSend,
+          }).unwrap();
+        }
         toast.success(`Successfully updated ${data.name}`);
         setIsEditDialogOpen(false);
         setSelectedUser(null);
@@ -150,7 +170,15 @@ export function useUsersHandlers({
         notifyApiError(err, `Failed to update ${data.name}`);
       }
     },
-    [updateUser, setIsEditDialogOpen, setSelectedUser],
+    [
+      updateUser,
+      setUserRoles,
+      isAdmin,
+      systemRoleIds,
+      userRolesByUserId,
+      setIsEditDialogOpen,
+      setSelectedUser,
+    ],
   );
 
   const banUserById = useCallback(
@@ -167,10 +195,22 @@ export function useUsersHandlers({
     [setUserStatus],
   );
 
+  const deleteUserById = useCallback(
+    async (id: string) => {
+      await deleteUser(id).unwrap();
+    },
+    [deleteUser],
+  );
+
   const handleResetPassword = useCallback(
     async (userId: string) => {
       try {
         const result = await resetUserPassword(userId).unwrap();
+        if (result.password.trim().length === 0) {
+          throw new Error(
+            "The reset password response did not include a password.",
+          );
+        }
         setResetPasswordResult({ userId, password: result.password });
         setIsResetPasswordDialogOpen(true);
       } catch (err) {
@@ -189,6 +229,7 @@ export function useUsersHandlers({
     handleEditSubmit,
     banUserById,
     unbanUserById,
+    deleteUserById,
     handleResetPassword,
   };
 }

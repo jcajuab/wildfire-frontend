@@ -109,6 +109,8 @@ export interface UseUsersPageResult {
   selectedUser: User | null;
   userToBan: User | null;
   isBanDialogOpen: boolean;
+  userToDelete: User | null;
+  isDeleteDialogOpen: boolean;
 
   // Reset password dialog
   resetPasswordResult: { userId: string; password: string } | null;
@@ -122,6 +124,8 @@ export interface UseUsersPageResult {
   setIsEditDialogOpen: (open: boolean) => void;
   setIsBanDialogOpen: (open: boolean) => void;
   setUserToBan: (user: User | null) => void;
+  setIsDeleteDialogOpen: (open: boolean) => void;
+  setUserToDelete: (user: User | null) => void;
   setIsResetPasswordDialogOpen: (open: boolean) => void;
 
   // Handlers
@@ -139,9 +143,11 @@ export interface UseUsersPageResult {
   handleEditSubmit: (data: EditUserFormData) => Promise<void>;
   handleRequestBanUser: (user: User) => void;
   handleRequestUnbanUser: (user: User) => void;
+  handleRequestDeleteUser: (user: User) => void;
   handleResetPassword: (userId: string) => Promise<void>;
   banUserById: (id: string) => Promise<void>;
   unbanUserById: (id: string) => Promise<void>;
+  deleteUserById: (id: string) => Promise<void>;
 }
 
 export function useUsersPage(options?: {
@@ -334,6 +340,8 @@ export function useUsersPage(options?: {
     selectedUser: dialogs.selectedUser,
     userToBan: dialogs.userToBan,
     isBanDialogOpen: dialogs.isBanDialogOpen,
+    userToDelete: dialogs.userToDelete,
+    isDeleteDialogOpen: dialogs.isDeleteDialogOpen,
     resetPasswordResult: dialogs.resetPasswordResult,
     isResetPasswordDialogOpen: dialogs.isResetPasswordDialogOpen,
     setPage: filters.setPage,
@@ -343,6 +351,8 @@ export function useUsersPage(options?: {
     setIsEditDialogOpen: dialogs.setIsEditDialogOpen,
     setIsBanDialogOpen: dialogs.setIsBanDialogOpen,
     setUserToBan: dialogs.setUserToBan,
+    setIsDeleteDialogOpen: dialogs.setIsDeleteDialogOpen,
+    setUserToDelete: dialogs.setUserToDelete,
     setIsResetPasswordDialogOpen: dialogs.setIsResetPasswordDialogOpen,
     handleSearchChange: filters.handleSearchChange,
     handleInvitationSearchChange: filters.handleInvitationSearchChange,
@@ -359,8 +369,10 @@ export function useUsersPage(options?: {
     handleEditSubmit: handlers.handleEditSubmit,
     handleRequestBanUser: dialogs.handleRequestBanUser,
     handleRequestUnbanUser: dialogs.handleRequestUnbanUser,
+    handleRequestDeleteUser: dialogs.handleRequestDeleteUser,
     handleResetPassword: handlers.handleResetPassword,
     banUserById: handlers.banUserById,
     unbanUserById: handlers.unbanUserById,
+    deleteUserById: handlers.deleteUserById,
   };
 }

@@ -204,6 +204,8 @@ export function UsersPageView({
     selectedUser,
     userToBan,
     isBanDialogOpen,
+    userToDelete,
+    isDeleteDialogOpen,
     resetPasswordResult,
     isResetPasswordDialogOpen,
     setPage,
@@ -213,6 +215,8 @@ export function UsersPageView({
     setIsEditDialogOpen,
     setIsBanDialogOpen,
     setUserToBan,
+    setIsDeleteDialogOpen,
+    setUserToDelete,
     setIsResetPasswordDialogOpen,
     handleSearchChange,
     handleInvitationSearchChange,
@@ -228,9 +232,11 @@ export function UsersPageView({
     handleEditSubmit,
     handleRequestBanUser,
     handleRequestUnbanUser,
+    handleRequestDeleteUser,
     handleResetPassword,
     banUserById,
     unbanUserById,
+    deleteUserById,
   } = useUsersPage({ initialUsers, initialRoles, initialInvitations });
 
   const selectedTab = canCreateUser ? activeTab : "users";
@@ -249,6 +255,11 @@ export function UsersPageView({
   const canManageSelectedUserStatus =
     canDeleteUser &&
     selectedUser != null &&
+    !selectedUserIsSystem &&
+    selectedUser.id !== currentUser?.id;
+  const canManageSelectedInvitedUser =
+    selectedUser != null &&
+    selectedUser.isInvitedUser === true &&
     !selectedUserIsSystem &&
     selectedUser.id !== currentUser?.id;
 
@@ -385,6 +396,7 @@ export function UsersPageView({
                     onRoleToggle={handleRoleToggle}
                     onBanUser={handleRequestBanUser}
                     onUnbanUser={handleRequestUnbanUser}
+                    onDeleteUser={handleRequestDeleteUser}
                     onResetPassword={handleResetPassword}
                     canUpdate={canUpdateUser}
                     canDelete={canDeleteUser}
@@ -491,6 +503,9 @@ export function UsersPageView({
         onOpenChange={setIsEditDialogOpen}
         onSubmit={handleEditSubmit}
         canManageStatus={canManageSelectedUserStatus}
+        canManageRoles={canUpdateUser && availableRoles.length > 0}
+        availableRoles={availableRoles}
+        selectedRoleIds={selectedUserRoleIds}
         onRequestBanUser={(user) => {
           setIsEditDialogOpen(false);
           handleRequestBanUser(user);
@@ -499,6 +514,22 @@ export function UsersPageView({
           setIsEditDialogOpen(false);
           handleRequestUnbanUser(user);
         }}
+        onRequestResetPassword={
+          canUpdateUser && canManageSelectedInvitedUser
+            ? (user) => {
+                setIsEditDialogOpen(false);
+                void handleResetPassword(user.id);
+              }
+            : undefined
+        }
+        onRequestDeleteUser={
+          canDeleteUser && canManageSelectedInvitedUser
+            ? (user) => {
+                setIsEditDialogOpen(false);
+                handleRequestDeleteUser(user);
+              }
+            : undefined
+        }
       />
 
       <ConfirmActionDialog
@@ -527,6 +558,26 @@ export function UsersPageView({
             toast.success(`Successfully banned ${username}`);
           }
           setUserToBan(null);
+        }}
+      />
+
+      <ConfirmActionDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Delete invited user?"
+        description={
+          userToDelete
+            ? `This will permanently delete ${userToDelete.name} and remove content, playlists, and schedules they own. This cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete User"
+        errorFallback="Failed to delete user"
+        onConfirm={async () => {
+          if (!userToDelete) return;
+          const { id, username } = userToDelete;
+          await deleteUserById(id);
+          toast.success(`Successfully deleted ${username}`);
+          setUserToDelete(null);
         }}
       />
 

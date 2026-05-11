@@ -816,11 +816,13 @@ export const rbacApi = api.injectEndpoints({
         url: `users/${userId}/reset-password`,
         method: "POST",
       }),
-      transformResponse: (response) =>
-        parseApiResponseDataSafe<{ password: string }>(
+      transformResponse: (response) => {
+        const result = parseApiResponseDataSafe<{ plainPassword: string }>(
           response,
           "resetUserPassword",
-        ),
+        );
+        return { password: result.plainPassword };
+      },
       async onQueryStarted(userId, api) {
         try {
           await api.queryFulfilled;

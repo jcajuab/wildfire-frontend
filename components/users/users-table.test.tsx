@@ -72,6 +72,7 @@ function renderUsersTable(
       onRoleToggle={vi.fn()}
       onBanUser={vi.fn()}
       onUnbanUser={vi.fn()}
+      onDeleteUser={vi.fn()}
       onResetPassword={vi.fn()}
       roleFilter={overrides.roleFilter}
       onRoleFilterChange={overrides.onRoleFilterChange}
@@ -264,6 +265,7 @@ describe("UsersTable", () => {
         onRoleToggle={vi.fn()}
         onBanUser={vi.fn()}
         onUnbanUser={vi.fn()}
+        onDeleteUser={vi.fn()}
         onResetPassword={vi.fn()}
       />,
     );
@@ -283,6 +285,7 @@ describe("UsersTable", () => {
         onRoleToggle={vi.fn()}
         onBanUser={vi.fn()}
         onUnbanUser={vi.fn()}
+        onDeleteUser={vi.fn()}
         onResetPassword={vi.fn()}
         canUpdate={false}
         canDelete={false}
@@ -292,6 +295,69 @@ describe("UsersTable", () => {
     expect(
       screen.queryByRole("button", { name: "Actions for Alice" }),
     ).not.toBeInTheDocument();
+  });
+
+  test("shows invited-only reset and delete actions in a wider menu", async () => {
+    const actor = userEvent.setup();
+    renderUsersTable({
+      users: [{ ...user, isInvitedUser: true }],
+    });
+
+    await actor.click(
+      screen.getByRole("button", { name: "Actions for Alice" }),
+    );
+
+    expect(screen.getByRole("menu")).toHaveClass("w-52");
+    expect(
+      screen.getByRole("menuitem", { name: "Reset Password" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: "Delete User" }),
+    ).toBeInTheDocument();
+
+    const menuItems = screen
+      .getAllByRole("menuitem")
+      .map((item) => item.textContent);
+    expect(menuItems).toEqual([
+      "Edit User",
+      "Reset Password",
+      "Roles",
+      "Ban User",
+      "Delete User",
+    ]);
+  });
+
+  test("does not show delete user for DCISM users", async () => {
+    const actor = userEvent.setup();
+    renderUsersTable();
+
+    await actor.click(
+      screen.getByRole("button", { name: "Actions for Alice" }),
+    );
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Delete User" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("shows invited user deletion for delete-only managers", async () => {
+    const actor = userEvent.setup();
+    renderUsersTable({
+      users: [{ ...user, isInvitedUser: true }],
+      canUpdate: false,
+      canDelete: true,
+    });
+
+    await actor.click(
+      screen.getByRole("button", { name: "Actions for Alice" }),
+    );
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Edit User" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: "Delete User" }),
+    ).toBeInTheDocument();
   });
 
   test("hides row actions for admin users with a system role", () => {

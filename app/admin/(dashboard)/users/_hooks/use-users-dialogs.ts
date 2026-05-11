@@ -9,6 +9,8 @@ export function useUsersDialogs() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userToBan, setUserToBan] = useState<User | null>(null);
   const [isBanDialogOpen, setIsBanDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [resetPasswordResult, setResetPasswordResult] = useState<{
     userId: string;
     password: string;
@@ -31,6 +33,11 @@ export function useUsersDialogs() {
     setIsBanDialogOpen(true);
   }, []);
 
+  const handleRequestDeleteUser = useCallback((user: User) => {
+    setUserToDelete(user);
+    setIsDeleteDialogOpen(true);
+  }, []);
+
   return {
     isInviteDialogOpen,
     setIsInviteDialogOpen,
@@ -42,6 +49,10 @@ export function useUsersDialogs() {
     setUserToBan,
     isBanDialogOpen,
     setIsBanDialogOpen,
+    userToDelete,
+    setUserToDelete,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
     resetPasswordResult,
     setResetPasswordResult,
     isResetPasswordDialogOpen,
@@ -49,5 +60,6 @@ export function useUsersDialogs() {
     handleEdit,
     handleRequestBanUser,
     handleRequestUnbanUser,
+    handleRequestDeleteUser,
   };
 }

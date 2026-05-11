@@ -11,6 +11,7 @@ import {
   IconKey,
   IconCheck,
   IconLoader2,
+  IconTrash,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +39,7 @@ export interface UserActionsMenuProps {
   ) => Promise<string[]>;
   readonly onBanUser: (user: User) => void;
   readonly onUnbanUser: (user: User) => void;
+  readonly onDeleteUser: (user: User) => void;
   readonly onResetPassword: (userId: string) => Promise<void>;
   readonly canUpdate: boolean;
   readonly canDelete: boolean;
@@ -51,6 +53,7 @@ export function UserActionsMenu({
   onRoleToggle,
   onBanUser,
   onUnbanUser,
+  onDeleteUser,
   onResetPassword,
   canUpdate,
   canDelete,
@@ -69,6 +72,11 @@ export function UserActionsMenu({
 
   const isBanned = Boolean(user.bannedAt);
   const isInvitedUser = user.isInvitedUser === true;
+  const showResetPassword = canUpdate && isInvitedUser;
+  const showRoles = canUpdate;
+  const showStatus = canDelete;
+  const showDelete = canDelete && isInvitedUser;
+  const showDestructiveGroup = showStatus || showDelete;
 
   return (
     <DropdownMenu>
@@ -81,19 +89,28 @@ export function UserActionsMenu({
           <IconDotsVertical className="size-4" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-52">
         {canUpdate && (
+          <DropdownMenuItem onClick={() => onEdit(user)}>
+            <IconEdit className="size-4" aria-hidden="true" />
+            Edit User
+          </DropdownMenuItem>
+        )}
+        {showResetPassword ? (
+          <DropdownMenuItem onClick={() => void onResetPassword(user.id)}>
+            <IconKey className="size-4" aria-hidden="true" />
+            Reset Password
+          </DropdownMenuItem>
+        ) : null}
+        {showRoles ? (
           <>
-            <DropdownMenuItem onClick={() => onEdit(user)}>
-              <IconEdit className="size-4" aria-hidden="true" />
-              Edit User
-            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <IconCircle className="size-4" aria-hidden="true" />
                 Roles
               </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
+              <DropdownMenuSubContent sideOffset={8} className="min-w-52">
                 {availableRoles.map((role) => {
                   const isChecked = effectiveRoleIds.includes(role.id);
                   const isLoading = loadingRoleId === role.id;
@@ -144,23 +161,20 @@ export function UserActionsMenu({
                 })}
               </DropdownMenuSubContent>
             </DropdownMenuSub>
-            {isInvitedUser && (
-              <DropdownMenuItem onClick={() => void onResetPassword(user.id)}>
-                <IconKey className="size-4" aria-hidden="true" />
-                Reset Password
-              </DropdownMenuItem>
-            )}
           </>
-        )}
-        {canDelete && (
+        ) : null}
+        {showDestructiveGroup ? (
           <>
-            {canUpdate && <DropdownMenuSeparator />}
-            {isBanned ? (
+            {(canUpdate || showResetPassword || showRoles) && (
+              <DropdownMenuSeparator />
+            )}
+            {showStatus && isBanned ? (
               <DropdownMenuItem onClick={() => onUnbanUser(user)}>
                 <IconCircleCheck className="size-4" aria-hidden="true" />
                 Unban User
               </DropdownMenuItem>
-            ) : (
+            ) : null}
+            {showStatus && !isBanned ? (
               <DropdownMenuItem
                 variant="destructive"
                 onClick={() => onBanUser(user)}
@@ -168,9 +182,18 @@ export function UserActionsMenu({
                 <IconBan className="size-4" aria-hidden="true" />
                 Ban User
               </DropdownMenuItem>
-            )}
+            ) : null}
+            {showDelete ? (
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => onDeleteUser(user)}
+              >
+                <IconTrash className="size-4" aria-hidden="true" />
+                Delete User
+              </DropdownMenuItem>
+            ) : null}
           </>
-        )}
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
