@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import { IconFilter, IconLoader2, IconX } from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -67,7 +67,7 @@ interface LogsFilterPopoverProps {
   readonly renderEmbeddedAnchor?: (trigger: ReactElement) => ReactElement;
 }
 
-export function LogsFilterPopover({
+export const LogsFilterPopover = memo(function LogsFilterPopover({
   filters,
   isFetching = false,
   selectedStatusValue,
@@ -306,4 +306,4 @@ export function LogsFilterPopover({
       </PopoverContent>
     </Popover>
   );
-}
+});

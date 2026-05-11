@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import {
   IconChevronDown,
   IconFileExport,
@@ -24,7 +24,7 @@ interface ManageLogsMenuProps {
   readonly onFlush: () => void;
 }
 
-export function ManageLogsMenu({
+export const ManageLogsMenu = memo(function ManageLogsMenu({
   canExport,
   canFlush,
   onExport,
@@ -71,4 +71,4 @@ export function ManageLogsMenu({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});

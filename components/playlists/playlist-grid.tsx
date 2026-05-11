@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { PlaylistCard } from "./playlist-card";
@@ -18,7 +18,7 @@ interface PlaylistGridProps {
   readonly isSelectionMode?: boolean;
 }
 
-export function PlaylistGrid({
+export const PlaylistGrid = memo(function PlaylistGrid({
   playlists,
   onEdit,
   onDelete,
@@ -50,4 +50,4 @@ export function PlaylistGrid({
       ))}
     </div>
   );
-}
+});

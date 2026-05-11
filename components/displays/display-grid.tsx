@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import { IconPhoto } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
@@ -19,7 +19,7 @@ interface DisplayGridProps {
   readonly isSelectionMode?: boolean;
 }
 
-export function DisplayGrid({
+export const DisplayGrid = memo(function DisplayGrid({
   items,
   onViewPage,
   onUnregisterDisplay,
@@ -58,4 +58,4 @@ export function DisplayGrid({
       ))}
     </div>
   );
-}
+});

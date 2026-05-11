@@ -34,6 +34,7 @@ import {
   useDisplaysPage,
   type InitialDisplaysBootstrap,
 } from "./_hooks/use-displays-page";
+import type { Display } from "@/types/display";
 
 const DisplayRegistrationLinkDialog = dynamic(
   () =>
@@ -276,12 +277,35 @@ export function DisplaysPageView({
     statusFilter,
   ]);
 
-  const selectedDisplayLabels = selectedItems.map((item) => item.label);
+  const selectedDisplayLabels = useMemo(
+    () => selectedItems.map((item) => item.label),
+    [selectedItems],
+  );
   const selectedDisplayCount = selectedCount;
   const unregisterSelectedLabel =
     selectedDisplayCount === 1
       ? "Unregister 1 display"
       : `Unregister ${selectedDisplayCount} displays`;
+
+  const openBulkUnregisterDialog = useCallback(() => {
+    setIsBulkUnregisterDialogOpen(true);
+  }, []);
+
+  const enterSelectionMode = useCallback(() => {
+    setIsSelectionMode(true);
+  }, []);
+
+  const openAddInfoDialog = useCallback(() => {
+    setIsAddInfoDialogOpen(true);
+  }, [setIsAddInfoDialogOpen]);
+
+  const handleManageGroups = useCallback(() => {
+    router.push("/admin/displays/display-groups");
+  }, [router]);
+
+  const handleManageGroupsPrefetch = useCallback(() => {
+    router.prefetch("/admin/displays/display-groups");
+  }, [router]);
 
   const handleConfirmBulkUnregister = useCallback(async () => {
     if (selectedItems.length === 0) return;
@@ -316,6 +340,38 @@ export function DisplaysPageView({
     setIsSelectionMode(false);
   }, [clearSelection]);
 
+  const bulkState = useMemo(
+    () =>
+      isSelectionMode
+        ? {
+            mode: "bulk-unregister" as const,
+            selectedCount: selectedDisplayCount,
+            onDelete: openBulkUnregisterDialog,
+            onCancel: handleCancelSelectionMode,
+          }
+        : {
+            mode: "normal" as const,
+            onEnterBulkUnregister: enterSelectionMode,
+          },
+    [
+      enterSelectionMode,
+      handleCancelSelectionMode,
+      isSelectionMode,
+      openBulkUnregisterDialog,
+      selectedDisplayCount,
+    ],
+  );
+
+  const handleSelectionChange = useCallback(
+    (display: Display, checked: boolean) => {
+      setItemSelected({ id: display.id, label: display.name }, checked);
+    },
+    [setItemSelected],
+  );
+
+  const handleDisplaySelectionChange =
+    canDeleteDisplay && isSelectionMode ? handleSelectionChange : undefined;
+
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
       {initialQueryArgs != null && initialData != null ? (
@@ -340,24 +396,10 @@ export function DisplaysPageView({
             canCreateDisplay={canCreateDisplay}
             canManageGroups={canManageDisplayGroups}
             canDeleteDisplay={canDeleteDisplay}
-            bulkState={
-              isSelectionMode
-                ? {
-                    mode: "bulk-unregister",
-                    selectedCount: selectedDisplayCount,
-                    onDelete: () => setIsBulkUnregisterDialogOpen(true),
-                    onCancel: handleCancelSelectionMode,
-                  }
-                : {
-                    mode: "normal",
-                    onEnterBulkUnregister: () => setIsSelectionMode(true),
-                  }
-            }
-            onRegisterDisplay={() => setIsAddInfoDialogOpen(true)}
-            onManageGroups={() => router.push("/admin/displays/display-groups")}
-            onManageGroupsPrefetch={() =>
-              router.prefetch("/admin/displays/display-groups")
-            }
+            bulkState={bulkState}
+            onRegisterDisplay={openAddInfoDialog}
+            onManageGroups={handleManageGroups}
+            onManageGroupsPrefetch={handleManageGroupsPrefetch}
             onStatusFilterChange={handleStatusFilterChange}
             onSortFilterChange={handleSortFilterChange}
             onSearchChange={handleSearchChange}
@@ -393,15 +435,7 @@ export function DisplaysPageView({
                 isGlobalEmergencyActive={globalEmergencyActive}
                 isSelectionMode={isSelectionMode}
                 selectedIds={isSelectionMode ? selectedIds : undefined}
-                onSelectionChange={
-                  canDeleteDisplay && isSelectionMode
-                    ? (display, checked) =>
-                        setItemSelected(
-                          { id: display.id, label: display.name },
-                          checked,
-                        )
-                    : undefined
-                }
+                onSelectionChange={handleDisplaySelectionChange}
                 showOutputMetadata={canCreateDisplay}
               />
             )}

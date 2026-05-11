@@ -1,7 +1,13 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -25,6 +31,7 @@ import { runBulkAction } from "@/lib/bulk-action";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { useSchedulesPage } from "./_hooks/use-schedules-page";
+import type { Schedule } from "@/types/schedule";
 
 export function SchedulesBootstrapCacheSeeder({
   queryArgs,
@@ -145,11 +152,22 @@ export function SchedulesPageView({
     view,
   ]);
 
-  const selectedScheduleLabels = selectedItems.map((item) => item.label);
+  const selectedScheduleLabels = useMemo(
+    () => selectedItems.map((item) => item.label),
+    [selectedItems],
+  );
   const deleteSelectedLabel =
     selectedCount === 1
       ? "Delete 1 schedule"
       : `Delete ${selectedCount} schedules`;
+
+  const openBulkDeleteDialog = useCallback(() => {
+    setIsBulkDeleteDialogOpen(true);
+  }, []);
+
+  const enterSelectionMode = useCallback(() => {
+    setIsSelectionMode(true);
+  }, []);
 
   const handleConfirmBulkDelete = useCallback(async () => {
     if (selectedItems.length === 0) return;
@@ -189,6 +207,55 @@ export function SchedulesPageView({
     setIsSelectionMode(false);
   }, [clearSelection]);
 
+  const bulkState = useMemo(
+    () =>
+      isSelectionMode
+        ? {
+            mode: "bulk-delete" as const,
+            selectedCount,
+            onDelete: openBulkDeleteDialog,
+            onCancel: handleCancelSelectionMode,
+          }
+        : {
+            mode: "normal" as const,
+            onEnterBulkDelete: enterSelectionMode,
+          },
+    [
+      enterSelectionMode,
+      handleCancelSelectionMode,
+      isSelectionMode,
+      openBulkDeleteDialog,
+      selectedCount,
+    ],
+  );
+
+  const openPlaylistScheduleDialog = useCallback(() => {
+    setCreateDialogKind("PLAYLIST");
+  }, [setCreateDialogKind]);
+
+  const openFlashScheduleDialog = useCallback(() => {
+    setCreateDialogKind("FLASH");
+  }, [setCreateDialogKind]);
+
+  const handleCreateDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) setCreateDialogKind(null);
+    },
+    [setCreateDialogKind],
+  );
+
+  const handleScheduleSelectionChange = useCallback(
+    (schedule: Schedule, checked: boolean) => {
+      setItemSelected({ id: schedule.id, label: schedule.name }, checked);
+    },
+    [setItemSelected],
+  );
+
+  const handleGridScheduleSelectionChange =
+    canDeleteSchedule && isSelectionMode
+      ? handleScheduleSelectionChange
+      : undefined;
+
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
       <SchedulesToolbar
@@ -200,26 +267,14 @@ export function SchedulesPageView({
         targetResourceOptions={targetResourceOptions}
         canCreateSchedule={canCreateSchedule}
         canDeleteSchedule={canDeleteSchedule}
-        bulkState={
-          isSelectionMode
-            ? {
-                mode: "bulk-delete",
-                selectedCount,
-                onDelete: () => setIsBulkDeleteDialogOpen(true),
-                onCancel: handleCancelSelectionMode,
-              }
-            : {
-                mode: "normal",
-                onEnterBulkDelete: () => setIsSelectionMode(true),
-              }
-        }
+        bulkState={bulkState}
         onSearchChange={setSearch}
         onDisplayGroupSortChange={setDisplayGroupSort}
         onScheduleTypeFilterChange={setScheduleTypeFilter}
         onTargetResourceChange={setTargetResourceIds}
         onClearFilters={handleClearFilters}
-        onCreatePlaylistSchedule={() => setCreateDialogKind("PLAYLIST")}
-        onCreateFlashSchedule={() => setCreateDialogKind("FLASH")}
+        onCreatePlaylistSchedule={openPlaylistScheduleDialog}
+        onCreateFlashSchedule={openFlashScheduleDialog}
       />
 
       <section className="flex min-h-0 flex-1 flex-col">
@@ -310,15 +365,7 @@ export function SchedulesPageView({
                   isSelectionMode={isSelectionMode}
                   selectedIds={isSelectionMode ? selectedIds : undefined}
                   canSelectSchedule={canDeleteScheduleItem}
-                  onScheduleSelectionChange={
-                    canDeleteSchedule && isSelectionMode
-                      ? (schedule, checked) =>
-                          setItemSelected(
-                            { id: schedule.id, label: schedule.name },
-                            checked,
-                          )
-                      : undefined
-                  }
+                  onScheduleSelectionChange={handleGridScheduleSelectionChange}
                 />
               </div>
             )}
@@ -339,9 +386,7 @@ export function SchedulesPageView({
       {/* Create Schedule Dialog */}
       <CreateScheduleDialog
         open={createDialogKind !== null}
-        onOpenChange={(open) => {
-          if (!open) setCreateDialogKind(null);
-        }}
+        onOpenChange={handleCreateDialogOpenChange}
         kind={createDialogKind ?? "PLAYLIST"}
         onCreate={handleCreateSchedule}
         availablePlaylists={availablePlaylists}

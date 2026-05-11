@@ -112,16 +112,27 @@ export function useContentPageController({
   const dialogState = useContentDialogState();
   const debouncedSearch = useDebounce(filters.search, 500);
   const sortQuery = toContentSortQuery(filters.sortFilter);
-  const queryArgs: ContentListQuery = {
-    page: filters.page,
-    pageSize: PAGE_SIZE,
-    status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
-    type: filters.typeFilter === "all" ? undefined : filters.typeFilter,
-    ownerId: filters.ownerFilter === "all" ? undefined : filters.ownerFilter,
-    search: debouncedSearch.trim().length > 0 ? debouncedSearch : undefined,
-    sortBy: sortQuery.sortBy,
-    sortDirection: sortQuery.sortDirection,
-  };
+  const queryArgs = useMemo<ContentListQuery>(
+    () => ({
+      page: filters.page,
+      pageSize: PAGE_SIZE,
+      status: filters.statusFilter === "all" ? undefined : filters.statusFilter,
+      type: filters.typeFilter === "all" ? undefined : filters.typeFilter,
+      ownerId: filters.ownerFilter === "all" ? undefined : filters.ownerFilter,
+      search: debouncedSearch.trim().length > 0 ? debouncedSearch : undefined,
+      sortBy: sortQuery.sortBy,
+      sortDirection: sortQuery.sortDirection,
+    }),
+    [
+      debouncedSearch,
+      filters.ownerFilter,
+      filters.page,
+      filters.statusFilter,
+      filters.typeFilter,
+      sortQuery.sortBy,
+      sortQuery.sortDirection,
+    ],
+  );
   const isInitialListQuery =
     initialList != null &&
     normalizedQueryKey(initialList.queryArgs) === normalizedQueryKey(queryArgs);
@@ -209,27 +220,31 @@ export function useContentPageController({
     contentToDelete: dialogState.contentToDelete,
     trackContentJob,
   });
+  const { handleUploadFile: handleCrudUploadFile } = crudHandlers;
 
   // PDF crop: upload then redirect to dedicated crop page
   const [uploadPdf] = useUploadPdfMutation();
   const router = useRouter();
 
-  const handleUploadFile = async (name: string, file: File) => {
-    if (file.type === "application/pdf") {
-      try {
-        const session = await uploadPdf(file).unwrap();
-        sessionStorage.setItem(
-          `wildfire:pdf-crop:${session.uploadId}`,
-          JSON.stringify({ ...session, contentName: name }),
-        );
-        router.push(`/admin/content/pdf-crop?uploadId=${session.uploadId}`);
-      } catch (error) {
-        notifyApiError(error, "Failed to upload PDF.");
+  const handleUploadFile = useCallback(
+    async (name: string, file: File) => {
+      if (file.type === "application/pdf") {
+        try {
+          const session = await uploadPdf(file).unwrap();
+          sessionStorage.setItem(
+            `wildfire:pdf-crop:${session.uploadId}`,
+            JSON.stringify({ ...session, contentName: name }),
+          );
+          router.push(`/admin/content/pdf-crop?uploadId=${session.uploadId}`);
+        } catch (error) {
+          notifyApiError(error, "Failed to upload PDF.");
+        }
+        return;
       }
-      return;
-    }
-    await crudHandlers.handleUploadFile(name, file);
-  };
+      await handleCrudUploadFile(name, file);
+    },
+    [handleCrudUploadFile, router, uploadPdf],
+  );
   const handleEdit = useCallback(
     (content: Content) => {
       void loadContent(content.id).then((result) => {

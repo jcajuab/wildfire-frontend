@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import {
   IconChevronDown,
   IconDeviceDesktopPlus,
@@ -62,7 +62,7 @@ interface DisplaysToolbarProps {
   readonly onManageGroupsPrefetch?: () => void;
 }
 
-export function DisplaysToolbar({
+export const DisplaysToolbar = memo(function DisplaysToolbar({
   statusFilter,
   sortFilter,
   search,
@@ -229,4 +229,4 @@ export function DisplaysToolbar({
       </div>
     </header>
   );
-}
+});

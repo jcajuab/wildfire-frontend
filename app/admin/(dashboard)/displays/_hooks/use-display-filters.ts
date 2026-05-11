@@ -77,6 +77,11 @@ export function useDisplayFilters() {
     [setFilters],
   );
 
+  const setPage = useCallback(
+    (page: number) => setFilters({ page }),
+    [setFilters],
+  );
+
   const handleClearFilters = useCallback(() => {
     setFilters({
       status: "all",
@@ -92,7 +97,7 @@ export function useDisplayFilters() {
     sortFilter: filters.sort,
     search: filters.q,
     page: filters.page,
-    setPage: (page: number) => setFilters({ page }),
+    setPage,
     groupFilters: filters.groups,
     normalizedOutputFilter,
     handleStatusFilterChange,

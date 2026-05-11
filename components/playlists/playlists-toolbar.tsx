@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import { IconPlus, IconTrash, IconX } from "@tabler/icons-react";
 
 import { SearchControl } from "@/components/common/search-control";
@@ -50,7 +50,7 @@ interface PlaylistsToolbarProps {
   readonly onClearFilters: () => void;
 }
 
-export function PlaylistsToolbar({
+export const PlaylistsToolbar = memo(function PlaylistsToolbar({
   statusFilter,
   ownerFilter,
   sortFilter,
@@ -185,4 +185,4 @@ export function PlaylistsToolbar({
       </div>
     </header>
   );
-}
+});

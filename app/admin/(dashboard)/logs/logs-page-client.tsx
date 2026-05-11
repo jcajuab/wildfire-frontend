@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
+import { useCallback } from "react";
 import { useLayoutEffect } from "react";
 import { useState } from "react";
 
@@ -128,6 +129,19 @@ export function LogsPageClient({
     handleResetFilters,
     selectedStatusValue,
   } = useLogsPage({ initialEvents, initialUsers, initialDisplays });
+  const { setPage: setLogsPage } = filters;
+
+  const handleExportOpen = useCallback(() => {
+    setExportDialogOpen(true);
+  }, []);
+
+  const handleFlushOpen = useCallback(() => {
+    setFlushDialogOpen(true);
+  }, []);
+
+  const handleLogsFlushed = useCallback(() => {
+    setLogsPage(1);
+  }, [setLogsPage]);
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
@@ -171,8 +185,8 @@ export function LogsPageClient({
             <ManageLogsMenu
               canExport={canExport}
               canFlush={canFlush}
-              onExport={() => setExportDialogOpen(true)}
-              onFlush={() => setFlushDialogOpen(true)}
+              onExport={handleExportOpen}
+              onFlush={handleFlushOpen}
             />
           </div>
         </div>
@@ -225,7 +239,7 @@ export function LogsPageClient({
       <FlushLogsDialog
         open={flushDialogOpen}
         onOpenChange={setFlushDialogOpen}
-        onFlushed={() => filters.setPage(1)}
+        onFlushed={handleLogsFlushed}
       />
     </div>
   );

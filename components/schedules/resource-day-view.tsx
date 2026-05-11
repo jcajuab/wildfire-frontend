@@ -1,7 +1,7 @@
 "use client";
 
-import type { ReactElement } from "react";
-import { useState, useEffect } from "react";
+import { memo, type ReactElement } from "react";
+import { useEffect, useState } from "react";
 import {
   IconCheck,
   IconChevronDown,
@@ -49,7 +49,7 @@ function getNowMinutes(): number {
   return now.getHours() * 60 + now.getMinutes();
 }
 
-export function ResourceDayView({
+export const ResourceDayView = memo(function ResourceDayView({
   days,
   resources,
   eventsByResourceDate,
@@ -284,4 +284,4 @@ export function ResourceDayView({
       </div>
     </div>
   );
-}
+});

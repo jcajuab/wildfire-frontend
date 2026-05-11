@@ -58,6 +58,8 @@ export interface UseLogsPageResult {
 }
 
 const COMMON_STATUS_CODES = ["200", "401", "403", "404", "500"] as const;
+const EMPTY_USERS: readonly RbacUser[] = [];
+const EMPTY_DISPLAYS: readonly DisplayOption[] = [];
 
 function normalizedAuditQueryKey(query: AuditListQuery | void): string {
   return JSON.stringify({
@@ -114,7 +116,7 @@ export function useLogsPage(options?: {
     refetchOnReconnect: false,
   });
 
-  const users = usersData ?? options?.initialUsers ?? [];
+  const users = usersData ?? options?.initialUsers ?? EMPTY_USERS;
   const {
     users: authorOptions,
     isFetching: isAuthorOptionsFetching,
@@ -126,7 +128,7 @@ export function useLogsPage(options?: {
     search: filters.author,
     pageSize: 50,
   });
-  const displays = displaysData ?? options?.initialDisplays ?? [];
+  const displays = displaysData ?? options?.initialDisplays ?? EMPTY_DISPLAYS;
 
   const actorResolver = useActorResolver({ users, displays });
 

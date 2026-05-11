@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useMemo, useState, useCallback } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { EmptyState } from "@/components/common/empty-state";
@@ -63,7 +63,7 @@ function EmptyResourcesState(): ReactElement {
   );
 }
 
-export function CalendarGrid({
+export const CalendarGrid = memo(function CalendarGrid({
   currentDate,
   view,
   schedules,
@@ -201,4 +201,4 @@ export function CalendarGrid({
       onScheduleSelectionChange={onScheduleSelectionChange}
     />
   );
-}
+});

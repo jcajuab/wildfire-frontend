@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import {
   IconCheck,
   IconChevronDown,
@@ -60,7 +60,7 @@ export interface ResourceGridSharedProps {
   ) => void;
 }
 
-export function ResourceWeekView({
+export const ResourceWeekView = memo(function ResourceWeekView({
   days,
   resources,
   eventsByResourceDate,
@@ -251,4 +251,4 @@ export function ResourceWeekView({
       </div>
     </div>
   );
-}
+});

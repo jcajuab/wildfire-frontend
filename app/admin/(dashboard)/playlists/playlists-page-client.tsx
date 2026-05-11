@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -21,6 +21,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { getPlaylistEditPath } from "@/lib/playlist-paths";
 import { PAGE_SIZE, usePlaylistsPage } from "./_hooks/use-playlists-page";
+import type { PlaylistSummary } from "@/types/playlist";
 
 export function PlaylistsListCacheSeeder({
   queryArgs,
@@ -119,12 +120,23 @@ export function PlaylistsPageView({
     clearSelection();
   }, [clearSelection, ownerFilter, search, sortFilter, statusFilter]);
 
-  const selectedPlaylistLabels = selectedItems.map((item) => item.label);
+  const selectedPlaylistLabels = useMemo(
+    () => selectedItems.map((item) => item.label),
+    [selectedItems],
+  );
   const selectedPlaylistCount = selectedCount;
   const deleteSelectedLabel =
     selectedPlaylistCount === 1
       ? "Delete 1 playlist"
       : `Delete ${selectedPlaylistCount} playlists`;
+
+  const openBulkDeleteDialog = useCallback(() => {
+    setIsBulkDeleteDialogOpen(true);
+  }, []);
+
+  const enterSelectionMode = useCallback(() => {
+    setIsSelectionMode(true);
+  }, []);
 
   const handleConfirmBulkDelete = useCallback(async () => {
     if (selectedItems.length === 0) return;
@@ -169,6 +181,51 @@ export function PlaylistsPageView({
     setIsSelectionMode(false);
   }, [clearSelection]);
 
+  const bulkState = useMemo(
+    () =>
+      isSelectionMode
+        ? {
+            mode: "bulk-delete" as const,
+            selectedCount: selectedPlaylistCount,
+            onDelete: openBulkDeleteDialog,
+            onCancel: handleCancelSelectionMode,
+          }
+        : {
+            mode: "normal" as const,
+            onEnterBulkDelete: enterSelectionMode,
+          },
+    [
+      enterSelectionMode,
+      handleCancelSelectionMode,
+      isSelectionMode,
+      openBulkDeleteDialog,
+      selectedPlaylistCount,
+    ],
+  );
+
+  const handleSelectionChange = useCallback(
+    (playlist: PlaylistSummary, checked: boolean) => {
+      setItemSelected({ id: playlist.id, label: playlist.name }, checked);
+    },
+    [setItemSelected],
+  );
+
+  const handlePlaylistSelectionChange =
+    canDeletePlaylist && isSelectionMode ? handleSelectionChange : undefined;
+
+  const handleDeleteDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) setPlaylistToDelete(null);
+    },
+    [setPlaylistToDelete],
+  );
+
+  const handleConfirmDeletePlaylist = useCallback(async () => {
+    if (!playlistToDelete) return;
+    await deletePlaylistMutation(playlistToDelete.id);
+    toast.success("Successfully deleted playlist");
+  }, [deletePlaylistMutation, playlistToDelete]);
+
   useEffect(() => {
     if (manageId && handledManageRef.current !== manageId) {
       handledManageRef.current = manageId;
@@ -202,19 +259,7 @@ export function PlaylistsPageView({
             isFetching={isFetching && !isLoading}
             canCreatePlaylist={canCreatePlaylist}
             canDeletePlaylist={canDeletePlaylist}
-            bulkState={
-              isSelectionMode
-                ? {
-                    mode: "bulk-delete",
-                    selectedCount: selectedPlaylistCount,
-                    onDelete: () => setIsBulkDeleteDialogOpen(true),
-                    onCancel: handleCancelSelectionMode,
-                  }
-                : {
-                    mode: "normal",
-                    onEnterBulkDelete: () => setIsSelectionMode(true),
-                  }
-            }
+            bulkState={bulkState}
             onSearchChange={handleSearchChange}
             onStatusFilterChange={handleStatusFilterChange}
             onOwnerSearchChange={handleOwnerSearchChange}
@@ -241,15 +286,7 @@ export function PlaylistsPageView({
                 onDelete={canDeletePlaylist ? handleDeletePlaylist : undefined}
                 isSelectionMode={isSelectionMode}
                 selectedIds={isSelectionMode ? selectedIds : undefined}
-                onSelectionChange={
-                  canDeletePlaylist && isSelectionMode
-                    ? (playlist, checked) =>
-                        setItemSelected(
-                          { id: playlist.id, label: playlist.name },
-                          checked,
-                        )
-                    : undefined
-                }
+                onSelectionChange={handlePlaylistSelectionChange}
               />
             )}
           </div>
@@ -268,9 +305,7 @@ export function PlaylistsPageView({
 
       <ConfirmActionDialog
         open={deleteDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) setPlaylistToDelete(null);
-        }}
+        onOpenChange={handleDeleteDialogOpenChange}
         title="Delete playlist?"
         description={
           playlistToDelete
@@ -279,11 +314,7 @@ export function PlaylistsPageView({
         }
         confirmLabel="Delete playlist"
         errorFallback="Failed to delete playlist."
-        onConfirm={async () => {
-          if (!playlistToDelete) return;
-          await deletePlaylistMutation(playlistToDelete.id);
-          toast.success("Successfully deleted playlist");
-        }}
+        onConfirm={handleConfirmDeletePlaylist}
       />
 
       <BulkDeleteConfirmDialog

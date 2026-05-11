@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useLayoutEffect } from "react";
+import { useCallback, useLayoutEffect, useMemo } from "react";
 import Link from "next/link";
 import { IconPlus } from "@tabler/icons-react";
 
@@ -74,6 +74,39 @@ export function RolesPageView({
     handleDeleteRole,
     deleteRole,
   } = useRolesPage({ initialList });
+
+  const emptyState = useMemo(
+    () => ({
+      title: search ? "No roles found" : "No roles yet",
+      description: search
+        ? "Try a different role name or description."
+        : "Create roles to group permissions and assign them to users.",
+      action: null,
+    }),
+    [search],
+  );
+
+  const handleDeleteDialogOpenChange = useCallback(
+    (open: boolean) => {
+      setIsDeleteDialogOpen(open);
+      if (!open) {
+        setRoleToDelete(null);
+      }
+    },
+    [setIsDeleteDialogOpen, setRoleToDelete],
+  );
+
+  const handleConfirmDeleteRole = useCallback(async () => {
+    if (!roleToDelete) return;
+    await deleteRole(roleToDelete.id);
+    const removedUsers = roleToDelete.usersCount ?? 0;
+    toast.success(
+      removedUsers > 0
+        ? `Successfully deleted ${roleToDelete.name} role and removed ${removedUsers} assignment(s)`
+        : `Successfully deleted ${roleToDelete.name} role`,
+    );
+    setRoleToDelete(null);
+  }, [deleteRole, roleToDelete, setRoleToDelete]);
 
   if (rolesLoading) {
     return (
@@ -162,13 +195,7 @@ export function RolesPageView({
                   onDelete={handleDeleteRole}
                   canEdit={canUpdateRole}
                   canDelete={canDeleteRole}
-                  emptyState={{
-                    title: search ? "No roles found" : "No roles yet",
-                    description: search
-                      ? "Try a different role name or description."
-                      : "Create roles to group permissions and assign them to users.",
-                    action: null,
-                  }}
+                  emptyState={emptyState}
                 />
               </div>
 
@@ -188,12 +215,7 @@ export function RolesPageView({
 
       <ConfirmActionDialog
         open={isDeleteDialogOpen}
-        onOpenChange={(open) => {
-          setIsDeleteDialogOpen(open);
-          if (!open) {
-            setRoleToDelete(null);
-          }
-        }}
+        onOpenChange={handleDeleteDialogOpenChange}
         title="Delete role?"
         description={
           roleToDelete
@@ -204,17 +226,7 @@ export function RolesPageView({
         }
         confirmLabel="Delete role"
         errorFallback="Failed to delete role."
-        onConfirm={async () => {
-          if (!roleToDelete) return;
-          await deleteRole(roleToDelete.id);
-          const removedUsers = roleToDelete.usersCount ?? 0;
-          toast.success(
-            removedUsers > 0
-              ? `Successfully deleted ${roleToDelete.name} role and removed ${removedUsers} assignment(s)`
-              : `Successfully deleted ${roleToDelete.name} role`,
-          );
-          setRoleToDelete(null);
-        }}
+        onConfirm={handleConfirmDeleteRole}
       />
     </div>
   );

@@ -29,6 +29,7 @@ import type {
   BackendDisplay,
   DisplaysBootstrapResponse,
   DisplayGroup,
+  DisplayOutputOption,
   DisplaysListQuery,
   DisplaysListResponse,
 } from "@/lib/api/displays-api";
@@ -42,6 +43,7 @@ import { useDisplayCrudHandlers } from "./use-display-crud-handlers";
 
 export const PAGE_SIZE = DISPLAYS_PAGE_SIZE;
 const BOOTSTRAP_PAGE_SIZE = DISPLAYS_BOOTSTRAP_PAGE_SIZE;
+const EMPTY_DISPLAY_OUTPUT_OPTIONS: readonly DisplayOutputOption[] = [];
 const UNFILTERED_DISPLAY_QUERY: DisplaysListQuery = {
   page: 1,
   pageSize: BOOTSTRAP_PAGE_SIZE,
@@ -293,7 +295,8 @@ export function useDisplaysPage({
     () => bootstrapData?.displayGroups ?? [],
     [bootstrapData?.displayGroups],
   );
-  const displayOutputOptions = bootstrapData?.displayOutputOptions ?? [];
+  const displayOutputOptions =
+    bootstrapData?.displayOutputOptions ?? EMPTY_DISPLAY_OUTPUT_OPTIONS;
   const runtimeOverrides = bootstrapData?.runtimeOverrides;
   const globalEmergencyActive =
     runtimeOverrides?.globalEmergency.active ?? false;
@@ -467,7 +470,9 @@ export function useDisplaysPage({
     [displayGroupsData],
   );
 
-  const availableOutputFilters = canCreateDisplay ? displayOutputOptions : [];
+  const availableOutputFilters = canCreateDisplay
+    ? displayOutputOptions
+    : EMPTY_DISPLAY_OUTPUT_OPTIONS;
 
   const { handleConfirmUnregisterDisplay: confirmUnregister } = crudHandlers;
 

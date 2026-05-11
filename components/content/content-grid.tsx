@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import { IconFileUpload } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
@@ -17,7 +17,7 @@ interface ContentGridProps {
   readonly isSelectionMode?: boolean;
 }
 
-export function ContentGrid({
+export const ContentGrid = memo(function ContentGrid({
   items,
   onEdit,
   onDelete,
@@ -52,4 +52,4 @@ export function ContentGrid({
       ))}
     </div>
   );
-}
+});

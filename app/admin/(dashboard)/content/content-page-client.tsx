@@ -27,6 +27,7 @@ import { getApiErrorMessage } from "@/lib/api/get-api-error-message";
 import { runBulkAction } from "@/lib/bulk-action";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { useContentPageController } from "./_hooks/use-content-page-controller";
+import type { Content } from "@/types/content";
 
 const CreateContentDialog = dynamic(
   () =>
@@ -172,6 +173,7 @@ export function ContentPageView({
     [initialData, initialQueryArgs, isInitialListSeeded],
   );
   const controller = useContentPageController({ initialList });
+  const { deleteContentById, openCreateDialog } = controller;
   const {
     selectedItems,
     selectedIds,
@@ -188,18 +190,41 @@ export function ContentPageView({
     clearSelection();
   }, [clearSelection, search, statusFilter, typeFilter]);
 
-  const selectedContentLabels = selectedItems.map((item) => item.label);
+  const selectedContentLabels = useMemo(
+    () => selectedItems.map((item) => item.label),
+    [selectedItems],
+  );
   const selectedContentCount = selectedCount;
   const deleteSelectedLabel =
     selectedContentCount === 1
       ? "Delete 1 content item"
       : `Delete ${selectedContentCount} content items`;
 
+  const openBulkDeleteDialog = useCallback(() => {
+    setIsBulkDeleteDialogOpen(true);
+  }, []);
+
+  const enterSelectionMode = useCallback(() => {
+    setIsSelectionMode(true);
+  }, []);
+
+  const handleCreateText = useCallback(() => {
+    openCreateDialog("text");
+  }, [openCreateDialog]);
+
+  const handleCreateUpload = useCallback(() => {
+    openCreateDialog("upload");
+  }, [openCreateDialog]);
+
+  const handleCreateFlash = useCallback(() => {
+    openCreateDialog("flash");
+  }, [openCreateDialog]);
+
   const handleConfirmBulkDelete = useCallback(async () => {
     if (selectedItems.length === 0) return;
 
     const result = await runBulkAction(selectedItems, (item) =>
-      controller.deleteContentById(item.id),
+      deleteContentById(item.id),
     );
 
     if (result.successfulItems.length > 0) {
@@ -226,12 +251,46 @@ export function ContentPageView({
       setIsSelectionMode(false);
       clearSelection();
     }
-  }, [controller, removeSelectedIds, selectedItems, clearSelection]);
+  }, [deleteContentById, removeSelectedIds, selectedItems, clearSelection]);
 
   const handleCancelSelectionMode = useCallback(() => {
     clearSelection();
     setIsSelectionMode(false);
   }, [clearSelection]);
+
+  const bulkState = useMemo(
+    () =>
+      isSelectionMode
+        ? {
+            mode: "bulk-delete" as const,
+            selectedCount: selectedContentCount,
+            onDelete: openBulkDeleteDialog,
+            onCancel: handleCancelSelectionMode,
+          }
+        : {
+            mode: "normal" as const,
+            onEnterBulkDelete: enterSelectionMode,
+          },
+    [
+      enterSelectionMode,
+      handleCancelSelectionMode,
+      isSelectionMode,
+      openBulkDeleteDialog,
+      selectedContentCount,
+    ],
+  );
+
+  const handleSelectionChange = useCallback(
+    (content: Content, checked: boolean) => {
+      setItemSelected({ id: content.id, label: content.title }, checked);
+    },
+    [setItemSelected],
+  );
+
+  const handleContentSelectionChange =
+    controller.canDeleteContent && isSelectionMode
+      ? handleSelectionChange
+      : undefined;
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
@@ -260,19 +319,7 @@ export function ContentPageView({
             isFetching={controller.isFetching && !controller.isLoading}
             canCreateContent={controller.canCreateContent}
             canDeleteContent={controller.canDeleteContent}
-            bulkState={
-              isSelectionMode
-                ? {
-                    mode: "bulk-delete",
-                    selectedCount: selectedContentCount,
-                    onDelete: () => setIsBulkDeleteDialogOpen(true),
-                    onCancel: handleCancelSelectionMode,
-                  }
-                : {
-                    mode: "normal",
-                    onEnterBulkDelete: () => setIsSelectionMode(true),
-                  }
-            }
+            bulkState={bulkState}
             onSearchChange={controller.filters.handleSearchChange}
             onStatusFilterChange={controller.filters.handleStatusFilterChange}
             onTypeFilterChange={controller.filters.handleTypeFilterChange}
@@ -281,9 +328,9 @@ export function ContentPageView({
             onOwnerFilterChange={controller.filters.handleOwnerFilterChange}
             onSortFilterChange={controller.filters.handleSortFilterChange}
             onClearFilters={controller.filters.handleClearFilters}
-            onCreateText={() => controller.openCreateDialog("text")}
-            onCreateUpload={() => controller.openCreateDialog("upload")}
-            onCreateFlash={() => controller.openCreateDialog("flash")}
+            onCreateText={handleCreateText}
+            onCreateUpload={handleCreateUpload}
+            onCreateFlash={handleCreateFlash}
           />
 
           <div className="min-h-0 flex-1 overflow-auto p-4">
@@ -322,15 +369,7 @@ export function ContentPageView({
                 }
                 isSelectionMode={isSelectionMode}
                 selectedIds={isSelectionMode ? selectedIds : undefined}
-                onSelectionChange={
-                  controller.canDeleteContent && isSelectionMode
-                    ? (content, checked) =>
-                        setItemSelected(
-                          { id: content.id, label: content.title },
-                          checked,
-                        )
-                    : undefined
-                }
+                onSelectionChange={handleContentSelectionChange}
               />
             )}
           </div>

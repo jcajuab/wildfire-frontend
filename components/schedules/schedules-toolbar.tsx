@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import {
   IconBolt,
   IconChevronDown,
@@ -56,7 +56,7 @@ interface SchedulesToolbarProps {
   readonly onCreateFlashSchedule: () => void;
 }
 
-export function SchedulesToolbar({
+export const SchedulesToolbar = memo(function SchedulesToolbar({
   search,
   resourceMode,
   displayGroupSort,
@@ -200,4 +200,4 @@ export function SchedulesToolbar({
       </div>
     </header>
   );
-}
+});

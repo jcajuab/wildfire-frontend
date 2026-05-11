@@ -79,13 +79,16 @@ export function useRolesPage(options?: {
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const rolesQuery: RbacRoleListQuery = {
-    page: filters.page,
-    pageSize: PAGE_SIZE,
-    q: debouncedSearch || undefined,
-    sortBy: filters.sortField,
-    sortDirection: filters.sortDirection,
-  };
+  const rolesQuery = useMemo<RbacRoleListQuery>(
+    () => ({
+      page: filters.page,
+      pageSize: PAGE_SIZE,
+      q: debouncedSearch || undefined,
+      sortBy: filters.sortField,
+      sortDirection: filters.sortDirection,
+    }),
+    [debouncedSearch, filters.page, filters.sortDirection, filters.sortField],
+  );
   const isInitialListQuery =
     options?.initialList != null &&
     normalizedRolesQueryKey(options.initialList.queryArgs) ===

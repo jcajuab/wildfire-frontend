@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import {
   IconBolt,
   IconChevronDown,
@@ -69,7 +69,7 @@ interface ContentToolbarProps {
   readonly onCreateFlash: () => void;
 }
 
-export function ContentToolbar({
+export const ContentToolbar = memo(function ContentToolbar({
   statusFilter,
   typeFilter,
   ownerFilter,
@@ -238,4 +238,4 @@ export function ContentToolbar({
       </div>
     </header>
   );
-}
+});

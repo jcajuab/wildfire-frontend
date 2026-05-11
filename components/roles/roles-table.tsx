@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import { IconDotsVertical, IconEdit, IconTrash } from "@tabler/icons-react";
 
 import { SortableHeader } from "@/components/common/sortable-header";
@@ -51,7 +51,7 @@ interface RoleActionsMenuProps {
   readonly deleteDisabled?: boolean;
 }
 
-function RoleActionsMenu({
+const RoleActionsMenu = memo(function RoleActionsMenu({
   role,
   onEdit,
   onDelete,
@@ -101,9 +101,9 @@ function RoleActionsMenu({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});
 
-export function RolesTable({
+export const RolesTable = memo(function RolesTable({
   roles,
   sort,
   onSortChange,
@@ -207,4 +207,4 @@ export function RolesTable({
       </TableBody>
     </Table>
   );
-}
+});

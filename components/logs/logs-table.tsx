@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import { useState, useCallback } from "react";
 import Image from "next/image";
 import {
@@ -47,7 +47,7 @@ interface LogActionsMenuProps {
   readonly onViewMetadata: (log: LogEntry) => void;
 }
 
-function LogActionsMenu({
+const LogActionsMenu = memo(function LogActionsMenu({
   log,
   onViewMetadata,
 }: LogActionsMenuProps): ReactElement {
@@ -71,9 +71,9 @@ function LogActionsMenu({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});
 
-export function LogsTable({
+export const LogsTable = memo(function LogsTable({
   logs,
   emptyDescription = "Logs will appear here as users authenticate and perform actions.",
 }: LogsTableProps): ReactElement {
@@ -165,4 +165,4 @@ export function LogsTable({
       />
     </>
   );
-}
+});
