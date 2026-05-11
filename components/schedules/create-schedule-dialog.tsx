@@ -62,12 +62,12 @@ export function CreateScheduleDialog({
           <DialogTitle>
             {kind === "PLAYLIST"
               ? "Create Playlist Schedule"
-              : "Create Flash Overlay Schedule"}
+              : "Create Flash Schedule"}
           </DialogTitle>
           <DialogDescription>
             {kind === "PLAYLIST"
               ? "Create a playlist schedule for selected displays."
-              : "Create a flash overlay schedule for selected displays."}
+              : "Schedule a flash message to appear on selected displays."}
           </DialogDescription>
         </DialogHeader>
 

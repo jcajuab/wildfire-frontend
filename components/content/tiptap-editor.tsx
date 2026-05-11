@@ -33,7 +33,7 @@ import { LinkPopover } from "./tiptap-link-popover";
 import { TablePopover } from "./tiptap-table-popover";
 import { ColorPicker } from "./tiptap-color-picker";
 
-const TEXT_CONTENT_MAX_CHARS = 1000;
+const TEXT_CONTENT_MAX_CHARS = 360;
 
 interface TiptapEditorProps {
   readonly content?: string;

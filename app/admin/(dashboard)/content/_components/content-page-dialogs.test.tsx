@@ -116,7 +116,7 @@ describe("EditContentDialog", () => {
     await waitFor(() => {
       expect(document.querySelector(".ProseMirror")).toBeInTheDocument();
     });
-    expect(await screen.findByText("11 / 1000 characters")).toBeInTheDocument();
+    expect(await screen.findByText("11 / 360 characters")).toBeInTheDocument();
     expect(screen.queryByText(/words/)).not.toBeInTheDocument();
 
     const editor = document.querySelector(".ProseMirror");

@@ -256,7 +256,7 @@ describe("CreateContentDialog", () => {
       screen.queryByRole("button", { name: /Create text/i }),
     ).not.toBeInTheDocument();
 
-    expect(await screen.findByText("0 / 1000 characters")).toBeInTheDocument();
+    expect(await screen.findByText("0 / 360 characters")).toBeInTheDocument();
     expect(screen.queryByText(/words/)).not.toBeInTheDocument();
 
     await waitFor(() => {
