@@ -9,14 +9,10 @@ import {
   displaysApi,
   useGetDisplaysBootstrapQuery,
   useGetDisplaysQuery,
-  useGetDisplaysInfiniteQuery,
   useGetDisplayGroupsInfiniteQuery,
-  useGetDisplayGroupsForDisplayQuery,
-  useResolveDisplayGroupsMutation,
   useSetDisplayGroupsMutation,
   useCreateDisplayGroupMutation,
   useUpdateDisplayGroupMutation,
-  useUpdateDisplayMutation,
   type BackendDisplay,
   type DisplayGroup,
   type DisplaysBootstrapResponse,
@@ -26,12 +22,6 @@ import { useAppDispatch } from "@/lib/hooks";
 import { DISPLAYS_BOOTSTRAP_PAGE_SIZE } from "@/lib/displays-search-params";
 import { ADMIN_RESOURCE_PAGE_SIZE } from "@/lib/admin-pagination";
 import { collapseDisplayGroupWhitespace } from "@/lib/display-group-normalization";
-import { notifyApiError } from "@/lib/api/get-api-error-message";
-import {
-  mapDisplayApiToDisplay,
-  withDisplayGroups,
-} from "@/lib/mappers/display-mapper";
-import type { Display } from "@/types/display";
 
 export const DISPLAY_PAGE_SIZE = ADMIN_RESOURCE_PAGE_SIZE;
 export const GROUP_PAGE_SIZE = ADMIN_RESOURCE_PAGE_SIZE;
@@ -39,8 +29,6 @@ export const GROUP_PAGE_SIZE = ADMIN_RESOURCE_PAGE_SIZE;
 // to many groups but rarely more than a few dozen; 100 matches the backend's
 // pageSize cap so requests don't 422.
 const SELECTED_DISPLAY_GROUPS_PAGE_SIZE = 100;
-
-export type Axis = "group" | "display";
 
 export const BOOTSTRAP_QUERY: DisplaysListQuery = {
   page: 1,
@@ -58,9 +46,6 @@ interface UseDisplayGroupsPageOptions {
 
 export interface UseDisplayGroupsPageResult {
   readonly canManageGroups: boolean;
-
-  readonly axis: Axis;
-  readonly handleAxisChange: (next: Axis) => void;
 
   readonly leftGroups: readonly DisplayGroup[];
   readonly isLoading: boolean;
@@ -90,33 +75,6 @@ export interface UseDisplayGroupsPageResult {
   readonly displayTotal: number;
   readonly setDisplayPage: (page: number) => void;
   readonly isDisplaysLoading: boolean;
-
-  // Display-axis state (left=displays, right=groups)
-  readonly selectedDisplayId: string | null;
-  readonly selectedDisplay: Display | null;
-  readonly leftDisplaySearch: string;
-  readonly handleLeftDisplaySearchChange: (v: string) => void;
-  readonly leftDisplays: readonly BackendDisplay[];
-  readonly isLeftDisplaysLoading: boolean;
-  readonly hasMoreLeftDisplays: boolean;
-  readonly isFetchingMoreLeftDisplays: boolean;
-  readonly fetchMoreLeftDisplays: () => void;
-  readonly selectedGroupIds: ReadonlySet<string>;
-  readonly groupsForRightPane: readonly DisplayGroup[];
-  readonly groupsRightPanePage: number;
-  readonly groupsRightPaneTotal: number;
-  readonly setGroupsRightPanePage: (page: number) => void;
-  readonly handleSelectDisplay: (displayId: string) => void;
-  readonly handleToggleGroup: (groupId: string) => void;
-  readonly handleConfirmAddGroups: () => Promise<void>;
-  readonly handleConfirmRemoveGroups: () => Promise<void>;
-
-  // Edit-display dialog (display-axis settings icon)
-  readonly editingDisplay: Display | null;
-  readonly isEditDisplayOpen: boolean;
-  readonly handleOpenEditDisplay: (displayId: string) => void;
-  readonly handleEditDisplayOpenChange: (open: boolean) => void;
-  readonly handleSaveDisplay: (display: Display) => Promise<boolean>;
 
   readonly renameGroupId: string | null;
   readonly renameGroupInitialName: string;
@@ -161,10 +119,7 @@ export function useDisplayGroupsPage({
     useCreateDisplayGroupMutation();
   const [updateDisplayGroupMutation, { isLoading: isRenamePending }] =
     useUpdateDisplayGroupMutation();
-  const [updateDisplayMutation] = useUpdateDisplayMutation();
-  const [resolveDisplayGroupsMutation] = useResolveDisplayGroupsMutation();
 
-  const [axis, setAxis] = useState<Axis>("group");
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [groupSearch, setGroupSearch] = useState("");
   const [displaySearch, setDisplaySearch] = useState("");
@@ -178,32 +133,13 @@ export function useDisplayGroupsPage({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
 
-  // Display-axis state
-  const [selectedDisplayId, setSelectedDisplayId] = useState<string | null>(
-    null,
-  );
-  const [selectedGroupIds, setSelectedGroupIds] = useState<ReadonlySet<string>>(
-    new Set(),
-  );
-  const [leftDisplaySearch, setLeftDisplaySearch] = useState("");
-  const [groupsRightPanePage, setGroupsRightPanePage] = useState(1);
-
-  // Edit-display dialog state
-  const [editingDisplayId, setEditingDisplayId] = useState<string | null>(null);
-  const [isEditDisplayOpen, setIsEditDisplayOpen] = useState(false);
-
   const debouncedDisplaySearch = useDebounce(displaySearch, 500);
-  const debouncedLeftDisplaySearch = useDebounce(leftDisplaySearch, 500);
   const debouncedGroupSearch = useDebounce(groupSearch, 500);
 
   // Bypass debounce when search is cleared so the unfiltered cache activates
   // immediately rather than waiting 500 ms on the stale filtered key.
   const effectiveGroupQ =
     groupSearch.trim() === "" ? undefined : debouncedGroupSearch || undefined;
-  const effectiveLeftDisplayQ =
-    leftDisplaySearch.trim() === ""
-      ? undefined
-      : debouncedLeftDisplaySearch || undefined;
 
   // ---- Left pane "By group": infinite-scroll groups list ----
   // refetchOnMountOrArgChange forces a fresh page-1 fetch every time `q`
@@ -216,7 +152,7 @@ export function useDisplayGroupsPage({
       sortBy: "count",
       sortDirection: "desc",
     },
-    { skip: axis !== "group", refetchOnMountOrArgChange: true },
+    { refetchOnMountOrArgChange: true },
   );
 
   const leftGroups = useMemo<readonly DisplayGroup[]>(
@@ -291,116 +227,9 @@ export function useDisplayGroupsPage({
 
   const isDisplaysLoading = actionMode !== "add" && isGroupDisplaysLoading;
 
-  // ---- Display-axis: infinite-scroll displays list for the left pane ----
-  const displaysInfinite = useGetDisplaysInfiniteQuery(
-    {
-      q: effectiveLeftDisplayQ,
-      pageSize: DISPLAY_PAGE_SIZE,
-      sortBy: "groupCount",
-      sortDirection: "desc",
-    },
-    { skip: axis !== "display", refetchOnMountOrArgChange: true },
-  );
-
-  const leftDisplays = useMemo<readonly BackendDisplay[]>(
-    () => displaysInfinite.data?.pages.flatMap((p) => p.items) ?? [],
-    [displaysInfinite.data?.pages],
-  );
-  const isLeftDisplaysLoading = displaysInfinite.isLoading;
-  const hasMoreLeftDisplays = displaysInfinite.hasNextPage;
-  const isFetchingMoreLeftDisplays = displaysInfinite.isFetchingNextPage;
-  const fetchMoreLeftDisplays = useCallback(() => {
-    void displaysInfinite.fetchNextPage();
-  }, [displaysInfinite]);
-
-  const selectedDisplayBackend = useMemo<BackendDisplay | null>(() => {
-    if (axis !== "display" || !selectedDisplayId) return null;
-    return leftDisplays.find((d) => d.id === selectedDisplayId) ?? null;
-  }, [axis, leftDisplays, selectedDisplayId]);
-
-  // ---- Selected display's groups (full list, capped) for derivations like
-  // selectedDisplay.groups and the edit dialog. ----
-  const { data: selectedDisplayGroupsData } =
-    useGetDisplayGroupsForDisplayQuery(
-      {
-        displayId: selectedDisplayId ?? "",
-        page: 1,
-        pageSize: SELECTED_DISPLAY_GROUPS_PAGE_SIZE,
-        membership: "member",
-      },
-      { skip: selectedDisplayId == null },
-    );
-
-  const selectedDisplayGroups = useMemo<readonly DisplayGroup[]>(
-    () => selectedDisplayGroupsData?.items ?? [],
-    [selectedDisplayGroupsData?.items],
-  );
-  const selectedDisplayGroupIds = useMemo<readonly string[]>(
-    () => selectedDisplayGroups.map((g) => g.id),
-    [selectedDisplayGroups],
-  );
-
-  const selectedDisplay = useMemo<Display | null>(() => {
-    if (!selectedDisplayBackend) return null;
-    return withDisplayGroups(
-      mapDisplayApiToDisplay(selectedDisplayBackend),
-      selectedDisplayGroups.map((g) => ({ name: g.name })),
-    );
-  }, [selectedDisplayBackend, selectedDisplayGroups]);
-
-  // ---- Right-pane groups: paginated, filtered by add/remove mode ----
-  const { data: rightPaneGroupsData } = useGetDisplayGroupsForDisplayQuery(
-    {
-      displayId: selectedDisplayId ?? "",
-      page: groupsRightPanePage,
-      pageSize: GROUP_PAGE_SIZE,
-      q: debouncedDisplaySearch || undefined,
-      membership: actionMode === "add" ? "non-member" : "member",
-    },
-    { skip: axis !== "display" || selectedDisplayId == null },
-  );
-
-  const groupsForRightPane = useMemo<readonly DisplayGroup[]>(
-    () => rightPaneGroupsData?.items ?? [],
-    [rightPaneGroupsData?.items],
-  );
-  const groupsRightPaneTotal =
-    selectedDisplayId == null ? 0 : (rightPaneGroupsData?.total ?? 0);
-
-  // ---- Edit-display dialog: groups for the editing display id ----
-  const { data: editingDisplayGroupsData } = useGetDisplayGroupsForDisplayQuery(
-    {
-      displayId: editingDisplayId ?? "",
-      page: 1,
-      pageSize: SELECTED_DISPLAY_GROUPS_PAGE_SIZE,
-      membership: "member",
-    },
-    { skip: editingDisplayId == null },
-  );
-
-  const editingDisplay = useMemo<Display | null>(() => {
-    if (!editingDisplayId) return null;
-    const backend =
-      leftDisplays.find((d) => d.id === editingDisplayId) ??
-      (selectedDisplayBackend?.id === editingDisplayId
-        ? selectedDisplayBackend
-        : null);
-    if (!backend) return null;
-    const groupNames = (editingDisplayGroupsData?.items ?? []).map((g) => ({
-      name: g.name,
-    }));
-    return withDisplayGroups(mapDisplayApiToDisplay(backend), groupNames);
-  }, [
-    editingDisplayId,
-    leftDisplays,
-    selectedDisplayBackend,
-    editingDisplayGroupsData?.items,
-  ]);
-
   const handleDisplaySearchChange = useCallback((v: string) => {
     setDisplaySearch(v);
     setDisplayPage(1);
-    setGroupsRightPanePage(1);
   }, []);
 
   const handleSelectGroup = useCallback(
@@ -418,24 +247,19 @@ export function useDisplayGroupsPage({
   const handleEnterAdd = useCallback(() => {
     setActionMode("add");
     setSelectedDisplayIds(new Set());
-    setSelectedGroupIds(new Set());
     setAddFilter("ungrouped");
     setDisplayPage(1);
-    setGroupsRightPanePage(1);
   }, []);
 
   const handleEnterRemove = useCallback(() => {
     setActionMode("remove");
     setSelectedDisplayIds(new Set());
-    setSelectedGroupIds(new Set());
     setDisplayPage(1);
-    setGroupsRightPanePage(1);
   }, []);
 
   const handleCancelAction = useCallback(() => {
     setActionMode(null);
     setSelectedDisplayIds(new Set());
-    setSelectedGroupIds(new Set());
   }, []);
 
   const handleToggleDisplay = useCallback((id: string) => {
@@ -572,167 +396,8 @@ export function useDisplayGroupsPage({
     [updateDisplayGroupMutation],
   );
 
-  // ---- Display-axis handlers ----
-  const handleAxisChange = useCallback((next: Axis) => {
-    setAxis(next);
-    // Reset both axes' selections so users don't carry stale state across.
-    setSelectedGroupId(null);
-    setSelectedDisplayId(null);
-    setActionMode(null);
-    setSelectedDisplayIds(new Set());
-    setSelectedGroupIds(new Set());
-    setGroupSearch("");
-    setDisplaySearch("");
-    setLeftDisplaySearch("");
-    setDisplayPage(1);
-    setGroupsRightPanePage(1);
-  }, []);
-
-  const handleLeftDisplaySearchChange = useCallback((v: string) => {
-    setLeftDisplaySearch(v);
-    // Infinite query refetches automatically when the q arg changes.
-  }, []);
-
-  const handleSelectDisplay = useCallback((displayId: string) => {
-    setSelectedDisplayId((prev) => (prev === displayId ? null : displayId));
-    setActionMode(null);
-    setSelectedGroupIds(new Set());
-    setGroupsRightPanePage(1);
-  }, []);
-
-  const handleToggleGroup = useCallback((groupId: string) => {
-    setSelectedGroupIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(groupId)) {
-        next.delete(groupId);
-      } else {
-        next.add(groupId);
-      }
-      return next as ReadonlySet<string>;
-    });
-  }, []);
-
-  const handleConfirmAddGroups = useCallback(async () => {
-    if (!selectedDisplayId || selectedGroupIds.size === 0) return;
-    setIsExecuting(true);
-    try {
-      const merged = Array.from(
-        new Set([...selectedDisplayGroupIds, ...selectedGroupIds]),
-      );
-      await setDisplayGroupsMutation({
-        displayId: selectedDisplayId,
-        groupIds: merged,
-      }).unwrap();
-      const n = selectedGroupIds.size;
-      toast.success(`${n} group${n !== 1 ? "s" : ""} added to display.`);
-    } catch (err) {
-      notifyApiError(err, "Failed to add groups.");
-    } finally {
-      setIsExecuting(false);
-      setActionMode(null);
-      setSelectedGroupIds(new Set());
-    }
-  }, [
-    selectedDisplayId,
-    selectedDisplayGroupIds,
-    selectedGroupIds,
-    setDisplayGroupsMutation,
-  ]);
-
-  const handleConfirmRemoveGroups = useCallback(async () => {
-    if (!selectedDisplayId || selectedGroupIds.size === 0) return;
-    setIsExecuting(true);
-    try {
-      const next = selectedDisplayGroupIds.filter(
-        (id) => !selectedGroupIds.has(id),
-      );
-      await setDisplayGroupsMutation({
-        displayId: selectedDisplayId,
-        groupIds: next,
-      }).unwrap();
-      const n = selectedGroupIds.size;
-      toast.success(`${n} group${n !== 1 ? "s" : ""} removed from display.`);
-    } catch (err) {
-      notifyApiError(err, "Failed to remove groups.");
-    } finally {
-      setIsExecuting(false);
-      setActionMode(null);
-      setSelectedGroupIds(new Set());
-    }
-  }, [
-    selectedDisplayId,
-    selectedDisplayGroupIds,
-    selectedGroupIds,
-    setDisplayGroupsMutation,
-  ]);
-
-  // ---- Edit-display dialog handlers ----
-  const handleOpenEditDisplay = useCallback((displayId: string) => {
-    setEditingDisplayId(displayId);
-    setIsEditDisplayOpen(true);
-  }, []);
-
-  const handleEditDisplayOpenChange = useCallback((open: boolean) => {
-    setIsEditDisplayOpen(open);
-    if (!open) {
-      // Defer clearing editingDisplayId until the dialog is closed so the form
-      // doesn't lose its current display while animating out.
-      setEditingDisplayId(null);
-    }
-  }, []);
-
-  const handleSaveDisplay = useCallback(
-    async (display: Display): Promise<boolean> => {
-      try {
-        await updateDisplayMutation({
-          id: display.id,
-          name: display.name,
-          output: display.output,
-        }).unwrap();
-      } catch (err) {
-        notifyApiError(err, "Failed to save display details.");
-        return false;
-      }
-
-      try {
-        // Resolve group names → group IDs in one backend round-trip,
-        // creating any missing ones idempotently.
-        const names = display.groups
-          .map((g) => collapseDisplayGroupWhitespace(g.name))
-          .filter((n) => n.length > 0);
-        let nextGroupIds: string[] = [];
-        if (names.length > 0) {
-          const resolved = await resolveDisplayGroupsMutation({
-            names,
-          }).unwrap();
-          nextGroupIds = resolved.items.map((i) => i.id);
-        }
-        await setDisplayGroupsMutation({
-          displayId: display.id,
-          groupIds: nextGroupIds,
-        }).unwrap();
-      } catch (err) {
-        notifyApiError(
-          err,
-          "Display details were saved, but group assignment failed.",
-        );
-        return false;
-      }
-
-      toast.success(`Successfully updated ${display.name}`);
-      return true;
-    },
-    [
-      updateDisplayMutation,
-      resolveDisplayGroupsMutation,
-      setDisplayGroupsMutation,
-    ],
-  );
-
   return {
     canManageGroups,
-    axis,
-    handleAxisChange,
     leftGroups,
     isLoading,
     isError,
@@ -754,29 +419,6 @@ export function useDisplayGroupsPage({
     displayTotal,
     setDisplayPage,
     isDisplaysLoading,
-    selectedDisplayId,
-    selectedDisplay,
-    leftDisplaySearch,
-    handleLeftDisplaySearchChange,
-    leftDisplays,
-    isLeftDisplaysLoading,
-    hasMoreLeftDisplays,
-    isFetchingMoreLeftDisplays,
-    fetchMoreLeftDisplays,
-    selectedGroupIds,
-    groupsForRightPane,
-    groupsRightPanePage,
-    groupsRightPaneTotal,
-    setGroupsRightPanePage,
-    handleSelectDisplay,
-    handleToggleGroup,
-    handleConfirmAddGroups,
-    handleConfirmRemoveGroups,
-    editingDisplay,
-    isEditDisplayOpen,
-    handleOpenEditDisplay,
-    handleEditDisplayOpenChange,
-    handleSaveDisplay,
     renameGroupId,
     renameGroupInitialName,
     setRenameGroupId,

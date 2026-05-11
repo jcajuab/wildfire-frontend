@@ -146,6 +146,7 @@ function ComboboxContent({
 }
 
 function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
+  const { onWheelCapture, ...listProps } = props;
   return (
     <ComboboxPrimitive.List
       data-slot="combobox-list"
@@ -153,7 +154,8 @@ function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
         "max-h-[min(18rem,var(--available-height))] scroll-py-1 overflow-y-auto overscroll-contain p-1 data-empty:p-0",
         className,
       )}
-      {...props}
+      onWheelCapture={composeComboboxWheelHandler(onWheelCapture)}
+      {...listProps}
     />
   );
 }
@@ -168,6 +170,7 @@ function ComboboxVirtualList<T>({
   onLoadMore,
   getItemKey,
   renderItem,
+  ...props
 }: Omit<ComboboxPrimitive.List.Props, "children"> & {
   readonly items: readonly T[];
   readonly estimateSize?: number;
@@ -178,6 +181,7 @@ function ComboboxVirtualList<T>({
   readonly getItemKey: (item: T, index: number) => React.Key;
   readonly renderItem: (item: T, index: number) => React.ReactNode;
 }) {
+  const { onWheelCapture, ...listProps } = props;
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual is required for large combobox option sets.
   const virtualizer = useVirtualizer({
@@ -214,6 +218,8 @@ function ComboboxVirtualList<T>({
         "max-h-[min(18rem,var(--available-height))] scroll-py-1 overflow-y-auto overscroll-contain p-1 data-empty:p-0",
         className,
       )}
+      onWheelCapture={composeComboboxWheelHandler(onWheelCapture)}
+      {...listProps}
     >
       <div
         className="relative w-full"
@@ -244,6 +250,50 @@ function ComboboxVirtualList<T>({
       ) : null}
     </ComboboxPrimitive.List>
   );
+}
+
+function normalizeWheelDelta(
+  event: React.WheelEvent<HTMLElement>,
+  element: HTMLElement,
+): number {
+  if (event.deltaMode === 1) {
+    return event.deltaY * 16;
+  }
+  if (event.deltaMode === 2) {
+    return event.deltaY * element.clientHeight;
+  }
+  return event.deltaY;
+}
+
+function handleComboboxWheel(event: React.WheelEvent<HTMLElement>): void {
+  if (event.defaultPrevented) return;
+
+  const element = event.currentTarget;
+  const maxScrollTop = element.scrollHeight - element.clientHeight;
+  if (maxScrollTop <= 0) return;
+
+  const deltaY = normalizeWheelDelta(event, element);
+  if (deltaY === 0) return;
+
+  const nextScrollTop = Math.max(
+    0,
+    Math.min(maxScrollTop, element.scrollTop + deltaY),
+  );
+
+  if (nextScrollTop === element.scrollTop) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  element.scrollTop = nextScrollTop;
+}
+
+function composeComboboxWheelHandler<T extends HTMLElement>(
+  handler?: React.WheelEventHandler<T>,
+): React.WheelEventHandler<T> {
+  return (event) => {
+    handler?.(event);
+    handleComboboxWheel(event as React.WheelEvent<HTMLElement>);
+  };
 }
 
 function ComboboxItem({
