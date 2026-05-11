@@ -17,8 +17,8 @@ export interface UseGlobalEmergencyReturn {
   isBusy: boolean;
   canRead: boolean;
   canUpdate: boolean;
-  activate: (slotIndex: number) => Promise<void>;
-  deactivate: () => Promise<void>;
+  activate: (slotIndex: number) => Promise<boolean>;
+  deactivate: () => Promise<boolean>;
 }
 
 export function useGlobalEmergency(): UseGlobalEmergencyReturn {
@@ -49,14 +49,16 @@ export function useGlobalEmergency(): UseGlobalEmergencyReturn {
 
   const activate = useCallback(
     async (slotIndex: number) => {
-      if (!canUpdate || isBusy) return;
+      if (!canUpdate || isBusy) return false;
       setIsBusy(true);
       try {
         await activateGlobalEmergency({ slotIndex }).unwrap();
         setOptimisticActive(true);
         toast.success("Global emergency mode activated.");
+        return true;
       } catch (error) {
         notifyApiError(error, "Failed to activate global emergency mode.");
+        return false;
       } finally {
         setIsBusy(false);
         setTimeout(() => setOptimisticActive(null), 3000);
@@ -66,14 +68,16 @@ export function useGlobalEmergency(): UseGlobalEmergencyReturn {
   );
 
   const deactivate = useCallback(async () => {
-    if (!canUpdate || isBusy) return;
+    if (!canUpdate || isBusy) return false;
     setIsBusy(true);
     try {
       await deactivateGlobalEmergency({}).unwrap();
       setOptimisticActive(false);
       toast.success("Global emergency mode stopped.");
+      return true;
     } catch (error) {
       notifyApiError(error, "Failed to stop global emergency mode.");
+      return false;
     } finally {
       setIsBusy(false);
       setTimeout(() => setOptimisticActive(null), 3000);

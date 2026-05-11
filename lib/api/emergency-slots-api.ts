@@ -14,6 +14,9 @@ export interface EmergencySlotContent {
   readonly type: EmergencySlotContentType;
   readonly status: EmergencySlotContentStatus;
   readonly thumbnailKey: string | null;
+  readonly thumbnailUrl?: string | null;
+  readonly textPreviewText?: string | null;
+  readonly textHtmlContent?: string | null;
 }
 
 export interface EmergencySlot {

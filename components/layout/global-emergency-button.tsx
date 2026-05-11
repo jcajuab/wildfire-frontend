@@ -3,7 +3,7 @@
 import { IconAlertTriangle } from "@tabler/icons-react";
 import type { ReactElement } from "react";
 
-import { EmergencySlotDropdown } from "@/components/emergency/emergency-slot-dropdown";
+import { StartEmergencyDialog } from "@/components/emergency/start-emergency-dialog";
 import { Button } from "@/components/ui/button";
 import {
   SidebarGroup,
@@ -62,7 +62,7 @@ export function GlobalEmergencyButton({
       <SidebarGroup className="mt-auto">
         <SidebarMenu>
           <SidebarMenuItem>
-            <EmergencySlotDropdown
+            <StartEmergencyDialog
               emergency={emergency}
               trigger={
                 <SidebarMenuButton
@@ -102,7 +102,7 @@ export function GlobalEmergencyButton({
   }
 
   return (
-    <EmergencySlotDropdown
+    <StartEmergencyDialog
       emergency={emergency}
       trigger={
         <Button

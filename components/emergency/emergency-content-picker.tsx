@@ -29,16 +29,18 @@ import { RICH_TEXT_PREVIEW_CLASSES } from "@/lib/rich-text-preview-classes";
 import type { EmergencySlotIndex } from "@/lib/api/emergency-slots-api";
 import { cn } from "@/lib/utils";
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 15;
 
 interface EmergencyContentPickerProps {
   readonly selectedSlotIndex: EmergencySlotIndex | null;
+  readonly selectedContentId?: string | null;
   readonly onSelect: (content: BackendContentListItem) => void;
   readonly submittingContentId?: string | null;
 }
 
 export function EmergencyContentPicker({
   selectedSlotIndex,
+  selectedContentId = null,
   onSelect,
   submittingContentId = null,
 }: EmergencyContentPickerProps): ReactElement {
@@ -66,11 +68,8 @@ export function EmergencyContentPicker({
   const isSubmitting = submittingContentId !== null;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
-        <header>
-          <h3 className="text-sm font-medium">Content Library</h3>
-        </header>
         <SearchControl
           value={search}
           onChange={handleSearchChange}
@@ -93,6 +92,7 @@ export function EmergencyContentPicker({
                 <li key={item.id}>
                   <CompactContentCard
                     content={item}
+                    selected={selectedContentId === item.id}
                     disabled={isPickerDisabled || isSubmitting}
                     isSubmitting={submittingContentId === item.id}
                     onSelect={() => onSelect(item)}
@@ -117,6 +117,7 @@ export function EmergencyContentPicker({
 
 interface CompactContentCardProps {
   readonly content: BackendContentListItem;
+  readonly selected: boolean;
   readonly disabled: boolean;
   readonly isSubmitting: boolean;
   readonly onSelect: () => void;
@@ -124,6 +125,7 @@ interface CompactContentCardProps {
 
 function CompactContentCard({
   content,
+  selected,
   disabled,
   isSubmitting,
   onSelect,
@@ -151,6 +153,7 @@ function CompactContentCard({
       className={cn(
         "group flex h-full w-full min-w-0 cursor-pointer flex-col overflow-hidden rounded-md border border-border bg-background text-left transition-[border-color,background-color,opacity] duration-150 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none disabled:cursor-not-allowed",
         disabled ? "opacity-60" : "hover:border-primary/50 hover:bg-primary/5",
+        selected && "border-primary bg-primary/5 ring-2 ring-primary/20",
       )}
     >
       <span className="relative flex aspect-video items-center justify-center overflow-hidden bg-muted/50">
