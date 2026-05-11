@@ -46,6 +46,7 @@ async function getCachedUsersList(params: {
   sortDirection: string;
   q?: string;
   roleId?: string;
+  userType?: string;
 }) {
   "use cache: private";
   cacheTag("wildfire:users-list");
@@ -137,6 +138,7 @@ export default async function UsersPage({
     pageSize: q.pageSize,
     q: q.q,
     roleId: q.roleId,
+    userType: q.userType,
     sortBy: q.sortBy,
     sortDirection: q.sortDirection,
   };
@@ -158,6 +160,7 @@ export default async function UsersPage({
       sortDirection: queryArgs.sortDirection ?? "asc",
       q: queryArgs.q,
       roleId: queryArgs.roleId,
+      userType: queryArgs.userType,
     }),
     canReadRoles ? getCachedRoleOptions() : null,
     canCreateUser ? getCachedInvitations(initialInvitationQuery) : null,

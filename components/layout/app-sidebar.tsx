@@ -260,8 +260,8 @@ export function AppSidebar(): ReactElement {
           <SidebarMenu className="gap-1">
             <SidebarMenuItem>
               <UserMenu
-                menuSide="top"
-                menuAlign="center"
+                menuSide="right"
+                menuAlign="end"
                 avatarSize={28}
                 avatarWrapperClassName="size-7"
                 fallbackIconClassName="size-6 text-sidebar-foreground"

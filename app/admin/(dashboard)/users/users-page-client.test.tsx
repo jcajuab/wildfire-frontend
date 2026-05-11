@@ -86,6 +86,7 @@ function makePageResult(
     canCreateUser: true,
     search: "",
     roleId: "all",
+    userType: "all",
     page: 1,
     invitationSearch: "",
     invitationPage: 1,
@@ -153,6 +154,7 @@ function makePageResult(
     handleInvitationSearchChange: handleInvitationSearchChangeMock,
     handleSortChange: vi.fn(),
     handleRoleFilterChange: vi.fn(),
+    handleUserTypeFilterChange: vi.fn(),
     handleInvitationStatusFilterChange: vi.fn(),
     handleInvitationSortChange: vi.fn(),
     handleInvite: vi.fn(),
@@ -165,7 +167,6 @@ function makePageResult(
     handleResetPassword: vi.fn(),
     banUserById: vi.fn(),
     unbanUserById: vi.fn(),
-    refreshUsers: vi.fn(),
     ...overrides,
   };
 }

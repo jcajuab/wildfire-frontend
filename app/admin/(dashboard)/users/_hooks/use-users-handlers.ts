@@ -12,7 +12,6 @@ import {
 } from "@/lib/api/rbac-api";
 import {
   useCreateInvitationMutation,
-  type CreateInvitationResponse,
   useResendInvitationMutation,
 } from "@/lib/api/invitations-api";
 import type { EditUserFormData } from "@/components/users/edit-user-dialog";
@@ -50,9 +49,7 @@ export function useUsersHandlers({
   const [resetUserPassword] = useResetUserPasswordMutation();
 
   const handleInvite = useCallback(
-    async (
-      emails: readonly string[],
-    ): Promise<{ id: string; expiresAt: string } | null> => {
+    async (emails: readonly string[]): Promise<boolean> => {
       try {
         const results = await Promise.allSettled(
           emails.map((email) => createInvitation({ email }).unwrap()),
@@ -79,24 +76,17 @@ export function useUsersHandlers({
           );
         }
 
-        const firstSuccess = results.find(
-          (
-            result,
-          ): result is PromiseFulfilledResult<CreateInvitationResponse> =>
-            result.status === "fulfilled",
-        );
-
-        return firstSuccess?.value ?? null;
+        return true;
       } catch (err) {
         if (err instanceof AuthApiError && err.status === 429) {
           notifyApiError(
             err,
             "Too many invite requests. Please wait and try again.",
           );
-          return null;
+          return false;
         }
         notifyApiError(err, "Failed to invite user(s)");
-        return null;
+        return false;
       }
     },
     [createInvitation],
@@ -152,7 +142,6 @@ export function useUsersHandlers({
           username: data.username,
           name: data.name,
           email: data.email,
-          isActive: data.isActive,
         }).unwrap();
         toast.success(`Successfully updated ${data.name}`);
         setIsEditDialogOpen(false);

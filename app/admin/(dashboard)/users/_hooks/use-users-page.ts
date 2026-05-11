@@ -14,7 +14,7 @@ import type {
   RbacUserListQuery,
   RbacUsersListResponse,
 } from "@/lib/api/rbac-api";
-import type { User, UserRole, UserSort } from "@/types/user";
+import type { User, UserRole, UserSort, UserTypeFilter } from "@/types/user";
 import type {
   InvitationListResponse,
   InvitationRecord,
@@ -37,6 +37,7 @@ function normalizedUsersQueryKey(query: RbacUserListQuery): string {
     pageSize: query.pageSize ?? PAGE_SIZE,
     q: query.q ?? null,
     roleId: query.roleId ?? null,
+    userType: query.userType ?? null,
     sortBy: query.sortBy ?? "name",
     sortDirection: query.sortDirection ?? "asc",
   });
@@ -76,6 +77,7 @@ export interface UseUsersPageResult {
   // Filter state
   search: string;
   roleId: string;
+  userType: UserTypeFilter;
   page: number;
   invitationSearch: string;
   invitationPage: number;
@@ -127,11 +129,10 @@ export interface UseUsersPageResult {
   handleInvitationSearchChange: (value: string) => void;
   handleSortChange: (nextSort: UserSort) => void;
   handleRoleFilterChange: (roleId: string) => void;
+  handleUserTypeFilterChange: (userType: UserTypeFilter) => void;
   handleInvitationStatusFilterChange: (status: InvitationStatusFilter) => void;
   handleInvitationSortChange: (nextSort: InvitationSort) => void;
-  handleInvite: (
-    emails: readonly string[],
-  ) => Promise<{ id: string; expiresAt: string } | null>;
+  handleInvite: (emails: readonly string[]) => Promise<boolean>;
   handleResendInvitation: (id: string) => Promise<void>;
   handleRoleToggle: (userId: string, newRoleIds: string[]) => Promise<string[]>;
   handleEdit: (user: User) => void;
@@ -141,7 +142,6 @@ export interface UseUsersPageResult {
   handleResetPassword: (userId: string) => Promise<void>;
   banUserById: (id: string) => Promise<void>;
   unbanUserById: (id: string) => Promise<void>;
-  refreshUsers: () => void;
 }
 
 export function useUsersPage(options?: {
@@ -168,6 +168,7 @@ export function useUsersPage(options?: {
     pageSize: PAGE_SIZE,
     q: debouncedSearch || undefined,
     roleId: filters.roleId === "all" ? undefined : filters.roleId,
+    userType: filters.userType === "all" ? undefined : filters.userType,
     sortBy: filters.sortField === "lastSeen" ? "lastSeenAt" : filters.sortField,
     sortDirection: filters.sortDirection,
   };
@@ -185,15 +186,14 @@ export function useUsersPage(options?: {
     isLoading: usersQueryLoading,
     isFetching: usersQueryFetching,
     isError: usersError,
-    refetch: refetchUsers,
   } = useGetUsersQuery(usersQueryArgs, {
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
     refetchOnReconnect: true,
-    skip: isInitialUsersQuery && cachedInitialUsers.data == null,
+    skip: false,
   });
   const effectiveUsersData = isInitialUsersQuery
-    ? (cachedInitialUsers.data ?? options?.initialUsers?.data)
+    ? (usersData ?? cachedInitialUsers.data ?? options?.initialUsers?.data)
     : usersData;
 
   const { data: rolesData, isLoading: rolesLoading } = useGetRoleOptionsQuery(
@@ -203,8 +203,7 @@ export function useUsersPage(options?: {
   const effectiveRolesData = rolesData ?? options?.initialRoles;
 
   const usersLoading =
-    effectiveUsersData == null &&
-    (isInitialUsersQuery ? false : usersQueryLoading || rolesLoading);
+    effectiveUsersData == null && (usersQueryLoading || rolesLoading);
 
   const dialogs = useUsersDialogs();
 
@@ -306,6 +305,7 @@ export function useUsersPage(options?: {
     canCreateUser,
     search: filters.search,
     roleId: filters.roleId,
+    userType: filters.userType,
     page: filters.page,
     invitationSearch: filters.invitationSearch,
     invitationPage: filters.invitationPage,
@@ -348,6 +348,7 @@ export function useUsersPage(options?: {
     handleInvitationSearchChange: filters.handleInvitationSearchChange,
     handleSortChange: filters.handleSortChange,
     handleRoleFilterChange: filters.handleRoleFilterChange,
+    handleUserTypeFilterChange: filters.handleUserTypeFilterChange,
     handleInvitationStatusFilterChange:
       filters.handleInvitationStatusFilterChange,
     handleInvitationSortChange: filters.handleInvitationSortChange,
@@ -361,6 +362,5 @@ export function useUsersPage(options?: {
     handleResetPassword: handlers.handleResetPassword,
     banUserById: handlers.banUserById,
     unbanUserById: handlers.unbanUserById,
-    refreshUsers: refetchUsers,
   };
 }

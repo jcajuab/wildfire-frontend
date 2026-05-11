@@ -89,12 +89,7 @@ export function useSettingsPage(): UseSettingsPageResult {
   const isInvitedUser = user?.isInvitedUser ?? false;
   const isWildfireUser = isInvitedUser || (user?.isAdmin ?? false);
 
-  const accountDisplayName = [
-    profileEditor.firstName.trim(),
-    profileEditor.lastName.trim(),
-  ]
-    .filter((part) => part.length > 0)
-    .join(" ");
+  const accountDisplayName = profileEditor.name.trim();
   const accountNameForDialog =
     accountDisplayName.length > 0
       ? accountDisplayName

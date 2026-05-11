@@ -1,9 +1,12 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { PendingInvitationsTable } from "./pending-invitations-table";
-import { useRevealInviteLinkMutation } from "@/lib/api/invitations-api";
+import {
+  useDeleteInvitationMutation,
+  useRevealInviteLinkMutation,
+} from "@/lib/api/invitations-api";
 import type {
   InvitationRecord,
   InvitationSort,
@@ -12,6 +15,7 @@ import type {
 
 vi.mock("@/lib/api/invitations-api", () => ({
   useRevealInviteLinkMutation: vi.fn(),
+  useDeleteInvitationMutation: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
@@ -22,7 +26,9 @@ vi.mock("sonner", () => ({
 }));
 
 const useRevealInviteLinkMutationMock = vi.mocked(useRevealInviteLinkMutation);
+const useDeleteInvitationMutationMock = vi.mocked(useDeleteInvitationMutation);
 const revealInviteLinkMock = vi.fn();
+const deleteInvitationMock = vi.fn();
 const writeTextMock = vi.fn();
 
 function mockClipboard(): void {
@@ -80,6 +86,13 @@ describe("PendingInvitationsTable", () => {
     useRevealInviteLinkMutationMock.mockReturnValue([
       revealInviteLinkMock,
     ] as unknown as ReturnType<typeof useRevealInviteLinkMutation>);
+    deleteInvitationMock.mockReturnValue({
+      unwrap: vi.fn().mockResolvedValue(undefined),
+    });
+    useDeleteInvitationMutationMock.mockReturnValue([
+      deleteInvitationMock,
+      { isLoading: false },
+    ] as unknown as ReturnType<typeof useDeleteInvitationMutation>);
   });
 
   test("renders compact invitation columns without link, created, or visible action headers", () => {
@@ -185,7 +198,8 @@ describe("PendingInvitationsTable", () => {
     expect(onResend).toHaveBeenCalledWith("invite-1");
   });
 
-  test("hides row menu for non-pending invitations", () => {
+  test("shows delete action for non-pending invitations", async () => {
+    const actor = userEvent.setup();
     renderTable({
       invitations: [
         {
@@ -196,17 +210,43 @@ describe("PendingInvitationsTable", () => {
       ],
     });
 
-    const row = screen
-      .getAllByRole("row")
-      .find((candidate) =>
-        candidate.textContent?.includes("student@example.com"),
-      );
+    await actor.click(
+      screen.getByRole("button", {
+        name: "Actions for invitation to student@example.com",
+      }),
+    );
 
     expect(
-      within(row as HTMLElement).queryByRole("button", {
-        name: /Actions for invitation/,
-      }),
+      screen.queryByRole("menuitem", { name: "Copy Invite Link" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Regenerate Link" }),
+    ).not.toBeInTheDocument();
+    const deleteItem = screen.getByRole("menuitem", {
+      name: "Delete Invitation",
+    });
+
+    expect(deleteItem).toBeVisible();
+    expect(deleteItem).toHaveAttribute("data-variant", "destructive");
+  });
+
+  test("deletes invitation after confirmation", async () => {
+    const actor = userEvent.setup();
+    renderTable();
+
+    await actor.click(
+      screen.getByRole("button", {
+        name: "Actions for invitation to student@example.com",
+      }),
+    );
+    await actor.click(
+      screen.getByRole("menuitem", { name: "Delete Invitation" }),
+    );
+    await actor.click(
+      screen.getByRole("button", { name: "Delete invitation" }),
+    );
+
+    expect(deleteInvitationMock).toHaveBeenCalledWith("invite-1");
   });
 
   test("shows regenerating state while invitation is being regenerated", async () => {

@@ -1,16 +1,19 @@
 "use client";
 
 import type { ReactElement } from "react";
+import { useState } from "react";
 import {
   IconRefresh,
   IconCopy,
   IconLoader2,
   IconDotsVertical,
   IconFilter,
+  IconTrash,
 } from "@tabler/icons-react";
 import { SortableHeader } from "@/components/common/sortable-header";
 import { TableHeaderControl } from "@/components/common/table-header-control";
 import { EmptyState } from "@/components/common/empty-state";
+import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,7 +34,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/formatters";
-import { useRevealInviteLinkMutation } from "@/lib/api/invitations-api";
+import {
+  useDeleteInvitationMutation,
+  useRevealInviteLinkMutation,
+} from "@/lib/api/invitations-api";
 import type {
   InvitationRecord,
   InvitationSort,
@@ -131,15 +137,17 @@ function InvitationStatusFilterHeader({
 function InvitationActionsMenu({
   invitation,
   isResending,
+  isDeleting,
   onResend,
+  onDelete,
 }: {
   readonly invitation: InvitationRecord;
   readonly isResending: boolean;
+  readonly isDeleting: boolean;
   readonly onResend: (invitationId: string) => void;
+  readonly onDelete: (invitation: InvitationRecord) => void;
 }): ReactElement | null {
   const [revealInviteLink] = useRevealInviteLinkMutation();
-
-  if (invitation.status !== "pending") return null;
 
   const handleCopyLink = async (): Promise<void> => {
     try {
@@ -163,21 +171,40 @@ function InvitationActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-40">
-        <DropdownMenuItem onSelect={() => void handleCopyLink()}>
-          <IconCopy className="size-4" aria-hidden="true" />
-          Copy Invite Link
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        {invitation.status === "pending" ? (
+          <>
+            <DropdownMenuItem onSelect={() => void handleCopyLink()}>
+              <IconCopy className="size-4" aria-hidden="true" />
+              Copy Invite Link
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={isResending}
+              onSelect={() => onResend(invitation.id)}
+            >
+              {isResending ? (
+                <IconLoader2
+                  className="size-4 animate-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <IconRefresh className="size-4" aria-hidden="true" />
+              )}
+              {isResending ? "Regenerating..." : "Regenerate Link"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        ) : null}
         <DropdownMenuItem
-          disabled={isResending}
-          onSelect={() => onResend(invitation.id)}
+          disabled={isDeleting}
+          variant="destructive"
+          onSelect={() => onDelete(invitation)}
         >
-          {isResending ? (
+          {isDeleting ? (
             <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
           ) : (
-            <IconRefresh className="size-4" aria-hidden="true" />
+            <IconTrash className="size-4" aria-hidden="true" />
           )}
-          {isResending ? "Regenerating..." : "Regenerate Link"}
+          Delete Invitation
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -195,6 +222,18 @@ export function PendingInvitationsTable({
   onResend,
   onSendInvitation,
 }: PendingInvitationsTableProps): ReactElement {
+  const [invitationToDelete, setInvitationToDelete] =
+    useState<InvitationRecord | null>(null);
+  const [deleteInvitation, { isLoading: isDeletingInvitation }] =
+    useDeleteInvitationMutation();
+
+  const handleDeleteInvitation = async (): Promise<void> => {
+    if (!invitationToDelete) return;
+    await deleteInvitation(invitationToDelete.id).unwrap();
+    toast.success("Invitation deleted.");
+    setInvitationToDelete(null);
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-28 items-center justify-center">
@@ -220,108 +259,129 @@ export function PendingInvitationsTable({
   }
 
   return (
-    <Table>
-      <TableHeader className="sticky top-0 z-10 bg-background">
-        <TableRow>
-          <TableHead
-            aria-sort={
-              sort.field === "email"
-                ? sort.direction === "asc"
-                  ? "ascending"
-                  : "descending"
-                : "none"
-            }
-          >
-            {onSortChange ? (
-              <SortableHeader
-                label="Invitee"
-                field="email"
-                currentSort={sort}
-                onSort={(field, direction) =>
-                  onSortChange({ field, direction })
-                }
-              />
-            ) : (
-              "Invitee"
-            )}
-          </TableHead>
-          <TableHead className="w-[160px]">
-            {onStatusFilterChange ? (
-              <InvitationStatusFilterHeader
-                value={statusFilter}
-                onChange={onStatusFilterChange}
-              />
-            ) : (
-              "Status"
-            )}
-          </TableHead>
-          <TableHead
-            className="w-[260px]"
-            aria-sort={
-              sort.field === "expiresAt"
-                ? sort.direction === "asc"
-                  ? "ascending"
-                  : "descending"
-                : "none"
-            }
-          >
-            {onSortChange ? (
-              <SortableHeader
-                label="Expires"
-                field="expiresAt"
-                currentSort={sort}
-                onSort={(field, direction) =>
-                  onSortChange({ field, direction })
-                }
-              />
-            ) : (
-              "Expires"
-            )}
-          </TableHead>
-          <TableHead className="w-[48px] text-right">
-            <span className="sr-only">Actions</span>
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody className="[&_tr:last-child]:border-b">
-        {invitations.map((invitation) => {
-          const isResending = resendingInvitationId === invitation.id;
-          return (
-            <TableRow key={invitation.id} className="h-12">
-              <TableCell>
-                <div className="flex min-h-8 min-w-0 flex-col justify-center">
-                  <span className="truncate font-medium">
-                    {invitation.email}
-                  </span>
-                  {invitation.name ? (
-                    <span className="truncate text-xs text-muted-foreground">
-                      {invitation.name}
-                    </span>
-                  ) : null}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant="outline"
-                  className={statusClassName[invitation.status]}
-                >
-                  {statusLabel[invitation.status]}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-muted-foreground tabular-nums">
-                {formatDateTime(invitation.expiresAt)}
-              </TableCell>
-              <TableCell className="w-[48px] text-right">
-                <InvitationActionsMenu
-                  invitation={invitation}
-                  isResending={isResending}
-                  onResend={onResend}
+    <>
+      <Table>
+        <TableHeader className="sticky top-0 z-10 bg-background">
+          <TableRow>
+            <TableHead
+              aria-sort={
+                sort.field === "email"
+                  ? sort.direction === "asc"
+                    ? "ascending"
+                    : "descending"
+                  : "none"
+              }
+            >
+              {onSortChange ? (
+                <SortableHeader
+                  label="Invitee"
+                  field="email"
+                  currentSort={sort}
+                  onSort={(field, direction) =>
+                    onSortChange({ field, direction })
+                  }
                 />
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
+              ) : (
+                "Invitee"
+              )}
+            </TableHead>
+            <TableHead className="w-[160px]">
+              {onStatusFilterChange ? (
+                <InvitationStatusFilterHeader
+                  value={statusFilter}
+                  onChange={onStatusFilterChange}
+                />
+              ) : (
+                "Status"
+              )}
+            </TableHead>
+            <TableHead
+              className="w-[260px]"
+              aria-sort={
+                sort.field === "expiresAt"
+                  ? sort.direction === "asc"
+                    ? "ascending"
+                    : "descending"
+                  : "none"
+              }
+            >
+              {onSortChange ? (
+                <SortableHeader
+                  label="Expires"
+                  field="expiresAt"
+                  currentSort={sort}
+                  onSort={(field, direction) =>
+                    onSortChange({ field, direction })
+                  }
+                />
+              ) : (
+                "Expires"
+              )}
+            </TableHead>
+            <TableHead className="w-[48px] text-right">
+              <span className="sr-only">Actions</span>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody className="[&_tr:last-child]:border-b">
+          {invitations.map((invitation) => {
+            const isResending = resendingInvitationId === invitation.id;
+            const isDeleting =
+              isDeletingInvitation && invitationToDelete?.id === invitation.id;
+            return (
+              <TableRow key={invitation.id} className="h-12">
+                <TableCell>
+                  <div className="flex min-h-8 min-w-0 flex-col justify-center">
+                    <span className="truncate font-medium">
+                      {invitation.email}
+                    </span>
+                    {invitation.name ? (
+                      <span className="truncate text-xs text-muted-foreground">
+                        {invitation.name}
+                      </span>
+                    ) : null}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant="outline"
+                    className={statusClassName[invitation.status]}
+                  >
+                    {statusLabel[invitation.status]}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-muted-foreground tabular-nums">
+                  {formatDateTime(invitation.expiresAt)}
+                </TableCell>
+                <TableCell className="w-[48px] text-right">
+                  <InvitationActionsMenu
+                    invitation={invitation}
+                    isResending={isResending}
+                    isDeleting={isDeleting}
+                    onResend={onResend}
+                    onDelete={setInvitationToDelete}
+                  />
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+      <ConfirmActionDialog
+        open={invitationToDelete != null}
+        onOpenChange={(open) => {
+          if (!open) setInvitationToDelete(null);
+        }}
+        title="Delete invitation?"
+        description={
+          invitationToDelete
+            ? `This will permanently delete the invitation for ${invitationToDelete.email}. Pending invite links will stop working.`
+            : undefined
+        }
+        confirmLabel="Delete invitation"
+        errorFallback="Failed to delete invitation"
+        onConfirm={handleDeleteInvitation}
+      />
+    </>
   );
 }

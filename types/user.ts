@@ -26,6 +26,7 @@ export interface User {
 import type { SortDirection } from "@/types/common";
 
 export type UserSortField = "name" | "email" | "lastSeen";
+export type UserTypeFilter = "all" | "dcism" | "invited" | "banned";
 
 export interface UserSort {
   readonly field: UserSortField;

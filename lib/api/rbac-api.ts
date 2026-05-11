@@ -82,6 +82,7 @@ export interface RbacUserListQuery {
   readonly pageSize?: number;
   readonly q?: string;
   readonly roleId?: string;
+  readonly userType?: "dcism" | "invited" | "banned";
   readonly sortBy?: "name" | "email" | "lastSeenAt";
   readonly sortDirection?: "asc" | "desc";
 }
@@ -98,9 +99,28 @@ type RoleEditBootstrapMutable = Omit<
   rolePermissions: RbacPermission[];
 };
 
-type UserListMutable = Omit<RbacUsersListResponse, "items"> & {
+type UserListMutable = {
+  -readonly [K in keyof Omit<
+    RbacUsersListResponse,
+    "items"
+  >]: RbacUsersListResponse[K];
+} & {
   items: RbacUser[];
 };
+
+function getRbacUserType(user: RbacUser): "dcism" | "invited" | "banned" {
+  if (user.bannedAt != null || !user.isActive) {
+    return "banned";
+  }
+  return user.isInvitedUser ? "invited" : "dcism";
+}
+
+function matchesUserTypeFilter(
+  user: RbacUser,
+  userType?: "dcism" | "invited" | "banned",
+): boolean {
+  return userType == null || getRbacUserType(user) === userType;
+}
 
 export interface RoleEditBootstrapResponse {
   readonly role: RbacRoleSummary;
@@ -413,6 +433,7 @@ export const rbacApi = api.injectEndpoints({
           pageSize: query?.pageSize ?? 10,
           q: query?.q,
           roleId: query?.roleId,
+          userType: query?.userType,
           sortBy: query?.sortBy ?? "name",
           sortDirection: query?.sortDirection ?? "asc",
         },
@@ -596,6 +617,10 @@ export const rbacApi = api.injectEndpoints({
         { type: "User", id: userId },
         { type: "User", id: "LIST" },
         { type: "Role", id: "LIST" },
+        { type: "Content", id: "LIST" },
+        { type: "Playlist", id: "LIST" },
+        { type: "Schedule", id: "LIST" },
+        { type: "Display", id: "LIST" },
       ],
       async onQueryStarted({ userId }, api) {
         try {
@@ -663,18 +688,35 @@ export const rbacApi = api.injectEndpoints({
             .map((args) =>
               api.dispatch(
                 rbacApi.util.updateQueryData("getUsers", args, (draft) => {
-                  const user = draft.items.find((item) => item.id === userId);
-                  if (user) {
-                    (user as RbacUser & { bannedAt?: string | null }).bannedAt =
-                      banned ? new Date().toISOString() : null;
+                  const mutableDraft = draft as UserListMutable;
+                  const idx = mutableDraft.items.findIndex(
+                    (item) => item.id === userId,
+                  );
+                  if (idx === -1) return;
+                  const existing = mutableDraft.items[idx];
+                  if (!existing) return;
+                  const nextUser: RbacUser = {
+                    ...existing,
+                    bannedAt: banned ? new Date().toISOString() : null,
+                    isActive: !banned,
+                  };
+                  if (!matchesUserTypeFilter(nextUser, args?.userType)) {
+                    mutableDraft.items.splice(idx, 1);
+                    mutableDraft.total = Math.max(0, mutableDraft.total - 1);
+                    return;
                   }
+                  mutableDraft.items[idx] = nextUser;
                 }),
               ),
             ),
           api.dispatch(
             rbacApi.util.updateQueryData("getUser", userId, (draft) => {
-              (draft as RbacUser & { bannedAt?: string | null }).bannedAt =
-                banned ? new Date().toISOString() : null;
+              const mutableDraft = draft as RbacUser & {
+                bannedAt?: string | null;
+                isActive: boolean;
+              };
+              mutableDraft.bannedAt = banned ? new Date().toISOString() : null;
+              mutableDraft.isActive = !banned;
             }),
           ),
         ];
@@ -686,6 +728,10 @@ export const rbacApi = api.injectEndpoints({
               { type: "User", id: userId },
               { type: "User", id: "LIST" },
               { type: "Role", id: "LIST" },
+              { type: "Content", id: "LIST" },
+              { type: "Playlist", id: "LIST" },
+              { type: "Schedule", id: "LIST" },
+              { type: "Display", id: "LIST" },
               { type: "AuditEvent", id: "LIST" },
             ],
             revalidate: [
@@ -693,6 +739,12 @@ export const rbacApi = api.injectEndpoints({
               "users-options",
               "roles-list",
               "roles-options",
+              "content-list",
+              "content-options",
+              "playlists",
+              "schedules-bootstrap",
+              "displays-bootstrap",
+              "displays-options",
               "audit",
             ],
           });

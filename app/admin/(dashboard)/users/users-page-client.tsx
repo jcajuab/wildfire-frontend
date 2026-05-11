@@ -180,6 +180,7 @@ export function UsersPageView({
     search,
     invitationSearch,
     roleId,
+    userType,
     page,
     activeTab,
     sort,
@@ -218,6 +219,7 @@ export function UsersPageView({
     handleInvitationSearchChange,
     handleSortChange,
     handleRoleFilterChange,
+    handleUserTypeFilterChange,
     handleInvitationStatusFilterChange,
     handleInvitationSortChange,
     handleInvite,
@@ -230,11 +232,22 @@ export function UsersPageView({
     handleResetPassword,
     banUserById,
     unbanUserById,
-    refreshUsers,
   } = useUsersPage({ initialUsers, initialRoles, initialInvitations });
 
   const selectedTab = canCreateUser ? activeTab : "users";
   const invitationsTotal = invitationsData?.total ?? 0;
+  const selectedUserRoleIds =
+    selectedUser == null
+      ? []
+      : (userRolesByUserId[selectedUser.id] ?? []).map((role) => role.id);
+  const selectedUserIsSystem = selectedUserRoleIds.some((id) =>
+    systemRoleIds.includes(id),
+  );
+  const canManageSelectedUserStatus =
+    canDeleteUser &&
+    selectedUser != null &&
+    !selectedUserIsSystem &&
+    selectedUser.id !== currentUser?.id;
 
   useEffect(() => {
     if (!canCreateUser && activeTab !== "users") {
@@ -387,6 +400,8 @@ export function UsersPageView({
                       onSortChange={handleSortChange}
                       roleFilter={roleId}
                       onRoleFilterChange={handleRoleFilterChange}
+                      userTypeFilter={userType}
+                      onUserTypeFilterChange={handleUserTypeFilterChange}
                       onEdit={handleEdit}
                       onRoleToggle={handleRoleToggle}
                       onBanUser={handleRequestBanUser}
@@ -448,7 +463,20 @@ export function UsersPageView({
       <InviteUsersDialog
         open={isInviteDialogOpen}
         onOpenChange={setIsInviteDialogOpen}
-        onInvite={handleInvite}
+        onInvite={async (emails) => {
+          const didInvite = await handleInvite(emails);
+          if (didInvite) {
+            await setActiveTab("invitations");
+            handleInvitationSearchChange("");
+            handleInvitationStatusFilterChange("all");
+            handleInvitationSortChange({
+              field: "createdAt",
+              direction: "desc",
+            });
+            setInvitationPage(1);
+          }
+          return didInvite;
+        }}
       />
 
       <EditUserDialog
@@ -456,6 +484,15 @@ export function UsersPageView({
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSubmit={handleEditSubmit}
+        canManageStatus={canManageSelectedUserStatus}
+        onRequestBanUser={(user) => {
+          setIsEditDialogOpen(false);
+          handleRequestBanUser(user);
+        }}
+        onRequestUnbanUser={(user) => {
+          setIsEditDialogOpen(false);
+          handleRequestUnbanUser(user);
+        }}
       />
 
       <ConfirmActionDialog
@@ -466,7 +503,7 @@ export function UsersPageView({
           userToBan
             ? userToBan.bannedAt
               ? `This will restore ${userToBan.name}'s access to WILDFIRE.`
-              : `This will suspend ${userToBan.name}'s access to WILDFIRE.`
+              : `This will ban ${userToBan.name}, revoke their sessions, and delete content, playlists, and schedules they own. This cannot be undone.`
             : undefined
         }
         confirmLabel={userToBan?.bannedAt ? "Unban user" : "Ban user"}
@@ -484,7 +521,6 @@ export function UsersPageView({
             toast.success(`Successfully banned ${username}`);
           }
           setUserToBan(null);
-          refreshUsers();
         }}
       />
 

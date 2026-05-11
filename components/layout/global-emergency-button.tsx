@@ -33,7 +33,7 @@ export function GlobalEmergencyButton({
     ? "Updating..."
     : isActive
       ? "Stop Emergency"
-      : "Manage Emergencies";
+      : "Start Emergency";
 
   if (variant === "sidebar") {
     if (isActive) {
@@ -109,7 +109,7 @@ export function GlobalEmergencyButton({
           variant={isActive ? "destructive" : "ghost"}
           size="icon"
           disabled={!canUpdate || isBusy}
-          aria-label={isActive ? "Stop Emergency" : "Manage Emergencies"}
+          aria-label={isActive ? "Stop Emergency" : "Start Emergency"}
           className={
             isActive
               ? undefined

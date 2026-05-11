@@ -127,27 +127,23 @@ export function SettingsPageView({
                   </SettingsField>
 
                   <ProfileNameEditor
-                    firstName={profileEditor.firstName}
-                    lastName={profileEditor.lastName}
-                    savedFirstName={profileEditor.savedFirstName}
-                    savedLastName={profileEditor.savedLastName}
-                    editingField={profileEditor.editingField}
+                    name={profileEditor.name}
+                    savedName={profileEditor.savedName}
+                    isEditingName={profileEditor.isEditingName}
                     isSavingProfileName={profileEditor.isSavingProfileName}
                     profileNameError={profileEditor.profileNameError}
-                    onFirstNameChange={profileEditor.setFirstName}
-                    onLastNameChange={profileEditor.setLastName}
-                    onEditFieldChange={(field) => {
-                      if (field) {
+                    onNameChange={profileEditor.setName}
+                    onEditNameChange={(editing) => {
+                      if (editing) {
                         profileEditor.setProfileNameError(null);
                       }
-                      profileEditor.setEditingField(field);
+                      profileEditor.setIsEditingName(editing);
                     }}
                     onSaveProfileName={profileEditor.saveProfileName}
                     onCancelEdit={() => {
-                      profileEditor.setFirstName(profileEditor.savedFirstName);
-                      profileEditor.setLastName(profileEditor.savedLastName);
+                      profileEditor.setName(profileEditor.savedName);
                       profileEditor.setProfileNameError(null);
-                      profileEditor.setEditingField(null);
+                      profileEditor.setIsEditingName(false);
                     }}
                   />
 

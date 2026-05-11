@@ -8,13 +8,8 @@ import {
 } from "@/lib/api/get-api-error-message";
 import type { AuthResponse } from "@/types/auth";
 
-const splitName = (
-  fullName: string | undefined,
-): { first: string; last: string } => {
-  const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
-  const first = parts[0] ?? "Admin";
-  const last = parts.slice(1).join(" ");
-  return { first, last };
+const normalizeName = (fullName: string | undefined): string => {
+  return (fullName ?? "").trim() || "Admin";
 };
 
 interface UseProfileEditorProps {
@@ -32,18 +27,13 @@ export function useProfileEditor({
   updateSession,
   logout,
 }: UseProfileEditorProps) {
-  const initialName = splitName(userName);
-  const [firstName, setFirstName] = useState(initialName.first);
-  const [lastName, setLastName] = useState(initialName.last);
-  const [savedFirstName, setSavedFirstName] = useState(initialName.first);
-  const [savedLastName, setSavedLastName] = useState(initialName.last);
+  const initialName = normalizeName(userName);
+  const [name, setName] = useState(initialName);
+  const [savedName, setSavedName] = useState(initialName);
 
   const [isSavingProfileName, setIsSavingProfileName] = useState(false);
   const [profileNameError, setProfileNameError] = useState<string | null>(null);
-
-  const [editingField, setEditingField] = useState<
-    "firstName" | "lastName" | null
-  >(null);
+  const [isEditingName, setIsEditingName] = useState(false);
 
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
   const [profilePictureError, setProfilePictureError] = useState<string | null>(
@@ -63,16 +53,12 @@ export function useProfileEditor({
   const [isEditingEmail, setIsEditingEmail] = useState(false);
 
   useEffect(() => {
-    const nextName = splitName(userName);
-    setSavedFirstName(nextName.first);
-    setSavedLastName(nextName.last);
-    if (editingField !== "firstName") {
-      setFirstName(nextName.first);
+    const nextName = normalizeName(userName);
+    setSavedName(nextName);
+    if (!isEditingName) {
+      setName(nextName);
     }
-    if (editingField !== "lastName") {
-      setLastName(nextName.last);
-    }
-  }, [editingField, userName]);
+  }, [isEditingName, userName]);
 
   useEffect(() => {
     if (!isEditingUsername) {
@@ -89,33 +75,30 @@ export function useProfileEditor({
   }, [isEditingEmail, userEmail]);
 
   const saveProfileName = useCallback(
-    async (nextFirstName: string, nextLastName: string): Promise<boolean> => {
-      const normalizedFirstName = nextFirstName.trim();
-      const normalizedLastName = nextLastName.trim();
-      const normalizedSavedFirstName = savedFirstName.trim();
-      const normalizedSavedLastName = savedLastName.trim();
+    async (nextName: string): Promise<boolean> => {
+      const normalizedName = nextName.trim();
+      const normalizedSavedName = savedName.trim();
 
-      setFirstName(normalizedFirstName);
-      setLastName(normalizedLastName);
+      setName(normalizedName);
 
-      if (
-        normalizedFirstName === normalizedSavedFirstName &&
-        normalizedLastName === normalizedSavedLastName
-      ) {
+      if (normalizedName.length === 0) {
+        setProfileNameError("Name is required.");
+        return false;
+      }
+
+      if (normalizedName === normalizedSavedName) {
         setProfileNameError(null);
         return true;
       }
 
-      const name = [normalizedFirstName, normalizedLastName]
-        .filter((part) => part.length > 0)
-        .join(" ");
       setIsSavingProfileName(true);
       setProfileNameError(null);
       try {
-        const response = await updateCurrentUserProfile({ name });
+        const response = await updateCurrentUserProfile({
+          name: normalizedName,
+        });
         updateSession(response);
-        setSavedFirstName(normalizedFirstName);
-        setSavedLastName(normalizedLastName);
+        setSavedName(normalizedName);
         toast.success("Successfully updated name");
         return true;
       } catch (err) {
@@ -128,7 +111,7 @@ export function useProfileEditor({
         setIsSavingProfileName(false);
       }
     },
-    [savedFirstName, savedLastName, updateSession],
+    [savedName, updateSession],
   );
 
   const saveUsername = useCallback(
@@ -250,13 +233,11 @@ export function useProfileEditor({
   );
 
   return {
-    firstName,
-    lastName,
-    savedFirstName,
-    savedLastName,
+    name,
+    savedName,
     isSavingProfileName,
     profileNameError,
-    editingField,
+    isEditingName,
     isAvatarUploading,
     profilePictureError,
     username,
@@ -269,10 +250,9 @@ export function useProfileEditor({
     isSavingEmail,
     emailError,
     isEditingEmail,
-    setFirstName,
-    setLastName,
+    setName,
     setProfileNameError,
-    setEditingField,
+    setIsEditingName,
     setProfilePictureError,
     setUsername,
     setUsernameError,

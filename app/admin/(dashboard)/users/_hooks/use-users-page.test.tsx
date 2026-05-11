@@ -164,6 +164,7 @@ function mockFilters(overrides: Partial<ReturnType<typeof useUsersFilters>>) {
   useUsersFiltersMock.mockReturnValue({
     search: "",
     roleId: "all",
+    userType: "all",
     page: 1,
     invitationSearch: "",
     invitationPage: 1,
@@ -179,6 +180,7 @@ function mockFilters(overrides: Partial<ReturnType<typeof useUsersFilters>>) {
     handleSearchChange: vi.fn(),
     handleSortChange: vi.fn(),
     handleRoleFilterChange: vi.fn(),
+    handleUserTypeFilterChange: vi.fn(),
     handleInvitationSearchChange: vi.fn(),
     handleInvitationStatusFilterChange: vi.fn(),
     handleInvitationSortChange: vi.fn(),
@@ -250,12 +252,12 @@ describe("useUsersPage", () => {
       refetchOnMountOrArgChange: true,
       refetchOnFocus: true,
       refetchOnReconnect: true,
-      skip: true,
+      skip: false,
     });
     expect(result.current.users.map((user) => user.name)).toEqual([
-      "Admin",
-      "Alice",
       "Bob",
+      "Alice",
+      "Admin",
     ]);
   });
 
@@ -295,8 +297,7 @@ describe("useUsersPage", () => {
       skip: false,
     });
     expect(result.current.users.map((user) => user.name)).toEqual([
-      "Cached Admin",
-      "Cached Alice",
+      "Refetched Admin",
     ]);
     expect(result.current.usersFetching).toBe(true);
   });

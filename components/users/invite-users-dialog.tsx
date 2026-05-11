@@ -2,18 +2,7 @@
 
 import type { ChangeEvent, FormEvent, ReactElement } from "react";
 import { useState, useRef } from "react";
-import {
-  IconPlus,
-  IconDownload,
-  IconUpload,
-  IconX,
-  IconCopy,
-  IconCheck,
-  IconLoader2,
-  IconLink,
-} from "@tabler/icons-react";
-import { INVITE_LINK_DISPLAY_PLACEHOLDER } from "@/lib/invite";
-import { useRevealInviteLinkMutation } from "@/lib/api/invitations-api";
+import { IconPlus, IconDownload, IconUpload, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -32,98 +21,7 @@ import { Separator } from "@/components/ui/separator";
 interface InviteUsersDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onInvite: (
-    emails: readonly string[],
-  ) => Promise<{ id: string; expiresAt: string } | null>;
-}
-
-interface InviteResult {
-  readonly id: string;
-  readonly expiresAt: string;
-}
-
-function InviteLinkActions({
-  invitationId,
-}: {
-  readonly invitationId: string;
-}): ReactElement {
-  const [revealInviteLink] = useRevealInviteLinkMutation();
-  const [revealedUrl, setRevealedUrl] = useState<string | null>(null);
-  const [isRevealing, setIsRevealing] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const handleGetLink = async (): Promise<void> => {
-    if (revealedUrl) return;
-    setIsRevealing(true);
-    try {
-      const { inviteUrl } = await revealInviteLink(invitationId).unwrap();
-      setRevealedUrl(inviteUrl);
-    } catch {
-      toast.error("Failed to get invite link");
-    } finally {
-      setIsRevealing(false);
-    }
-  };
-
-  const handleCopy = (): void => {
-    if (!revealedUrl) return;
-    try {
-      navigator.clipboard.writeText(revealedUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("Failed to copy link");
-    }
-  };
-
-  return (
-    <div className="flex h-full items-center gap-2">
-      {revealedUrl == null ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-full"
-          onClick={handleGetLink}
-          disabled={isRevealing}
-          aria-label="Get invite link"
-        >
-          {isRevealing ? (
-            <>
-              <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
-              Getting Link...
-            </>
-          ) : (
-            <>
-              <IconLink className="size-4" aria-hidden="true" />
-              Get Link
-            </>
-          )}
-        </Button>
-      ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-full"
-          onClick={handleCopy}
-          aria-label="Copy invite link"
-        >
-          {copied ? (
-            <>
-              <IconCheck className="size-4 text-green-600" aria-hidden="true" />
-              Link Copied
-            </>
-          ) : (
-            <>
-              <IconCopy className="size-4" aria-hidden="true" />
-              Copy Link
-            </>
-          )}
-        </Button>
-      )}
-    </div>
-  );
+  readonly onInvite: (emails: readonly string[]) => Promise<boolean>;
 }
 
 function InviteUsersDialogContent({
@@ -132,7 +30,6 @@ function InviteUsersDialogContent({
 }: Omit<InviteUsersDialogProps, "open">): ReactElement {
   const [emails, setEmails] = useState<string[]>([""]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [inviteResult, setInviteResult] = useState<InviteResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleEmailChange = (index: number, value: string): void => {
@@ -196,10 +93,13 @@ function InviteUsersDialogContent({
     if (validEmails.length === 0) return;
     setIsSubmitting(true);
     try {
-      const result = await onInvite(validEmails);
-      if (result) {
-        setInviteResult({ id: result.id, expiresAt: result.expiresAt });
-      } else {
+      const didInvite = await onInvite(validEmails);
+      if (didInvite) {
+        toast.success(
+          validEmails.length === 1
+            ? "Invitation sent. Use the row menu to copy the link."
+            : `${validEmails.length} invitations sent.`,
+        );
         onOpenChange(false);
       }
     } finally {
@@ -210,33 +110,6 @@ function InviteUsersDialogContent({
   const hasValidEmail = emails.some(
     (email) => email.trim() && email.includes("@"),
   );
-
-  // Show invite URL result view
-  if (inviteResult) {
-    return (
-      <div className="flex min-h-0 flex-col gap-4">
-        <DialogHeader>
-          <DialogTitle>Invitation Created</DialogTitle>
-          <DialogDescription>
-            Share this link with the invitee. The link expires after use. The
-            full link is not shown here; use the button beside the field to get
-            and copy it.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex items-stretch gap-2">
-          <div className="flex min-w-0 flex-1 items-center rounded-md border border-border bg-muted/50 px-3 py-2.5">
-            <span className="truncate font-mono text-xs text-muted-foreground">
-              {INVITE_LINK_DISPLAY_PLACEHOLDER}
-            </span>
-          </div>
-          <InviteLinkActions invitationId={inviteResult.id} />
-        </div>
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Done</Button>
-        </DialogFooter>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">

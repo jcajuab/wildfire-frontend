@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactElement, ReactNode } from "react";
+import { AIChatBubble } from "@/components/ai/ai-chat-bubble";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { MobileHeader } from "@/components/layout/mobile-header";
@@ -32,7 +33,7 @@ export function AppLayout({ children }: AppLayoutProps): ReactElement {
           >
             {children}
           </main>
-          {/* Temporarily removed while the AI assistant bubble is reworked. */}
+          <AIChatBubble />
         </SidebarProvider>
       </TooltipProvider>
     </AdminEventProvider>

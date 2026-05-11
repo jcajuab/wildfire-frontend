@@ -2,7 +2,9 @@
 
 import type { FormEvent, ReactElement } from "react";
 import { useState } from "react";
+import { IconBan, IconCircleCheck } from "@tabler/icons-react";
 
+import { RequiredLabel } from "@/components/common/required-label";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,8 +16,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RequiredLabel } from "@/components/common/required-label";
-import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAuth } from "@/context/auth-context";
 import type { User } from "@/types/user";
 
@@ -24,7 +29,6 @@ export interface EditUserFormData {
   readonly username?: string;
   readonly name: string;
   readonly email: string | null;
-  readonly isActive: boolean;
 }
 
 interface EditUserDialogProps {
@@ -32,6 +36,14 @@ interface EditUserDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onSubmit: (data: EditUserFormData) => Promise<void> | void;
+  readonly canManageStatus?: boolean;
+  readonly onRequestBanUser?: (user: User) => void;
+  readonly onRequestUnbanUser?: (user: User) => void;
+}
+
+function getUserType(user: User): "dcism" | "invited" | "banned" {
+  if (user.bannedAt != null || !user.isActive) return "banned";
+  return user.isInvitedUser ? "invited" : "dcism";
 }
 
 /** Form body keyed by user.id so state resets when editing a different user. */
@@ -40,22 +52,40 @@ function EditUserForm({
   onOpenChange,
   onSubmit,
   onSubmittingChange,
+  canManageStatus = false,
+  onRequestBanUser,
+  onRequestUnbanUser,
 }: {
   user: User;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: EditUserFormData) => Promise<void> | void;
   onSubmittingChange?: (submitting: boolean) => void;
+  canManageStatus?: boolean;
+  onRequestBanUser?: (user: User) => void;
+  onRequestUnbanUser?: (user: User) => void;
 }): ReactElement {
   const [name, setName] = useState(user.name);
   const [username, setUsername] = useState(user.username);
   const [email, setEmail] = useState(user.email ?? "");
-  const [isActive, setIsActive] = useState(user.isActive);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user: currentUser } = useAuth();
-  const isAdmin = currentUser?.isAdmin === true;
   const isSelf = currentUser?.id === user.id;
   const isDcismUser =
     !user.isInvitedUser && !(user.roles ?? []).some((r) => r.name === "Admin");
+  const userType = getUserType(user);
+  const isBanned = userType === "banned";
+  const userTypeLabel =
+    userType === "banned"
+      ? "Banned"
+      : userType === "invited"
+        ? "Invited"
+        : "DCISM";
+  const usernameLockedReason = isSelf
+    ? "You cannot change your own username."
+    : isDcismUser
+      ? "Username is managed by DCISM and cannot be changed."
+      : null;
+  const isUsernameLocked = usernameLockedReason !== null;
 
   const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
@@ -68,7 +98,6 @@ function EditUserForm({
         ...(isDcismUser ? {} : { username: username.trim() }),
         name: name.trim(),
         email: email.trim().length > 0 ? email.trim() : null,
-        isActive,
       });
     } finally {
       setIsSubmitting(false);
@@ -88,10 +117,20 @@ function EditUserForm({
       <DialogHeader>
         <DialogTitle>Edit User</DialogTitle>
         <DialogDescription>
-          Update user identity details and account activation status.
+          Update user identity details and account access.
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="edit-user-type">User Type</Label>
+          <Input
+            id="edit-user-type"
+            value={userTypeLabel}
+            readOnly
+            aria-readonly="true"
+            className="cursor-default bg-muted/40"
+          />
+        </div>
         <div className="space-y-2">
           <RequiredLabel htmlFor="edit-user-name">Name</RequiredLabel>
           <Input
@@ -103,23 +142,34 @@ function EditUserForm({
         </div>
         <div className="space-y-2">
           <RequiredLabel htmlFor="edit-user-username">Username</RequiredLabel>
-          <Input
-            id="edit-user-username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="username"
-            disabled={isSelf || isDcismUser}
-          />
-          {isSelf ? (
-            <p className="text-xs text-muted-foreground">
-              You cannot change your own username.
-            </p>
-          ) : isDcismUser ? (
-            <p className="text-xs text-muted-foreground">
-              Username is managed by DCISM and cannot be changed.
-            </p>
-          ) : null}
+          {isUsernameLocked ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <Input
+                    id="edit-user-username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="username"
+                    disabled
+                    className="disabled:cursor-help"
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" align="start">
+                {usernameLockedReason}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Input
+              id="edit-user-username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="username"
+            />
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="edit-user-email">Email</Label>
@@ -137,33 +187,53 @@ function EditUserForm({
             </p>
           ) : null}
         </div>
-        <div className="flex items-center justify-between rounded-md border border-border p-4">
-          <div className="space-y-0.5">
-            <Label htmlFor="edit-user-active">Active</Label>
-            <p className="text-xs text-muted-foreground">
-              Inactive users cannot sign in.
-            </p>
-          </div>
-          <Switch
-            id="edit-user-active"
-            checked={isActive}
-            onCheckedChange={setIsActive}
-            disabled={!isAdmin || isSelf}
-          />
-        </div>
       </div>
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
-        <Button type="submit" disabled={!isValid || isSubmitting}>
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
+      <DialogFooter className="flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          {canManageStatus ? (
+            <Button
+              type="button"
+              variant="outline"
+              className={
+                isBanned
+                  ? undefined
+                  : "border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              }
+              onClick={() =>
+                isBanned ? onRequestUnbanUser?.(user) : onRequestBanUser?.(user)
+              }
+              disabled={isSubmitting}
+            >
+              {isBanned ? (
+                <IconCircleCheck
+                  className="size-4"
+                  aria-hidden="true"
+                  data-icon="inline-start"
+                />
+              ) : (
+                <IconBan
+                  className="size-4"
+                  aria-hidden="true"
+                  data-icon="inline-start"
+                />
+              )}
+              {isBanned ? "Unban User" : "Ban User"}
+            </Button>
+          ) : null}
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!isValid || isSubmitting}>
+            {isSubmitting ? "Saving..." : "Save"}
+          </Button>
+        </div>
       </DialogFooter>
     </form>
   );
@@ -174,6 +244,9 @@ export function EditUserDialog({
   open,
   onOpenChange,
   onSubmit,
+  canManageStatus,
+  onRequestBanUser,
+  onRequestUnbanUser,
 }: EditUserDialogProps): ReactElement {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -200,6 +273,9 @@ export function EditUserDialog({
             onOpenChange={guardedOnOpenChange}
             onSubmit={onSubmit}
             onSubmittingChange={setIsSubmitting}
+            canManageStatus={canManageStatus}
+            onRequestBanUser={onRequestBanUser}
+            onRequestUnbanUser={onRequestUnbanUser}
           />
         ) : null}
       </DialogContent>

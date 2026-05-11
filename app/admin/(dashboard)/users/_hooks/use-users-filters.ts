@@ -8,7 +8,7 @@ import {
   useQueryStates,
 } from "nuqs";
 import type { SortDirection } from "@/types/common";
-import type { UserSort, UserSortField } from "@/types/user";
+import type { UserSort, UserSortField, UserTypeFilter } from "@/types/user";
 import type {
   InvitationSort,
   InvitationSortField,
@@ -19,6 +19,7 @@ const USER_SORT_FIELDS = ["name", "email", "lastSeen"] as const;
 const INVITATION_SORT_FIELDS = ["createdAt", "email", "expiresAt"] as const;
 const USER_SORT_DIRECTIONS = ["asc", "desc"] as const;
 const USER_TABS = ["users", "invitations"] as const;
+const USER_TYPE_FILTERS = ["all", "dcism", "invited", "banned"] as const;
 const INVITATION_STATUS_FILTERS = [
   "all",
   "pending",
@@ -32,6 +33,7 @@ export type UsersPageTab = (typeof USER_TABS)[number];
 const usersFiltersSchema = {
   q: parseAsString.withDefault(""),
   roleId: parseAsString.withDefault("all"),
+  userType: parseAsStringLiteral(USER_TYPE_FILTERS).withDefault("all"),
   sortField: parseAsStringLiteral(USER_SORT_FIELDS).withDefault("name"),
   sortDir: parseAsStringLiteral(USER_SORT_DIRECTIONS).withDefault("asc"),
   page: parseAsInteger.withDefault(1),
@@ -90,6 +92,13 @@ export function useUsersFilters() {
     [setFilters],
   );
 
+  const handleUserTypeFilterChange = useCallback(
+    (userType: UserTypeFilter) => {
+      setFilters({ userType, page: 1 });
+    },
+    [setFilters],
+  );
+
   const handleInvitationStatusFilterChange = useCallback(
     (status: InvitationStatusFilter) => {
       setFilters({ inviteStatus: status, invitePage: 1 });
@@ -118,6 +127,7 @@ export function useUsersFilters() {
   return {
     search: filters.q,
     roleId: filters.roleId,
+    userType: filters.userType as UserTypeFilter,
     page: filters.page,
     invitationSearch: filters.inviteQ,
     invitationPage: filters.invitePage,
@@ -133,6 +143,7 @@ export function useUsersFilters() {
     handleSearchChange,
     handleSortChange,
     handleRoleFilterChange,
+    handleUserTypeFilterChange,
     handleInvitationSearchChange,
     handleInvitationStatusFilterChange,
     handleInvitationSortChange,

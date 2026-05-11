@@ -113,7 +113,7 @@ export function EmergencySlotDropdown({
                 }}
               >
                 <IconPlus className="size-3.5" aria-hidden="true" />
-                Add emergency assets
+                Manage Emergency Assets
               </DropdownMenuItem>
             </>
           )}

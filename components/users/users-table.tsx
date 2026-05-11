@@ -25,7 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/formatters";
-import type { User, UserRole, UserSort } from "@/types/user";
+import type { User, UserRole, UserSort, UserTypeFilter } from "@/types/user";
 
 interface UsersTableProps {
   readonly users: readonly User[];
@@ -43,6 +43,8 @@ interface UsersTableProps {
   readonly onResetPassword: (userId: string) => Promise<void>;
   readonly roleFilter?: string;
   readonly onRoleFilterChange?: (roleId: string) => void;
+  readonly userTypeFilter?: UserTypeFilter;
+  readonly onUserTypeFilterChange?: (userType: UserTypeFilter) => void;
   readonly canUpdate?: boolean;
   readonly canDelete?: boolean;
   /** When true, allow update/delete for Root users. When false, hide actions for users who have a system role. */
@@ -51,6 +53,36 @@ interface UsersTableProps {
   readonly systemRoleIds?: readonly string[];
   /** When set, the row for this user id will show " (You)" after the name. */
   readonly currentUserId?: string | null;
+}
+
+const USER_TYPE_LABELS: Record<UserTypeFilter, string> = {
+  all: "All user types",
+  dcism: "DCISM",
+  invited: "Invited",
+  banned: "Banned",
+};
+
+function getUserType(user: User): Exclude<UserTypeFilter, "all"> {
+  if (user.bannedAt != null || !user.isActive) {
+    return "banned";
+  }
+  return user.isInvitedUser ? "invited" : "dcism";
+}
+
+function UserTypeBadge({ user }: { readonly user: User }): ReactElement {
+  const type = getUserType(user);
+  const className =
+    type === "banned"
+      ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-50 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300"
+      : type === "invited"
+        ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+        : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300";
+
+  return (
+    <Badge variant="outline" className={className}>
+      {USER_TYPE_LABELS[type]}
+    </Badge>
+  );
 }
 
 function RoleFilterHeader({
@@ -97,6 +129,51 @@ function RoleFilterHeader({
   );
 }
 
+function UserTypeFilterHeader({
+  value,
+  onChange,
+}: {
+  readonly value: UserTypeFilter;
+  readonly onChange: (userType: UserTypeFilter) => void;
+}): ReactElement {
+  const hasActiveFilter = value !== "all";
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <TableHeaderControl aria-label="Filter users by user type">
+          User Type
+          <IconFilter
+            className={
+              hasActiveFilter
+                ? "size-3.5 text-foreground"
+                : "size-3.5 text-muted-foreground"
+            }
+            aria-hidden="true"
+          />
+          {hasActiveFilter ? (
+            <span className="sr-only">
+              filtered by {USER_TYPE_LABELS[value]}
+            </span>
+          ) : null}
+        </TableHeaderControl>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-44">
+        <DropdownMenuRadioGroup
+          value={value}
+          onValueChange={(nextValue) => onChange(nextValue as UserTypeFilter)}
+        >
+          {(["all", "dcism", "invited", "banned"] as const).map((type) => (
+            <DropdownMenuRadioItem key={type} value={type}>
+              {USER_TYPE_LABELS[type]}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 interface UserRowProps {
   readonly user: User;
   readonly userRoles: readonly UserRole[];
@@ -129,7 +206,6 @@ function UserRow({
 }: UserRowProps): ReactElement {
   const userRoleIds = userRoles.map((r) => r.id);
   const isCurrentUser = currentUserId != null && user.id === currentUserId;
-  const isBanned = Boolean(user.bannedAt);
 
   return (
     <TableRow className="h-12">
@@ -157,14 +233,6 @@ function UserRow({
                   </span>
                 )}
               </span>
-              {isBanned && (
-                <Badge
-                  variant="destructive"
-                  className="h-5 border-destructive/30 px-2 text-[0.625rem]"
-                >
-                  Banned
-                </Badge>
-              )}
             </div>
             <div className="truncate text-xs text-muted-foreground">
               @{user.username}
@@ -174,6 +242,9 @@ function UserRow({
       </TableCell>
       <TableCell className="max-w-[18rem] truncate text-muted-foreground">
         {user.email ?? "No email available"}
+      </TableCell>
+      <TableCell>
+        <UserTypeBadge user={user} />
       </TableCell>
       <TableCell>
         <div className="flex max-w-[15rem] flex-nowrap gap-1 overflow-hidden">
@@ -227,6 +298,8 @@ export function UsersTable({
   onResetPassword,
   roleFilter = "all",
   onRoleFilterChange,
+  userTypeFilter = "all",
+  onUserTypeFilterChange,
   canUpdate = true,
   canDelete = true,
   systemRoleIds = [],
@@ -249,7 +322,7 @@ export function UsersTable({
       <TableHeader className="sticky top-0 z-10 bg-background">
         <TableRow>
           <TableHead
-            className="w-[300px]"
+            className="w-[260px]"
             aria-sort={
               sort.field === "name"
                 ? sort.direction === "asc"
@@ -266,7 +339,7 @@ export function UsersTable({
             />
           </TableHead>
           <TableHead
-            className="w-[300px]"
+            className="w-[260px]"
             aria-sort={
               sort.field === "email"
                 ? sort.direction === "asc"
@@ -281,6 +354,16 @@ export function UsersTable({
               currentSort={sort}
               onSort={(field, direction) => onSortChange({ field, direction })}
             />
+          </TableHead>
+          <TableHead className="w-[180px]">
+            {onUserTypeFilterChange ? (
+              <UserTypeFilterHeader
+                value={userTypeFilter}
+                onChange={onUserTypeFilterChange}
+              />
+            ) : (
+              "User Type"
+            )}
           </TableHead>
           <TableHead className="w-[240px]">
             {onRoleFilterChange ? (

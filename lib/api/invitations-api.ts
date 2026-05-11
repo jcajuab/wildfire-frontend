@@ -26,6 +26,14 @@ export interface InvitationListQuery {
   readonly sortDirection?: "asc" | "desc";
 }
 
+type MutableInvitationListResponse = Omit<
+  InvitationListResponse,
+  "items" | "total"
+> & {
+  items: InvitationRecord[];
+  total: number;
+};
+
 export const invitationsApi = api.injectEndpoints({
   endpoints: (build) => ({
     listInvitations: build.query<
@@ -140,6 +148,53 @@ export const invitationsApi = api.injectEndpoints({
         }
       },
     }),
+    deleteInvitation: build.mutation<void, string>({
+      query: (id) => ({
+        url: `auth/invitations/${encodeURIComponent(id)}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_result, _error, id) => [
+        { type: "Invitation", id },
+        { type: "Invitation", id: "LIST" },
+      ],
+      async onQueryStarted(id, api) {
+        const patchResults = invitationsApi.util
+          .selectCachedArgsForQuery(api.getState(), "listInvitations")
+          .map((args) =>
+            api.dispatch(
+              invitationsApi.util.updateQueryData(
+                "listInvitations",
+                args,
+                (draft) => {
+                  const mutableDraft = draft as MutableInvitationListResponse;
+                  const index = mutableDraft.items.findIndex(
+                    (item) => item.id === id,
+                  );
+                  if (index === -1) return;
+                  mutableDraft.items.splice(index, 1);
+                  mutableDraft.total = Math.max(0, mutableDraft.total - 1);
+                },
+              ),
+            ),
+          );
+
+        try {
+          await api.queryFulfilled;
+          await applyMutationCacheEffects(api.dispatch, {
+            invalidate: [
+              { type: "Invitation", id },
+              { type: "Invitation", id: "LIST" },
+              { type: "AuditEvent", id: "LIST" },
+            ],
+            revalidate: ["invitations", "audit"],
+          });
+        } catch {
+          for (const patch of patchResults) {
+            patch.undo();
+          }
+        }
+      },
+    }),
   }),
 });
 
@@ -148,4 +203,5 @@ export const {
   useCreateInvitationMutation,
   useResendInvitationMutation,
   useRevealInviteLinkMutation,
+  useDeleteInvitationMutation,
 } = invitationsApi;

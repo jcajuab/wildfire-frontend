@@ -101,7 +101,7 @@ describe("EmergencySlotDropdown", () => {
     render(
       <EmergencySlotDropdown
         emergency={makeEmergency({ activate })}
-        trigger={<button type="button">Manage Emergencies</button>}
+        trigger={<button type="button">Start Emergency</button>}
       />,
     );
 
@@ -111,6 +111,9 @@ describe("EmergencySlotDropdown", () => {
     expect(screen.getByRole("button", { name: "Slot 2" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Slot 4" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Slot 5" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Manage Emergency Assets" }),
+    ).toBeInTheDocument();
   });
 
   test("renders stop action when global emergency is active", () => {
@@ -131,7 +134,7 @@ describe("EmergencySlotDropdown", () => {
       screen.getAllByRole("button", { name: "Stop Emergency" }),
     ).toHaveLength(2);
     expect(
-      screen.queryByRole("button", { name: "Add assets" }),
+      screen.queryByRole("button", { name: "Manage Emergency Assets" }),
     ).not.toBeInTheDocument();
   });
 });

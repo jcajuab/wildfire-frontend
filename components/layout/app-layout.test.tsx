@@ -18,6 +18,14 @@ vi.mock("@/components/layout/admin-event-provider", () => ({
   ),
 }));
 
+vi.mock("@/components/ai/ai-chat-bubble", () => ({
+  AIChatBubble: () => (
+    <button type="button" aria-label="Open WILDFIRE AI">
+      AI
+    </button>
+  ),
+}));
+
 vi.mock("@/components/ui/sidebar", () => ({
   SidebarProvider: ({ children }: { readonly children: ReactNode }) => (
     <div>{children}</div>
@@ -31,7 +39,7 @@ vi.mock("@/components/ui/tooltip", () => ({
 }));
 
 describe("AppLayout", () => {
-  test("temporarily omits the AI assistant bubble", () => {
+  test("renders the AI assistant bubble slot", () => {
     render(
       <AppLayout>
         <div>Dashboard content</div>
@@ -40,10 +48,7 @@ describe("AppLayout", () => {
 
     expect(screen.getByText("Dashboard content")).toBeInTheDocument();
     expect(
-      screen.queryByRole("complementary", { name: "AI assistant" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Open WILDFIRE AI" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("button", { name: "Open WILDFIRE AI" }),
+    ).toBeInTheDocument();
   });
 });

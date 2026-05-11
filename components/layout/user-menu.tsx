@@ -57,8 +57,8 @@ function UserMenuAvatar({
 
 interface UserMenuProps {
   readonly trigger: (args: { avatar: ReactNode }) => ReactNode;
-  readonly menuSide?: "top" | "bottom";
-  readonly menuAlign?: "center" | "end";
+  readonly menuSide?: "top" | "right" | "bottom" | "left";
+  readonly menuAlign?: "start" | "center" | "end";
   readonly avatarSize: number;
   readonly avatarWrapperClassName: string;
   readonly fallbackIconClassName: string;

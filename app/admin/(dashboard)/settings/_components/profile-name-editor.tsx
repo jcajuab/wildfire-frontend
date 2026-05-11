@@ -10,185 +10,93 @@ const controlContainerClass = "w-full max-w-md";
 const controlClass = "h-10 w-full";
 
 interface ProfileNameEditorProps {
-  readonly firstName: string;
-  readonly lastName: string;
-  readonly savedFirstName: string;
-  readonly savedLastName: string;
-  readonly editingField: "firstName" | "lastName" | null;
+  readonly name: string;
+  readonly savedName: string;
+  readonly isEditingName: boolean;
   readonly isSavingProfileName: boolean;
   readonly profileNameError: string | null;
-  readonly onFirstNameChange: (value: string) => void;
-  readonly onLastNameChange: (value: string) => void;
-  readonly onEditFieldChange: (field: "firstName" | "lastName" | null) => void;
-  readonly onSaveProfileName: (
-    firstName: string,
-    lastName: string,
-  ) => Promise<boolean>;
+  readonly onNameChange: (value: string) => void;
+  readonly onEditNameChange: (editing: boolean) => void;
+  readonly onSaveProfileName: (name: string) => Promise<boolean>;
   readonly onCancelEdit: () => void;
 }
 
 export function ProfileNameEditor({
-  firstName,
-  lastName,
-  savedFirstName,
-  savedLastName,
-  editingField,
+  name,
+  savedName,
+  isEditingName,
   isSavingProfileName,
   profileNameError,
-  onFirstNameChange,
-  onLastNameChange,
-  onEditFieldChange,
+  onNameChange,
+  onEditNameChange,
   onSaveProfileName,
   onCancelEdit,
 }: ProfileNameEditorProps): ReactElement {
-  const isFirstNameDirty = firstName.trim() !== savedFirstName.trim();
-  const isLastNameDirty = lastName.trim() !== savedLastName.trim();
+  const isNameDirty = name.trim() !== savedName.trim();
+
+  const saveName = (): void => {
+    void (async () => {
+      const didSave = await onSaveProfileName(name);
+      if (didSave) {
+        onEditNameChange(false);
+      }
+    })();
+  };
 
   return (
-    <>
-      <SettingsField label="First name">
-        <div className={controlContainerClass}>
-          {editingField === "firstName" ? (
-            <div className="flex items-start gap-2">
-              <Input
-                id="firstName"
-                value={firstName}
-                onChange={(event) => onFirstNameChange(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    void (async () => {
-                      const didSave = await onSaveProfileName(
-                        firstName,
-                        lastName,
-                      );
-                      if (didSave) {
-                        onEditFieldChange(null);
-                      }
-                    })();
-                  }
-                  if (event.key === "Escape") {
-                    event.preventDefault();
-                    onCancelEdit();
-                  }
-                }}
-                aria-label="First name"
-                className={`${controlClass} flex-1`}
-              />
-              <DirtyFieldActions
-                canConfirm={isFirstNameDirty}
-                confirmLabel="Save first name"
-                cancelLabel="Cancel first name changes"
-                isSubmitting={isSavingProfileName}
-                onConfirm={() => {
-                  void (async () => {
-                    const didSave = await onSaveProfileName(
-                      firstName,
-                      lastName,
-                    );
-                    if (didSave) {
-                      onEditFieldChange(null);
-                    }
-                  })();
-                }}
-                onCancel={onCancelEdit}
-              />
-            </div>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onEditFieldChange("firstName")}
-              disabled={isSavingProfileName}
-              className={`${controlClass} justify-between gap-2 pr-2`}
-              aria-label="Edit first name"
-            >
-              <span>{firstName || "Set first name"}</span>
-              <IconPencil
-                className="size-3.5 text-muted-foreground/80"
-                aria-hidden="true"
-              />
-            </Button>
-          )}
-        </div>
-        {editingField === "firstName" && profileNameError ? (
-          <p role="alert" className="text-xs text-destructive">
-            {profileNameError}
-          </p>
-        ) : null}
-      </SettingsField>
-
-      <SettingsField label="Last name">
-        <div className={controlContainerClass}>
-          {editingField === "lastName" ? (
-            <div className="flex items-start gap-2">
-              <Input
-                id="lastName"
-                value={lastName}
-                onChange={(event) => onLastNameChange(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    void (async () => {
-                      const didSave = await onSaveProfileName(
-                        firstName,
-                        lastName,
-                      );
-                      if (didSave) {
-                        onEditFieldChange(null);
-                      }
-                    })();
-                  }
-                  if (event.key === "Escape") {
-                    event.preventDefault();
-                    onCancelEdit();
-                  }
-                }}
-                aria-label="Last name"
-                className={`${controlClass} flex-1`}
-              />
-              <DirtyFieldActions
-                canConfirm={isLastNameDirty}
-                confirmLabel="Save last name"
-                cancelLabel="Cancel last name changes"
-                isSubmitting={isSavingProfileName}
-                onConfirm={() => {
-                  void (async () => {
-                    const didSave = await onSaveProfileName(
-                      firstName,
-                      lastName,
-                    );
-                    if (didSave) {
-                      onEditFieldChange(null);
-                    }
-                  })();
-                }}
-                onCancel={onCancelEdit}
-              />
-            </div>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onEditFieldChange("lastName")}
-              disabled={isSavingProfileName}
-              className={`${controlClass} justify-between gap-2 pr-2`}
-              aria-label="Edit last name"
-            >
-              <span>{lastName || "Set last name"}</span>
-              <IconPencil
-                className="size-3.5 text-muted-foreground/80"
-                aria-hidden="true"
-              />
-            </Button>
-          )}
-        </div>
-        {editingField === "lastName" && profileNameError ? (
-          <p role="alert" className="text-xs text-destructive">
-            {profileNameError}
-          </p>
-        ) : null}
-      </SettingsField>
-    </>
+    <SettingsField label="Name">
+      <div className={controlContainerClass}>
+        {isEditingName ? (
+          <div className="flex items-start gap-2">
+            <Input
+              id="profile-name"
+              value={name}
+              onChange={(event) => onNameChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  saveName();
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  onCancelEdit();
+                }
+              }}
+              aria-label="Name"
+              placeholder="Enter your full name"
+              className={`${controlClass} flex-1`}
+            />
+            <DirtyFieldActions
+              canConfirm={isNameDirty}
+              confirmLabel="Save name"
+              cancelLabel="Cancel name changes"
+              isSubmitting={isSavingProfileName}
+              onConfirm={saveName}
+              onCancel={onCancelEdit}
+            />
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onEditNameChange(true)}
+            disabled={isSavingProfileName}
+            className={`${controlClass} justify-between gap-2 pr-2`}
+            aria-label="Edit name"
+          >
+            <span>{savedName || "Set name"}</span>
+            <IconPencil
+              className="size-3.5 text-muted-foreground/80"
+              aria-hidden="true"
+            />
+          </Button>
+        )}
+      </div>
+      {isEditingName && profileNameError ? (
+        <p role="alert" className="text-xs text-destructive">
+          {profileNameError}
+        </p>
+      ) : null}
+    </SettingsField>
   );
 }
