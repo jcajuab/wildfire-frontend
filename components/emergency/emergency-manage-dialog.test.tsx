@@ -215,6 +215,9 @@ describe("EmergencyManageDialog", () => {
     expect(
       screen.getByRole("button", { name: "Select Slot 1" }),
     ).toHaveTextContent("Existing Poster");
+    expect(
+      screen.getByRole("button", { name: "Clear Existing Poster" }),
+    ).toHaveClass("text-destructive");
     expect(screen.queryByLabelText("Slot name")).not.toBeInTheDocument();
   });
 

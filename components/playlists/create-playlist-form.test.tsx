@@ -65,8 +65,14 @@ describe("CreatePlaylistForm", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Name")).toBeInTheDocument();
+    expect(screen.getByLabelText("Playlist Name")).toBeInTheDocument();
     expect(screen.getByLabelText("Description")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Enter playlist name")).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText(
+        "Describe the playlist purpose or playback context",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText("Playlist Items")).toBeInTheDocument();
     expect(screen.getByText("Content Library")).toBeInTheDocument();
     expect(
@@ -124,7 +130,7 @@ describe("CreatePlaylistForm", () => {
       />,
     );
 
-    await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.type(screen.getByLabelText("Playlist Name"), "Morning Playlist");
     await user.click(screen.getByRole("button", { name: "Poster" }));
 
     const lastState = onStateChange.mock.lastCall?.[0];
@@ -247,7 +253,7 @@ describe("CreatePlaylistForm", () => {
 
     expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
 
-    await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.type(screen.getByLabelText("Playlist Name"), "Morning Playlist");
 
     expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
 
@@ -271,11 +277,33 @@ describe("CreatePlaylistForm", () => {
       />,
     );
 
-    await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.type(screen.getByLabelText("Playlist Name"), "Morning Playlist");
     await user.click(screen.getByRole("button", { name: "Poster" }));
 
     expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
     expect(screen.getByText("Over 60 second limit")).toBeInTheDocument();
+  });
+
+  test("allows a playlist at exactly the 60 second duration limit", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <CreatePlaylistForm
+        onCreate={vi.fn()}
+        availableContent={[
+          {
+            ...availableContent[0],
+            duration: 60,
+          },
+        ]}
+      />,
+    );
+
+    await user.type(screen.getByLabelText("Playlist Name"), "Morning Playlist");
+    await user.click(screen.getByRole("button", { name: "Poster" }));
+
+    expect(screen.getByRole("button", { name: "Create" })).toBeEnabled();
+    expect(screen.queryByText("Over 60 second limit")).not.toBeInTheDocument();
   });
 
   test("keeps the draft when creation fails", async () => {
@@ -288,11 +316,11 @@ describe("CreatePlaylistForm", () => {
       />,
     );
 
-    await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.type(screen.getByLabelText("Playlist Name"), "Morning Playlist");
     await user.click(screen.getByRole("button", { name: "Poster" }));
     await user.click(screen.getByRole("button", { name: "Create" }));
 
-    expect(screen.getByLabelText("Name")).toHaveValue("Morning Playlist");
+    expect(screen.getByLabelText("Playlist Name")).toHaveValue("Morning Playlist");
   });
 
   test("loops video items by default without showing a loop toggle", async () => {
@@ -306,7 +334,7 @@ describe("CreatePlaylistForm", () => {
       />,
     );
 
-    await user.type(screen.getByLabelText("Name"), "Video Playlist");
+    await user.type(screen.getByLabelText("Playlist Name"), "Video Playlist");
     await user.click(screen.getByRole("button", { name: "Campus Video" }));
 
     expect(screen.queryByLabelText("Loop video")).not.toBeInTheDocument();

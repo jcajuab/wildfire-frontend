@@ -121,7 +121,7 @@ describe("SortableItemRow", () => {
     ).toBeFalsy();
   });
 
-  test("keeps the duration control usable on narrow layouts", async () => {
+  test("emphasizes the duration control and keeps it editable", async () => {
     const user = userEvent.setup();
     const onUpdateDuration = vi.fn();
 
@@ -136,12 +136,54 @@ describe("SortableItemRow", () => {
     const durationInput = screen.getByLabelText(
       "Duration in seconds for Poster",
     );
-    expect(durationInput).toHaveClass("w-24", "sm:w-16");
+    expect(screen.queryByText("Duration")).not.toBeInTheDocument();
+    expect(durationInput).toHaveClass("font-medium", "tabular-nums");
+    expect(screen.queryByText(/Max \d+ sec/)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Remove Poster from playlist" }),
+    ).toHaveClass("text-destructive");
 
     await user.clear(durationInput);
     await user.type(durationInput, "15");
 
     expect(onUpdateDuration).toHaveBeenLastCalledWith("draft-1", 15);
+  });
+
+  test("increments and decrements duration with compact controls", async () => {
+    const user = userEvent.setup();
+    const onUpdateDuration = vi.fn();
+
+    render(
+      <SortableItemRow
+        item={baseItem}
+        onRemove={vi.fn()}
+        onUpdateDuration={onUpdateDuration}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Increase duration for Poster" }),
+    );
+    expect(onUpdateDuration).toHaveBeenLastCalledWith("draft-1", 6);
+
+    await user.click(
+      screen.getByRole("button", { name: "Decrease duration for Poster" }),
+    );
+    expect(onUpdateDuration).toHaveBeenLastCalledWith("draft-1", 4);
+  });
+
+  test("does not decrement below one second", () => {
+    render(
+      <SortableItemRow
+        item={{ ...baseItem, duration: 1 }}
+        onRemove={vi.fn()}
+        onUpdateDuration={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Decrease duration for Poster" }),
+    ).toBeDisabled();
   });
 
   test("hides loop controls and clamps video duration to source duration", async () => {
@@ -167,15 +209,23 @@ describe("SortableItemRow", () => {
     );
 
     expect(screen.queryByLabelText("Loop video")).not.toBeInTheDocument();
+    expect(screen.getByText("Max 8 sec")).toBeInTheDocument();
 
     const durationInput = screen.getByLabelText(
       "Duration in seconds for Campus Video",
     );
     expect(durationInput).toHaveAttribute("max", "8");
+    expect(
+      screen.getByRole("button", {
+        name: "Increase duration for Campus Video",
+      }),
+    ).toBeDisabled();
 
     await user.clear(durationInput);
     await user.type(durationInput, "12");
     expect(onUpdateDuration).toHaveBeenLastCalledWith("draft-1", 8);
+    await user.tab();
+    expect(durationInput).toHaveValue(8);
 
     await user.clear(durationInput);
     await user.type(durationInput, "5");

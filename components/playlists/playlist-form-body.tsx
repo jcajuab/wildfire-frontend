@@ -96,9 +96,7 @@ export function PlaylistDurationBudget({
     durationLimit > 0
       ? Math.min(100, Math.round((totalDuration / durationLimit) * 100))
       : 0;
-  const isWarning = totalDuration >= durationLimit - 10;
   const isOverLimit = totalDuration > durationLimit;
-  const tone = isOverLimit ? "destructive" : isWarning ? "warning" : "normal";
 
   return (
     <div
@@ -116,10 +114,7 @@ export function PlaylistDurationBudget({
         </Badge>
         <Badge
           variant={isOverLimit ? "destructive" : "outline"}
-          className={cn(
-            "bg-background font-normal tabular-nums",
-            tone === "warning" && "border-amber-300 bg-amber-50 text-amber-700",
-          )}
+          className="bg-background font-normal tabular-nums"
         >
           {formatDuration(totalDuration)} / {formatDuration(durationLimit)}
         </Badge>
@@ -131,8 +126,7 @@ export function PlaylistDurationBudget({
         <div
           className={cn(
             "h-full rounded-full bg-primary transition-[width]",
-            tone === "warning" && "bg-amber-500",
-            tone === "destructive" && "bg-destructive",
+            isOverLimit && "bg-destructive",
           )}
           style={{ width: `${percentage}%` }}
         />
@@ -291,10 +285,12 @@ export function PlaylistFormBody({
 
           <div className="flex flex-col gap-4 p-4">
             <div className="flex flex-col gap-1.5">
-              <RequiredLabel htmlFor="playlist-name">Name</RequiredLabel>
+              <RequiredLabel htmlFor="playlist-name">
+                Playlist Name
+              </RequiredLabel>
               <Input
                 id="playlist-name"
-                placeholder="Demo Playlist"
+                placeholder="Enter playlist name"
                 value={name}
                 disabled={disabled}
                 onChange={(e) => onNameChange(e.target.value)}
@@ -305,7 +301,7 @@ export function PlaylistFormBody({
               <Label htmlFor="playlist-description">Description</Label>
               <Textarea
                 id="playlist-description"
-                placeholder="Enter playlist description"
+                placeholder="Describe the playlist purpose or playback context"
                 rows={3}
                 value={description}
                 disabled={disabled}

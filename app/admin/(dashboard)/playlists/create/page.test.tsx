@@ -169,7 +169,7 @@ describe("CreatePlaylistPage", () => {
     expect(
       screen.getByRole("heading", { name: "Create Playlist" }),
     ).toBeInTheDocument();
-    const nameInput = screen.getByLabelText("Name");
+    const nameInput = screen.getByLabelText("Playlist Name");
     expect(nameInput).toBeInTheDocument();
     const header = screen.getByRole("banner");
 
@@ -215,14 +215,14 @@ describe("CreatePlaylistPage", () => {
 
     render(<CreatePlaylistPageView />);
 
-    await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.type(screen.getByLabelText("Playlist Name"), "Morning Playlist");
     await user.click(screen.getByRole("button", { name: "Poster" }));
     await user.click(screen.getByRole("button", { name: "Create" }));
 
     await waitFor(() => {
       expect(notifyApiErrorMock).toHaveBeenCalled();
     });
-    expect(screen.getByLabelText("Name")).toHaveValue("Morning Playlist");
+    expect(screen.getByLabelText("Playlist Name")).toHaveValue("Morning Playlist");
     expect(pushMock).not.toHaveBeenCalled();
   });
 
@@ -233,7 +233,7 @@ describe("CreatePlaylistPage", () => {
 
     expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
 
-    await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.type(screen.getByLabelText("Playlist Name"), "Morning Playlist");
 
     expect(screen.getByRole("button", { name: "Create" })).toBeDisabled();
 
@@ -270,7 +270,7 @@ describe("CreatePlaylistPage", () => {
 
     render(<CreatePlaylistPageView />);
 
-    await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.type(screen.getByLabelText("Playlist Name"), "Morning Playlist");
     await user.click(screen.getByRole("button", { name: "Poster" }));
     await user.click(screen.getByRole("button", { name: "Create" }));
 
@@ -303,7 +303,7 @@ describe("CreatePlaylistPage", () => {
 
     render(<CreatePlaylistPageView />);
 
-    await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.type(screen.getByLabelText("Playlist Name"), "Morning Playlist");
     await user.click(screen.getByRole("button", { name: "Poster" }));
     await user.click(screen.getByRole("button", { name: "Create" }));
 
@@ -322,7 +322,7 @@ describe("CreatePlaylistPage", () => {
 
     render(<CreatePlaylistPageView />);
 
-    await user.type(screen.getByLabelText("Name"), "Morning Playlist");
+    await user.type(screen.getByLabelText("Playlist Name"), "Morning Playlist");
     await user.click(screen.getByRole("button", { name: "Poster" }));
     await user.click(screen.getByRole("button", { name: "Create" }));
 
@@ -331,7 +331,7 @@ describe("CreatePlaylistPage", () => {
     });
     expect(notifyApiErrorMock).toHaveBeenCalled();
     expect(pushMock).not.toHaveBeenCalled();
-    expect(screen.getByLabelText("Name")).toHaveValue("Morning Playlist");
+    expect(screen.getByLabelText("Playlist Name")).toHaveValue("Morning Playlist");
     expect(screen.getByText("Poster")).toBeInTheDocument();
   });
 });

@@ -74,7 +74,7 @@ export function EmergencyAssetList({
                     aria-label={`Clear ${displayLabel}`}
                     onClick={() => onClearSlot(slotIndex)}
                     disabled={clearingSlotIndex !== null}
-                    className="size-7 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className="size-7 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:ring-destructive/20"
                   >
                     {isClearingThis ? (
                       <IconLoader2

@@ -8,8 +8,10 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   IconClock,
   IconGripVertical,
+  IconMinus,
   IconPhoto,
-  IconX,
+  IconPlus,
+  IconTrash,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +38,9 @@ export interface SortableItemRowProps {
   readonly disabled?: boolean;
 }
 
+const formatSecondsLabel = (seconds: number): string =>
+  `${seconds} ${seconds === 1 ? "sec" : "sec"}`;
+
 export function SortableItemRow({
   item,
   onRemove,
@@ -60,6 +65,11 @@ export function SortableItemRow({
       : undefined;
   const clampDuration = (value: number) =>
     Math.max(1, Math.min(value, maxDuration ?? Number.MAX_SAFE_INTEGER));
+  const commitDuration = (duration: number) => {
+    const clamped = clampDuration(duration);
+    setRawValue(String(clamped));
+    onUpdateDuration(item.id, clamped);
+  };
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- valid sync pattern for controlled input
@@ -77,9 +87,9 @@ export function SortableItemRow({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex flex-col gap-3 rounded-md border border-border bg-background p-3 transition-colors hover:bg-muted/30 sm:flex-row sm:items-center"
+      className="flex flex-col gap-3 rounded-md border border-border bg-background p-3 transition-colors hover:bg-muted/30 lg:flex-row lg:items-center"
     >
-      <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
+      <div className="flex min-w-0 flex-1 items-start gap-3 lg:items-center">
         <div
           data-testid="playlist-item-thumbnail"
           className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded bg-muted"
@@ -106,13 +116,28 @@ export function SortableItemRow({
           )}
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
           <span className="truncate text-sm font-medium">
             {item.content.title}
           </span>
-          <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
-            <div className="flex items-center gap-1">
-              <IconClock className="size-4 shrink-0" />
+
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <div className="flex h-8 items-center gap-0.5 rounded-md border border-input bg-background px-1 shadow-xs">
+              <IconClock
+                className="size-3.5 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => commitDuration(item.duration - 1)}
+                aria-label={`Decrease duration for ${item.content.title}`}
+                disabled={disabled || item.duration <= 1}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <IconMinus className="size-3.5" aria-hidden="true" />
+              </Button>
               <Input
                 type="number"
                 min="1"
@@ -129,19 +154,33 @@ export function SortableItemRow({
                 }}
                 onBlur={() => {
                   const parsed = parseInt(rawValue, 10);
-                  const clamped =
-                    Number.isFinite(parsed) && parsed > 0
-                      ? clampDuration(parsed)
-                      : 1;
-                  setRawValue(String(clamped));
-                  onUpdateDuration(item.id, clamped);
+                  commitDuration(
+                    Number.isFinite(parsed) && parsed > 0 ? parsed : 1,
+                  );
                 }}
-                className="h-8 w-24 px-2 text-center tabular-nums sm:w-16"
+                className="h-7 w-12 border-0 bg-transparent px-0 text-center font-medium text-primary tabular-nums shadow-none [appearance:textfield] focus-visible:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 onPointerDown={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
               />
-              <span>sec</span>
+              <span className="-ml-0.5">sec</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => commitDuration(item.duration + 1)}
+                aria-label={`Increase duration for ${item.content.title}`}
+                disabled={
+                  disabled ||
+                  item.duration >= (maxDuration ?? Number.MAX_SAFE_INTEGER)
+                }
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <IconPlus className="size-3.5" aria-hidden="true" />
+              </Button>
             </div>
+            {maxDuration != null ? (
+              <span>Max {formatSecondsLabel(maxDuration)}</span>
+            ) : null}
           </div>
         </div>
       </div>
@@ -153,8 +192,9 @@ export function SortableItemRow({
           onClick={() => onRemove(item.id)}
           aria-label={`Remove ${item.content.title} from playlist`}
           disabled={disabled}
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:ring-destructive/20"
         >
-          <IconX className="size-4" />
+          <IconTrash className="size-4" aria-hidden="true" />
         </Button>
         <button
           type="button"
