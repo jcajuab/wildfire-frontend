@@ -273,8 +273,69 @@ describe("StartEmergencyDialog", () => {
     expect(useListContentQueryMock).toHaveBeenCalledWith(
       expect.objectContaining({
         pageSize: 15,
+        status: "READY",
+        excludeType: "FLASH",
       }),
     );
+  });
+
+  test("uses user-facing empty copy when no eligible content exists", async () => {
+    const user = userEvent.setup();
+
+    useListEmergencySlotsQueryMock.mockReturnValue({
+      data: { slots: [] },
+      isFetching: false,
+      refetch: refetchSlotsMock,
+    } as unknown as ReturnType<typeof useListEmergencySlotsQuery>);
+    useListContentQueryMock.mockReturnValue({
+      data: {
+        items: [],
+        total: 0,
+        page: 1,
+        pageSize: 15,
+      },
+      isFetching: false,
+    } as unknown as ReturnType<typeof useListContentQuery>);
+
+    renderDialog();
+
+    await user.click(screen.getByRole("button", { name: "Slot 1" }));
+
+    expect(
+      screen.getByText("No eligible image, video, or text content found."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/READY/)).not.toBeInTheDocument();
+  });
+
+  test("uses search-aware empty copy for emergency content search", async () => {
+    const user = userEvent.setup();
+
+    useListEmergencySlotsQueryMock.mockReturnValue({
+      data: { slots: [] },
+      isFetching: false,
+      refetch: refetchSlotsMock,
+    } as unknown as ReturnType<typeof useListEmergencySlotsQuery>);
+    useListContentQueryMock.mockReturnValue({
+      data: {
+        items: [],
+        total: 0,
+        page: 1,
+        pageSize: 15,
+      },
+      isFetching: false,
+    } as unknown as ReturnType<typeof useListContentQuery>);
+
+    renderDialog();
+
+    await user.click(screen.getByRole("button", { name: "Slot 1" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Search emergency content" }),
+      "Safe",
+    );
+
+    expect(
+      screen.getByText("No eligible content matches the current search."),
+    ).toBeInTheDocument();
   });
 
   test("renders text content previews in filled slots", () => {

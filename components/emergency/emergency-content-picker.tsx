@@ -66,6 +66,10 @@ export function EmergencyContentPicker({
 
   const isPickerDisabled = selectedSlotIndex === null;
   const isSubmitting = submittingContentId !== null;
+  const emptyMessage =
+    search.trim().length > 0
+      ? "No eligible content matches the current search."
+      : "No eligible image, video, or text content found.";
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
@@ -84,7 +88,7 @@ export function EmergencyContentPicker({
             </p>
           ) : items.length === 0 ? (
             <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-              No READY image, video, or text content found.
+              {emptyMessage}
             </p>
           ) : (
             <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
