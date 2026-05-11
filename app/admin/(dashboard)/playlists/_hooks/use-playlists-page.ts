@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { useCan } from "@/hooks/use-can";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useInfiniteUserOptions } from "@/hooks/use-infinite-user-options";
 import {
   playlistsApi,
   type BackendPlaylistListResponse,
@@ -13,7 +14,7 @@ import {
   useDeletePlaylistMutation,
   useListPlaylistsQuery,
 } from "@/lib/api/playlists-api";
-import { useGetUserOptionsQuery, useGetUserQuery } from "@/lib/api/rbac-api";
+import type { RbacUser } from "@/lib/api/rbac-api";
 import { mapBackendPlaylistSummary } from "@/lib/mappers/playlist-mapper";
 import { getPlaylistEditPath } from "@/lib/playlist-paths";
 import type {
@@ -32,9 +33,12 @@ export interface UsePlaylistsPageResult {
   canUpdatePlaylist: boolean;
   canDeletePlaylist: boolean;
   canFilterByOwner: boolean;
-  ownerOptions: ReturnType<typeof useGetUserOptionsQuery>["data"];
+  ownerOptions: readonly RbacUser[];
   ownerSearch: string;
   isOwnerOptionsFetching: boolean;
+  isOwnerOptionsLoadingMore: boolean;
+  hasMoreOwnerOptions: boolean;
+  loadMoreOwnerOptions: () => void;
 
   // Filter state
   statusFilter: PlaylistStatusFilter;
@@ -120,19 +124,6 @@ export function usePlaylistsPage({
   const [ownerSearch, setOwnerSearch] = useState("");
   const debouncedOwnerSearch = useDebounce(ownerSearch.trim(), 250);
   const {
-    data: searchedOwnerOptions = [],
-    isFetching: isOwnerOptionsFetching,
-  } = useGetUserOptionsQuery(
-    {
-      q: debouncedOwnerSearch.length > 0 ? debouncedOwnerSearch : undefined,
-      limit: 25,
-    },
-    {
-      skip: !canFilterByOwner,
-    },
-  );
-
-  const {
     statusFilter,
     ownerFilter,
     sortFilter,
@@ -146,19 +137,18 @@ export function usePlaylistsPage({
     handleSearchChange,
   } = usePlaylistsFilters();
   const selectedOwnerId = ownerFilter === "all" ? undefined : ownerFilter;
-  const selectedOwnerInOptions = searchedOwnerOptions.some(
-    (owner) => owner.id === selectedOwnerId,
-  );
-  const { data: selectedOwner } = useGetUserQuery(selectedOwnerId ?? "", {
-    skip:
-      !canFilterByOwner || selectedOwnerId == null || selectedOwnerInOptions,
+  const {
+    users: ownerOptions,
+    isFetching: isOwnerOptionsFetching,
+    isLoadingMore: isOwnerOptionsLoadingMore,
+    hasMore: hasMoreOwnerOptions,
+    loadMore: loadMoreOwnerOptions,
+  } = useInfiniteUserOptions({
+    enabled: canFilterByOwner,
+    search: debouncedOwnerSearch,
+    pageSize: 50,
+    selectedUserId: selectedOwnerId,
   });
-  const ownerOptions = useMemo(() => {
-    if (!selectedOwner || selectedOwnerInOptions) {
-      return searchedOwnerOptions;
-    }
-    return [selectedOwner, ...searchedOwnerOptions];
-  }, [searchedOwnerOptions, selectedOwner, selectedOwnerInOptions]);
   const debouncedSearch = useDebounce(search, 500);
   const sortQuery = useMemo(
     () => toPlaylistSortQuery(sortFilter),
@@ -258,6 +248,9 @@ export function usePlaylistsPage({
     ownerOptions,
     ownerSearch,
     isOwnerOptionsFetching,
+    isOwnerOptionsLoadingMore,
+    hasMoreOwnerOptions,
+    loadMoreOwnerOptions,
     isLoading,
     isFetching,
     statusFilter,

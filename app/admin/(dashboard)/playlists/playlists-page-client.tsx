@@ -79,6 +79,9 @@ export function PlaylistsPageView({
     ownerOptions,
     ownerSearch,
     isOwnerOptionsFetching,
+    isOwnerOptionsLoadingMore,
+    hasMoreOwnerOptions,
+    loadMoreOwnerOptions,
     isLoading,
     isFetching,
     statusFilter,
@@ -194,6 +197,8 @@ export function PlaylistsPageView({
             ownerSearch={ownerSearch}
             canFilterByOwner={canFilterByOwner}
             isOwnerOptionsFetching={isOwnerOptionsFetching}
+            isOwnerOptionsLoadingMore={isOwnerOptionsLoadingMore}
+            hasMoreOwnerOptions={hasMoreOwnerOptions}
             isFetching={isFetching && !isLoading}
             canCreatePlaylist={canCreatePlaylist}
             canDeletePlaylist={canDeletePlaylist}
@@ -213,6 +218,7 @@ export function PlaylistsPageView({
             onSearchChange={handleSearchChange}
             onStatusFilterChange={handleStatusFilterChange}
             onOwnerSearchChange={handleOwnerSearchChange}
+            onLoadMoreOwnerOptions={loadMoreOwnerOptions}
             onOwnerFilterChange={handleOwnerFilterChange}
             onSortFilterChange={handleSortFilterChange}
             onClearFilters={handleClearFilters}

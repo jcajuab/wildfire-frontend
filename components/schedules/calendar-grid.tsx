@@ -2,12 +2,11 @@
 
 import type { ReactElement } from "react";
 import { useMemo, useState, useCallback } from "react";
-import { IconPlus } from "@tabler/icons-react";
 import Link from "next/link";
 
-import { Can } from "@/components/common/can";
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
+import { useCan } from "@/hooks/use-can";
 import type {
   CalendarView,
   ResourceMode,
@@ -43,19 +42,22 @@ interface CalendarGridProps {
 }
 
 function EmptyResourcesState(): ReactElement {
+  const canCreateDisplays = useCan("displays:create");
+
   return (
     <EmptyState
       title="No displays available for scheduling"
-      description="Add displays first, then assign schedules to resources."
+      description={
+        canCreateDisplays
+          ? "Go to Displays to register screens before assigning schedules."
+          : "Ask an administrator to register displays before schedules can be assigned."
+      }
       action={
-        <Can permission="displays:create">
+        canCreateDisplays ? (
           <Button asChild>
-            <Link href="/admin/displays">
-              <IconPlus className="size-4" aria-hidden="true" />
-              Add Display
-            </Link>
+            <Link href="/admin/displays">Go to Displays</Link>
           </Button>
-        </Can>
+        ) : null
       }
     />
   );

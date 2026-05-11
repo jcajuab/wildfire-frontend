@@ -14,7 +14,7 @@ import {
   ComboboxContent,
   ComboboxEmpty,
   ComboboxItem,
-  ComboboxList,
+  ComboboxVirtualList,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
@@ -377,13 +377,13 @@ export function DisplayFilterPopover({
                   />
                 </ComboboxChips>
                 <ComboboxContent anchor={anchorRef}>
-                  <ComboboxList>
-                    {filteredGroups.map((name) => (
-                      <ComboboxItem key={name} value={name}>
-                        {name}
-                      </ComboboxItem>
-                    ))}
-                  </ComboboxList>
+                  <ComboboxVirtualList
+                    items={filteredGroups}
+                    getItemKey={(name) => name}
+                    renderItem={(name) => (
+                      <ComboboxItem value={name}>{name}</ComboboxItem>
+                    )}
+                  />
                   <ComboboxEmpty>No groups found.</ComboboxEmpty>
                 </ComboboxContent>
               </Combobox>

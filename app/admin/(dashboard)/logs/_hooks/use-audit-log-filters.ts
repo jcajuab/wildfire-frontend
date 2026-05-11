@@ -30,6 +30,7 @@ const auditLogFiltersParsers = {
   q: parseAsString.withDefault(""),
   from: parseAsString.withDefault(""),
   to: parseAsString.withDefault(""),
+  author: parseAsString.withDefault(""),
   action: parseAsString.withDefault(""),
   requestId: parseAsString.withDefault(""),
   resourceType: parseAsStringLiteral(RESOURCE_TYPE_FILTER_OPTIONS).withDefault(
@@ -47,6 +48,7 @@ export function useAuditLogFilters(pageSize: number) {
     q,
     from,
     to,
+    author,
     action,
     requestId,
     resourceType,
@@ -68,6 +70,10 @@ export function useAuditLogFilters(pageSize: number) {
   );
   const setTo = useCallback(
     (value: string) => setFilters({ to: value }),
+    [setFilters],
+  );
+  const setAuthor = useCallback(
+    (value: string) => setFilters({ author: value }),
     [setFilters],
   );
   const setAction = useCallback(
@@ -97,8 +103,7 @@ export function useAuditLogFilters(pageSize: number) {
   const debouncedFromDraft = useDebounce(fromDraft, 250);
   const debouncedToDraft = useDebounce(toDraft, 250);
   const debouncedSearch = useDebounce(q, 500);
-  const debouncedAction = useDebounce(action, 500);
-  const debouncedRequestId = useDebounce(requestId, 500);
+  const debouncedAuthor = useDebounce(author, 500);
 
   const [resourceTypeInput, setResourceTypeInput] = useState<string>(() =>
     resourceType === "" ? "" : getResourceTypeFilterLabel(resourceType),
@@ -183,21 +188,17 @@ export function useAuditLogFilters(pageSize: number) {
       q: debouncedSearch || undefined,
       from: from && isValidYyyyMmDd(from) ? dateToISOStart(from) : undefined,
       to: to && isValidYyyyMmDd(to) ? dateToISOEnd(to) : undefined,
-      action: debouncedAction || undefined,
-      actorType: actorType === "all" ? undefined : actorType,
+      author: debouncedAuthor || undefined,
       resourceType: resourceType || undefined,
       status: parsedStatus,
-      requestId: debouncedRequestId || undefined,
     }),
     [
       debouncedSearch,
-      debouncedAction,
-      actorType,
+      debouncedAuthor,
       from,
       page,
       pageSize,
       parsedStatus,
-      debouncedRequestId,
       resourceType,
       to,
     ],
@@ -222,6 +223,7 @@ export function useAuditLogFilters(pageSize: number) {
       q: null,
       from: null,
       to: null,
+      author: null,
       action: null,
       requestId: null,
       resourceType: null,
@@ -247,6 +249,8 @@ export function useAuditLogFilters(pageSize: number) {
     setTo,
     toDraft,
     setToDraft,
+    author,
+    setAuthor,
     action,
     setAction,
     requestId,

@@ -38,7 +38,7 @@ import {
   ComboboxEmpty,
   ComboboxInput,
   ComboboxItem,
-  ComboboxList,
+  ComboboxVirtualList,
 } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,7 +49,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useGetUserOptionsQuery } from "@/lib/api/rbac-api";
+import { useInfiniteUserOptions } from "@/hooks/use-infinite-user-options";
 import {
   DESIGN_PERMISSIONS,
   mergeDesignPermissionsWithApi,
@@ -243,15 +243,16 @@ export function RoleForm({
   const latestOnSubmitRef = useRef(onSubmit);
   const emittedStateRef = useRef<RoleFormState | null>(null);
   const ignoredUserSearchValuesRef = useRef<Set<string>>(new Set());
-  const { data: searchedUsers = [] } = useGetUserOptionsQuery(
-    {
-      q: deferredUserSearch.length > 0 ? deferredUserSearch : undefined,
-    },
-    {
-      refetchOnMountOrArgChange: true,
-      skip: !canReadUsers,
-    },
-  );
+  const {
+    users: searchedUsers,
+    hasMore: hasMoreUserOptions,
+    isLoadingMore: isUserOptionsLoadingMore,
+    loadMore: loadMoreUserOptions,
+  } = useInfiniteUserOptions({
+    enabled: canReadUsers,
+    search: deferredUserSearch,
+    pageSize: 50,
+  });
 
   const displayPermissions: DesignPermissionWithId[] = useMemo(
     () => mergeDesignPermissionsWithApi(permissions),
@@ -968,10 +969,14 @@ export function RoleForm({
                         disabled={isSubmitting}
                       />
                       <ComboboxContent>
-                        <ComboboxList>
-                          {filteredUnassignedUsers.map((user) => (
+                        <ComboboxVirtualList
+                          items={filteredUnassignedUsers}
+                          hasMore={hasMoreUserOptions}
+                          isLoadingMore={isUserOptionsLoadingMore}
+                          onLoadMore={loadMoreUserOptions}
+                          getItemKey={(user) => user.id}
+                          renderItem={(user) => (
                             <ComboboxItem
-                              key={user.id}
                               value={user.id}
                               onPointerDownCapture={(event) => {
                                 event.preventDefault();
@@ -992,8 +997,8 @@ export function RoleForm({
                                 </span>
                               </span>
                             </ComboboxItem>
-                          ))}
-                        </ComboboxList>
+                          )}
+                        />
                         <ComboboxEmpty>No matching users.</ComboboxEmpty>
                       </ComboboxContent>
                     </Combobox>

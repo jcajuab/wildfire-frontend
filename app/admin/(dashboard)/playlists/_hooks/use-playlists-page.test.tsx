@@ -11,7 +11,10 @@ import {
   type BackendPlaylistSummary,
   type PlaylistListQuery,
 } from "@/lib/api/playlists-api";
-import { useGetUserOptionsQuery, useGetUserQuery } from "@/lib/api/rbac-api";
+import {
+  useGetUserOptionsPageQuery,
+  useGetUserQuery,
+} from "@/lib/api/rbac-api";
 
 import { usePlaylistsFilters } from "./use-playlists-filters";
 import { usePlaylistsPage } from "./use-playlists-page";
@@ -54,7 +57,7 @@ vi.mock("@/lib/api/playlists-api", () => ({
 }));
 
 vi.mock("@/lib/api/rbac-api", () => ({
-  useGetUserOptionsQuery: vi.fn(() => ({
+  useGetUserOptionsPageQuery: vi.fn(() => ({
     data: [],
   })),
   useGetUserQuery: vi.fn(() => ({
@@ -68,7 +71,7 @@ vi.mock("./use-playlists-filters", () => ({
 
 const useCanMock = vi.mocked(useCan);
 const useAuthMock = vi.mocked(useAuth);
-const useGetUserOptionsQueryMock = vi.mocked(useGetUserOptionsQuery);
+const useGetUserOptionsPageQueryMock = vi.mocked(useGetUserOptionsPageQuery);
 const useGetUserQueryMock = vi.mocked(useGetUserQuery);
 const useDeletePlaylistMutationMock = vi.mocked(useDeletePlaylistMutation);
 const useListPlaylistsQueryMock = vi.mocked(useListPlaylistsQuery);
@@ -158,7 +161,7 @@ describe("usePlaylistsPage", () => {
       bootstrapSession: vi.fn(),
       updateSession: vi.fn(),
     } as unknown as ReturnType<typeof useAuth>);
-    useGetUserOptionsQueryMock.mockReturnValue({
+    useGetUserOptionsPageQueryMock.mockReturnValue({
       data: [
         {
           id: "00000000-0000-4000-8000-000000000001",
@@ -169,7 +172,7 @@ describe("usePlaylistsPage", () => {
         },
       ],
       isFetching: false,
-    } as unknown as ReturnType<typeof useGetUserOptionsQuery>);
+    } as unknown as ReturnType<typeof useGetUserOptionsPageQuery>);
     useGetUserQueryMock.mockReturnValue({
       data: undefined,
     } as unknown as ReturnType<typeof useGetUserQuery>);
@@ -288,8 +291,8 @@ describe("usePlaylistsPage", () => {
     );
     expect(result.current.canFilterByOwner).toBe(true);
     expect(result.current.ownerOptions).toHaveLength(1);
-    expect(useGetUserOptionsQueryMock).toHaveBeenCalledWith(
-      { q: undefined, limit: 25 },
+    expect(useGetUserOptionsPageQueryMock).toHaveBeenCalledWith(
+      { page: 1, pageSize: 50, q: undefined },
       { skip: false },
     );
     expect(result.current.playlists.map((playlist) => playlist.name)).toEqual([

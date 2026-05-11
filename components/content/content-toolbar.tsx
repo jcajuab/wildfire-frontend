@@ -50,6 +50,8 @@ interface ContentToolbarProps {
   readonly ownerSearch?: string;
   readonly canFilterByOwner?: boolean;
   readonly isOwnerOptionsFetching?: boolean;
+  readonly isOwnerOptionsLoadingMore?: boolean;
+  readonly hasMoreOwnerOptions?: boolean;
   readonly isFetching?: boolean;
   readonly canCreateContent: boolean;
   readonly canDeleteContent: boolean;
@@ -58,6 +60,7 @@ interface ContentToolbarProps {
   readonly onStatusFilterChange: (value: ContentStatusFilter) => void;
   readonly onTypeFilterChange: (value: TypeFilter) => void;
   readonly onOwnerSearchChange?: (value: string) => void;
+  readonly onLoadMoreOwnerOptions?: () => void;
   readonly onOwnerFilterChange: (value: string) => void;
   readonly onSortFilterChange: (value: ContentSortFilter) => void;
   readonly onClearFilters: () => void;
@@ -77,6 +80,8 @@ export function ContentToolbar({
   ownerSearch = "",
   canFilterByOwner = false,
   isOwnerOptionsFetching = false,
+  isOwnerOptionsLoadingMore = false,
+  hasMoreOwnerOptions = false,
   isFetching = false,
   canCreateContent,
   canDeleteContent,
@@ -85,6 +90,7 @@ export function ContentToolbar({
   onStatusFilterChange,
   onTypeFilterChange,
   onOwnerSearchChange,
+  onLoadMoreOwnerOptions,
   onOwnerFilterChange,
   onSortFilterChange,
   onClearFilters,
@@ -118,6 +124,8 @@ export function ContentToolbar({
               ownerSearch={ownerSearch}
               canFilterByOwner={canFilterByOwner}
               isOwnerOptionsFetching={isOwnerOptionsFetching}
+              isOwnerOptionsLoadingMore={isOwnerOptionsLoadingMore}
+              hasMoreOwnerOptions={hasMoreOwnerOptions}
               isFetching={isFetching}
               embeddedTrigger
               renderEmbeddedAnchor={(trigger) => (
@@ -135,6 +143,7 @@ export function ContentToolbar({
               onStatusFilterChange={onStatusFilterChange}
               onTypeFilterChange={onTypeFilterChange}
               onOwnerSearchChange={onOwnerSearchChange}
+              onLoadMoreOwnerOptions={onLoadMoreOwnerOptions}
               onOwnerFilterChange={onOwnerFilterChange}
               onSortFilterChange={onSortFilterChange}
               onClearFilters={onClearFilters}
@@ -188,7 +197,7 @@ export function ContentToolbar({
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={onCreateUpload}>
                     <IconUpload className="size-4" aria-hidden="true" />
-                    Upload
+                    File
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={onCreateFlash}>
                     <IconBolt className="size-4" aria-hidden="true" />

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCan } from "@/hooks/use-can";
 import { useAuth } from "@/context/auth-context";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useInfiniteUserOptions } from "@/hooks/use-infinite-user-options";
 import {
   contentApi,
   type BackendContentListResponse,
@@ -14,7 +15,6 @@ import {
   useListContentQuery,
   useUploadPdfMutation,
 } from "@/lib/api/content-api";
-import { useGetUserOptionsQuery, useGetUserQuery } from "@/lib/api/rbac-api";
 import {
   getApiErrorMessage,
   notifyApiError,
@@ -95,33 +95,20 @@ export function useContentPageController({
   const canFilterByOwner = user?.isAdmin === true && canReadUsers;
   const [ownerSearch, setOwnerSearch] = useState("");
   const debouncedOwnerSearch = useDebounce(ownerSearch.trim(), 250);
-  const {
-    data: searchedOwnerOptions = [],
-    isFetching: isOwnerOptionsFetching,
-  } = useGetUserOptionsQuery(
-    {
-      q: debouncedOwnerSearch.length > 0 ? debouncedOwnerSearch : undefined,
-      limit: 25,
-    },
-    {
-      skip: !canFilterByOwner,
-    },
-  );
   const selectedOwnerId =
     filters.ownerFilter === "all" ? undefined : filters.ownerFilter;
-  const selectedOwnerInOptions = searchedOwnerOptions.some(
-    (owner) => owner.id === selectedOwnerId,
-  );
-  const { data: selectedOwner } = useGetUserQuery(selectedOwnerId ?? "", {
-    skip:
-      !canFilterByOwner || selectedOwnerId == null || selectedOwnerInOptions,
+  const {
+    users: ownerOptions,
+    isFetching: isOwnerOptionsFetching,
+    isLoadingMore: isOwnerOptionsLoadingMore,
+    hasMore: hasMoreOwnerOptions,
+    loadMore: loadMoreOwnerOptions,
+  } = useInfiniteUserOptions({
+    enabled: canFilterByOwner,
+    search: debouncedOwnerSearch,
+    pageSize: 50,
+    selectedUserId: selectedOwnerId,
   });
-  const ownerOptions = useMemo(() => {
-    if (!selectedOwner || selectedOwnerInOptions) {
-      return searchedOwnerOptions;
-    }
-    return [selectedOwner, ...searchedOwnerOptions];
-  }, [searchedOwnerOptions, selectedOwner, selectedOwnerInOptions]);
   const dialogState = useContentDialogState();
   const debouncedSearch = useDebounce(filters.search, 500);
   const sortQuery = toContentSortQuery(filters.sortFilter);
@@ -284,6 +271,9 @@ export function useContentPageController({
     ownerOptions,
     ownerSearch,
     isOwnerOptionsFetching,
+    isOwnerOptionsLoadingMore,
+    hasMoreOwnerOptions,
+    loadMoreOwnerOptions,
     data,
     error,
     errorMessage: getApiErrorMessage(

@@ -11,7 +11,7 @@ import {
   ComboboxContent,
   ComboboxEmpty,
   ComboboxItem,
-  ComboboxList,
+  ComboboxVirtualList,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import {
@@ -128,18 +128,21 @@ export function DisplayGroupsTagsInput({
           />
         </ComboboxChips>
         <ComboboxContent anchor={anchorRef} container={resolvedPortalContainer}>
-          <ComboboxList>
-            {filteredNames.map((name) => (
-              <ComboboxItem key={name} value={name}>
-                {name}
-              </ComboboxItem>
-            ))}
-            {showCreate ? (
-              <ComboboxItem key="__create__" value="__create__">
-                Create &ldquo;{trimmed}&rdquo;
-              </ComboboxItem>
-            ) : null}
-          </ComboboxList>
+          <ComboboxVirtualList
+            items={
+              showCreate ? [...filteredNames, "__create__"] : filteredNames
+            }
+            getItemKey={(name) => name}
+            renderItem={(name) =>
+              name === "__create__" ? (
+                <ComboboxItem value="__create__">
+                  Create &ldquo;{trimmed}&rdquo;
+                </ComboboxItem>
+              ) : (
+                <ComboboxItem value={name}>{name}</ComboboxItem>
+              )
+            }
+          />
           <ComboboxEmpty>No groups found.</ComboboxEmpty>
         </ComboboxContent>
       </Combobox>

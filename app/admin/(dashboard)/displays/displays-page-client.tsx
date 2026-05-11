@@ -11,15 +11,12 @@ import {
 } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
-import { Can } from "@/components/common/can";
 import { EmptyState } from "@/components/common/empty-state";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { DisplayGrid } from "@/components/displays/display-grid";
 import { DisplaysToolbar } from "@/components/displays/displays-toolbar";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   displaysApi,
@@ -384,14 +381,6 @@ export function DisplaysPageView({
               <EmptyState
                 title="No displays yet"
                 description="Register a display to start showing content on your screens."
-                action={
-                  <Can permission="displays:create">
-                    <Button onClick={() => setIsAddInfoDialogOpen(true)}>
-                      <IconPlus className="size-4" aria-hidden="true" />
-                      Add Display
-                    </Button>
-                  </Can>
-                }
               />
             ) : (
               <DisplayGrid

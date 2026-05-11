@@ -191,10 +191,13 @@ export function mapAuditEventToLogEntry(
 ): LogEntry {
   const actorId = event.actorId ?? "unknown";
   const actorType = event.actorType ?? "unknown";
+  const resolvedActorName = options?.getActorName?.(actorId, event.actorType);
   const authorName =
-    event.actorName ??
-    options?.getActorName?.(actorId, event.actorType) ??
-    (actorType === "user" ? actorId : actorType);
+    actorType === "user"
+      ? resolvedActorName != null && resolvedActorName !== "Unknown user"
+        ? resolvedActorName
+        : (event.actorName ?? resolvedActorName ?? actorId)
+      : (event.actorName ?? resolvedActorName ?? actorType);
   const rawMetadata = safeParseMetadata(event.metadataJson, {
     requestId: event.requestId,
     action: event.action,

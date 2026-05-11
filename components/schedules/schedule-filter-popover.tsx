@@ -14,7 +14,7 @@ import {
   ComboboxContent,
   ComboboxEmpty,
   ComboboxItem,
-  ComboboxList,
+  ComboboxVirtualList,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
@@ -138,13 +138,13 @@ function TargetResourceCombobox({
           />
         </ComboboxChips>
         <ComboboxContent anchor={anchorRef}>
-          <ComboboxList>
-            {filteredOptions.map((option) => (
-              <ComboboxItem key={option.id} value={option.id}>
-                {option.name}
-              </ComboboxItem>
-            ))}
-          </ComboboxList>
+          <ComboboxVirtualList
+            items={filteredOptions}
+            getItemKey={(option) => option.id}
+            renderItem={(option) => (
+              <ComboboxItem value={option.id}>{option.name}</ComboboxItem>
+            )}
+          />
           <ComboboxEmpty>{emptyLabel}</ComboboxEmpty>
         </ComboboxContent>
       </Combobox>

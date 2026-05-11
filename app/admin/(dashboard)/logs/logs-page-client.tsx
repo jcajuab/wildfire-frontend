@@ -113,15 +113,18 @@ export function LogsPageClient({
     logs,
     total,
     isFetching,
+    authorOptions,
+    isAuthorOptionsFetching,
+    isAuthorOptionsLoadingMore,
+    hasMoreAuthorOptions,
+    loadMoreAuthorOptions,
     handleSearchChange,
     handleFromChange,
     handleToChange,
-    handleActionChange,
-    handleActorTypeChange,
+    handleAuthorChange,
     handleResourceTypeChange,
     handleResourceTypeInputChange,
     handleStatusChange,
-    handleRequestIdChange,
     handleResetFilters,
     selectedStatusValue,
   } = useLogsPage({ initialEvents, initialUsers, initialDisplays });
@@ -139,14 +142,17 @@ export function LogsPageClient({
                 filters={filters}
                 isFetching={isFetching}
                 selectedStatusValue={selectedStatusValue}
+                authorOptions={authorOptions}
+                isAuthorOptionsFetching={isAuthorOptionsFetching}
+                isAuthorOptionsLoadingMore={isAuthorOptionsLoadingMore}
+                hasMoreAuthorOptions={hasMoreAuthorOptions}
+                onLoadMoreAuthorOptions={loadMoreAuthorOptions}
                 onFromChange={handleFromChange}
                 onToChange={handleToChange}
-                onActionChange={handleActionChange}
-                onActorTypeChange={handleActorTypeChange}
+                onAuthorChange={handleAuthorChange}
                 onResourceTypeChange={handleResourceTypeChange}
                 onResourceTypeInputChange={handleResourceTypeInputChange}
                 onStatusChange={handleStatusChange}
-                onRequestIdChange={handleRequestIdChange}
                 onResetFilters={handleResetFilters}
                 renderEmbeddedAnchor={(trigger) => (
                   <SearchControl
@@ -211,11 +217,9 @@ export function LogsPageClient({
         open={exportDialogOpen}
         onOpenChange={setExportDialogOpen}
         q={filters.search}
-        action={filters.action}
-        actorType={filters.actorType}
+        author={filters.author}
         resourceType={filters.resourceType}
         parsedStatus={filters.parsedStatus}
-        requestId={filters.requestId}
         total={total}
       />
       <FlushLogsDialog

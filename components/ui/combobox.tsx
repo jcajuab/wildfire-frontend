@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Combobox as ComboboxPrimitive } from "@base-ui/react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -141,6 +142,94 @@ function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
       )}
       {...props}
     />
+  );
+}
+
+function ComboboxVirtualList<T>({
+  className,
+  items,
+  estimateSize = 32,
+  overscan = 6,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
+  getItemKey,
+  renderItem,
+}: Omit<ComboboxPrimitive.List.Props, "children"> & {
+  readonly items: readonly T[];
+  readonly estimateSize?: number;
+  readonly overscan?: number;
+  readonly hasMore?: boolean;
+  readonly isLoadingMore?: boolean;
+  readonly onLoadMore?: () => void;
+  readonly getItemKey: (item: T, index: number) => React.Key;
+  readonly renderItem: (item: T, index: number) => React.ReactNode;
+}) {
+  const scrollRef = React.useRef<HTMLDivElement | null>(null);
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual is required for large combobox option sets.
+  const virtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => estimateSize,
+    overscan,
+  });
+  const virtualItems = virtualizer.getVirtualItems();
+  const renderedVirtualItems =
+    virtualItems.length > 0
+      ? virtualItems
+      : items.map((_, index) => ({
+          index,
+          start: index * estimateSize,
+        }));
+
+  React.useEffect(() => {
+    if (!hasMore || isLoadingMore || !onLoadMore || virtualItems.length === 0) {
+      return;
+    }
+
+    const lastItem = virtualItems[virtualItems.length - 1];
+    if (lastItem && lastItem.index >= items.length - 4) {
+      onLoadMore();
+    }
+  }, [hasMore, isLoadingMore, items.length, onLoadMore, virtualItems]);
+
+  return (
+    <ComboboxPrimitive.List
+      ref={scrollRef}
+      data-slot="combobox-list"
+      className={cn(
+        "no-scrollbar max-h-[min(calc(--spacing(72)---spacing(9)),calc(var(--available-height)---spacing(9)))] scroll-py-1 overflow-y-auto overscroll-contain p-1 data-empty:p-0",
+        className,
+      )}
+    >
+      <div
+        className="relative w-full"
+        style={{ height: virtualizer.getTotalSize() }}
+      >
+        {renderedVirtualItems.map((virtualItem) => {
+          const item = items[virtualItem.index];
+          if (item == null) {
+            return null;
+          }
+          return (
+            <div
+              key={getItemKey(item, virtualItem.index)}
+              data-index={virtualItem.index}
+              ref={virtualizer.measureElement}
+              className="absolute left-0 top-0 w-full"
+              style={{ transform: `translateY(${virtualItem.start}px)` }}
+            >
+              {renderItem(item, virtualItem.index)}
+            </div>
+          );
+        })}
+      </div>
+      {isLoadingMore ? (
+        <div className="px-2 py-1.5 text-xs text-muted-foreground">
+          Loading more...
+        </div>
+      ) : null}
+    </ComboboxPrimitive.List>
   );
 }
 
@@ -295,6 +384,7 @@ export {
   ComboboxInput,
   ComboboxContent,
   ComboboxList,
+  ComboboxVirtualList,
   ComboboxItem,
   ComboboxGroup,
   ComboboxLabel,

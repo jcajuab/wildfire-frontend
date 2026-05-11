@@ -4,16 +4,21 @@ import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { RoleForm, type RoleFormState } from "@/components/roles/role-form";
-import { useGetUserOptionsQuery } from "@/lib/api/rbac-api";
+import {
+  useGetUserOptionsPageQuery,
+  useGetUserQuery,
+} from "@/lib/api/rbac-api";
 import { DESIGN_PERMISSIONS } from "@/lib/design-permissions";
 import type { PermissionAction, PermissionResource } from "@/types/permission";
 import type { Permission } from "@/types/role";
 
 vi.mock("@/lib/api/rbac-api", () => ({
-  useGetUserOptionsQuery: vi.fn(),
+  useGetUserOptionsPageQuery: vi.fn(),
+  useGetUserQuery: vi.fn(() => ({ data: undefined })),
 }));
 
-const useGetUserOptionsQueryMock = vi.mocked(useGetUserOptionsQuery);
+const useGetUserOptionsPageQueryMock = vi.mocked(useGetUserOptionsPageQuery);
+const useGetUserQueryMock = vi.mocked(useGetUserQuery);
 
 function buildDesignPermissions(): Permission[] {
   return DESIGN_PERMISSIONS.map((permission) => ({
@@ -34,10 +39,13 @@ describe("RoleForm", () => {
       },
     );
 
-    useGetUserOptionsQueryMock.mockReset();
-    useGetUserOptionsQueryMock.mockReturnValue({
+    useGetUserOptionsPageQueryMock.mockReset();
+    useGetUserOptionsPageQueryMock.mockReturnValue({
       data: [],
-    } as unknown as ReturnType<typeof useGetUserOptionsQuery>);
+    } as unknown as ReturnType<typeof useGetUserOptionsPageQuery>);
+    useGetUserQueryMock.mockReturnValue({
+      data: undefined,
+    } as unknown as ReturnType<typeof useGetUserQuery>);
   });
 
   afterEach(() => {
@@ -229,12 +237,9 @@ describe("RoleForm", () => {
       />,
     );
 
-    expect(useGetUserOptionsQueryMock).toHaveBeenCalledWith(
-      { q: undefined },
-      expect.objectContaining({
-        refetchOnMountOrArgChange: true,
-        skip: true,
-      }),
+    expect(useGetUserOptionsPageQueryMock).toHaveBeenCalledWith(
+      { page: 1, pageSize: 50, q: undefined },
+      { skip: true },
     );
     expect(
       screen.getByText(/User assignment is unavailable without/i),
@@ -266,7 +271,7 @@ describe("RoleForm", () => {
 
   test("selects and adds a user from the assignment combobox", async () => {
     const user = userEvent.setup();
-    useGetUserOptionsQueryMock.mockReturnValue({
+    useGetUserOptionsPageQueryMock.mockReturnValue({
       data: [
         {
           id: "user-2",
@@ -275,7 +280,7 @@ describe("RoleForm", () => {
           email: null,
         },
       ],
-    } as unknown as ReturnType<typeof useGetUserOptionsQuery>);
+    } as unknown as ReturnType<typeof useGetUserOptionsPageQuery>);
 
     render(
       <RoleForm
@@ -319,7 +324,7 @@ describe("RoleForm", () => {
 
   test("clears the selected user when the assignment combobox is edited after selection", async () => {
     const user = userEvent.setup();
-    useGetUserOptionsQueryMock.mockReturnValue({
+    useGetUserOptionsPageQueryMock.mockReturnValue({
       data: [
         {
           id: "user-2",
@@ -328,7 +333,7 @@ describe("RoleForm", () => {
           email: null,
         },
       ],
-    } as unknown as ReturnType<typeof useGetUserOptionsQuery>);
+    } as unknown as ReturnType<typeof useGetUserOptionsPageQuery>);
 
     render(
       <RoleForm
@@ -594,7 +599,7 @@ describe("RoleForm", () => {
 
   test("preserves search query and assigned-user pagination behavior", async () => {
     const user = userEvent.setup();
-    useGetUserOptionsQueryMock.mockReturnValue({
+    useGetUserOptionsPageQueryMock.mockReturnValue({
       data: [
         {
           id: "user-1",
@@ -603,7 +608,7 @@ describe("RoleForm", () => {
           email: "alice@example.com",
         },
       ],
-    } as unknown as ReturnType<typeof useGetUserOptionsQuery>);
+    } as unknown as ReturnType<typeof useGetUserOptionsPageQuery>);
 
     const initialUsers = Array.from({ length: 26 }, (_, index) => ({
       id: `assigned-${index + 1}`,
@@ -635,12 +640,9 @@ describe("RoleForm", () => {
     );
 
     await waitFor(() => {
-      expect(useGetUserOptionsQueryMock).toHaveBeenCalledWith(
-        { q: "ali" },
-        expect.objectContaining({
-          refetchOnMountOrArgChange: true,
-          skip: false,
-        }),
+      expect(useGetUserOptionsPageQueryMock).toHaveBeenCalledWith(
+        { page: 1, pageSize: 50, q: "ali" },
+        { skip: false },
       );
     });
 

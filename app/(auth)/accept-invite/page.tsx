@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import type { FormEvent, ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ const MIN_PASSWORD_LENGTH = 8;
 
 function AcceptInvitePageBody(): ReactElement {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [token, setToken] = useState("");
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
@@ -23,6 +24,7 @@ function AcceptInvitePageBody(): ReactElement {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(5);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,6 +33,24 @@ function AcceptInvitePageBody(): ReactElement {
       setToken(queryToken);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!isSubmitted) return;
+
+    setRedirectCountdown(5);
+    const interval = window.setInterval(() => {
+      setRedirectCountdown((current) => {
+        if (current <= 1) {
+          window.clearInterval(interval);
+          router.replace("/login");
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [isSubmitted, router]);
 
   const passwordTooShort = useMemo(
     () => password.length > 0 && password.length < MIN_PASSWORD_LENGTH,
@@ -49,7 +69,9 @@ function AcceptInvitePageBody(): ReactElement {
       return;
     }
     if (trimmedToken.length === 0) {
-      setErrorMessage("Invite token is required.");
+      setErrorMessage(
+        "This invitation link is missing its token. Request a new invitation link from an administrator.",
+      );
       return;
     }
     if (username.trim().length === 0) {
@@ -88,7 +110,7 @@ function AcceptInvitePageBody(): ReactElement {
           Accept invitation
         </h1>
         <p className="text-sm text-muted-foreground">
-          Set your display name and password to activate your account
+          Complete your account setup to access WILDFIRE.
         </p>
       </div>
 
@@ -107,22 +129,10 @@ function AcceptInvitePageBody(): ReactElement {
             className="rounded-lg bg-[var(--success-muted)] px-3 py-2 text-sm text-[var(--success-foreground)]"
             role="status"
           >
-            Invitation accepted. You can now sign in.
+            Invitation accepted. Redirecting to login in {redirectCountdown}{" "}
+            {redirectCountdown === 1 ? "second" : "seconds"}.
           </p>
         ) : null}
-
-        <div className="space-y-2">
-          <RequiredLabel htmlFor="token">Invite token</RequiredLabel>
-          <Input
-            id="token"
-            type="text"
-            value={token}
-            name="token"
-            onChange={(event) => setToken(event.target.value)}
-            className="h-11 rounded-lg text-sm"
-            required
-          />
-        </div>
 
         <div className="space-y-2">
           <Label htmlFor="name">Display name</Label>
@@ -133,7 +143,8 @@ function AcceptInvitePageBody(): ReactElement {
             name="name"
             onChange={(event) => setName(event.target.value)}
             className="h-11 rounded-lg text-sm"
-            placeholder="Your name"
+            placeholder="Enter your full name"
+            disabled={isSubmitted}
           />
         </div>
 
@@ -146,7 +157,9 @@ function AcceptInvitePageBody(): ReactElement {
             name="username"
             onChange={(event) => setUsername(event.target.value)}
             className="h-11 rounded-lg text-sm"
+            placeholder="Choose a username"
             autoComplete="username"
+            disabled={isSubmitted}
             required
           />
         </div>
@@ -160,7 +173,9 @@ function AcceptInvitePageBody(): ReactElement {
             name="password"
             onChange={(event) => setPassword(event.target.value)}
             className="h-11 rounded-lg text-sm"
+            placeholder="Create a password"
             autoComplete="new-password"
+            disabled={isSubmitted}
             required
           />
         </div>
@@ -176,7 +191,9 @@ function AcceptInvitePageBody(): ReactElement {
             name="confirmPassword"
             onChange={(event) => setConfirmPassword(event.target.value)}
             className="h-11 rounded-lg text-sm"
+            placeholder="Confirm your password"
             autoComplete="new-password"
+            disabled={isSubmitted}
             required
           />
         </div>
@@ -184,7 +201,7 @@ function AcceptInvitePageBody(): ReactElement {
         <Button
           type="submit"
           className="h-11 w-full rounded-lg text-sm"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isSubmitted}
         >
           {isSubmitting ? "Accepting..." : "Accept invitation"}
         </Button>

@@ -11,10 +11,9 @@ import {
   ComboboxEmpty,
   ComboboxInput,
   ComboboxItem,
-  ComboboxList,
+  ComboboxVirtualList,
 } from "@/components/ui/combobox";
 import { DateInput } from "@/components/ui/date-input";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -22,24 +21,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   getResourceTypeLabel,
   RESOURCE_TYPE_FILTER_OPTIONS,
   RESOURCE_TYPE_SELECT_ALL_VALUE,
   type ResourceTypeFilter,
 } from "@/lib/audit-resource-types";
+import type { RbacUser } from "@/lib/api/rbac-api";
 
-import {
-  ACTOR_TYPE_FILTERS,
-  type ActorTypeFilter,
-  type UseLogsPageResult,
-} from "../_hooks/use-logs-page";
+import { type UseLogsPageResult } from "../_hooks/use-logs-page";
 
 const COMMON_STATUS_CODES = ["200", "401", "403", "404", "500"] as const;
 const STATUS_CODE_LABELS: Record<(typeof COMMON_STATUS_CODES)[number], string> =
@@ -55,21 +44,25 @@ const RESOURCE_TYPE_FILTER_VALUES = RESOURCE_TYPE_FILTER_OPTIONS.filter(
 );
 
 function includesNormalized(value: string, query: string): boolean {
-  return value.toLowerCase().includes(query.trim().toLowerCase());
+  const normalizedQuery = query.trim().toLowerCase().replace(/^@/, "");
+  return value.toLowerCase().includes(normalizedQuery);
 }
 
 interface LogsFilterPopoverProps {
   readonly filters: UseLogsPageResult["filters"];
   readonly isFetching?: boolean;
   readonly selectedStatusValue: string | null;
+  readonly authorOptions: readonly RbacUser[];
+  readonly isAuthorOptionsFetching?: boolean;
+  readonly isAuthorOptionsLoadingMore?: boolean;
+  readonly hasMoreAuthorOptions?: boolean;
   readonly onFromChange: (nextValue: string) => void;
   readonly onToChange: (nextValue: string) => void;
-  readonly onActionChange: (nextValue: string) => void;
-  readonly onActorTypeChange: (nextValue: ActorTypeFilter) => void;
+  readonly onAuthorChange: (nextValue: string) => void;
+  readonly onLoadMoreAuthorOptions?: () => void;
   readonly onResourceTypeChange: (nextValue: ResourceTypeFilter) => void;
   readonly onResourceTypeInputChange: (nextInputValue: string) => void;
   readonly onStatusChange: (nextValue: string) => void;
-  readonly onRequestIdChange: (nextValue: string) => void;
   readonly onResetFilters: () => void;
   readonly renderEmbeddedAnchor?: (trigger: ReactElement) => ReactElement;
 }
@@ -78,23 +71,24 @@ export function LogsFilterPopover({
   filters,
   isFetching = false,
   selectedStatusValue,
+  authorOptions,
+  isAuthorOptionsFetching = false,
+  isAuthorOptionsLoadingMore = false,
+  hasMoreAuthorOptions = false,
   onFromChange,
   onToChange,
-  onActionChange,
-  onActorTypeChange,
+  onAuthorChange,
+  onLoadMoreAuthorOptions,
   onResourceTypeChange,
   onResourceTypeInputChange,
   onStatusChange,
-  onRequestIdChange,
   onResetFilters,
   renderEmbeddedAnchor,
 }: LogsFilterPopoverProps): ReactElement {
   const activeFilters = [
     filters.from,
     filters.to,
-    filters.action,
-    filters.requestId,
-    filters.actorType !== "all" ? filters.actorType : "",
+    filters.author,
     filters.resourceType,
     filters.parsedStatus != null ? String(filters.parsedStatus) : "",
   ].filter(Boolean);
@@ -113,6 +107,15 @@ export function LogsFilterPopover({
   });
   const filteredStatusCodes = COMMON_STATUS_CODES.filter((code) =>
     includesNormalized(STATUS_CODE_LABELS[code], filters.statusRaw),
+  );
+  const authorItems = Array.from(
+    new Set(authorOptions.map((user) => user.username)),
+  ).sort((a, b) => a.localeCompare(b));
+  const selectedAuthorValue = authorItems.includes(filters.author)
+    ? filters.author
+    : null;
+  const filteredAuthorItems = authorItems.filter((username) =>
+    includesNormalized(username, filters.author),
   );
 
   const trigger = (
@@ -168,27 +171,41 @@ export function LogsFilterPopover({
               />
             </div>
             <div className="grid gap-1.5">
-              <Label>Actor Type</Label>
-              <Select
-                value={filters.actorType}
-                onValueChange={(value) => {
-                  if (ACTOR_TYPE_FILTERS.includes(value as ActorTypeFilter)) {
-                    onActorTypeChange(value as ActorTypeFilter);
-                  }
-                }}
+              <Label htmlFor="logs-filter-author">Author</Label>
+              <Combobox
+                value={selectedAuthorValue}
+                items={authorItems}
+                filteredItems={filteredAuthorItems}
+                inputValue={filters.author}
+                onValueChange={(nextValue) => onAuthorChange(nextValue ?? "")}
+                onInputValueChange={(nextInputValue) =>
+                  onAuthorChange(nextInputValue ?? "")
+                }
               >
-                <SelectTrigger
-                  aria-label="Actor Type"
-                  className="w-full justify-between"
-                >
-                  <SelectValue placeholder="All actor types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All actor types</SelectItem>
-                  <SelectItem value="user">Users</SelectItem>
-                  <SelectItem value="display">Displays</SelectItem>
-                </SelectContent>
-              </Select>
+                <ComboboxInput
+                  id="logs-filter-author"
+                  placeholder="All authors"
+                  showClear
+                />
+                <ComboboxContent>
+                  <ComboboxEmpty>No matching author.</ComboboxEmpty>
+                  <ComboboxVirtualList
+                    items={filteredAuthorItems}
+                    hasMore={hasMoreAuthorOptions}
+                    isLoadingMore={isAuthorOptionsLoadingMore}
+                    onLoadMore={onLoadMoreAuthorOptions}
+                    getItemKey={(username) => username}
+                    renderItem={(username) => (
+                      <ComboboxItem value={username}>@{username}</ComboboxItem>
+                    )}
+                  />
+                  {isAuthorOptionsFetching && !isAuthorOptionsLoadingMore ? (
+                    <div className="px-3 py-2 text-xs text-muted-foreground">
+                      Loading authors...
+                    </div>
+                  ) : null}
+                </ComboboxContent>
+              </Combobox>
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="logs-filter-status">Status</Label>
@@ -210,33 +227,17 @@ export function LogsFilterPopover({
                 />
                 <ComboboxContent>
                   <ComboboxEmpty>No matching status code.</ComboboxEmpty>
-                  <ComboboxList>
-                    {filteredStatusCodes.map((code) => (
-                      <ComboboxItem key={code} value={code}>
+                  <ComboboxVirtualList
+                    items={filteredStatusCodes}
+                    getItemKey={(code) => code}
+                    renderItem={(code) => (
+                      <ComboboxItem value={code}>
                         {STATUS_CODE_LABELS[code]}
                       </ComboboxItem>
-                    ))}
-                  </ComboboxList>
+                    )}
+                  />
                 </ComboboxContent>
               </Combobox>
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="logs-filter-action">Action</Label>
-              <Input
-                id="logs-filter-action"
-                value={filters.action}
-                onChange={(event) => onActionChange(event.target.value)}
-                placeholder="Filter by action"
-              />
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="logs-filter-request-id">Request ID</Label>
-              <Input
-                id="logs-filter-request-id"
-                value={filters.requestId}
-                onChange={(event) => onRequestIdChange(event.target.value)}
-                placeholder="Filter by request ID"
-              />
             </div>
             <div className="grid gap-1.5 sm:col-span-2">
               <Label htmlFor="logs-filter-resource-type">Resource Type</Label>
@@ -268,15 +269,17 @@ export function LogsFilterPopover({
                 />
                 <ComboboxContent>
                   <ComboboxEmpty>No matching resource type.</ComboboxEmpty>
-                  <ComboboxList>
-                    {filteredResourceTypeItems.map((value) => (
-                      <ComboboxItem key={value} value={value}>
+                  <ComboboxVirtualList
+                    items={filteredResourceTypeItems}
+                    getItemKey={(value) => value}
+                    renderItem={(value) => (
+                      <ComboboxItem value={value}>
                         {value === RESOURCE_TYPE_SELECT_ALL_VALUE
                           ? "All resource types"
                           : getResourceTypeLabel(value)}
                       </ComboboxItem>
-                    ))}
-                  </ComboboxList>
+                    )}
+                  />
                 </ComboboxContent>
               </Combobox>
             </div>

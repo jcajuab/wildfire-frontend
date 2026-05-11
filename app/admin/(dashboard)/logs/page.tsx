@@ -33,11 +33,9 @@ async function getCachedAuditEvents(params: {
   q?: string;
   from?: string;
   to?: string;
-  action?: string;
-  actorType?: string;
+  author?: string;
   resourceType?: string;
   status?: number;
-  requestId?: string;
 }) {
   "use cache: private";
   cacheTag("wildfire:audit");
@@ -123,11 +121,9 @@ export default async function LogsPage({
       q: listQuery.q,
       from: listQuery.from,
       to: listQuery.to,
-      action: listQuery.action,
-      actorType: listQuery.actorType,
+      author: listQuery.author,
       resourceType: listQuery.resourceType,
       status: listQuery.status,
-      requestId: listQuery.requestId,
     }),
     canReadUsers ? getCachedUserOptions() : null,
     canReadDisplays ? getCachedDisplayOptions() : null,

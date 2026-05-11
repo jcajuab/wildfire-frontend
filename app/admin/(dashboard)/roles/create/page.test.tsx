@@ -7,7 +7,8 @@ import {
   useCreateRoleMutation,
   useDeleteRoleMutation,
   useGetPermissionsQuery,
-  useGetUserOptionsQuery,
+  useGetUserOptionsPageQuery,
+  useGetUserQuery,
   useLazyGetUserRolesQuery,
   useSetRolePermissionsMutation,
   useSetUserRolesMutation,
@@ -59,7 +60,8 @@ vi.mock("@/hooks/use-can", () => ({
 
 vi.mock("@/lib/api/rbac-api", () => ({
   useGetPermissionsQuery: vi.fn(),
-  useGetUserOptionsQuery: vi.fn(),
+  useGetUserOptionsPageQuery: vi.fn(),
+  useGetUserQuery: vi.fn(() => ({ data: undefined })),
   useCreateRoleMutation: vi.fn(),
   useUpdateRoleMutation: vi.fn(),
   useDeleteRoleMutation: vi.fn(),
@@ -71,7 +73,8 @@ vi.mock("@/lib/api/rbac-api", () => ({
 const useRouterMock = vi.mocked(useRouter);
 const useCanMock = vi.mocked(useCan);
 const useGetPermissionsQueryMock = vi.mocked(useGetPermissionsQuery);
-const useGetUserOptionsQueryMock = vi.mocked(useGetUserOptionsQuery);
+const useGetUserOptionsPageQueryMock = vi.mocked(useGetUserOptionsPageQuery);
+const useGetUserQueryMock = vi.mocked(useGetUserQuery);
 const useCreateRoleMutationMock = vi.mocked(useCreateRoleMutation);
 const useUpdateRoleMutationMock = vi.mocked(useUpdateRoleMutation);
 const useDeleteRoleMutationMock = vi.mocked(useDeleteRoleMutation);
@@ -110,9 +113,12 @@ describe("CreateRolePage", () => {
       ],
     } as unknown as ReturnType<typeof useGetPermissionsQuery>);
 
-    useGetUserOptionsQueryMock.mockReturnValue({
+    useGetUserOptionsPageQueryMock.mockReturnValue({
       data: [],
-    } as unknown as ReturnType<typeof useGetUserOptionsQuery>);
+    } as unknown as ReturnType<typeof useGetUserOptionsPageQuery>);
+    useGetUserQueryMock.mockReturnValue({
+      data: undefined,
+    } as unknown as ReturnType<typeof useGetUserQuery>);
 
     createRoleMock.mockReturnValue({
       unwrap: async () => ({

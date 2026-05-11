@@ -31,11 +31,9 @@ interface AuditExportDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly q: string;
-  readonly action: string;
-  readonly actorType: "all" | "user" | "display";
+  readonly author: string;
   readonly resourceType: string;
   readonly parsedStatus: number | undefined;
-  readonly requestId: string;
   readonly total: number;
 }
 
@@ -43,11 +41,9 @@ export function AuditExportDialog({
   open,
   onOpenChange,
   q,
-  action,
-  actorType,
+  author,
   resourceType,
   parsedStatus,
-  requestId,
   total,
 }: AuditExportDialogProps): ReactElement {
   const [isExporting, setIsExporting] = useState<boolean>(false);
@@ -83,11 +79,9 @@ export function AuditExportDialog({
         q: q || undefined,
         from: dateToISOStart(fromTrimmed),
         to: dateToISOEnd(toTrimmed),
-        action: action || undefined,
-        actorType: actorType === "all" ? undefined : actorType,
+        author: author || undefined,
         resourceType: resourceType || undefined,
         status: parsedStatus,
-        requestId: requestId || undefined,
       };
       const blob = await exportAuditEventsCsv(query);
       const url = URL.createObjectURL(blob);

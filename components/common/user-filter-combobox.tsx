@@ -9,7 +9,7 @@ import {
   ComboboxEmpty,
   ComboboxInput,
   ComboboxItem,
-  ComboboxList,
+  ComboboxVirtualList,
 } from "@/components/ui/combobox";
 
 export interface UserFilterOption {
@@ -25,6 +25,9 @@ interface UserFilterComboboxProps {
   readonly options: readonly UserFilterOption[];
   readonly inputValue: string;
   readonly isFetching?: boolean;
+  readonly hasMore?: boolean;
+  readonly isLoadingMore?: boolean;
+  readonly onLoadMore?: () => void;
   readonly onInputValueChange: (value: string) => void;
   readonly onValueChange: (value: string) => void;
 }
@@ -48,6 +51,9 @@ export function UserFilterCombobox({
   options,
   inputValue,
   isFetching = false,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
   onInputValueChange,
   onValueChange,
 }: UserFilterComboboxProps): ReactElement {
@@ -105,9 +111,21 @@ export function UserFilterCombobox({
         showClear={value !== ALL_USERS_VALUE || inputValue.length > 0}
       />
       <ComboboxContent>
-        <ComboboxList>
-          <ComboboxItem value={ALL_USERS_VALUE}>All users</ComboboxItem>
-          {options.map((user) => {
+        <ComboboxVirtualList
+          items={[ALL_USERS_VALUE, ...options] as const}
+          hasMore={hasMore}
+          isLoadingMore={isLoadingMore}
+          onLoadMore={onLoadMore}
+          getItemKey={(item) =>
+            typeof item === "string" ? item : `user-${item.id}`
+          }
+          renderItem={(item) => {
+            if (typeof item === "string") {
+              return (
+                <ComboboxItem value={ALL_USERS_VALUE}>All users</ComboboxItem>
+              );
+            }
+            const user = item;
             const detail = formatUserDetail(user);
             const label = formatUserLabel(user);
             return (
@@ -125,8 +143,8 @@ export function UserFilterCombobox({
                 </span>
               </ComboboxItem>
             );
-          })}
-        </ComboboxList>
+          }}
+        />
         {isFetching ? (
           <div className="px-3 py-2 text-xs text-muted-foreground">
             Loading users...

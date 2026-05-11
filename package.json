@@ -26,6 +26,7 @@
     "@streamdown/mermaid": "^1.0.2",
     "@tabler/icons-react": "^3.36.1",
     "@tailwindcss/typography": "^0.5.19",
+    "@tanstack/react-virtual": "^3.13.24",
     "@tiptap/extension-character-count": "^3.20.1",
     "@tiptap/extension-link": "^3.20.1",
     "@tiptap/extension-placeholder": "^3.20.1",

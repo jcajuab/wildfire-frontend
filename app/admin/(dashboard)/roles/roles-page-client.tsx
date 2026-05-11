@@ -167,20 +167,7 @@ export function RolesPageView({
                     description: search
                       ? "Try a different role name or description."
                       : "Create roles to group permissions and assign them to users.",
-                    action: search ? null : (
-                      <Can permission="roles:create">
-                        <Button asChild>
-                          <Link href={ROLE_CREATE_PATH}>
-                            <IconPlus
-                              className="size-4"
-                              aria-hidden="true"
-                              data-icon="inline-start"
-                            />
-                            Create Role
-                          </Link>
-                        </Button>
-                      </Can>
-                    ),
+                    action: null,
                   }}
                 />
               </div>

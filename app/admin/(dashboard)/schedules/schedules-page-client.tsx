@@ -129,6 +129,8 @@ export function SchedulesPageView({
   } = useBulkSelection();
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const hasNoDisplays =
+    !isLoading && !isBootstrapError && availableDisplays.length === 0;
 
   useEffect(() => {
     clearSelection();
@@ -222,18 +224,20 @@ export function SchedulesPageView({
 
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-muted/15 p-4">
-            <CalendarHeader
-              currentDate={currentDate}
-              view={view}
-              onViewChange={setView}
-              resourceMode={resourceMode}
-              onResourceModeChange={setResourceMode}
-              onPrev={handlePrev}
-              onNext={handleNext}
-              onToday={handleToday}
-            />
-          </div>
+          {!hasNoDisplays ? (
+            <div className="shrink-0 border-b border-border bg-muted/15 p-4">
+              <CalendarHeader
+                currentDate={currentDate}
+                view={view}
+                onViewChange={setView}
+                resourceMode={resourceMode}
+                onResourceModeChange={setResourceMode}
+                onPrev={handlePrev}
+                onNext={handleNext}
+                onToday={handleToday}
+              />
+            </div>
+          ) : null}
 
           <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-4">
             {isFetching && !isLoading ? (

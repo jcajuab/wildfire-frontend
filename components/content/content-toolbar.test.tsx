@@ -124,7 +124,7 @@ describe("ContentToolbar", () => {
     expect(onCreateText).toHaveBeenCalledTimes(1);
 
     await user.click(screen.getByRole("button", { name: "Create Content" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload" }));
+    await user.click(screen.getByRole("menuitem", { name: "File" }));
     expect(onCreateUpload).toHaveBeenCalledTimes(1);
 
     await user.click(screen.getByRole("button", { name: "Create Content" }));

@@ -1,11 +1,8 @@
 "use client";
 
 import type { ReactElement } from "react";
-import Link from "next/link";
 
-import { Can } from "@/components/common/can";
 import { EmptyState } from "@/components/common/empty-state";
-import { Button } from "@/components/ui/button";
 import { PlaylistCard } from "./playlist-card";
 import type { PlaylistSummary } from "@/types/playlist";
 
@@ -34,13 +31,6 @@ export function PlaylistGrid({
       <EmptyState
         title="No playlists yet"
         description="Create your first playlist to combine content and publish it to displays."
-        action={
-          <Can permission="playlists:create">
-            <Button asChild>
-              <Link href="/admin/playlists/create">Create Playlist</Link>
-            </Button>
-          </Can>
-        }
       />
     );
   }

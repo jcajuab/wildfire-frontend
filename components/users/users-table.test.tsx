@@ -184,6 +184,50 @@ describe("UsersTable", () => {
     );
   });
 
+  test("uses semantic colors for user type badges", () => {
+    renderUsersTable({
+      users: [
+        user,
+        {
+          ...user,
+          id: "user-invited",
+          username: "invited",
+          name: "Invited User",
+          isInvitedUser: true,
+        },
+        {
+          ...user,
+          id: "user-banned",
+          username: "banned",
+          name: "Banned User",
+          bannedAt: "2026-05-10T00:00:00.000Z",
+          isActive: false,
+        },
+      ],
+      userRolesByUserId: {
+        [user.id]: [],
+        "user-invited": [],
+        "user-banned": [],
+      },
+    });
+
+    expect(screen.getByText("DCISM")).toHaveClass(
+      "border-blue-200",
+      "bg-blue-50",
+      "text-blue-700",
+    );
+    expect(screen.getByText("Invited")).toHaveClass(
+      "border-amber-200",
+      "bg-amber-50",
+      "text-amber-700",
+    );
+    expect(screen.getByText("Banned")).toHaveClass(
+      "border-red-200",
+      "bg-red-50",
+      "text-red-700",
+    );
+  });
+
   test("keeps long names and emails constrained inside the table cells", () => {
     const longUser: User = {
       ...user,
@@ -289,5 +333,11 @@ describe("UsersTable", () => {
     expect(
       screen.getByRole("heading", { name: "No users found" }).closest("div"),
     ).toHaveClass("border-0", "bg-transparent");
+    expect(
+      screen
+        .getByRole("heading", { name: "No users found" })
+        .closest("td")
+        ?.querySelector("svg"),
+    ).not.toBeInTheDocument();
   });
 });

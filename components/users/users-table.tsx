@@ -80,8 +80,8 @@ function UserTypeBadge({ user }: { readonly user: User }): ReactElement {
     type === "banned"
       ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-50 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300"
       : type === "invited"
-        ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-        : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300";
+        ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+        : "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
 
   return (
     <Badge variant="outline" className={className}>
@@ -396,14 +396,15 @@ export function UsersTable({
           </TableHead>
         </TableRow>
       </TableHeader>
-      <TableBody className="[&_tr:last-child]:border-b">
+      <TableBody
+        className={users.length > 0 ? "[&_tr:last-child]:border-b" : undefined}
+      >
         {users.length === 0 ? (
           <TableEmptyState
             colSpan={6}
             title={emptyState.title}
             description={emptyState.description}
             action={emptyState.action}
-            icon={<IconUser className="size-7" aria-hidden="true" />}
           />
         ) : null}
         {users.map((user) => {

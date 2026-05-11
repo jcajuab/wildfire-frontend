@@ -5,7 +5,6 @@ import { useState, useCallback } from "react";
 import Image from "next/image";
 import {
   IconDotsVertical,
-  IconHistory,
   IconInfoCircle,
   IconUser,
 } from "@tabler/icons-react";
@@ -102,13 +101,14 @@ export function LogsTable({
             </TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody className="[&_tr:last-child]:border-b">
+        <TableBody
+          className={logs.length > 0 ? "[&_tr:last-child]:border-b" : undefined}
+        >
           {logs.length === 0 ? (
             <TableEmptyState
               colSpan={5}
               title="No logs found"
               description={emptyDescription}
-              icon={<IconHistory className="size-7" aria-hidden="true" />}
             />
           ) : null}
           {logs.map((log) => (

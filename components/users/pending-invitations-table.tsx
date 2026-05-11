@@ -320,7 +320,11 @@ export function PendingInvitationsTable({
             </TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody className="[&_tr:last-child]:border-b">
+        <TableBody
+          className={
+            invitations.length > 0 ? "[&_tr:last-child]:border-b" : undefined
+          }
+        >
           {invitations.length === 0 ? (
             <TableEmptyState
               colSpan={4}

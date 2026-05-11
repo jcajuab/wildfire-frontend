@@ -5,6 +5,7 @@ import { useCallback, useMemo } from "react";
 interface ActorUser {
   readonly id: string;
   readonly name: string;
+  readonly username: string;
   readonly avatarUrl?: string | null;
 }
 
@@ -20,7 +21,7 @@ interface UseActorResolverProps {
 
 export function useActorResolver({ users, displays }: UseActorResolverProps) {
   const userMap = useMemo(
-    () => new Map(users.map((u) => [u.id, u.name])),
+    () => new Map(users.map((u) => [u.id, `@${u.username}`])),
     [users],
   );
 

@@ -41,7 +41,9 @@ vi.mock("@/lib/api/displays-api", () => ({
 }));
 
 vi.mock("@/lib/api/rbac-api", () => ({
+  useGetUserOptionsPageQuery: vi.fn(() => ({ data: [], isFetching: false })),
   useGetUserOptionsQuery: vi.fn(() => ({ data: [] })),
+  useGetUserQuery: vi.fn(() => ({ data: undefined })),
 }));
 
 vi.mock("./use-audit-log-filters", () => ({

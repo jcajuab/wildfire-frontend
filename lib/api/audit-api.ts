@@ -39,6 +39,7 @@ export interface AuditListQuery {
   readonly q?: string;
   readonly from?: string;
   readonly to?: string;
+  readonly author?: string;
   readonly action?: string;
   readonly actorId?: string;
   readonly actorType?: string;
@@ -52,6 +53,7 @@ export interface AuditExportQuery {
   readonly q?: string;
   readonly from?: string;
   readonly to?: string;
+  readonly author?: string;
   readonly action?: string;
   readonly actorId?: string;
   readonly actorType?: string;
@@ -133,6 +135,7 @@ export const auditApi = api.injectEndpoints({
           q: query?.q,
           from: query?.from,
           to: query?.to,
+          author: query?.author,
           action: query?.action,
           actorId: query?.actorId,
           actorType: query?.actorType,

@@ -1,12 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import {
-  IconDotsVertical,
-  IconEdit,
-  IconTrash,
-  IconUsers,
-} from "@tabler/icons-react";
+import { IconDotsVertical, IconEdit, IconTrash } from "@tabler/icons-react";
 
 import { SortableHeader } from "@/components/common/sortable-header";
 import { TableEmptyState } from "@/components/common/table-empty-state";
@@ -170,14 +165,15 @@ export function RolesTable({
           </TableHead>
         </TableRow>
       </TableHeader>
-      <TableBody className="[&_tr:last-child]:border-b">
+      <TableBody
+        className={roles.length > 0 ? "[&_tr:last-child]:border-b" : undefined}
+      >
         {roles.length === 0 ? (
           <TableEmptyState
             colSpan={4}
             title={emptyState.title}
             description={emptyState.description}
             action={emptyState.action}
-            icon={<IconUsers className="size-7" aria-hidden="true" />}
           />
         ) : null}
         {roles.map((role) => (

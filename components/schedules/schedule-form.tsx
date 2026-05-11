@@ -14,7 +14,7 @@ import {
   ComboboxContent,
   ComboboxEmpty,
   ComboboxItem,
-  ComboboxList,
+  ComboboxVirtualList,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
@@ -96,9 +96,11 @@ function DisplayGroupPicker({
         />
       </ComboboxChips>
       <ComboboxContent anchor={anchorRef}>
-        <ComboboxList>
-          {filtered.map((option) => (
-            <ComboboxItem key={option.id} value={option.id}>
+        <ComboboxVirtualList
+          items={filtered}
+          getItemKey={(option) => option.id}
+          renderItem={(option) => (
+            <ComboboxItem value={option.id}>
               <span className="flex flex-col gap-0.5">
                 <span>{option.name}</span>
                 <span className="text-xs text-muted-foreground">
@@ -107,8 +109,8 @@ function DisplayGroupPicker({
                 </span>
               </span>
             </ComboboxItem>
-          ))}
-        </ComboboxList>
+          )}
+        />
         <ComboboxEmpty>No display groups found.</ComboboxEmpty>
       </ComboboxContent>
     </Combobox>
@@ -163,13 +165,13 @@ function DisplayPicker({
         />
       </ComboboxChips>
       <ComboboxContent anchor={anchorRef}>
-        <ComboboxList>
-          {filtered.map((option) => (
-            <ComboboxItem key={option.id} value={option.id}>
-              {option.name}
-            </ComboboxItem>
-          ))}
-        </ComboboxList>
+        <ComboboxVirtualList
+          items={filtered}
+          getItemKey={(option) => option.id}
+          renderItem={(option) => (
+            <ComboboxItem value={option.id}>{option.name}</ComboboxItem>
+          )}
+        />
         <ComboboxEmpty>No displays found.</ComboboxEmpty>
       </ComboboxContent>
     </Combobox>

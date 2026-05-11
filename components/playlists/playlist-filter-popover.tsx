@@ -46,11 +46,14 @@ interface PlaylistFilterPopoverProps {
   readonly ownerSearch?: string;
   readonly canFilterByOwner?: boolean;
   readonly isOwnerOptionsFetching?: boolean;
+  readonly isOwnerOptionsLoadingMore?: boolean;
+  readonly hasMoreOwnerOptions?: boolean;
   readonly isFetching?: boolean;
   readonly embeddedTrigger?: boolean;
   readonly renderEmbeddedAnchor?: (trigger: ReactElement) => ReactElement;
   readonly onStatusFilterChange: (value: PlaylistStatusFilter) => void;
   readonly onOwnerSearchChange?: (value: string) => void;
+  readonly onLoadMoreOwnerOptions?: () => void;
   readonly onOwnerFilterChange: (value: string) => void;
   readonly onSortFilterChange: (value: PlaylistSortFilter) => void;
   readonly onClearFilters: () => void;
@@ -103,11 +106,14 @@ export function PlaylistFilterPopover({
   ownerSearch = "",
   canFilterByOwner = false,
   isOwnerOptionsFetching = false,
+  isOwnerOptionsLoadingMore = false,
+  hasMoreOwnerOptions = false,
   isFetching = false,
   embeddedTrigger = false,
   renderEmbeddedAnchor,
   onStatusFilterChange,
   onOwnerSearchChange = () => {},
+  onLoadMoreOwnerOptions,
   onOwnerFilterChange,
   onSortFilterChange,
   onClearFilters,
@@ -242,6 +248,9 @@ export function PlaylistFilterPopover({
                   options={ownerOptions}
                   inputValue={ownerSearch}
                   isFetching={isOwnerOptionsFetching}
+                  isLoadingMore={isOwnerOptionsLoadingMore}
+                  hasMore={hasMoreOwnerOptions}
+                  onLoadMore={onLoadMoreOwnerOptions}
                   onInputValueChange={onOwnerSearchChange}
                   onValueChange={onOwnerFilterChange}
                 />

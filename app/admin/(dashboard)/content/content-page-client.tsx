@@ -9,27 +9,12 @@ import {
   useState,
 } from "react";
 import dynamic from "next/dynamic";
-import {
-  IconBolt,
-  IconFileText,
-  IconPlus,
-  IconUpload,
-} from "@tabler/icons-react";
 import { toast } from "sonner";
-import { Can } from "@/components/common/can";
 import { EmptyState } from "@/components/common/empty-state";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { ContentGrid } from "@/components/content/content-grid";
 import { ContentToolbar } from "@/components/content/content-toolbar";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   contentApi,
   type BackendContentListResponse,
@@ -270,6 +255,8 @@ export function ContentPageView({
             ownerSearch={controller.ownerSearch}
             canFilterByOwner={controller.canFilterByOwner}
             isOwnerOptionsFetching={controller.isOwnerOptionsFetching}
+            isOwnerOptionsLoadingMore={controller.isOwnerOptionsLoadingMore}
+            hasMoreOwnerOptions={controller.hasMoreOwnerOptions}
             isFetching={controller.isFetching && !controller.isLoading}
             canCreateContent={controller.canCreateContent}
             canDeleteContent={controller.canDeleteContent}
@@ -290,6 +277,7 @@ export function ContentPageView({
             onStatusFilterChange={controller.filters.handleStatusFilterChange}
             onTypeFilterChange={controller.filters.handleTypeFilterChange}
             onOwnerSearchChange={controller.handleOwnerSearchChange}
+            onLoadMoreOwnerOptions={controller.loadMoreOwnerOptions}
             onOwnerFilterChange={controller.filters.handleOwnerFilterChange}
             onSortFilterChange={controller.filters.handleSortFilterChange}
             onClearFilters={controller.filters.handleClearFilters}
@@ -313,46 +301,6 @@ export function ContentPageView({
               <EmptyState
                 title="No content yet"
                 description="Upload images, videos, or create flash and text content to get started."
-                action={
-                  <Can permission="content:create">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button>
-                          <IconPlus
-                            className="size-4"
-                            aria-hidden="true"
-                            data-icon="inline-start"
-                          />
-                          Create Content
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="center"
-                        className="w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-2rem)]"
-                      >
-                        <DropdownMenuItem
-                          onClick={() => controller.openCreateDialog("text")}
-                        >
-                          <IconFileText className="size-4" aria-hidden="true" />
-                          Text
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => controller.openCreateDialog("upload")}
-                        >
-                          <IconUpload className="size-4" aria-hidden="true" />
-                          Upload
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => controller.openCreateDialog("flash")}
-                        >
-                          <IconBolt className="size-4" aria-hidden="true" />
-                          Flash
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </Can>
-                }
               />
             ) : (
               <ContentGrid

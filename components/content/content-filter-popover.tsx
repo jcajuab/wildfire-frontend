@@ -54,12 +54,15 @@ interface ContentFilterPopoverProps {
   readonly ownerSearch?: string;
   readonly canFilterByOwner?: boolean;
   readonly isOwnerOptionsFetching?: boolean;
+  readonly isOwnerOptionsLoadingMore?: boolean;
+  readonly hasMoreOwnerOptions?: boolean;
   readonly isFetching?: boolean;
   readonly embeddedTrigger?: boolean;
   readonly renderEmbeddedAnchor?: (trigger: ReactElement) => ReactElement;
   readonly onStatusFilterChange: (value: ContentStatusFilter) => void;
   readonly onTypeFilterChange: (value: TypeFilter) => void;
   readonly onOwnerSearchChange?: (value: string) => void;
+  readonly onLoadMoreOwnerOptions?: () => void;
   readonly onOwnerFilterChange: (value: string) => void;
   readonly onSortFilterChange: (value: ContentSortFilter) => void;
   readonly onClearFilters: () => void;
@@ -127,12 +130,15 @@ export function ContentFilterPopover({
   ownerSearch = "",
   canFilterByOwner = false,
   isOwnerOptionsFetching = false,
+  isOwnerOptionsLoadingMore = false,
+  hasMoreOwnerOptions = false,
   isFetching = false,
   embeddedTrigger = false,
   renderEmbeddedAnchor,
   onStatusFilterChange,
   onTypeFilterChange,
   onOwnerSearchChange = () => {},
+  onLoadMoreOwnerOptions,
   onOwnerFilterChange,
   onSortFilterChange,
   onClearFilters,
@@ -302,6 +308,9 @@ export function ContentFilterPopover({
                   options={ownerOptions}
                   inputValue={ownerSearch}
                   isFetching={isOwnerOptionsFetching}
+                  isLoadingMore={isOwnerOptionsLoadingMore}
+                  hasMore={hasMoreOwnerOptions}
+                  onLoadMore={onLoadMoreOwnerOptions}
                   onInputValueChange={onOwnerSearchChange}
                   onValueChange={onOwnerFilterChange}
                 />

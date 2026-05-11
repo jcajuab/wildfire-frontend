@@ -49,6 +49,7 @@ export interface RbacUser {
   readonly name: string;
   readonly isActive: boolean;
   readonly isInvitedUser?: boolean;
+  readonly invitedAt?: string | null;
   readonly bannedAt?: string | null;
   readonly lastSeenAt?: string | null;
   readonly avatarUrl?: string | null;
@@ -87,6 +88,12 @@ export interface RbacUserListQuery {
   readonly sortDirection?: "asc" | "desc";
 }
 
+export interface RbacUserOptionsPageQuery {
+  readonly page?: number;
+  readonly pageSize?: number;
+  readonly q?: string;
+}
+
 type RoleListMutable = Omit<RbacRolesListResponse, "items"> & {
   items: RbacRoleListItem[];
 };
@@ -107,6 +114,22 @@ type UserListMutable = {
 } & {
   items: RbacUser[];
 };
+
+function normalizeRbacUser(user: RbacUser): RbacUser {
+  return {
+    ...user,
+    isInvitedUser: user.isInvitedUser ?? user.invitedAt != null,
+  };
+}
+
+function normalizeRbacUsersList(
+  response: RbacUsersListResponse,
+): RbacUsersListResponse {
+  return {
+    ...response,
+    items: response.items.map(normalizeRbacUser),
+  };
+}
 
 function getRbacUserType(user: RbacUser): "dcism" | "invited" | "banned" {
   if (user.bannedAt != null || !user.isActive) {
@@ -439,7 +462,9 @@ export const rbacApi = api.injectEndpoints({
         },
       }),
       transformResponse: (response) =>
-        transformPaginatedListResponse<RbacUser>(response, "getUsers"),
+        normalizeRbacUsersList(
+          transformPaginatedListResponse<RbacUser>(response, "getUsers"),
+        ),
       providesTags: createProvidesTags("User"),
     }),
     getUserOptions: build.query<
@@ -455,7 +480,9 @@ export const rbacApi = api.injectEndpoints({
         },
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<RbacUser[]>(response, "getUserOptions"),
+        parseApiResponseDataSafe<RbacUser[]>(response, "getUserOptions").map(
+          normalizeRbacUser,
+        ),
       providesTags: (result) =>
         result
           ? [
@@ -464,10 +491,34 @@ export const rbacApi = api.injectEndpoints({
             ]
           : [{ type: "User", id: "LIST" }],
     }),
+    getUserOptionsPage: build.query<
+      RbacUsersListResponse,
+      RbacUserOptionsPageQuery | void
+    >({
+      keepUnusedDataFor: 30,
+      query: (query) => ({
+        url: "users/options/search",
+        params: {
+          page: query?.page ?? 1,
+          pageSize: query?.pageSize ?? 50,
+          q: query?.q,
+        },
+      }),
+      transformResponse: (response) =>
+        normalizeRbacUsersList(
+          transformPaginatedListResponse<RbacUser>(
+            response,
+            "getUserOptionsPage",
+          ),
+        ),
+      providesTags: createProvidesTags("User"),
+    }),
     getUser: build.query<RbacUser, string>({
       query: (id) => `users/${id}`,
       transformResponse: (response) =>
-        parseApiResponseDataSafe<RbacUser>(response, "getUser"),
+        normalizeRbacUser(
+          parseApiResponseDataSafe<RbacUser>(response, "getUser"),
+        ),
       providesTags: (_result, _error, id) => [{ type: "User", id }],
     }),
     createUser: build.mutation<
@@ -485,7 +536,9 @@ export const rbacApi = api.injectEndpoints({
         body,
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<RbacUser>(response, "createUser"),
+        normalizeRbacUser(
+          parseApiResponseDataSafe<RbacUser>(response, "createUser"),
+        ),
       invalidatesTags: [{ type: "User", id: "LIST" }],
       async onQueryStarted(_arg, api) {
         try {
@@ -526,7 +579,9 @@ export const rbacApi = api.injectEndpoints({
         body,
       }),
       transformResponse: (response) =>
-        parseApiResponseDataSafe<RbacUser>(response, "updateUser"),
+        normalizeRbacUser(
+          parseApiResponseDataSafe<RbacUser>(response, "updateUser"),
+        ),
       invalidatesTags: (_result, _error, { id }) => [
         { type: "User", id },
         { type: "User", id: "LIST" },
@@ -800,6 +855,7 @@ export const {
   useGetPermissionsQuery,
   useGetUsersQuery,
   useGetUserOptionsQuery,
+  useGetUserOptionsPageQuery,
   useGetUserQuery,
   useCreateUserMutation,
   useUpdateUserMutation,

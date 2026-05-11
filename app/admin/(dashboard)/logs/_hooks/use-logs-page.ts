@@ -3,6 +3,7 @@
 import { useCallback, useMemo } from "react";
 
 import { useCan } from "@/hooks/use-can";
+import { useInfiniteUserOptions } from "@/hooks/use-infinite-user-options";
 import {
   useListAuditEventsQuery,
   type AuditListQuery,
@@ -20,15 +21,9 @@ import {
 } from "@/lib/audit-resource-types";
 import { mapAuditEventToLogEntry } from "@/lib/mappers/audit-log-mapper";
 import type { LogEntry } from "@/types/log";
-import {
-  useAuditLogFilters,
-  ACTOR_TYPE_FILTERS,
-  type ActorTypeFilter,
-} from "./use-audit-log-filters";
+import { useAuditLogFilters } from "./use-audit-log-filters";
 import { useActorResolver } from "./use-actor-resolver";
 import { LOGS_PAGE_SIZE } from "@/lib/audit-log-search-params";
-
-export { ACTOR_TYPE_FILTERS, type ActorTypeFilter };
 
 export const PAGE_SIZE = LOGS_PAGE_SIZE;
 
@@ -44,17 +39,20 @@ export interface UseLogsPageResult {
   logs: LogEntry[];
   total: number;
   isFetching: boolean;
+  authorOptions: readonly RbacUser[];
+  isAuthorOptionsFetching: boolean;
+  isAuthorOptionsLoadingMore: boolean;
+  hasMoreAuthorOptions: boolean;
+  loadMoreAuthorOptions: () => void;
 
   // Handlers
   handleSearchChange: (nextValue: string) => void;
   handleFromChange: (nextValue: string) => void;
   handleToChange: (nextValue: string) => void;
-  handleActionChange: (nextValue: string) => void;
-  handleActorTypeChange: (nextValue: ActorTypeFilter) => void;
+  handleAuthorChange: (nextValue: string) => void;
   handleResourceTypeChange: (nextValue: ResourceTypeFilter) => void;
   handleResourceTypeInputChange: (nextInputValue: string) => void;
   handleStatusChange: (nextValue: string) => void;
-  handleRequestIdChange: (nextValue: string) => void;
   handleResetFilters: () => void;
   selectedStatusValue: string | null;
 }
@@ -68,13 +66,9 @@ function normalizedAuditQueryKey(query: AuditListQuery | void): string {
     q: query?.q ?? null,
     from: query?.from ?? null,
     to: query?.to ?? null,
-    action: query?.action ?? null,
-    actorId: query?.actorId ?? null,
-    actorType: query?.actorType ?? null,
-    resourceId: query?.resourceId ?? null,
+    author: query?.author ?? null,
     resourceType: query?.resourceType ?? null,
     status: query?.status ?? null,
-    requestId: query?.requestId ?? null,
   });
 }
 
@@ -121,6 +115,17 @@ export function useLogsPage(options?: {
   });
 
   const users = usersData ?? options?.initialUsers ?? [];
+  const {
+    users: authorOptions,
+    isFetching: isAuthorOptionsFetching,
+    isLoadingMore: isAuthorOptionsLoadingMore,
+    hasMore: hasMoreAuthorOptions,
+    loadMore: loadMoreAuthorOptions,
+  } = useInfiniteUserOptions({
+    enabled: canReadUsers,
+    search: filters.author,
+    pageSize: 50,
+  });
   const displays = displaysData ?? options?.initialDisplays ?? [];
 
   const actorResolver = useActorResolver({ users, displays });
@@ -141,12 +146,10 @@ export function useLogsPage(options?: {
     setSearch,
     setFromDraft,
     setToDraft,
-    setAction,
-    setActorType,
+    setAuthor,
     setResourceType,
     setResourceTypeInput,
     setStatusRaw,
-    setRequestId,
   } = filters;
 
   const resetToFirstPage = useCallback((): void => {
@@ -177,20 +180,12 @@ export function useLogsPage(options?: {
     [setToDraft],
   );
 
-  const handleActionChange = useCallback(
+  const handleAuthorChange = useCallback(
     (nextValue: string): void => {
-      setAction(nextValue);
+      setAuthor(nextValue);
       resetToFirstPage();
     },
-    [resetToFirstPage, setAction],
-  );
-
-  const handleActorTypeChange = useCallback(
-    (nextValue: ActorTypeFilter): void => {
-      setActorType(nextValue);
-      resetToFirstPage();
-    },
-    [resetToFirstPage, setActorType],
+    [resetToFirstPage, setAuthor],
   );
 
   const handleResourceTypeChange = useCallback(
@@ -238,14 +233,6 @@ export function useLogsPage(options?: {
       : null;
   }, [filters.statusRaw]);
 
-  const handleRequestIdChange = useCallback(
-    (nextValue: string): void => {
-      setRequestId(nextValue);
-      resetToFirstPage();
-    },
-    [resetToFirstPage, setRequestId],
-  );
-
   const handleResetFilters = useCallback((): void => {
     filters.resetAll();
   }, [filters]);
@@ -257,15 +244,18 @@ export function useLogsPage(options?: {
     logs,
     total,
     isFetching,
+    authorOptions,
+    isAuthorOptionsFetching,
+    isAuthorOptionsLoadingMore,
+    hasMoreAuthorOptions,
+    loadMoreAuthorOptions,
     handleSearchChange,
     handleFromChange,
     handleToChange,
-    handleActionChange,
-    handleActorTypeChange,
+    handleAuthorChange,
     handleResourceTypeChange,
     handleResourceTypeInputChange,
     handleStatusChange,
-    handleRequestIdChange,
     handleResetFilters,
     selectedStatusValue,
   };

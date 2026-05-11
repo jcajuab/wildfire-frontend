@@ -438,11 +438,6 @@ export function UsersPageView({
                         description: hasActiveInvitationFilters
                           ? "Try adjusting your search or status filter."
                           : "Invitations you send will appear here with status and expiration details.",
-                        action: hasActiveInvitationFilters ? null : (
-                          <Button onClick={() => setIsInviteDialogOpen(true)}>
-                            Send Invitation
-                          </Button>
-                        ),
                       }}
                     />
                   </div>

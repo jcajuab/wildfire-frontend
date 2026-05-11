@@ -35,6 +35,8 @@ interface PlaylistsToolbarProps {
   readonly ownerSearch?: string;
   readonly canFilterByOwner?: boolean;
   readonly isOwnerOptionsFetching?: boolean;
+  readonly isOwnerOptionsLoadingMore?: boolean;
+  readonly hasMoreOwnerOptions?: boolean;
   readonly isFetching?: boolean;
   readonly canCreatePlaylist: boolean;
   readonly canDeletePlaylist: boolean;
@@ -42,6 +44,7 @@ interface PlaylistsToolbarProps {
   readonly onSearchChange: (value: string) => void;
   readonly onStatusFilterChange: (value: PlaylistStatusFilter) => void;
   readonly onOwnerSearchChange?: (value: string) => void;
+  readonly onLoadMoreOwnerOptions?: () => void;
   readonly onOwnerFilterChange: (value: string) => void;
   readonly onSortFilterChange: (value: PlaylistSortFilter) => void;
   readonly onClearFilters: () => void;
@@ -57,6 +60,8 @@ export function PlaylistsToolbar({
   ownerSearch = "",
   canFilterByOwner = false,
   isOwnerOptionsFetching = false,
+  isOwnerOptionsLoadingMore = false,
+  hasMoreOwnerOptions = false,
   isFetching = false,
   canCreatePlaylist,
   canDeletePlaylist,
@@ -64,6 +69,7 @@ export function PlaylistsToolbar({
   onSearchChange,
   onStatusFilterChange,
   onOwnerSearchChange,
+  onLoadMoreOwnerOptions,
   onOwnerFilterChange,
   onSortFilterChange,
   onClearFilters,
@@ -93,6 +99,8 @@ export function PlaylistsToolbar({
               ownerSearch={ownerSearch}
               canFilterByOwner={canFilterByOwner}
               isOwnerOptionsFetching={isOwnerOptionsFetching}
+              isOwnerOptionsLoadingMore={isOwnerOptionsLoadingMore}
+              hasMoreOwnerOptions={hasMoreOwnerOptions}
               isFetching={isFetching}
               embeddedTrigger
               renderEmbeddedAnchor={(trigger) => (
@@ -109,6 +117,7 @@ export function PlaylistsToolbar({
               )}
               onStatusFilterChange={onStatusFilterChange}
               onOwnerSearchChange={onOwnerSearchChange}
+              onLoadMoreOwnerOptions={onLoadMoreOwnerOptions}
               onOwnerFilterChange={onOwnerFilterChange}
               onSortFilterChange={onSortFilterChange}
               onClearFilters={onClearFilters}
