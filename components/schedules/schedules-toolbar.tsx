@@ -163,7 +163,7 @@ export function SchedulesToolbar({
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={onCreateFlashSchedule}>
                     <IconBolt className="size-4" aria-hidden="true" />
-                    Flash Overlay
+                    Flash
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

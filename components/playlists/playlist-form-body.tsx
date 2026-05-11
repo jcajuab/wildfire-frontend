@@ -307,9 +307,7 @@ export function PlaylistFormBody({
         <section className="flex min-h-[28rem] flex-col overflow-hidden rounded-md border border-border bg-background xl:min-h-0 xl:flex-1">
           <div className="flex flex-col gap-3 border-b border-border bg-muted/15 p-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-col gap-1">
-              <RequiredLabel className="text-sm font-semibold">
-                Playlist Items
-              </RequiredLabel>
+              <h2 className="text-sm font-semibold">Playlist Items</h2>
               {itemsSubtitleSlot}
             </div>
             {itemsHeaderSlot ? (

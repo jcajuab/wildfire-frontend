@@ -22,7 +22,6 @@ import {
   IconTrash,
   IconX,
 } from "@tabler/icons-react";
-import { RequiredLabel } from "@/components/common/required-label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
@@ -1064,9 +1063,7 @@ export function PdfCropEditor({
           <div
             className={cn(PDF_CROP_CONTROL_BAND_CLASSNAME, "justify-between")}
           >
-            <RequiredLabel className="text-sm font-semibold">
-              Cropped Content
-            </RequiredLabel>
+            <h2 className="text-sm font-semibold">Cropped Content</h2>
             <Badge variant={collectedCrops.length > 0 ? "default" : "outline"}>
               {collectedCrops.length}
             </Badge>

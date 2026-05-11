@@ -142,7 +142,7 @@ describe("SchedulesToolbar", () => {
     expect(onCreatePlaylistSchedule).toHaveBeenCalledTimes(1);
 
     await user.click(screen.getByRole("button", { name: "Create Schedule" }));
-    await user.click(screen.getByRole("menuitem", { name: "Flash Overlay" }));
+    await user.click(screen.getByRole("menuitem", { name: "Flash" }));
     expect(onCreateFlashSchedule).toHaveBeenCalledTimes(1);
   });
 
