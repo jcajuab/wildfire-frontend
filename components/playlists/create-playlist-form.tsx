@@ -13,7 +13,11 @@ import {
 import type { Content } from "@/types/content";
 import type { PlaylistItem } from "@/types/playlist";
 import { type DraftItem } from "./sortable-item-row";
-import { PlaylistDurationBudget, PlaylistFormBody } from "./playlist-form-body";
+import {
+  getPlaylistItemLoop,
+  PlaylistDurationBudget,
+  PlaylistFormBody,
+} from "./playlist-form-body";
 
 export type PlaylistSelectableContent = Content & {
   readonly type: PlaylistItem["content"]["type"];
@@ -110,7 +114,7 @@ export function CreatePlaylistForm({
       content: item.content,
       duration: item.duration,
       sequence: index,
-      loop: item.loop,
+      loop: getPlaylistItemLoop(item.content),
     }));
 
     setIsSubmitting(true);

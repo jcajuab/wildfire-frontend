@@ -130,7 +130,7 @@ describe("ContentToolbar", () => {
     await user.click(screen.getByRole("button", { name: "Create Content" }));
     expect(
       document.querySelector('[data-slot="dropdown-menu-separator"]'),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
     await user.click(screen.getByRole("menuitem", { name: "Flash" }));
     expect(onCreateFlash).toHaveBeenCalledTimes(1);
   });

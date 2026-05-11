@@ -18,6 +18,7 @@ function mapBackendPlaylistItemToContent(
     title: item.content.title,
     type: item.content.type,
     checksum: item.content.checksum,
+    duration: item.content.duration,
     thumbnailUrl: item.content.thumbnailUrl ?? null,
     textPreviewText:
       item.content.textPreviewText ??

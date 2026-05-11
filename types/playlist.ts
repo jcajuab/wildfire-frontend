@@ -11,6 +11,7 @@ export interface PlaylistItemContent {
   readonly title: string;
   readonly type: "IMAGE" | "VIDEO" | "TEXT";
   readonly checksum: string;
+  readonly duration?: number | null;
   readonly thumbnailUrl?: string | null;
   readonly textPreviewText?: string | null;
   /** @deprecated Playlist previews now use textPreviewText. */

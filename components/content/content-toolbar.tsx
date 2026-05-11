@@ -24,7 +24,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -191,7 +190,6 @@ export function ContentToolbar({
                     <IconUpload className="size-4" aria-hidden="true" />
                     Upload
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={onCreateFlash}>
                     <IconBolt className="size-4" aria-hidden="true" />
                     Flash

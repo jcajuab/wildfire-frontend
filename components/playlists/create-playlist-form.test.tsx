@@ -47,6 +47,15 @@ const availableContent = [
   },
 ] satisfies readonly PlaylistSelectableContent[];
 
+const videoContent = {
+  ...availableContent[0],
+  id: "content-video-1",
+  title: "Campus Video",
+  type: "VIDEO",
+  mimeType: "video/mp4",
+  duration: 8,
+} satisfies PlaylistSelectableContent;
+
 describe("CreatePlaylistForm", () => {
   test("renders the authoring layout without display-target fields", () => {
     render(
@@ -284,5 +293,36 @@ describe("CreatePlaylistForm", () => {
     await user.click(screen.getByRole("button", { name: "Create" }));
 
     expect(screen.getByLabelText("Name")).toHaveValue("Morning Playlist");
+  });
+
+  test("loops video items by default without showing a loop toggle", async () => {
+    const user = userEvent.setup();
+    const onCreate = vi.fn();
+
+    render(
+      <CreatePlaylistForm
+        onCreate={onCreate}
+        availableContent={[videoContent]}
+      />,
+    );
+
+    await user.type(screen.getByLabelText("Name"), "Video Playlist");
+    await user.click(screen.getByRole("button", { name: "Campus Video" }));
+
+    expect(screen.queryByLabelText("Loop video")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Create" }));
+
+    expect(onCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        items: [
+          expect.objectContaining({
+            content: expect.objectContaining({ type: "VIDEO" }),
+            duration: 8,
+            loop: true,
+          }),
+        ],
+      }),
+    );
   });
 });

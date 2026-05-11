@@ -89,6 +89,7 @@ function playlistItem(
       title: "Poster",
       type: "IMAGE",
       checksum: "checksum-1",
+      duration: null,
       thumbnailUrl: null,
       textPreviewText: null,
     },
@@ -235,6 +236,7 @@ describe("playlists api cache patches", () => {
     expect(revalidateWildfireTagsViaRoute).toHaveBeenCalledWith([
       "playlists",
       "schedules-bootstrap",
+      "content-list",
     ]);
     expect(selectList(store, defaultQuery)).toBeUndefined();
     expect(selectList(store, matchingStatusQuery)).toBeUndefined();
@@ -283,6 +285,7 @@ describe("playlists api cache patches", () => {
     expect(revalidateWildfireTagsViaRoute).toHaveBeenCalledWith([
       "playlists",
       "schedules-bootstrap",
+      "content-list",
     ]);
   });
 
@@ -397,6 +400,7 @@ describe("playlists api cache patches", () => {
     expect(revalidateWildfireTagsViaRoute).toHaveBeenCalledWith([
       "playlists",
       "schedules-bootstrap",
+      "content-list",
     ]);
   });
 });

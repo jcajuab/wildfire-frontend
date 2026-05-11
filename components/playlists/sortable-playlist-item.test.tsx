@@ -51,6 +51,7 @@ const baseItem = {
     type: "IMAGE" as const,
     thumbnailUrl: null,
     checksum: "checksum-1",
+    duration: null,
   },
 };
 
@@ -67,7 +68,6 @@ describe("SortableItemRow", () => {
         }}
         onRemove={vi.fn()}
         onUpdateDuration={vi.fn()}
-        onUpdateLoop={vi.fn()}
       />,
     );
 
@@ -83,7 +83,6 @@ describe("SortableItemRow", () => {
         item={baseItem}
         onRemove={vi.fn()}
         onUpdateDuration={vi.fn()}
-        onUpdateLoop={vi.fn()}
       />,
     );
 
@@ -108,7 +107,6 @@ describe("SortableItemRow", () => {
         }}
         onRemove={vi.fn()}
         onUpdateDuration={vi.fn()}
-        onUpdateLoop={vi.fn()}
       />,
     );
 
@@ -132,7 +130,6 @@ describe("SortableItemRow", () => {
         item={baseItem}
         onRemove={vi.fn()}
         onUpdateDuration={onUpdateDuration}
-        onUpdateLoop={vi.fn()}
       />,
     );
 
@@ -145,5 +142,43 @@ describe("SortableItemRow", () => {
     await user.type(durationInput, "15");
 
     expect(onUpdateDuration).toHaveBeenLastCalledWith("draft-1", 15);
+  });
+
+  test("hides loop controls and clamps video duration to source duration", async () => {
+    const user = userEvent.setup();
+    const onUpdateDuration = vi.fn();
+
+    render(
+      <SortableItemRow
+        item={{
+          ...baseItem,
+          duration: 8,
+          loop: true,
+          content: {
+            ...baseItem.content,
+            title: "Campus Video",
+            type: "VIDEO",
+            duration: 8,
+          },
+        }}
+        onRemove={vi.fn()}
+        onUpdateDuration={onUpdateDuration}
+      />,
+    );
+
+    expect(screen.queryByLabelText("Loop video")).not.toBeInTheDocument();
+
+    const durationInput = screen.getByLabelText(
+      "Duration in seconds for Campus Video",
+    );
+    expect(durationInput).toHaveAttribute("max", "8");
+
+    await user.clear(durationInput);
+    await user.type(durationInput, "12");
+    expect(onUpdateDuration).toHaveBeenLastCalledWith("draft-1", 8);
+
+    await user.clear(durationInput);
+    await user.type(durationInput, "5");
+    expect(onUpdateDuration).toHaveBeenLastCalledWith("draft-1", 5);
   });
 });

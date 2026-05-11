@@ -32,6 +32,26 @@ import { cn } from "@/lib/utils";
 import { SortableItemRow, type DraftItem } from "./sortable-item-row";
 import type { PlaylistSelectableContent } from "./create-playlist-form";
 
+const getDefaultItemDuration = (content: PlaylistSelectableContent) =>
+  content.duration != null && content.duration > 0 ? content.duration : 5;
+
+const getNormalizedItemDuration = (
+  item: DraftItem,
+  duration: number,
+): number => {
+  const maxDuration =
+    item.content.type === "VIDEO" &&
+    item.content.duration != null &&
+    item.content.duration > 0
+      ? item.content.duration
+      : Number.MAX_SAFE_INTEGER;
+  return Math.max(1, Math.min(duration, maxDuration));
+};
+
+export const getPlaylistItemLoop = (content: {
+  readonly type: string;
+}): boolean => content.type === "VIDEO";
+
 export interface PlaylistFormBodyProps {
   readonly name: string;
   readonly onNameChange: (value: string) => void;
@@ -177,9 +197,9 @@ export function PlaylistFormBody({
       const newItem: DraftItem = {
         id: `draft-${Date.now()}-${content.id}`,
         content,
-        duration: content.duration ?? 5,
+        duration: getDefaultItemDuration(content),
         sequence: items.length + 1,
-        loop: false,
+        loop: getPlaylistItemLoop(content),
       };
       onItemsChange([...items, newItem]);
     },
@@ -198,18 +218,9 @@ export function PlaylistFormBody({
       onItemsChange(
         items.map((item) =>
           item.id === itemId
-            ? { ...item, duration: Math.max(1, duration) }
+            ? { ...item, duration: getNormalizedItemDuration(item, duration) }
             : item,
         ),
-      );
-    },
-    [items, onItemsChange],
-  );
-
-  const handleUpdateLoop = useCallback(
-    (itemId: string, loop: boolean) => {
-      onItemsChange(
-        items.map((item) => (item.id === itemId ? { ...item, loop } : item)),
       );
     },
     [items, onItemsChange],
@@ -344,7 +355,6 @@ export function PlaylistFormBody({
                       item={item}
                       onRemove={handleRemoveItem}
                       onUpdateDuration={handleUpdateDuration}
-                      onUpdateLoop={handleUpdateLoop}
                       disabled={disabled}
                     />
                   ))

@@ -320,7 +320,7 @@ export default function DisplayRuntimePage() {
               autoPlay
               muted
               playsInline
-              loop={currentItem.loop}
+              loop
             />
           </div>
         ) : currentItem.content.type === "IMAGE" ? (

@@ -13,8 +13,6 @@ import {
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { getTextThumbnailText } from "@/lib/content-thumbnail-preview";
 import type { Content } from "@/types/content";
 import type { PlaylistItemContent } from "@/types/playlist";
@@ -35,7 +33,6 @@ export interface SortableItemRowProps {
   readonly item: DraftItem;
   readonly onRemove: (id: string) => void;
   readonly onUpdateDuration: (id: string, duration: number) => void;
-  readonly onUpdateLoop: (id: string, loop: boolean) => void;
   readonly disabled?: boolean;
 }
 
@@ -43,7 +40,6 @@ export function SortableItemRow({
   item,
   onRemove,
   onUpdateDuration,
-  onUpdateLoop,
   disabled = false,
 }: SortableItemRowProps): ReactElement {
   const {
@@ -56,6 +52,14 @@ export function SortableItemRow({
   } = useSortable({ id: item.id, disabled });
 
   const [rawValue, setRawValue] = useState(String(item.duration));
+  const maxDuration =
+    item.content.type === "VIDEO" &&
+    item.content.duration != null &&
+    item.content.duration > 0
+      ? item.content.duration
+      : undefined;
+  const clampDuration = (value: number) =>
+    Math.max(1, Math.min(value, maxDuration ?? Number.MAX_SAFE_INTEGER));
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- valid sync pattern for controlled input
@@ -112,6 +116,7 @@ export function SortableItemRow({
               <Input
                 type="number"
                 min="1"
+                max={maxDuration}
                 value={rawValue}
                 aria-label={`Duration in seconds for ${item.content.title}`}
                 disabled={disabled}
@@ -119,13 +124,15 @@ export function SortableItemRow({
                   setRawValue(e.target.value);
                   const parsed = parseInt(e.target.value, 10);
                   if (Number.isFinite(parsed) && parsed > 0) {
-                    onUpdateDuration(item.id, parsed);
+                    onUpdateDuration(item.id, clampDuration(parsed));
                   }
                 }}
                 onBlur={() => {
                   const parsed = parseInt(rawValue, 10);
                   const clamped =
-                    Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+                    Number.isFinite(parsed) && parsed > 0
+                      ? clampDuration(parsed)
+                      : 1;
                   setRawValue(String(clamped));
                   onUpdateDuration(item.id, clamped);
                 }}
@@ -135,23 +142,6 @@ export function SortableItemRow({
               />
               <span>sec</span>
             </div>
-            {item.content.type === "VIDEO" ? (
-              <div className="flex items-center gap-2">
-                <Switch
-                  id={`loop-${item.id}`}
-                  checked={item.loop}
-                  disabled={disabled}
-                  onCheckedChange={(checked) => onUpdateLoop(item.id, checked)}
-                  onPointerDown={(e) => e.stopPropagation()}
-                />
-                <Label
-                  htmlFor={`loop-${item.id}`}
-                  className="cursor-pointer font-normal text-muted-foreground"
-                >
-                  Loop video
-                </Label>
-              </div>
-            ) : null}
           </div>
         </div>
       </div>

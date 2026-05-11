@@ -9,6 +9,7 @@ import {
   useCreatePlaylistMutation,
 } from "@/lib/api/playlists-api";
 import { type CreatePlaylistDraft } from "@/components/playlists/create-playlist-form";
+import { getPlaylistItemLoop } from "@/components/playlists/playlist-form-body";
 import {
   type PlaylistContentLibraryState,
   usePlaylistContentLibrary,
@@ -52,7 +53,7 @@ export function useCreatePlaylistPage(): UseCreatePlaylistPageResult {
           items: data.items.map((item) => ({
             contentId: item.content.id,
             duration: item.duration,
-            loop: item.loop,
+            loop: getPlaylistItemLoop(item.content),
           })),
         }).unwrap();
 

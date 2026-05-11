@@ -11,7 +11,11 @@ import {
 import type { Content } from "@/types/content";
 import type { PlaylistItem, PlaylistItemContent } from "@/types/playlist";
 import { type DraftItem } from "./sortable-item-row";
-import { PlaylistDurationBudget, PlaylistFormBody } from "./playlist-form-body";
+import {
+  getPlaylistItemLoop,
+  PlaylistDurationBudget,
+  PlaylistFormBody,
+} from "./playlist-form-body";
 import { MAX_BASE_DURATION_SECONDS } from "./create-playlist-form";
 
 export type PlaylistSelectableContent = Content & {
@@ -24,7 +28,7 @@ export function toDrafts(items: readonly PlaylistItem[]): DraftItem[] {
     content: item.content,
     duration: item.duration,
     sequence: item.sequence,
-    loop: item.loop,
+    loop: getPlaylistItemLoop(item.content),
   }));
 }
 

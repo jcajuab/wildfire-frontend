@@ -113,12 +113,12 @@ describe("EditContentDialog", () => {
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
 
-    expect(await screen.findByText("11 / 1000 characters")).toBeInTheDocument();
-    expect(screen.queryByText(/words/)).not.toBeInTheDocument();
-
     await waitFor(() => {
       expect(document.querySelector(".ProseMirror")).toBeInTheDocument();
     });
+    expect(await screen.findByText("11 / 1000 characters")).toBeInTheDocument();
+    expect(screen.queryByText(/words/)).not.toBeInTheDocument();
+
     const editor = document.querySelector(".ProseMirror");
     expect(editor).toHaveClass("min-h-[280px]");
     expect(editor).toHaveClass("max-h-[min(46vh,420px)]");

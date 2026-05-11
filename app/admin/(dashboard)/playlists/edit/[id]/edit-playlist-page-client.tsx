@@ -12,6 +12,7 @@ import {
   toDrafts,
   type PlaylistItemsAtomicSnapshot,
 } from "@/components/playlists/edit-playlist-form";
+import { getPlaylistItemLoop } from "@/components/playlists/playlist-form-body";
 import { type DraftItem } from "@/components/playlists/sortable-item-row";
 import { MAX_BASE_DURATION_SECONDS } from "@/components/playlists/create-playlist-form";
 import { Button } from "@/components/ui/button";
@@ -85,13 +86,13 @@ export function EditPlaylistPageView(): ReactElement {
             kind: "new",
             contentId: item.content.id,
             duration: item.duration,
-            loop: item.loop,
+            loop: getPlaylistItemLoop(item.content),
           }
         : {
             kind: "existing",
             itemId: item.id,
             duration: item.duration,
-            loop: item.loop,
+            loop: getPlaylistItemLoop(item.content),
           },
     );
 

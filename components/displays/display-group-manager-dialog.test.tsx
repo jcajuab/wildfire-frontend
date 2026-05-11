@@ -76,7 +76,10 @@ describe("DisplayGroupManagerDialog", () => {
       />,
     );
 
-    await user.type(screen.getByLabelText("New group name"), "  Main   Hall  ");
+    await user.type(
+      screen.getByLabelText("Display Group Name"),
+      "  Main   Hall  ",
+    );
     await user.click(screen.getByRole("button", { name: "Add" }));
 
     await waitFor(() => {
