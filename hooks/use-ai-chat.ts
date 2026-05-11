@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getBaseUrl } from "@/lib/api/config";
 import { contentApi } from "@/lib/api/content-api";
 import { playlistsApi } from "@/lib/api/playlists-api";
 import { revalidateWildfireTagsViaRoute } from "@/lib/api/revalidate-via-route";
@@ -39,7 +40,7 @@ export function useAIChat({
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
-        api: "/api/ai/chat",
+        api: `${getBaseUrl()}/ai/chat`,
         headers: () => getAuthorizationHeaders(),
         prepareSendMessagesRequest: ({
           messages,
