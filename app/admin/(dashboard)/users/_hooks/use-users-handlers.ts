@@ -145,24 +145,6 @@ export function useUsersHandlers({
           name: data.name,
           email: data.email,
         }).unwrap();
-
-        if (data.roleIds != null) {
-          const roleIdsToSend = isAdmin
-            ? data.roleIds
-            : (() => {
-                const currentIds =
-                  userRolesByUserId[data.id]?.map((r) => r.id) ?? [];
-                const preservedSystem = currentIds.filter((id) =>
-                  systemRoleIds.includes(id),
-                );
-                return [...new Set([...data.roleIds, ...preservedSystem])];
-              })();
-
-          await setUserRoles({
-            userId: data.id,
-            roleIds: roleIdsToSend,
-          }).unwrap();
-        }
         toast.success(`Successfully updated ${data.name}`);
         setIsEditDialogOpen(false);
         setSelectedUser(null);
@@ -170,15 +152,7 @@ export function useUsersHandlers({
         notifyApiError(err, `Failed to update ${data.name}`);
       }
     },
-    [
-      updateUser,
-      setUserRoles,
-      isAdmin,
-      systemRoleIds,
-      userRolesByUserId,
-      setIsEditDialogOpen,
-      setSelectedUser,
-    ],
+    [updateUser, setIsEditDialogOpen, setSelectedUser],
   );
 
   const banUserById = useCallback(

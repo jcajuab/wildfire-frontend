@@ -1,7 +1,13 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useEffect, useLayoutEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import { IconPlus, IconCopy, IconCheck } from "@tabler/icons-react";
 import { toast } from "sonner";
 
@@ -245,23 +251,106 @@ export function UsersPageView({
     search.trim().length > 0 || roleId !== "all" || userType !== "all";
   const hasActiveInvitationFilters =
     invitationSearch.trim().length > 0 || invitationStatusFilter !== "all";
-  const selectedUserRoleIds =
-    selectedUser == null
-      ? []
-      : (userRolesByUserId[selectedUser.id] ?? []).map((role) => role.id);
-  const selectedUserIsSystem = selectedUserRoleIds.some((id) =>
-    systemRoleIds.includes(id),
+  const handleInviteDialogOpen = useCallback(
+    () => setIsInviteDialogOpen(true),
+    [setIsInviteDialogOpen],
   );
-  const canManageSelectedUserStatus =
-    canDeleteUser &&
-    selectedUser != null &&
-    !selectedUserIsSystem &&
-    selectedUser.id !== currentUser?.id;
-  const canManageSelectedInvitedUser =
-    selectedUser != null &&
-    selectedUser.isInvitedUser === true &&
-    !selectedUserIsSystem &&
-    selectedUser.id !== currentUser?.id;
+  const handleTabChange = useCallback(
+    (value: string) => {
+      if (value === "users" || value === "invitations") {
+        void setActiveTab(value);
+      }
+    },
+    [setActiveTab],
+  );
+  const handleSearchControlChange =
+    selectedTab === "users" ? handleSearchChange : handleInvitationSearchChange;
+  const searchControlAriaLabel =
+    selectedTab === "users" ? "Search users" : "Search invitations";
+  const searchControlPlaceholder =
+    selectedTab === "users"
+      ? "Search by name, username, or email"
+      : "Search by invitee";
+  const handlePageChange =
+    selectedTab === "users" ? setPage : setInvitationPage;
+  const visiblePage = selectedTab === "users" ? page : invitationPage;
+  const visibleTotal =
+    selectedTab === "users" ? (usersData?.total ?? 0) : invitationsTotal;
+  const usersEmptyState = useMemo(
+    () => ({
+      title: hasActiveUserFilters ? "No users found" : "No users yet",
+      description: hasActiveUserFilters
+        ? "Try adjusting your search, role, or user type filters."
+        : "Invite users to give them access to WILDFIRE.",
+      action: hasActiveUserFilters ? null : (
+        <Can permission="users:create">
+          <Button onClick={handleInviteDialogOpen}>
+            <IconPlus
+              className="size-4"
+              aria-hidden="true"
+              data-icon="inline-start"
+            />
+            Invite User
+          </Button>
+        </Can>
+      ),
+    }),
+    [handleInviteDialogOpen, hasActiveUserFilters],
+  );
+  const invitationsEmptyState = useMemo(
+    () => ({
+      title: hasActiveInvitationFilters
+        ? "No invitations found"
+        : "No invitations yet",
+      description: hasActiveInvitationFilters
+        ? "Try adjusting your search or status filter."
+        : "Invitations you send will appear here with status and expiration details.",
+    }),
+    [hasActiveInvitationFilters],
+  );
+  const handleInviteUsers = useCallback(
+    async (emails: readonly string[]) => {
+      const didInvite = await handleInvite(emails);
+      if (didInvite) {
+        await setActiveTab("invitations");
+        handleInvitationSearchChange("");
+        handleInvitationStatusFilterChange("all");
+        handleInvitationSortChange({
+          field: "createdAt",
+          direction: "desc",
+        });
+        setInvitationPage(1);
+      }
+      return didInvite;
+    },
+    [
+      handleInvite,
+      handleInvitationSearchChange,
+      handleInvitationSortChange,
+      handleInvitationStatusFilterChange,
+      setActiveTab,
+      setInvitationPage,
+    ],
+  );
+  const handleConfirmBanUser = useCallback(async () => {
+    if (!userToBan) return;
+    const { id, username, bannedAt } = userToBan;
+    if (bannedAt) {
+      await unbanUserById(id);
+      toast.success(`Successfully unbanned ${username}`);
+    } else {
+      await banUserById(id);
+      toast.success(`Successfully banned ${username}`);
+    }
+    setUserToBan(null);
+  }, [banUserById, setUserToBan, unbanUserById, userToBan]);
+  const handleConfirmDeleteUser = useCallback(async () => {
+    if (!userToDelete) return;
+    const { id, username } = userToDelete;
+    await deleteUserById(id);
+    toast.success(`Successfully deleted ${username}`);
+    setUserToDelete(null);
+  }, [deleteUserById, setUserToDelete, userToDelete]);
 
   useEffect(() => {
     if (!canCreateUser && activeTab !== "users") {
@@ -310,7 +399,7 @@ export function UsersPageView({
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
       <PageHeader title="Users">
         <Can permission="users:create">
-          <Button onClick={() => setIsInviteDialogOpen(true)}>
+          <Button onClick={handleInviteDialogOpen}>
             <IconPlus
               className="size-4"
               aria-hidden="true"
@@ -325,11 +414,7 @@ export function UsersPageView({
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <Tabs
             value={selectedTab}
-            onValueChange={(value) => {
-              if (value === "users" || value === "invitations") {
-                void setActiveTab(value);
-              }
-            }}
+            onValueChange={handleTabChange}
             className="min-h-0 flex-1 overflow-hidden p-4"
           >
             <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border">
@@ -348,21 +433,9 @@ export function UsersPageView({
                 )}
                 <SearchControl
                   value={selectedTab === "users" ? search : invitationSearch}
-                  onChange={
-                    selectedTab === "users"
-                      ? handleSearchChange
-                      : handleInvitationSearchChange
-                  }
-                  ariaLabel={
-                    selectedTab === "users"
-                      ? "Search users"
-                      : "Search invitations"
-                  }
-                  placeholder={
-                    selectedTab === "users"
-                      ? "Search by name, username, or email"
-                      : "Search by invitee"
-                  }
+                  onChange={handleSearchControlChange}
+                  ariaLabel={searchControlAriaLabel}
+                  placeholder={searchControlPlaceholder}
                   className="w-full max-w-none sm:w-80"
                 />
               </div>
@@ -403,26 +476,7 @@ export function UsersPageView({
                     isSuperAdmin={isAdmin}
                     systemRoleIds={systemRoleIds}
                     currentUserId={currentUser?.id}
-                    emptyState={{
-                      title: hasActiveUserFilters
-                        ? "No users found"
-                        : "No users yet",
-                      description: hasActiveUserFilters
-                        ? "Try adjusting your search, role, or user type filters."
-                        : "Invite users to give them access to WILDFIRE.",
-                      action: hasActiveUserFilters ? null : (
-                        <Can permission="users:create">
-                          <Button onClick={() => setIsInviteDialogOpen(true)}>
-                            <IconPlus
-                              className="size-4"
-                              aria-hidden="true"
-                              data-icon="inline-start"
-                            />
-                            Invite User
-                          </Button>
-                        </Can>
-                      ),
-                    }}
+                    emptyState={usersEmptyState}
                   />
                 </div>
               </TabsContent>
@@ -442,15 +496,8 @@ export function UsersPageView({
                       onSortChange={handleInvitationSortChange}
                       resendingInvitationId={resendingInvitationId}
                       onResend={handleResendInvitation}
-                      onSendInvitation={() => setIsInviteDialogOpen(true)}
-                      emptyState={{
-                        title: hasActiveInvitationFilters
-                          ? "No invitations found"
-                          : "No invitations yet",
-                        description: hasActiveInvitationFilters
-                          ? "Try adjusting your search or status filter."
-                          : "Invitations you send will appear here with status and expiration details.",
-                      }}
+                      onSendInvitation={handleInviteDialogOpen}
+                      emptyState={invitationsEmptyState}
                     />
                   </div>
                 </TabsContent>
@@ -459,16 +506,10 @@ export function UsersPageView({
               {selectedTab === "users" || selectedTab === "invitations" ? (
                 <footer className="border-t border-border bg-background/80">
                   <PaginationFooter
-                    page={selectedTab === "users" ? page : invitationPage}
+                    page={visiblePage}
                     pageSize={PAGE_SIZE}
-                    total={
-                      selectedTab === "users"
-                        ? (usersData?.total ?? 0)
-                        : invitationsTotal
-                    }
-                    onPageChange={
-                      selectedTab === "users" ? setPage : setInvitationPage
-                    }
+                    total={visibleTotal}
+                    onPageChange={handlePageChange}
                     alwaysShow
                   />
                 </footer>
@@ -481,20 +522,7 @@ export function UsersPageView({
       <InviteUsersDialog
         open={isInviteDialogOpen}
         onOpenChange={setIsInviteDialogOpen}
-        onInvite={async (emails) => {
-          const didInvite = await handleInvite(emails);
-          if (didInvite) {
-            await setActiveTab("invitations");
-            handleInvitationSearchChange("");
-            handleInvitationStatusFilterChange("all");
-            handleInvitationSortChange({
-              field: "createdAt",
-              direction: "desc",
-            });
-            setInvitationPage(1);
-          }
-          return didInvite;
-        }}
+        onInvite={handleInviteUsers}
       />
 
       <EditUserDialog
@@ -502,34 +530,6 @@ export function UsersPageView({
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSubmit={handleEditSubmit}
-        canManageStatus={canManageSelectedUserStatus}
-        canManageRoles={canUpdateUser && availableRoles.length > 0}
-        availableRoles={availableRoles}
-        selectedRoleIds={selectedUserRoleIds}
-        onRequestBanUser={(user) => {
-          setIsEditDialogOpen(false);
-          handleRequestBanUser(user);
-        }}
-        onRequestUnbanUser={(user) => {
-          setIsEditDialogOpen(false);
-          handleRequestUnbanUser(user);
-        }}
-        onRequestResetPassword={
-          canUpdateUser && canManageSelectedInvitedUser
-            ? (user) => {
-                setIsEditDialogOpen(false);
-                void handleResetPassword(user.id);
-              }
-            : undefined
-        }
-        onRequestDeleteUser={
-          canDeleteUser && canManageSelectedInvitedUser
-            ? (user) => {
-                setIsEditDialogOpen(false);
-                handleRequestDeleteUser(user);
-              }
-            : undefined
-        }
       />
 
       <ConfirmActionDialog
@@ -547,18 +547,7 @@ export function UsersPageView({
         errorFallback={
           userToBan?.bannedAt ? "Failed to unban user" : "Failed to ban user"
         }
-        onConfirm={async () => {
-          if (!userToBan) return;
-          const { id, username, bannedAt } = userToBan;
-          if (bannedAt) {
-            await unbanUserById(id);
-            toast.success(`Successfully unbanned ${username}`);
-          } else {
-            await banUserById(id);
-            toast.success(`Successfully banned ${username}`);
-          }
-          setUserToBan(null);
-        }}
+        onConfirm={handleConfirmBanUser}
       />
 
       <ConfirmActionDialog
@@ -572,13 +561,7 @@ export function UsersPageView({
         }
         confirmLabel="Delete User"
         errorFallback="Failed to delete user"
-        onConfirm={async () => {
-          if (!userToDelete) return;
-          const { id, username } = userToDelete;
-          await deleteUserById(id);
-          toast.success(`Successfully deleted ${username}`);
-          setUserToDelete(null);
-        }}
+        onConfirm={handleConfirmDeleteUser}
       />
 
       <ResetPasswordDialog

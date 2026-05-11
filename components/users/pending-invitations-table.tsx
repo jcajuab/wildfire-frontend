@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import {
   IconRefresh,
   IconCopy,
@@ -90,56 +90,62 @@ const statusOptions: readonly {
   { value: "revoked", label: "Revoked" },
   { value: "expired", label: "Expired" },
 ];
+const DEFAULT_INVITATION_SORT: InvitationSort = {
+  field: "createdAt",
+  direction: "desc",
+};
 
-function InvitationStatusFilterHeader({
-  value,
-  onChange,
-}: {
-  readonly value: InvitationStatusFilter;
-  readonly onChange: (status: InvitationStatusFilter) => void;
-}): ReactElement {
-  const hasActiveFilter = value !== "all";
-  const activeLabel = statusOptions.find(
-    (option) => option.value === value,
-  )?.label;
+const InvitationStatusFilterHeader = memo(
+  function InvitationStatusFilterHeader({
+    value,
+    onChange,
+  }: {
+    readonly value: InvitationStatusFilter;
+    readonly onChange: (status: InvitationStatusFilter) => void;
+  }): ReactElement {
+    const hasActiveFilter = value !== "all";
+    const activeLabel = statusOptions.find(
+      (option) => option.value === value,
+    )?.label;
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <TableHeaderControl aria-label="Filter invitations by status">
-          Status
-          <IconFilter
-            className={
-              hasActiveFilter
-                ? "size-3.5 text-foreground"
-                : "size-3.5 text-muted-foreground"
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <TableHeaderControl aria-label="Filter invitations by status">
+            Status
+            <IconFilter
+              className={
+                hasActiveFilter
+                  ? "size-3.5 text-foreground"
+                  : "size-3.5 text-muted-foreground"
+              }
+              aria-hidden="true"
+            />
+            {hasActiveFilter && activeLabel ? (
+              <span className="sr-only">filtered by {activeLabel}</span>
+            ) : null}
+          </TableHeaderControl>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="min-w-40">
+          <DropdownMenuRadioGroup
+            value={value}
+            onValueChange={(nextValue) =>
+              onChange(nextValue as InvitationStatusFilter)
             }
-            aria-hidden="true"
-          />
-          {hasActiveFilter && activeLabel ? (
-            <span className="sr-only">filtered by {activeLabel}</span>
-          ) : null}
-        </TableHeaderControl>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-40">
-        <DropdownMenuRadioGroup
-          value={value}
-          onValueChange={(nextValue) =>
-            onChange(nextValue as InvitationStatusFilter)
-          }
-        >
-          {statusOptions.map((option) => (
-            <DropdownMenuRadioItem key={option.value} value={option.value}>
-              {option.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
+          >
+            {statusOptions.map((option) => (
+              <DropdownMenuRadioItem key={option.value} value={option.value}>
+                {option.label}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  },
+);
 
-function InvitationActionsMenu({
+const InvitationActionsMenu = memo(function InvitationActionsMenu({
   invitation,
   isResending,
   isDeleting,
@@ -154,7 +160,7 @@ function InvitationActionsMenu({
 }): ReactElement | null {
   const [revealInviteLink] = useRevealInviteLinkMutation();
 
-  const handleCopyLink = async (): Promise<void> => {
+  const handleCopyLink = useCallback(async (): Promise<void> => {
     try {
       const { inviteUrl } = await revealInviteLink(invitation.id).unwrap();
       await navigator.clipboard.writeText(inviteUrl);
@@ -162,7 +168,15 @@ function InvitationActionsMenu({
     } catch {
       toast.error("Failed to copy invite link");
     }
-  };
+  }, [invitation.id, revealInviteLink]);
+  const handleResend = useCallback(
+    () => onResend(invitation.id),
+    [invitation.id, onResend],
+  );
+  const handleDelete = useCallback(
+    () => onDelete(invitation),
+    [invitation, onDelete],
+  );
 
   return (
     <DropdownMenu>
@@ -182,10 +196,7 @@ function InvitationActionsMenu({
               <IconCopy className="size-4" aria-hidden="true" />
               Copy Invite Link
             </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={isResending}
-              onSelect={() => onResend(invitation.id)}
-            >
+            <DropdownMenuItem disabled={isResending} onSelect={handleResend}>
               {isResending ? (
                 <IconLoader2
                   className="size-4 animate-spin"
@@ -202,7 +213,7 @@ function InvitationActionsMenu({
         <DropdownMenuItem
           disabled={isDeleting}
           variant="destructive"
-          onSelect={() => onDelete(invitation)}
+          onSelect={handleDelete}
         >
           {isDeleting ? (
             <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -214,38 +225,102 @@ function InvitationActionsMenu({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});
 
-export function PendingInvitationsTable({
+const InvitationRow = memo(function InvitationRow({
+  invitation,
+  isResending,
+  isDeleting,
+  onResend,
+  onDelete,
+}: {
+  readonly invitation: InvitationRecord;
+  readonly isResending: boolean;
+  readonly isDeleting: boolean;
+  readonly onResend: (invitationId: string) => void;
+  readonly onDelete: (invitation: InvitationRecord) => void;
+}): ReactElement {
+  return (
+    <TableRow className="h-12">
+      <TableCell>
+        <div className="flex min-h-8 min-w-0 flex-col justify-center">
+          <span className="truncate font-medium">{invitation.email}</span>
+          {invitation.name ? (
+            <span className="truncate text-xs text-muted-foreground">
+              {invitation.name}
+            </span>
+          ) : null}
+        </div>
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline" className={statusClassName[invitation.status]}>
+          {statusLabel[invitation.status]}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-muted-foreground tabular-nums">
+        {formatDateTime(invitation.expiresAt)}
+      </TableCell>
+      <TableCell className="w-[48px] text-right">
+        <InvitationActionsMenu
+          invitation={invitation}
+          isResending={isResending}
+          isDeleting={isDeleting}
+          onResend={onResend}
+          onDelete={onDelete}
+        />
+      </TableCell>
+    </TableRow>
+  );
+});
+
+export const PendingInvitationsTable = memo(function PendingInvitationsTable({
   invitations,
   isLoading = false,
   statusFilter = "all",
-  sort = { field: "createdAt", direction: "desc" },
+  sort = DEFAULT_INVITATION_SORT,
   resendingInvitationId,
   onStatusFilterChange,
   onSortChange,
   onResend,
   onSendInvitation,
-  emptyState = {
-    title: "No invitations yet",
-    description:
-      "Invitations you send will appear here with status and expiration details.",
-    action: onSendInvitation ? (
-      <Button onClick={onSendInvitation}>Send Invitation</Button>
-    ) : null,
-  },
+  emptyState,
 }: PendingInvitationsTableProps): ReactElement {
   const [invitationToDelete, setInvitationToDelete] =
     useState<InvitationRecord | null>(null);
   const [deleteInvitation, { isLoading: isDeletingInvitation }] =
     useDeleteInvitationMutation();
+  const resolvedEmptyState = useMemo(
+    () =>
+      emptyState ?? {
+        title: "No invitations yet",
+        description:
+          "Invitations you send will appear here with status and expiration details.",
+        action: onSendInvitation ? (
+          <Button onClick={onSendInvitation}>Send Invitation</Button>
+        ) : null,
+      },
+    [emptyState, onSendInvitation],
+  );
 
-  const handleDeleteInvitation = async (): Promise<void> => {
+  const handleDeleteInvitation = useCallback(async (): Promise<void> => {
     if (!invitationToDelete) return;
     await deleteInvitation(invitationToDelete.id).unwrap();
     toast.success("Invitation deleted.");
     setInvitationToDelete(null);
-  };
+  }, [deleteInvitation, invitationToDelete]);
+  const handleDeleteDialogOpenChange = useCallback((open: boolean) => {
+    if (!open) setInvitationToDelete(null);
+  }, []);
+  const handleInviteeSort = useCallback(
+    (field: InvitationSort["field"], direction: InvitationSort["direction"]) =>
+      onSortChange?.({ field, direction }),
+    [onSortChange],
+  );
+  const handleExpiresSort = useCallback(
+    (field: InvitationSort["field"], direction: InvitationSort["direction"]) =>
+      onSortChange?.({ field, direction }),
+    [onSortChange],
+  );
 
   if (isLoading) {
     return (
@@ -274,9 +349,7 @@ export function PendingInvitationsTable({
                   label="Invitee"
                   field="email"
                   currentSort={sort}
-                  onSort={(field, direction) =>
-                    onSortChange({ field, direction })
-                  }
+                  onSort={handleInviteeSort}
                 />
               ) : (
                 "Invitee"
@@ -307,9 +380,7 @@ export function PendingInvitationsTable({
                   label="Expires"
                   field="expiresAt"
                   currentSort={sort}
-                  onSort={(field, direction) =>
-                    onSortChange({ field, direction })
-                  }
+                  onSort={handleExpiresSort}
                 />
               ) : (
                 "Expires"
@@ -328,9 +399,9 @@ export function PendingInvitationsTable({
           {invitations.length === 0 ? (
             <TableEmptyState
               colSpan={4}
-              title={emptyState.title}
-              description={emptyState.description}
-              action={emptyState.action}
+              title={resolvedEmptyState.title}
+              description={resolvedEmptyState.description}
+              action={resolvedEmptyState.action}
             />
           ) : null}
           {invitations.map((invitation) => {
@@ -338,49 +409,21 @@ export function PendingInvitationsTable({
             const isDeleting =
               isDeletingInvitation && invitationToDelete?.id === invitation.id;
             return (
-              <TableRow key={invitation.id} className="h-12">
-                <TableCell>
-                  <div className="flex min-h-8 min-w-0 flex-col justify-center">
-                    <span className="truncate font-medium">
-                      {invitation.email}
-                    </span>
-                    {invitation.name ? (
-                      <span className="truncate text-xs text-muted-foreground">
-                        {invitation.name}
-                      </span>
-                    ) : null}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant="outline"
-                    className={statusClassName[invitation.status]}
-                  >
-                    {statusLabel[invitation.status]}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-muted-foreground tabular-nums">
-                  {formatDateTime(invitation.expiresAt)}
-                </TableCell>
-                <TableCell className="w-[48px] text-right">
-                  <InvitationActionsMenu
-                    invitation={invitation}
-                    isResending={isResending}
-                    isDeleting={isDeleting}
-                    onResend={onResend}
-                    onDelete={setInvitationToDelete}
-                  />
-                </TableCell>
-              </TableRow>
+              <InvitationRow
+                key={invitation.id}
+                invitation={invitation}
+                isResending={isResending}
+                isDeleting={isDeleting}
+                onResend={onResend}
+                onDelete={setInvitationToDelete}
+              />
             );
           })}
         </TableBody>
       </Table>
       <ConfirmActionDialog
         open={invitationToDelete != null}
-        onOpenChange={(open) => {
-          if (!open) setInvitationToDelete(null);
-        }}
+        onOpenChange={handleDeleteDialogOpenChange}
         title="Delete invitation?"
         description={
           invitationToDelete
@@ -393,4 +436,4 @@ export function PendingInvitationsTable({
       />
     </>
   );
-}
+});

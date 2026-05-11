@@ -123,6 +123,18 @@ export function useUsersFilters() {
     },
     [setFilters],
   );
+  const setPage = useCallback(
+    (page: number) => setFilters({ page }),
+    [setFilters],
+  );
+  const setInvitationPage = useCallback(
+    (page: number) => setFilters({ invitePage: page }),
+    [setFilters],
+  );
+  const setActiveTab = useCallback(
+    (tab: UsersPageTab) => setFilters({ tab }),
+    [setFilters],
+  );
 
   return {
     search: filters.q,
@@ -133,9 +145,9 @@ export function useUsersFilters() {
     invitationPage: filters.invitePage,
     invitationStatusFilter: filters.inviteStatus as InvitationStatusFilter,
     activeTab: filters.tab,
-    setPage: (page: number) => setFilters({ page }),
-    setInvitationPage: (page: number) => setFilters({ invitePage: page }),
-    setActiveTab: (tab: UsersPageTab) => setFilters({ tab }),
+    setPage,
+    setInvitationPage,
+    setActiveTab,
     sort,
     invitationSort,
     sortField: filters.sortField,

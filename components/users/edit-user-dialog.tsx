@@ -2,13 +2,6 @@
 
 import type { FormEvent, ReactElement } from "react";
 import { useState } from "react";
-import {
-  IconBan,
-  IconCircle,
-  IconCircleCheck,
-  IconKey,
-  IconTrash,
-} from "@tabler/icons-react";
 
 import { RequiredLabel } from "@/components/common/required-label";
 import { Button } from "@/components/ui/button";
@@ -20,12 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -34,14 +21,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/context/auth-context";
-import type { User, UserRole } from "@/types/user";
+import type { User } from "@/types/user";
 
 export interface EditUserFormData {
   readonly id: string;
   readonly username?: string;
   readonly name: string;
   readonly email: string | null;
-  readonly roleIds?: string[];
 }
 
 interface EditUserDialogProps {
@@ -49,14 +35,6 @@ interface EditUserDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onSubmit: (data: EditUserFormData) => Promise<void> | void;
-  readonly canManageStatus?: boolean;
-  readonly canManageRoles?: boolean;
-  readonly availableRoles?: readonly UserRole[];
-  readonly selectedRoleIds?: readonly string[];
-  readonly onRequestBanUser?: (user: User) => void;
-  readonly onRequestUnbanUser?: (user: User) => void;
-  readonly onRequestResetPassword?: (user: User) => void;
-  readonly onRequestDeleteUser?: (user: User) => void;
 }
 
 function getUserType(user: User): "dcism" | "invited" | "banned" {
@@ -70,39 +48,21 @@ function EditUserForm({
   onOpenChange,
   onSubmit,
   onSubmittingChange,
-  canManageStatus = false,
-  canManageRoles = false,
-  availableRoles = [],
-  selectedRoleIds = [],
-  onRequestBanUser,
-  onRequestUnbanUser,
-  onRequestResetPassword,
-  onRequestDeleteUser,
 }: {
   user: User;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: EditUserFormData) => Promise<void> | void;
   onSubmittingChange?: (submitting: boolean) => void;
-  canManageStatus?: boolean;
-  canManageRoles?: boolean;
-  availableRoles?: readonly UserRole[];
-  selectedRoleIds?: readonly string[];
-  onRequestBanUser?: (user: User) => void;
-  onRequestUnbanUser?: (user: User) => void;
-  onRequestResetPassword?: (user: User) => void;
-  onRequestDeleteUser?: (user: User) => void;
 }): ReactElement {
   const [name, setName] = useState(user.name);
   const [username, setUsername] = useState(user.username);
   const [email, setEmail] = useState(user.email ?? "");
-  const [roleIds, setRoleIds] = useState<string[]>([...selectedRoleIds]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user: currentUser } = useAuth();
   const isSelf = currentUser?.id === user.id;
   const isDcismUser =
     !user.isInvitedUser && !(user.roles ?? []).some((r) => r.name === "Admin");
   const userType = getUserType(user);
-  const isBanned = userType === "banned";
   const userTypeLabel =
     userType === "banned"
       ? "Banned"
@@ -115,28 +75,6 @@ function EditUserForm({
       ? "Username is managed by DCISM and cannot be changed."
       : null;
   const isUsernameLocked = usernameLockedReason !== null;
-  const isNonDcismUser = user.isInvitedUser === true;
-  const canResetPassword = isNonDcismUser && onRequestResetPassword != null;
-  const canDeleteUser = isNonDcismUser && onRequestDeleteUser != null;
-  const selectedRoleNames = availableRoles
-    .filter((role) => roleIds.includes(role.id))
-    .map((role) => role.name);
-  const roleSummary =
-    selectedRoleNames.length === 0
-      ? "No roles assigned"
-      : selectedRoleNames.length === 1
-        ? selectedRoleNames[0]
-        : `${selectedRoleNames.length} roles selected`;
-  const canEditRoles =
-    canManageRoles && availableRoles.length > 0 && !isSubmitting;
-
-  const toggleRole = (roleId: string): void => {
-    setRoleIds((current) =>
-      current.includes(roleId)
-        ? current.filter((id) => id !== roleId)
-        : [...current, roleId],
-    );
-  };
 
   const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
@@ -149,7 +87,6 @@ function EditUserForm({
         ...(isDcismUser ? {} : { username: username.trim() }),
         name: name.trim(),
         email: email.trim().length > 0 ? email.trim() : null,
-        ...(canManageRoles ? { roleIds } : {}),
       });
     } finally {
       setIsSubmitting(false);
@@ -239,106 +176,8 @@ function EditUserForm({
             readOnly
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="edit-user-roles">Role Assignment</Label>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild disabled={!canEditRoles}>
-              <Button
-                id="edit-user-roles"
-                type="button"
-                variant="outline"
-                className="h-9 w-full justify-between text-left font-normal"
-                disabled={!canEditRoles}
-              >
-                <span className="truncate">{roleSummary}</span>
-                <IconCircle
-                  className="size-4 text-muted-foreground"
-                  aria-hidden="true"
-                />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="start"
-              className="w-(--radix-dropdown-menu-trigger-width)"
-            >
-              {availableRoles.map((role) => (
-                <DropdownMenuCheckboxItem
-                  key={role.id}
-                  checked={roleIds.includes(role.id)}
-                  onSelect={(event) => event.preventDefault()}
-                  onCheckedChange={() => toggleRole(role.id)}
-                >
-                  {role.name}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
       </div>
-      <DialogFooter className="flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
-          {canResetPassword ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onRequestResetPassword?.(user)}
-              disabled={isSubmitting}
-            >
-              <IconKey
-                className="size-4"
-                aria-hidden="true"
-                data-icon="inline-start"
-              />
-              Reset Password
-            </Button>
-          ) : null}
-          {canManageStatus ? (
-            <Button
-              type="button"
-              variant="outline"
-              className={
-                isBanned
-                  ? undefined
-                  : "border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-              }
-              onClick={() =>
-                isBanned ? onRequestUnbanUser?.(user) : onRequestBanUser?.(user)
-              }
-              disabled={isSubmitting}
-            >
-              {isBanned ? (
-                <IconCircleCheck
-                  className="size-4"
-                  aria-hidden="true"
-                  data-icon="inline-start"
-                />
-              ) : (
-                <IconBan
-                  className="size-4"
-                  aria-hidden="true"
-                  data-icon="inline-start"
-                />
-              )}
-              {isBanned ? "Unban User" : "Ban User"}
-            </Button>
-          ) : null}
-          {canDeleteUser ? (
-            <Button
-              type="button"
-              variant="outline"
-              className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-              onClick={() => onRequestDeleteUser?.(user)}
-              disabled={isSubmitting}
-            >
-              <IconTrash
-                className="size-4"
-                aria-hidden="true"
-                data-icon="inline-start"
-              />
-              Delete User
-            </Button>
-          ) : null}
-        </div>
+      <DialogFooter>
         <div className="flex justify-end gap-2">
           <Button
             type="button"
@@ -362,14 +201,6 @@ export function EditUserDialog({
   open,
   onOpenChange,
   onSubmit,
-  canManageStatus,
-  canManageRoles,
-  availableRoles,
-  selectedRoleIds,
-  onRequestBanUser,
-  onRequestUnbanUser,
-  onRequestResetPassword,
-  onRequestDeleteUser,
 }: EditUserDialogProps): ReactElement {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -396,14 +227,6 @@ export function EditUserDialog({
             onOpenChange={guardedOnOpenChange}
             onSubmit={onSubmit}
             onSubmittingChange={setIsSubmitting}
-            canManageStatus={canManageStatus}
-            canManageRoles={canManageRoles}
-            availableRoles={availableRoles}
-            selectedRoleIds={selectedRoleIds}
-            onRequestBanUser={onRequestBanUser}
-            onRequestUnbanUser={onRequestUnbanUser}
-            onRequestResetPassword={onRequestResetPassword}
-            onRequestDeleteUser={onRequestDeleteUser}
           />
         ) : null}
       </DialogContent>

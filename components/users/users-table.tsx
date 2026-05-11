@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
+import { memo, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { IconFilter, IconUser } from "@tabler/icons-react";
 import { UserActionsMenu } from "./user-actions-menu";
@@ -67,6 +68,7 @@ const USER_TYPE_LABELS: Record<UserTypeFilter, string> = {
   invited: "Invited",
   banned: "Banned",
 };
+const EMPTY_ROLES: readonly UserRole[] = [];
 
 function getUserType(user: User): Exclude<UserTypeFilter, "all"> {
   if (user.bannedAt != null || !user.isActive) {
@@ -75,7 +77,11 @@ function getUserType(user: User): Exclude<UserTypeFilter, "all"> {
   return user.isInvitedUser ? "invited" : "dcism";
 }
 
-function UserTypeBadge({ user }: { readonly user: User }): ReactElement {
+const UserTypeBadge = memo(function UserTypeBadge({
+  user,
+}: {
+  readonly user: User;
+}): ReactElement {
   const type = getUserType(user);
   const className =
     type === "banned"
@@ -89,9 +95,9 @@ function UserTypeBadge({ user }: { readonly user: User }): ReactElement {
       {USER_TYPE_LABELS[type]}
     </Badge>
   );
-}
+});
 
-function RoleFilterHeader({
+const RoleFilterHeader = memo(function RoleFilterHeader({
   roles,
   value,
   onChange,
@@ -133,9 +139,9 @@ function RoleFilterHeader({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});
 
-function UserTypeFilterHeader({
+const UserTypeFilterHeader = memo(function UserTypeFilterHeader({
   value,
   onChange,
 }: {
@@ -178,7 +184,7 @@ function UserTypeFilterHeader({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});
 
 interface UserRowProps {
   readonly user: User;
@@ -198,7 +204,7 @@ interface UserRowProps {
   readonly currentUserId?: string | null;
 }
 
-function UserRow({
+const UserRow = memo(function UserRow({
   user,
   userRoles,
   availableRoles,
@@ -212,7 +218,7 @@ function UserRow({
   canDelete,
   currentUserId,
 }: UserRowProps): ReactElement {
-  const userRoleIds = userRoles.map((r) => r.id);
+  const userRoleIds = useMemo(() => userRoles.map((r) => r.id), [userRoles]);
   const isCurrentUser = currentUserId != null && user.id === currentUserId;
 
   return (
@@ -292,9 +298,9 @@ function UserRow({
       </TableCell>
     </TableRow>
   );
-}
+});
 
-export function UsersTable({
+export const UsersTable = memo(function UsersTable({
   users,
   availableRoles,
   userRolesByUserId,
@@ -320,6 +326,26 @@ export function UsersTable({
       "Invite teammates to collaborate on content, playlists, and display operations.",
   },
 }: UsersTableProps): ReactElement {
+  const systemRoleIdSet = useMemo(
+    () => new Set(systemRoleIds),
+    [systemRoleIds],
+  );
+  const handleNameSort = useCallback(
+    (field: UserSort["field"], direction: UserSort["direction"]) =>
+      onSortChange({ field, direction }),
+    [onSortChange],
+  );
+  const handleEmailSort = useCallback(
+    (field: UserSort["field"], direction: UserSort["direction"]) =>
+      onSortChange({ field, direction }),
+    [onSortChange],
+  );
+  const handleLastSeenSort = useCallback(
+    (field: UserSort["field"], direction: UserSort["direction"]) =>
+      onSortChange({ field, direction }),
+    [onSortChange],
+  );
+
   return (
     <Table>
       <TableHeader className="sticky top-0 z-10 bg-background">
@@ -338,7 +364,7 @@ export function UsersTable({
               label="Name"
               field="name"
               currentSort={sort}
-              onSort={(field, direction) => onSortChange({ field, direction })}
+              onSort={handleNameSort}
             />
           </TableHead>
           <TableHead
@@ -355,7 +381,7 @@ export function UsersTable({
               label="Email"
               field="email"
               currentSort={sort}
-              onSort={(field, direction) => onSortChange({ field, direction })}
+              onSort={handleEmailSort}
             />
           </TableHead>
           <TableHead className="w-[180px]">
@@ -393,7 +419,7 @@ export function UsersTable({
               label="Last Seen"
               field="lastSeen"
               currentSort={sort}
-              onSort={(field, direction) => onSortChange({ field, direction })}
+              onSort={handleLastSeenSort}
             />
           </TableHead>
           <TableHead className="w-[48px] text-right">
@@ -413,12 +439,10 @@ export function UsersTable({
           />
         ) : null}
         {users.map((user) => {
-          const userRoleIds = (userRolesByUserId[user.id] ?? []).map(
-            (r) => r.id,
-          );
+          const userRoles = userRolesByUserId[user.id] ?? EMPTY_ROLES;
           const isTargetSuperAdmin =
-            systemRoleIds.length > 0 &&
-            userRoleIds.some((id) => systemRoleIds.includes(id));
+            systemRoleIdSet.size > 0 &&
+            userRoles.some((role) => systemRoleIdSet.has(role.id));
           const canUpdateRow = canUpdate && !isTargetSuperAdmin;
           const canDeleteRow =
             canDelete &&
@@ -428,7 +452,7 @@ export function UsersTable({
             <UserRow
               key={user.id}
               user={user}
-              userRoles={userRolesByUserId[user.id] ?? []}
+              userRoles={userRoles}
               availableRoles={availableRoles}
               onEdit={onEdit}
               onRoleToggle={onRoleToggle}
@@ -445,4 +469,4 @@ export function UsersTable({
       </TableBody>
     </Table>
   );
-}
+});
