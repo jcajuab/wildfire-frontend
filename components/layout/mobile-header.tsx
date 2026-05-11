@@ -29,13 +29,13 @@ export function MobileHeader(): ReactElement {
   );
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-2 border-b border-sidebar-border bg-sidebar px-3 text-sidebar-foreground md:hidden">
+    <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-2 border-b border-sidebar-border bg-sidebar px-3 text-sidebar-foreground shadow-sm md:hidden">
       <Button
         variant="ghost"
         size="icon"
         onClick={toggleSidebar}
         aria-label="Toggle navigation"
-        className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        className="text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground"
       >
         <IconMenu2 className="size-5" />
       </Button>
@@ -43,9 +43,9 @@ export function MobileHeader(): ReactElement {
       <AdminNavLink
         href={homeRoute}
         aria-label="Home"
-        className="flex items-center text-sidebar-foreground"
+        className="flex min-h-9 items-center rounded-md text-sidebar-foreground outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
       >
-        <WildfireLogo className="h-5" />
+        <WildfireLogo className="h-5 w-auto" />
       </AdminNavLink>
 
       <div className="flex-1" />
@@ -63,7 +63,7 @@ export function MobileHeader(): ReactElement {
             variant="ghost"
             size="icon"
             aria-label="Account menu"
-            className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            className="text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground"
           >
             {avatar}
           </Button>

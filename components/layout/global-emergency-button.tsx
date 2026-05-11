@@ -38,13 +38,13 @@ export function GlobalEmergencyButton({
   if (variant === "sidebar") {
     if (isActive) {
       return (
-        <SidebarGroup className="mt-auto">
-          <SidebarMenu>
+        <SidebarGroup className="mt-auto px-0 pt-3">
+          <SidebarMenu className="gap-1">
             <SidebarMenuItem>
               <SidebarMenuButton
                 size="default"
                 disabled={!canUpdate || isBusy}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
+                className="h-8 rounded-md bg-destructive px-2.5 text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
                 onClick={() => {
                   void deactivate();
                 }}
@@ -59,8 +59,8 @@ export function GlobalEmergencyButton({
     }
 
     return (
-      <SidebarGroup className="mt-auto">
-        <SidebarMenu>
+      <SidebarGroup className="mt-auto px-0 pt-3">
+        <SidebarMenu className="gap-1">
           <SidebarMenuItem>
             <StartEmergencyDialog
               emergency={emergency}
@@ -70,8 +70,8 @@ export function GlobalEmergencyButton({
                   disabled={!canUpdate || isBusy}
                   className={
                     isActive
-                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
-                      : "border border-sidebar-foreground/35 bg-sidebar/70 text-sidebar-foreground hover:border-transparent hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground focus-visible:border-sidebar-foreground/45 [&_svg]:text-sidebar-foreground"
+                      ? "h-8 rounded-md bg-destructive px-2.5 text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90 hover:text-destructive-foreground [&_svg]:text-destructive-foreground"
+                      : "h-8 rounded-md border border-sidebar-foreground/24 bg-sidebar-foreground/6 px-2.5 text-sidebar-foreground/92 transition-colors hover:border-sidebar-foreground/34 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground focus-visible:border-sidebar-foreground/45 [&_svg]:text-sidebar-foreground/86"
                   }
                 >
                   <IconAlertTriangle className="size-4" aria-hidden="true" />

@@ -85,12 +85,13 @@ const INITIAL_FORM: LinkFormState = {
 const FALLBACK_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MIN_SLUG_LENGTH = 3;
 const MAX_SLUG_LENGTH = 120;
+const DISPLAY_SLUG_APOSTROPHE_PATTERN = /['`\u2018\u2019\u02bc\uff07]/g;
 
 function normalizeDisplaySlug(value: string): string {
   return value
     .trim()
     .toLowerCase()
-    .replace(/['''']/g, "")
+    .replace(DISPLAY_SLUG_APOSTROPHE_PATTERN, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
@@ -98,7 +99,7 @@ function normalizeDisplaySlug(value: string): string {
 function normalizeEditableDisplaySlug(value: string): string {
   return value
     .toLowerCase()
-    .replace(/['''']/g, "")
+    .replace(DISPLAY_SLUG_APOSTROPHE_PATTERN, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+/g, "");
 }

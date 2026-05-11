@@ -59,6 +59,9 @@ interface UserMenuProps {
   readonly trigger: (args: { avatar: ReactNode }) => ReactNode;
   readonly menuSide?: "top" | "right" | "bottom" | "left";
   readonly menuAlign?: "start" | "center" | "end";
+  readonly menuSideOffset?: number;
+  readonly menuAlignOffset?: number;
+  readonly menuContentClassName?: string;
   readonly avatarSize: number;
   readonly avatarWrapperClassName: string;
   readonly fallbackIconClassName: string;
@@ -68,6 +71,9 @@ export function UserMenu({
   trigger,
   menuSide = "top",
   menuAlign = "center",
+  menuSideOffset = 8,
+  menuAlignOffset = 0,
+  menuContentClassName,
   avatarSize,
   avatarWrapperClassName,
   fallbackIconClassName,
@@ -88,7 +94,7 @@ export function UserMenu({
       avatarUrl={avatarUrl}
       displayName={displayName}
       wrapperClassName={cn(
-        "flex items-center justify-center rounded-full bg-sidebar-foreground/15",
+        "flex items-center justify-center rounded-full bg-sidebar-foreground/14 ring-1 ring-sidebar-foreground/12",
         avatarWrapperClassName,
       )}
       fallbackIconClassName={fallbackIconClassName}
@@ -99,7 +105,13 @@ export function UserMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{trigger({ avatar })}</DropdownMenuTrigger>
-      <DropdownMenuContent side={menuSide} align={menuAlign} sideOffset={8}>
+      <DropdownMenuContent
+        side={menuSide}
+        align={menuAlign}
+        sideOffset={menuSideOffset}
+        alignOffset={menuAlignOffset}
+        className={menuContentClassName}
+      >
         {canAccessSettings ? (
           <DropdownMenuItem asChild>
             <AdminNavLink href="/admin/settings">

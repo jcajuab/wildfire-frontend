@@ -219,6 +219,16 @@ describe("DisplayRegistrationLinkDialog", () => {
     });
     expect(slugInput).toHaveValue("lobby-main-display");
 
+    fireEvent.change(displayNameInput, {
+      target: { value: "Achile's Macbook" },
+    });
+    expect(slugInput).toHaveValue("achiles-macbook");
+
+    fireEvent.change(displayNameInput, {
+      target: { value: "Achile\u2019s Macbook" },
+    });
+    expect(slugInput).toHaveValue("achiles-macbook");
+
     fireEvent.change(slugInput, { target: { value: "Custom Slug" } });
     expect(slugInput).toHaveValue("custom-slug");
 

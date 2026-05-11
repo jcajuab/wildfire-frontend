@@ -53,6 +53,10 @@ interface NavItem {
 
 const CORE_SECTION = "CORE";
 const MANAGE_SECTION = "MANAGE";
+const NAV_BUTTON_CLASS =
+  "h-8 rounded-md px-2.5 text-sidebar-foreground/88 transition-[background-color,color] hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground/95 data-[active=true]:font-medium data-[active=true]:text-primary data-[active=true]:shadow-sm data-[active=true]:hover:bg-sidebar-foreground/95 data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground/80 data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary aria-disabled:opacity-100";
+const SECTION_LABEL_CLASS =
+  "h-auto px-2 pb-2 pt-1 text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.12em] text-sidebar-foreground/62";
 
 const NAV_ICON_BY_PATH: Record<
   string,
@@ -143,21 +147,25 @@ export function AppSidebar(): ReactElement {
 
   return (
     <Sidebar variant="floating" collapsible="offcanvas" className="pr-0">
-      <SidebarHeader>
-        <AdminNavLink href={homeRoute} aria-label="Home">
-          <WildfireLogo className="h-6" />
+      <SidebarHeader className="px-4 pb-3 pt-4">
+        <AdminNavLink
+          href={homeRoute}
+          aria-label="Home"
+          className="flex min-h-10 items-center rounded-md text-sidebar-foreground outline-none transition-colors hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+        >
+          <WildfireLogo className="h-6 w-auto" />
         </AdminNavLink>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="gap-0 px-3 pb-3">
         <nav aria-label="Main navigation">
           {coreNavItems.length > 0 ? (
-            <SidebarGroup>
-              <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground">
+            <SidebarGroup className="px-0 py-4">
+              <SidebarGroupLabel className={SECTION_LABEL_CLASS}>
                 {CORE_SECTION}
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu className="gap-1">
+                <SidebarMenu className="gap-1.5">
                   {coreNavItems.map((item) => {
                     const isNavPending =
                       isPending &&
@@ -175,7 +183,7 @@ export function AppSidebar(): ReactElement {
                             item.href,
                             item.match,
                           )}
-                          className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary aria-disabled:opacity-100"
+                          className={NAV_BUTTON_CLASS}
                           tooltip={item.title}
                         >
                           <AdminNavLink
@@ -202,12 +210,12 @@ export function AppSidebar(): ReactElement {
           ) : null}
 
           {manageNavItems.length > 0 ? (
-            <SidebarGroup>
-              <SidebarGroupLabel className="text-xs font-semibold tracking-wide text-sidebar-foreground">
+            <SidebarGroup className="px-0 py-4">
+              <SidebarGroupLabel className={SECTION_LABEL_CLASS}>
                 {MANAGE_SECTION}
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu className="gap-1">
+                <SidebarMenu className="gap-1.5">
                   {manageNavItems.map((item) => {
                     const isNavPending =
                       isPending &&
@@ -225,7 +233,7 @@ export function AppSidebar(): ReactElement {
                             item.href,
                             item.match,
                           )}
-                          className="text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-foreground data-[active=true]:text-primary data-[active=true]:hover:bg-sidebar-foreground data-[active=true]:hover:text-primary [&_svg]:text-sidebar-foreground data-[active=true]:[&_svg]:text-primary data-[active=true]:hover:[&_svg]:text-primary aria-disabled:opacity-100"
+                          className={NAV_BUTTON_CLASS}
                           tooltip={item.title}
                         >
                           <AdminNavLink
@@ -256,33 +264,36 @@ export function AppSidebar(): ReactElement {
       </SidebarContent>
 
       {!isMobile ? (
-        <SidebarFooter>
+        <SidebarFooter className="px-3 py-3">
           <SidebarMenu className="gap-1">
             <SidebarMenuItem>
               <UserMenu
                 menuSide="right"
                 menuAlign="end"
+                menuSideOffset={12}
+                menuAlignOffset={-4}
+                menuContentClassName="min-w-52"
                 avatarSize={28}
                 avatarWrapperClassName="size-7"
                 fallbackIconClassName="size-6 text-sidebar-foreground"
                 trigger={({ avatar }) => (
                   <SidebarMenuButton
                     size="lg"
-                    className="w-full justify-between text-sidebar-foreground hover:bg-sidebar-foreground/14 hover:text-sidebar-foreground"
+                    className="h-12 w-full justify-between rounded-md px-2.5 text-sidebar-foreground transition-colors hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2.5">
                       {avatar}
                       <div className="flex min-w-0 flex-col items-start">
                         <span className="truncate text-sm font-medium leading-5">
                           {displayName}
                         </span>
-                        <span className="truncate text-xs leading-5 text-sidebar-foreground">
+                        <span className="truncate text-xs leading-5 text-sidebar-foreground/72">
                           {displayEmail}
                         </span>
                       </div>
                     </div>
                     <IconDotsVertical
-                      className="size-4 text-sidebar-foreground"
+                      className="size-4 shrink-0 text-sidebar-foreground/70"
                       aria-hidden="true"
                     />
                   </SidebarMenuButton>
