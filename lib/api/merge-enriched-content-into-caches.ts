@@ -1,4 +1,10 @@
-import { type BackendContent, contentApi } from "@/lib/api/content-api";
+import {
+  type BackendContent,
+  type BackendContentListItem,
+  contentApi,
+  contentMatchesOptionsQuery,
+  upsertContentIntoListDraft,
+} from "@/lib/api/content-api";
 import type { AppDispatch, RootState } from "@/lib/store";
 
 /**
@@ -17,10 +23,13 @@ export function mergeEnrichedContentIntoCaches(
   );
   for (const args of listArgs) {
     dispatch(
-      contentApi.util.updateQueryData("listContent", args, (draft) => ({
-        ...draft,
-        items: draft.items.map((c) => (c.id === content.id ? content : c)),
-      })),
+      contentApi.util.updateQueryData("listContent", args, (draft) => {
+        upsertContentIntoListDraft(
+          draft,
+          args,
+          content as BackendContentListItem,
+        );
+      }),
     );
   }
   dispatch(
@@ -34,11 +43,16 @@ export function mergeEnrichedContentIntoCaches(
     dispatch(
       contentApi.util.updateQueryData("getContentOptions", oa, (draft) => {
         const idx = draft.findIndex((c) => c.id === content.id);
+        if (!contentMatchesOptionsQuery(content, oa)) {
+          if (idx !== -1) draft.splice(idx, 1);
+          return;
+        }
         const option = {
           id: content.id,
           title: content.title,
           type: content.type,
           thumbnailUrl: content.thumbnailUrl,
+          textPreviewText: content.textPreviewText,
         };
         if (idx !== -1) {
           draft[idx] = option;

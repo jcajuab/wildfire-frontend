@@ -5,6 +5,7 @@ import {
   mergeEnrichedContentIntoCaches,
   patchContentStatusInCaches,
 } from "@/lib/api/merge-enriched-content-into-caches";
+import { revalidateWildfireTagsViaRoute } from "@/lib/api/revalidate-via-route";
 import type { DisplayLifecycleEvent } from "@/lib/api/display-events";
 import type { BackendDisplay } from "@/lib/api/displays-api";
 import { displaysApi } from "@/lib/api/displays-api";
@@ -185,6 +186,13 @@ export function handleDisplayLifecycleEvent(
           .unwrap()
           .then((full) => {
             mergeEnrichedContentIntoCaches(dispatch, getState, full);
+            dispatch(
+              api.util.invalidateTags([{ type: "Content", id: "LIST" }]),
+            );
+            void revalidateWildfireTagsViaRoute([
+              "content-list",
+              "content-options",
+            ]);
           })
           .catch(() => {
             patchContentStatusInCaches(
@@ -193,6 +201,13 @@ export function handleDisplayLifecycleEvent(
               event.contentId,
               "READY",
             );
+            dispatch(
+              api.util.invalidateTags([{ type: "Content", id: "LIST" }]),
+            );
+            void revalidateWildfireTagsViaRoute([
+              "content-list",
+              "content-options",
+            ]);
           });
         return;
       }
@@ -203,6 +218,7 @@ export function handleDisplayLifecycleEvent(
         event.contentId,
         event.status,
       );
+      dispatch(api.util.invalidateTags([{ type: "Content", id: "LIST" }]));
       return;
     }
   }

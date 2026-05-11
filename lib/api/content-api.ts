@@ -47,7 +47,7 @@ type ContentListMutable = {
   pageSize: number;
 };
 
-function contentMatchesListQuery(
+export function contentMatchesListQuery(
   content: BackendContentListItem,
   query: ContentListQuery | void,
 ): boolean {
@@ -66,7 +66,7 @@ function contentMatchesListQuery(
   return true;
 }
 
-function contentMatchesOptionsQuery(
+export function contentMatchesOptionsQuery(
   content: BackendContent,
   query: ContentOptionsQueryArg,
 ): boolean {
@@ -92,14 +92,22 @@ function trimContentListToPageSize(draft: ContentListMutable): void {
   }
 }
 
-function patchCreatedContentList(
+export function upsertContentIntoListDraft(
   draft: BackendContentListResponse,
   query: ContentListQuery | void,
   content: BackendContentListItem,
 ): void {
-  if (!contentMatchesListQuery(content, query)) return;
   const d = draft as unknown as ContentListMutable;
   const idx = d.items.findIndex((c) => c.id === content.id);
+
+  if (!contentMatchesListQuery(content, query)) {
+    if (idx !== -1) {
+      d.items.splice(idx, 1);
+      d.total = Math.max(0, d.total - 1);
+    }
+    return;
+  }
+
   if (idx !== -1) {
     d.items[idx] = content;
     return;
@@ -108,6 +116,14 @@ function patchCreatedContentList(
   if (!canInsertCreatedContent(query)) return;
   d.items.unshift(content);
   trimContentListToPageSize(d);
+}
+
+function patchCreatedContentList(
+  draft: BackendContentListResponse,
+  query: ContentListQuery | void,
+  content: BackendContentListItem,
+): void {
+  upsertContentIntoListDraft(draft, query, content);
 }
 
 const PDF_CROP_SUBMIT_WAIT_TIMEOUT_MS = 60_000;
@@ -657,6 +673,36 @@ export const contentApi = api.injectEndpoints({
                   );
                 }
               }),
+            );
+          }
+          const optionArgs = contentApi.util.selectCachedArgsForQuery(
+            getState(),
+            "getContentOptions",
+          );
+          for (const oa of optionArgs) {
+            dispatch(
+              contentApi.util.updateQueryData(
+                "getContentOptions",
+                oa,
+                (draft) => {
+                  for (const item of items) {
+                    if (!contentMatchesOptionsQuery(item, oa)) continue;
+                    const idx = draft.findIndex((c) => c.id === item.id);
+                    const option = {
+                      id: item.id,
+                      title: item.title,
+                      type: item.type,
+                      thumbnailUrl: item.thumbnailUrl,
+                      textPreviewText: item.textPreviewText,
+                    };
+                    if (idx !== -1) {
+                      draft[idx] = option;
+                    } else {
+                      draft.push(option);
+                    }
+                  }
+                },
+              ),
             );
           }
 

@@ -3,13 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconAlertTriangle } from "@tabler/icons-react";
-import { toast } from "sonner";
 import {
+  contentApi,
   useSubmitPdfCropsMutation,
   useCancelPdfUploadMutation,
   type PdfUploadAcceptedResponse,
   type PdfCropRegion,
 } from "@/lib/api/content-api";
+import { useAppDispatch } from "@/lib/hooks";
+import { CONTENT_PAGE_SIZE } from "@/lib/content-search-params";
 import dynamic from "next/dynamic";
 import type { CropRegion } from "@/components/content/pdf-crop-editor";
 import { EmptyState } from "@/components/common/empty-state";
@@ -57,13 +59,16 @@ function PdfCropSession({
   submitPdfCrops,
   cancelPdfUpload,
 }: PdfCropSessionProps) {
+  const dispatch = useAppDispatch();
   const submittedRef = useRef(false);
   const cancelStartedRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = useCallback(
     (regions: CropRegion[]) => {
       if (submittedRef.current) return;
       submittedRef.current = true;
+      setIsSubmitting(true);
 
       const mapped: PdfCropRegion[] = regions.map((r) => ({
         pageNumber: r.pageNumber,
@@ -72,14 +77,42 @@ function PdfCropSession({
         width: r.width,
         height: r.height,
       }));
-      submitPdfCrops({ uploadId, regions: mapped, contentName });
-      sessionStorage.removeItem(`${SESSION_KEY_PREFIX}${uploadId}`);
-      toast.message(
-        "Processing PDF crops. You'll be notified when they're ready.",
-      );
-      router.push("/admin/content");
+      void (async () => {
+        try {
+          await submitPdfCrops({
+            uploadId,
+            regions: mapped,
+            contentName,
+          }).unwrap();
+        } catch {
+          submittedRef.current = false;
+          return;
+        }
+
+        try {
+          await dispatch(
+            contentApi.endpoints.listContent.initiate(
+              {
+                page: 1,
+                pageSize: CONTENT_PAGE_SIZE,
+                sortBy: "createdAt",
+                sortDirection: "desc",
+              },
+              { forceRefetch: true, subscribe: false },
+            ),
+          ).unwrap();
+        } catch {
+          // The mutation already patched/invalidation-tagged content caches; this
+          // refetch is a best-effort guard against a stale RSC seed on navigation.
+        } finally {
+          sessionStorage.removeItem(`${SESSION_KEY_PREFIX}${uploadId}`);
+          router.push("/admin/content");
+          router.refresh();
+          setIsSubmitting(false);
+        }
+      })();
     },
-    [uploadId, submitPdfCrops, router, contentName],
+    [contentName, dispatch, router, submitPdfCrops, uploadId],
   );
 
   const handleCancel = useCallback(() => {
@@ -104,7 +137,7 @@ function PdfCropSession({
       pages={[...session.pages]}
       filename={session.filename}
       contentName={contentName}
-      isSubmitting={false}
+      isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
       onCancel={handleCancel}
     />

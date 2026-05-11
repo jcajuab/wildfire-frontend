@@ -6,11 +6,13 @@ import {
   type BackendContent,
   type BackendContentJob,
 } from "@/lib/api/content-api";
+import { api } from "@/lib/api/api";
 import { notifyApiError } from "@/lib/api/get-api-error-message";
 import {
   mergeEnrichedContentIntoCaches,
   patchContentStatusInCaches,
 } from "@/lib/api/merge-enriched-content-into-caches";
+import { revalidateWildfireTagsViaRoute } from "@/lib/api/revalidate-via-route";
 import { useAppDispatch, useAppStore } from "@/lib/hooks";
 import { waitForContentJob } from "./content-job-sse-client";
 
@@ -54,6 +56,13 @@ export function useContentJobMonitor(
             .fetchContent(job.contentId)
             .then((full) => {
               mergeEnrichedContentIntoCaches(dispatch, store.getState, full);
+              dispatch(
+                api.util.invalidateTags([{ type: "Content", id: "LIST" }]),
+              );
+              void revalidateWildfireTagsViaRoute([
+                "content-list",
+                "content-options",
+              ]);
             })
             .catch(() => {
               patchContentStatusInCaches(
@@ -62,6 +71,13 @@ export function useContentJobMonitor(
                 job.contentId,
                 "READY",
               );
+              dispatch(
+                api.util.invalidateTags([{ type: "Content", id: "LIST" }]),
+              );
+              void revalidateWildfireTagsViaRoute([
+                "content-list",
+                "content-options",
+              ]);
             })
             .finally(() => {
               toast.success(job.successMessage);

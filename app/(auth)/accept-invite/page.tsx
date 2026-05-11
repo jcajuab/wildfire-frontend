@@ -135,7 +135,7 @@ function AcceptInvitePageBody(): ReactElement {
         ) : null}
 
         <div className="space-y-2">
-          <Label htmlFor="name">Display name</Label>
+          <Label htmlFor="name">Full name</Label>
           <Input
             id="name"
             type="text"
