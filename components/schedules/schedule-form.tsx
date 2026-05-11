@@ -311,12 +311,11 @@ function ScheduleFormFrame({
   const [currentMinute, setCurrentMinute] = useState(() => new Date());
 
   useEffect(() => {
-    if (!isCreate) return;
     const intervalId = window.setInterval(() => {
       setCurrentMinute(new Date());
     }, 30_000);
     return () => window.clearInterval(intervalId);
-  }, [isCreate]);
+  }, []);
 
   const resolvedTargetDisplayIds = useMemo(() => {
     if (!isCreate || targetMode === "displays") {
@@ -339,8 +338,10 @@ function ScheduleFormFrame({
     return formData.endTime <= formData.startTime;
   }, [formData.startTime, formData.endTime]);
 
-  const isStartTimeBeforeNow =
-    isCreate && isScheduleStartBeforeNow(formData, currentMinute);
+  const isStartTimeBeforeNow = isScheduleStartBeforeNow(
+    formData,
+    currentMinute,
+  );
 
   const canSubmit = useMemo(() => {
     const hasTargets =
@@ -373,7 +374,7 @@ function ScheduleFormFrame({
 
   async function handleSubmit(): Promise<void> {
     if (!canSubmit || isSubmitting) return;
-    if (isCreate && isScheduleStartBeforeNow(formData)) return;
+    if (isScheduleStartBeforeNow(formData)) return;
     setIsSubmitting(true);
     onSubmittingChange?.(true);
     try {
@@ -439,7 +440,7 @@ function ScheduleFormFrame({
               id="schedule-start-date"
               type="date"
               value={formData.startDate}
-              min={isCreate ? getTodayDateString(currentMinute) : undefined}
+              min={getTodayDateString(currentMinute)}
               disabled={isSubmitting}
               aria-invalid={isStartTimeBeforeNow}
               onChange={(event) =>
@@ -477,7 +478,6 @@ function ScheduleFormFrame({
               type="time"
               value={formData.startTime}
               min={
-                isCreate &&
                 formData.startDate === getTodayDateString(currentMinute)
                   ? getCurrentTimeString(currentMinute)
                   : undefined

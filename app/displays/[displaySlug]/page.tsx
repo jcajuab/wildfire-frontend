@@ -24,27 +24,40 @@ function PlaybackCountdown({
   readonly duration: number;
   readonly resetKey: string;
 }) {
-  const [countdown, setCountdown] = useState(duration);
+  const [counterState, setCounterState] = useState({
+    resetKey,
+    duration,
+    countdown: duration,
+  });
+  if (
+    counterState.resetKey !== resetKey ||
+    counterState.duration !== duration
+  ) {
+    setCounterState({ resetKey, duration, countdown: duration });
+  }
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCountdown((prev) => (prev > 1 ? prev - 1 : prev));
+      setCounterState((prev) => ({
+        ...prev,
+        countdown: prev.countdown > 1 ? prev.countdown - 1 : prev.countdown,
+      }));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [duration, resetKey]);
 
   return (
     <div
       key={resetKey}
-      className="pointer-events-none absolute bottom-4 right-4 z-30 select-none text-5xl font-bold text-white"
+      className="pointer-events-none absolute bottom-4 right-4 z-[9999] select-none text-5xl font-bold text-white"
       style={{
         textShadow:
           "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
       }}
       aria-hidden="true"
     >
-      {countdown}
+      {counterState.countdown}
     </div>
   );
 }

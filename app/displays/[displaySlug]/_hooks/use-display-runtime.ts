@@ -22,7 +22,7 @@ import { createScheduleBoundaryTimer } from "@/lib/display-runtime/schedule-time
 import { createDisplaySseClient } from "@/lib/display-runtime/sse-client";
 import { useMounted } from "@/hooks/use-mounted";
 
-const FALLBACK_POLL_MS = 30_000;
+const MANIFEST_POLL_MS = 30_000;
 const HEARTBEAT_MS = 30_000;
 const VIEWER_POLL_MS = 30_000;
 
@@ -150,8 +150,6 @@ export function useDisplayRuntime(displaySlug: string) {
       const streamUrl = `${baseUrl}/display-runtime/${encodeURIComponent(
         registration.slug,
       )}/stream`;
-      let latestConnectionState: "connected" | "reconnecting" | "closed" =
-        "closed";
       let pollTimerId: ReturnType<typeof setInterval> | null = null;
       let heartbeatTimerId: ReturnType<typeof setInterval> | null = null;
 
@@ -174,7 +172,6 @@ export function useDisplayRuntime(displaySlug: string) {
             body: "",
           }),
         onStateChange: (nextState) => {
-          latestConnectionState = nextState;
           setConnectionState(nextState);
         },
         onEvent: (eventType) => {
@@ -204,15 +201,12 @@ export function useDisplayRuntime(displaySlug: string) {
       });
 
       pollTimerId = setInterval(() => {
-        if (latestConnectionState === "connected") {
-          return;
-        }
         void refreshManifest(keyPair.privateKey).catch((error) => {
           setErrorMessage(
             error instanceof Error ? error.message : "Failed to poll manifest",
           );
         });
-      }, FALLBACK_POLL_MS);
+      }, MANIFEST_POLL_MS);
 
       heartbeatTimerId = setInterval(() => {
         void postSignedHeartbeat({
@@ -312,8 +306,6 @@ export function useDisplayRuntime(displaySlug: string) {
       restartBoundaryTimer();
 
       const streamUrl = `${baseUrl}/displays/by-slug/${encodeURIComponent(displaySlug)}/stream`;
-      let latestConnectionState: "connected" | "reconnecting" | "closed" =
-        "connected";
       let pollTimerId: ReturnType<typeof setInterval> | null = null;
 
       const teardownAll = () => {
@@ -330,7 +322,6 @@ export function useDisplayRuntime(displaySlug: string) {
           return getAuthorizationHeaders();
         },
         onStateChange: (nextState) => {
-          latestConnectionState = nextState;
           setConnectionState(nextState);
         },
         onEvent: () => {
@@ -351,9 +342,6 @@ export function useDisplayRuntime(displaySlug: string) {
       });
 
       pollTimerId = setInterval(() => {
-        if (latestConnectionState === "connected") {
-          return;
-        }
         void refreshViewerManifest().catch((error) => {
           setErrorMessage(
             error instanceof Error ? error.message : "Failed to poll manifest",
