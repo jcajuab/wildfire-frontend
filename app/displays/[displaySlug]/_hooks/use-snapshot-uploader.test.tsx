@@ -10,7 +10,8 @@ import { getStoredDisplayKeyPair } from "@/lib/crypto/key-manager";
 import type { DisplayRegistrationRecord } from "@/lib/display-identity/registration-store";
 
 vi.mock("@/lib/display-api/client", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/display-api/client")>();
+  const actual =
+    await importOriginal<typeof import("@/lib/display-api/client")>();
   return {
     ...actual,
     postSignedSnapshot: vi.fn(),

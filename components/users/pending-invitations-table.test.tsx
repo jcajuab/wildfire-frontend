@@ -286,9 +286,7 @@ describe("PendingInvitationsTable", () => {
       screen.getByRole("heading", { name: "No invitations yet" }),
     ).toBeVisible();
     expect(
-      screen
-        .getByRole("heading", { name: "No invitations yet" })
-        .closest("tr"),
+      screen.getByRole("heading", { name: "No invitations yet" }).closest("tr"),
     ).toHaveClass("border-0", "hover:bg-transparent");
     expect(
       screen
