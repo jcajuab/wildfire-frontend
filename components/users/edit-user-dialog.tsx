@@ -122,16 +122,6 @@ function EditUserForm({
       </DialogHeader>
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="edit-user-type">User Type</Label>
-          <Input
-            id="edit-user-type"
-            value={userTypeLabel}
-            readOnly
-            aria-readonly="true"
-            className="cursor-default bg-muted/40"
-          />
-        </div>
-        <div className="space-y-2">
           <RequiredLabel htmlFor="edit-user-name">Name</RequiredLabel>
           <Input
             id="edit-user-name"
@@ -151,7 +141,7 @@ function EditUserForm({
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="username"
+                    placeholder="Enter username"
                     disabled
                     className="disabled:cursor-help"
                   />
@@ -167,7 +157,7 @@ function EditUserForm({
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="username"
+              placeholder="Enter username"
             />
           )}
         </div>
@@ -178,7 +168,7 @@ function EditUserForm({
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="user@example.com"
+            placeholder="Enter email address"
             aria-invalid={!isEmailValid}
           />
           {!isEmailValid ? (
@@ -186,6 +176,16 @@ function EditUserForm({
               Please enter a valid email address.
             </p>
           ) : null}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="edit-user-type">User Type</Label>
+          <Input
+            id="edit-user-type"
+            type="text"
+            value={userTypeLabel}
+            disabled
+            readOnly
+          />
         </div>
       </div>
       <DialogFooter className="flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -258,7 +258,7 @@ export function EditUserDialog({
   return (
     <Dialog open={open} onOpenChange={guardedOnOpenChange}>
       <DialogContent
-        className="sm:max-w-md"
+        className="sm:max-w-lg"
         onInteractOutside={(e) => {
           if (isSubmitting) e.preventDefault();
         }}

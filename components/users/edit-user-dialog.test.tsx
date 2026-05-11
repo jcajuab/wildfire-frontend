@@ -39,11 +39,19 @@ describe("EditUserDialog", () => {
   test("shows user type as a read-only form field", () => {
     renderDialog();
 
-    expect(screen.getByLabelText("User Type")).toHaveValue("DCISM");
-    expect(screen.getByLabelText("User Type")).toHaveAttribute(
-      "aria-readonly",
-      "true",
-    );
+    const userType = screen.getByLabelText("User Type");
+    expect(userType).toHaveValue("DCISM");
+    expect(userType).toBeDisabled();
+    expect(userType).toBeInstanceOf(HTMLInputElement);
+  });
+
+  test("marks invited users in the read-only user type field", () => {
+    renderDialog({
+      ...baseUser,
+      isInvitedUser: true,
+    });
+
+    expect(screen.getByLabelText("User Type")).toHaveValue("Invited");
   });
 
   test("locks DCISM username editing without inline helper copy", () => {
@@ -66,5 +74,25 @@ describe("EditUserDialog", () => {
     expect(
       screen.getByRole("button", { name: "Unban User" }),
     ).toBeInTheDocument();
+  });
+
+  test("orders editable fields before the disabled user type field", () => {
+    renderDialog();
+
+    const labels = screen
+      .getAllByText(/^(Name|Username|Email|User Type)\*?$/)
+      .map((label) => label.textContent);
+
+    expect(labels).toEqual(["Name", "Username", "Email", "User Type"]);
+  });
+
+  test("keeps form completion actions ordered after the status action", () => {
+    renderDialog();
+
+    expect(
+      screen.getByRole("button", { name: "Ban User" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 });

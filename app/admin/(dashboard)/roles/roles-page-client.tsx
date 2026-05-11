@@ -7,7 +7,6 @@ import { IconPlus } from "@tabler/icons-react";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
-import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { SearchControl } from "@/components/common/search-control";
 import { PaginationFooter } from "@/components/common/pagination-footer";
@@ -155,42 +154,35 @@ export function RolesPageView({
               ) : null}
 
               <div className="min-h-0 flex-1 overflow-y-auto">
-                {roles.length === 0 ? (
-                  <EmptyState
-                    title={search ? "No roles found" : "No roles yet"}
-                    description={
-                      search
-                        ? "Try a different role name or description."
-                        : "Create roles to group permissions and assign them to users."
-                    }
-                    action={
-                      !search ? (
-                        <Can permission="roles:create">
-                          <Button asChild>
-                            <Link href={ROLE_CREATE_PATH}>
-                              <IconPlus
-                                className="size-4"
-                                aria-hidden="true"
-                                data-icon="inline-start"
-                              />
-                              Create Role
-                            </Link>
-                          </Button>
-                        </Can>
-                      ) : null
-                    }
-                  />
-                ) : (
-                  <RolesTable
-                    roles={roles}
-                    sort={sort}
-                    onSortChange={handleSortChange}
-                    onEdit={handleEdit}
-                    onDelete={handleDeleteRole}
-                    canEdit={canUpdateRole}
-                    canDelete={canDeleteRole}
-                  />
-                )}
+                <RolesTable
+                  roles={roles}
+                  sort={sort}
+                  onSortChange={handleSortChange}
+                  onEdit={handleEdit}
+                  onDelete={handleDeleteRole}
+                  canEdit={canUpdateRole}
+                  canDelete={canDeleteRole}
+                  emptyState={{
+                    title: search ? "No roles found" : "No roles yet",
+                    description: search
+                      ? "Try a different role name or description."
+                      : "Create roles to group permissions and assign them to users.",
+                    action: search ? null : (
+                      <Can permission="roles:create">
+                        <Button asChild>
+                          <Link href={ROLE_CREATE_PATH}>
+                            <IconPlus
+                              className="size-4"
+                              aria-hidden="true"
+                              data-icon="inline-start"
+                            />
+                            Create Role
+                          </Link>
+                        </Button>
+                      </Can>
+                    ),
+                  }}
+                />
               </div>
 
               <footer className="border-t border-border bg-background/80">

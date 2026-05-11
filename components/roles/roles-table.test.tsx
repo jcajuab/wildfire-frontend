@@ -182,7 +182,22 @@ describe("RolesTable", () => {
     renderTable({ roles: [] });
 
     expect(
+      screen.getByRole("columnheader", { name: /Name.*sort descending/ }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("columnheader", { name: "Description" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("columnheader", { name: /Users.*sort ascending/ }),
+    ).toBeVisible();
+    expect(
       screen.getByRole("heading", { name: "No roles found" }),
     ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "No roles found" }).closest("tr"),
+    ).toHaveClass("border-0", "hover:bg-transparent");
+    expect(
+      screen.getByRole("heading", { name: "No roles found" }).closest("div"),
+    ).toHaveClass("border-0", "bg-transparent");
   });
 });

@@ -28,7 +28,10 @@ export function useSnapshotUploader(
   registration: DisplayRegistrationRecord | null,
 ) {
   const snapshotUploadingRef = useRef(false);
-  const lastSnapshotUrlRef = useRef<string | null>(null);
+  const lastSnapshotRef = useRef<{
+    readonly sourceUrl: string;
+    readonly uploadedAtMs: number;
+  } | null>(null);
   const manifestRef = useRef(manifest);
   const currentIndexRef = useRef(currentIndex);
 
@@ -64,7 +67,11 @@ export function useSnapshotUploader(
       if (!snapshotSourceUrl) {
         return;
       }
-      if (snapshotSourceUrl === lastSnapshotUrlRef.current) {
+      const lastSnapshot = lastSnapshotRef.current;
+      if (
+        lastSnapshot?.sourceUrl === snapshotSourceUrl &&
+        Date.now() - lastSnapshot.uploadedAtMs < SNAPSHOT_UPLOAD_MS
+      ) {
         return;
       }
 
@@ -92,7 +99,10 @@ export function useSnapshotUploader(
           privateKey: keyPair.privateKey,
           imageDataUrl,
         });
-        lastSnapshotUrlRef.current = snapshotSourceUrl;
+        lastSnapshotRef.current = {
+          sourceUrl: snapshotSourceUrl,
+          uploadedAtMs: Date.now(),
+        };
       } catch {
         // Snapshot failures are non-fatal; runtime playback should continue.
       } finally {

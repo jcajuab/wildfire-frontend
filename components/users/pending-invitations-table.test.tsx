@@ -263,4 +263,37 @@ describe("PendingInvitationsTable", () => {
       screen.getByRole("menuitem", { name: "Regenerating..." }),
     ).toHaveAttribute("aria-disabled", "true");
   });
+
+  test("keeps table headers and status filter visible for empty results", () => {
+    renderTable({
+      invitations: [],
+      onStatusFilterChange: vi.fn(),
+      onSortChange: vi.fn(),
+    });
+
+    expect(
+      screen.getByRole("columnheader", { name: /Invitee.*sort ascending/ }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", {
+        name: "Filter invitations by status",
+      }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("columnheader", { name: /Expires.*sort ascending/ }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "No invitations yet" }),
+    ).toBeVisible();
+    expect(
+      screen
+        .getByRole("heading", { name: "No invitations yet" })
+        .closest("tr"),
+    ).toHaveClass("border-0", "hover:bg-transparent");
+    expect(
+      screen
+        .getByRole("heading", { name: "No invitations yet" })
+        .closest("div"),
+    ).toHaveClass("border-0", "bg-transparent");
+  });
 });

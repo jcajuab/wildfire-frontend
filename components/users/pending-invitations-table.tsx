@@ -12,7 +12,7 @@ import {
 } from "@tabler/icons-react";
 import { SortableHeader } from "@/components/common/sortable-header";
 import { TableHeaderControl } from "@/components/common/table-header-control";
-import { EmptyState } from "@/components/common/empty-state";
+import { TableEmptyState } from "@/components/common/table-empty-state";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,11 @@ interface PendingInvitationsTableProps {
   readonly onSortChange?: (sort: InvitationSort) => void;
   readonly onResend: (invitationId: string) => void;
   readonly onSendInvitation?: () => void;
+  readonly emptyState?: {
+    readonly title: string;
+    readonly description: string;
+    readonly action?: ReactElement | null;
+  };
 }
 
 const statusClassName: Readonly<Record<InvitationStatus, string>> = {
@@ -221,6 +226,14 @@ export function PendingInvitationsTable({
   onSortChange,
   onResend,
   onSendInvitation,
+  emptyState = {
+    title: "No invitations yet",
+    description:
+      "Invitations you send will appear here with status and expiration details.",
+    action: onSendInvitation ? (
+      <Button onClick={onSendInvitation}>Send Invitation</Button>
+    ) : null,
+  },
 }: PendingInvitationsTableProps): ReactElement {
   const [invitationToDelete, setInvitationToDelete] =
     useState<InvitationRecord | null>(null);
@@ -238,22 +251,6 @@ export function PendingInvitationsTable({
     return (
       <div className="flex min-h-28 items-center justify-center">
         <p className="text-sm text-muted-foreground">Loading invitations…</p>
-      </div>
-    );
-  }
-
-  if (invitations.length === 0) {
-    return (
-      <div className="py-6">
-        <EmptyState
-          title="No invitations yet"
-          description="Invitations you send will appear here with status and expiration details."
-          action={
-            onSendInvitation ? (
-              <Button onClick={onSendInvitation}>Send Invitation</Button>
-            ) : null
-          }
-        />
       </div>
     );
   }
@@ -324,6 +321,14 @@ export function PendingInvitationsTable({
           </TableRow>
         </TableHeader>
         <TableBody className="[&_tr:last-child]:border-b">
+          {invitations.length === 0 ? (
+            <TableEmptyState
+              colSpan={4}
+              title={emptyState.title}
+              description={emptyState.description}
+              action={emptyState.action}
+            />
+          ) : null}
           {invitations.map((invitation) => {
             const isResending = resendingInvitationId === invitation.id;
             const isDeleting =

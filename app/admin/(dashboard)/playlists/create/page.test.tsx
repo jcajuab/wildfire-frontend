@@ -222,7 +222,9 @@ describe("CreatePlaylistPage", () => {
     await waitFor(() => {
       expect(notifyApiErrorMock).toHaveBeenCalled();
     });
-    expect(screen.getByLabelText("Playlist Name")).toHaveValue("Morning Playlist");
+    expect(screen.getByLabelText("Playlist Name")).toHaveValue(
+      "Morning Playlist",
+    );
     expect(pushMock).not.toHaveBeenCalled();
   });
 
@@ -331,7 +333,9 @@ describe("CreatePlaylistPage", () => {
     });
     expect(notifyApiErrorMock).toHaveBeenCalled();
     expect(pushMock).not.toHaveBeenCalled();
-    expect(screen.getByLabelText("Playlist Name")).toHaveValue("Morning Playlist");
+    expect(screen.getByLabelText("Playlist Name")).toHaveValue(
+      "Morning Playlist",
+    );
     expect(screen.getByText("Poster")).toBeInTheDocument();
   });
 });

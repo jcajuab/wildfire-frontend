@@ -10,7 +10,7 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 
-import { EmptyState } from "@/components/common/empty-state";
+import { TableEmptyState } from "@/components/common/table-empty-state";
 import {
   Table,
   TableBody,
@@ -88,18 +88,6 @@ export function LogsTable({
     if (!open) setSelectedLog(null);
   }, []);
 
-  if (logs.length === 0) {
-    return (
-      <div className="py-8">
-        <EmptyState
-          title="No logs found"
-          description={emptyDescription}
-          icon={<IconHistory className="size-7" aria-hidden="true" />}
-        />
-      </div>
-    );
-  }
-
   return (
     <>
       <Table>
@@ -115,6 +103,14 @@ export function LogsTable({
           </TableRow>
         </TableHeader>
         <TableBody className="[&_tr:last-child]:border-b">
+          {logs.length === 0 ? (
+            <TableEmptyState
+              colSpan={5}
+              title="No logs found"
+              description={emptyDescription}
+              icon={<IconHistory className="size-7" aria-hidden="true" />}
+            />
+          ) : null}
           {logs.map((log) => (
             <TableRow key={log.id} className="h-12">
               <TableCell className="text-muted-foreground tabular-nums">

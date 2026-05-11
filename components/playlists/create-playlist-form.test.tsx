@@ -67,7 +67,9 @@ describe("CreatePlaylistForm", () => {
 
     expect(screen.getByLabelText("Playlist Name")).toBeInTheDocument();
     expect(screen.getByLabelText("Description")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Enter playlist name")).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Enter playlist name"),
+    ).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText(
         "Describe the playlist purpose or playback context",
@@ -320,7 +322,9 @@ describe("CreatePlaylistForm", () => {
     await user.click(screen.getByRole("button", { name: "Poster" }));
     await user.click(screen.getByRole("button", { name: "Create" }));
 
-    expect(screen.getByLabelText("Playlist Name")).toHaveValue("Morning Playlist");
+    expect(screen.getByLabelText("Playlist Name")).toHaveValue(
+      "Morning Playlist",
+    );
   });
 
   test("loops video items by default without showing a loop toggle", async () => {

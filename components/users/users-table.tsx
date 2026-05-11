@@ -5,8 +5,8 @@ import Image from "next/image";
 import { IconFilter, IconUser } from "@tabler/icons-react";
 import { UserActionsMenu } from "./user-actions-menu";
 
-import { EmptyState } from "@/components/common/empty-state";
 import { SortableHeader } from "@/components/common/sortable-header";
+import { TableEmptyState } from "@/components/common/table-empty-state";
 import { TableHeaderControl } from "@/components/common/table-header-control";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -53,6 +53,11 @@ interface UsersTableProps {
   readonly systemRoleIds?: readonly string[];
   /** When set, the row for this user id will show " (You)" after the name. */
   readonly currentUserId?: string | null;
+  readonly emptyState?: {
+    readonly title: string;
+    readonly description: string;
+    readonly action?: ReactElement | null;
+  };
 }
 
 const USER_TYPE_LABELS: Record<UserTypeFilter, string> = {
@@ -304,19 +309,12 @@ export function UsersTable({
   canDelete = true,
   systemRoleIds = [],
   currentUserId,
+  emptyState = {
+    title: "No users found",
+    description:
+      "Invite teammates to collaborate on content, playlists, and display operations.",
+  },
 }: UsersTableProps): ReactElement {
-  if (users.length === 0) {
-    return (
-      <div className="py-8">
-        <EmptyState
-          title="No users found"
-          description="Invite teammates to collaborate on content, playlists, and display operations."
-          icon={<IconUser className="size-7" aria-hidden="true" />}
-        />
-      </div>
-    );
-  }
-
   return (
     <Table>
       <TableHeader className="sticky top-0 z-10 bg-background">
@@ -399,6 +397,15 @@ export function UsersTable({
         </TableRow>
       </TableHeader>
       <TableBody className="[&_tr:last-child]:border-b">
+        {users.length === 0 ? (
+          <TableEmptyState
+            colSpan={6}
+            title={emptyState.title}
+            description={emptyState.description}
+            action={emptyState.action}
+            icon={<IconUser className="size-7" aria-hidden="true" />}
+          />
+        ) : null}
         {users.map((user) => {
           const userRoleIds = (userRolesByUserId[user.id] ?? []).map(
             (r) => r.id,

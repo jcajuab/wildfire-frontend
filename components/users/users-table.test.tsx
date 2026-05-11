@@ -53,6 +53,7 @@ function renderUsersTable(
     readonly availableRoles?: readonly UserRole[];
     readonly roleFilter?: string;
     readonly onRoleFilterChange?: (roleId: string) => void;
+    readonly onUserTypeFilterChange?: () => void;
     readonly systemRoleIds?: readonly string[];
   } = {},
 ) {
@@ -74,6 +75,7 @@ function renderUsersTable(
       onResetPassword={vi.fn()}
       roleFilter={overrides.roleFilter}
       onRoleFilterChange={overrides.onRoleFilterChange}
+      onUserTypeFilterChange={overrides.onUserTypeFilterChange}
       canUpdate={overrides.canUpdate}
       canDelete={overrides.canDelete}
       systemRoleIds={overrides.systemRoleIds}
@@ -256,5 +258,36 @@ describe("UsersTable", () => {
     expect(
       screen.queryByRole("button", { name: "Actions for Alice" }),
     ).not.toBeInTheDocument();
+  });
+
+  test("keeps table headers and filters visible for empty results", () => {
+    renderUsersTable({
+      users: [],
+      userRolesByUserId: {},
+      onRoleFilterChange: vi.fn(),
+      onUserTypeFilterChange: vi.fn(),
+    });
+
+    expect(
+      screen.getByRole("columnheader", { name: /Name.*sort descending/ }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("columnheader", { name: /Email.*sort ascending/ }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Filter users by user type" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Filter users by role" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "No users found" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "No users found" }).closest("tr"),
+    ).toHaveClass("border-0", "hover:bg-transparent");
+    expect(
+      screen.getByRole("heading", { name: "No users found" }).closest("div"),
+    ).toHaveClass("border-0", "bg-transparent");
   });
 });

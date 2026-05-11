@@ -7,7 +7,6 @@ import { toast } from "sonner";
 
 import { Can } from "@/components/common/can";
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
-import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -236,6 +235,10 @@ export function UsersPageView({
 
   const selectedTab = canCreateUser ? activeTab : "users";
   const invitationsTotal = invitationsData?.total ?? 0;
+  const hasActiveUserFilters =
+    search.trim().length > 0 || roleId !== "all" || userType !== "all";
+  const hasActiveInvitationFilters =
+    invitationSearch.trim().length > 0 || invitationStatusFilter !== "all";
   const selectedUserRoleIds =
     selectedUser == null
       ? []
@@ -368,52 +371,47 @@ export function UsersPageView({
                   </div>
                 ) : null}
                 <div className="min-h-0 flex-1 overflow-y-auto">
-                  {users.length === 0 && !usersFetching ? (
-                    <EmptyState
-                      title={search ? "No users found" : "No users yet"}
-                      description={
-                        search
-                          ? "Try a different name, username, or email."
-                          : "Invite users to give them access to WILDFIRE."
-                      }
-                      action={
-                        !search ? (
-                          <Can permission="users:create">
-                            <Button onClick={() => setIsInviteDialogOpen(true)}>
-                              <IconPlus
-                                className="size-4"
-                                aria-hidden="true"
-                                data-icon="inline-start"
-                              />
-                              Invite User
-                            </Button>
-                          </Can>
-                        ) : null
-                      }
-                    />
-                  ) : (
-                    <UsersTable
-                      users={users}
-                      availableRoles={availableRoles}
-                      userRolesByUserId={userRolesByUserId}
-                      sort={sort}
-                      onSortChange={handleSortChange}
-                      roleFilter={roleId}
-                      onRoleFilterChange={handleRoleFilterChange}
-                      userTypeFilter={userType}
-                      onUserTypeFilterChange={handleUserTypeFilterChange}
-                      onEdit={handleEdit}
-                      onRoleToggle={handleRoleToggle}
-                      onBanUser={handleRequestBanUser}
-                      onUnbanUser={handleRequestUnbanUser}
-                      onResetPassword={handleResetPassword}
-                      canUpdate={canUpdateUser}
-                      canDelete={canDeleteUser}
-                      isSuperAdmin={isAdmin}
-                      systemRoleIds={systemRoleIds}
-                      currentUserId={currentUser?.id}
-                    />
-                  )}
+                  <UsersTable
+                    users={users}
+                    availableRoles={availableRoles}
+                    userRolesByUserId={userRolesByUserId}
+                    sort={sort}
+                    onSortChange={handleSortChange}
+                    roleFilter={roleId}
+                    onRoleFilterChange={handleRoleFilterChange}
+                    userTypeFilter={userType}
+                    onUserTypeFilterChange={handleUserTypeFilterChange}
+                    onEdit={handleEdit}
+                    onRoleToggle={handleRoleToggle}
+                    onBanUser={handleRequestBanUser}
+                    onUnbanUser={handleRequestUnbanUser}
+                    onResetPassword={handleResetPassword}
+                    canUpdate={canUpdateUser}
+                    canDelete={canDeleteUser}
+                    isSuperAdmin={isAdmin}
+                    systemRoleIds={systemRoleIds}
+                    currentUserId={currentUser?.id}
+                    emptyState={{
+                      title: hasActiveUserFilters
+                        ? "No users found"
+                        : "No users yet",
+                      description: hasActiveUserFilters
+                        ? "Try adjusting your search, role, or user type filters."
+                        : "Invite users to give them access to WILDFIRE.",
+                      action: hasActiveUserFilters ? null : (
+                        <Can permission="users:create">
+                          <Button onClick={() => setIsInviteDialogOpen(true)}>
+                            <IconPlus
+                              className="size-4"
+                              aria-hidden="true"
+                              data-icon="inline-start"
+                            />
+                            Invite User
+                          </Button>
+                        </Can>
+                      ),
+                    }}
+                  />
                 </div>
               </TabsContent>
 
@@ -433,6 +431,19 @@ export function UsersPageView({
                       resendingInvitationId={resendingInvitationId}
                       onResend={handleResendInvitation}
                       onSendInvitation={() => setIsInviteDialogOpen(true)}
+                      emptyState={{
+                        title: hasActiveInvitationFilters
+                          ? "No invitations found"
+                          : "No invitations yet",
+                        description: hasActiveInvitationFilters
+                          ? "Try adjusting your search or status filter."
+                          : "Invitations you send will appear here with status and expiration details.",
+                        action: hasActiveInvitationFilters ? null : (
+                          <Button onClick={() => setIsInviteDialogOpen(true)}>
+                            Send Invitation
+                          </Button>
+                        ),
+                      }}
                     />
                   </div>
                 </TabsContent>

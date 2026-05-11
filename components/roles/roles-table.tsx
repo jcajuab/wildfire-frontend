@@ -8,8 +8,8 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 
-import { EmptyState } from "@/components/common/empty-state";
 import { SortableHeader } from "@/components/common/sortable-header";
+import { TableEmptyState } from "@/components/common/table-empty-state";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -39,6 +39,11 @@ interface RolesTableProps {
   readonly deleteLabel?: string;
   readonly getDeleteLabel?: (role: Role) => string;
   readonly isDeleteDisabled?: (role: Role) => boolean;
+  readonly emptyState?: {
+    readonly title: string;
+    readonly description: string;
+    readonly action?: ReactElement | null;
+  };
 }
 
 interface RoleActionsMenuProps {
@@ -114,19 +119,12 @@ export function RolesTable({
   deleteLabel = "Delete Role",
   getDeleteLabel,
   isDeleteDisabled,
+  emptyState = {
+    title: "No roles found",
+    description:
+      "Create role templates to standardize access control across your team.",
+  },
 }: RolesTableProps): ReactElement {
-  if (roles.length === 0) {
-    return (
-      <div className="py-8">
-        <EmptyState
-          title="No roles found"
-          description="Create role templates to standardize access control across your team."
-          icon={<IconUsers className="size-7" aria-hidden="true" />}
-        />
-      </div>
-    );
-  }
-
   return (
     <Table>
       <TableHeader className="sticky top-0 z-10 bg-background">
@@ -173,6 +171,15 @@ export function RolesTable({
         </TableRow>
       </TableHeader>
       <TableBody className="[&_tr:last-child]:border-b">
+        {roles.length === 0 ? (
+          <TableEmptyState
+            colSpan={4}
+            title={emptyState.title}
+            description={emptyState.description}
+            action={emptyState.action}
+            icon={<IconUsers className="size-7" aria-hidden="true" />}
+          />
+        ) : null}
         {roles.map((role) => (
           <TableRow key={role.id} className="h-12">
             <TableCell>

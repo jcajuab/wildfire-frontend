@@ -103,8 +103,24 @@ describe("LogsTable", () => {
     );
 
     expect(
+      screen.getByRole("columnheader", { name: "Timestamp" }),
+    ).toBeVisible();
+    expect(screen.getByRole("columnheader", { name: "Author" })).toBeVisible();
+    expect(
+      screen.getByRole("columnheader", { name: "Description" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("columnheader", { name: "Metadata" }),
+    ).toBeVisible();
+    expect(
       screen.getByRole("heading", { name: "No logs found" }),
     ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "No logs found" }).closest("tr"),
+    ).toHaveClass("border-0", "hover:bg-transparent");
+    expect(
+      screen.getByRole("heading", { name: "No logs found" }).closest("div"),
+    ).toHaveClass("border-0", "bg-transparent");
     expect(
       screen.getByText("No audit log entries match the current filters."),
     ).toBeVisible();
