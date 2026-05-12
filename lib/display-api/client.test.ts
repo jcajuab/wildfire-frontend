@@ -107,6 +107,7 @@ describe("display-api client contract validation", () => {
         JSON.stringify({
           data: {
             playlistId: null,
+            showCounter: true,
             playlistVersion: "v1",
             generatedAt: "2026-01-01T00:00:00.000Z",
             playback: {
@@ -119,6 +120,7 @@ describe("display-api client contract validation", () => {
                 id: "item-1",
                 sequence: 1,
                 duration: 10,
+                showCounter: false,
                 content: {
                   id: "content-1",
                   type: "IMAGE",
@@ -163,6 +165,8 @@ describe("display-api client contract validation", () => {
 
     expect(result.kind).toBe("ok");
     if (result.kind !== "ok") throw new Error("Expected ok result");
+    expect(result.manifest.showCounter).toBe(true);
+    expect(result.manifest.items[0]?.showCounter).toBe(false);
     expect(result.manifest.items[0]?.content.cropY).toBe(1080);
     expect(result.manifest.items[0]?.content.sliceCount).toBe(3);
     expect(fetchMock).toHaveBeenCalledWith(
@@ -171,6 +175,77 @@ describe("display-api client contract validation", () => {
         method: "GET",
       }),
     );
+  });
+
+  test("fetchSignedManifest falls back to top-level counter for legacy items", async () => {
+    vi.mocked(createSignedHeaders).mockResolvedValue({
+      "x-display-key-id": "key-id",
+      "x-display-slug": "lobby-display",
+      "x-display-timestamp": "2026-01-01T00:00:00.000Z",
+      "x-display-nonce": "nonce",
+      "x-display-body-sha256": "hash",
+      "x-display-signature": "signature",
+    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            playlistId: "playlist-1",
+            showCounter: true,
+            playlistVersion: "v1",
+            generatedAt: "2026-01-01T00:00:00.000Z",
+            playback: {
+              mode: "SCHEDULE",
+              emergency: null,
+              flash: null,
+            },
+            items: [
+              {
+                id: "item-1",
+                sequence: 1,
+                duration: 10,
+                loop: false,
+                content: {
+                  id: "content-1",
+                  type: "IMAGE",
+                  checksum: "checksum-1",
+                  downloadUrl: "https://example.test/image.jpg",
+                  thumbnailUrl: null,
+                  mimeType: "image/jpeg",
+                  width: 1000,
+                  height: 1000,
+                  duration: null,
+                  textHtmlContent: null,
+                },
+              },
+            ],
+            schedules: [],
+          },
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await fetchSignedManifest({
+      registration: {
+        displayId: "display-id",
+        slug: "lobby-display",
+        keyId: "key-id",
+        keyAlias: "key-alias",
+        fingerprint: "fp",
+        output: "HDMI-1",
+        registeredAt: "2026-01-01T00:00:00.000Z",
+      },
+      privateKey: {} as CryptoKey,
+    });
+
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") throw new Error("Expected ok result");
+    expect(result.manifest.items[0]?.showCounter).toBe(true);
   });
 
   test("fetchSignedManifest parses emergency playback with SLOT source", async () => {

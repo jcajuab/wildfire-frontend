@@ -127,7 +127,7 @@ export function useDisplayGroupsPage({
   const [selectedDisplayIds, setSelectedDisplayIds] = useState<
     ReadonlySet<string>
   >(new Set());
-  const [addFilter, setAddFilter] = useState<AddFilter>("ungrouped");
+  const [addFilter, setAddFilter] = useState<AddFilter>("all");
   const [displayPage, setDisplayPage] = useState(1);
   const [renameGroupId, setRenameGroupId] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -192,32 +192,27 @@ export function useDisplayGroupsPage({
       { skip: !selectedGroupId || actionMode === "add" },
     );
 
-  // Add mode: server-side text search + membership=ungrouped|any filter
-  const { data: addModeDisplaysData } = useGetDisplaysQuery(
-    {
-      q: debouncedDisplaySearch || undefined,
-      page: displayPage,
-      pageSize: DISPLAY_PAGE_SIZE,
-      sortBy: "name",
-      sortDirection: "asc",
-      membership: addFilter === "ungrouped" ? "ungrouped" : "any",
-    },
-    { skip: !selectedGroupId || actionMode !== "add" },
-  );
-
-  const addModePool = useMemo<readonly BackendDisplay[]>(() => {
-    if (!selectedGroup) return [];
-    const pool = addModeDisplaysData?.items ?? [];
-    // For "all non-members" we still need to exclude the selected group's
-    // current members, since the backend filter is membership=any.
-    if (addFilter !== "ungrouped") {
-      return pool.filter((d) => !selectedGroup.displayIds.includes(d.id));
-    }
-    return pool;
-  }, [addModeDisplaysData?.items, selectedGroup, addFilter]);
+  // Add mode: server-side text search + selected-group exclusion. A display can
+  // belong to multiple groups, so the default candidate list is every display
+  // that is not already a member of the selected group.
+  const { data: addModeDisplaysData, isLoading: isAddModeDisplaysLoading } =
+    useGetDisplaysQuery(
+      {
+        q: debouncedDisplaySearch || undefined,
+        page: displayPage,
+        pageSize: DISPLAY_PAGE_SIZE,
+        sortBy: "name",
+        sortDirection: "asc",
+        excludeGroupIds: selectedGroupId ? [selectedGroupId] : [],
+        membership: addFilter === "ungrouped" ? "ungrouped" : undefined,
+      },
+      { skip: !selectedGroupId || actionMode !== "add" },
+    );
 
   const paginatedDisplays =
-    actionMode === "add" ? addModePool : (groupDisplaysData?.items ?? []);
+    actionMode === "add"
+      ? (addModeDisplaysData?.items ?? [])
+      : (groupDisplaysData?.items ?? []);
 
   const displayTotal = !selectedGroupId
     ? 0
@@ -225,7 +220,8 @@ export function useDisplayGroupsPage({
       ? (addModeDisplaysData?.total ?? 0)
       : (groupDisplaysData?.total ?? 0);
 
-  const isDisplaysLoading = actionMode !== "add" && isGroupDisplaysLoading;
+  const isDisplaysLoading =
+    actionMode === "add" ? isAddModeDisplaysLoading : isGroupDisplaysLoading;
 
   const handleDisplaySearchChange = useCallback((v: string) => {
     setDisplaySearch(v);
@@ -247,7 +243,7 @@ export function useDisplayGroupsPage({
   const handleEnterAdd = useCallback(() => {
     setActionMode("add");
     setSelectedDisplayIds(new Set());
-    setAddFilter("ungrouped");
+    setAddFilter("all");
     setDisplayPage(1);
   }, []);
 

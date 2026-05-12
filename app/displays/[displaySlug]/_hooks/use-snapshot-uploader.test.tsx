@@ -71,6 +71,7 @@ function manifestWithSource(sourceUrl: string): DisplayManifest {
         sequence: 1,
         duration: 10,
         loop: false,
+        showCounter: false,
         content: {
           id: "content-1",
           type: "IMAGE",

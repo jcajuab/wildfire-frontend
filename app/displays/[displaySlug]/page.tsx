@@ -353,7 +353,7 @@ export default function DisplayRuntimePage() {
             html={currentItem.content.textHtmlContent ?? ""}
           />
         ) : null}
-        {manifest?.showCounter && currentItem ? (
+        {currentItem?.showCounter ? (
           <PlaybackCountdown
             key={`${currentItem.id}-${tickCount}`}
             resetKey={`${currentItem.id}-${tickCount}`}

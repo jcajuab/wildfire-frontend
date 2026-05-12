@@ -14,6 +14,7 @@ export interface ManifestItem {
   readonly sequence: number;
   readonly duration: number;
   readonly loop: boolean;
+  readonly showCounter: boolean;
   readonly content: {
     readonly id: string;
     readonly type: "IMAGE" | "VIDEO" | "TEXT";
@@ -227,7 +228,11 @@ const parseManifestItemContent = (
   };
 };
 
-const parseManifestItem = (payload: unknown, path: string): ManifestItem => {
+const parseManifestItem = (
+  payload: unknown,
+  path: string,
+  fallbackShowCounter: boolean,
+): ManifestItem => {
   const root = readRecord(payload, path);
   const loopRaw = root.loop;
   const loop =
@@ -236,11 +241,19 @@ const parseManifestItem = (payload: unknown, path: string): ManifestItem => {
       : loopRaw === undefined
         ? false
         : readBoolean(loopRaw, `${path}.loop`);
+  const showCounterRaw = root.showCounter;
+  const showCounter =
+    typeof showCounterRaw === "boolean"
+      ? showCounterRaw
+      : showCounterRaw === undefined
+        ? fallbackShowCounter
+        : readBoolean(showCounterRaw, `${path}.showCounter`);
   return {
     id: readString(root.id, `${path}.id`),
     sequence: readInteger(root.sequence, `${path}.sequence`),
     duration: readInteger(root.duration, `${path}.duration`),
     loop,
+    showCounter,
     content: parseManifestItemContent(root.content, `${path}.content`),
   };
 };
@@ -313,11 +326,12 @@ const parseDisplayManifest = (payload: unknown): DisplayManifest => {
   if (!Array.isArray(rawItems)) {
     throw new Error("manifest.items must be an array");
   }
+  const showCounter =
+    typeof root.showCounter === "boolean" ? root.showCounter : false;
 
   return {
     playlistId: readNullableString(root.playlistId, "manifest.playlistId"),
-    showCounter:
-      typeof root.showCounter === "boolean" ? root.showCounter : false,
+    showCounter,
     playlistVersion: readString(
       root.playlistVersion,
       "manifest.playlistVersion",
@@ -336,7 +350,7 @@ const parseDisplayManifest = (payload: unknown): DisplayManifest => {
       flash: parseFlashPlayback(playback.flash, "manifest.playback.flash"),
     },
     items: rawItems.map((item, index) =>
-      parseManifestItem(item, `manifest.items[${index}]`),
+      parseManifestItem(item, `manifest.items[${index}]`, showCounter),
     ),
     schedules: Array.isArray(root.schedules)
       ? root.schedules.map((schedule, index) =>

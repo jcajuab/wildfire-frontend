@@ -140,7 +140,16 @@ describe("EditDisplayDialog", () => {
     );
   });
 
-  test("updates display output when the index changes", async () => {
+  test("keeps display output controls read-only", () => {
+    renderEditDisplayDialog();
+
+    expect(
+      screen.getByRole("combobox", { name: "Output Type" }),
+    ).toHaveAttribute("data-disabled");
+    expect(screen.getByLabelText("Output Index")).toBeDisabled();
+  });
+
+  test("preserves display output when saving", async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
     const onSave = vi.fn(async () => true);
@@ -150,30 +159,14 @@ describe("EditDisplayDialog", () => {
       onSave,
     });
 
-    const outputIndexInput = screen.getByLabelText("Output Index");
-    await user.clear(outputIndexInput);
-    await user.type(outputIndexInput, "2");
-
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
-        output: "hdmi-2",
+        output: "hdmi-0",
       }),
     );
   }, 15_000);
-
-  test("disables save when output index is invalid", async () => {
-    const user = userEvent.setup();
-
-    renderEditDisplayDialog();
-
-    const outputIndexInput = screen.getByLabelText("Output Index");
-    await user.clear(outputIndexInput);
-    await user.type(outputIndexInput, "-1");
-
-    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
-  });
 
   test("keeps dialog open when save fails", async () => {
     const user = userEvent.setup();

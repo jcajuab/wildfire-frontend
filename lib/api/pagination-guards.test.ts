@@ -29,6 +29,7 @@ describe("server-driven list query contracts", () => {
       crypto.randomUUID(),
       crypto.randomUUID(),
     ] as const;
+    const excludedGroupIds = [crypto.randomUUID()] as const;
     global.fetch = vi.fn(async (input) => {
       const requestUrl =
         typeof input === "string"
@@ -46,6 +47,9 @@ describe("server-driven list query contracts", () => {
       expect(url.searchParams.get("sortDirection")).toBe("desc");
       expect(url.searchParams.getAll("groupIds")).toEqual([
         ...selectedGroupIds,
+      ]);
+      expect(url.searchParams.getAll("excludeGroupIds")).toEqual([
+        ...excludedGroupIds,
       ]);
       return new Response(
         JSON.stringify({
@@ -93,6 +97,7 @@ describe("server-driven list query contracts", () => {
         sortBy: "status",
         sortDirection: "desc",
         groupIds: selectedGroupIds,
+        excludeGroupIds: excludedGroupIds,
       }),
     );
     const data = "data" in result ? result.data : undefined;

@@ -45,6 +45,7 @@ export interface DisplaysListQuery {
   readonly q?: string;
   readonly status?: "PROCESSING" | "READY" | "LIVE" | "DOWN";
   readonly groupIds?: readonly string[];
+  readonly excludeGroupIds?: readonly string[];
   readonly groupNames?: readonly string[];
   readonly output?: string;
   readonly sortBy?: "name" | "status" | "groupCount";
@@ -166,6 +167,11 @@ export const displaysApi = api.injectEndpoints({
             params.append("groupIds", groupId);
           }
         }
+        if (query?.excludeGroupIds) {
+          for (const groupId of query.excludeGroupIds) {
+            params.append("excludeGroupIds", groupId);
+          }
+        }
         return `displays?${params.toString()}`;
       },
       transformResponse: (response) =>
@@ -196,6 +202,11 @@ export const displaysApi = api.injectEndpoints({
         if (queryArg.groupIds) {
           for (const groupId of queryArg.groupIds) {
             params.append("groupIds", groupId);
+          }
+        }
+        if (queryArg.excludeGroupIds) {
+          for (const groupId of queryArg.excludeGroupIds) {
+            params.append("excludeGroupIds", groupId);
           }
         }
         return `displays?${params.toString()}`;

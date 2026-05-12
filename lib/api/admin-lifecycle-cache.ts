@@ -7,10 +7,36 @@ import {
 } from "@/lib/api/merge-enriched-content-into-caches";
 import { revalidateWildfireTagsViaRoute } from "@/lib/api/revalidate-via-route";
 import type { DisplayLifecycleEvent } from "@/lib/api/display-events";
-import type { BackendDisplay } from "@/lib/api/displays-api";
+import type { BackendDisplay, DisplaysListQuery } from "@/lib/api/displays-api";
 import { displaysApi } from "@/lib/api/displays-api";
 import { playlistsApi } from "@/lib/api/playlists-api";
+import { normalizeDisplayOutputFilter } from "@/lib/display-output";
 import type { AppDispatch, RootState } from "@/lib/store";
+
+function displayMatchesDisplaysQuery(
+  display: BackendDisplay,
+  query: DisplaysListQuery | void,
+): boolean {
+  if (query?.status && display.status !== query.status) return false;
+  if (
+    query?.output &&
+    normalizeDisplayOutputFilter(display.output) !==
+      normalizeDisplayOutputFilter(query.output)
+  ) {
+    return false;
+  }
+  if (query?.q) {
+    const normalizedQuery = query.q.trim().toLowerCase();
+    const matchesQuery = [display.name, display.slug, display.output].some(
+      (value) => value.toLowerCase().includes(normalizedQuery),
+    );
+    if (!matchesQuery) return false;
+  }
+  // Freshly registered displays have no group membership yet. They match
+  // ungrouped and selected-group exclusion queries, but not group member lists.
+  if (query?.groupIds && query.groupIds.length > 0) return false;
+  return true;
+}
 
 /**
  * Applies SSE lifecycle updates by patching RTK Query cache in place instead of
@@ -51,6 +77,7 @@ export function handleDisplayLifecycleEvent(
             "getDisplays",
           );
           for (const args of displayListArgs) {
+            if (!displayMatchesDisplaysQuery(display, args)) continue;
             dispatch(
               displaysApi.util.updateQueryData("getDisplays", args, (draft) => {
                 patchPaginatedListById(draft, "add", display, {

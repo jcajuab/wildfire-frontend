@@ -225,7 +225,7 @@ export function EditDisplayForm({
                   outputType: value as DisplayOutputType,
                 }))
               }
-              disabled={isSaving}
+              disabled
             >
               <SelectTrigger id="edit-output-type" className="w-full">
                 <SelectValue />
@@ -256,7 +256,8 @@ export function EditDisplayForm({
                 }))
               }
               aria-invalid={!hasValidOutputIndex}
-              disabled={isSaving}
+              disabled
+              readOnly
             />
             {!hasValidOutputIndex ? (
               <p className="text-xs text-destructive">

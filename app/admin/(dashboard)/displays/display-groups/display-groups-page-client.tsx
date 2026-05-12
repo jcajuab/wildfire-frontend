@@ -127,7 +127,7 @@ export function DisplayGroupsPageClient({
             aria-label="Filter by category"
           >
             <IconFilter className="size-4" aria-hidden="true" />
-            {addFilter !== "ungrouped" ? (
+            {addFilter !== "all" ? (
               <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-primary" />
             ) : null}
           </Button>
@@ -156,8 +156,8 @@ export function DisplayGroupsPageClient({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ungrouped">Ungrouped</SelectItem>
                 <SelectItem value="all">All non-members</SelectItem>
+                <SelectItem value="ungrouped">Ungrouped</SelectItem>
               </SelectContent>
             </Select>
           </div>
