@@ -134,6 +134,22 @@ export type ToolOutputProps = ComponentProps<"div"> & {
   errorText: ToolPart["errorText"];
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const getCompactToolMessage = (output: unknown) => {
+  if (!isRecord(output)) return null;
+  const message = output.message;
+  return typeof message === "string" && message.trim().length > 0
+    ? message
+    : null;
+};
+
+const getCompactToolData = (output: unknown) => {
+  if (!isRecord(output) || !("data" in output)) return null;
+  return output.data;
+};
+
 export const ToolOutput = ({
   className,
   output,
@@ -144,9 +160,23 @@ export const ToolOutput = ({
     return null;
   }
 
+  const compactMessage = getCompactToolMessage(output);
+  const compactData = getCompactToolData(output);
   let Output = <div>{output as ReactNode}</div>;
 
-  if (typeof output === "object" && !isValidElement(output)) {
+  if (compactMessage) {
+    Output = (
+      <div className="space-y-2 p-3">
+        <p className="font-medium text-sm">{compactMessage}</p>
+        {compactData != null && (
+          <CodeBlock
+            code={JSON.stringify(compactData, null, 2)}
+            language="json"
+          />
+        )}
+      </div>
+    );
+  } else if (typeof output === "object" && !isValidElement(output)) {
     Output = (
       <CodeBlock code={JSON.stringify(output, null, 2)} language="json" />
     );
@@ -167,7 +197,7 @@ export const ToolOutput = ({
             : "bg-muted/50 text-foreground",
         )}
       >
-        {errorText && <div>{errorText}</div>}
+        {errorText && <div className="p-3">{errorText}</div>}
         {Output}
       </div>
     </div>

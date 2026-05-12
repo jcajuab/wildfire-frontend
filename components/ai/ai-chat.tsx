@@ -50,23 +50,70 @@ import { SlashCommandMenu } from "./slash-command-menu";
 
 const KNOWN_COMMAND_IDS = new Set(SLASH_COMMANDS.map((c) => c.id));
 
-function formatErrorMessage(message: string): string {
-  if (typeof message !== "string") return "Something went wrong.";
-  if (message.startsWith("{")) {
+export function formatAIErrorMessage(message: string): string {
+  if (typeof message !== "string" || message.trim().length === 0) {
+    return "The AI assistant is unavailable right now.";
+  }
+
+  const normalized = message.toLowerCase();
+  if (
+    normalized.includes("rate limit") ||
+    normalized.includes("too many requests") ||
+    normalized.includes("429")
+  ) {
+    return "AI request limit reached. Please wait and try again.";
+  }
+
+  if (
+    normalized.includes("unauthorized") ||
+    normalized.includes("forbidden") ||
+    normalized.includes("permission") ||
+    normalized.includes("401") ||
+    normalized.includes("403")
+  ) {
+    return "You do not have access to use the AI assistant.";
+  }
+
+  if (
+    normalized.includes("type validation failed") ||
+    normalized.includes("uimessagestream") ||
+    normalized.includes("stream")
+  ) {
+    return "The AI response could not be displayed. Please try again.";
+  }
+
+  if (
+    normalized.includes("tool") ||
+    normalized.includes("invalid input") ||
+    normalized.includes("validation")
+  ) {
+    return "The AI assistant could not complete that action. Please adjust the request and try again.";
+  }
+
+  if (
+    normalized.includes("api key") ||
+    normalized.includes("provider") ||
+    normalized.includes("model")
+  ) {
+    return "The selected AI provider could not complete the request.";
+  }
+
+  if (message.trim().startsWith("{")) {
     try {
       const parsed = JSON.parse(message) as Record<string, unknown>;
       const msg =
         typeof parsed.message === "string"
           ? parsed.message
-          : typeof parsed.error === "string"
-            ? parsed.error
-            : null;
-      if (msg) return msg;
+            : typeof parsed.error === "string"
+              ? parsed.error
+              : null;
+      if (msg) return formatAIErrorMessage(msg);
     } catch {
-      // fall through to raw message
+      return "The AI assistant is unavailable right now.";
     }
   }
-  return message || "Something went wrong.";
+
+  return "The AI assistant is unavailable right now.";
 }
 
 function parseMessageTokens(
@@ -360,7 +407,7 @@ export function AIChat() {
 
         {error != null && (
           <p className="mt-1 text-sm text-destructive">
-            {formatErrorMessage(error.message)} Please try again.
+            {formatAIErrorMessage(error.message)}
           </p>
         )}
       </div>
