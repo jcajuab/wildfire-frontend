@@ -92,8 +92,8 @@ export function usePlaylistContentLibrary(): PlaylistContentLibraryState {
       status: "READY",
       excludeType: "FLASH",
       search: normalizedSearch.length > 0 ? normalizedSearch : undefined,
-      sortBy: "title",
-      sortDirection: "asc",
+      sortBy: "createdAt",
+      sortDirection: "desc",
     }),
     [normalizedSearch, state.page],
   );

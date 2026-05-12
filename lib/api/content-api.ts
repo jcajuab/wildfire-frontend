@@ -644,6 +644,16 @@ export const contentApi = api.injectEndpoints({
         }>(response, "submitPdfCrops");
         return body.items;
       },
+      invalidatesTags: (result) =>
+        result
+          ? [
+              { type: "Content", id: "LIST" },
+              ...result.map((item) => ({
+                type: "Content" as const,
+                id: item.id,
+              })),
+            ]
+          : [{ type: "Content", id: "LIST" }],
       async onQueryStarted(_arg, { dispatch, queryFulfilled, getState }) {
         let timedOut = false;
         const timeoutId = setTimeout(() => {

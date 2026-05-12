@@ -259,8 +259,8 @@ describe("CreatePlaylistPage", () => {
           status: "READY",
           excludeType: "FLASH",
           search: "poster",
-          sortBy: "title",
-          sortDirection: "asc",
+          sortBy: "createdAt",
+          sortDirection: "desc",
         }),
         expect.objectContaining({ skip: false }),
       );

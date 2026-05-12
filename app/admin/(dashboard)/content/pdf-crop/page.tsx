@@ -4,14 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import {
-  contentApi,
   useSubmitPdfCropsMutation,
   useCancelPdfUploadMutation,
   type PdfUploadAcceptedResponse,
   type PdfCropRegion,
 } from "@/lib/api/content-api";
-import { useAppDispatch } from "@/lib/hooks";
-import { CONTENT_PAGE_SIZE } from "@/lib/content-search-params";
 import dynamic from "next/dynamic";
 import type { CropRegion } from "@/components/content/pdf-crop-editor";
 import { EmptyState } from "@/components/common/empty-state";
@@ -59,7 +56,6 @@ function PdfCropSession({
   submitPdfCrops,
   cancelPdfUpload,
 }: PdfCropSessionProps) {
-  const dispatch = useAppDispatch();
   const submittedRef = useRef(false);
   const cancelStartedRef = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,30 +85,12 @@ function PdfCropSession({
           return;
         }
 
-        try {
-          await dispatch(
-            contentApi.endpoints.listContent.initiate(
-              {
-                page: 1,
-                pageSize: CONTENT_PAGE_SIZE,
-                sortBy: "createdAt",
-                sortDirection: "desc",
-              },
-              { forceRefetch: true, subscribe: false },
-            ),
-          ).unwrap();
-        } catch {
-          // The mutation already patched/invalidation-tagged content caches; this
-          // refetch is a best-effort guard against a stale RSC seed on navigation.
-        } finally {
-          sessionStorage.removeItem(`${SESSION_KEY_PREFIX}${uploadId}`);
-          router.push("/admin/content");
-          router.refresh();
-          setIsSubmitting(false);
-        }
+        sessionStorage.removeItem(`${SESSION_KEY_PREFIX}${uploadId}`);
+        router.replace("/admin/content?page=1&sort=newest");
+        setIsSubmitting(false);
       })();
     },
-    [contentName, dispatch, router, submitPdfCrops, uploadId],
+    [contentName, router, submitPdfCrops, uploadId],
   );
 
   const handleCancel = useCallback(() => {
