@@ -21,9 +21,6 @@ const FLASH_TONE_BADGE_CLASSNAME: Record<FlashTone, string> = {
 
 const DEFAULT_BADGE_CLASSNAME = "bg-primary text-primary-foreground";
 
-const clamp = (value: number, min: number, max: number): number =>
-  Math.min(max, Math.max(min, value));
-
 export const getFlashMarqueeMessage = (message: string): string | null => {
   const normalized = message.trim();
   return normalized.length > 0 ? normalized : null;

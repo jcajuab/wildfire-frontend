@@ -3,13 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildFlashMarqueeStyle,
   getFlashBadgeClassName,
   getFlashMarqueeMessage,
   inferFlashRepeatCount,
 } from "@/lib/display-runtime/flash-ticker";
+import { resolveDisplayImageSizing } from "@/lib/display-runtime/image-sizing";
 import { formatTimeOfDay } from "@/lib/formatters";
 import { BouncingLogoScreensaver } from "@/components/displays/bouncing-logo-screensaver";
 import { DisplayTextContent } from "@/components/displays/display-text-content";
@@ -74,6 +75,14 @@ const getViewport = () => ({
   height: window.innerHeight,
 });
 
+const getRoundedElementSize = (element: Element) => {
+  const rect = element.getBoundingClientRect();
+  return {
+    width: Math.max(0, Math.round(rect.width)),
+    height: Math.max(0, Math.round(rect.height)),
+  };
+};
+
 function computeTableFontSize(
   html: string,
   viewportHeight: number,
@@ -128,6 +137,8 @@ export default function DisplayRuntimePage() {
   useSnapshotUploader(manifest, currentIndex, registration);
 
   const [viewport, setViewport] = useState({ width: 1920, height: 1080 });
+  const mediaAreaRef = useRef<HTMLDivElement | null>(null);
+  const [mediaArea, setMediaArea] = useState({ width: 1920, height: 1080 });
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -166,6 +177,32 @@ export default function DisplayRuntimePage() {
     }
     return getFlashMarqueeMessage(activeFlash.message);
   }, [activeFlash]);
+  const hasFlashTicker = activeFlash != null && flashMarqueeText != null;
+
+  useEffect(() => {
+    const element = mediaAreaRef.current;
+    if (!element) {
+      return;
+    }
+
+    const applyMediaArea = () => {
+      const next = getRoundedElementSize(element);
+      setMediaArea((prev) =>
+        prev.width === next.width && prev.height === next.height ? prev : next,
+      );
+    };
+
+    applyMediaArea();
+
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(applyMediaArea);
+    resizeObserver.observe(element);
+
+    return () => resizeObserver.disconnect();
+  }, [hasFlashTicker]);
 
   const flashRepeatCount = useMemo(() => {
     if (!flashMarqueeText) {
@@ -201,6 +238,19 @@ export default function DisplayRuntimePage() {
     viewport.height,
     viewport.width,
   ]);
+
+  const imageSizing = useMemo(() => {
+    if (currentItem?.content.type !== "IMAGE") {
+      return { mode: "fit" as const };
+    }
+
+    return resolveDisplayImageSizing({
+      imageWidth: currentItem.content.width,
+      imageHeight: currentItem.content.height,
+      containerWidth: mediaArea.width,
+      containerHeight: mediaArea.height,
+    });
+  }, [currentItem, mediaArea.height, mediaArea.width]);
 
   if (!isRegistrationResolved) {
     return (
@@ -321,7 +371,7 @@ export default function DisplayRuntimePage() {
           </div>
         </div>
       ) : null}
-      <div className="relative flex-1 min-h-0">
+      <div ref={mediaAreaRef} className="relative flex-1 min-h-0">
         {!currentItem ? (
           <BouncingLogoScreensaver />
         ) : currentItem.content.type === "VIDEO" ? (
@@ -337,15 +387,28 @@ export default function DisplayRuntimePage() {
             />
           </div>
         ) : currentItem.content.type === "IMAGE" ? (
-          <div className="pointer-events-none relative h-full w-full overflow-hidden bg-black select-none">
-            <Image
-              key={currentItem.id}
-              src={currentItem.content.downloadUrl}
-              alt="Display content image"
-              fill
-              sizes="100vw"
-              className="object-contain"
-            />
+          <div className="pointer-events-none flex h-full w-full items-center justify-center overflow-hidden bg-black select-none">
+            {imageSizing.mode === "capped" ? (
+              <Image
+                key={currentItem.id}
+                src={currentItem.content.downloadUrl}
+                alt="Display content image"
+                width={imageSizing.width}
+                height={imageSizing.height}
+                className="max-h-full max-w-full object-contain"
+              />
+            ) : (
+              <div className="relative h-full w-full">
+                <Image
+                  key={currentItem.id}
+                  src={currentItem.content.downloadUrl}
+                  alt="Display content image"
+                  fill
+                  sizes="100vw"
+                  className="object-contain"
+                />
+              </div>
+            )}
           </div>
         ) : currentItem.content.type === "TEXT" ? (
           <DisplayTextContent
