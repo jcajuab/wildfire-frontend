@@ -3,8 +3,10 @@ import type { CSSProperties } from "react";
 export type FlashTone = "INFO" | "WARNING" | "CRITICAL";
 
 const MIN_FLASH_HEIGHT_PX = 36;
+const MIN_FLASH_FONT_SIZE_PX = 14;
+const FLASH_FONT_SIZE_TO_HEIGHT_RATIO = 0.3;
 const MIN_FLASH_SPEED_PX_PER_SECOND = 12;
-const MAX_FLASH_HEIGHT_VIEWPORT_RATIO = 0.35;
+const FLASH_HEIGHT_VIEWPORT_RATIO = 0.1;
 const MIN_FLASH_REPEAT_COUNT = 4;
 const EXTRA_FLASH_REPEAT_UNITS = 2;
 const MIN_ESTIMATED_FLASH_UNIT_WIDTH_PX = 120;
@@ -65,11 +67,14 @@ export const buildFlashMarqueeStyle = (input: {
   viewportWidth: number;
   viewportHeight: number;
 }): CSSProperties => {
-  const maxHeightPx = Math.max(
+  const safeHeightPx = Math.max(
     MIN_FLASH_HEIGHT_PX,
-    Math.floor(input.viewportHeight * MAX_FLASH_HEIGHT_VIEWPORT_RATIO),
+    Math.floor(input.viewportHeight * FLASH_HEIGHT_VIEWPORT_RATIO),
   );
-  const safeHeightPx = clamp(input.heightPx, MIN_FLASH_HEIGHT_PX, maxHeightPx);
+  const safeFontSizePx = Math.max(
+    MIN_FLASH_FONT_SIZE_PX,
+    Math.round(safeHeightPx * FLASH_FONT_SIZE_TO_HEIGHT_RATIO),
+  );
   const safeSpeedPxPerSecond = Math.max(
     MIN_FLASH_SPEED_PX_PER_SECOND,
     input.speedPxPerSecond,
@@ -86,5 +91,6 @@ export const buildFlashMarqueeStyle = (input: {
   return {
     "--wildfire-flash-duration": `${durationSeconds}s`,
     height: `${safeHeightPx}px`,
+    fontSize: `${safeFontSizePx}px`,
   } as CSSProperties;
 };

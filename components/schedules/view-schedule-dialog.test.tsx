@@ -139,9 +139,7 @@ describe("ViewScheduleDialog", () => {
     expect(screen.queryByText("Mode")).toBeNull();
     expect(screen.queryByText("Playlist")).toBeNull();
     expect(screen.queryByText("Target display")).toBeNull();
-    expect(
-      screen.queryByRole("link", { name: /Cafeteria North/i }),
-    ).toBeNull();
+    expect(screen.queryByRole("link", { name: /Cafeteria North/i })).toBeNull();
   });
 
   test("renders assignment values without links when link permissions are unavailable", () => {
@@ -156,8 +154,6 @@ describe("ViewScheduleDialog", () => {
     expect(screen.getByText("Morning Loop")).toBeInTheDocument();
     expect(screen.getByText("Cafeteria North")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Morning Loop/i })).toBeNull();
-    expect(
-      screen.queryByRole("link", { name: /Cafeteria North/i }),
-    ).toBeNull();
+    expect(screen.queryByRole("link", { name: /Cafeteria North/i })).toBeNull();
   });
 });

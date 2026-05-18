@@ -287,7 +287,7 @@ export default function DisplayRuntimePage() {
         >
           <div className="flex h-full items-stretch">
             <div
-              className={`flex h-full shrink-0 items-center justify-center px-6 text-lg font-extrabold leading-none tracking-[0.16em] ${getFlashBadgeClassName(
+              className={`flex h-full shrink-0 items-center justify-center px-6 font-extrabold leading-none tracking-[0.16em] ${getFlashBadgeClassName(
                 activeFlash.tone,
               )}`}
             >
@@ -309,7 +309,7 @@ export default function DisplayRuntimePage() {
                       <span
                         key={`${groupIndex}-${unitIndex}`}
                         aria-hidden={groupIndex > 0 || unitIndex > 0}
-                        className="pr-10 text-lg font-semibold leading-none tracking-wide"
+                        className="pr-10 font-semibold leading-none tracking-wide"
                       >
                         {flashMarqueeText}
                       </span>

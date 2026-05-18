@@ -27,9 +27,9 @@ describe("getRequiredReadPermission", () => {
   });
 
   test("requires display create and update for display group management", () => {
-    expect(getRequiredReadPermissions("/admin/displays/display-groups")).toEqual(
-      ["displays:create", "displays:update"],
-    );
+    expect(
+      getRequiredReadPermissions("/admin/displays/display-groups"),
+    ).toEqual(["displays:create", "displays:update"]);
   });
 
   test("keeps role index on the read permission", () => {

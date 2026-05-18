@@ -104,9 +104,9 @@ export function formatAIErrorMessage(message: string): string {
       const msg =
         typeof parsed.message === "string"
           ? parsed.message
-            : typeof parsed.error === "string"
-              ? parsed.error
-              : null;
+          : typeof parsed.error === "string"
+            ? parsed.error
+            : null;
       if (msg) return formatAIErrorMessage(msg);
     } catch {
       return "The AI assistant is unavailable right now.";

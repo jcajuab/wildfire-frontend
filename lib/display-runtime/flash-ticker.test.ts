@@ -35,7 +35,7 @@ describe("flash ticker helpers", () => {
     expect(shortMessageRepeatCount).toBeGreaterThanOrEqual(4);
   });
 
-  test("clamps marquee speed and height for animation safety", () => {
+  test("clamps marquee speed and keeps a minimum viewport-based height", () => {
     const style = buildFlashMarqueeStyle({
       message: "ALERT",
       heightPx: 8,
@@ -46,6 +46,21 @@ describe("flash ticker helpers", () => {
     }) as Record<string, string>;
 
     expect(style.height).toBe("36px");
+    expect(style.fontSize).toBe("14px");
     expect(style["--wildfire-flash-duration"]).toBe("110s");
+  });
+
+  test("sizes ticker height and contained text from the viewport height", () => {
+    const style = buildFlashMarqueeStyle({
+      message: "ALERT",
+      heightPx: 48,
+      speedPxPerSecond: 96,
+      repeatCount: 4,
+      viewportWidth: 1000,
+      viewportHeight: 800,
+    }) as Record<string, string>;
+
+    expect(style.height).toBe("80px");
+    expect(style.fontSize).toBe("24px");
   });
 });

@@ -366,7 +366,9 @@ describe("StartEmergencyDialog", () => {
 
     renderDialog();
 
-    expect(screen.getByLabelText("Classes resume at 1 PM.")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Classes resume at 1 PM."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Classes resume at 1 PM.")).toBeInTheDocument();
   });
 

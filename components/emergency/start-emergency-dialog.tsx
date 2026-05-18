@@ -168,7 +168,9 @@ export function StartEmergencyDialog({
         >
           <DialogHeader className="px-4 pt-4 pb-3">
             <DialogTitle>
-              {editingSlotIndex === null ? "Start Emergency" : "Content Library"}
+              {editingSlotIndex === null
+                ? "Start Emergency"
+                : "Content Library"}
             </DialogTitle>
             <DialogDescription>
               {editingSlotIndex === null
