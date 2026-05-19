@@ -71,7 +71,9 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
     expect(
-      screen.getByText("Access the DCISM department-wide digital signage system."),
+      screen.getByText(
+        "Access the DCISM department-wide digital signage system.",
+      ),
     ).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText("Username"), "admin");
     await userEvent.type(screen.getByLabelText("Password"), "Admin12345!");

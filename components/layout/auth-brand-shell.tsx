@@ -18,10 +18,7 @@ function BrandLockup({
 }): ReactElement {
   return (
     <div
-      className={cn(
-        "flex min-w-0 items-center",
-        compact ? "gap-3" : "gap-4",
-      )}
+      className={cn("flex min-w-0 items-center", compact ? "gap-3" : "gap-4")}
     >
       <div className="shrink-0 text-primary">
         <WildfireLogo className={compact ? "h-5 w-auto" : "h-7 w-auto"} />

@@ -135,7 +135,9 @@ describe("ViewPlaylistPageView", () => {
     expect(
       screen.queryByRole("button", { name: /add content/i }),
     ).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /edit/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /edit/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: /back to playlists/i }),
     ).not.toBeInTheDocument();

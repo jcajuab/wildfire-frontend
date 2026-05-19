@@ -194,9 +194,7 @@ export default function LinkRegistrationPage(): ReactElement {
         fallback={
           <div className="w-full max-w-md text-center">
             <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />
-            <h1 className="text-xl font-semibold text-foreground">
-              Loading…
-            </h1>
+            <h1 className="text-xl font-semibold text-foreground">Loading…</h1>
           </div>
         }
       >

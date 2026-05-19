@@ -46,7 +46,7 @@ export function TermsAndConditionsProvider({
   >(null);
   const userId = user?.id ?? null;
   const getAcceptanceSnapshot = useCallback(
-    () => (userId ? readTermsAcceptance(userId)?.version ?? null : null),
+    () => (userId ? (readTermsAcceptance(userId)?.version ?? null) : null),
     [userId],
   );
   const acceptedVersion = useSyncExternalStore(

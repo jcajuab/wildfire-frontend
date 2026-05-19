@@ -126,7 +126,8 @@ function PlaylistItemPreview({
       <div className="border-b border-border bg-muted/15 px-4 py-3">
         <h2 className="truncate text-sm font-semibold">{item.content.title}</h2>
         <p className="text-xs text-muted-foreground">
-          {contentTypeLabel[item.content.type]} · {formatDuration(item.duration)}
+          {contentTypeLabel[item.content.type]} ·{" "}
+          {formatDuration(item.duration)}
           {item.loop ? " · loops" : ""}
         </p>
       </div>

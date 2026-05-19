@@ -3,11 +3,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { useState } from "react";
 import Link from "next/link";
-import {
-  IconArrowRight,
-  IconPencil,
-  IconTrash,
-} from "@tabler/icons-react";
+import { IconArrowRight, IconPencil, IconTrash } from "@tabler/icons-react";
 
 import {
   Dialog,
@@ -256,7 +252,6 @@ export function ViewScheduleDialog({
           onOpenChange(false);
         }}
       />
-
     </>
   );
 }

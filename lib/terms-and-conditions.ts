@@ -1,9 +1,7 @@
 export const TERMS_AND_CONDITIONS_VERSION = "2026-05-20";
-export const TERMS_ACCEPTANCE_CHANGE_EVENT =
-  "wildfire:terms-acceptance-change";
+export const TERMS_ACCEPTANCE_CHANGE_EVENT = "wildfire:terms-acceptance-change";
 
-const TERMS_ACCEPTANCE_STORAGE_PREFIX =
-  "wildfire:terms-and-conditions:v1";
+const TERMS_ACCEPTANCE_STORAGE_PREFIX = "wildfire:terms-and-conditions:v1";
 
 export interface TermsAcceptance {
   readonly acceptedAt: string;
@@ -96,7 +94,9 @@ export function readTermsAcceptance(userId: string): TermsAcceptance | null {
   }
 
   try {
-    const raw = window.localStorage.getItem(getTermsAcceptanceStorageKey(userId));
+    const raw = window.localStorage.getItem(
+      getTermsAcceptanceStorageKey(userId),
+    );
     if (!raw) {
       return null;
     }

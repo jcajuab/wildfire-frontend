@@ -86,7 +86,9 @@ describe("ViewScheduleDialog", () => {
     );
 
     if (!destructiveActions || !primaryActions) {
-      throw new Error("Schedule details footer action groups were not rendered.");
+      throw new Error(
+        "Schedule details footer action groups were not rendered.",
+      );
     }
 
     const deleteButton = within(footer).getByRole("button", {
