@@ -7,6 +7,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { AdminEventProvider } from "@/components/layout/admin-event-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { TermsAndConditionsProvider } from "@/components/legal/terms-and-conditions-provider";
 
 interface AppLayoutProps {
   readonly children: ReactNode;
@@ -16,25 +17,27 @@ export function AppLayout({ children }: AppLayoutProps): ReactElement {
   return (
     <AdminEventProvider>
       <TooltipProvider>
-        <SidebarProvider
-          open
-          style={
-            {
-              "--sidebar-width": "15.5rem",
-              "--sidebar-width-icon": "4rem",
-            } as CSSProperties
-          }
-        >
-          <AppSidebar />
-          <MobileHeader />
-          <main
-            id="main-content"
-            className="flex h-svh min-h-0 w-full flex-1 flex-col overflow-hidden bg-muted/30 p-2 pt-16 md:pt-2"
+        <TermsAndConditionsProvider>
+          <SidebarProvider
+            open
+            style={
+              {
+                "--sidebar-width": "15.5rem",
+                "--sidebar-width-icon": "4rem",
+              } as CSSProperties
+            }
           >
-            {children}
-          </main>
-          <AIChatBubble />
-        </SidebarProvider>
+            <AppSidebar />
+            <MobileHeader />
+            <main
+              id="main-content"
+              className="flex h-svh min-h-0 w-full flex-1 flex-col overflow-hidden bg-muted/30 p-2 pt-16 md:pt-2"
+            >
+              {children}
+            </main>
+            <AIChatBubble />
+          </SidebarProvider>
+        </TermsAndConditionsProvider>
       </TooltipProvider>
     </AdminEventProvider>
   );

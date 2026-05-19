@@ -1,7 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { IconLogout, IconSettings, IconUser } from "@tabler/icons-react";
+import {
+  IconFileText,
+  IconLogout,
+  IconSettings,
+  IconUser,
+} from "@tabler/icons-react";
 import type { ReactElement, ReactNode } from "react";
 import { useState } from "react";
 
@@ -12,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AdminNavLink } from "@/components/layout/admin-nav-link";
+import { useTermsAndConditions } from "@/components/legal/terms-and-conditions-provider";
 import { useAuth } from "@/context/auth-context";
 import { useLogout } from "@/hooks/use-logout";
 import { cn } from "@/lib/utils";
@@ -80,6 +86,7 @@ export function UserMenu({
 }: UserMenuProps): ReactElement {
   const { user, isInitialized } = useAuth();
   const { pending, logout } = useLogout();
+  const { openTermsAndConditions } = useTermsAndConditions();
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const displayName = user?.name ?? "User";
   const canAccessSettings = isInitialized;
@@ -120,6 +127,15 @@ export function UserMenu({
             </AdminNavLink>
           </DropdownMenuItem>
         ) : null}
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault();
+            openTermsAndConditions();
+          }}
+        >
+          <IconFileText className="size-4" aria-hidden="true" />
+          Terms and Conditions
+        </DropdownMenuItem>
         <DropdownMenuItem
           variant="destructive"
           disabled={pending}

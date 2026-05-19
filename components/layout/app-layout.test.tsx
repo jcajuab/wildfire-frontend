@@ -18,6 +18,14 @@ vi.mock("@/components/layout/admin-event-provider", () => ({
   ),
 }));
 
+vi.mock("@/components/legal/terms-and-conditions-provider", () => ({
+  TermsAndConditionsProvider: ({
+    children,
+  }: {
+    readonly children: ReactNode;
+  }) => <>{children}</>,
+}));
+
 vi.mock("@/components/ai/ai-chat-bubble", () => ({
   AIChatBubble: () => (
     <button type="button" aria-label="Open WILDFIRE AI">
