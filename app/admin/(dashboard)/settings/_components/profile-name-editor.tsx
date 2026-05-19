@@ -4,9 +4,12 @@ import { IconPencil } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DirtyFieldActions } from "./dirty-field-actions";
-import { SettingsField } from "./settings-field";
+import {
+  settingsControlClass,
+  settingsFieldClass,
+  SettingsField,
+} from "./settings-field";
 
-const controlContainerClass = "w-full max-w-md";
 const controlClass = "h-10 w-full";
 
 interface ProfileNameEditorProps {
@@ -45,7 +48,7 @@ export function ProfileNameEditor({
 
   return (
     <SettingsField label="Name">
-      <div className={controlContainerClass}>
+      <div className={settingsControlClass}>
         {isEditingName ? (
           <div className="flex items-start gap-2">
             <Input
@@ -64,7 +67,7 @@ export function ProfileNameEditor({
               }}
               aria-label="Name"
               placeholder="Enter your full name"
-              className={`${controlClass} flex-1`}
+              className={`${controlClass} ${settingsFieldClass} flex-1`}
             />
             <DirtyFieldActions
               canConfirm={isNameDirty}
@@ -81,7 +84,7 @@ export function ProfileNameEditor({
             variant="outline"
             onClick={() => onEditNameChange(true)}
             disabled={isSavingProfileName}
-            className={`${controlClass} justify-between gap-2 pr-2`}
+            className={`${controlClass} ${settingsFieldClass} justify-between gap-2 pr-2`}
             aria-label="Edit name"
           >
             <span>{savedName || "Set name"}</span>

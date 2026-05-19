@@ -52,6 +52,9 @@ vi.mock("./settings-page-client", () => ({
   }): ReactElement => (
     <div data-count={data.length} data-testid="ai-credentials-seeder" />
   ),
+  MaintenanceSettingsCacheSeeder: (): ReactElement => (
+    <div data-testid="maintenance-settings-seeder" />
+  ),
   SettingsPageView: ({
     canManageAICredentials,
   }: {

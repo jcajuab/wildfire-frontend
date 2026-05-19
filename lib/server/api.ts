@@ -29,6 +29,7 @@ export type ServerCacheTag =
   | "roles-list"
   | "roles-options"
   | "schedules-bootstrap"
+  | "settings"
   | "users-list"
   | "users-options";
 

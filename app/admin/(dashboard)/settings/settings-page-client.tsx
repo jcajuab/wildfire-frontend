@@ -5,15 +5,8 @@ import { useLayoutEffect } from "react";
 import { IconPencil } from "@tabler/icons-react";
 
 import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
-import { RequiredLabel } from "@/components/common/required-label";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import {
-  aiCredentialsApi,
-  type AICredential,
-} from "@/lib/api/ai-credentials-api";
-import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { useLogout } from "@/hooks/use-logout";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -22,12 +15,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  aiCredentialsApi,
+  type AICredential,
+} from "@/lib/api/ai-credentials-api";
+import {
+  maintenanceSettingsApi,
+  type MaintenanceSettings,
+  useGetMaintenanceSettingsQuery,
+} from "@/lib/api/maintenance-settings-api";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { useLogout } from "@/hooks/use-logout";
 import { AICredentialsSection } from "./_components/ai-credentials-section";
 import { AvatarUploader } from "./_components/avatar-uploader";
 import { ChangePasswordDialog } from "./_components/change-password-dialog";
 import { DirtyFieldActions } from "./_components/dirty-field-actions";
+import { MaintenanceSettingsSection } from "./_components/maintenance-settings-section";
 import { ProfileNameEditor } from "./_components/profile-name-editor";
-import { SettingsField } from "./_components/settings-field";
+import {
+  settingsControlClass,
+  settingsFieldClass,
+  SettingsField,
+  SettingsPanel,
+} from "./_components/settings-field";
 import { useSettingsPage } from "./_hooks/use-settings-page";
 
 export function AICredentialsCacheSeeder({
@@ -55,13 +65,45 @@ export function AICredentialsCacheSeeder({
   return null;
 }
 
-const controlContainerClass = "w-full max-w-md";
+export function MaintenanceSettingsCacheSeeder({
+  data,
+}: {
+  readonly data: MaintenanceSettings;
+}): null {
+  const dispatch = useAppDispatch();
+  const cachedData = useAppSelector(
+    (state) =>
+      maintenanceSettingsApi.endpoints.getMaintenanceSettings.select(undefined)(
+        state,
+      ).data,
+  );
+
+  useLayoutEffect(() => {
+    if (cachedData) {
+      return;
+    }
+
+    dispatch(
+      maintenanceSettingsApi.util.upsertQueryData(
+        "getMaintenanceSettings",
+        undefined,
+        data,
+      ),
+    );
+  }, [dispatch, data, cachedData]);
+  return null;
+}
+
 const controlClass = "h-10 w-full";
 
 export function SettingsPageView({
   canManageAICredentials,
+  canManageMaintenance,
+  initialMaintenanceSettings,
 }: {
   readonly canManageAICredentials: boolean;
+  readonly canManageMaintenance: boolean;
+  readonly initialMaintenanceSettings: MaintenanceSettings | null;
 }): ReactElement {
   const {
     user,
@@ -82,6 +124,15 @@ export function SettingsPageView({
     setIsDeleteDialogOpen,
   } = useSettingsPage();
   const { pending: isLogoutPending, logout: handleLogOut } = useLogout();
+  const { data: maintenanceSettings } = useGetMaintenanceSettingsQuery(
+    undefined,
+    {
+      skip: !canManageMaintenance,
+    },
+  );
+  const animatedClass = !prefersReducedMotion
+    ? "animate-in fade-in duration-150"
+    : "";
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background/95">
@@ -94,23 +145,13 @@ export function SettingsPageView({
         >
           <div className="min-h-0 flex-1 overflow-auto p-4">
             <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
-              <section
-                aria-labelledby="account-information-heading"
-                className={`border-b border-border pb-8${!prefersReducedMotion ? " animate-in fade-in duration-150" : ""}`}
+              <SettingsPanel
+                headingId="account-information-heading"
+                title="Account Information"
+                description="Profile and sign-in details."
+                className={animatedClass}
               >
-                <header className="mb-4">
-                  <h2
-                    id="account-information-heading"
-                    className="text-base font-semibold tracking-tight"
-                  >
-                    Account Information
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Profile and sign-in details.
-                  </p>
-                </header>
-
-                <dl className="space-y-4">
+                <dl className="divide-y divide-border/70">
                   <SettingsField label="Profile picture">
                     <AvatarUploader
                       avatarUrl={avatarUrl}
@@ -148,14 +189,8 @@ export function SettingsPageView({
                   />
 
                   {isWildfireUser && (
-                    <SettingsField
-                      label={
-                        <RequiredLabel htmlFor="username">
-                          Username
-                        </RequiredLabel>
-                      }
-                    >
-                      <div className={controlContainerClass}>
+                    <SettingsField label="Username">
+                      <div className={settingsControlClass}>
                         {profileEditor.isEditingUsername ? (
                           <div className="flex items-start gap-2">
                             <Input
@@ -187,7 +222,7 @@ export function SettingsPageView({
                                 }
                               }}
                               aria-label="Username"
-                              className={`${controlClass} flex-1`}
+                              className={`${controlClass} ${settingsFieldClass} flex-1`}
                             />
                             <DirtyFieldActions
                               canConfirm={
@@ -226,7 +261,7 @@ export function SettingsPageView({
                               profileEditor.setIsEditingUsername(true);
                             }}
                             disabled={profileEditor.isSavingUsername}
-                            className={`${controlClass} justify-between gap-2 pr-2`}
+                            className={`${controlClass} ${settingsFieldClass} justify-between gap-2 pr-2`}
                             aria-label="Edit username"
                           >
                             <span>
@@ -250,7 +285,7 @@ export function SettingsPageView({
 
                   {isWildfireUser && (
                     <SettingsField label="Email">
-                      <div className={controlContainerClass}>
+                      <div className={settingsControlClass}>
                         {profileEditor.isEditingEmail ? (
                           <div className="flex items-start gap-2">
                             <Input
@@ -283,7 +318,7 @@ export function SettingsPageView({
                                 }
                               }}
                               aria-label="Email"
-                              className={`${controlClass} flex-1`}
+                              className={`${controlClass} ${settingsFieldClass} flex-1`}
                             />
                             <DirtyFieldActions
                               canConfirm={
@@ -321,7 +356,7 @@ export function SettingsPageView({
                               profileEditor.setIsEditingEmail(true);
                             }}
                             disabled={profileEditor.isSavingEmail}
-                            className={`${controlClass} justify-between gap-2 pr-2`}
+                            className={`${controlClass} ${settingsFieldClass} justify-between gap-2 pr-2`}
                             aria-label="Edit email"
                           >
                             <span>
@@ -345,12 +380,12 @@ export function SettingsPageView({
 
                   {isWildfireUser && (
                     <SettingsField label="Password">
-                      <div className={controlContainerClass}>
+                      <div className={settingsControlClass}>
                         <Button
                           type="button"
                           variant="outline"
                           onClick={handleChangePassword}
-                          className={controlClass}
+                          className={`${controlClass} ${settingsFieldClass}`}
                         >
                           Change Password
                         </Button>
@@ -358,27 +393,17 @@ export function SettingsPageView({
                     </SettingsField>
                   )}
                 </dl>
-              </section>
+              </SettingsPanel>
 
-              <section
-                aria-labelledby="system-settings-heading"
-                className={`border-b border-border pb-8${!prefersReducedMotion ? " animate-in fade-in duration-150" : ""}`}
+              <SettingsPanel
+                headingId="system-settings-heading"
+                title="System Settings"
+                description="Display preferences."
+                className={animatedClass}
               >
-                <header className="mb-4">
-                  <h2
-                    id="system-settings-heading"
-                    className="text-base font-semibold tracking-tight"
-                  >
-                    System Settings
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Display preferences.
-                  </p>
-                </header>
-
-                <dl className="space-y-4">
+                <dl className="divide-y divide-border/70">
                   <SettingsField label="Theme">
-                    <div className={controlContainerClass}>
+                    <div className={settingsControlClass}>
                       <Select
                         value={theme ?? "light"}
                         onValueChange={(nextTheme) => setTheme(nextTheme)}
@@ -402,7 +427,7 @@ export function SettingsPageView({
                     </div>
                   </SettingsField>
                 </dl>
-              </section>
+              </SettingsPanel>
 
               {canManageAICredentials ? (
                 <AICredentialsSection
@@ -410,9 +435,16 @@ export function SettingsPageView({
                 />
               ) : null}
 
+              {canManageMaintenance ? (
+                <MaintenanceSettingsSection
+                  settings={maintenanceSettings ?? initialMaintenanceSettings}
+                  prefersReducedMotion={prefersReducedMotion}
+                />
+              ) : null}
+
               <section
                 aria-labelledby="danger-zone-heading"
-                className={`space-y-4${!prefersReducedMotion ? " animate-in fade-in duration-150" : ""}`}
+                className={`space-y-4${animatedClass ? ` ${animatedClass}` : ""}`}
               >
                 <header>
                   <h2
@@ -444,7 +476,7 @@ export function SettingsPageView({
                         disabled={isLogoutPending}
                         aria-busy={isLogoutPending}
                       >
-                        {isLogoutPending ? "Logging out…" : "Log Out"}
+                        {isLogoutPending ? "Logging out..." : "Log Out"}
                       </Button>
                     </div>
 

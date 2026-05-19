@@ -5,6 +5,7 @@ import { useLayoutEffect } from "react";
 import { IconFilter, IconMinus, IconPlus } from "@tabler/icons-react";
 
 import { EmptyState } from "@/components/common/empty-state";
+import { ConfirmActionDialog } from "@/components/common/confirm-action-dialog";
 import { PaginationFooter } from "@/components/common/pagination-footer";
 import { SearchControl } from "@/components/common/search-control";
 import { PageHeader } from "@/components/layout/page-header";
@@ -91,11 +92,14 @@ export function DisplayGroupsPageClient({
     renameGroupId,
     renameGroupInitialName,
     setRenameGroupId,
+    deleteGroup,
+    setDeleteGroupId,
     isCreateOpen,
     setIsCreateOpen,
     isExecuting,
     isCreatePending,
     isRenamePending,
+    isDeletePending,
     handleSelectGroup,
     handleEnterAdd,
     handleEnterRemove,
@@ -105,6 +109,7 @@ export function DisplayGroupsPageClient({
     handleConfirmRemove,
     handleCreateGroup,
     handleRenameGroup,
+    handleDeleteGroup,
   } = useDisplayGroupsPage({ initialData });
 
   const leftGroupsLoadMoreRef = useInfiniteScrollSentinel({
@@ -314,6 +319,7 @@ export function DisplayGroupsPageClient({
                           isSelected={selectedGroupId === group.id}
                           onSelect={() => handleSelectGroup(group.id)}
                           onSettings={() => setRenameGroupId(group.id)}
+                          onDelete={() => setDeleteGroupId(group.id)}
                           canManage={canManageGroups}
                         />
                       ))}
@@ -438,6 +444,25 @@ export function DisplayGroupsPageClient({
         isPending={isCreatePending}
         onCreate={handleCreateGroup}
         onClose={() => setIsCreateOpen(false)}
+      />
+
+      <ConfirmActionDialog
+        open={deleteGroup !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteGroupId(null);
+        }}
+        title={deleteGroup ? `Delete "${deleteGroup.name}"?` : "Delete group?"}
+        description={
+          deleteGroup
+            ? `This removes the group from ${deleteGroup.displayIds.length} display${
+                deleteGroup.displayIds.length === 1 ? "" : "s"
+              }. The displays will not be deleted.`
+            : undefined
+        }
+        confirmLabel={isDeletePending ? "Deleting..." : "Delete group"}
+        errorFallback="Failed to delete display group."
+        onConfirm={handleDeleteGroup}
+        destructive
       />
     </div>
   );

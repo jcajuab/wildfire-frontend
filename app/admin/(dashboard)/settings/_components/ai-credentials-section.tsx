@@ -17,9 +17,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAICredentials } from "@/hooks/use-ai-credentials";
 import { AI_PROVIDERS } from "@/lib/ai/providers";
-import { SettingsField } from "./settings-field";
+import {
+  settingsActionControlClass,
+  settingsControlClass,
+  settingsFieldClass,
+  SettingsField,
+  SettingsPanel,
+} from "./settings-field";
 
-const controlContainerClass = "w-full max-w-md";
 const controlClass = "h-10 w-full";
 
 interface ProviderInfo {
@@ -86,7 +91,7 @@ function ProviderCredentialRow({
         )
       }
     >
-      <div className={controlContainerClass}>
+      <div className={settingsActionControlClass}>
         {isEditing ? (
           <div className="flex items-center gap-2">
             <Input
@@ -96,7 +101,7 @@ function ProviderCredentialRow({
               placeholder="Paste API key"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className={controlClass}
+              className={`${controlClass} ${settingsFieldClass}`}
               disabled={isSaving}
               // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
@@ -134,7 +139,7 @@ function ProviderCredentialRow({
         ) : credential ? (
           <div className="flex items-center gap-2">
             <div
-              className={`${controlClass} flex items-center gap-2 rounded-md border border-border bg-muted/60 px-3`}
+              className={`${controlClass} ${settingsFieldClass} flex items-center gap-2 rounded-md border border-border bg-muted/60 px-3`}
             >
               <IconKey
                 className="h-4 w-4 shrink-0 text-muted-foreground"
@@ -177,7 +182,7 @@ function ProviderCredentialRow({
         ) : (
           <div className="flex items-center gap-2">
             <div
-              className={`${controlClass} flex items-center rounded-md border border-border bg-muted/60 px-3`}
+              className={`${controlClass} ${settingsFieldClass} flex items-center rounded-md border border-border bg-muted/60 px-3`}
             >
               <span className="text-sm text-muted-foreground">
                 Not configured
@@ -231,28 +236,17 @@ export function AICredentialsSection({
   } = useAICredentials();
 
   return (
-    <section
-      aria-labelledby="ai-credentials-heading"
-      className={`border-b border-border pb-8${!prefersReducedMotion ? " animate-in fade-in duration-150" : ""}`}
+    <SettingsPanel
+      headingId="ai-credentials-heading"
+      title="AI Provider Credentials"
+      description="API keys used by the AI assistant."
+      className={!prefersReducedMotion ? "animate-in fade-in duration-150" : ""}
     >
-      <header className="mb-4">
-        <h2
-          id="ai-credentials-heading"
-          className="text-base font-semibold tracking-tight"
-        >
-          AI Provider Credentials
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          API keys for AI assistant providers. These keys are used by the AI
-          Chat assistant.
-        </p>
-      </header>
-
-      <dl className="space-y-4">
+      <dl className="divide-y divide-border/70">
         {isLoading
           ? AI_PROVIDERS.map((provider) => (
               <SettingsField key={provider.id} label={provider.label}>
-                <div className={controlContainerClass}>
+                <div className={settingsControlClass}>
                   <div
                     className={`${controlClass} animate-pulse rounded-md bg-muted`}
                   />
@@ -276,6 +270,6 @@ export function AICredentialsSection({
               );
             })}
       </dl>
-    </section>
+    </SettingsPanel>
   );
 }

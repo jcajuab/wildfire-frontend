@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { IconSettings } from "@tabler/icons-react";
+import { IconSettings, IconTrash } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ interface DisplayGroupCardProps {
   readonly isSelected: boolean;
   readonly onSelect: () => void;
   readonly onSettings: (e: React.MouseEvent) => void;
+  readonly onDelete: (e: React.MouseEvent) => void;
   readonly canManage: boolean;
 }
 
@@ -20,6 +21,7 @@ export function DisplayGroupCard({
   isSelected,
   onSelect,
   onSettings,
+  onDelete,
   canManage,
 }: DisplayGroupCardProps): ReactElement {
   return (
@@ -43,18 +45,32 @@ export function DisplayGroupCard({
     >
       <span className="truncate font-medium">{group.name}</span>
       {canManage ? (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="ml-2 size-6 shrink-0 cursor-pointer text-muted-foreground hover:text-foreground"
-          aria-label="Group settings"
-          onClick={(e) => {
-            e.stopPropagation();
-            onSettings(e);
-          }}
-        >
-          <IconSettings className="size-3.5" aria-hidden="true" />
-        </Button>
+        <div className="ml-2 flex shrink-0 items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="size-6 cursor-pointer text-muted-foreground hover:text-foreground"
+            aria-label={`Rename ${group.name}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSettings(e);
+            }}
+          >
+            <IconSettings className="size-3.5" aria-hidden="true" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="size-6 cursor-pointer text-muted-foreground hover:text-destructive"
+            aria-label={`Delete ${group.name}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(e);
+            }}
+          >
+            <IconTrash className="size-3.5" aria-hidden="true" />
+          </Button>
+        </div>
       ) : null}
     </div>
   );

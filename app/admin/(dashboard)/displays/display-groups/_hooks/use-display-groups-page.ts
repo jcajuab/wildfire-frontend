@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { useDebounce } from "@/hooks/use-debounce";
 import { useCan } from "@/hooks/use-can";
+import { useAuth } from "@/context/auth-context";
 import {
   displaysApi,
   useGetDisplaysBootstrapQuery,
@@ -12,6 +13,7 @@ import {
   useGetDisplayGroupsInfiniteQuery,
   useSetDisplayGroupsMutation,
   useCreateDisplayGroupMutation,
+  useDeleteDisplayGroupMutation,
   useUpdateDisplayGroupMutation,
   type BackendDisplay,
   type DisplayGroup,
@@ -79,6 +81,9 @@ export interface UseDisplayGroupsPageResult {
   readonly renameGroupId: string | null;
   readonly renameGroupInitialName: string;
   readonly setRenameGroupId: (id: string | null) => void;
+  readonly deleteGroupId: string | null;
+  readonly deleteGroup: DisplayGroup | null;
+  readonly setDeleteGroupId: (id: string | null) => void;
 
   readonly isCreateOpen: boolean;
   readonly setIsCreateOpen: (open: boolean) => void;
@@ -86,6 +91,7 @@ export interface UseDisplayGroupsPageResult {
   readonly isExecuting: boolean;
   readonly isCreatePending: boolean;
   readonly isRenamePending: boolean;
+  readonly isDeletePending: boolean;
 
   readonly handleSelectGroup: (groupId: string) => void;
   readonly handleEnterAdd: () => void;
@@ -96,12 +102,14 @@ export interface UseDisplayGroupsPageResult {
   readonly handleConfirmRemove: () => Promise<void>;
   readonly handleCreateGroup: (name: string) => Promise<void>;
   readonly handleRenameGroup: (groupId: string, name: string) => Promise<void>;
+  readonly handleDeleteGroup: () => Promise<void>;
 }
 
 export function useDisplayGroupsPage({
   initialData,
 }: UseDisplayGroupsPageOptions = {}): UseDisplayGroupsPageResult {
-  const canManageGroups = useCan("displays:update");
+  const { user } = useAuth();
+  const canManageGroups = useCan("displays:update") && user?.isAdmin === true;
 
   // Bootstrap is still subscribed (other consumers seed it), but the
   // display-groups page no longer depends on `bootstrap.displayGroups`.
@@ -119,6 +127,8 @@ export function useDisplayGroupsPage({
     useCreateDisplayGroupMutation();
   const [updateDisplayGroupMutation, { isLoading: isRenamePending }] =
     useUpdateDisplayGroupMutation();
+  const [deleteDisplayGroupMutation, { isLoading: isDeletePending }] =
+    useDeleteDisplayGroupMutation();
 
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [groupSearch, setGroupSearch] = useState("");
@@ -130,6 +140,7 @@ export function useDisplayGroupsPage({
   const [addFilter, setAddFilter] = useState<AddFilter>("all");
   const [displayPage, setDisplayPage] = useState(1);
   const [renameGroupId, setRenameGroupId] = useState<string | null>(null);
+  const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
 
@@ -176,6 +187,11 @@ export function useDisplayGroupsPage({
   const renameGroupInitialName = useMemo(
     () => leftGroups.find((g) => g.id === renameGroupId)?.name ?? "",
     [leftGroups, renameGroupId],
+  );
+
+  const deleteGroup = useMemo(
+    () => leftGroups.find((g) => g.id === deleteGroupId) ?? null,
+    [leftGroups, deleteGroupId],
   );
 
   // Normal/Remove mode: server-side paginated query filtered by group
@@ -392,6 +408,20 @@ export function useDisplayGroupsPage({
     [updateDisplayGroupMutation],
   );
 
+  const handleDeleteGroup = useCallback(async () => {
+    if (!deleteGroup) return;
+    await deleteDisplayGroupMutation({ groupId: deleteGroup.id }).unwrap();
+    toast.success("Display group deleted.");
+    if (selectedGroupId === deleteGroup.id) {
+      setSelectedGroupId(null);
+      setActionMode(null);
+      setSelectedDisplayIds(new Set());
+      setDisplaySearch("");
+      setDisplayPage(1);
+    }
+    setDeleteGroupId(null);
+  }, [deleteDisplayGroupMutation, deleteGroup, selectedGroupId]);
+
   return {
     canManageGroups,
     leftGroups,
@@ -418,11 +448,15 @@ export function useDisplayGroupsPage({
     renameGroupId,
     renameGroupInitialName,
     setRenameGroupId,
+    deleteGroupId,
+    deleteGroup,
+    setDeleteGroupId,
     isCreateOpen,
     setIsCreateOpen,
     isExecuting,
     isCreatePending,
     isRenamePending,
+    isDeletePending,
     handleSelectGroup,
     handleEnterAdd,
     handleEnterRemove,
@@ -432,5 +466,6 @@ export function useDisplayGroupsPage({
     handleConfirmRemove,
     handleCreateGroup,
     handleRenameGroup,
+    handleDeleteGroup,
   };
 }

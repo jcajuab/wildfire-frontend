@@ -96,6 +96,8 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
   "auth.invitation.accept": "Accepted invitation",
   "audit.event.list": "Viewed audit logs",
   "audit.event.export": "Exported audit logs",
+  "settings.maintenance.read": "Viewed maintenance settings",
+  "settings.maintenance.update": "Updated maintenance settings",
   "authz.permission.deny": "Denied by permission policy",
 
   // AI module
