@@ -129,7 +129,7 @@ export function UserMenu({
           }}
         >
           <IconLogout className="size-4" aria-hidden="true" />
-          {pending ? "Logging out..." : "Log Out"}
+          {pending ? "Logging out…" : "Log Out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

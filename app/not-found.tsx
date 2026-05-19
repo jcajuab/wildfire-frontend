@@ -21,7 +21,7 @@ export default function NotFound() {
         href="/login"
         className="text-sm font-medium underline underline-offset-4 hover:text-primary"
       >
-        Go to Login
+        Go to Log In
       </Link>
     </div>
   );

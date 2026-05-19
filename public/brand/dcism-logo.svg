@@ -1,0 +1,27 @@
+<svg viewBox="0 0 514 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">DCISM</title>
+  <desc id="desc">Department of Computer, Information Sciences and Mathematics</desc>
+  <defs>
+    <filter id="mark-depth" x="360" y="8" width="151" height="97" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="2.2" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+    <linearGradient id="cloud-edge" x1="368" x2="503" y1="17" y2="95" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f6f6f6"/>
+    </linearGradient>
+  </defs>
+  <rect width="514" height="128" fill="#ffffff"/>
+  <g fill="#061f69">
+    <text x="4" y="91" font-family="Arial Black, Arial, Helvetica, sans-serif" font-size="94" font-weight="900" letter-spacing="-6.5">DCISM</text>
+    <text x="15" y="119" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.15">DEPARTMENT OF COMPUTER, INFORMATION SCIENCES AND MATHEMATICS</text>
+  </g>
+  <g filter="url(#mark-depth)">
+    <path d="M421.5 29.2c5.1-13.8 18.8-22.4 33.4-20.2 13.8 2.1 24.9 12.2 28.2 25.6 12.8 1.4 22.9 12.2 22.9 25.6 0 14.7-11.9 26.8-26.6 26.8H397c-15.9 0-28.8-12.9-28.8-28.8 0-16.5 13.8-29.6 30.2-28.8 6.3-5.1 14.5-7.3 23.1-6.2z" fill="url(#cloud-edge)"/>
+    <path d="M421.7 33.8c4.9-13 17.8-20.4 30.8-18.3 12.8 2.1 22.7 12 24.4 24.9h3.7c10.7 0 19.5 8.8 19.5 19.8 0 11.4-9.2 20.8-20.8 20.8h-82.1c-12.6 0-22.9-10.2-22.9-22.9 0-13.5 11.6-24 25-22.8l3.4.3 2.4-2.2c4.4-4.1 10.1-5.9 16.6-5z" fill="none" stroke="#061f69" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M330 73.5h124.5" stroke="#061f69" stroke-width="7" stroke-linecap="round"/>
+    <path d="M339.5 66.2a7.4 7.4 0 1 0 0 14.8 7.4 7.4 0 0 0 0-14.8z" fill="#ffffff" stroke="#061f69" stroke-width="3"/>
+    <path d="M358.1 66.2a7.4 7.4 0 1 0 0 14.8 7.4 7.4 0 0 0 0-14.8z" fill="#ffffff" stroke="#061f69" stroke-width="3"/>
+    <path d="M376.7 66.2a7.4 7.4 0 1 0 0 14.8 7.4 7.4 0 0 0 0-14.8z" fill="#ffffff" stroke="#061f69" stroke-width="3"/>
+    <path d="M452 63.7a10.2 10.2 0 1 0 0 20.4 10.2 10.2 0 0 0 0-20.4z" fill="#ffffff" stroke="#061f69" stroke-width="5"/>
+  </g>
+</svg>

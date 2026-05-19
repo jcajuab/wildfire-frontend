@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "Accept Invitation",
-  description: "Accept your invitation to join WILDFIRE.",
+  description:
+    "Accept your invitation to join the WILDFIRE department-wide signage dashboard.",
 };
 
 export default function Layout({ children }: { readonly children: ReactNode }) {

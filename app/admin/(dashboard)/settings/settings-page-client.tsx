@@ -444,7 +444,7 @@ export function SettingsPageView({
                         disabled={isLogoutPending}
                         aria-busy={isLogoutPending}
                       >
-                        {isLogoutPending ? "Logging out..." : "Log Out"}
+                        {isLogoutPending ? "Logging out…" : "Log Out"}
                       </Button>
                     </div>
 

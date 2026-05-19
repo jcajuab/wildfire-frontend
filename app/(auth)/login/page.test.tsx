@@ -70,9 +70,12 @@ describe("LoginPage", () => {
     setPostLoginNavigatorForTest(navigate);
 
     render(<LoginPage />);
+    expect(
+      screen.getByText("Access the DCISM department-wide digital signage system."),
+    ).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText("Username"), "admin");
     await userEvent.type(screen.getByLabelText("Password"), "Admin12345!");
-    await userEvent.click(screen.getByRole("button", { name: "Login" }));
+    await userEvent.click(screen.getByRole("button", { name: "Log In" }));
 
     await waitFor(() => {
       expect(loginMock).toHaveBeenCalledWith({

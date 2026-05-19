@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense, type ReactNode } from "react";
+import { AuthBrandShell } from "@/components/layout/auth-brand-shell";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -11,22 +12,8 @@ export default function AuthLayout({
   children: ReactNode;
 }>) {
   return (
-    <div className="grid min-h-svh bg-background md:grid-cols-2">
-      <section className="flex items-center justify-center px-6 py-10 sm:px-10">
-        <main id="main-content" className="w-full max-w-sm">
-          <Suspense fallback={null}>{children}</Suspense>
-        </main>
-      </section>
-      <aside className="hidden bg-primary p-10 text-primary-foreground md:flex md:flex-col md:justify-end">
-        <div className="space-y-4">
-          <p className="max-w-md text-4xl font-semibold leading-tight">
-            WILDFIRE is your campus digital signage platform
-          </p>
-          <p className="max-w-md text-lg text-primary-foreground/90">
-            Plan content, publish schedules, and keep every screen in sync
-          </p>
-        </div>
-      </aside>
-    </div>
+    <AuthBrandShell>
+      <Suspense fallback={null}>{children}</Suspense>
+    </AuthBrandShell>
   );
 }

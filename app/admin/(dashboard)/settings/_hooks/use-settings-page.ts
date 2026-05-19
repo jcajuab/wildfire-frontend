@@ -106,7 +106,7 @@ export function useSettingsPage(): UseSettingsPageResult {
     }): Promise<void> => {
       await changePassword(data);
       setIsPasswordDialogOpen(false);
-      toast.success("Successfully updated password. Logging out...");
+      toast.success("Successfully updated password. Logging out…");
       setTimeout(() => void logout(), 1500);
     },
     [logout],

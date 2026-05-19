@@ -7,7 +7,7 @@ export default function LoginPage(): ReactElement {
       fallback={
         <div className="w-full">
           <div className="flex items-center justify-center py-12">
-            <span className="text-sm text-muted-foreground">Loading...</span>
+            <span className="text-sm text-muted-foreground">Loading…</span>
           </div>
         </div>
       }

@@ -129,7 +129,7 @@ function AcceptInvitePageBody(): ReactElement {
             className="rounded-lg bg-[var(--success-muted)] px-3 py-2 text-sm text-[var(--success-foreground)]"
             role="status"
           >
-            Invitation accepted. Redirecting to login in {redirectCountdown}{" "}
+            Invitation accepted. Redirecting to log in in {redirectCountdown}{" "}
             {redirectCountdown === 1 ? "second" : "seconds"}.
           </p>
         ) : null}
@@ -159,6 +159,7 @@ function AcceptInvitePageBody(): ReactElement {
             className="h-11 rounded-lg text-sm"
             placeholder="Choose a username"
             autoComplete="username"
+            spellCheck={false}
             disabled={isSubmitted}
             required
           />
@@ -203,7 +204,7 @@ function AcceptInvitePageBody(): ReactElement {
           className="h-11 w-full rounded-lg text-sm"
           disabled={isSubmitting || isSubmitted}
         >
-          {isSubmitting ? "Accepting..." : "Accept invitation"}
+          {isSubmitting ? "Accepting…" : "Accept invitation"}
         </Button>
 
         <div className="text-center">
@@ -211,7 +212,7 @@ function AcceptInvitePageBody(): ReactElement {
             href="/login"
             className="text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
           >
-            Back to login
+            Back to log in
           </Link>
         </div>
       </form>
@@ -230,7 +231,7 @@ function AcceptInvitePageShell(): ReactElement {
 export default function AcceptInvitePage(): ReactElement {
   return (
     <Suspense
-      fallback={<div className="rounded-lg bg-muted px-3 py-2">Loading...</div>}
+      fallback={<div className="rounded-lg bg-muted px-3 py-2">Loading…</div>}
     >
       <AcceptInvitePageShell />
     </Suspense>

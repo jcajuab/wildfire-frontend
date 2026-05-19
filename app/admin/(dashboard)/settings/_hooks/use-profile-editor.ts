@@ -129,7 +129,7 @@ export function useProfileEditor({
       try {
         await updateCurrentUserProfile({ username: normalized });
         setSavedUsername(normalized);
-        toast.success("Successfully updated username. Logging out...");
+        toast.success("Successfully updated username. Logging out…");
         setTimeout(() => void logout(), 1500);
         return true;
       } catch (err) {
@@ -158,7 +158,7 @@ export function useProfileEditor({
       try {
         await updateCurrentUserProfile({ email: normalized || null });
         setSavedEmail(normalized);
-        toast.success("Successfully updated email. Logging out...");
+        toast.success("Successfully updated email. Logging out…");
         setTimeout(() => void logout(), 1500);
         return true;
       } catch (err) {

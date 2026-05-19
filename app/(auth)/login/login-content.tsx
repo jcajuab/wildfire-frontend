@@ -108,7 +108,7 @@ export function LoginContent(): ReactElement | null {
     return (
       <div className="w-full">
         <div className="flex items-center justify-center py-12">
-          <span className="text-sm text-muted-foreground">Loading...</span>
+          <span className="text-sm text-muted-foreground">Loading…</span>
         </div>
       </div>
     );
@@ -122,10 +122,10 @@ export function LoginContent(): ReactElement | null {
     <div className="w-full">
       <div className="flex flex-col items-start gap-2">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-          Login
+          Log In
         </h1>
         <p className="text-sm text-muted-foreground">
-          Welcome back to WILDFIRE
+          Access the DCISM department-wide digital signage system.
         </p>
       </div>
 
@@ -150,6 +150,7 @@ export function LoginContent(): ReactElement | null {
             onChange={(e) => setUsername(e.target.value)}
             className="h-11 rounded-lg text-sm"
             autoComplete="username"
+            spellCheck={false}
             required
           />
         </div>
@@ -176,7 +177,7 @@ export function LoginContent(): ReactElement | null {
           className="h-11 w-full rounded-lg text-sm"
           disabled={isLoggingIn}
         >
-          {isLoggingIn ? "Logging in..." : "Login"}
+          {isLoggingIn ? "Logging in…" : "Log In"}
         </Button>
       </form>
     </div>

@@ -15,6 +15,7 @@ import {
   fetchRegistrationLinkMetadata,
   claimRegistrationLink,
 } from "@/lib/display-api/client";
+import { AuthBrandShell } from "@/components/layout/auth-brand-shell";
 
 type RegistrationStatus =
   | { kind: "registering" }
@@ -125,7 +126,7 @@ function LinkRegistrationContent(): ReactElement {
         <>
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />
           <h1 className="text-xl font-semibold text-foreground">
-            Registering display...
+            Registering display…
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Generating cryptographic keys and completing registration.
@@ -154,7 +155,7 @@ function LinkRegistrationContent(): ReactElement {
             Registration complete!
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Display is now active. Redirecting to display runtime...
+            Display is now active. Redirecting to display runtime…
           </p>
         </>
       ) : null}
@@ -188,19 +189,19 @@ function LinkRegistrationContent(): ReactElement {
 
 export default function LinkRegistrationPage(): ReactElement {
   return (
-    <main className="flex min-h-svh items-center justify-center bg-background px-6">
+    <AuthBrandShell>
       <Suspense
         fallback={
           <div className="w-full max-w-md text-center">
             <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />
             <h1 className="text-xl font-semibold text-foreground">
-              Loading...
+              Loading…
             </h1>
           </div>
         }
       >
         <LinkRegistrationContent />
       </Suspense>
-    </main>
+    </AuthBrandShell>
   );
 }
