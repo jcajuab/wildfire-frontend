@@ -3,6 +3,14 @@ import { api } from "@/lib/api/api";
 import { parseApiResponseDataSafe } from "@/lib/api/contracts";
 
 export interface MaintenanceSettings {
+  readonly autoDeleteUnusedContent: {
+    readonly enabled: boolean;
+    readonly retentionDays: number;
+  };
+  readonly autoDeleteUnusedPlaylists: {
+    readonly enabled: boolean;
+    readonly retentionDays: number;
+  };
   readonly autoDeleteFinishedSchedules: {
     readonly enabled: boolean;
     readonly retentionDays: number;

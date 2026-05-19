@@ -29,6 +29,14 @@ type MaintenanceSettingsDraft = Omit<MaintenanceSettings, "updatedAt">;
 const toDraft = (
   settings: MaintenanceSettings | null,
 ): MaintenanceSettingsDraft => ({
+  autoDeleteUnusedContent: {
+    enabled: true,
+    retentionDays: settings?.autoDeleteUnusedContent.retentionDays ?? 30,
+  },
+  autoDeleteUnusedPlaylists: {
+    enabled: true,
+    retentionDays: settings?.autoDeleteUnusedPlaylists.retentionDays ?? 30,
+  },
   autoDeleteFinishedSchedules: {
     enabled: true,
     retentionDays: settings?.autoDeleteFinishedSchedules.retentionDays ?? 1,
@@ -99,6 +107,18 @@ export function MaintenanceSettingsSection({
 
   const handleSave = async (): Promise<void> => {
     const payload: MaintenanceSettingsDraft = {
+      autoDeleteUnusedContent: {
+        enabled: true,
+        retentionDays: normalizeRetention(
+          draft.autoDeleteUnusedContent.retentionDays,
+        ),
+      },
+      autoDeleteUnusedPlaylists: {
+        enabled: true,
+        retentionDays: normalizeRetention(
+          draft.autoDeleteUnusedPlaylists.retentionDays,
+        ),
+      },
       autoDeleteFinishedSchedules: {
         enabled: true,
         retentionDays: normalizeRetention(
@@ -130,6 +150,36 @@ export function MaintenanceSettingsSection({
       bodyClassName="divide-y divide-border/70"
     >
       <dl className="divide-y divide-border/70">
+        <MaintenanceRow
+          label="Unused content"
+          retentionDays={draft.autoDeleteUnusedContent.retentionDays}
+          onRetentionDaysChange={(retentionDays) =>
+            setDraft((current) => ({
+              ...current,
+              autoDeleteUnusedContent: {
+                ...current.autoDeleteUnusedContent,
+                enabled: true,
+                retentionDays,
+              },
+            }))
+          }
+          disabled={isLoading}
+        />
+        <MaintenanceRow
+          label="Unused playlists"
+          retentionDays={draft.autoDeleteUnusedPlaylists.retentionDays}
+          onRetentionDaysChange={(retentionDays) =>
+            setDraft((current) => ({
+              ...current,
+              autoDeleteUnusedPlaylists: {
+                ...current.autoDeleteUnusedPlaylists,
+                enabled: true,
+                retentionDays,
+              },
+            }))
+          }
+          disabled={isLoading}
+        />
         <MaintenanceRow
           label="Finished schedules"
           retentionDays={draft.autoDeleteFinishedSchedules.retentionDays}
