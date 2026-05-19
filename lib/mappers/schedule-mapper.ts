@@ -34,6 +34,13 @@ export function mapBackendScheduleToSchedule(item: BackendSchedule): Schedule {
       name: item.display.name ?? "Unnamed display",
     },
     createdBy: item.createdBy,
+    createdByUser: item.createdByUser
+      ? {
+          id: item.createdByUser.id,
+          username: item.createdByUser.username,
+          name: item.createdByUser.name,
+        }
+      : null,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   };

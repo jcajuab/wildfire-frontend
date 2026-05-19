@@ -278,12 +278,12 @@ describe("ContentCard", () => {
 
     render(<ContentCard content={baseContent} />);
 
-    expect(screen.getByText("@demo")).toBeInTheDocument();
+    expect(screen.getByText("by Demo User")).toBeInTheDocument();
     expect(screen.getByText("Created")).toBeInTheDocument();
     expect(screen.getByText("2 hours ago")).toBeInTheDocument();
     expect(
       screen.getByLabelText(
-        `Created by @demo. Created ${formatDateWithTime(baseContent.createdAt)}.`,
+        `Created by Demo User. Created ${formatDateWithTime(baseContent.createdAt)}.`,
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText("Created at")).not.toBeInTheDocument();
@@ -304,12 +304,12 @@ describe("ContentCard", () => {
 
     render(<ContentCard content={updatedContent} />);
 
-    expect(screen.getByText("@demo")).toBeInTheDocument();
+    expect(screen.getByText("by Demo User")).toBeInTheDocument();
     expect(screen.getByText("Updated")).toBeInTheDocument();
     expect(screen.getByText("2 hours ago")).toBeInTheDocument();
     expect(
       screen.getByLabelText(
-        `Created by @demo. Updated ${formatDateWithTime(updatedContent.updatedAt)}.`,
+        `Created by Demo User. Updated ${formatDateWithTime(updatedContent.updatedAt)}.`,
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText("Created at")).not.toBeInTheDocument();

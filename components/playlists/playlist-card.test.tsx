@@ -90,7 +90,7 @@ describe("PlaylistCard", () => {
 
     expect(screen.queryByText("Created at")).not.toBeInTheDocument();
     expect(screen.queryByText("Updated at")).not.toBeInTheDocument();
-    expect(screen.getByText("@demo")).toBeInTheDocument();
+    expect(screen.getByText("by Demo User")).toBeInTheDocument();
     expect(screen.getByText("Updated")).toBeInTheDocument();
   });
 
@@ -150,7 +150,7 @@ describe("PlaylistCard", () => {
     expect(cardElement.className).not.toContain("hover:border-primary");
   });
 
-  test("falls back to the owner name when username is unavailable", () => {
+  test("uses the owner name when username is unavailable", () => {
     render(
       <PlaylistCard
         playlist={{
@@ -164,7 +164,7 @@ describe("PlaylistCard", () => {
       />,
     );
 
-    expect(screen.getByText("@Demo User")).toBeInTheDocument();
+    expect(screen.getByText("by Demo User")).toBeInTheDocument();
   });
 
   test("renders text preview content without raw html", () => {

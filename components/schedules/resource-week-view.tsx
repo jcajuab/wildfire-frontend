@@ -9,6 +9,10 @@ import {
 import type { Schedule } from "@/types/schedule";
 import { formatWeekdayShort, formatMonthDay } from "@/lib/formatters";
 import {
+  formatScheduleCalendarAriaMeta,
+  formatScheduleCalendarMeta,
+} from "@/lib/schedules/schedule-display";
+import {
   computeOverlapCounters,
   createResourceDateKey,
   type ResourceCalendarLaneEvent,
@@ -171,6 +175,9 @@ export const ResourceWeekView = memo(function ResourceWeekView({
                         const selectionLabel = isSelected
                           ? "Deselect schedule"
                           : "Select schedule";
+                        const metaLabel = formatScheduleCalendarMeta(schedule);
+                        const ariaMetaLabel =
+                          formatScheduleCalendarAriaMeta(schedule);
 
                         return (
                           <button
@@ -204,10 +211,10 @@ export const ResourceWeekView = memo(function ResourceWeekView({
                             )}
                             aria-label={
                               isSelectionMode
-                                ? `${selectionLabel} ${schedule.name} on ${row.name}, ${event.timeLabel}`
+                                ? `${selectionLabel} ${schedule.name} on ${row.name}, ${event.timeLabel}, ${ariaMetaLabel}`
                                 : showCounter
-                                  ? `View schedule ${schedule.name} (${counter.position + 1} of ${counter.groupSize}) on ${row.name}, ${event.timeLabel}`
-                                  : `View schedule ${schedule.name} on ${row.name}, ${event.timeLabel}`
+                                  ? `View schedule ${schedule.name} (${counter.position + 1} of ${counter.groupSize}) on ${row.name}, ${event.timeLabel}, ${ariaMetaLabel}`
+                                  : `View schedule ${schedule.name} on ${row.name}, ${event.timeLabel}, ${ariaMetaLabel}`
                             }
                           >
                             <span className="block truncate text-xs font-medium max-[52rem]:line-clamp-2 max-[52rem]:overflow-hidden max-[52rem]:whitespace-normal">
@@ -237,6 +244,9 @@ export const ResourceWeekView = memo(function ResourceWeekView({
                             </span>
                             <span className="block truncate text-xs text-foreground/80 max-[52rem]:whitespace-normal">
                               {event.timeLabel}
+                            </span>
+                            <span className="block truncate text-[11px] text-muted-foreground max-[52rem]:whitespace-normal">
+                              {metaLabel}
                             </span>
                           </button>
                         );

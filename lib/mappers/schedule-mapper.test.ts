@@ -33,6 +33,11 @@ describe("schedule-mapper", () => {
         startTime: "08:00",
         endTime: "17:00",
         createdBy: "user-1",
+        createdByUser: {
+          id: "user-1",
+          username: "jane",
+          name: "Jane Doe",
+        },
         createdAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-01-01T00:00:00.000Z",
         playlist: { id: "playlist-1", name: "Morning" },
@@ -44,6 +49,7 @@ describe("schedule-mapper", () => {
     expect(schedules).toHaveLength(1);
     expect(schedules[0]?.id).toBe("schedule-1");
     expect(schedules[0]?.createdBy).toBe("user-1");
+    expect(schedules[0]?.createdByUser?.name).toBe("Jane Doe");
     expect(schedules[0]?.display.id).toBe("display-1");
     expect(schedules[0]?.playlist?.name).toBe("Morning");
   });

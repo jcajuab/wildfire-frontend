@@ -69,9 +69,12 @@ function getPlaylistActivityLabel(
     : "Created";
 }
 
-function getPlaylistOwnerHandle(playlist: PlaylistSummary): string {
+function getPlaylistOwnerLabel(playlist: PlaylistSummary): string {
+  const name = playlist.owner.name.trim();
+  if (name.length > 0) return name;
+
   const username = playlist.owner.username?.trim();
-  return username && username.length > 0 ? username : playlist.owner.name;
+  return username && username.length > 0 ? username : "Unknown owner";
 }
 
 function getPlaylistStatusBadgeClassName(
@@ -101,7 +104,7 @@ export const PlaylistCard = memo(function PlaylistCard({
     activityLabel === "Updated" ? playlist.updatedAt : playlist.createdAt;
   const activityDateLabel = formatDateWithTime(activityDate);
   const activityRelativeLabel = formatRelativeTime(activityDate);
-  const ownerHandle = getPlaylistOwnerHandle(playlist);
+  const ownerLabel = getPlaylistOwnerLabel(playlist);
   const statusLabel = playlist.status === "IN_USE" ? "In Use" : "Draft";
   const showEdit = canModify && Boolean(onEdit);
   const showDelete = canModify && Boolean(onDelete);
@@ -276,9 +279,9 @@ export const PlaylistCard = memo(function PlaylistCard({
       <div
         className="flex min-w-0 items-center gap-1.5 pt-0.5 text-xs leading-4 text-muted-foreground"
         title={`${activityLabel} ${activityDateLabel}`}
-        aria-label={`Created by @${ownerHandle}. ${activityLabel} ${activityDateLabel}.`}
+        aria-label={`Created by ${ownerLabel}. ${activityLabel} ${activityDateLabel}.`}
       >
-        <span className="min-w-0 truncate">@{ownerHandle}</span>
+        <span className="min-w-0 truncate">by {ownerLabel}</span>
         <span className="shrink-0 text-muted-foreground/70" aria-hidden="true">
           ·
         </span>

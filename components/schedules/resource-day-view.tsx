@@ -14,13 +14,17 @@ import {
   formatMinutesAsTime,
   type ResourceCalendarLaneEvent,
 } from "@/lib/schedules/resource-calendar";
+import {
+  formatScheduleCalendarAriaMeta,
+  formatScheduleCalendarMeta,
+} from "@/lib/schedules/schedule-display";
 import type { ResourceGridSharedProps } from "./resource-week-view";
 import { cn } from "@/lib/utils";
 
 const DAY_GRID_TEMPLATE = "16rem minmax(0, 1fr)";
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const DAY_EVENT_TOP_PADDING_PX = 6;
-const DAY_EVENT_HEIGHT_PX = 40;
+const DAY_EVENT_HEIGHT_PX = 58;
 const DAY_EVENT_LANE_GAP_PX = 4;
 const DAY_EVENT_BOTTOM_PADDING_PX = 6;
 
@@ -199,6 +203,9 @@ export const ResourceDayView = memo(function ResourceDayView({
                       const selectionLabel = isSelected
                         ? "Deselect schedule"
                         : "Select schedule";
+                      const metaLabel = formatScheduleCalendarMeta(schedule);
+                      const ariaMetaLabel =
+                        formatScheduleCalendarAriaMeta(schedule);
 
                       return (
                         <button
@@ -238,10 +245,10 @@ export const ResourceDayView = memo(function ResourceDayView({
                           }}
                           aria-label={
                             isSelectionMode
-                              ? `${selectionLabel} ${schedule.name} on ${row.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`
+                              ? `${selectionLabel} ${schedule.name} on ${row.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}, ${ariaMetaLabel}`
                               : showCounter
-                                ? `View schedule ${schedule.name} (${counter.position + 1} of ${counter.groupSize}) on ${row.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`
-                                : `View schedule ${schedule.name} on ${row.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}`
+                                ? `View schedule ${schedule.name} (${counter.position + 1} of ${counter.groupSize}) on ${row.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}, ${ariaMetaLabel}`
+                                : `View schedule ${schedule.name} on ${row.name}, ${formatMinutesAsTime(event.startMinutes)} to ${formatMinutesAsTime(event.endMinutes)}, ${ariaMetaLabel}`
                           }
                         >
                           <span className="block truncate text-xs font-medium">
@@ -271,6 +278,9 @@ export const ResourceDayView = memo(function ResourceDayView({
                           </span>
                           <span className="block truncate text-xs text-foreground/80">
                             {event.timeLabel}
+                          </span>
+                          <span className="block truncate text-[11px] text-muted-foreground">
+                            {metaLabel}
                           </span>
                         </button>
                       );

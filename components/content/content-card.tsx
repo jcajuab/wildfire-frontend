@@ -86,9 +86,12 @@ function getContentActivityLabel(content: Content): "Created" | "Updated" {
     : "Created";
 }
 
-function getContentOwnerHandle(content: Content): string {
+function getContentOwnerLabel(content: Content): string {
+  const name = content.owner.name.trim();
+  if (name.length > 0) return name;
+
   const username = content.owner.username?.trim();
-  return username && username.length > 0 ? username : content.owner.name;
+  return username && username.length > 0 ? username : "Unknown owner";
 }
 
 function getContentResourceStatusLabel(content: Content): string {
@@ -178,7 +181,7 @@ export const ContentCard = memo(function ContentCard({
     activityLabel === "Updated" ? content.updatedAt : content.createdAt;
   const activityDateLabel = formatDateWithTime(activityDate);
   const activityRelativeLabel = formatRelativeTime(activityDate);
-  const ownerHandle = getContentOwnerHandle(content);
+  const ownerLabel = getContentOwnerLabel(content);
 
   const ThumbnailFallbackIcon =
     content.type === "VIDEO" ? IconVideo : IconPhoto;
@@ -331,9 +334,9 @@ export const ContentCard = memo(function ContentCard({
         <div
           className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground"
           title={`${activityLabel} ${activityDateLabel}`}
-          aria-label={`Created by @${ownerHandle}. ${activityLabel} ${activityDateLabel}.`}
+          aria-label={`Created by ${ownerLabel}. ${activityLabel} ${activityDateLabel}.`}
         >
-          <span className="min-w-0 truncate">@{ownerHandle}</span>
+          <span className="min-w-0 truncate">by {ownerLabel}</span>
           <span
             className="shrink-0 text-muted-foreground/70"
             aria-hidden="true"

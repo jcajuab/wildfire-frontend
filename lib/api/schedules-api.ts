@@ -27,6 +27,11 @@ export interface BackendSchedule {
   readonly createdBy: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly createdByUser: {
+    readonly id: string;
+    readonly username: string;
+    readonly name: string | null;
+  } | null;
   readonly playlist: {
     readonly id: string;
     readonly name: string | null;

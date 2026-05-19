@@ -22,6 +22,12 @@ export interface ScheduleDisplay {
   readonly name: string;
 }
 
+export interface ScheduleCreator {
+  readonly id: string;
+  readonly username: string;
+  readonly name: string | null;
+}
+
 export interface Schedule {
   readonly id: string;
   readonly name: string;
@@ -34,6 +40,7 @@ export interface Schedule {
   readonly content: ScheduleContent | null;
   readonly display: ScheduleDisplay;
   readonly createdBy: string | null;
+  readonly createdByUser: ScheduleCreator | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }

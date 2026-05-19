@@ -106,6 +106,11 @@ const makeSchedule = (overrides: Partial<Schedule> = {}): Schedule => ({
   content: null,
   display: { id: "display-1", name: "Lobby" },
   createdBy: "user-1",
+  createdByUser: {
+    id: "user-1",
+    username: "jane",
+    name: "Jane Doe",
+  },
   createdAt: "2026-05-06T00:00:00.000Z",
   updatedAt: "2026-05-06T00:00:00.000Z",
   ...overrides,
@@ -159,6 +164,11 @@ function makeBootstrapData(
         startTime: "09:00",
         endTime: "10:00",
         createdBy: "user-1",
+        createdByUser: {
+          id: "user-1",
+          username: "jane",
+          name: "Jane Doe",
+        },
         createdAt: "2026-05-08T00:00:00.000Z",
         updatedAt: "2026-05-08T00:00:00.000Z",
         playlist: {

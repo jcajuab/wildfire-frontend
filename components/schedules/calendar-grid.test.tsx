@@ -16,6 +16,11 @@ const baseSchedule = {
   endTime: "17:00",
   display: display,
   createdBy: "@admin",
+  createdByUser: {
+    id: "user-1",
+    username: "admin",
+    name: "Admin User",
+  },
   createdAt: "2026-03-06T00:00:00.000Z",
   updatedAt: "2026-03-06T00:00:00.000Z",
 } as const;
@@ -98,31 +103,42 @@ describe("CalendarGrid", () => {
   });
 
   test("renders overlapping day schedules on distinct vertical lanes", () => {
-    render(
-      <CalendarGrid
-        currentDate={new Date("2026-03-06T00:00:00.000Z")}
-        view="resource-day"
-        schedules={schedules}
-        resources={[display]}
-        resourceMode="display"
-        displayGroups={[]}
-        onScheduleClick={vi.fn()}
-      />,
-    );
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-06T02:00:00.000Z"));
 
-    const playlistEvent = screen.getByRole("button", {
-      name: /view schedule test schedule/i,
-    });
-    const flashEvent = screen.getByRole("button", {
-      name: /view schedule flash test/i,
-    });
+    try {
+      render(
+        <CalendarGrid
+          currentDate={new Date("2026-03-06T00:00:00.000Z")}
+          view="resource-day"
+          schedules={schedules}
+          resources={[display]}
+          resourceMode="display"
+          displayGroups={[]}
+          onScheduleClick={vi.fn()}
+        />,
+      );
 
-    const playlistTop = Number.parseFloat(playlistEvent.style.top);
-    const flashTop = Number.parseFloat(flashEvent.style.top);
+      const playlistEvent = screen.getByRole("button", {
+        name: /view schedule test schedule/i,
+      });
+      const flashEvent = screen.getByRole("button", {
+        name: /view schedule flash test/i,
+      });
 
-    expect(Number.isFinite(playlistTop)).toBe(true);
-    expect(Number.isFinite(flashTop)).toBe(true);
-    expect(Math.abs(playlistTop - flashTop)).toBeGreaterThanOrEqual(44);
+      const playlistTop = Number.parseFloat(playlistEvent.style.top);
+      const flashTop = Number.parseFloat(flashEvent.style.top);
+
+      expect(Number.isFinite(playlistTop)).toBe(true);
+      expect(Number.isFinite(flashTop)).toBe(true);
+      expect(Math.abs(playlistTop - flashTop)).toBeGreaterThanOrEqual(44);
+      expect(
+        screen.getAllByText(/by admin user · 2 hours ago/i).length,
+      ).toBeGreaterThan(0);
+      expect(playlistEvent).toHaveAccessibleName(/by admin user, scheduled/i);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("toggles schedule selection instead of opening details in bulk mode", async () => {
